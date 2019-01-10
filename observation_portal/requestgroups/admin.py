@@ -1,3 +1,179 @@
 from django.contrib import admin
+from django.urls import reverse
 
-# Register your models here.
+from .models import RequestGroup, Request, Location, Target, Window, Configuration, Constraints, InstrumentConfig
+
+
+class ConfigurationInline(admin.TabularInline):
+    model = Configuration
+    extra = 0
+
+
+class LocationInline(admin.TabularInline):
+    model = Location
+    extra = 0
+
+
+class TargetInline(admin.TabularInline):
+    model = Target
+    extra = 0
+
+
+class WindowInline(admin.TabularInline):
+    model = Window
+    extra = 0
+
+
+class ConstraintsInline(admin.TabularInline):
+    model = Constraints
+    extra = 0
+
+
+class InstrumentConfigInline(admin.TabularInline):
+    model = InstrumentConfig
+    extra = 0
+
+
+class RequestGroupAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'submitter',
+        'proposal',
+        'name',
+        'observation_type',
+        'operator',
+        'ipp_value',
+        'created',
+        'state',
+        'modified',
+        'requests_count',
+    )
+    list_filter = ('state', 'created', 'modified')
+    search_fields = ('name',)
+    readonly_fields = ('requests', 'requests_count')
+
+    def requests_count(self, obj):
+        return obj.requests.count()
+
+    def requests(self, obj):
+        html = ''
+        for request in obj.requests.all():
+            html += '<a href="{0}">{1}</a></p>'.format(
+                reverse('admin:requestgroups_request_change', args=(request.id,)),
+                request.id
+            )
+        return html
+    requests.allow_tags = True
+
+
+class RequestAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'request_group',
+        'observation_note',
+        'state',
+        'modified',
+        'created',
+    )
+    raw_id_fields = (
+        'request_group',
+    )
+    list_filter = ('state', 'modified', 'created')
+    inlines = [ConfigurationInline, WindowInline, TargetInline, LocationInline]
+
+
+class LocationAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'request',
+        'telescope_class',
+        'site',
+        'observatory',
+        'telescope',
+    )
+    list_filter = ('telescope_class',)
+
+
+class TargetAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'name',
+        'request',
+        'type',
+        'roll',
+        'pitch',
+        'hour_angle',
+        'ra',
+        'dec',
+        'altitude',
+        'azimuth',
+        'coordinate_system',
+        'equinox',
+        'proper_motion_ra',
+        'proper_motion_dec',
+        'epoch',
+        'parallax',
+        'diff_pitch_rate',
+        'diff_roll_rate',
+        'diff_epoch_rate',
+        'diff_pitch_acceleration',
+        'diff_roll_acceleration',
+        'scheme',
+        'epochofel',
+        'orbinc',
+        'longascnode',
+        'longofperih',
+        'argofperih',
+        'meandist',
+        'perihdist',
+        'eccentricity',
+        'meanlong',
+        'meananom',
+        'dailymot',
+        'epochofperih',
+    )
+    list_filter = ('type',)
+    search_fields = ('name',)
+
+
+class WindowAdmin(admin.ModelAdmin):
+    list_display = ('id', 'request', 'start', 'end')
+    list_filter = ('start', 'end')
+    raw_id_fields = (
+        'request',
+    )
+
+
+class ConfigurationAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'request',
+        'type',
+        'priority',
+    )
+    raw_id_fields = (
+        'request',
+    )
+    list_filter = ('type',)
+    inlines = [InstrumentConfigInline, ConstraintsInline]
+
+
+class ConstraintsAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'configuration',
+        'max_airmass',
+        'min_lunar_distance',
+        'max_lunar_phase',
+        'max_seeing',
+        'min_transparency',
+    )
+
+
+admin.site.register(Constraints, ConstraintsAdmin)
+admin.site.register(Configuration, ConfigurationAdmin)
+admin.site.register(Window, WindowAdmin)
+admin.site.register(Target, TargetAdmin)
+admin.site.register(RequestGroup, RequestGroupAdmin)
+admin.site.register(Location, LocationAdmin)
+admin.site.register(Request, RequestAdmin)

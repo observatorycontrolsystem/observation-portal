@@ -62,7 +62,7 @@
             <tbody>
                 {% for call in calls %}
                 {% if call.proposal_type == 'COLAB'%}
-                {% time_requested_by_tag user.sciencecollaborationallocation call.semester as time_requested %}
+                {% time_requested_by_sca user.sciencecollaborationallocation call.semester as time_requested %}
                 <tr>
                     <td>{{ call.semester }}</td>
                     <td>{{ time_requested.1m0 }}/{{ request.user.sciencecollaborationallocation.one_meter_alloc }}</td>

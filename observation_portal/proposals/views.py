@@ -138,7 +138,7 @@ class SemesterDetailView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['proposals'] = self.get_object().proposals.filter(active=True, non_science=False) \
-            .distinct().order_by('tag__name')
+            .distinct().order_by('sca__name')
         return context
 
 

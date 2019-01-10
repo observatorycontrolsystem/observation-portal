@@ -6,7 +6,7 @@ from observation_portal.accounts.models import Profile
 class RequestLogMiddleware(object):
     def __init__(self, get_response):
         self.get_response = get_response
-        self.logger = logging.getLogger('valhalla_request')
+        self.logger = logging.getLogger('observation_portal_request')
 
     def __call__(self, request):
         response = self.get_response(request)

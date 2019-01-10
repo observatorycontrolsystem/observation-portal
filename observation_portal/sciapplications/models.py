@@ -109,7 +109,7 @@ class ScienceApplication(models.Model):
         return self.title
 
     @property
-    def tag(self):
+    def sca(self):
         try:
             return self.submitter.sciencecollaborationallocation
         except ScienceCollaborationAllocation.DoesNotExist:
@@ -122,7 +122,7 @@ class ScienceApplication(models.Model):
             'KEY': 'KEY',
             'DDT': 'DDT',
             'NAOC': 'NAOC',
-            'COLAB': self.tag.id
+            'COLAB': self.sca.id
         }
         return '{0}{1}-{2}'.format(
             proposal_type_to_name[self.call.proposal_type], self.call.semester, str(self.tac_rank).zfill(3)
@@ -159,7 +159,7 @@ class ScienceApplication(models.Model):
             tac_priority=self.tac_priority,
             tac_rank=self.tac_rank,
             active=False,
-            tag=self.tag
+            sca=self.sca
         )
 
         for tr in self.timerequest_set.filter(approved=True):

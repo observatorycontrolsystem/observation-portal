@@ -38,7 +38,7 @@ class ProposalAdmin(admin.ModelAdmin):
         'active',
         'title',
         'tac_priority',
-        'tag',
+        'sca',
         'public',
         'semesters',
         'pi',
@@ -46,7 +46,7 @@ class ProposalAdmin(admin.ModelAdmin):
         'modified'
     )
 
-    list_filter = ('active', 'tag', 'public')
+    list_filter = ('active', 'sca', 'public')
     raw_id_fields = ('users',)
     inlines = [TimeAllocationAdminInline]
     search_fields = ['id', 'title', 'abstract']

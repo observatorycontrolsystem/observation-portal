@@ -9,8 +9,8 @@ import os
 
 from observation_portal.requestgroups.models import RequestGroup, Request, Window, Configuration, Constraints, Target, Location
 
-CONFIGDB_TEST_FILE = os.path.join(settings.BASE_DIR, 'valhalla/common/test_data/configdb.json')
-FILTERWHEELS_FILE = os.path.join(settings.BASE_DIR, 'valhalla/common/test_data/filterwheels.json')
+CONFIGDB_TEST_FILE = os.path.join(settings.BASE_DIR, 'observation_portal/common/test_data/configdb.json')
+FILTERWHEELS_FILE = os.path.join(settings.BASE_DIR, 'observation_portal/common/test_data/filterwheels.json')
 
 
 class ConfigDBTestMixin(object):

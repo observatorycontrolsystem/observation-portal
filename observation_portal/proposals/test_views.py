@@ -368,8 +368,8 @@ class TestSemesterAdmin(TestCase):
 
 class TestSemesterDetail(TestCase):
     def setUp(self):
-        tag = mixer.blend(ScienceCollaborationAllocation)
-        self.proposal = mixer.blend(Proposal, tag=tag)
+        sca = mixer.blend(ScienceCollaborationAllocation)
+        self.proposal = mixer.blend(Proposal, sca=sca)
         self.semester = mixer.blend(Semester)
         self.ta = mixer.blend(TimeAllocation, semester=self.semester, proposal=self.proposal)
 

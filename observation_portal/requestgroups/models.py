@@ -111,7 +111,7 @@ class Request(models.Model):
 
     SERIALIZER_EXCLUDE = ('group',)
 
-    group = models.ForeignKey(RequestGroup, related_name='requests', on_delete=models.CASCADE)
+    request_group = models.ForeignKey(RequestGroup, related_name='requests', on_delete=models.CASCADE)
     observation_note = models.CharField(max_length=255, default='', blank=True)
     state = models.CharField(max_length=40, choices=STATE_CHOICES, default=STATE_CHOICES[0][0])
     modified = models.DateTimeField(auto_now=True, db_index=True)

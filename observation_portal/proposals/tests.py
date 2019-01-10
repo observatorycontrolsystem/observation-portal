@@ -155,14 +155,14 @@ class TestAccounting(TestCase):
         self.assertEqual(chunks[0][0], start)
         self.assertEqual(chunks[3][1], end)
 
-    @patch('valhalla.proposals.accounting.query_pond', return_value=1)
+    @patch('observation_portal.proposals.accounting.query_pond', return_value=1)
     def test_time_totals_from_pond(self, qp_mock):
         ta = mixer.blend(TimeAllocation)
         result = get_time_totals_from_pond(ta, ta.semester.start, ta.semester.end, False)
         self.assertEqual(result, 1)
         self.assertEqual(qp_mock.call_count, 1)
 
-    @patch('valhalla.proposals.accounting.query_pond', side_effect=HTTPError)
+    @patch('observation_portal.proposals.accounting.query_pond', side_effect=HTTPError)
     def test_time_totals_from_pond_timeout(self, qa_mock):
         ta = mixer.blend(TimeAllocation)
         with self.assertRaises(RecursionError):
@@ -187,7 +187,7 @@ class TestAccounting(TestCase):
         self.assertEqual(query_pond(None, datetime.datetime(2017, 1, 1), datetime.datetime(2017, 2, 1), None, None, False), 2)
         self.assertEqual(query_pond(None, datetime.datetime(2017, 1, 1), datetime.datetime(2017, 2, 1), None, None, True), 1)
 
-    @patch('valhalla.proposals.accounting.query_pond', return_value=1)
+    @patch('observation_portal.proposals.accounting.query_pond', return_value=1)
     def test_run_accounting(self, qa_mock):
         semester = mixer.blend(
             Semester, start=datetime.datetime(2017, 1, 1, tzinfo=timezone.utc), end=datetime.datetime(2017, 4, 30, tzinfo=timezone.utc))

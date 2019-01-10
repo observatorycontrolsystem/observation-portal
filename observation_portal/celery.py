@@ -5,9 +5,9 @@ from django.core.mail import send_mail as django_send_mail
 from django.core.mail import send_mass_mail as django_send_mass_mail
 
 # set the default Django settings module for the 'celery' program.
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'valhalla.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'observation_portal.settings')
 
-app = Celery('valhalla')
+app = Celery('observation_portal')
 
 # Using a string here means the worker don't have to serialize
 # the configuration object to child processes.

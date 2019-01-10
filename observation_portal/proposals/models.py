@@ -66,7 +66,7 @@ class Proposal(models.Model):
     abstract = models.TextField(default='', blank=True)
     tac_priority = models.PositiveIntegerField(default=0)
     tac_rank = models.PositiveIntegerField(default=0)
-    tag = models.ForeignKey(ScienceCollaborationAllocation, on_delete=models.CASCADE)
+    sca = models.ForeignKey(ScienceCollaborationAllocation, on_delete=models.CASCADE)
     public = models.BooleanField(default=False)
     non_science = models.BooleanField(default=False)
     users = models.ManyToManyField(User, through='Membership')

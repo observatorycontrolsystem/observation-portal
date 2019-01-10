@@ -92,7 +92,7 @@ class TelescopeStatesFakeInput(ConfigDBTestMixin, TestCase):
         self.tk1 = TelescopeKey('tst', 'doma', '1m0a')
         self.tk2 = TelescopeKey('tst', 'domb', '1m0a')
 
-        self.es_patcher = patch('valhalla.common.telescope_states.TelescopeStates._get_es_data')
+        self.es_patcher = patch('observation_portal.common.telescope_states.TelescopeStates._get_es_data')
         self.mock_es = self.es_patcher.start()
         self.mock_es.return_value = self.es_output
 
@@ -136,7 +136,7 @@ class TestTelescopeStates(TelescopeStatesFakeInput):
                                           }
         self.assertIn(domb_expected_available_state2, telescope_states[self.tk2])
 
-    @patch('valhalla.common.telescope_states.get_site_rise_set_intervals')
+    @patch('observation_portal.common.telescope_states.get_site_rise_set_intervals')
     def test_telescope_availability_limits_interval(self, mock_intervals):
         mock_intervals.return_value = [(datetime(2016, 9, 30, 18, 30, 0, tzinfo=timezone.utc),
                                         datetime(2016, 9, 30, 21, 0, 0, tzinfo=timezone.utc)),
@@ -164,7 +164,7 @@ class TestTelescopeStates(TelescopeStatesFakeInput):
         domb_expected_availability = domb_available_time / domb_total_time
         self.assertAlmostEqual(domb_expected_availability, telescope_availability[self.tk2][0][1])
 
-    @patch('valhalla.common.telescope_states.get_site_rise_set_intervals')
+    @patch('observation_portal.common.telescope_states.get_site_rise_set_intervals')
     def test_telescope_availability_spans_interval(self, mock_intervals):
         mock_intervals.return_value = [(datetime(2016, 9, 30, 18, 30, 0, tzinfo=timezone.utc),
                                         datetime(2016, 9, 30, 21, 0, 0, tzinfo=timezone.utc)),
@@ -191,7 +191,7 @@ class TestTelescopeStates(TelescopeStatesFakeInput):
         domb_expected_availability = 1.0
         self.assertAlmostEqual(domb_expected_availability, telescope_availability[self.tk2][0][1])
 
-    @patch('valhalla.common.telescope_states.get_site_rise_set_intervals')
+    @patch('observation_portal.common.telescope_states.get_site_rise_set_intervals')
     def test_telescope_availability_combine(self, mock_intervals):
         mock_intervals.return_value = [(datetime(2016, 9, 30, 18, 30, 0, tzinfo=timezone.utc),
                                         datetime(2016, 9, 30, 21, 0, 0, tzinfo=timezone.utc)),
@@ -226,10 +226,10 @@ class TestTelescopeStates(TelescopeStatesFakeInput):
 
 class TelescopeStatesFromFile(TestCase):
     def setUp(self):
-        self.configdb_null_patcher = patch('valhalla.common.configdb.ConfigDB._get_configdb_data')
+        self.configdb_null_patcher = patch('observation_portal.common.configdb.ConfigDB._get_configdb_data')
         mock_configdb_null = self.configdb_null_patcher.start()
         mock_configdb_null.return_value = {}
-        self.configdb_patcher = patch('valhalla.common.configdb.ConfigDB.get_instrument_types_per_telescope')
+        self.configdb_patcher = patch('observation_portal.common.configdb.ConfigDB.get_instrument_types_per_telescope')
         self.mock_configdb = self.configdb_patcher.start()
         self.mock_configdb.return_value = {
             TelescopeKey(site='coj', observatory='clma', telescope='2m0a'): ['2M0-FLOYDS-SCICAM',
@@ -246,14 +246,14 @@ class TelescopeStatesFromFile(TestCase):
             TelescopeKey(site='sqa', observatory='doma', telescope='0m8a'): ['0M8-SCICAM-SBIG',
                                                                              '0M8-NRES-SCICAM']}
 
-        with open('valhalla/common/test_data/es_telescope_states_data.txt', 'r') as input_file:
+        with open('observation_portal/common/test_data/es_telescope_states_data.txt', 'r') as input_file:
             self.es_output = json.loads(input_file.read())
 
         self.start = datetime(2016, 10, 1, tzinfo=timezone.utc)
         self.end = datetime(2016, 10, 10, tzinfo=timezone.utc)
         self.short_end = datetime(2016, 10, 4, tzinfo=timezone.utc)
 
-        self.es_patcher = patch('valhalla.common.telescope_states.TelescopeStates._get_es_data')
+        self.es_patcher = patch('observation_portal.common.telescope_states.TelescopeStates._get_es_data')
         self.mock_es = self.es_patcher.start()
         self.mock_es.return_value = self.es_output
 

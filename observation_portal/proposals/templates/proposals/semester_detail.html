@@ -12,9 +12,9 @@
 <div class="row">
   <div class="col-md-12">
     <h1>{{ object.id }} proposals</h1>
-    {% regroup proposals by tag as tags %}
-    {% for tag in tags %}
-      <h2>{{ tag.grouper.name|cut:'0' }}</h2>
+    {% regroup proposals by sca as scas %}
+    {% for sca in scas %}
+      <h2>{{ sca.grouper.name|cut:'0' }}</h2>
       <table class="table">
         <colgroup>
           <col style="width: 15%">
@@ -40,7 +40,7 @@
           <th>SBIG (2.0m)</th>
         </tr></thead>
         <tbody>
-          {% for proposal in tag.list %}
+          {% for proposal in sca.list %}
           <tr>
             <td>{{ proposal.pi.last_name}} {{ proposal.pi.first_name|slice:'1'}}</td>
             <td>{{ proposal.pi.profile.institution }}</td>

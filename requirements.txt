@@ -10,6 +10,8 @@ rise_set
 elasticsearch<6.0
 WeasyPrint
 PyPDF2
+psycopg2-binary
+boto3
 
 mixer
 responses

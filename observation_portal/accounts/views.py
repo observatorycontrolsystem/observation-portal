@@ -8,8 +8,8 @@ from django.shortcuts import redirect
 from django.contrib import messages
 from django.views.generic.edit import FormView
 
-from valhalla.accounts.forms import UserForm, ProfileForm, AccountRemovalForm
-from valhalla.accounts.serializers import UserSerializer
+from observation_portal.accounts.forms import UserForm, ProfileForm, AccountRemovalForm
+from observation_portal.accounts.serializers import UserSerializer
 
 
 class UserUpdateView(LoginRequiredMixin, TemplateView):

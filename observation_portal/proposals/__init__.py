@@ -1,1 +1,1 @@
-default_app_config = 'valhalla.proposals.apps.ProposalsConfig'
+default_app_config = 'observation_portal.proposals.apps.ProposalsConfig'

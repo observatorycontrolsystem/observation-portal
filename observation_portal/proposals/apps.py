@@ -2,7 +2,7 @@ from django.apps import AppConfig
 
 
 class ProposalsConfig(AppConfig):
-    name = 'valhalla.proposals'
+    name = 'observation_portal.proposals'
 
     def ready(self):
         import observation_portal.proposals.signals.handlers  # noqa

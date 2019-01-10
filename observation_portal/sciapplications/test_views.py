@@ -109,7 +109,7 @@ class TestGetCreateSciApp(TestCase):
         self.assertEqual(response.status_code, 404)
 
 
-@patch('valhalla.sciapplications.forms.PdfFileReader', new=MockPDFFileReader)
+@patch('observation_portal.sciapplications.forms.PdfFileReader', new=MockPDFFileReader)
 class TestPostCreateSciApp(TestCase):
     def setUp(self):
         self.semester = mixer.blend(
@@ -501,7 +501,7 @@ class TestGetUpdateSciApp(TestCase):
         self.assertEqual(response.status_code, 404)
 
 
-@patch('valhalla.sciapplications.forms.PdfFileReader', new=MockPDFFileReader)
+@patch('observation_portal.sciapplications.forms.PdfFileReader', new=MockPDFFileReader)
 class TestPostUpdateSciApp(TestCase):
     def setUp(self):
         self.semester = mixer.blend(
@@ -633,9 +633,9 @@ class TestSciAppIndex(TestCase):
             opens=timezone.now(),
             proposal_type=Call.COLLAB_PROPOSAL,
         )
-        tag = mixer.blend(ScienceCollaborationAllocation, admin=self.user)
+        sca = mixer.blend(ScienceCollaborationAllocation, admin=self.user)
         response = self.client.get(reverse('sciapplications:index'))
-        self.assertContains(response, tag.name + ' Proposals')
+        self.assertContains(response, sca.name + ' Proposals')
 
     def test_collab_admin_time_used(self):
         call = mixer.blend(
@@ -644,7 +644,7 @@ class TestSciAppIndex(TestCase):
             opens=timezone.now(),
             proposal_type=Call.COLLAB_PROPOSAL,
         )
-        tag = mixer.blend(ScienceCollaborationAllocation, admin=self.user, one_meter_alloc=9)
+        sca = mixer.blend(ScienceCollaborationAllocation, admin=self.user, one_meter_alloc=9)
         app = mixer.blend(
             ScienceApplication,
             status=ScienceApplication.DRAFT,
@@ -654,7 +654,7 @@ class TestSciAppIndex(TestCase):
         instrument = mixer.blend(Instrument, code='1M0-SCICAM-SINISTRO', telescope_class='1m0')
         tr = mixer.blend(TimeRequest, science_application=app, instrument=instrument, std_time=8)
         response = self.client.get(reverse('sciapplications:index'))
-        self.assertContains(response, '{0}/{1}'.format(tr.std_time, tag.one_meter_alloc))
+        self.assertContains(response, '{0}/{1}'.format(tr.std_time, sca.one_meter_alloc))
 
 class TestSciAppDetail(TestCase):
     def setUp(self):
