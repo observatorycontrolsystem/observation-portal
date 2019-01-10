@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load bootstrap3 %}
+{% block title %} Proposal List {% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-md-9">
+        <h2>Your Proposals</h2>
+        <p>
+            Below is a list of all proposals for which you are either the principal investigator (PI)
+            or a co-investigator.
+        </p>
+        <p>Click on a Proposal ID to view details and (if you are the PI) manage co-investigators.</p>
+        {% if user.is_staff %}
+            Admin only:
+            {% if filter.form.semester.field.queryset.count > 0 %}
+            <a href="{% url 'proposals:semester-admin' filter.form.semester.field.queryset.0 %}">
+                View All Proposals
+            </a>
+            {% endif %}
+        {% endif %}
+    </div>
+    <div class="col-md-3">
+        <h4>
+            <a href="{% url 'sciapplications:index' %}"><i class="fa fa-pencil-square-o fa-fw"></i> Submit Proposal</a>
+        </h4>
+        <p>
+            There {{ calls|length|pluralize:"is,are" }} currently <a href="{% url 'sciapplications:index' %}">{{ calls|length }}</a> open call{{ calls|length|pluralize }} for proposals.
+        </p>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12">
+        <form method="get" action="" class="form-inline pull-right">
+            {% bootstrap_field filter.form.active %}
+            {% bootstrap_field filter.form.semester %}
+            {% bootstrap_button button_type="submit" content="Filter" %}
+        </form>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <td>Proposal</td>
+                    <td>Title</td>
+                    <td>Principal Investigator</td>
+                    <td>Co-Investigators</td>
+                </tr>
+            </thead>
+            <tbody>
+                {% for proposal in object_list %}
+                <tr>
+                    <td><a href="{% url 'proposals:detail' pk=proposal.id %}">{{ proposal.id }}</a></td>
+                    <td>{{ proposal.title }}</td>
+                    <td>{{ proposal.pi }}</td>
+                    <td>{{ proposal.cis|slice:"3"|join:", " }}{% if proposal.cis|length > 3 %}...{% endif %}</td>
+                </tr>
+                {% empty %}
+                    {% if user.proposal_set.count < 1 %}
+                        <tr>
+                            <td colspan="4">You are not a member of any proposals. Would you like to
+                            <a href="{% url 'sciapplications:index' %}">submit a proposal?</a></td>
+                        </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4">No proposals for this semester.</td>
+                    </tr>
+                    {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

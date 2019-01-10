@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% load bootstrap3 i18n %}
+{% block title %}{% trans 'Profile' %}{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <h2>Settings</h2>
+        <form class="form" method="post" action="">
+        {% csrf_token %}
+        {% bootstrap_form user_form %}
+        {% bootstrap_form profile_form %}
+        {% buttons submit='Save' reset='Cancel' %}
+        <a href="{% url 'auth_password_change' %}" class="btn btn-danger pull-right">Change Password</a>
+        {% endbuttons %}
+        </form>
+    </div>
+    <div class="col-md-4">
+        <h2>API Key</h2>
+        <p>
+        The following key may be used to authenticate when using the
+        <a href="{% url 'api:api-root' %}">API</a>.
+        This key should be treated like a password.
+        </p>
+        <input class="form-control" value="{{ user.profile.api_token.key }}" onclick="this.select()" readonly>
+        <p>If you think your API token may have been comprimised (by accidentally checking it in to
+        a public source code repository, emailing it out, etc) you may revoke the token to obtain
+        a new one using the button below. WARNING: This will cause any applications that use this
+        token to stop working!
+        </p>
+        <form action="{% url 'revoke-api-token' %}" method="POST">
+            {% csrf_token %}
+            <input type="submit" class="btn btn-danger" value="Revoke Token" />
+        </form>
+        <h2>API Quota</h2>
+        <p>The observations API is rate limited so that it remains available to all users in the event
+        a single user makes too many requests in too rapid a succession, causing denial of service to
+        other clients.</p>
+        <p>The rate limit is applied on a 24 hour rolling window. Your current quota is:</p>
+        <p><strong>{{ user.profile.api_quota.used }} out of {{ user.profile.api_quota.allowed }}</strong></p>
+        <h2>Account Removal</h2>
+        <p>You may request that your account be deleted.<p>
+        <a href="{% url 'account-removal' %}" title="Request account removal">Request account removal</a>
+    </div>
+</div>
+{% endblock %}

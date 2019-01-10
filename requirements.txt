@@ -1,2 +1,15 @@
 django
 django-rest-framework
+celery
+requests
+django-filter
+django-registration-redux
+django-oauth-toolkit
+time_intervals
+rise_set
+elasticsearch<6.0
+WeasyPrint
+PyPDF2
+
+mixer
+responses

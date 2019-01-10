@@ -1,0 +1,221 @@
+{% extends 'base.html' %}
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.12.2/bootstrap-table.min.css" />
+<style type="text/css">
+  .table {
+    font-family: monospace;
+    font-size: 12px;
+  }
+  .text-cell {
+    min-width: 300px;
+    max-width: 300px;
+  }
+  /*
+   * Unset the width of the enclosing container (from base.html) to make it fluid, which makes the table more
+   * readable. This layout modification is an exception for this one page.
+   */
+  .container {
+    width: unset;
+  }
+</style>
+{% endblock %}
+{% block content %}
+<div class="row">
+  <div class="col-md-12">
+    <div id="toolbar">
+      <div class="form form-inline">
+      <div class="form-group">
+        <label for="semester" class="control-label">Semester</label>
+        <select class="form-control" onchange="location = this.value">
+          {% for semester in semesters %}
+          <option value="{% url 'proposals:semester-admin' semester %}"
+                  {% if object == semester %} selected {% endif %}>
+            {{ semester }}
+          </option>
+          {% endfor %}
+        </select>
+        <div class="checkbox">
+          <label>
+            <input id="completed" type="checkbox" onclick="selectCompleted()"> Completed
+          </label>
+        </div>
+      </div>
+    </div>
+    </div>
+    <table id="semester-table" class="table table-striped">
+      </select>
+      </select>
+      <thead>
+        <tr>
+          <th>Proposal</th>
+          <th>Class</th>
+          <th>PI</th>
+          <th>Priority</th>
+          <th>Std Alloc</th>
+          <th>Std Used</th>
+          <th>RR Alloc</th>
+          <th>RR Used</th>
+          <th>IPP Limit</th>
+          <th>IPP Avail</th>
+          <th># Users</th>
+          <th>Notes</th>
+          <th>completed</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for ta in object.timeallocation_set.all.distinct %}
+      <tr>
+        <td><a href="{% url 'proposals:detail' ta.proposal.id %}">{{ ta.proposal.id }}</a></td>
+        <td>{{ ta.proposal.pi.first_name }} {{ ta.proposal.pi.last_name }}</td>
+        <td>{{ ta.proposal.tac_priority }}</td>
+        <td>{{ ta.instrument_name }}</td>
+        <td>{{ ta.std_allocation|floatformat }}</td>
+        <td {% if ta.std_allocation > 0 and ta.std_time_used >= ta.std_allocation %} class="bg-danger" {% endif %}>
+          {{ ta.std_time_used|floatformat }}
+        </td>
+        <td>{{ ta.tc_allocation|floatformat }}</td>
+        <td {% if ta.tc_allocation > 0 and ta.tc_time_used >= ta.tc_allocation %} class="bg-danger" {% endif %}>
+          {{ ta.tc_time_used|floatformat }}
+        </td>
+        <td>{{ ta.rr_allocation|floatformat }}</td>
+        <td {% if ta.rr_allocation > 0 and ta.rr_time_used >= ta.rr_allocation %} class="bg-danger" {% endif %}>
+          {{ ta.rr_time_used|floatformat }}
+        </td>
+        <td>{{ ta.ipp_limit|floatformat }}</td>
+        <td>{{ ta.ipp_time_available|floatformat }}</td>
+        <td>{{ ta.proposal.users.count }}</td>
+        <td>{{ ta.proposal.notes }}</td>
+        <td>
+          {% if ta.rr_allocation > 0 and ta.rr_time_used >= ta.rr_allocation or ta.std_allocation > 0 and ta.std_time_used >= ta.std_allocation or ta.tc_allocation > 0 and ta.tc_time_used >= ta.tc_allocation %}
+            isComplete
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+{% block extra_javascript %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.12.2/bootstrap-table.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/1.3.3/FileSaver.min.js"></script>
+<script src="https://cdn.lco.global/script/tableExport.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.12.2/extensions/export/bootstrap-table-export.min.js"></script>
+<script type="text/javascript">
+$('#semester-table').bootstrapTable({
+  sortName: 'proposal',
+  toolbar: '#toolbar',
+  showExport: true,
+  search: true,
+  showFooter: true,
+  columns: [
+    {
+      field: 'proposal',
+      title: 'Proposal',
+      sortable: true,
+      footerFormatter: function(data){
+        return 'Total: ' + data.length;
+      }
+    },
+    {
+      field: 'pi',
+      title: 'PI',
+      sortable: true,
+    },
+    { field: 'priority',
+      title: 'Priority',
+      sortable: true,
+    },
+    {
+      field: 'class',
+      title: 'Class',
+      sortable: true,
+    },
+    {
+      field: 'std_allocation',
+      title: 'Std Alloc',
+      sortable: true,
+      footerFormatter: sumFormatter
+    },
+    {
+      field: 'std_used',
+      title: 'Std Used',
+      sortable: true,
+      footerFormatter: sumFormatter
+    },
+    {
+      field: 'rr_allocation',
+      title: 'RR Alloc',
+      sortable: true,
+      footerFormatter: sumFormatter
+    },
+    {
+      field: 'rr_used',
+      title: 'RR Used',
+      sortable: true,
+      footerFormatter: sumFormatter
+    },
+    {
+      field: 'tc_allocation',
+      title: 'TC Alloc',
+      sortable: true,
+      footerFormatter: sumFormatter
+    },
+    {
+      field: 'tc_used',
+      title: 'TC Used',
+      sortable: true,
+      footerFormatter: sumFormatter
+    },
+    {
+      field: 'ipp_limit',
+      title: 'IPP Limit',
+      sortable: true,
+      footerFormatter: sumFormatter
+    },
+    {
+      field: 'ipp_available',
+      title: 'IPP Available',
+      sortable: true,
+      footerFormatter: sumFormatter
+    },
+    {
+      field: 'num_users',
+      title: '# Users',
+      sortable: true,
+    },
+    {
+      field: 'notes',
+      title: 'Notes',
+      cellStyle: function(value, row, index, field) {
+        return {
+          classes: 'text-cell'
+        };
+      }
+    },
+    {
+      field: 'completed',
+      title: 'completed',
+      visible: false
+    }
+  ],
+});
+
+function sumFormatter(data){
+  var field = this.field;
+  var total_sum = data.reduce(function(sum, row){
+    return sum + (parseFloat(row[field]) || 0);
+  }, 0);
+  return total_sum.toFixed(3);
+}
+
+function selectCompleted(){
+  if($('#completed').is(':checked')){
+    $('#semester-table').bootstrapTable('resetSearch', 'isComplete');
+  }else{
+    $('#semester-table').bootstrapTable('resetSearch', '');
+  }
+}
+</script>
+{% endblock %}

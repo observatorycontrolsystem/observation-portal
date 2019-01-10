@@ -1,0 +1,11 @@
+Hello,
+
+This email is to inform you that the observation request: {{ requestgroup.name }} has completed.
+
+Data may be downloaded here:
+https://observe.lco.global{{ requestgroup.get_absolute_url }}
+
+Thank you,
+
+Lco.global
+

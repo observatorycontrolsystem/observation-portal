@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+{% load i18n bootstrap3 proposal_extras %}
+{% block title %}{{ object.id }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <h3>{{ object }} <small>{{ object.title }}</small></h3>
+        <p>{{ object.abstract }}</p>
+        <h4>Total Observation Requests:
+            <a title="View requests" href="{% url 'requestgroups:list' %}?proposal={{ object.id }}">{{ object.requestgroup_set.all.count }}</a>
+        </h4>
+        <h4>
+          Principal Investigator: {{ object.pi.first_name }} {{ object.pi.last_name }}
+          <a href="mailto:{{ object.pi.email }}">{{ object.pi.email }}</a>
+        </h4>
+        <h4>Co Investigators <small><i id="toggleci" class="fa fa-eye"></i></h4>
+        {% if not user.profile.simple_interface or user == object.pi %}
+        <table class="table" id="cilist">
+          <thead>
+            <tr><th>Name</th><th>UserId</th><th>Email</th><th>Hour Limit</th><th>Hours Requested</th>
+              {% if object.public %}
+              <th>Simple Interface</th>
+              {% endif %}
+              {% if user == object.pi %}
+              <th>Remove</th>
+              {% endif %}
+            </tr>
+          </thead>
+          <tbody>
+          {% for mem in object.membership_set.all %}
+          {% if mem.role != 'PI' %}
+            <tr>
+              <td>{{ mem.user.first_name }} {{ mem.user.last_name }}</td>
+              <td>{{ mem.user.username }}</td>
+              <td><a href="mailto:{{ mem.user.email }}">{{ mem.user.email }}</a></td>
+              <td>
+                {% if mem.time_limit < 0 %}No Limit{% else %}{{ mem.time_limit_hours | floatformat:3 }}{% endif %}
+                {% if user == object.pi %}
+                &nbsp;<i class="fa fa-pencil memlimit" data-membership="{{ mem.id }}"></i>
+                <form method="POST" action="{% url 'proposals:membership-limit' pk=mem.id %}" class="form-inline limitform" style="display: none">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <input name="time_limit" type="number" class="form-control" style="width: 100px" step="0.001"
+                         {% if mem.time_limit > 0 %} value="{{ mem.time_limit_hours | floatformat:3 }}" {% endif %} />
+                    </div>
+                    <button type="submit" class="btn btn-default remove-limit">Remove Limit</button>
+                    <button type="submit" class="btn btn-default">Set Limit</button>
+                </form>
+                {% endif %}
+              </td>
+              {% time_used_by_user mem.user proposal as time_used %}
+              <td>{{ time_used | floatformat:3 }}</td>
+              {% if object.public %}
+              <td>{% if mem.user.profile.simple_interface %}<i class="fa fa-check"></i>{% endif %}</td>
+              {% endif %}
+              {% if user == object.pi %}
+              <td><a href="{% url 'proposals:membership-delete' mem.id %}"><i class="fa fa-trash"></i></a></td>
+              {% endif %}
+            </tr>
+          {% endif %}
+          {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
+        <h4>Time Allocation</h4>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Semester</th>
+                    <th>Telescope Class</th>
+                    <th>Hours</th>
+                    <th>Used/Allocated</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% regroup object.timeallocation_set.all by semester as timeallocations %}
+                {% for ta in timeallocations %}
+                    <tr class="bg-info">
+                        <td colspan="4">{{ ta.grouper }}</td>
+                    </tr>
+                    {% for ta in ta.list %}
+                        <tr class="bg-grey">
+                            <td></td>
+                            <td>{{ ta.instrument_name }}</td>
+                            <td colspan="2"></td>
+                        </tr>
+                        <tr>
+                            <td colspan="2"></td>
+                            <td>Standard</td>
+                            <td>
+                                <div class="progress">
+                                    <div class="progress-bar" role="progress-bar" style="min-width: 3em; width:{% widthratio ta.std_time_used ta.std_allocation 100 %}%">
+                                        {{ ta.std_time_used|floatformat}}/{{ ta.std_allocation }}
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2"></td>
+                            <td>Rapid Response</td>
+                            <td>
+                                <div class="progress">
+                                    <div class="progress-bar" role="progress-bar" style="min-width: 3em; width:{% widthratio ta.rr_time_used ta.rr_allocation 100 %}%">
+                                        {{ ta.rr_time_used|floatformat}}/{{ ta.rr_allocation }}
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2"></td>
+                            <td>IPP</td>
+                            <td>
+                                Available: {{ ta.ipp_time_available|floatformat }} Limit: {{ ta.ipp_limit }}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="col-md-4">
+        <strong>Email Notifications</strong>
+        <div class="help-block">
+          You will recieve notifications whenever a requested observation on this proposal is completed.
+        </div>
+        <form method="POST" action="" class="form">
+            {% csrf_token %}
+            {% bootstrap_form form=notification_form %}
+            <button type="submit" class="btn btn-default">Save</button>
+        </form>
+        <br/>
+        <dl>
+          <dt>Links</dt>
+          <dd><a href="https://archive.lco.global/?PROPID={{ object.id }}" target="_blank">View Data on the LCO Science Archive</a></dd>
+        </dl>
+        {% if user == object.pi %}
+        <strong>Global Hour Limit</strong>
+        <div class="help-block">
+          {% blocktrans %}
+          Use this form to set an hour limit for every Co-I on the proposal.
+          {% endblocktrans %}
+        </div>
+        <form method="POST" action="{% url 'proposals:membership-global' pk=object.id %}" class="form-inline">
+          {% csrf_token %}
+          <div class="form-group">
+            <input name="time_limit" type="number" class="form-control" style="width: 100px" step="0.001" placeholder="Hours"/>
+          </div>
+          <button type="submit" class="btn btn-default remove-limit">Remove Limit</button>
+          <button type="submit" class="btn btn-default">Set Global Limit</button>
+        </form>
+        <br/>
+        <strong>Invite Co-Investigators</strong>
+        <div class="help-block">
+            {% blocktrans %}
+            Invite co-investigators by entering their email address below and
+            pressing "add". If you would like to add multiple address at once, enter them below,
+            comma separated. If the user is already registered with LCO, they will be added to
+            this proposal. If not, they will be invited.
+            {% endblocktrans %}
+        </div>
+        <form method="POST" action="{% url 'proposals:invite' pk=object.id %}" class="form-inline">
+            {% csrf_token %}
+            <div class="form-group">
+                <label class="sr-only" for="email">Invite a Co-Investigator</label>
+                <input name="email" class="form-control" placeholder="Email Address(s)"/>
+            </div>
+            <button type="submit" class="btn btn-default">Add</button>
+        </form>
+        <br/>
+        <dl>
+            <dt>{% trans 'Pending Invitations' %}</dt>
+            {% for invite in object.proposalinvite_set.all %}
+            {% if not invite.used %}
+            <dd><a href="mailto:{{ invite.email }}">{{ invite.email }}</a></dd>
+            <dd>Invited: {{ invite.sent }}</dd>
+            <dd><a href="{% url 'proposals:proposalinvite-delete' invite.id %}">Delete</a></dd>
+            {% endif %}
+            {% empty %}
+            <p>No pending invitations.</p>
+            {% endfor %}
+        </dl>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+{% block extra_javascript %}
+<script type="text/javascript">
+    $('#toggleci').click(function(){
+        $(this).toggleClass('fa-eye-slash');
+        $('#cilist').toggle();
+    });
+    $('[data-toggle="tooltip"]').tooltip();
+
+    $('.remove-limit').click(function(){
+      $(this).parent().find('input[name="time_limit"]').val('-1');
+    });
+
+    $('.memlimit').click(function(){
+      $('.limitform').hide();
+      $(this).next().first().show();
+    })
+
+</script>
+{% endblock %}

@@ -1,0 +1,100 @@
+<!doctype html>
+{% load static i18n sciapp_extras %}
+<html class="no-js" lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>{{ object.title}}</title>
+    {% if not pdf %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/print.css' %}">
+    {% endif %}
+</head>
+<body>
+    {% if not pdf %}
+    <ul style="float:right;">
+    <li><a href="#" onclick="window.history.back()">Back</a></li>
+    <li><a href="#" onclick="window.print()">Print this page</a></li>
+    <li><a href="{% url 'sciapplications:pdf' pk=object.id %}">View Pdf</a></li>
+    </ul>
+    {% endif %}
+    {% if object.title %}
+        <h1>{{ object.title }}</h1>
+        <br/>
+    {% endif %}
+
+    <h2>Semester: <small>{{ object.call.semester }}</small></h2>
+
+    {% if object.status == 'SUBMITTED' and object.submitted %}
+    <h2>Submitted: <small>{{ object.submitted|date:"j M Y P" }}</small></h2>
+    {% endif %}
+
+    {% if object.abstract %}
+        <h2>{% trans 'Abstract' %}</h2>
+        <p>{{ object.abstract|linebreaks }}</p>
+    {% endif %}
+
+    {% if object.timerequest_set.count %}
+    <h2>{% trans 'Observing Budget' %}</h2>
+    <table>
+      <thead>
+        <tr>
+          {% if object.call.proposal_type == 'KEY' %}
+          <th class="center">{% trans 'Semester' %}</th>
+          {% endif %}
+          <th>{% trans 'Instrument' %}</th>
+          <th class="center">{% trans 'Standard Time' %}</th>
+          <th class="center">{% trans 'Rapid Response' %}</th>
+          <th class="center">{% trans 'Time Critical' %}</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% regroup object.timerequest_set.all by semester as timerequests %}
+      {% for timerequest_group in timerequests %}
+        {% if object.call.proposal_type == 'KEY' %}
+        <tr><td colspan="5">{{ timerequest_group.grouper }}</td></tr>
+        {% endif %}
+        {% for timerequest in timerequest_group.list %}
+        <tr>
+            {% if object.call.proposal_type == 'KEY' %}
+            <td></td>
+            {% endif %}
+            <td>{{ timerequest.instrument }}</td>
+            <td class="center">{{ timerequest.std_time }}</td>
+            <td class="center">{{ timerequest.rr_time }}</td>
+            <td class="center">{{ timerequest.tc_time }}</td>
+        </tr>
+        {% endfor %}
+      {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+
+    {% if object.call.proposal_type != 'DDT' %}
+    <div class="page-break"></div>
+    {% endif %}
+
+    <h2>{% trans 'Principal Investigator' %}</h2>
+    {% if object.pi %}
+      <p>{{ object.pi_first_name|slice:':1' }}. {{ object.pi_last_name }} &lt;{{ object.pi }}&gt; ({{ object.pi_institution }})</p>
+    {% else %}
+      <p>{{ object.submitter.first_name|slice:':1' }}. {{ object.submitter.last_name }} &lt;{{ object.submitter.email }}&gt; ({{ object.submitter.profile.institution }})</p>
+    {% endif %}
+
+    {% if object.coinvestigator_set.exists %}
+      <h2>{% trans 'Co Investigators' %}</h2>
+      <table class="coi">
+        <thead><tr><th>{% trans 'Name' %}</th><th>{% trans 'Email' %}</th><th>{% trans 'Institution' %}</th></tr></thead>
+        <tbody>
+        {% for coi in object.coinvestigator_set.all %}
+          <tr><td>{{ coi.first_name|slice:':1' }}. {{ coi.last_name }}</td><td>{{ coi.email }}</td><td>{{ coi.institution }}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+
+    {% if object.pdf and not pdf %}
+        <h2>Uploaded PDF</h2>
+        <p><a href="{% file_to_s3_url object.pdf %}">Download</a></p>
+    {% endif %}
+</body>
+</html>

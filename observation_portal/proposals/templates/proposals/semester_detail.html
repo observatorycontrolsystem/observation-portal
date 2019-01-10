@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% load proposal_extras %}
+{% block extra_css %}
+<style>
+  .showAbstract {
+    cursor: pointer;
+  }
+</style>
+{% endblock %}
+{% block title %}Semester {{ object.id }}{% endblock %}
+{% block content %}
+<div class="row">
+  <div class="col-md-12">
+    <h1>{{ object.id }} proposals</h1>
+    {% regroup proposals by tag as tags %}
+    {% for tag in tags %}
+      <h2>{{ tag.grouper.name|cut:'0' }}</h2>
+      <table class="table">
+        <colgroup>
+          <col style="width: 15%">
+          <col style="width: 15%">
+          <col style="width: 35%"/>
+          <col style="width: 10%">
+          <col style="width: 5%">
+          <col style="width: 5%">
+          <col style="width: 5%">
+          <col style="width: 5%">
+          <col style="width: 5%">
+        </colgroup>
+        <thead><tr>
+          <th>PI Name</th>
+          <th>PI Institution</th>
+          <th>Title</th>
+          <th>Semesters</th>
+          <th>FLOYDS (2m)</th>
+          <th>Spectral (2m)</th>
+          <th>NRES (1m)</th>
+          <th>Sinistro (1m)</th>
+          <th>SBIG (0.4m)</th>
+          <th>SBIG (2.0m)</th>
+        </tr></thead>
+        <tbody>
+          {% for proposal in tag.list %}
+          <tr>
+            <td>{{ proposal.pi.last_name}} {{ proposal.pi.first_name|slice:'1'}}</td>
+            <td>{{ proposal.pi.profile.institution }}</td>
+            <td>
+              <a class="showAbstract">
+              {{ proposal.title }}
+              <span class="title hidden">{{ proposal.title }}</span>
+              <span class="abstract hidden">{{ proposal.abstract }}</span>
+              </a>
+            </td>
+            <td>{% for semester in proposal.semester_set.all.distinct %} {{ semester }} {% endfor %}</td>
+            <td>
+              {{ proposal.current_allocation.2M0FLOYDSSCICAM.std|floatformat:0 }}
+            </td>
+            <td>
+              {{ proposal.current_allocation.2M0SCICAMSPECTRAL.std|floatformat:0 }}
+            </td>
+            <td>
+              {{ proposal.current_allocation.1M0NRESSCICAM.std|floatformat:0 }}
+            </td>
+            <td>
+              {{ proposal.current_allocation.1M0SCICAMSINISTRO.std|floatformat:0 }}
+            </td>
+            <td>
+              {{ proposal.current_allocation.0M4SCICAMSBIG.std|floatformat:0 }}
+            </td>
+            <td>
+              {{ proposal.current_allocation.2M0SCICAMSBIG.std|floatformat:0 }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endfor %}
+  </div>
+</div>
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel"></h4>
+      </div>
+      <div class="modal-body" id="myModalBody">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_javascript %}
+<script type="text/javascript">
+  $('.showAbstract').click(function(){
+    $('#myModalLabel').text($(this).children('.title').text());
+    $('#myModalBody').text($(this).children('.abstract').text());
+    $('#myModal').modal();
+  });
+</script>
+{% endblock %}

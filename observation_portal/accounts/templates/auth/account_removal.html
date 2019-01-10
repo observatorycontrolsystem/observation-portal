@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% load bootstrap3 %}
+{% block content %}
+<h2>Account removal request</h2>
+<p>Please let us know why you would like your account removed.</p>
+<form method="POST" action="{% url 'account-removal' %}" class="form">
+  {% csrf_token %}
+  {% bootstrap_form form %}
+  {% buttons %}
+  <input type="submit" class="btn btn-primary" value="Submit request">
+  {% endbuttons %}
+</form>
+{% endblock %}

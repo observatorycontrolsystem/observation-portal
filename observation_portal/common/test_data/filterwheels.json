@@ -1,0 +1,1787 @@
+{
+
+    "count": 21,
+    "next": null,
+    "previous": null,
+    "results": [
+        {
+            "id": 3,
+            "filters": [
+                {
+                    "id": 16,
+                    "modified": "2015-12-02T00:47:14.381739Z",
+                    "name": "SDSS-r&prime;",
+                    "code": "rp",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 17,
+                    "modified": "2015-12-02T00:47:14.383522Z",
+                    "name": "SDSS-i&prime;",
+                    "code": "ip",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 20,
+                    "modified": "2015-12-02T00:47:14.388635Z",
+                    "name": "Bessell-V",
+                    "code": "V",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 21,
+                    "modified": "2015-12-02T00:47:14.390396Z",
+                    "name": "Bessell-B",
+                    "code": "B",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 25,
+                    "modified": "2015-12-02T00:47:14.396576Z",
+                    "name": "zp",
+                    "code": "zp",
+                    "filter_type": "Exotic"
+                }
+            ],
+            "__str__": "rp,ip,V,B,zp"
+        },
+        {
+            "id": 10,
+            "filters": [
+                {
+                    "id": 52,
+                    "modified": "2015-12-02T00:47:14.440431Z",
+                    "name": "Opaque",
+                    "code": "opaque",
+                    "filter_type": "Exotic"
+                },
+                {
+                    "id": 50,
+                    "modified": "2015-12-02T00:47:14.436966Z",
+                    "name": "150um Pinhole",
+                    "code": "150um-Pinhole",
+                    "filter_type": "Engineering"
+                },
+                {
+                    "id": 15,
+                    "modified": "2015-12-02T00:47:14.380023Z",
+                    "name": "Clear",
+                    "code": "air",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 16,
+                    "modified": "2015-12-02T00:47:14.381739Z",
+                    "name": "SDSS-r&prime;",
+                    "code": "rp",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 17,
+                    "modified": "2015-12-02T00:47:14.383522Z",
+                    "name": "SDSS-i&prime;",
+                    "code": "ip",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 18,
+                    "modified": "2015-12-02T00:47:14.385281Z",
+                    "name": "SDSS-g&prime;",
+                    "code": "gp",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 19,
+                    "modified": "2015-12-02T00:47:14.386946Z",
+                    "name": "PanSTARRS-Z",
+                    "code": "zs",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 20,
+                    "modified": "2015-12-02T00:47:14.388635Z",
+                    "name": "Bessell-V",
+                    "code": "V",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 21,
+                    "modified": "2015-12-02T00:47:14.390396Z",
+                    "name": "Bessell-B",
+                    "code": "B",
+                    "filter_type": "Standard"
+                }
+            ],
+            "__str__": "opaque,150um-Pinhole,air,rp,ip,gp,zs,V,B"
+        },
+        {
+            "id": 19,
+            "filters": [
+                {
+                    "id": 9,
+                    "modified": "2015-12-02T00:47:14.370109Z",
+                    "name": "Bessell-I",
+                    "code": "I",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 10,
+                    "modified": "2015-12-02T00:47:14.371791Z",
+                    "name": "Bessell-R",
+                    "code": "R",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 11,
+                    "modified": "2015-12-02T00:47:14.373417Z",
+                    "name": "Bessell-U",
+                    "code": "U",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 12,
+                    "modified": "2015-12-02T00:47:14.375062Z",
+                    "name": "PanSTARRS-w",
+                    "code": "w",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 13,
+                    "modified": "2015-12-02T00:47:14.376852Z",
+                    "name": "PanSTARRS-Y",
+                    "code": "Y",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 14,
+                    "modified": "2015-12-02T00:47:14.378386Z",
+                    "name": "SDSS-u&prime;",
+                    "code": "up",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 15,
+                    "modified": "2015-12-02T00:47:14.380023Z",
+                    "name": "Clear",
+                    "code": "air",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 16,
+                    "modified": "2015-12-02T00:47:14.381739Z",
+                    "name": "SDSS-r&prime;",
+                    "code": "rp",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 17,
+                    "modified": "2015-12-02T00:47:14.383522Z",
+                    "name": "SDSS-i&prime;",
+                    "code": "ip",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 18,
+                    "modified": "2015-12-02T00:47:14.385281Z",
+                    "name": "SDSS-g&prime;",
+                    "code": "gp",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 19,
+                    "modified": "2015-12-02T00:47:14.386946Z",
+                    "name": "PanSTARRS-Z",
+                    "code": "zs",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 20,
+                    "modified": "2015-12-02T00:47:14.388635Z",
+                    "name": "Bessell-V",
+                    "code": "V",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 21,
+                    "modified": "2015-12-02T00:47:14.390396Z",
+                    "name": "Bessell-B",
+                    "code": "B",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 26,
+                    "modified": "2015-12-02T00:47:14.398205Z",
+                    "name": "ND",
+                    "code": "ND",
+                    "filter_type": "Exotic"
+                },
+                {
+                    "id": 49,
+                    "modified": "2015-12-02T00:47:14.435328Z",
+                    "name": "400um Pinhole",
+                    "code": "400um-Pinhole",
+                    "filter_type": "Engineering"
+                },
+                {
+                    "id": 50,
+                    "modified": "2015-12-02T00:47:14.436966Z",
+                    "name": "150um Pinhole",
+                    "code": "150um-Pinhole",
+                    "filter_type": "Engineering"
+                }
+            ],
+            "__str__": "I,R,U,w,Y,up,air,rp,ip,gp,zs,V,B,ND,400um-Pinhole,150um-Pinhole"
+        },
+        {
+            "id": 5,
+            "filters": [
+                {
+                    "id": 61,
+                    "modified": "2015-12-02T00:47:14.454645Z",
+                    "name": "6.0 A slit",
+                    "code": "slit_6.0as",
+                    "filter_type": "Slit"
+                },
+                {
+                    "id": 60,
+                    "modified": "2015-12-02T00:47:14.453197Z",
+                    "name": "1.6 A slit",
+                    "code": "slit_1.6as",
+                    "filter_type": "Slit"
+                },
+                {
+                    "id": 59,
+                    "modified": "2015-12-02T00:47:14.451746Z",
+                    "name": "2.0 A slit",
+                    "code": "slit_2.0as",
+                    "filter_type": "Slit"
+                },
+                {
+                    "id": 58,
+                    "modified": "2015-12-02T00:47:14.450148Z",
+                    "name": "1.2 A slit",
+                    "code": "slit_1.2as",
+                    "filter_type": "Slit"
+                }
+            ],
+            "__str__": "slit_6.0as,slit_1.6as,slit_2.0as,slit_1.2as"
+        },
+        {
+            "id": 2,
+            "filters": [
+                {
+                    "id": 6,
+                    "modified": "2015-12-02T00:47:14.364881Z",
+                    "name": "Skymapper CaV",
+                    "code": "Skymapper-VS",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 7,
+                    "modified": "2015-12-02T00:47:14.366566Z",
+                    "name": "Solar (V+R)",
+                    "code": "solar",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 9,
+                    "modified": "2015-12-02T00:47:14.370109Z",
+                    "name": "Bessell-I",
+                    "code": "I",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 10,
+                    "modified": "2015-12-02T00:47:14.371791Z",
+                    "name": "Bessell-R",
+                    "code": "R",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 13,
+                    "modified": "2015-12-02T00:47:14.376852Z",
+                    "name": "PanSTARRS-Y",
+                    "code": "Y",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 14,
+                    "modified": "2015-12-02T00:47:14.378386Z",
+                    "name": "SDSS-u&prime;",
+                    "code": "up",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 15,
+                    "modified": "2015-12-02T00:47:14.380023Z",
+                    "name": "Clear",
+                    "code": "air",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 16,
+                    "modified": "2015-12-02T00:47:14.381739Z",
+                    "name": "SDSS-r&prime;",
+                    "code": "rp",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 17,
+                    "modified": "2015-12-02T00:47:14.383522Z",
+                    "name": "SDSS-i&prime;",
+                    "code": "ip",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 18,
+                    "modified": "2015-12-02T00:47:14.385281Z",
+                    "name": "SDSS-g&prime;",
+                    "code": "gp",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 19,
+                    "modified": "2015-12-02T00:47:14.386946Z",
+                    "name": "PanSTARRS-Z",
+                    "code": "zs",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 20,
+                    "modified": "2015-12-02T00:47:14.388635Z",
+                    "name": "Bessell-V",
+                    "code": "V",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 21,
+                    "modified": "2015-12-02T00:47:14.390396Z",
+                    "name": "Bessell-B",
+                    "code": "B",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 33,
+                    "modified": "2015-12-02T00:47:14.408949Z",
+                    "name": "CR",
+                    "code": "CR",
+                    "filter_type": "Exotic"
+                },
+                {
+                    "id": 34,
+                    "modified": "2015-12-02T00:47:14.410468Z",
+                    "name": "C3",
+                    "code": "C3",
+                    "filter_type": "Exotic"
+                },
+                {
+                    "id": 35,
+                    "modified": "2015-12-02T00:47:14.412059Z",
+                    "name": "CN",
+                    "code": "CN",
+                    "filter_type": "Exotic"
+                },
+                {
+                    "id": 36,
+                    "modified": "2015-12-02T00:47:14.413629Z",
+                    "name": "NH2",
+                    "code": "NH2",
+                    "filter_type": "Exotic"
+                },
+                {
+                    "id": 37,
+                    "modified": "2015-12-02T00:47:14.415183Z",
+                    "name": "C2",
+                    "code": "C2",
+                    "filter_type": "Exotic"
+                },
+                {
+                    "id": 38,
+                    "modified": "2015-12-02T00:47:14.416655Z",
+                    "name": "OH",
+                    "code": "OH",
+                    "filter_type": "Exotic"
+                }
+            ],
+            "__str__": "Skymapper-VS,solar,I,R,Y,up,air,rp,ip,gp,zs,V,B,CR,C3,CN,NH2,C2,OH"
+        },
+        {
+            "id": 12,
+            "filters": [
+                {
+                    "id": 50,
+                    "modified": "2015-12-02T00:47:14.436966Z",
+                    "name": "150um Pinhole",
+                    "code": "150um-Pinhole",
+                    "filter_type": "Engineering"
+                },
+                {
+                    "id": 9,
+                    "modified": "2015-12-02T00:47:14.370109Z",
+                    "name": "Bessell-I",
+                    "code": "I",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 10,
+                    "modified": "2015-12-02T00:47:14.371791Z",
+                    "name": "Bessell-R",
+                    "code": "R",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 11,
+                    "modified": "2015-12-02T00:47:14.373417Z",
+                    "name": "Bessell-U",
+                    "code": "U",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 15,
+                    "modified": "2015-12-02T00:47:14.380023Z",
+                    "name": "Clear",
+                    "code": "air",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 20,
+                    "modified": "2015-12-02T00:47:14.388635Z",
+                    "name": "Bessell-V",
+                    "code": "V",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 21,
+                    "modified": "2015-12-02T00:47:14.390396Z",
+                    "name": "Bessell-B",
+                    "code": "B",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 28,
+                    "modified": "2015-12-02T00:47:14.401414Z",
+                    "name": "Blank-off-plate",
+                    "code": "Blank-off-plate",
+                    "filter_type": "Engineering"
+                }
+            ],
+            "__str__": "150um-Pinhole,I,R,U,air,V,B,Blank-off-plate"
+        },
+        {
+            "id": 14,
+            "filters": [
+                {
+                    "id": 3,
+                    "modified": "2015-12-02T00:47:14.359982Z",
+                    "name": "H Beta",
+                    "code": "H-Beta",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 5,
+                    "modified": "2015-12-02T00:47:14.363346Z",
+                    "name": "H Alpha",
+                    "code": "H-Alpha",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 9,
+                    "modified": "2015-12-02T00:47:14.370109Z",
+                    "name": "Bessell-I",
+                    "code": "I",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 10,
+                    "modified": "2015-12-02T00:47:14.371791Z",
+                    "name": "Bessell-R",
+                    "code": "R",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 11,
+                    "modified": "2015-12-02T00:47:14.373417Z",
+                    "name": "Bessell-U",
+                    "code": "U",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 12,
+                    "modified": "2015-12-02T00:47:14.375062Z",
+                    "name": "PanSTARRS-w",
+                    "code": "w",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 13,
+                    "modified": "2015-12-02T00:47:14.376852Z",
+                    "name": "PanSTARRS-Y",
+                    "code": "Y",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 14,
+                    "modified": "2015-12-02T00:47:14.378386Z",
+                    "name": "SDSS-u&prime;",
+                    "code": "up",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 15,
+                    "modified": "2015-12-02T00:47:14.380023Z",
+                    "name": "Clear",
+                    "code": "air",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 16,
+                    "modified": "2015-12-02T00:47:14.381739Z",
+                    "name": "SDSS-r&prime;",
+                    "code": "rp",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 17,
+                    "modified": "2015-12-02T00:47:14.383522Z",
+                    "name": "SDSS-i&prime;",
+                    "code": "ip",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 18,
+                    "modified": "2015-12-02T00:47:14.385281Z",
+                    "name": "SDSS-g&prime;",
+                    "code": "gp",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 19,
+                    "modified": "2015-12-02T00:47:14.386946Z",
+                    "name": "PanSTARRS-Z",
+                    "code": "zs",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 20,
+                    "modified": "2015-12-02T00:47:14.388635Z",
+                    "name": "Bessell-V",
+                    "code": "V",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 21,
+                    "modified": "2015-12-02T00:47:14.390396Z",
+                    "name": "Bessell-B",
+                    "code": "B",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 49,
+                    "modified": "2015-12-02T00:47:14.435328Z",
+                    "name": "400um Pinhole",
+                    "code": "400um-Pinhole",
+                    "filter_type": "Engineering"
+                },
+                {
+                    "id": 50,
+                    "modified": "2015-12-02T00:47:14.436966Z",
+                    "name": "150um Pinhole",
+                    "code": "150um-Pinhole",
+                    "filter_type": "Engineering"
+                }
+            ],
+            "__str__": "H-Beta,H-Alpha,I,R,U,w,Y,up,air,rp,ip,gp,zs,V,B,400um-Pinhole,150um-Pinhole"
+        },
+        {
+            "id": 22,
+            "filters": [
+                {
+                    "id": 9,
+                    "modified": "2015-12-02T00:47:14.370109Z",
+                    "name": "Bessell-I",
+                    "code": "I",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 10,
+                    "modified": "2015-12-02T00:47:14.371791Z",
+                    "name": "Bessell-R",
+                    "code": "R",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 11,
+                    "modified": "2015-12-02T00:47:14.373417Z",
+                    "name": "Bessell-U",
+                    "code": "U",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 12,
+                    "modified": "2015-12-02T00:47:14.375062Z",
+                    "name": "PanSTARRS-w",
+                    "code": "w",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 13,
+                    "modified": "2015-12-02T00:47:14.376852Z",
+                    "name": "PanSTARRS-Y",
+                    "code": "Y",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 14,
+                    "modified": "2015-12-02T00:47:14.378386Z",
+                    "name": "SDSS-u&prime;",
+                    "code": "up",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 15,
+                    "modified": "2015-12-02T00:47:14.380023Z",
+                    "name": "Clear",
+                    "code": "air",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 16,
+                    "modified": "2015-12-02T00:47:14.381739Z",
+                    "name": "SDSS-r&prime;",
+                    "code": "rp",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 17,
+                    "modified": "2015-12-02T00:47:14.383522Z",
+                    "name": "SDSS-i&prime;",
+                    "code": "ip",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 18,
+                    "modified": "2015-12-02T00:47:14.385281Z",
+                    "name": "SDSS-g&prime;",
+                    "code": "gp",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 19,
+                    "modified": "2015-12-02T00:47:14.386946Z",
+                    "name": "PanSTARRS-Z",
+                    "code": "zs",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 20,
+                    "modified": "2015-12-02T00:47:14.388635Z",
+                    "name": "Bessell-V",
+                    "code": "V",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 21,
+                    "modified": "2015-12-02T00:47:14.390396Z",
+                    "name": "Bessell-B",
+                    "code": "B",
+                    "filter_type": "Standard"
+                }
+            ],
+            "__str__": "I,R,U,w,Y,up,air,rp,ip,gp,zs,V,B"
+        },
+        {
+            "id": 7,
+            "filters": [
+                {
+                    "id": 52,
+                    "modified": "2015-12-02T00:47:14.440431Z",
+                    "name": "Opaque",
+                    "code": "opaque",
+                    "filter_type": "Exotic"
+                },
+                {
+                    "id": 1,
+                    "modified": "2015-12-02T00:47:14.356033Z",
+                    "name": "H-alpha",
+                    "code": "Ha",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 12,
+                    "modified": "2015-12-02T00:47:14.375062Z",
+                    "name": "PanSTARRS-w",
+                    "code": "w",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 14,
+                    "modified": "2015-12-02T00:47:14.378386Z",
+                    "name": "SDSS-u&prime;",
+                    "code": "up",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 15,
+                    "modified": "2015-12-02T00:47:14.380023Z",
+                    "name": "Clear",
+                    "code": "air",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 16,
+                    "modified": "2015-12-02T00:47:14.381739Z",
+                    "name": "SDSS-r&prime;",
+                    "code": "rp",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 17,
+                    "modified": "2015-12-02T00:47:14.383522Z",
+                    "name": "SDSS-i&prime;",
+                    "code": "ip",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 18,
+                    "modified": "2015-12-02T00:47:14.385281Z",
+                    "name": "SDSS-g&prime;",
+                    "code": "gp",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 19,
+                    "modified": "2015-12-02T00:47:14.386946Z",
+                    "name": "PanSTARRS-Z",
+                    "code": "zs",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 20,
+                    "modified": "2015-12-02T00:47:14.388635Z",
+                    "name": "Bessell-V",
+                    "code": "V",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 21,
+                    "modified": "2015-12-02T00:47:14.390396Z",
+                    "name": "Bessell-B",
+                    "code": "B",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 27,
+                    "modified": "2015-12-02T00:47:14.399840Z",
+                    "name": "pinhole",
+                    "code": "pinhole",
+                    "filter_type": "Engineering"
+                }
+            ],
+            "__str__": "opaque,Ha,w,up,air,rp,ip,gp,zs,V,B,pinhole"
+        },
+        {
+            "id": 20,
+            "filters": [
+                {
+                    "id": 15,
+                    "modified": "2015-12-02T00:47:14.380023Z",
+                    "name": "Clear",
+                    "code": "air",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 16,
+                    "modified": "2015-12-02T00:47:14.381739Z",
+                    "name": "SDSS-r&prime;",
+                    "code": "rp",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 1,
+                    "modified": "2015-12-02T00:47:14.356033Z",
+                    "name": "H-alpha",
+                    "code": "Ha",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 17,
+                    "modified": "2015-12-02T00:47:14.383522Z",
+                    "name": "SDSS-i&prime;",
+                    "code": "ip",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 18,
+                    "modified": "2015-12-02T00:47:14.385281Z",
+                    "name": "SDSS-g&prime;",
+                    "code": "gp",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 20,
+                    "modified": "2015-12-02T00:47:14.388635Z",
+                    "name": "Bessell-V",
+                    "code": "V",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 21,
+                    "modified": "2015-12-02T00:47:14.390396Z",
+                    "name": "Bessell-B",
+                    "code": "B",
+                    "filter_type": "Standard"
+                }
+            ],
+            "__str__": "air,rp,Ha,ip,gp,V,B"
+        },
+        {
+            "id": 21,
+            "filters": [
+                {
+                    "id": 15,
+                    "modified": "2015-12-02T00:47:14.380023Z",
+                    "name": "Clear",
+                    "code": "air",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 39,
+                    "modified": "2015-12-02T00:47:14.418375Z",
+                    "name": "Luminance",
+                    "code": "Luminance",
+                    "filter_type": "Exotic"
+                },
+                {
+                    "id": 40,
+                    "modified": "2015-12-02T00:47:14.420146Z",
+                    "name": "Green",
+                    "code": "Green",
+                    "filter_type": "Exotic"
+                },
+                {
+                    "id": 41,
+                    "modified": "2015-12-02T00:47:14.421984Z",
+                    "name": "Blue",
+                    "code": "Blue",
+                    "filter_type": "Exotic"
+                }
+            ],
+            "__str__": "air,Luminance,Green,Blue"
+        },
+        {
+            "id": 9,
+            "filters": [
+                {
+                    "id": 9,
+                    "modified": "2015-12-02T00:47:14.370109Z",
+                    "name": "Bessell-I",
+                    "code": "I",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 10,
+                    "modified": "2015-12-02T00:47:14.371791Z",
+                    "name": "Bessell-R",
+                    "code": "R",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 11,
+                    "modified": "2015-12-02T00:47:14.373417Z",
+                    "name": "Bessell-U",
+                    "code": "U",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 12,
+                    "modified": "2015-12-02T00:47:14.375062Z",
+                    "name": "PanSTARRS-w",
+                    "code": "w",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 14,
+                    "modified": "2015-12-02T00:47:14.378386Z",
+                    "name": "SDSS-u&prime;",
+                    "code": "up",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 15,
+                    "modified": "2015-12-02T00:47:14.380023Z",
+                    "name": "Clear",
+                    "code": "air",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 16,
+                    "modified": "2015-12-02T00:47:14.381739Z",
+                    "name": "SDSS-r&prime;",
+                    "code": "rp",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 17,
+                    "modified": "2015-12-02T00:47:14.383522Z",
+                    "name": "SDSS-i&prime;",
+                    "code": "ip",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 18,
+                    "modified": "2015-12-02T00:47:14.385281Z",
+                    "name": "SDSS-g&prime;",
+                    "code": "gp",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 19,
+                    "modified": "2015-12-02T00:47:14.386946Z",
+                    "name": "PanSTARRS-Z",
+                    "code": "zs",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 20,
+                    "modified": "2015-12-02T00:47:14.388635Z",
+                    "name": "Bessell-V",
+                    "code": "V",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 21,
+                    "modified": "2015-12-02T00:47:14.390396Z",
+                    "name": "Bessell-B",
+                    "code": "B",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 23,
+                    "modified": "2015-12-02T00:47:14.393554Z",
+                    "name": "yx",
+                    "code": "yx",
+                    "filter_type": "Exotic"
+                },
+                {
+                    "id": 24,
+                    "modified": "2015-12-02T00:47:14.395077Z",
+                    "name": "ha",
+                    "code": "ha",
+                    "filter_type": "Exotic"
+                },
+                {
+                    "id": 26,
+                    "modified": "2015-12-02T00:47:14.398205Z",
+                    "name": "ND",
+                    "code": "ND",
+                    "filter_type": "Exotic"
+                },
+                {
+                    "id": 43,
+                    "modified": "2015-12-02T00:47:14.425294Z",
+                    "name": "al",
+                    "code": "al",
+                    "filter_type": "Exotic"
+                },
+                {
+                    "id": 44,
+                    "modified": "2015-12-02T00:47:14.426884Z",
+                    "name": "l3",
+                    "code": "l3",
+                    "filter_type": "Exotic"
+                },
+                {
+                    "id": 45,
+                    "modified": "2015-12-02T00:47:14.428462Z",
+                    "name": "r3",
+                    "code": "r3",
+                    "filter_type": "Exotic"
+                },
+                {
+                    "id": 46,
+                    "modified": "2015-12-02T00:47:14.430127Z",
+                    "name": "g3",
+                    "code": "g3",
+                    "filter_type": "Exotic"
+                },
+                {
+                    "id": 47,
+                    "modified": "2015-12-02T00:47:14.431903Z",
+                    "name": "b3",
+                    "code": "b3",
+                    "filter_type": "Exotic"
+                },
+                {
+                    "id": 49,
+                    "modified": "2015-12-02T00:47:14.435328Z",
+                    "name": "400um Pinhole",
+                    "code": "400um-Pinhole",
+                    "filter_type": "Engineering"
+                },
+                {
+                    "id": 50,
+                    "modified": "2015-12-02T00:47:14.436966Z",
+                    "name": "150um Pinhole",
+                    "code": "150um-Pinhole",
+                    "filter_type": "Engineering"
+                }
+            ],
+            "__str__": "I,R,U,w,up,air,rp,ip,gp,zs,V,B,yx,ha,ND,al,l3,r3,g3,b3,400um-Pinhole,150um-Pinhole"
+        },
+        {
+            "id": 1,
+            "filters": [
+                {
+                    "id": 9,
+                    "modified": "2015-12-02T00:47:14.370109Z",
+                    "name": "Bessell-I",
+                    "code": "I",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 10,
+                    "modified": "2015-12-02T00:47:14.371791Z",
+                    "name": "Bessell-R",
+                    "code": "R",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 11,
+                    "modified": "2015-12-02T00:47:14.373417Z",
+                    "name": "Bessell-U",
+                    "code": "U",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 12,
+                    "modified": "2015-12-02T00:47:14.375062Z",
+                    "name": "PanSTARRS-w",
+                    "code": "w",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 13,
+                    "modified": "2015-12-02T00:47:14.376852Z",
+                    "name": "PanSTARRS-Y",
+                    "code": "Y",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 14,
+                    "modified": "2015-12-02T00:47:14.378386Z",
+                    "name": "SDSS-u&prime;",
+                    "code": "up",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 15,
+                    "modified": "2015-12-02T00:47:14.380023Z",
+                    "name": "Clear",
+                    "code": "air",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 16,
+                    "modified": "2015-12-02T00:47:14.381739Z",
+                    "name": "SDSS-r&prime;",
+                    "code": "rp",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 17,
+                    "modified": "2015-12-02T00:47:14.383522Z",
+                    "name": "SDSS-i&prime;",
+                    "code": "ip",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 18,
+                    "modified": "2015-12-02T00:47:14.385281Z",
+                    "name": "SDSS-g&prime;",
+                    "code": "gp",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 19,
+                    "modified": "2015-12-02T00:47:14.386946Z",
+                    "name": "PanSTARRS-Z",
+                    "code": "zs",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 20,
+                    "modified": "2015-12-02T00:47:14.388635Z",
+                    "name": "Bessell-V",
+                    "code": "V",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 21,
+                    "modified": "2015-12-02T00:47:14.390396Z",
+                    "name": "Bessell-B",
+                    "code": "B",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 49,
+                    "modified": "2015-12-02T00:47:14.435328Z",
+                    "name": "400um Pinhole",
+                    "code": "400um-Pinhole",
+                    "filter_type": "Engineering"
+                },
+                {
+                    "id": 50,
+                    "modified": "2015-12-02T00:47:14.436966Z",
+                    "name": "150um Pinhole",
+                    "code": "150um-Pinhole",
+                    "filter_type": "Engineering"
+                }
+            ],
+            "__str__": "I,R,U,w,Y,up,air,rp,ip,gp,zs,V,B,400um-Pinhole,150um-Pinhole"
+        },
+        {
+            "id": 8,
+            "filters": [
+                {
+                    "id": 52,
+                    "modified": "2015-12-02T00:47:14.440431Z",
+                    "name": "Opaque",
+                    "code": "opaque",
+                    "filter_type": "Exotic"
+                },
+                {
+                    "id": 51,
+                    "modified": "2015-12-02T00:47:14.438718Z",
+                    "name": "100um Pinhole",
+                    "code": "100um-Pinhole",
+                    "filter_type": "Engineering"
+                },
+                {
+                    "id": 12,
+                    "modified": "2015-12-02T00:47:14.375062Z",
+                    "name": "PanSTARRS-w",
+                    "code": "w",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 14,
+                    "modified": "2015-12-02T00:47:14.378386Z",
+                    "name": "SDSS-u&prime;",
+                    "code": "up",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 15,
+                    "modified": "2015-12-02T00:47:14.380023Z",
+                    "name": "Clear",
+                    "code": "air",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 16,
+                    "modified": "2015-12-02T00:47:14.381739Z",
+                    "name": "SDSS-r&prime;",
+                    "code": "rp",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 17,
+                    "modified": "2015-12-02T00:47:14.383522Z",
+                    "name": "SDSS-i&prime;",
+                    "code": "ip",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 18,
+                    "modified": "2015-12-02T00:47:14.385281Z",
+                    "name": "SDSS-g&prime;",
+                    "code": "gp",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 19,
+                    "modified": "2015-12-02T00:47:14.386946Z",
+                    "name": "PanSTARRS-Z",
+                    "code": "zs",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 20,
+                    "modified": "2015-12-02T00:47:14.388635Z",
+                    "name": "Bessell-V",
+                    "code": "V",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 21,
+                    "modified": "2015-12-02T00:47:14.390396Z",
+                    "name": "Bessell-B",
+                    "code": "B",
+                    "filter_type": "Standard"
+                }
+            ],
+            "__str__": "opaque,100um-Pinhole,w,up,air,rp,ip,gp,zs,V,B"
+        },
+        {
+            "id": 13,
+            "filters": [
+                {
+                    "id": 60,
+                    "modified": "2015-12-02T00:47:14.453197Z",
+                    "name": "1.6 A slit",
+                    "code": "slit_1.6as",
+                    "filter_type": "Slit"
+                }
+            ],
+            "__str__": "slit_1.6as"
+        },
+        {
+            "id": 11,
+            "filters": [
+                {
+                    "id": 9,
+                    "modified": "2015-12-02T00:47:14.370109Z",
+                    "name": "Bessell-I",
+                    "code": "I",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 10,
+                    "modified": "2015-12-02T00:47:14.371791Z",
+                    "name": "Bessell-R",
+                    "code": "R",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 11,
+                    "modified": "2015-12-02T00:47:14.373417Z",
+                    "name": "Bessell-U",
+                    "code": "U",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 12,
+                    "modified": "2015-12-02T00:47:14.375062Z",
+                    "name": "PanSTARRS-w",
+                    "code": "w",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 13,
+                    "modified": "2015-12-02T00:47:14.376852Z",
+                    "name": "PanSTARRS-Y",
+                    "code": "Y",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 14,
+                    "modified": "2015-12-02T00:47:14.378386Z",
+                    "name": "SDSS-u&prime;",
+                    "code": "up",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 15,
+                    "modified": "2015-12-02T00:47:14.380023Z",
+                    "name": "Clear",
+                    "code": "air",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 16,
+                    "modified": "2015-12-02T00:47:14.381739Z",
+                    "name": "SDSS-r&prime;",
+                    "code": "rp",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 17,
+                    "modified": "2015-12-02T00:47:14.383522Z",
+                    "name": "SDSS-i&prime;",
+                    "code": "ip",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 18,
+                    "modified": "2015-12-02T00:47:14.385281Z",
+                    "name": "SDSS-g&prime;",
+                    "code": "gp",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 19,
+                    "modified": "2015-12-02T00:47:14.386946Z",
+                    "name": "PanSTARRS-Z",
+                    "code": "zs",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 20,
+                    "modified": "2015-12-02T00:47:14.388635Z",
+                    "name": "Bessell-V",
+                    "code": "V",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 21,
+                    "modified": "2015-12-02T00:47:14.390396Z",
+                    "name": "Bessell-B",
+                    "code": "B",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 24,
+                    "modified": "2015-12-02T00:47:14.395077Z",
+                    "name": "ha",
+                    "code": "ha",
+                    "filter_type": "Exotic"
+                },
+                {
+                    "id": 43,
+                    "modified": "2015-12-02T00:47:14.425294Z",
+                    "name": "al",
+                    "code": "al",
+                    "filter_type": "Exotic"
+                },
+                {
+                    "id": 44,
+                    "modified": "2015-12-02T00:47:14.426884Z",
+                    "name": "l3",
+                    "code": "l3",
+                    "filter_type": "Exotic"
+                },
+                {
+                    "id": 45,
+                    "modified": "2015-12-02T00:47:14.428462Z",
+                    "name": "r3",
+                    "code": "r3",
+                    "filter_type": "Exotic"
+                },
+                {
+                    "id": 46,
+                    "modified": "2015-12-02T00:47:14.430127Z",
+                    "name": "g3",
+                    "code": "g3",
+                    "filter_type": "Exotic"
+                },
+                {
+                    "id": 47,
+                    "modified": "2015-12-02T00:47:14.431903Z",
+                    "name": "b3",
+                    "code": "b3",
+                    "filter_type": "Exotic"
+                },
+                {
+                    "id": 49,
+                    "modified": "2015-12-02T00:47:14.435328Z",
+                    "name": "400um Pinhole",
+                    "code": "400um-Pinhole",
+                    "filter_type": "Engineering"
+                },
+                {
+                    "id": 50,
+                    "modified": "2015-12-02T00:47:14.436966Z",
+                    "name": "150um Pinhole",
+                    "code": "150um-Pinhole",
+                    "filter_type": "Engineering"
+                }
+            ],
+            "__str__": "I,R,U,w,Y,up,air,rp,ip,gp,zs,V,B,ha,al,l3,r3,g3,b3,400um-Pinhole,150um-Pinhole"
+        },
+        {
+            "id": 17,
+            "filters": [
+                {
+                    "id": 15,
+                    "modified": "2015-12-02T00:47:14.380023Z",
+                    "name": "Clear",
+                    "code": "air",
+                    "filter_type": "Standard"
+                }
+            ],
+            "__str__": "air"
+        },
+        {
+            "id": 16,
+            "filters": [
+                {
+                    "id": 9,
+                    "modified": "2015-12-02T00:47:14.370109Z",
+                    "name": "Bessell-I",
+                    "code": "I",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 10,
+                    "modified": "2015-12-02T00:47:14.371791Z",
+                    "name": "Bessell-R",
+                    "code": "R",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 11,
+                    "modified": "2015-12-02T00:47:14.373417Z",
+                    "name": "Bessell-U",
+                    "code": "U",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 12,
+                    "modified": "2015-12-02T00:47:14.375062Z",
+                    "name": "PanSTARRS-w",
+                    "code": "w",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 13,
+                    "modified": "2015-12-02T00:47:14.376852Z",
+                    "name": "PanSTARRS-Y",
+                    "code": "Y",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 14,
+                    "modified": "2015-12-02T00:47:14.378386Z",
+                    "name": "SDSS-u&prime;",
+                    "code": "up",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 15,
+                    "modified": "2015-12-02T00:47:14.380023Z",
+                    "name": "Clear",
+                    "code": "air",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 16,
+                    "modified": "2015-12-02T00:47:14.381739Z",
+                    "name": "SDSS-r&prime;",
+                    "code": "rp",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 17,
+                    "modified": "2015-12-02T00:47:14.383522Z",
+                    "name": "SDSS-i&prime;",
+                    "code": "ip",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 18,
+                    "modified": "2015-12-02T00:47:14.385281Z",
+                    "name": "SDSS-g&prime;",
+                    "code": "gp",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 19,
+                    "modified": "2015-12-02T00:47:14.386946Z",
+                    "name": "PanSTARRS-Z",
+                    "code": "zs",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 20,
+                    "modified": "2015-12-02T00:47:14.388635Z",
+                    "name": "Bessell-V",
+                    "code": "V",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 21,
+                    "modified": "2015-12-02T00:47:14.390396Z",
+                    "name": "Bessell-B",
+                    "code": "B",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 26,
+                    "modified": "2015-12-02T00:47:14.398205Z",
+                    "name": "ND",
+                    "code": "ND",
+                    "filter_type": "Exotic"
+                },
+                {
+                    "id": 29,
+                    "modified": "2015-12-02T00:47:14.402997Z",
+                    "name": "B*ND",
+                    "code": "B*ND",
+                    "filter_type": "Exotic"
+                },
+                {
+                    "id": 30,
+                    "modified": "2015-12-02T00:47:14.404466Z",
+                    "name": "V*ND",
+                    "code": "V*ND",
+                    "filter_type": "Exotic"
+                },
+                {
+                    "id": 31,
+                    "modified": "2015-12-02T00:47:14.405927Z",
+                    "name": "R*ND",
+                    "code": "R*ND",
+                    "filter_type": "Exotic"
+                },
+                {
+                    "id": 32,
+                    "modified": "2015-12-02T00:47:14.407431Z",
+                    "name": "I*ND",
+                    "code": "I*ND",
+                    "filter_type": "Exotic"
+                },
+                {
+                    "id": 49,
+                    "modified": "2015-12-02T00:47:14.435328Z",
+                    "name": "400um Pinhole",
+                    "code": "400um-Pinhole",
+                    "filter_type": "Engineering"
+                },
+                {
+                    "id": 50,
+                    "modified": "2015-12-02T00:47:14.436966Z",
+                    "name": "150um Pinhole",
+                    "code": "150um-Pinhole",
+                    "filter_type": "Engineering"
+                }
+            ],
+            "__str__": "I,R,U,w,Y,up,air,rp,ip,gp,zs,V,B,ND,B*ND,V*ND,R*ND,I*ND,400um-Pinhole,150um-Pinhole"
+        },
+        {
+            "id": 18,
+            "filters": [
+                {
+                    "id": 9,
+                    "modified": "2015-12-02T00:47:14.370109Z",
+                    "name": "Bessell-I",
+                    "code": "I",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 10,
+                    "modified": "2015-12-02T00:47:14.371791Z",
+                    "name": "Bessell-R",
+                    "code": "R",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 15,
+                    "modified": "2015-12-02T00:47:14.380023Z",
+                    "name": "Clear",
+                    "code": "air",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 20,
+                    "modified": "2015-12-02T00:47:14.388635Z",
+                    "name": "Bessell-V",
+                    "code": "V",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 21,
+                    "modified": "2015-12-02T00:47:14.390396Z",
+                    "name": "Bessell-B",
+                    "code": "B",
+                    "filter_type": "Standard"
+                }
+            ],
+            "__str__": "I,R,air,V,B"
+        },
+        {
+            "id": 15,
+            "filters": [
+                {
+                    "id": 2,
+                    "modified": "2015-12-02T00:47:14.357952Z",
+                    "name": "D51",
+                    "code": "D51",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 3,
+                    "modified": "2015-12-02T00:47:14.359982Z",
+                    "name": "H Beta",
+                    "code": "H-Beta",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 4,
+                    "modified": "2015-12-02T00:47:14.361692Z",
+                    "name": "OIII",
+                    "code": "OIII",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 5,
+                    "modified": "2015-12-02T00:47:14.363346Z",
+                    "name": "H Alpha",
+                    "code": "H-Alpha",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 6,
+                    "modified": "2015-12-02T00:47:14.364881Z",
+                    "name": "Skymapper CaV",
+                    "code": "Skymapper-VS",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 7,
+                    "modified": "2015-12-02T00:47:14.366566Z",
+                    "name": "Solar (V+R)",
+                    "code": "solar",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 8,
+                    "modified": "2015-12-02T00:47:14.368297Z",
+                    "name": "Astrodon UV",
+                    "code": "Astrodon-UV",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 9,
+                    "modified": "2015-12-02T00:47:14.370109Z",
+                    "name": "Bessell-I",
+                    "code": "I",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 10,
+                    "modified": "2015-12-02T00:47:14.371791Z",
+                    "name": "Bessell-R",
+                    "code": "R",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 13,
+                    "modified": "2015-12-02T00:47:14.376852Z",
+                    "name": "PanSTARRS-Y",
+                    "code": "Y",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 14,
+                    "modified": "2015-12-02T00:47:14.378386Z",
+                    "name": "SDSS-u&prime;",
+                    "code": "up",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 15,
+                    "modified": "2015-12-02T00:47:14.380023Z",
+                    "name": "Clear",
+                    "code": "air",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 16,
+                    "modified": "2015-12-02T00:47:14.381739Z",
+                    "name": "SDSS-r&prime;",
+                    "code": "rp",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 17,
+                    "modified": "2015-12-02T00:47:14.383522Z",
+                    "name": "SDSS-i&prime;",
+                    "code": "ip",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 18,
+                    "modified": "2015-12-02T00:47:14.385281Z",
+                    "name": "SDSS-g&prime;",
+                    "code": "gp",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 19,
+                    "modified": "2015-12-02T00:47:14.386946Z",
+                    "name": "PanSTARRS-Z",
+                    "code": "zs",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 20,
+                    "modified": "2015-12-02T00:47:14.388635Z",
+                    "name": "Bessell-V",
+                    "code": "V",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 21,
+                    "modified": "2015-12-02T00:47:14.390396Z",
+                    "name": "Bessell-B",
+                    "code": "B",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 48,
+                    "modified": "2015-12-02T00:47:14.433605Z",
+                    "name": "200um Pinhole",
+                    "code": "200um-Pinhole",
+                    "filter_type": "Engineering"
+                }
+            ],
+            "__str__": "D51,H-Beta,OIII,H-Alpha,Skymapper-VS,solar,Astrodon-UV,I,R,Y,up,air,rp,ip,gp,zs,V,B,200um-Pinhole"
+        },
+        {
+            "id": 4,
+            "filters": [
+                {
+                    "id": 1,
+                    "modified": "2015-12-02T00:47:14.356033Z",
+                    "name": "H-alpha",
+                    "code": "Ha",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 16,
+                    "modified": "2015-12-02T00:47:14.381739Z",
+                    "name": "SDSS-r&prime;",
+                    "code": "rp",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 17,
+                    "modified": "2015-12-02T00:47:14.383522Z",
+                    "name": "SDSS-i&prime;",
+                    "code": "ip",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 18,
+                    "modified": "2015-12-02T00:47:14.385281Z",
+                    "name": "SDSS-g&prime;",
+                    "code": "gp",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 20,
+                    "modified": "2015-12-02T00:47:14.388635Z",
+                    "name": "Bessell-V",
+                    "code": "V",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 21,
+                    "modified": "2015-12-02T00:47:14.390396Z",
+                    "name": "Bessell-B",
+                    "code": "B",
+                    "filter_type": "Standard"
+                },
+                {
+                    "id": 22,
+                    "modified": "2015-12-02T00:47:14.392034Z",
+                    "name": "clear",
+                    "code": "clear",
+                    "filter_type": "Standard"
+                }
+            ],
+            "__str__": "Ha,rp,ip,gp,V,B,clear"
+        }
+    ]
+
+}

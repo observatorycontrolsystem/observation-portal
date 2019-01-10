@@ -1,0 +1,12 @@
+Hello {{ proposal.pi.first_name }} {{ proposal.pi.last_name }},
+
+Your proposal, {{ proposal.title }}, has been approved for the {{ semester.id }} semester which
+{{ semester_already_started|yesno:"started,starts" }} at {{ semester.start|date:"G e \o\n F jS Y" }}.
+
+The project code is {{ proposal.id }}.
+
+https://observe.lco.global
+
+Thank you,
+
+LCO.global

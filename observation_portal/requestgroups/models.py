@@ -5,18 +5,19 @@ from django.utils.functional import cached_property
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.core.cache import cache
 from django.urls import reverse
-from django.conf import settings
 from django.forms.models import model_to_dict
-import requests
 import logging
 
-from valhalla.proposals.models import Proposal, TimeAllocationKey
-from valhalla.userrequests.external_serializers import BlockSerializer
-from valhalla.userrequests.target_helpers import TARGET_TYPE_HELPER_MAP
-from valhalla.common.rise_set_utils import get_rise_set_target
-from valhalla.userrequests.request_utils import return_paginated_results
-from valhalla.userrequests.duration_utils import (get_request_duration, get_molecule_duration, get_total_duration_dict,
-                                                  get_semester_in)
+from observation_portal.proposals.models import Proposal, TimeAllocationKey
+from observation_portal.requestgroups.target_helpers import TARGET_TYPE_HELPER_MAP
+from observation_portal.common.rise_set_utils import get_rise_set_target
+from observation_portal.requestgroups.duration_utils import (
+    get_request_duration,
+    get_configuration_duration,
+    get_instrument_configuration_duration,
+    get_total_duration_dict,
+    get_semester_in
+)
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +47,7 @@ class RequestGroup(models.Model):
 
     submitter = models.ForeignKey(User, on_delete=models.CASCADE)
     proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE)
-    group_name = models.CharField(max_length=50)
+    name = models.CharField(max_length=50)
     observation_type = models.CharField(max_length=40, choices=OBSERVATION_TYPES)
     operator = models.CharField(max_length=20, choices=OPERATOR_CHOICES)
     ipp_value = models.FloatField(validators=[MinValueValidator(0.5), MaxValueValidator(2.0)])
@@ -165,6 +166,7 @@ class Request(models.Model):
 
     @property
     def timeallocation(self):
+        # TODO: you can have multiple instrument types per configuration, so usage of this will need to change
         return self.group.proposal.timeallocation_set.get(
             semester__start__lte=self.min_window_time,
             semester__end__gte=self.max_window_time,
@@ -173,17 +175,11 @@ class Request(models.Model):
 
 
 class Location(models.Model):
-    TELESCOPE_CLASSES = (
-        ('2m0', '2m0'),
-        ('1m0', '1m0'),
-        ('0m8', '0m8'),
-        ('0m4', '0m4'),
-    )
-
     SERIALIZER_EXCLUDE = ('request', 'id')
 
     request = models.OneToOneField(Request, on_delete=models.CASCADE)
-    telescope_class = models.CharField(max_length=20, choices=TELESCOPE_CLASSES)
+    # TODO: Replace with telescope classes from configdb
+    telescope_class = models.CharField(max_length=20)
     site = models.CharField(max_length=20, default='', blank=True)
     observatory = models.CharField(max_length=20, default='', blank=True)
     telescope = models.CharField(max_length=20, default='', blank=True)
@@ -339,6 +335,7 @@ class Configuration(models.Model):
 
     # The type of configuration being requested.
     # Valid types are in TYPES
+    # TODO: Get the types from configdb
     type = models.CharField(max_length=50, choices=TYPES)
 
     extra_params = JSONField()
@@ -357,10 +354,10 @@ class Configuration(models.Model):
     @property
     def as_dict(self):
         cdict = model_to_dict(self, exclude=self.SERIALIZER_EXCLUDE)
-	cdict['instrument_configs'] = [ic.as_dict for ic in self.instrument_configs.all()]
- 	cdict['acquisition_config'] = self.acquisition_config.as_dict
-	cdict['guiding_config'] = self.guiding_config.as_dict
-	return cdict
+        cdict['instrument_configs'] = [ic.as_dict for ic in self.instrument_configs.all()]
+        cdict['acquisition_config'] = self.acquisition_config.as_dict
+        cdict['guiding_config'] = self.guiding_config.as_dict
+        return cdict
 
     @cached_property
     def duration(self):
@@ -382,17 +379,17 @@ class InstrumentConfig(models.Model):
     extra_params = JSONField()
 
     class Meta:
-	ordering = ('id',)
+        ordering = ('id',)
 
     @property
     def as_dict(self):
-	ic = model_to_dict(self, exclude=self.SERIALIZER_EXCLUDE)
-	ic['rois'] = [roi.as_dict for roi in self.rois.all()]
-	return ic
+        ic = model_to_dict(self, exclude=self.SERIALIZER_EXCLUDE)
+        ic['rois'] = [roi.as_dict for roi in self.rois.all()]
+        return ic
 
     @cached_property
     def duration(self):
-	return get_instrument_configuration_duration(self.as_dict)
+        return get_instrument_configuration_duration(self.as_dict)
 
 
 class ROI(models.Model):
@@ -404,11 +401,11 @@ class ROI(models.Model):
     y2 = models.PositiveIntegerField(null=True, blank=True)  # Sub Frame Y end pixel
 
     class Meta:
-	ordering = ('id',)
+        ordering = ('id',)
 
     @property
     def as_dict(self):
-  	return model_to_dict(self, exclude=self.SERIALIZER_EXCLUDE)
+        return model_to_dict(self, exclude=self.SERIALIZER_EXCLUDE)
 
 
 class GuidingConfig(models.Model):
@@ -427,11 +424,11 @@ class GuidingConfig(models.Model):
     extra_params = JSONField()
 
     class Meta:
-	ordering = ('id',)
+        ordering = ('id',)
 
     @property
     def as_dict(self):
-	return model_to_dict(self, exclude=self.SERIALIZER_EXClUDE)
+        return model_to_dict(self, exclude=self.SERIALIZER_EXClUDE)
 
 
 class AcquisitionConfig(models.Model):
@@ -447,11 +444,11 @@ class AcquisitionConfig(models.Model):
     extra_params = JSONField()
 
     class Meta:
-	ordering = ('id',)
+        ordering = ('id',)
 
     @property
     def as_dict(self):
-	return model_to_dict(self, exclude=self.SERIALIZER_EXCLUDE)
+        return model_to_dict(self, exclude=self.SERIALIZER_EXCLUDE)
 
 
 class Constraints(models.Model):
