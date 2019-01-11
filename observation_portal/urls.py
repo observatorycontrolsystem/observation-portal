@@ -18,6 +18,9 @@ from django.conf.urls import url, include
 from django.urls import path
 from rest_framework.routers import DefaultRouter
 from rest_framework.authtoken.views import obtain_auth_token
+from rest_framework import permissions
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
 
 from observation_portal.requestgroups.viewsets import RequestGroupViewSet, RequestViewSet
 from observation_portal.requestgroups.views import TelescopeStatesView, TelescopeAvailabilityView, AirmassView
@@ -43,8 +46,21 @@ api_urlpatterns = ([
     url(r'pressure/', PressureView.as_view(), name='pressure'),
 ], 'api')
 
+schema_view = get_schema_view(
+   openapi.Info(
+      title="Observation Portal API",
+      default_version='v1',
+      description="Test description",
+      terms_of_service="https://lco.global/policies/terms/",
+      contact=openapi.Contact(email="science-support@lco.global"),
+      license=openapi.License(name="GPL 3.0 License"),
+   ),
+   public=True,
+   permission_classes=(permissions.AllowAny,),
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     url(r'^api/', include(api_urlpatterns)),
+    url(r'^redoc/$', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 ]

@@ -242,7 +242,7 @@ class Target(models.Model):
     diff_pitch_rate = models.FloatField(verbose_name='Differential Pitch Rate (arcsec/s)', null=True, blank=True)
     diff_roll_rate = models.FloatField(verbose_name='Differential Roll Rate  (arcsec/s)', null=True, blank=True)
     diff_epoch_rate = models.FloatField(verbose_name='Reference time for non-sidereal motion (MJD)', null=True,
-                                        blank=True)
+                                        blank=True, help_text='test help text')
 
     # Satellite Fields
     diff_pitch_acceleration = models.FloatField(verbose_name='Differential Pitch Acceleration (arcsec/s^2)', null=True,

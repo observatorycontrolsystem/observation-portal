@@ -1,5 +1,5 @@
 from django import template
-from valhalla.common.configdb import configdb
+from observation_portal.common.configdb import configdb
 
 register = template.Library()
 

@@ -302,7 +302,7 @@ class RequestSerializer(serializers.ModelSerializer):
     location = LocationSerializer()
     configurations = ConfigurationSerializer(many=True)
     windows = WindowSerializer(many=True)
-    cadence = CadenceSerializer(required=False)
+    cadence = CadenceSerializer(required=False, write_only=True)
     duration = serializers.ReadOnlyField()
 
     class Meta:
