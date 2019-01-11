@@ -44,14 +44,14 @@ class SetTimeMixin(object):
         self.time_patcher.stop()
 
 
-def create_simple_requestgroup(user, proposal, state='PENDING', request=None, window=None, molecule=None,
+def create_simple_requestgroup(user, proposal, state='PENDING', request=None, window=None, configuration=None,
                               constraints=None, target=None, location=None):
-    ur = mixer.blend(RequestGroup, state=state, submitter=user, proposal=proposal)
+    rg = mixer.blend(RequestGroup, state=state, submitter=user, proposal=proposal)
 
     if not request:
-        request = mixer.blend(Request, user_request=ur)
+        request = mixer.blend(Request, request_group=rg)
     else:
-        request.user_request = ur
+        request.request_group = rg
         request.save()
 
     if not window:
@@ -60,20 +60,20 @@ def create_simple_requestgroup(user, proposal, state='PENDING', request=None, wi
         window.request = request
         window.save()
 
-    if not molecule:
-        mixer.blend(Configuration, request=request)
+    if not configuration:
+        configuration = mixer.blend(Configuration, request=request)
     else:
-        molecule.request = request
-        molecule.save()
+        configuration.request = request
+        configuration.save()
 
     if not constraints:
-        mixer.blend(Constraints, request=request)
+        mixer.blend(Constraints, configuration=configuration)
     else:
         constraints.request = request
         constraints.save()
 
     if not target:
-        mixer.blend(Target, request=request)
+        mixer.blend(Target, configuration=configuration)
     else:
         target.request = request
         target.save()

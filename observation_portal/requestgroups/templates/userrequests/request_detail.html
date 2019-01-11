@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %} User Request Detail {% endblock %}
+{% block content %}
+{% include 'userrequests/partials/userrequest_header.html' with userrequest=object.user_request %}
+<div class="row">
+  <div class="col-md-12">
+    <ol class="breadcrumb">
+      <li><a href="{% url 'userrequests:detail' object.user_request %}">Sub-requests</a></li>
+      <li class="active"># {{ object.id }}</li>
+    </ol>
+  </div>
+</div>
+{% include 'userrequests/partials/request_row.html' with request=object link=False %}
+<div id="request-detail" data-requestid="{{ object.id }}">
+  <div id="app"></div>
+</div>
+{% endblock %}
+{% block extra_javascript %}
+<script type="text/javascript" src="{% static 'bundles/request_detail.js' %}"></script>
+{% endblock %}

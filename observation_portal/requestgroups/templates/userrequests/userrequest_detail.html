@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% load static bootstrap3%}
+{% block title %} User Request Detail {% endblock %}
+{% block content %}
+{% include 'userrequests/partials/userrequest_header.html' with userrequest=userrequest %}
+<div class="row">
+  <div class="col-md-12">
+    <ol class="breadcrumb">
+      <li href="#" class="active">Sub-requests</li>
+    </ol>
+  </div>
+</div>
+{% for request in requests %}
+<section class="request-list">
+  {% include 'userrequests/partials/request_row.html' with request=request link=True %}
+</section>
+{% endfor %}
+{% if requests.paginator.num_pages > 1 %}
+  {% bootstrap_pagination requests extra=request.GET.urlencode %}
+{% endif %}
+{% endblock %}
+{% block extra_javascript %}
+<script type="text/javascript" src="{% static 'bundles/userrequest_detail.js' %}"></script>
+{% endblock %}

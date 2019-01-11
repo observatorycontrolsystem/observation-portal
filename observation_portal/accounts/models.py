@@ -29,11 +29,11 @@ class Profile(models.Model):
     def time_used_in_proposal(self, proposal):
         if not proposal.current_semester:
             return 0
-        user_requests = self.user.requestgroup_set.filter(
+        requestgroups = self.user.requestgroup_set.filter(
             proposal=proposal, created__gte=proposal.current_semester.start, state__in=['PENDING', 'COMPLETED']
         ).prefetch_related('requests')
         return sum(
-            request.duration for user_request in user_requests for request in user_request.requests.filter(state__in=['PENDING', 'COMPLETED'])
+            request.duration for request_group in requestgroups for request in request_group.requests.filter(state__in=['PENDING', 'COMPLETED'])
         )
 
     @property

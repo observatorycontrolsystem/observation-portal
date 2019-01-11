@@ -1,0 +1,64 @@
+{% load i18n request_extras %}
+<div class="row">
+  <div class="col-md-12 ">
+    <h2>{{ userrequest.group_id }} <br/><small>Tracking # {{ userrequest.id }}</small></h2>
+  </div>
+</div>
+<div class="row">
+  <div class="col-md-12">
+    <dl class="col-md-2">
+      <dt>{% trans 'State' %}</dt>
+      <dd class="text-{{ userrequest.state|state_to_bs }}">
+        <i class="fa fa-{{ userrequest.state|state_to_icon }}"></i> {{ userrequest.state }}
+      </dd>
+    </dl>
+    <dl class="col-md-1">
+      <dt>{% trans 'Updated' %}</dt>
+      <dd>{{ userrequest.modified }}</dd>
+    </dl>
+    <dl class="col-md-1">
+      <dt>{% trans 'Submitted' %}</dt>
+      <dd>{{ userrequest.created }}</dd>
+    </dl>
+    <dl class="col-md-2">
+      <dt>{% trans 'Proposal' %}</dt>
+      <dd>
+        <a href="{% url 'proposals:detail' pk=userrequest.proposal.id %}">{{ userrequest.proposal }}</a>
+      </dd>
+    </dl>
+    <dl class="col-md-2">
+      <dt>{% trans 'Submitter' %}</dt>
+      <dd>{{ userrequest.submitter }}</dd>
+    </dl>
+    <dl class="col-md-2">
+      <dt>IPP</dt>
+      <dd>{{ userrequest.ipp_value }}</dd>
+    </dl>
+    {% if userrequest.observation_type == 'TARGET_OF_OPPORTUNITY' %}
+    <div class="col-md-1">
+      <p><i>{% trans 'Rapid Response' %}</i></p>
+    </div>
+    {% endif %}
+    <span class="col-md-1">
+      <div class="btn-group">
+        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          Options <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu">
+          <li>
+            <a title="Copy this request" href="{% url 'userrequests:create' %}?userrequestid={{ userrequest.id }}">
+              <i class="fa fa-copy"></i> Copy
+            </a>
+          </li>
+          {% if userrequest.state == 'PENDING' and user.is_authenticated %}
+          <li>
+            <a title="Cancel this request" id="cancelur" data-id="{{ userrequest.id }}">
+              <i class="fa fa-times"></i> Cancel
+            </a>
+          </li>
+          {% endif %}
+        </ul>
+      </div>
+    </span>
+  </div>
+</div>

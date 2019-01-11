@@ -12,7 +12,7 @@ import responses
 import datetime
 
 from observation_portal.proposals.models import ProposalInvite, Proposal, Membership, ProposalNotification, TimeAllocation, Semester
-from observation_portal.requestgroups.models import RequestGroup, Configuration
+from observation_portal.requestgroups.models import RequestGroup, Configuration, InstrumentConfig
 from observation_portal.accounts.models import Profile
 from observation_portal.proposals.accounting import split_time, get_time_totals_from_pond, query_pond
 from observation_portal.proposals.tasks import run_accounting
@@ -141,8 +141,9 @@ class TestProposalUserLimits(ConfigDBTestMixin, TestCase):
 
     def test_time_used_for_user(self):
         self.assertEqual(self.user.profile.time_used_in_proposal(self.proposal), 0)
-        molecule = mixer.blend(Configuration, instrument_name='1M0-SCICAM-SBIG', exposure_time=30)
-        create_simple_requestgroup(self.user, self.proposal, molecule=molecule)
+        configuration = mixer.blend(Configuration, instrument_name='1M0-SCICAM-SBIG')
+        mixer.blend(InstrumentConfig, configuration=configuration, exposure_time=30)
+        create_simple_requestgroup(self.user, self.proposal, configuration=configuration)
         self.assertGreater(self.user.profile.time_used_in_proposal(self.proposal), 0)
 
 

@@ -14,8 +14,37 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
+from django.conf.urls import url, include
 from django.urls import path
+from rest_framework.routers import DefaultRouter
+from rest_framework.authtoken.views import obtain_auth_token
+
+from observation_portal.requestgroups.viewsets import RequestGroupViewSet, RequestViewSet
+from observation_portal.requestgroups.views import TelescopeStatesView, TelescopeAvailabilityView, AirmassView
+from observation_portal.requestgroups.views import InstrumentsInformationView, RequestGroupStatusIsDirty
+from observation_portal.requestgroups.views import ContentionView, PressureView, RequestGroupListView
+from observation_portal.proposals.viewsets import ProposalViewSet, SemesterViewSet
+from observation_portal.accounts.views import ProfileApiView
+
+router = DefaultRouter()
+router.register(r'requests', RequestViewSet, 'requests')
+router.register(r'userrequests', RequestGroupViewSet, 'user_requests')
+
+api_urlpatterns = ([
+    url(r'^', include(router.urls)),
+    url(r'^api-token-auth/', obtain_auth_token, name='api-token-auth'),
+    url(r'^telescope_states/', TelescopeStatesView.as_view(), name='telescope_states'),
+    url(r'^telescope_availability/', TelescopeAvailabilityView.as_view(), name='telescope_availability'),
+    url(r'profile/', ProfileApiView.as_view(), name='profile'),
+    url(r'airmass/', AirmassView.as_view(), name='airmass'),
+    url(r'instruments/', InstrumentsInformationView.as_view(), name='instruments_information'),
+    url(r'isDirty/', RequestGroupStatusIsDirty.as_view(), name='isDirty'),
+    url(r'contention/(?P<instrument_name>.+)/', ContentionView.as_view(), name='contention'),
+    url(r'pressure/', PressureView.as_view(), name='pressure'),
+], 'api')
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    url(r'^api/', include(api_urlpatterns)),
 ]

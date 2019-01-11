@@ -109,7 +109,7 @@ class Request(models.Model):
         ('CANCELED', 'CANCELED'),
     )
 
-    SERIALIZER_EXCLUDE = ('group',)
+    SERIALIZER_EXCLUDE = ('request_group',)
 
     request_group = models.ForeignKey(RequestGroup, related_name='requests', on_delete=models.CASCADE)
     observation_note = models.CharField(max_length=255, default='', blank=True)
@@ -162,7 +162,7 @@ class Request(models.Model):
 
     @property
     def time_allocation_key(self):
-        return TimeAllocationKey(self.semester.id, self.configurations.first().instrument_configs.first().name)
+        return TimeAllocationKey(self.semester.id, self.configurations.first().instrument_name)
 
     @property
     def timeallocation(self):
@@ -170,7 +170,7 @@ class Request(models.Model):
         return self.group.proposal.timeallocation_set.get(
             semester__start__lte=self.min_window_time,
             semester__end__gte=self.max_window_time,
-            instrument_name=self.configurations.first().instrument_configs.first().name
+            instrument_name=self.configurations.first().instrument_name
         )
 
 
@@ -332,6 +332,7 @@ class Configuration(models.Model):
     SERIALIZER_EXCLUDE = ('request', 'id')
 
     request = models.ForeignKey(Request, related_name='configurations', on_delete=models.CASCADE)
+    instrument_name = models.CharField(max_length=255)
 
     # The type of configuration being requested.
     # Valid types are in TYPES
@@ -367,7 +368,6 @@ class Configuration(models.Model):
 class InstrumentConfig(models.Model):
     SERIALIZER_EXCLUDE = ('id', 'configuration')
     configuration = models.ForeignKey(Configuration, related_name='instrument_configs', on_delete=models.CASCADE)
-    name = models.CharField(max_length=255)
     optical_elements = JSONField()
     mode = models.CharField(max_length=50, default='', blank=True)
     exposure_time = models.FloatField(validators=[MinValueValidator(0.01)])
@@ -392,8 +392,9 @@ class InstrumentConfig(models.Model):
         return get_instrument_configuration_duration(self.as_dict)
 
 
-class ROI(models.Model):
+class RegionOfInterest(models.Model):
     SERIALIZER_EXCLUDE = ('id', 'instrument_config')
+
     instrument_config = models.ForeignKey(InstrumentConfig, related_name='rois', on_delete=models.CASCADE)
     x1 = models.PositiveIntegerField(null=True, blank=True)  # Sub Frame X start pixel
     x2 = models.PositiveIntegerField(null=True, blank=True)  # Sub Frame X end pixel

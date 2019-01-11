@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Create New Request {% endblock %}
+{% block content %}
+<div id="app"></div>
+{% endblock %}
+{% block extra_javascript %}
+<script type="text/javascript" src="{% static 'bundles/compose.js' %}"></script>
+{% endblock %}

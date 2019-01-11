@@ -22,7 +22,7 @@ def get_largest_interval(intervals):
 
     return largest_interval
 
-
+# TODO: rewrite to handle multiple targets per request
 def get_rise_set_intervals_by_site(request_dict):
     ''' Computes or Retrieves from cache a dictionary of rise_set intervals by site for the request
     '''
@@ -38,15 +38,15 @@ def get_rise_set_intervals_by_site(request_dict):
             # There is no cached rise_set intervals for this request and site, so recalculate it now
             intervals_by_site[site] = []
             rise_set_site = get_rise_set_site(site_details[site])
-            rise_set_target = get_rise_set_target(request_dict['target'])
+            rise_set_target = get_rise_set_target(request_dict['configurations'][0]['target'])
             for window in request_dict['windows']:
                 visibility = get_rise_set_visibility(rise_set_site, window['start'], window['end'], site_details[site])
                 try:
                     intervals_by_site[site].extend(
                         visibility.get_observable_intervals(
                             rise_set_target,
-                            airmass=request_dict['constraints']['max_airmass'],
-                            moon_distance=Angle(degrees=request_dict['constraints']['min_lunar_distance'])
+                            airmass=request_dict['configurations'][0]['constraints']['max_airmass'],
+                            moon_distance=Angle(degrees=request_dict['configurations'][0]['constraints']['min_lunar_distance'])
                         )
                     )
                 except MovingViolation:
@@ -61,7 +61,7 @@ def get_rise_set_intervals(request_dict, site=''):
     intervals = []
     site = site if site else request_dict['location'].get('site', '')
     telescope_details = configdb.get_telescopes_with_instrument_type_and_location(
-            request_dict['molecules'][0]['instrument_name'],
+            request_dict['configurations'][0]['instrument_name'],
             site,
             request_dict['location'].get('observatory', ''),
             request_dict['location'].get('telescope', '')

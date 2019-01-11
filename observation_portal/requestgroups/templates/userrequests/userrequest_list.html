@@ -1,0 +1,218 @@
+{% extends 'index.html' %}
+{% load i18n bootstrap3 request_extras humanize static %}
+{% block title %}Submitted Requests{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/userrequest_list.css' %}">
+{% endblock %}
+{% block request_list %}
+  {% if object_list|length < 1 %}
+  <div class="empty-requests">
+    <center>
+    {% if user.proposal_set.count > 0 %}
+      <h2>{% trans 'No observation requests found.' %}</h2>
+      <a class="btn btn-success btn-lg" href="#">{% trans 'Submit an Observation Request' %}</a>
+    {% else %}
+      <h2> You are not a member of any proposals yet.</h2>
+      <p>Only users with at least one active proposal may submit observation requests.</p>
+      <a class="btn btn-success btn-lg" href="{% url 'sciapplications:index' %}">{% trans 'Submit a new proposal' %}</a>
+    {% endif %}
+      <h3>Need help?</h3>
+      <a href="https://lco.global/documentation/">View the documentation</a> or <a href="mailto:scisupport@lco.global">contact support</a>.
+    </center>
+  </div>
+  {% else %}
+  <div class="row">
+    <div class="col-md-12">
+      <div class="row">
+        <div class="col-md-7">
+          <p class="title">Submitted Observation Requests</p>
+        </div>
+        <div class="col-md-5">
+          <li class="dropdown list-unstyled">
+            <a class="dropdown-toggle pull-right btn btn-default" href="#" data-toggle="dropdown">
+              <i class="fa fa-filter"></i> Filter List
+            </a>
+            <div class="dropdown-menu" style="padding:17px;">
+              <form method="get" action="" id="filter" class="form">
+
+                {% bootstrap_label '<i class="fa fa-sort"></i> Sort' label_for="id_o" %}
+                {% bootstrap_field filter.form.order show_label=False size='small' show_help=false %}
+
+                {% bootstrap_label '<i class="fa fa-refresh"></i> State' label_for="id_state" %}
+                {% bootstrap_field filter.form.state show_label=False size='small' %}
+
+                {% bootstrap_label '<i class="fa fa-paragraph"></i> Title Contains' label_for="id_title" %}
+                {% bootstrap_field filter.form.title show_label=False size='small' addon_after='<span class="fa fa-times clearinput"></span>' %}
+
+                {% bootstrap_label '<i class="fa fa-crosshairs"></i> Target Name Contains' label_for="id_target" %}
+                {% bootstrap_field filter.form.target show_label=False size='small' %}
+
+                <div class="form-group">
+                  <label class="control-label" for="id_proposal"><i class="fa fa-users"></i> Proposal</label>
+                    <select class="form-control input-sm" id="id_proposal" name="proposal" title="" name="id_proposal">
+                      <option value="">---------</option>
+                      {% if request.GET.proposal %}
+                        <!-- if an admin user is checking out proposals for a proposal they don't belong to, allow filtering to work -->
+                        <option value="{{ request.GET.proposal }}" selected="selected">{{ request.GET.proposal }}</option>
+                      {% endif %}
+                      {% for proposal in user.profile.current_proposals %}
+                      <option value="{{ proposal }}" {% if proposal.id == filter.form.proposal.value %} selected="selected"%}{% endif %}>
+                        {{ proposal.title }} ({{ proposal.semester_set.first }})
+                      </option>
+                      {% endfor %}
+                      {% for proposal in user.proposal_set.all %}
+                      {% if proposal not in user.profile.current_proposals %}
+                      <option value="{{ proposal }}" {% if proposal.id == filter.form.proposal.value %} selected="selected"%}{% endif %}>
+                        {{ proposal.title }} ({{ proposal.semester_set.first }})
+                      </option>
+                      {% endif %}
+                      {% endfor %}
+                    </select>
+                </div>
+
+                {% bootstrap_label '<i class="fa fa-calendar"> <i class="fa fa-arrow-right"></i> </i> Submitted After' label_for="id_created_before" %}
+                {% bootstrap_field filter.form.created_after show_label=False size='small' addon_after='<span class="fa fa-times clearinput"></span>' %}
+
+                {% bootstrap_label '<i class="fa fa-arrow-left"></i> <i class="fa fa-calendar"></i> Submitted Before' label_for="id_created_before" %}
+                {% bootstrap_field filter.form.created_before show_label=False size='small' addon_after='<span class="fa fa-times clearinput"></span>' %}
+
+                {% bootstrap_label '<i class="fa fa-user"></i> Username Contains' label_for="id_user" %}
+                {% bootstrap_field filter.form.user show_label=False show_help=False size='small' addon_after='<span class="fa fa-times clearinput"></span>' %}
+
+                {% bootstrap_label '<i class="fa fa-wpexplorer"></i> Telescope Class' label_for="id_telescope_class" %}
+                {% bootstrap_field filter.form.telescope_class show_label=False size='small' %}
+
+                <br/>
+                <input type="submit" class="btn btn-info" value="Filter Results"/>
+                <a href="{% url 'userrequests:list' %}" class="btn btn-default">Clear All Fields</a>
+              </form>
+            </div>
+          </li>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-4">
+      <small>User Info</small>
+    </div>
+    <div class="col-md-3">
+      <small>State Info</small>
+    </div>
+    <div class="col-md-5">
+      <small class="pull-right"># Requests / Pending / Failed / Complete</small>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-12" style="min-height: 500px">
+      <section class="userrequest-list">
+        {% for ur in object_list %}
+        <div class="row userrequest userrequest-{{ ur.state|state_to_bs }}">
+          <div class="col-sm-8 col-xs-12">
+            <div class="row">
+              <div class="col-md-12">
+                <a class="userrequest-title" href="{% url 'userrequests:detail' ur %}">
+                  {{ ur.group_id|default:'Unnamed Request' }}
+                </a>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-xs-6 userrequest-block border-right">
+                <p><i class="fa fa-fw fa-user"></i> {{ ur.submitter }}</p>
+                <p><i class="fa fa-fw fa-users"></i> <a href="{% url 'proposals:detail' pk=ur.proposal.id %}">{{ ur.proposal }}</a></p>
+              </div>
+              <div class="col-xs-6 userrequest-block border-right">
+                <p><span class="text-{{ ur.state|state_to_bs }}">
+                  <i class="fa fa-fw fa-{{ ur.state|state_to_icon }}"></i>
+                  {{ ur.state }}
+                </span></p>
+                <p><i class="fa fa-fw fa-calendar"></i> <span class="tool-tip" title="{{ ur.modified|naturaltime }}">{{ ur.modified }}</span></p>
+              </div>
+            </div>
+          </div>
+          {% with ur_count=ur.requests.count %}
+          {% if ur_count %}
+          <div class="col-sm-1 hidden-xs request-block">
+            <div class="row">
+              <div class="col-xs-12 request-count">
+                <p><center>{{ ur_count }}</center></p>
+              </div>
+            </div>
+          </div>
+          <div class="col-sm-1 hidden-xs request-block">
+            <div class="row">
+              <div class="col-xs-12 request-count">
+                <p><center class="text-warning">{{ ur|request_state_count:'PENDING' }}</center></p>
+              </div>
+            </div>
+          </div>
+          <div class="col-sm-1 hidden-xs request-block">
+            <div class="row">
+              <div class="col-xs-12 request-count">
+                <p><center class="text-danger">{{ ur|request_state_count:'WINDOW_EXPIRED' }}</center></p>
+              </div>
+            </div>
+          </div>
+           <div class="col-sm-1 hidden-xs request-block">
+            <div class="row">
+              <div class="col-xs-12 request-count">
+                <p><center class="text-success">{{ ur|request_state_count:'COMPLETED' }}</center></p>
+              </div>
+            </div>
+          </div>
+          {% else %}
+          <div class="col-md-3 bg-danger no-requests request-block">
+            <p>No requests attempted.</p>
+          </div>
+          {% endif %}
+          {% endwith %}
+        </div>
+      {% endfor %}
+      </section>
+    </div>
+    <div class="row">
+      <div class="col-md-9">
+        {% if paginator.num_pages > 1 %}
+        {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
+        {% endif %}
+      </div>
+      <div class="col-md-3">
+        <br/>
+        <select name="paginate_by" class="form-control" id="per_page">
+          <option value="5">Show: 5</option>
+          <option value="10">Show: 10</option>
+          <option value="20" selected>Show: 20</option>
+          <option value="50">Show: 50</option>
+          <option value="100">Show: 100</option>
+        </select>
+      </div>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}
+{% block extra_javascript %}
+  {{ block.super }}
+  <script type="text/javascript">
+    $('#id_created_after, #id_created_before').datetimepicker({
+      'format': 'YYYY-M-D HH:mm:ss'
+    }).on('dp.change', function(){
+      $('#id_created_after').data("DateTimePicker").hide();
+      $('#id_created_before').data("DateTimePicker").hide();
+    });
+    $(function() {
+      $(".tool-tip").tooltip();
+      var url = new URL(window.location.href);
+      if(url.searchParams.get('paginate_by')){
+        $('#per_page').val(url.searchParams.get('paginate_by'));
+      }
+    });
+    $('.clearinput').click(function(){
+      $(this).parent().parent().find('input').val('');
+    })
+    $('#per_page').change(function(){
+      var url = new URL(window.location.href);
+      url.searchParams.set('paginate_by', this.value);
+      window.location = url;
+    });
+  </script>
+{% endblock %}

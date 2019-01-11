@@ -10,8 +10,8 @@ from observation_portal.common.rise_set_utils import get_rise_set_intervals, get
 logger = logging.getLogger(__name__)
 
 
-PER_MOLECULE_GAP = 5.0             # in-between molecule gap - shared for all instruments
-PER_MOLECULE_STARTUP_TIME = 11.0   # per-molecule startup time, which encompasses initial pointing
+PER_MOLECULE_GAP = 5.0             # in-between configuration gap - shared for all instruments
+PER_MOLECULE_STARTUP_TIME = 11.0   # per-configuration startup time, which encompasses initial pointing
 OVERHEAD_ALLOWANCE = 1.1           # amount of leeway in a proposals timeallocation before rejecting that request
 MAX_IPP_LIMIT = 2.0                # the maximum allowed value of ipp
 MIN_IPP_LIMIT = 0.5                # the minimum allowed value of ipp
@@ -36,12 +36,13 @@ def get_semester_in(start_date, end_date):
     return None
 
 
-def get_num_mol_changes(molecules):
-    return len(list(itertools.groupby([mol['type'].upper() for mol in molecules])))
+def get_num_mol_changes(configurations):
+    return len(list(itertools.groupby([conf['type'].upper() for conf in configurations])))
 
 
-def get_num_filter_changes(molecules):
-    return len(list(itertools.groupby([mol.get('filter', '') for mol in molecules])))
+# TODO: filters go away replaced with optical elements groups
+def get_num_filter_changes(configurations):
+    return len(list(itertools.groupby([conf.get('filter', '') for conf in configurations])))
 
 
 def get_instrument_configuration_duration_per_exposure(instrument_configuration_dict):
@@ -109,7 +110,7 @@ def get_request_duration_sum(requestgroup_dict):
         duration = get_request_duration(req)
         tak = get_time_allocation_key(
             telescope_class=req['location']['telescope_class'],
-            instrument_name=req['molecules'][0]['instrument_name'],
+            instrument_name=req['configurations'][0]['instrument_name'],
             min_window_time=min([w['start'] for w in req['windows']]),
             max_window_time=max([w['end'] for w in req['windows']])
         )
@@ -119,8 +120,8 @@ def get_request_duration_sum(requestgroup_dict):
     return duration_sum
 
 
-def get_num_exposures(molecule_dict, time_available):
-    mol_duration_per_exp = get_instrument_configuration_duration_per_exposure(molecule_dict)
+def get_num_exposures(configuration_dict, time_available):
+    mol_duration_per_exp = get_instrument_configuration_duration_per_exposure(configuration_dict)
     exposure_time = time_available.total_seconds() - PER_MOLECULE_GAP - PER_MOLECULE_STARTUP_TIME
     num_exposures = exposure_time // mol_duration_per_exp
 
@@ -129,16 +130,16 @@ def get_num_exposures(molecule_dict, time_available):
 
 def get_request_duration(request_dict):
     # calculate the total time needed by the request, based on its instrument and exposures
-    request_overheads = configdb.get_request_overheads(request_dict['molecules'][0]['instrument_name'])
-    duration = sum([get_configuration_duration(m) for m in request_dict['molecules']])
-    if configdb.is_spectrograph(request_dict['molecules'][0]['instrument_name']):
-        duration += get_num_mol_changes(request_dict['molecules']) * request_overheads['config_change_time']
+    request_overheads = configdb.get_request_overheads(request_dict['configurations'][0]['instrument_name'])
+    duration = sum([get_configuration_duration(m) for m in request_dict['configurations']])
+    if configdb.is_spectrograph(request_dict['configurations'][0]['instrument_name']):
+        duration += get_num_mol_changes(request_dict['configurations']) * request_overheads['config_change_time']
 
-        for molecule in request_dict['molecules']:
-            if molecule['acquire_mode'].upper() != 'OFF' and molecule['type'].upper() in ['SPECTRUM', 'NRES_SPECTRUM']:
-                duration += request_overheads['acquire_exposure_time'] + request_overheads['acquire_processing_time']
+        # for configuration in request_dict['configurations']:
+        #     if configuration['acquire_mode'].upper() != 'OFF' and configuration['type'].upper() in ['SPECTRUM', 'NRES_SPECTRUM']:
+        #         duration += request_overheads['acquire_exposure_time'] + request_overheads['acquire_processing_time']
     else:
-        duration += get_num_filter_changes(request_dict['molecules']) * request_overheads['filter_change_time']
+        duration += get_num_filter_changes(request_dict['configurations']) * request_overheads['filter_change_time']
 
     duration += request_overheads['front_padding']
     duration = ceil(duration)
@@ -163,7 +164,7 @@ def get_time_allocation(telescope_class, instrument_name, proposal_id, min_windo
 
 def get_time_allocation_key(telescope_class, instrument_name, min_window_time, max_window_time):
     semester = get_semester_in(min_window_time, max_window_time)
-    return TimeAllocationKey(semester.id, telescope_class, instrument_name)
+    return TimeAllocationKey(semester.id, instrument_name)
 
 
 def get_total_duration_dict(requestgroup_dict):
@@ -172,7 +173,7 @@ def get_total_duration_dict(requestgroup_dict):
         min_window_time = min([window['start'] for window in request['windows']])
         max_window_time = max([window['end'] for window in request['windows']])
         tak = get_time_allocation_key(request['location']['telescope_class'],
-                                      request['molecules'][0]['instrument_name'],
+                                      request['configurations'][0]['instrument_name'],
                                       min_window_time,
                                       max_window_time
                                       )
