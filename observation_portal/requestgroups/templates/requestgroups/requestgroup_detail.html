@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 {% load static bootstrap3%}
-{% block title %} User Request Detail {% endblock %}
+{% block title %} Request Group Detail {% endblock %}
 {% block content %}
-{% include 'userrequests/partials/userrequest_header.html' with userrequest=userrequest %}
+{% include 'requestgroups/partials/requestgroup_header.html' with requestgroup=requestgroup %}
 <div class="row">
   <div class="col-md-12">
     <ol class="breadcrumb">
@@ -12,7 +12,7 @@
 </div>
 {% for request in requests %}
 <section class="request-list">
-  {% include 'userrequests/partials/request_row.html' with request=request link=True %}
+  {% include 'requestgroups/partials/request_row.html' with request=request link=True %}
 </section>
 {% endfor %}
 {% if requests.paginator.num_pages > 1 %}
@@ -20,5 +20,5 @@
 {% endif %}
 {% endblock %}
 {% block extra_javascript %}
-<script type="text/javascript" src="{% static 'bundles/userrequest_detail.js' %}"></script>
+<script type="text/javascript" src="{% static 'bundles/requestgroup_detail.js' %}"></script>
 {% endblock %}

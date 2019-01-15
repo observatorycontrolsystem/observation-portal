@@ -1,17 +1,17 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %} User Request Detail {% endblock %}
+{% block title %} Request Group Detail {% endblock %}
 {% block content %}
-{% include 'userrequests/partials/userrequest_header.html' with userrequest=object.user_request %}
+{% include 'requestgroups/partials/requestgroup_header.html' with requestgroup=object.request_group %}
 <div class="row">
   <div class="col-md-12">
     <ol class="breadcrumb">
-      <li><a href="{% url 'userrequests:detail' object.user_request %}">Sub-requests</a></li>
+      <li><a href="{% url 'requestgroups:detail' object.request_group %}">Sub-requests</a></li>
       <li class="active"># {{ object.id }}</li>
     </ol>
   </div>
 </div>
-{% include 'userrequests/partials/request_row.html' with request=object link=False %}
+{% include 'requestgroups/partials/request_row.html' with request=object link=False %}
 <div id="request-detail" data-requestid="{{ object.id }}">
   <div id="app"></div>
 </div>

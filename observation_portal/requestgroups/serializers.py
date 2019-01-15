@@ -106,7 +106,7 @@ class TargetSerializer(serializers.ModelSerializer):
         }
 
     def to_representation(self, instance):
-        # Only return data for the speific target type
+        # Only return data for the specific target type
         data = super().to_representation(instance)
         target_helper = TARGET_TYPE_HELPER_MAP[data['type']](data)
         return {k: data.get(k) for k in target_helper.fields}

@@ -1,7 +1,8 @@
 from django.contrib import admin
 from django.urls import reverse
 
-from .models import RequestGroup, Request, Location, Target, Window, Configuration, Constraints, InstrumentConfig
+from .models import RequestGroup, Request, Location, Target, Window, Configuration, Constraints, InstrumentConfig, \
+    AcquisitionConfig, GuidingConfig
 
 
 class ConfigurationInline(admin.TabularInline):
@@ -26,6 +27,16 @@ class WindowInline(admin.TabularInline):
 
 class ConstraintsInline(admin.TabularInline):
     model = Constraints
+    extra = 0
+
+
+class AcquisitionConfigInline(admin.TabularInline):
+    model = AcquisitionConfig
+    extra = 0
+
+
+class GuidingConfigInline(admin.TabularInline):
+    model = GuidingConfig
     extra = 0
 
 
@@ -79,7 +90,7 @@ class RequestAdmin(admin.ModelAdmin):
         'request_group',
     )
     list_filter = ('state', 'modified', 'created')
-    inlines = [ConfigurationInline, WindowInline, TargetInline, LocationInline]
+    inlines = [ConfigurationInline, WindowInline, LocationInline]
 
 
 class LocationAdmin(admin.ModelAdmin):
@@ -98,7 +109,7 @@ class TargetAdmin(admin.ModelAdmin):
     list_display = (
         'id',
         'name',
-        'request',
+        'configuration',
         'type',
         'roll',
         'pitch',
@@ -155,7 +166,7 @@ class ConfigurationAdmin(admin.ModelAdmin):
         'request',
     )
     list_filter = ('type',)
-    inlines = [InstrumentConfigInline, ConstraintsInline]
+    inlines = [InstrumentConfigInline, ConstraintsInline, TargetInline, AcquisitionConfigInline, GuidingConfigInline]
 
 
 class ConstraintsAdmin(admin.ModelAdmin):
@@ -170,7 +181,28 @@ class ConstraintsAdmin(admin.ModelAdmin):
     )
 
 
+class AcquisitionConfigAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'configuration',
+        'name',
+        'state'
+    )
+
+
+class GuidingConfigAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'configuration',
+        'name',
+        'state',
+        'exposure_time'
+    )
+
+
 admin.site.register(Constraints, ConstraintsAdmin)
+admin.site.register(AcquisitionConfig, AcquisitionConfigAdmin)
+admin.site.register(GuidingConfig, GuidingConfigAdmin)
 admin.site.register(Configuration, ConfigurationAdmin)
 admin.site.register(Window, WindowAdmin)
 admin.site.register(Target, TargetAdmin)

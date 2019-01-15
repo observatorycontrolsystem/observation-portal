@@ -2,7 +2,7 @@
 {% load i18n bootstrap3 request_extras humanize static %}
 {% block title %}Submitted Requests{% endblock %}
 {% block extra_css %}
-  <link rel="stylesheet" href="{% static 'css/userrequest_list.css' %}">
+  <link rel="stylesheet" href="{% static 'css/requestgroup_list.css' %}">
 {% endblock %}
 {% block request_list %}
   {% if object_list|length < 1 %}
@@ -84,7 +84,7 @@
 
                 <br/>
                 <input type="submit" class="btn btn-info" value="Filter Results"/>
-                <a href="{% url 'userrequests:list' %}" class="btn btn-default">Clear All Fields</a>
+                <a href="{% url 'requestgroups:list' %}" class="btn btn-default">Clear All Fields</a>
               </form>
             </div>
           </li>
@@ -105,58 +105,58 @@
   </div>
   <div class="row">
     <div class="col-md-12" style="min-height: 500px">
-      <section class="userrequest-list">
-        {% for ur in object_list %}
-        <div class="row userrequest userrequest-{{ ur.state|state_to_bs }}">
+      <section class="requestgroup-list">
+        {% for rg in object_list %}
+        <div class="row requestgroup requestgroup-{{ rg.state|state_to_bs }}">
           <div class="col-sm-8 col-xs-12">
             <div class="row">
               <div class="col-md-12">
-                <a class="userrequest-title" href="{% url 'userrequests:detail' ur %}">
-                  {{ ur.group_id|default:'Unnamed Request' }}
+                <a class="requestgroup-title" href="{% url 'requestgroups:detail' rg %}">
+                  {{ rg.group_id|default:'Unnamed Request' }}
                 </a>
               </div>
             </div>
             <div class="row">
-              <div class="col-xs-6 userrequest-block border-right">
-                <p><i class="fa fa-fw fa-user"></i> {{ ur.submitter }}</p>
-                <p><i class="fa fa-fw fa-users"></i> <a href="{% url 'proposals:detail' pk=ur.proposal.id %}">{{ ur.proposal }}</a></p>
+              <div class="col-xs-6 requestgroup-block border-right">
+                <p><i class="fa fa-fw fa-user"></i> {{ rg.submitter }}</p>
+                <p><i class="fa fa-fw fa-users"></i> <a href="{% url 'proposals:detail' pk=rg.proposal.id %}">{{ rg.proposal }}</a></p>
               </div>
-              <div class="col-xs-6 userrequest-block border-right">
-                <p><span class="text-{{ ur.state|state_to_bs }}">
-                  <i class="fa fa-fw fa-{{ ur.state|state_to_icon }}"></i>
-                  {{ ur.state }}
+              <div class="col-xs-6 requestgroup-block border-right">
+                <p><span class="text-{{ rg.state|state_to_bs }}">
+                  <i class="fa fa-fw fa-{{ rg.state|state_to_icon }}"></i>
+                  {{ rg.state }}
                 </span></p>
-                <p><i class="fa fa-fw fa-calendar"></i> <span class="tool-tip" title="{{ ur.modified|naturaltime }}">{{ ur.modified }}</span></p>
+                <p><i class="fa fa-fw fa-calendar"></i> <span class="tool-tip" title="{{ rg.modified|naturaltime }}">{{ rg.modified }}</span></p>
               </div>
             </div>
           </div>
-          {% with ur_count=ur.requests.count %}
-          {% if ur_count %}
+          {% with rg_count=rg.requests.count %}
+          {% if rg_count %}
           <div class="col-sm-1 hidden-xs request-block">
             <div class="row">
               <div class="col-xs-12 request-count">
-                <p><center>{{ ur_count }}</center></p>
-              </div>
-            </div>
-          </div>
-          <div class="col-sm-1 hidden-xs request-block">
-            <div class="row">
-              <div class="col-xs-12 request-count">
-                <p><center class="text-warning">{{ ur|request_state_count:'PENDING' }}</center></p>
+                <p><center>{{ rg_count }}</center></p>
               </div>
             </div>
           </div>
           <div class="col-sm-1 hidden-xs request-block">
             <div class="row">
               <div class="col-xs-12 request-count">
-                <p><center class="text-danger">{{ ur|request_state_count:'WINDOW_EXPIRED' }}</center></p>
+                <p><center class="text-warning">{{ rg|request_state_count:'PENDING' }}</center></p>
+              </div>
+            </div>
+          </div>
+          <div class="col-sm-1 hidden-xs request-block">
+            <div class="row">
+              <div class="col-xs-12 request-count">
+                <p><center class="text-danger">{{ rg|request_state_count:'WINDOW_EXPIRED' }}</center></p>
               </div>
             </div>
           </div>
            <div class="col-sm-1 hidden-xs request-block">
             <div class="row">
               <div class="col-xs-12 request-count">
-                <p><center class="text-success">{{ ur|request_state_count:'COMPLETED' }}</center></p>
+                <p><center class="text-success">{{ rg|request_state_count:'COMPLETED' }}</center></p>
               </div>
             </div>
           </div>

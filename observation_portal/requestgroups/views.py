@@ -59,7 +59,7 @@ def requestgroup_queryset(request):
 
 class RequestGroupListView(FilterView):
     filterset_class = RequestGroupFilter
-    template_name = 'requestgroupss/requestgroup_list.html'
+    template_name = 'requestgroups/requestgroup_list.html'
     strict = False  # TODO remove when https://github.com/carltongibson/django-filter/issues/930 is fixed
 
     def get_queryset(self):
@@ -120,8 +120,9 @@ class RequestCreateView(LoginRequiredMixin, TemplateView):
 
 
 class TelescopeStatesView(APIView):
-    ''' Retrieves the telescope states for all telescopes between the start and end times
-    '''
+    """
+    Retrieves the telescope states for all telescopes between the start and end times
+    """
     permission_classes = (AllowAny,)
 
     def get(self, request):
@@ -138,8 +139,9 @@ class TelescopeStatesView(APIView):
 
 
 class TelescopeAvailabilityView(APIView):
-    ''' Retrieves the nightly % availability of each telescope between the start and end times
-    '''
+    """
+    Retrieves the nightly percent availability of each telescope between the start and end times
+    """
     permission_classes = (AllowAny,)
 
     def get(self, request):
@@ -165,6 +167,9 @@ class TelescopeAvailabilityView(APIView):
 
 
 class AirmassView(APIView):
+    """
+    Gets the airmasses for the request at available sites
+    """
     permission_classes = (AllowAny,)
 
     def post(self, request):

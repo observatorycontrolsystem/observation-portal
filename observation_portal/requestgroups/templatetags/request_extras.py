@@ -29,8 +29,8 @@ def state_to_icon(value):
 
 
 @register.filter
-def request_state_count(userrequest, state):
-    return userrequest.requests.filter(state=state).count()
+def request_state_count(requestgroup, state):
+    return requestgroup.requests.filter(state=state).count()
 
 
 @register.filter
