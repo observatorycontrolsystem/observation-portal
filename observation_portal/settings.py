@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django_filters',
     'rest_framework.authtoken',
     'oauth2_provider',
+    'django_extensions',
     'observation_portal.accounts',
     'observation_portal.requestgroups',
     'observation_portal.proposals',
@@ -85,7 +86,7 @@ WSGI_APPLICATION = 'observation_portal.wsgi.application'
 DATABASES = {
    'default': {
        'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
-       'NAME': os.getenv('DB_NAME', 'valhalla'),
+       'NAME': os.getenv('DB_NAME', 'observation_portal'),
        'USER': os.getenv('DB_USER', 'postgres'),
        'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),
        'HOST': os.getenv('DB_HOST', 'localhost'),

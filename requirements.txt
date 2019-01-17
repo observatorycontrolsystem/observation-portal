@@ -4,6 +4,7 @@ drf-yasg
 celery
 requests
 django-filter
+django-extensions
 django-registration-redux
 django-oauth-toolkit
 time_intervals

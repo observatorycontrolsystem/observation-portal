@@ -22,15 +22,19 @@ from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
-from observation_portal.requestgroups.viewsets import RequestGroupViewSet, RequestViewSet
+from observation_portal.requestgroups.viewsets import RequestGroupViewSet, RequestViewSet, DraftRequestGroupViewSet
 from observation_portal.requestgroups.views import TelescopeStatesView, TelescopeAvailabilityView, AirmassView
 from observation_portal.requestgroups.views import InstrumentsInformationView, RequestGroupStatusIsDirty
 from observation_portal.requestgroups.views import ContentionView, PressureView
 from observation_portal.accounts.views import ProfileApiView
+from observation_portal.proposals.viewsets import ProposalViewSet, SemesterViewSet
 
 router = DefaultRouter()
 router.register(r'requests', RequestViewSet, 'requests')
 router.register(r'requestgroups', RequestGroupViewSet, 'request_groups')
+router.register(r'drafts', DraftRequestGroupViewSet, 'drafts')
+router.register(r'proposals', ProposalViewSet, 'proposals')
+router.register(r'semesters', SemesterViewSet, 'semesters')
 
 api_urlpatterns = ([
     url(r'^', include(router.urls)),
