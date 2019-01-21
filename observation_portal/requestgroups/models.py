@@ -331,6 +331,7 @@ class Configuration(models.Model):
         help_text='The type of exposures for the observations under this Configuration'
     )
     extra_params = JSONField(
+        default=dict,
         verbose_name='extra parameters',
         help_text='Extra Configuration parameters'
     )
@@ -537,6 +538,7 @@ class Target(models.Model):
     )
 
     extra_params = JSONField(
+        default=dict,
         verbose_name='extra parameters',
         help_text='Extra Target parameters'
     )
@@ -567,6 +569,7 @@ class InstrumentConfig(models.Model):
         help_text='The Configuration to which this InstrumentConfig belongs'
     )
     optical_elements = JSONField(
+        default=dict,
         help_text='Specification of optical elements used for this InstrumentConfig'
     )
     mode = models.CharField(
@@ -605,6 +608,7 @@ class InstrumentConfig(models.Model):
                   'east of north.'
     )
     extra_params = JSONField(
+        default=dict,
         verbose_name='extra parameters',
         help_text='Extra InstrumentConfig parameters'
     )
@@ -676,6 +680,7 @@ class GuidingConfig(models.Model):
         help_text='GuidingConfig state to use for the observations'
     )
     optical_elements = JSONField(
+        default=dict,
         help_text='Optical Element specification for this GuidingConfig'
     )
     exposure_time = models.FloatField(
@@ -683,6 +688,7 @@ class GuidingConfig(models.Model):
         help_text='Guiding exposure time'
     )
     extra_params = JSONField(
+        default=dict,
         verbose_name='extra parameters',
         help_text='Extra GuidingConfig parameters'
     )
@@ -715,6 +721,7 @@ class AcquisitionConfig(models.Model):
         help_text='AcquisitionConfig state to use for the observations'
     )
     extra_params = JSONField(
+        default=dict,
         verbose_name='extra parameters',
         help_text='Extra AcquisitionConfig parameters'
     )
@@ -758,6 +765,7 @@ class Constraints(models.Model):
         help_text='Minimum acceptable transparency'
     )
     extra_params = JSONField(
+        default=dict,
         verbose_name='extra parameters',
         help_text='Extra Constraints parameters'
     )

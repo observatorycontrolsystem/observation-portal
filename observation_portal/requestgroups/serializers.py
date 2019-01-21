@@ -78,6 +78,12 @@ class InstrumentConfigSerializer(serializers.ModelSerializer):
     def validate(self, data):
         return data
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if not data['rois']:
+            del data['rois']
+        return data
+
 
 class AcquisitionConfigSerializer(serializers.ModelSerializer):
     class Meta:
