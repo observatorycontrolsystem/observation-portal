@@ -94,6 +94,16 @@ DATABASES = {
    }
 }
 
+CACHES = {
+    'default': {
+        'BACKEND': os.getenv('CACHE_BACKEND', 'django.core.cache.backends.dummy.DummyCache'),
+        'LOCATION': os.getenv('CACHE_LOCATION', 'unique-snowflake')
+    },
+    'locmem': {
+        'BACKEND': os.getenv('LOCAL_CACHE_BACKEND', 'django.core.cache.backends.dummy.DummyCache'),
+        'LOCATION': 'locmem-cache'
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators
@@ -113,6 +123,20 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+AUTHENTICATION_BACKENDS = [
+    'observation_portal.accounts.backends.EmailOrUsernameModelBackend',
+    'django.contrib.auth.backends.ModelBackend',
+    'oauth2_provider.backends.OAuth2Backend',
+]
+
+OAUTH2_PROVIDER = {
+    'ACCESS_TOKEN_EXPIRE_SECONDS': 86400 * 30,  # 30 days
+    'REFRESH_TOKEN_EXPIRE_SECONDS': 86400 * 30  # 30 days
+}
+
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_URLS_REGEX = r'^/api/.*$|^/o/.*'
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.1/topics/i18n/
@@ -123,7 +147,7 @@ TIME_ZONE = 'UTC'
 
 USE_I18N = True
 
-USE_L10N = True
+USE_L10N = False
 
 USE_TZ = True
 
@@ -132,3 +156,31 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
 STATIC_URL = '/static/'
+
+ELASTICSEARCH_URL = os.getenv('ELASTICSEARCH_URL', 'http://elasticsearchdev.lco.gtn')
+CONFIGDB_URL = os.getenv('CONFIGDB_URL', 'http://configdbdev.lco.gtn')
+DOWNTIMEDB_URL = os.getenv('DOWNTIMEDB_URL', 'http://downtimedb.lco.gtn')
+
+REST_FRAMEWORK = {
+    'TEST_REQUEST_DEFAULT_FORMAT': 'json',
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
+        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
+    ),
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 50,
+    'DEFAULT_THROTTLE_CLASSES': (
+        'observation_portal.accounts.throttling.AllowStaffUserRateThrottle',
+        'rest_framework.throttling.ScopedRateThrottle',
+    ),
+    'DEFAULT_THROTTLE_RATES': {
+        'user': '5000/day',
+        'requestgroups.cancel': '1000/day',
+        'requestgroups.create': '2500/day',
+        'requestgroups.validate': '10000/day'
+    }
+}
