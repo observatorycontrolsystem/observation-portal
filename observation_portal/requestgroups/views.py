@@ -179,20 +179,18 @@ class AirmassView(APIView):
         else:
             return Response(serializer.errors)
 
-
+# TODO: Modify where this is used in the vue to use modes/optical_elements structures
 class InstrumentsInformationView(APIView):
     permission_classes = (AllowAny,)
 
     def get(self, request):
         info = {}
         for instrument_type in configdb.get_active_instrument_types({}):
-            filters = configdb.get_filters(instrument_type)
-            filter_map = configdb.get_filter_map()
             info[instrument_type] = {
                 'type': 'SPECTRA' if configdb.is_spectrograph(instrument_type) else 'IMAGE',
                 'class': instrument_type[0:3],
                 'name': configdb.get_instrument_name(instrument_type),
-                'filters': {filter: filter_map[filter] for filter in filters},
+                'optical_elements': configdb.get_optical_elements(instrument_type),
                 'binnings': configdb.get_binnings(instrument_type),
                 'default_binning': configdb.get_default_binning(instrument_type),
             }
