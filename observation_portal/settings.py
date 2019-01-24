@@ -31,12 +31,15 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
+    'django.contrib.sites',
+    'registration',  # must come before admin to use custom templates
+    'django.contrib.admin',
     'rest_framework',
     'drf_yasg',
     'django_filters',
@@ -182,5 +185,24 @@ REST_FRAMEWORK = {
         'requestgroups.cancel': '1000/day',
         'requestgroups.create': '2500/day',
         'requestgroups.validate': '10000/day'
+    }
+}
+
+CELERY_TASK_ALWAYS_EAGER = not os.getenv('CELERY_ENABLED', False)
+CELERY_BROKER_URL = os.getenv('BROKER_URL', 'memory://localhost')
+CELERY_WORKER_HIJACK_ROOT_LOGGER = False
+
+CELERY_BEAT_SCHEDULE = {
+    'time-accounting-every-hour': {
+        'task': 'valhalla.proposals.tasks.run_accounting',
+        'schedule': 3600.0
+    },
+    'expire-requests-every-5-minutes': {
+        'task': 'valhalla.userrequests.tasks.expire_requests',
+        'schedule': 300.0
+    },
+    'expire-access-tokens-every-day': {
+        'task': 'valhalla.accounts.tasks.expire_access_tokens',
+        'schedule': 86400.0
     }
 }

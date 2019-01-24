@@ -186,7 +186,7 @@ class AcquisitionConfigAdmin(admin.ModelAdmin):
         'id',
         'configuration',
         'name',
-        'state'
+        'mode'
     )
 
 

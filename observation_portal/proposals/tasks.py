@@ -15,6 +15,8 @@ def update_time_allocation(time_allocation_id):
     logger.info('Updating timeallocation for %s', talloc.proposal, extra={'tags': {'proposal': talloc.proposal.id}})
     std_total = get_time_totals_from_pond(talloc, talloc.semester.start, talloc.semester.end, too=False)
     rr_total = get_time_totals_from_pond(talloc, talloc.semester.start, talloc.semester.end, too=True)
+    print(std_total)
+    print(rr_total)
     talloc.std_time_used = std_total
     talloc.rr_time_used = rr_total
     talloc.save()

@@ -22,6 +22,7 @@ def get_largest_interval(intervals):
 
     return largest_interval
 
+
 # TODO: rewrite to handle multiple targets per request
 def get_rise_set_intervals_by_site(request_dict):
     ''' Computes or Retrieves from cache a dictionary of rise_set intervals by site for the request

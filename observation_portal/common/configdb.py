@@ -165,6 +165,41 @@ class ConfigDB(object):
                             return {type: mode_details}
         return {}
 
+    def get_mode_with_code(self, instrument_type, code, mode_type=''):
+        modes = self.get_modes(instrument_type, mode_type)
+        for mode in modes:
+            if mode['code'].lower() == code.lower():
+                return mode
+
+        raise ConfigDBException("No mode named {} found for instrument type {}".format(code, instrument_type))
+
+    def get_readout_mode_with_binning(self, instrument_type, binning):
+        readout_modes = self.get_modes(instrument_type, 'readout')
+        readout_modes.sort(key=lambda x: x['default'], reverse=True)  # Start with the default
+        for readout_mode in readout_modes:
+            if readout_mode['params']['binning'] == binning:
+                return readout_mode
+
+        raise ConfigDBException("No readout mode found with binning {} for instrument type {}".format(binning,
+                                                                                                      instrument_type))
+
+    def get_default_modes(self, instrument_type, mode_type=''):
+        '''
+            Function returns the default mode of each available mode_type (or the specified mode_type) for the given
+            instrument_type
+        :param instrument_type:
+        :param mode_type:
+        :return:
+        '''
+        modes = self.get_modes(instrument_type, mode_type)
+        for type, mode_set in modes.items():
+            for mode in mode_set:
+                if mode['default']:
+                    modes[type] = mode
+                    break
+
+        return modes
+
     def get_binnings(self, instrument_type):
         '''
             Function creates a set of available binning modes for the instrument_type specified

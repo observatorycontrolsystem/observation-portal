@@ -660,11 +660,15 @@ class RegionOfInterest(models.Model):
 
 
 class GuidingConfig(models.Model):
+    ON = 'ON'
+    OPTIONAL = 'OPTIONAL'
+    OFF = 'OFF'
+
     SERIALIZER_EXCLUDE = ('id', 'configuration')
     STATES = (
-        ('OPTIONAL', 'OPTIONAL'),
-        ('ON', 'ON'),
-        ('OFF', 'OFF')
+        ('OPTIONAL', OPTIONAL),
+        ('ON', ON),
+        ('OFF', OFF)
     )
 
     configuration = models.OneToOneField(
@@ -676,8 +680,12 @@ class GuidingConfig(models.Model):
         help_text='Name of this GuidingConfig'
     )
     state = models.CharField(
-        max_length=50, choices=STATES, default=STATES[0][0],
+        max_length=50, choices=STATES, default=OPTIONAL,
         help_text='GuidingConfig state to use for the observations'
+    )
+    mode = models.CharField(
+        max_length=50, default='',
+        help_text='Guiding mode to use for the observations'
     )
     optical_elements = JSONField(
         default=dict,
@@ -702,11 +710,8 @@ class GuidingConfig(models.Model):
 
 
 class AcquisitionConfig(models.Model):
+    OFF = 'OFF'
     SERIALIZER_EXCLUDE = ('id', 'configuration')
-    STATES = (
-        ('OFF', 'OFF'),
-        ('ON', 'ON')
-    )
 
     configuration = models.OneToOneField(
         Configuration, related_name='acquisition_config', on_delete=models.CASCADE,
@@ -716,9 +721,9 @@ class AcquisitionConfig(models.Model):
         max_length=255,
         help_text='The name of this AcquisitionConfig'
     )
-    state = models.CharField(
-        max_length=50, choices=STATES, default=STATES[0][0],
-        help_text='AcquisitionConfig state to use for the observations'
+    mode = models.CharField(
+        max_length=50, default=OFF,
+        help_text='AcquisitionConfig mode to use for the observations'
     )
     extra_params = JSONField(
         default=dict,

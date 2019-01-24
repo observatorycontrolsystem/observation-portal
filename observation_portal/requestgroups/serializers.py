@@ -14,7 +14,7 @@ from observation_portal.requestgroups.models import (Request, Target, Window, Re
 from observation_portal.requestgroups.models import DraftRequestGroup
 from observation_portal.requestgroups.state_changes import debit_ipp_time, TimeAllocationError, validate_ipp
 from observation_portal.requestgroups.target_helpers import TARGET_TYPE_HELPER_MAP
-from observation_portal.common.configdb import configdb
+from observation_portal.common.configdb import configdb, ConfigDBException
 from observation_portal.requestgroups.request_utils import MOLECULE_TYPE_DISPLAY
 from observation_portal.requestgroups.duration_utils import (get_request_duration, get_request_duration_sum,
                                                              get_total_duration_dict, OVERHEAD_ALLOWANCE,
@@ -76,6 +76,14 @@ class InstrumentConfigSerializer(serializers.ModelSerializer):
         exclude = InstrumentConfig.SERIALIZER_EXCLUDE
 
     def validate(self, data):
+        if 'bin_x' in data and not 'bin_y' in data:
+            data['bin_y'] = data['bin_x']
+        elif 'bin_y' in data and not 'bin_x' in data:
+            data['bin_x'] = data['bin_y']
+
+        if 'bin_x' in data and 'bin_y' in data and data['bin_x'] != data['bin_y']:
+            raise serializers.ValidationError(_("Currently only square binnings are supported. Please submit with bin_x == bin_y"))
+
         return data
 
     def to_representation(self, instance):
@@ -148,13 +156,80 @@ class ConfigurationSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, data):
-        # set special defaults if it is a spectrograph
-        if configdb.is_spectrograph(data['instrument_name']):
-            if 'state' not in data['guiding_config']:
-                data['guiding_config']['state'] = 'ON'
-            if 'state' not in data['acquisition_config']:
-                data['acquisition_config']['state'] = 'ON'
+        modes = configdb.get_modes(data['instrument_name'])
+        default_modes = configdb.get_default_modes(data['instrument_name'])
+        guiding_config = data['guiding_config']
+        # Set defaults for guiding and acquisition modes if they are not set
+        if 'state' not in guiding_config:
+            if configdb.is_spectrograph(data['instrument_name']):
+                guiding_config['state'] = GuidingConfig.ON
+            else:
+                guiding_config['state'] = GuidingConfig.OPTIONAL
+        elif (guiding_config['state'] == GuidingConfig.OFF and 'mode' in guiding_config
+              and guiding_config['mode']):
+            raise serializers.ValidationError(_("Cannot set a guiding mode if the guiding state is OFF"))
 
+        if 'mode' not in guiding_config:
+            if guiding_config['state'] != GuidingConfig.OFF and 'guiding' in default_modes:
+                guiding_config['mode'] = default_modes['guiding']['code']
+        else:
+            if ('guiding' in modes
+                    and guiding_config['mode'].lower() not in [gm['code'].lower() for gm in modes['guiding']]):
+                raise serializers.ValidationError(_("guiding mode {} is not available for instrument type {}"
+                                                    .format(guiding_config['mode'], data['instrument_name'])))
+
+        acquisition_config = data['acquisition_config']
+        if 'mode' not in acquisition_config:
+            if 'acquisition' in default_modes:
+                acquisition_config['mode'] = default_modes['acquisition']['code']
+        elif 'acquisition' in modes and acquisition_config['mode'] not in [am['code'] for am in modes['acquisition']]:
+            raise serializers.ValidationError(_("Acquisition mode {} is not available for instrument type {}"
+                                                .format(acquisition_config['mode'], data['instrument_name'])))
+
+        # check for any required fields for acquisition
+        acquisition_mode = configdb.get_mode_with_code(data['instrument_name'], acquisition_config['mode'],
+                                                       'acquisition')
+        if 'required_fields' in acquisition_mode['params']:
+            for field in acquisition_mode['params']['required_fields']:
+                if field not in acquisition_config['extra_params']:
+                    raise serializers.ValidationError(_("Acquisition Mode {} required extra param of {} to be set"
+                                                        .format(acquisition_mode['code'], field)))
+
+        for instrument_config in data['instrument_configs']:
+            if 'readout_mode' not in instrument_config and 'readout' in default_modes:
+                if 'bin_x' not in instrument_config and 'bin_y' not in instrument_config:
+                    instrument_config['readout_mode'] = default_modes['readout']['code']
+                    instrument_config['bin_x'] = default_modes['readout']['params']['binning']
+                    instrument_config['bin_y'] = instrument_config['bin_x']
+                elif 'bin_x' in instrument_config:
+                    instrument_config['readout_mode'] = configdb.get_readout_mode_with_binning(data['instrument_name'],
+                                                                                               instrument_config['bin_x'])['code']
+            else:
+                try:
+                    readout_mode = configdb.get_mode_with_code(data['instrument_name'],
+                                                               instrument_config['readout_mode'], 'readout')
+                except ConfigDBException as cdbe:
+                    raise serializers.ValidationError(_(str(cdbe)))
+                if 'bin_x' not in instrument_config:
+                    instrument_config['bin_x'] = readout_mode['params']['binning']
+                    instrument_config['bin_y'] = readout_mode['params']['binning']
+                elif instrument_config['bin_x'] != readout_mode['params']['binning']:
+                    raise serializers.ValidationError(_("{} binning is not a valid binning on readout mode {} for instrument type {}"
+                                                        .format(instrument_config['bin_x'], instrument_config['readout_mode'], data['instrument_name'])))
+
+
+
+
+        # # set special defaults if it is a spectrograph
+        # if configdb.is_spectrograph(data['instrument_name']):
+        #     if 'state' not in data['guiding_config']:
+        #         data['guiding_config']['state'] = 'ON'
+        #     if 'state' not in data['acquisition_config']:
+        #         data['acquisition_config']['state'] = 'ON'
+
+        if data['acquisition_config']['state'] == 'ON':
+            if 'mode' not in data['acquisition_config']['extra_params']:
+                data['acquisition_config']['extra_params']['mode'] = modes['']
             # if data['acquire_mode'] == 'BRIGHTEST' and not data.get('acquire_radius_arcsec'):
             #     raise serializers.ValidationError({'acquire_radius_arcsec': 'Acquire radius must be positive.'})
 
