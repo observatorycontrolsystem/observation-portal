@@ -166,7 +166,7 @@ class ScienceApplication(models.Model):
             TimeAllocation.objects.create(
                 std_allocation=tr.std_time,
                 rr_allocation=tr.rr_time,
-                telescope_class=tr.instrument.telescope_class,
+                tc_allocation=tr.tc_time,
                 instrument_name=tr.instrument.code,
                 semester=tr.semester,
                 proposal=proposal
