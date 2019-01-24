@@ -19,6 +19,7 @@ from observation_portal.proposals.tasks import run_accounting
 from observation_portal.common.test_helpers import create_simple_requestgroup, ConfigDBTestMixin
 from observation_portal.requestgroups.signals import handlers  # DO NOT DELETE, needed to active signals
 
+
 class TestProposal(TestCase):
     def test_add_existing_user(self):
         proposal = mixer.blend(Proposal)
