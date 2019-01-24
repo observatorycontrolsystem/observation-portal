@@ -14,7 +14,7 @@ The portal can be run as a standalone application with reduced functionality. Th
 * Python >= 3.6
 * PostgreSQL 11
 
-## Setup a virtual environment
+## Set up a virtual environment
 From the base of this project:
 
 ```
