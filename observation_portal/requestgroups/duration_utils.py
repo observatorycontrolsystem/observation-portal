@@ -34,16 +34,16 @@ def get_semester_in(start_date, end_date):
     return None
 
 
-def get_instrument_configuration_duration_per_exposure(instrument_configuration_dict):
-    total_overhead_per_exp = configdb.get_exposure_overhead(instrument_configuration_dict['name'],
+def get_instrument_configuration_duration_per_exposure(instrument_configuration_dict, instrument_name):
+    total_overhead_per_exp = configdb.get_exposure_overhead(instrument_name,
                                                             instrument_configuration_dict['bin_x'],
                                                             instrument_configuration_dict['mode'])
     duration_per_exp = instrument_configuration_dict['exposure_time'] + total_overhead_per_exp
     return duration_per_exp
 
 
-def get_instrument_configuration_duration(instrument_config_dict):
-    duration_per_exposure = get_instrument_configuration_duration_per_exposure(instrument_config_dict)
+def get_instrument_configuration_duration(instrument_config_dict, instrument_name):
+    duration_per_exposure = get_instrument_configuration_duration_per_exposure(instrument_config_dict, instrument_name)
     return instrument_config_dict['exposure_count'] * duration_per_exposure
 
 
@@ -52,7 +52,7 @@ def get_configuration_duration(configuration_dict):
     duration = 0
     previous_optical_elements = {}
     for inst_config in configuration_dict['instrument_configs']:
-        duration += get_instrument_configuration_duration(inst_config)
+        duration += get_instrument_configuration_duration(inst_config, configuration_dict['instrument_name'])
         change_overhead = 0
         # Assume all optical element changes are done in parallel so just take the max of all elements changing
         for oe_type, oe_value in inst_config['optical_elements'].items():

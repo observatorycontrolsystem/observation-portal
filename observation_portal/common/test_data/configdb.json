@@ -17,6 +17,9 @@
               "horizon": 15.0,
               "ha_limit_pos": 4.6,
               "ha_limit_neg": -4.6,
+              "slew_rate": 0.0,
+              "minimum_slew_overhead": 2.0,
+              "instrument_change_overhead": 30.0,
               "instrument_set": [
                 {
                   "state": "SCHEDULABLE",
@@ -48,9 +51,61 @@
                           "binning": 3,
                           "readout": 11.5
                         }
-                      ]
+                      ],
+                      "modes":{
+                        "readout": [
+                          {
+                            "code": "1m0_sbig_1",
+                            "type": "readout",
+                            "default": false,
+                            "overhead": 35.0,
+                            "params": {
+                              "binning": 1
+                            }
+                          },
+                          {
+                            "code": "1m0_sbig_2",
+                            "type": "readout",
+                            "default": true,
+                            "overhead": 14.5,
+                            "params": {
+                              "binning": 2
+                            }
+                          },
+                          {
+                            "code": "1m0_sbig_3",
+                            "type": "readout",
+                            "default": false,
+                            "overhead": 11.5,
+                            "params": {
+                              "binning": 3
+                            }
+                          }
+                        ],
+                        "acquisition": [
+                          {
+                            "code": "OFF",
+                            "type": "acquisition",
+                            "overhead": 0.0,
+                            "default": true
+                          }
+                        ]
+                      }
                     },
-                    "filters": "air"
+                    "filters": "air",
+                    "optical_element_groups": [
+                      {
+                        "type": "filters",
+                        "element_change_overhead": 2,
+                        "optical_elements": [
+                          {
+                            "name": "Air",
+                            "code": "air",
+                            "schedulable": false
+                          }
+                        ]
+                      }
+                    ]
                   },
                   "__str__": "tst.doma.1m0a.xx01-xx01"
                 },
@@ -76,9 +131,58 @@
                           "binning": 1,
                           "readout": 25
                         }
-                      ]
+                      ],
+                      "modes":{
+                        "readout": [
+                          {
+                            "code": "2m0_floyds_1",
+                            "type": "readout",
+                            "default": false,
+                            "overhead": 25.0,
+                            "params": {
+                              "binning": 1
+                            }
+                          }
+                        ],
+                        "acquisition": [
+                          {
+                            "code": "WCS",
+                            "type": "acquisition",
+                            "overhead": 90.0,
+                            "default": true
+                          }
+                        ]
+                      }
                     },
-                    "filters": "slit_6.0as,slit_1.6as,slit_2.0as,slit_1.2as"
+                    "filters": "slit_6.0as,slit_1.6as,slit_2.0as,slit_1.2as",
+                    "optical_element_groups": [
+                      {
+                        "type": "slits",
+                        "element_change_overhead": 0,
+                        "optical_elements": [
+                          {
+                            "name": "6.0As Slit",
+                            "code": "slit_6.0as",
+                            "schedulable": true
+                          },
+                          {
+                            "name": "2.0As Slit",
+                            "code": "slit_2.0as",
+                            "schedulable": true
+                          },
+                          {
+                            "name": "1.6As Slit",
+                            "code": "slit_1.6as",
+                            "schedulable": true
+                          },
+                          {
+                            "name": "1.2As Slit",
+                            "code": "slit_1.2as",
+                            "schedulable": true
+                          }
+                        ]
+                      }
+                    ]
                   },
                   "__str__": "tst.doma.2m0a.xx02-xx02"
                 }
@@ -96,6 +200,10 @@
               "horizon": 15.0,
               "ha_limit_pos": 4.6,
               "ha_limit_neg": -4.6,
+              "ha_limit_neg": -4.6,
+              "slew_rate": 0.0,
+              "minimum_slew_overhead": 2.0,
+              "instrument_change_overhead": 30.0,
               "instrument_set": [
                 {
                   "state": "SCHEDULABLE",
@@ -127,9 +235,61 @@
                           "binning": 3,
                           "readout": 11.5
                         }
-                      ]
+                      ],
+                      "modes":{
+                        "readout": [
+                          {
+                            "code": "1m0_sbig_1",
+                            "type": "readout",
+                            "default": false,
+                            "overhead": 35.0,
+                            "params": {
+                              "binning": 1
+                            }
+                          },
+                          {
+                            "code": "1m0_sbig_2",
+                            "type": "readout",
+                            "default": true,
+                            "overhead": 14.5,
+                            "params": {
+                              "binning": 2
+                            }
+                          },
+                          {
+                            "code": "1m0_sbig_3",
+                            "type": "readout",
+                            "default": false,
+                            "overhead": 11.5,
+                            "params": {
+                              "binning": 3
+                            }
+                          }
+                        ],
+                        "acquisition": [
+                          {
+                            "code": "OFF",
+                            "type": "acquisition",
+                            "overhead": 0.0,
+                            "default": true
+                          }
+                        ]
+                      }
                     },
-                    "filters": "air"
+                    "filters": "air",
+                    "optical_element_groups": [
+                      {
+                        "type": "filters",
+                        "element_change_overhead": 2,
+                        "optical_elements": [
+                          {
+                            "name": "Air",
+                            "code": "air",
+                            "schedulable": false
+                          }
+                        ]
+                      }
+                    ]
                   },
                   "__str__": "tst.domb.1m0a.xx01-xx01"
                 },
@@ -159,9 +319,52 @@
                           "binning": 2,
                           "readout": 90.5
                         }
-                      ]
+                      ],
+                      "modes":{
+                        "readout": [
+                          {
+                            "code": "1m0_nres_1",
+                            "type": "readout",
+                            "default": false,
+                            "overhead": 35.0,
+                            "params": {
+                              "binning": 1
+                            }
+                          },
+                          {
+                            "code": "1m0_nres_2",
+                            "type": "readout",
+                            "default": true,
+                            "overhead": 90.5,
+                            "params": {
+                              "binning": 2
+                            }
+                          }
+                        ],
+                        "acquisition": [
+                          {
+                            "code": "WCS",
+                            "type": "acquisition",
+                            "overhead": 0.0,
+                            "default": true
+                          }
+                        ]
+                      }
                     },
-                    "filters": "air"
+                    "filters": "air",
+                    "optical_element_groups": [
+                      {
+                        "type": "filters",
+                        "element_change_overhead": 2,
+                        "optical_elements": [
+                          {
+                            "name": "Air",
+                            "code": "air",
+                            "schedulable": false
+                          }
+                        ]
+                      }
+                    ]
                   },
                   "__str__": "tst.domb.1m0a.nresXX-nresXX"
                 },
@@ -187,9 +390,58 @@
                           "binning": 1,
                           "readout": 25
                         }
-                      ]
+                      ],
+                      "modes":{
+                        "readout": [
+                          {
+                            "code": "2m0_floyds_1",
+                            "type": "readout",
+                            "default": false,
+                            "overhead": 25.0,
+                            "params": {
+                              "binning": 1
+                            }
+                          }
+                        ],
+                        "acquisition": [
+                          {
+                            "code": "WCS",
+                            "type": "acquisition",
+                            "overhead": 90.0,
+                            "default": true
+                          }
+                        ]
+                      }
                     },
-                    "filters": "slit_6.0as,slit_1.6as,slit_2.0as,slit_1.2as"
+                    "filters": "slit_6.0as,slit_1.6as,slit_2.0as,slit_1.2as",
+                    "optical_element_groups": [
+                      {
+                        "type": "slits",
+                        "element_change_overhead": 0,
+                        "optical_elements": [
+                          {
+                            "name": "6.0As Slit",
+                            "code": "slit_6.0as",
+                            "schedulable": true
+                          },
+                          {
+                            "name": "2.0As Slit",
+                            "code": "slit_2.0as",
+                            "schedulable": true
+                          },
+                          {
+                            "name": "1.6As Slit",
+                            "code": "slit_1.6as",
+                            "schedulable": true
+                          },
+                          {
+                            "name": "1.2As Slit",
+                            "code": "slit_1.2as",
+                            "schedulable": true
+                          }
+                        ]
+                      }
+                    ]
                   },
                   "__str__": "tst.domb.2m0a.xx02-xx02"
                 }
@@ -213,6 +465,10 @@
             "horizon": 15.0,
             "ha_limit_pos": 4.6,
             "ha_limit_neg": -4.6,
+            "ha_limit_neg": -4.6,
+            "slew_rate": 0.0,
+            "minimum_slew_overhead": 2.0,
+            "instrument_change_overhead": 0.0,
             "instrument_set": [
             ]
           }

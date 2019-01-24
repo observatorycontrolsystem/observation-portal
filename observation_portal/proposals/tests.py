@@ -12,7 +12,7 @@ import responses
 import datetime
 
 from observation_portal.proposals.models import ProposalInvite, Proposal, Membership, ProposalNotification, TimeAllocation, Semester
-from observation_portal.requestgroups.models import RequestGroup, Configuration, InstrumentConfig
+from observation_portal.requestgroups.models import RequestGroup, Configuration, InstrumentConfig, AcquisitionConfig, GuidingConfig
 from observation_portal.accounts.models import Profile
 from observation_portal.proposals.accounting import split_time, get_time_totals_from_pond, query_pond
 from observation_portal.proposals.tasks import run_accounting
@@ -143,6 +143,8 @@ class TestProposalUserLimits(ConfigDBTestMixin, TestCase):
         self.assertEqual(self.user.profile.time_used_in_proposal(self.proposal), 0)
         configuration = mixer.blend(Configuration, instrument_name='1M0-SCICAM-SBIG')
         mixer.blend(InstrumentConfig, configuration=configuration, exposure_time=30)
+        mixer.blend(AcquisitionConfig, configuration=configuration)
+        mixer.blend(GuidingConfig, configuration=configuration)
         create_simple_requestgroup(self.user, self.proposal, configuration=configuration)
         self.assertGreater(self.user.profile.time_used_in_proposal(self.proposal), 0)
 
@@ -175,13 +177,13 @@ class TestAccounting(TestCase):
     def test_query_pond(self):
         responses.add(
             responses.GET,
-            '{0}/accounting/{1}/'.format('lake.lco.gtn', 'NORMAL'),
+            '{0}/accounting/{1}/'.format('http://lake.lco.gtn', 'NORMAL'),
             body='{ "block_bounded_attempted_hours": 1, "attempted_hours": 2 }',
             content_type='application/json'
         )
         responses.add(
             responses.GET,
-            '{0}/accounting/{1}/'.format('lake.lco.gtn', 'TOO'),
+            '{0}/accounting/{1}/'.format('http://lake.lco.gtn', 'RAPID_RESPONSE'),
             body='{ "block_bounded_attempted_hours": 1, "attempted_hours": 2 }',
             content_type='application/json'
         )

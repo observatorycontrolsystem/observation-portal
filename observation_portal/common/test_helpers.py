@@ -84,4 +84,4 @@ def create_simple_requestgroup(user, proposal, state='PENDING', request=None, wi
         location.request = request
         location.save()
 
-    return ur
+    return rg

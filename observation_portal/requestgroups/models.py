@@ -624,7 +624,7 @@ class InstrumentConfig(models.Model):
 
     @cached_property
     def duration(self):
-        return get_instrument_configuration_duration(self.as_dict)
+        return get_instrument_configuration_duration(self.as_dict, self.configuration.instrument_name)
 
 
 class RegionOfInterest(models.Model):
