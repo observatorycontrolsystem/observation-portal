@@ -12,12 +12,12 @@ import responses
 import datetime
 
 from observation_portal.proposals.models import ProposalInvite, Proposal, Membership, ProposalNotification, TimeAllocation, Semester
-from observation_portal.requestgroups.models import RequestGroup, Configuration, InstrumentConfig, AcquisitionConfig, GuidingConfig
+from observation_portal.requestgroups.models import RequestGroup, Configuration, InstrumentConfig, AcquisitionConfig, GuidingConfig, Target
 from observation_portal.accounts.models import Profile
 from observation_portal.proposals.accounting import split_time, get_time_totals_from_pond, query_pond
 from observation_portal.proposals.tasks import run_accounting
 from observation_portal.common.test_helpers import create_simple_requestgroup, ConfigDBTestMixin
-
+from observation_portal.requestgroups.signals import handlers  # DO NOT DELETE, needed to active signals
 
 class TestProposal(TestCase):
     def test_add_existing_user(self):
@@ -79,7 +79,7 @@ class TestProposalNotifications(TestCase):
         self.proposal = mixer.blend(Proposal)
         self.user = mixer.blend(User)
         mixer.blend(Membership, user=self.user, proposal=self.proposal)
-        self.requestgroup = mixer.blend(RequestGroup, proposal=self.proposal, state='PENDING')
+        self.requestgroup = mixer.blend(RequestGroup, proposal=self.proposal, submitter=self.user, state='PENDING')
 
     def test_all_proposal_notification(self):
         mixer.blend(Profile, user=self.user, notifications_enabled=True)
@@ -118,7 +118,7 @@ class TestProposalNotifications(TestCase):
 
     def test_no_notifications_only_authored(self):
         mixer.blend(Profile, user=self.user, notifications_enabled=True, notifications_on_authored_only=True)
-        self.requestgroup.author = mixer.blend(User)
+        self.requestgroup.submitter = mixer.blend(User)
         self.requestgroup.state = 'COMPLETED'
         self.requestgroup.save()
         self.assertEqual(len(mail.outbox), 0)
@@ -142,10 +142,9 @@ class TestProposalUserLimits(ConfigDBTestMixin, TestCase):
     def test_time_used_for_user(self):
         self.assertEqual(self.user.profile.time_used_in_proposal(self.proposal), 0)
         configuration = mixer.blend(Configuration, instrument_name='1M0-SCICAM-SBIG')
-        mixer.blend(InstrumentConfig, configuration=configuration, exposure_time=30)
-        mixer.blend(AcquisitionConfig, configuration=configuration)
-        mixer.blend(GuidingConfig, configuration=configuration)
-        create_simple_requestgroup(self.user, self.proposal, configuration=configuration)
+        instrument_config = mixer.blend(InstrumentConfig, configuration=configuration, exposure_time=30)
+        create_simple_requestgroup(self.user, self.proposal, configuration=configuration,
+                                   instrument_config=instrument_config)
         self.assertGreater(self.user.profile.time_used_in_proposal(self.proposal), 0)
 
 

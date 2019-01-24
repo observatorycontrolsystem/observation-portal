@@ -354,6 +354,7 @@ class Configuration(models.Model):
         cdict['instrument_configs'] = [ic.as_dict for ic in self.instrument_configs.all()]
         cdict['acquisition_config'] = self.acquisition_config.as_dict
         cdict['guiding_config'] = self.guiding_config.as_dict
+        cdict['target'] = self.target.as_dict
         return cdict
 
     @cached_property

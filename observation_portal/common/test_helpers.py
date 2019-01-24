@@ -7,7 +7,8 @@ import responses
 import json
 import os
 
-from observation_portal.requestgroups.models import RequestGroup, Request, Window, Configuration, Constraints, Target, Location
+from observation_portal.requestgroups.models import (RequestGroup, Request, Window, Configuration, Constraints, Target,
+                                                     Location, InstrumentConfig, GuidingConfig, AcquisitionConfig)
 
 CONFIGDB_TEST_FILE = os.path.join(settings.BASE_DIR, 'observation_portal/common/test_data/configdb.json')
 FILTERWHEELS_FILE = os.path.join(settings.BASE_DIR, 'observation_portal/common/test_data/filterwheels.json')
@@ -45,7 +46,8 @@ class SetTimeMixin(object):
 
 
 def create_simple_requestgroup(user, proposal, state='PENDING', request=None, window=None, configuration=None,
-                              constraints=None, target=None, location=None):
+                               constraints=None, target=None, location=None, instrument_config=None,
+                               acquisition_config=None, guiding_config=None):
     rg = mixer.blend(RequestGroup, state=state, submitter=user, proposal=proposal)
 
     if not request:
@@ -69,13 +71,31 @@ def create_simple_requestgroup(user, proposal, state='PENDING', request=None, wi
     if not constraints:
         mixer.blend(Constraints, configuration=configuration)
     else:
-        constraints.request = request
+        constraints.configuration = configuration
         constraints.save()
+
+    if not instrument_config:
+        mixer.blend(InstrumentConfig, configuration=configuration)
+    else:
+        instrument_config.configuration = configuration
+        instrument_config.save()
+
+    if not guiding_config:
+        mixer.blend(GuidingConfig, configuration=configuration)
+    else:
+        guiding_config.configuration = configuration
+        guiding_config.save()
+
+    if not acquisition_config:
+        mixer.blend(AcquisitionConfig, configuration=configuration)
+    else:
+        acquisition_config.configuration = configuration
+        acquisition_config.save()
 
     if not target:
         mixer.blend(Target, configuration=configuration)
     else:
-        target.request = request
+        target.configuration = configuration
         target.save()
 
     if not location:

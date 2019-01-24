@@ -153,14 +153,14 @@ def get_request_duration(request_dict):
         previous_target = configuration['target']
 
         # Now add the Acquisition overhead if this request requires it
-        if configuration['acquisition_config']['state'] == 'ON':
-            if 'mode' in configuration['acquisition_config']['extra_params']:
-                duration += request_overheads['acquisition_overheads'][configuration['acquisition_config']['extra_params']['mode']]
+        if configuration['acquisition_config']['mode'] != 'OFF':
+            if configuration['acquisition_config']['mode'] in request_overheads['acquisition_overheads']:
+                duration += request_overheads['acquisition_overheads'][configuration['acquisition_config']['mode']]
 
         # Now add the Guiding overhead if this request requires it
         if configuration['guiding_config']['state'] == 'ON':
-            if 'mode' in configuration['guiding_config']['extra_params']:
-                duration += request_overheads['guiding_overheads'][configuration['guiding_config']['extra_params']['mode']]
+            if configuration['guiding_config']['mode'] in request_overheads['guiding_overheads']:
+                duration += request_overheads['guiding_overheads'][configuration['guiding_config']['mode']]
 
         # TODO: find out if we need to have a configuration type change time for spectrographs?
         if configdb.is_spectrograph(configuration['instrument_name']):
