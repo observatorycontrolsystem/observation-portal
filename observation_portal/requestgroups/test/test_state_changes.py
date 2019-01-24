@@ -690,7 +690,7 @@ class TestUpdateRequestStates(TestCase):
         self.assertEqual(self.rg.state, 'COMPLETED')
 
 
-@patch('observation_portal.requestgroupss.state_changes.modify_ipp_time_from_requests')
+@patch('observation_portal.requestgroups.state_changes.modify_ipp_time_from_requests')
 class TestExpireRequests(TestCase):
     def setUp(self):
         self.request_group = dmixer.blend(RequestGroup, state='PENDING')

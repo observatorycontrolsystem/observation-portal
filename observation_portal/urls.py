@@ -16,6 +16,7 @@ Including another URLconf
 from django.contrib import admin
 from django.conf.urls import url, include
 from django.urls import path
+from django.views.generic import TemplateView
 from rest_framework.routers import DefaultRouter
 from rest_framework.authtoken.views import obtain_auth_token
 from rest_framework import permissions
@@ -28,6 +29,9 @@ from observation_portal.requestgroups.views import InstrumentsInformationView, R
 from observation_portal.requestgroups.views import ContentionView, PressureView
 from observation_portal.accounts.views import ProfileApiView
 from observation_portal.proposals.viewsets import ProposalViewSet, SemesterViewSet
+import observation_portal.sciapplications.urls as sciapplications_urls
+import observation_portal.requestgroups.urls as requestgroup_urls
+import observation_portal.proposals.urls as proposals_urls
 
 router = DefaultRouter()
 router.register(r'requests', RequestViewSet, 'requests')
@@ -63,7 +67,11 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    url(r'^', include(requestgroup_urls)),
     url(r'^api/', include(api_urlpatterns)),
+    url(r'^proposals/', include(proposals_urls)),
+    url(r'^apply/', include(sciapplications_urls)),
+    path('admin/', admin.site.urls),
+    url(r'^help/', TemplateView.as_view(template_name='help.html'), name='help'),
     url(r'^redoc/$', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 ]

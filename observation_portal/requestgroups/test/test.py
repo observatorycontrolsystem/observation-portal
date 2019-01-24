@@ -4,14 +4,14 @@ from mixer.backend.django import mixer
 from datetime import datetime
 import math
 
-from valhalla.userrequests.models import Request, Molecule, Target, UserRequest, Window, Location, Constraints
-from valhalla.proposals.models import Proposal, TimeAllocation, Semester
-from valhalla.common.configdb import ConfigDBException
-from valhalla.common.test_helpers import ConfigDBTestMixin, SetTimeMixin
-from valhalla.userrequests.duration_utils import PER_MOLECULE_STARTUP_TIME, PER_MOLECULE_GAP
+from observation_portal.requestgroups.models import Request, Configuration, Target, RequestGroup, Window, Location, Constraints
+from observation_portal.proposals.models import Proposal, TimeAllocation, Semester
+from observation_portal.common.configdb import ConfigDBException
+from observation_portal.common.test_helpers import ConfigDBTestMixin, SetTimeMixin
+from observation_portal.requestgroups.duration_utils import PER_MOLECULE_STARTUP_TIME, PER_MOLECULE_GAP
 
 
-class TestUserRequestTotalDuration(ConfigDBTestMixin, SetTimeMixin, TestCase):
+class TestRequestGroupTotalDuration(ConfigDBTestMixin, SetTimeMixin, TestCase):
     def setUp(self):
         super().setUp()
         self.proposal = mixer.blend(Proposal)
@@ -23,19 +23,19 @@ class TestUserRequestTotalDuration(ConfigDBTestMixin, SetTimeMixin, TestCase):
                                                too_allocation=10, too_time_used=0.0, ipp_limit=10.0,
                                                ipp_time_available=5.0)
 
-        self.ur_single = mixer.blend(UserRequest, proposal=self.proposal, operator='SINGLE')
-        self.ur_many = mixer.blend(UserRequest, proposal=self.proposal)
+        self.rg_single = mixer.blend(RequestGroup, proposal=self.proposal, operator='SINGLE')
+        self.rg_many = mixer.blend(RequestGroup, proposal=self.proposal)
 
-        self.request = mixer.blend(Request, user_request=self.ur_single)
-        self.requests = mixer.cycle(3).blend(Request, user_request=self.ur_many)
+        self.request = mixer.blend(Request, request_group=self.rg_single)
+        self.requests = mixer.cycle(3).blend(Request, request_group=self.rg_many)
 
-        self.molecule_expose = mixer.blend(
-            Molecule, request=self.request, bin_x=2, bin_y=2, instrument_name='1M0-SCICAM-SBIG',
+        self.configuration_expose = mixer.blend(
+            Configuration, request=self.request, bin_x=2, bin_y=2, instrument_name='1M0-SCICAM-SBIG',
             exposure_time=600, exposure_count=2, type='EXPOSE', filter='blah'
         )
 
-        self.molecule_exposes = mixer.cycle(3).blend(
-            Molecule, request=(r for r in self.requests), filter=(f for f in ['uv', 'uv', 'ir']),
+        self.configuration_exposes = mixer.cycle(3).blend(
+            Configuration, request=(r for r in self.requests), filter=(f for f in ['uv', 'uv', 'ir']),
             bin_x=2, bin_y=2, instrument_name='1M0-SCICAM-SBIG', exposure_time=1000, exposure_count=1, type='EXPOSE'
         )
 
@@ -57,27 +57,27 @@ class TestUserRequestTotalDuration(ConfigDBTestMixin, SetTimeMixin, TestCase):
         mixer.blend(Constraints, request=self.request)
         mixer.cycle(3).blend(Constraints, request=(r for r in self.requests))
 
-    def test_single_ur_total_duration(self):
+    def test_single_rg_total_duration(self):
         request_duration = self.request.duration
-        total_duration = self.ur_single.total_duration
+        total_duration = self.rg_single.total_duration
         tak = self.request.time_allocation_key
         self.assertEqual(request_duration, total_duration[tak])
 
-    def test_many_ur_takes_highest_duration(self):
-        self.ur_many.operator = 'MANY'
-        self.ur_many.save()
+    def test_many_rg_takes_highest_duration(self):
+        self.rg_many.operator = 'MANY'
+        self.rg_many.save()
 
         highest_duration = max(r.duration for r in self.requests)
-        total_duration = self.ur_many.total_duration
+        total_duration = self.rg_many.total_duration
         tak = self.requests[0].time_allocation_key
         self.assertEqual(highest_duration, total_duration[tak])
 
-    def test_and_ur_takes_sum_of_durations(self):
-        self.ur_many.operator = 'AND'
-        self.ur_many.save()
+    def test_and_rg_takes_sum_of_durations(self):
+        self.rg_many.operator = 'AND'
+        self.rg_many.save()
 
         sum_duration = sum(r.duration for r in self.requests)
-        total_duration = self.ur_many.total_duration
+        total_duration = self.rg_many.total_duration
         tak = self.requests[0].time_allocation_key
         self.assertEqual(sum_duration, total_duration[tak])
 
@@ -93,38 +93,38 @@ class TestRequestDuration(ConfigDBTestMixin, SetTimeMixin, TestCase):
 
         self.target_acquire_off = mixer.blend(Target, acquire_mode='OFF', type='SIDEREAL')
 
-        self.molecule_expose = mixer.blend(
-            Molecule, bin_x=2, bin_y=2, instrument_name='1M0-SCICAM-SBIG',
+        self.configuration_expose = mixer.blend(
+            Configuration, bin_x=2, bin_y=2, instrument_name='1M0-SCICAM-SBIG',
             exposure_time=600, exposure_count=2, type='EXPOSE', filter='blah'
         )
 
-        self.molecule_expose_1 = mixer.blend(
-            Molecule, bin_x=2, bin_y=2, instrument_name='1M0-SCICAM-SBIG',
+        self.configuration_expose_1 = mixer.blend(
+            Configuration, bin_x=2, bin_y=2, instrument_name='1M0-SCICAM-SBIG',
             exposure_time=1000, exposure_count=1, type='EXPOSE', filter='uv'
         )
 
-        self.molecule_expose_2 = mixer.blend(
-            Molecule, bin_x=2, bin_y=2, instrument_name='1M0-SCICAM-SBIG',
+        self.configuration_expose_2 = mixer.blend(
+            Configuration, bin_x=2, bin_y=2, instrument_name='1M0-SCICAM-SBIG',
             exposure_time=10, exposure_count=5, type='EXPOSE', filter='uv'
         )
 
-        self.molecule_expose_3 = mixer.blend(
-            Molecule, bin_x=2, bin_y=2, instrument_name='1M0-SCICAM-SBIG',
+        self.configuration_expose_3 = mixer.blend(
+            Configuration, bin_x=2, bin_y=2, instrument_name='1M0-SCICAM-SBIG',
             exposure_time=3, exposure_count=3, type='EXPOSE', filter='ir'
         )
 
-        self.molecule_spectrum = mixer.blend(
-            Molecule, bin_x=1, bin_y=1, instrument_name='2M0-FLOYDS-SCICAM',
+        self.configuration_spectrum = mixer.blend(
+            Configuration, bin_x=1, bin_y=1, instrument_name='2M0-FLOYDS-SCICAM',
             exposure_time=1800, exposure_count=1, type='SPECTRUM'
         )
 
-        self.molecule_arc = mixer.blend(
-            Molecule, bin_x=1, bin_y=1, instrument_name='2M0-FLOYDS-SCICAM',
+        self.configuration_arc = mixer.blend(
+            Configuration, bin_x=1, bin_y=1, instrument_name='2M0-FLOYDS-SCICAM',
             exposure_time=30, exposure_count=2, type='ARC'
         )
 
-        self.molecule_lampflat = mixer.blend(
-            Molecule, bin_x=1, bin_y=1, instrument_name='2M0-FLOYDS-SCICAM',
+        self.configuration_lampflat = mixer.blend(
+            Configuration, bin_x=1, bin_y=1, instrument_name='2M0-FLOYDS-SCICAM',
             exposure_time=60, exposure_count=1, type='LAMPFLAT'
         )
 
@@ -142,86 +142,86 @@ class TestRequestDuration(ConfigDBTestMixin, SetTimeMixin, TestCase):
         self.floyds_acquire_exposure_time = 30
 
 
-    def test_ccd_single_molecule_request_duration(self):
-        self.molecule_expose.request = self.request
-        self.molecule_expose.save()
+    def test_ccd_single_configuration_request_duration(self):
+        self.configuration_expose.request = self.request
+        self.configuration_expose.save()
         duration = self.request.duration
 
-        exp_time = self.molecule_expose.exposure_time
-        exp_count = self.molecule_expose.exposure_count
+        exp_time = self.configuration_expose.exposure_time
+        exp_count = self.configuration_expose.exposure_count
 
         self.assertEqual(duration, math.ceil(exp_count*(exp_time + self.sbig_readout_time2 + self.sbig_fixed_overhead_per_exposure) + self.sbig_front_padding + self.sbig_filter_change_time + PER_MOLECULE_GAP + PER_MOLECULE_STARTUP_TIME))
 
-    def test_ccd_single_molecule_unsupported_binning_duration(self):
+    def test_ccd_single_configuration_unsupported_binning_duration(self):
         default_binning = mixer.blend(
-            Molecule, bin_x=2, bin_y=2, instrument_name='1M0-SCICAM-SBIG',
+            Configuration, bin_x=2, bin_y=2, instrument_name='1M0-SCICAM-SBIG',
             exposure_time=600, exposure_count=2, type='EXPOSE', filter='blah'
         )
 
         bad_binning = mixer.blend(
-            Molecule, bin_x=300, bin_y=300, instrument_name='1M0-SCICAM-SBIG',
+            Configuration, bin_x=300, bin_y=300, instrument_name='1M0-SCICAM-SBIG',
             exposure_time=600, exposure_count=2, type='EXPOSE', filter='blah'
         )
 
         self.assertEqual(default_binning.duration, bad_binning.duration)
 
-    def test_ccd_single_molecule_duration(self):
-        duration = self.molecule_expose.duration
+    def test_ccd_single_configuration_duration(self):
+        duration = self.configuration_expose.duration
 
-        exp_time = self.molecule_expose.exposure_time
-        exp_count = self.molecule_expose.exposure_count
+        exp_time = self.configuration_expose.exposure_time
+        exp_count = self.configuration_expose.exposure_count
 
         self.assertEqual(duration, (exp_count*(exp_time + self.sbig_readout_time2 + self.sbig_fixed_overhead_per_exposure) + PER_MOLECULE_GAP + PER_MOLECULE_STARTUP_TIME))
 
-    def test_ccd_multiple_molecule_request_duration(self):
-        self.molecule_expose_1.request = self.request
-        self.molecule_expose_1.save()
-        self.molecule_expose_2.request = self.request
-        self.molecule_expose_2.save()
-        self.molecule_expose_3.request = self.request
-        self.molecule_expose_3.save()
+    def test_ccd_multiple_configuration_request_duration(self):
+        self.configuration_expose_1.request = self.request
+        self.configuration_expose_1.save()
+        self.configuration_expose_2.request = self.request
+        self.configuration_expose_2.save()
+        self.configuration_expose_3.request = self.request
+        self.configuration_expose_3.save()
         duration = self.request.duration
 
-        exp_time1 = self.molecule_expose_1.exposure_time
-        exp_count1 = self.molecule_expose_1.exposure_count
-        exp_time2 = self.molecule_expose_2.exposure_time
-        exp_count2 = self.molecule_expose_2.exposure_count
-        exp_time3 = self.molecule_expose_3.exposure_time
-        exp_count3 = self.molecule_expose_3.exposure_count
+        exp_time1 = self.configuration_expose_1.exposure_time
+        exp_count1 = self.configuration_expose_1.exposure_count
+        exp_time2 = self.configuration_expose_2.exposure_time
+        exp_count2 = self.configuration_expose_2.exposure_count
+        exp_time3 = self.configuration_expose_3.exposure_time
+        exp_count3 = self.configuration_expose_3.exposure_count
 
         exp_1_duration = exp_count1*(exp_time1 + self.sbig_readout_time2 + self.sbig_fixed_overhead_per_exposure)
         exp_2_duration = exp_count2*(exp_time2 + self.sbig_readout_time2 + self.sbig_fixed_overhead_per_exposure)
         exp_3_duration = exp_count3*(exp_time3 + self.sbig_readout_time2 + self.sbig_fixed_overhead_per_exposure)
 
         num_filter_changes = 2
-        num_molecules = 3
+        num_configurations = 3
 
-        self.assertEqual(duration, math.ceil(exp_1_duration + exp_2_duration + exp_3_duration + self.sbig_front_padding + num_filter_changes*self.sbig_filter_change_time + num_molecules*(PER_MOLECULE_GAP + PER_MOLECULE_STARTUP_TIME)))
+        self.assertEqual(duration, math.ceil(exp_1_duration + exp_2_duration + exp_3_duration + self.sbig_front_padding + num_filter_changes*self.sbig_filter_change_time + num_configurations*(PER_MOLECULE_GAP + PER_MOLECULE_STARTUP_TIME)))
 
-    def test_ccd_multiple_molecule_duration(self):
-        duration = self.molecule_expose_1.duration
-        duration += self.molecule_expose_2.duration
-        duration += self.molecule_expose_3.duration
+    def test_ccd_multiple_configuration_duration(self):
+        duration = self.configuration_expose_1.duration
+        duration += self.configuration_expose_2.duration
+        duration += self.configuration_expose_3.duration
 
-        exp_time1 = self.molecule_expose_1.exposure_time
-        exp_count1 = self.molecule_expose_1.exposure_count
-        exp_time2 = self.molecule_expose_2.exposure_time
-        exp_count2 = self.molecule_expose_2.exposure_count
-        exp_time3 = self.molecule_expose_3.exposure_time
-        exp_count3 = self.molecule_expose_3.exposure_count
+        exp_time1 = self.configuration_expose_1.exposure_time
+        exp_count1 = self.configuration_expose_1.exposure_count
+        exp_time2 = self.configuration_expose_2.exposure_time
+        exp_count2 = self.configuration_expose_2.exposure_count
+        exp_time3 = self.configuration_expose_3.exposure_time
+        exp_count3 = self.configuration_expose_3.exposure_count
 
         exp_1_duration = exp_count1 * (exp_time1 + self.sbig_readout_time2 + self.sbig_fixed_overhead_per_exposure)
         exp_2_duration = exp_count2 * (exp_time2 + self.sbig_readout_time2 + self.sbig_fixed_overhead_per_exposure)
         exp_3_duration = exp_count3 * (exp_time3 + self.sbig_readout_time2 + self.sbig_fixed_overhead_per_exposure)
 
-        num_molecules = 3
+        num_configurations = 3
 
-        self.assertEqual(duration, (exp_1_duration + exp_2_duration + exp_3_duration + num_molecules*(PER_MOLECULE_GAP + PER_MOLECULE_STARTUP_TIME)))
+        self.assertEqual(duration, (exp_1_duration + exp_2_duration + exp_3_duration + num_configurations*(PER_MOLECULE_GAP + PER_MOLECULE_STARTUP_TIME)))
 
-    def test_floyds_single_molecule_request_duration_with_acquire_on(self):
-        self.molecule_spectrum.request = self.request
-        self.molecule_spectrum.acquire_mode = 'WCS'
-        self.molecule_spectrum.save()
+    def test_floyds_single_configuration_request_duration_with_acquire_on(self):
+        self.configuration_spectrum.request = self.request
+        self.configuration_spectrum.acquire_mode = 'WCS'
+        self.configuration_spectrum.save()
 
         duration = self.request.duration
 
@@ -230,13 +230,13 @@ class TestRequestDuration(ConfigDBTestMixin, SetTimeMixin, TestCase):
 
         self.assertEqual(duration, math.ceil(exp_count*(exp_time + self.floyds_readout_time1 + self.floyds_fixed_overhead_per_exposure) + self.floyds_front_padding + self.floyds_config_change_time + self.floyds_acquire_exposure_time + self.floyds_acquire_processing_time + PER_MOLECULE_GAP + PER_MOLECULE_STARTUP_TIME))
 
-    def test_floyds_multiple_spectrum_molecule_request_duration_with_acquire_on(self):
-        self.molecule_spectrum.request = self.request
-        self.molecule_spectrum.acquire_mode = 'WCS'
-        self.molecule_spectrum.save()
+    def test_floyds_multiple_spectrum_configuration_request_duration_with_acquire_on(self):
+        self.configuration_spectrum.request = self.request
+        self.configuration_spectrum.acquire_mode = 'WCS'
+        self.configuration_spectrum.save()
 
         mixer.blend(
-            Molecule, request=self.request, bin_x=1, bin_y=1, instrument_name='2M0-FLOYDS-SCICAM',
+            Configuration, request=self.request, bin_x=1, bin_y=1, instrument_name='2M0-FLOYDS-SCICAM',
             exposure_time=1800, exposure_count=1, type='SPECTRUM', acquire_mode='WCS'
         )
 
@@ -244,104 +244,104 @@ class TestRequestDuration(ConfigDBTestMixin, SetTimeMixin, TestCase):
 
         exp_time = 1800
         exp_count = 1
-        num_spectrum_molecules = 2
+        num_spectrum_configurations = 2
 
-        self.assertEqual(duration, math.ceil(exp_count*num_spectrum_molecules*(exp_time + self.floyds_readout_time1 + self.floyds_fixed_overhead_per_exposure) + self.floyds_front_padding + self.floyds_config_change_time + num_spectrum_molecules*(self.floyds_acquire_exposure_time + self.floyds_acquire_processing_time + PER_MOLECULE_GAP + PER_MOLECULE_STARTUP_TIME)))
+        self.assertEqual(duration, math.ceil(exp_count*num_spectrum_configurations*(exp_time + self.floyds_readout_time1 + self.floyds_fixed_overhead_per_exposure) + self.floyds_front_padding + self.floyds_config_change_time + num_spectrum_configurations*(self.floyds_acquire_exposure_time + self.floyds_acquire_processing_time + PER_MOLECULE_GAP + PER_MOLECULE_STARTUP_TIME)))
 
 
-    def test_floyds_single_molecule_request_duration_with_acquire_off(self):
-        self.molecule_spectrum.request = self.request
-        self.molecule_spectrum.save()
+    def test_floyds_single_configuration_request_duration_with_acquire_off(self):
+        self.configuration_spectrum.request = self.request
+        self.configuration_spectrum.save()
 
         duration = self.request.duration
 
-        exp_time = self.molecule_spectrum.exposure_time
-        exp_count = self.molecule_spectrum.exposure_count
+        exp_time = self.configuration_spectrum.exposure_time
+        exp_count = self.configuration_spectrum.exposure_count
 
         self.assertEqual(duration, math.ceil(exp_count*(exp_time + self.floyds_readout_time1 + self.floyds_fixed_overhead_per_exposure) + self.floyds_front_padding + self.floyds_config_change_time + PER_MOLECULE_GAP + PER_MOLECULE_STARTUP_TIME))
 
-    def test_floyds_single_molecule_duration(self):
-        duration = self.molecule_spectrum.duration
+    def test_floyds_single_configuration_duration(self):
+        duration = self.configuration_spectrum.duration
 
-        exp_time = self.molecule_spectrum.exposure_time
-        exp_count = self.molecule_spectrum.exposure_count
+        exp_time = self.configuration_spectrum.exposure_time
+        exp_count = self.configuration_spectrum.exposure_count
 
         self.assertEqual(duration, (exp_count*(exp_time + self.floyds_readout_time1 + self.floyds_fixed_overhead_per_exposure) + PER_MOLECULE_GAP + PER_MOLECULE_STARTUP_TIME))
 
-    def test_floyds_multiple_molecule_request_duration_with_acquire_on(self):
-        self.molecule_lampflat.request = self.request
-        self.molecule_lampflat.save()
-        self.molecule_arc.request = self.request
-        self.molecule_arc.save()
-        self.molecule_spectrum.request = self.request
-        self.molecule_spectrum.acquire_mode = 'WCS'
-        self.molecule_spectrum.save()
+    def test_floyds_multiple_configuration_request_duration_with_acquire_on(self):
+        self.configuration_lampflat.request = self.request
+        self.configuration_lampflat.save()
+        self.configuration_arc.request = self.request
+        self.configuration_arc.save()
+        self.configuration_spectrum.request = self.request
+        self.configuration_spectrum.acquire_mode = 'WCS'
+        self.configuration_spectrum.save()
 
         duration = self.request.duration
 
-        exp_time_s = self.molecule_spectrum.exposure_time
-        exp_count_s = self.molecule_spectrum.exposure_count
-        exp_time_a = self.molecule_arc.exposure_time
-        exp_count_a = self.molecule_arc.exposure_count
-        exp_time_l = self.molecule_lampflat.exposure_time
-        exp_count_l = self.molecule_lampflat.exposure_count
+        exp_time_s = self.configuration_spectrum.exposure_time
+        exp_count_s = self.configuration_spectrum.exposure_count
+        exp_time_a = self.configuration_arc.exposure_time
+        exp_count_a = self.configuration_arc.exposure_count
+        exp_time_l = self.configuration_lampflat.exposure_time
+        exp_count_l = self.configuration_lampflat.exposure_count
 
         exp_s_duration = exp_count_s*(exp_time_s + self.floyds_readout_time1 + self.floyds_fixed_overhead_per_exposure)
         exp_a_duration = exp_count_a*(exp_time_a + self.floyds_readout_time1 + self.floyds_fixed_overhead_per_exposure)
         exp_l_duration = exp_count_l*(exp_time_l + self.floyds_readout_time1 + self.floyds_fixed_overhead_per_exposure)
 
-        num_molecules = 3
+        num_configurations = 3
 
-        self.assertEqual(duration, math.ceil(exp_s_duration + exp_a_duration + exp_l_duration + self.floyds_front_padding + self.floyds_acquire_exposure_time + self.floyds_acquire_processing_time + num_molecules*(self.floyds_config_change_time + PER_MOLECULE_GAP + PER_MOLECULE_STARTUP_TIME)))
+        self.assertEqual(duration, math.ceil(exp_s_duration + exp_a_duration + exp_l_duration + self.floyds_front_padding + self.floyds_acquire_exposure_time + self.floyds_acquire_processing_time + num_configurations*(self.floyds_config_change_time + PER_MOLECULE_GAP + PER_MOLECULE_STARTUP_TIME)))
 
-    def test_floyds_multiple_molecule_request_duration_with_acquire_off(self):
-        self.molecule_lampflat.request = self.request
-        self.molecule_lampflat.save()
-        self.molecule_arc.request = self.request
-        self.molecule_arc.save()
-        self.molecule_spectrum.request = self.request
-        self.molecule_spectrum.save()
+    def test_floyds_multiple_configuration_request_duration_with_acquire_off(self):
+        self.configuration_lampflat.request = self.request
+        self.configuration_lampflat.save()
+        self.configuration_arc.request = self.request
+        self.configuration_arc.save()
+        self.configuration_spectrum.request = self.request
+        self.configuration_spectrum.save()
 
         duration = self.request.duration
 
-        exp_time_s = self.molecule_spectrum.exposure_time
-        exp_count_s = self.molecule_spectrum.exposure_count
-        exp_time_a = self.molecule_arc.exposure_time
-        exp_count_a = self.molecule_arc.exposure_count
-        exp_time_l = self.molecule_lampflat.exposure_time
-        exp_count_l = self.molecule_lampflat.exposure_count
+        exp_time_s = self.configuration_spectrum.exposure_time
+        exp_count_s = self.configuration_spectrum.exposure_count
+        exp_time_a = self.configuration_arc.exposure_time
+        exp_count_a = self.configuration_arc.exposure_count
+        exp_time_l = self.configuration_lampflat.exposure_time
+        exp_count_l = self.configuration_lampflat.exposure_count
 
         exp_s_duration = exp_count_s*(exp_time_s + self.floyds_readout_time1 + self.floyds_fixed_overhead_per_exposure)
         exp_a_duration = exp_count_a*(exp_time_a + self.floyds_readout_time1 + self.floyds_fixed_overhead_per_exposure)
         exp_l_duration = exp_count_l*(exp_time_l + self.floyds_readout_time1 + self.floyds_fixed_overhead_per_exposure)
 
-        num_molecules = 3
+        num_configurations = 3
 
-        self.assertEqual(duration, math.ceil(exp_s_duration + exp_a_duration + exp_l_duration + self.floyds_front_padding + num_molecules*(self.floyds_config_change_time + PER_MOLECULE_GAP + PER_MOLECULE_STARTUP_TIME)))
+        self.assertEqual(duration, math.ceil(exp_s_duration + exp_a_duration + exp_l_duration + self.floyds_front_padding + num_configurations*(self.floyds_config_change_time + PER_MOLECULE_GAP + PER_MOLECULE_STARTUP_TIME)))
 
-    def test_floyds_multiple_molecule_duration(self):
-        duration = self.molecule_lampflat.duration
-        duration += self.molecule_arc.duration
-        duration += self.molecule_spectrum.duration
+    def test_floyds_multiple_configuration_duration(self):
+        duration = self.configuration_lampflat.duration
+        duration += self.configuration_arc.duration
+        duration += self.configuration_spectrum.duration
 
-        exp_time_s = self.molecule_spectrum.exposure_time
-        exp_count_s = self.molecule_spectrum.exposure_count
-        exp_time_a = self.molecule_arc.exposure_time
-        exp_count_a = self.molecule_arc.exposure_count
-        exp_time_l = self.molecule_lampflat.exposure_time
-        exp_count_l = self.molecule_lampflat.exposure_count
+        exp_time_s = self.configuration_spectrum.exposure_time
+        exp_count_s = self.configuration_spectrum.exposure_count
+        exp_time_a = self.configuration_arc.exposure_time
+        exp_count_a = self.configuration_arc.exposure_count
+        exp_time_l = self.configuration_lampflat.exposure_time
+        exp_count_l = self.configuration_lampflat.exposure_count
 
         exp_s_duration = exp_count_s*(exp_time_s + self.floyds_readout_time1 + self.floyds_fixed_overhead_per_exposure)
         exp_a_duration = exp_count_a*(exp_time_a + self.floyds_readout_time1 + self.floyds_fixed_overhead_per_exposure)
         exp_l_duration = exp_count_l*(exp_time_l + self.floyds_readout_time1 + self.floyds_fixed_overhead_per_exposure)
 
-        num_molecules = 3
+        num_configurations = 3
 
-        self.assertEqual(duration, (exp_s_duration + exp_a_duration + exp_l_duration + num_molecules*(PER_MOLECULE_GAP + PER_MOLECULE_STARTUP_TIME)))
+        self.assertEqual(duration, (exp_s_duration + exp_a_duration + exp_l_duration + num_configurations*(PER_MOLECULE_GAP + PER_MOLECULE_STARTUP_TIME)))
 
     def test_get_duration_from_non_existent_camera(self):
-        bad_molecule = mixer.blend(Molecule, instrument_name='FAKE_INSTRUMENT', bin_x=1, bin_y=1)
+        bad_configuration = mixer.blend(Configuration, instrument_name='FAKE_INSTRUMENT', bin_x=1, bin_y=1)
 
         with self.assertRaises(ConfigDBException) as context:
-            bad_molecule.duration
+            bad_configuration.duration
             self.assertTrue('not found in configdb' in context.exception)

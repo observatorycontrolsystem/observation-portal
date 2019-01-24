@@ -226,7 +226,7 @@ class TestTelescopeStates(TelescopeStatesFromFile):
         response = self.client.get(reverse('api:telescope_states'))
         self.assertContains(response, str(timezone.now().date()))
 
-    @patch('valhalla.common.telescope_states.TelescopeStates._get_es_data', side_effect=ElasticSearchException)
+    @patch('observation_portal.common.telescope_states.TelescopeStates._get_es_data', side_effect=ElasticSearchException)
     def test_elasticsearch_down(self, es_patch):
         response = self.client.get(reverse('api:telescope_availability') +
                                    '?start=2016-10-1T1:23:44&end=2016-10-10T22:22:2')

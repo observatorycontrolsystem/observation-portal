@@ -1,0 +1,13 @@
+{% extends "registration/registration_base.html" %}
+{% load i18n bootstrap3 %}
+
+{% block title %}{% trans "Register for an account" %}{% endblock %}
+
+{% block content %}
+<form method="post" action="">
+    {% csrf_token %}
+    {% bootstrap_form form %}
+    <p>Read the <a href="https://lco.global/observatory/termsofservice/" target="_blank">Terms of Service</a></p>
+    {% buttons submit='Register' %}{% endbuttons %}
+</form>
+{% endblock %}
