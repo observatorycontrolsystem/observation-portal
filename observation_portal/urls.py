@@ -29,6 +29,7 @@ from observation_portal.requestgroups.views import InstrumentsInformationView, R
 from observation_portal.requestgroups.views import ContentionView, PressureView
 from observation_portal.accounts.views import ProfileApiView
 from observation_portal.proposals.viewsets import ProposalViewSet, SemesterViewSet
+import observation_portal.accounts.urls as accounts_urls
 import observation_portal.sciapplications.urls as sciapplications_urls
 import observation_portal.requestgroups.urls as requestgroup_urls
 import observation_portal.proposals.urls as proposals_urls
@@ -68,6 +69,7 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     url(r'^', include(requestgroup_urls)),
+    url(r'^accounts/', include(accounts_urls)),
     url(r'^api/', include(api_urlpatterns)),
     url(r'^proposals/', include(proposals_urls)),
     url(r'^apply/', include(sciapplications_urls)),

@@ -1710,7 +1710,7 @@ class TestAirmassApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         self.assertTrue(response.json()['airmass_data']['tst']['times'])
 
 
-@patch('pbservation_portal.requestgroups.state_changes.modify_ipp_time_from_requests')
+@patch('observation_portal.requestgroups.state_changes.modify_ipp_time_from_requests')
 class TestCancelRequestGroupApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
     ''' Test canceling user requests via API. Mocking out modify_ipp_time_from_requets
         as it is called on state change, but tested elsewhere '''
@@ -2001,7 +2001,7 @@ class TestPressure(ConfigDBTestMixin, APITestCase):
 
         self.now = datetime(year=2017, month=5, day=12, hour=10, tzinfo=timezone.utc)
 
-        self.timezone_patch = patch('observation_portal.request_groups.contention.timezone')
+        self.timezone_patch = patch('observation_portal.requestgroups.contention.timezone')
         self.mock_timezone = self.timezone_patch.start()
         self.mock_timezone.now.return_value = self.now
 
