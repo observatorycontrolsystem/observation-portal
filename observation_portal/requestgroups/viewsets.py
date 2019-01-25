@@ -39,16 +39,15 @@ class RequestGroupViewSet(viewsets.ModelViewSet):
         return super().get_throttles()
 
     def get_queryset(self):
-        return RequestGroup.objects.all()
-        # if self.request.user.is_staff:
-        #     qs = RequestGroup.objects.all()
-        # elif self.request.user.is_authenticated:
-        #     qs = RequestGroup.objects.filter(
-        #         proposal__in=self.request.user.proposal_set.all()
-        #     )
-        # else:
-        #     qs = RequestGroup.objects.filter(proposal__in=Proposal.objects.filter(public=True))
-        # return qs.prefetch_related('requests', 'requests__windows', 'requests__configurations', 'requests__location')
+        if self.request.user.is_staff:
+            qs = RequestGroup.objects.all()
+        elif self.request.user.is_authenticated:
+            qs = RequestGroup.objects.filter(
+                proposal__in=self.request.user.proposal_set.all()
+            )
+        else:
+            qs = RequestGroup.objects.filter(proposal__in=Proposal.objects.filter(public=True))
+        return qs.prefetch_related('requests', 'requests__windows', 'requests__configurations', 'requests__location')
 
     def perform_create(self, serializer):
         serializer.save(submitter=self.request.user)
@@ -184,15 +183,14 @@ class RequestViewSet(viewsets.ReadOnlyModelViewSet):
     ordering_fields = ('id', 'state')
 
     def get_queryset(self):
-        return Request.objects.all()
-        # if self.request.user.is_staff:
-        #     return Request.objects.all()
-        # elif self.request.user.is_authenticated:
-        #     return Request.objects.filter(
-        #         request_group__proposal__in=self.request.user.proposal_set.all()
-        #     )
-        # else:
-        #     return Request.objects.filter(request_group__proposal__in=Proposal.objects.filter(public=True))
+        if self.request.user.is_staff:
+            return Request.objects.all()
+        elif self.request.user.is_authenticated:
+            return Request.objects.filter(
+                request_group__proposal__in=self.request.user.proposal_set.all()
+            )
+        else:
+            return Request.objects.filter(request_group__proposal__in=Proposal.objects.filter(public=True))
 
     @action(detail=True)
     def airmass(self, request, pk=None):

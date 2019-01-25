@@ -142,7 +142,8 @@ OAUTH2_PROVIDER = {
 
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_URLS_REGEX = r'^/api/.*$|^/o/.*'
-
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.1/topics/i18n/
@@ -222,15 +223,15 @@ CELERY_WORKER_HIJACK_ROOT_LOGGER = False
 
 CELERY_BEAT_SCHEDULE = {
     'time-accounting-every-hour': {
-        'task': 'valhalla.proposals.tasks.run_accounting',
+        'task': 'observation_portal.proposals.tasks.run_accounting',
         'schedule': 3600.0
     },
     'expire-requests-every-5-minutes': {
-        'task': 'valhalla.userrequests.tasks.expire_requests',
+        'task': 'observation_portal.userrequests.tasks.expire_requests',
         'schedule': 300.0
     },
     'expire-access-tokens-every-day': {
-        'task': 'valhalla.accounts.tasks.expire_access_tokens',
+        'task': 'observation_portal.accounts.tasks.expire_access_tokens',
         'schedule': 86400.0
     }
 }

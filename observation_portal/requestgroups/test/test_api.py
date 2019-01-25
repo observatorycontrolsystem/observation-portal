@@ -32,21 +32,34 @@ generic_payload = {
     'ipp_value': 1.0,
     'observation_type': 'NORMAL',
     'requests': [{
-        'target': {
-            'name': 'fake target',
-            'type': 'SIDEREAL',
-            'dec': 20,
-            'ra': 34.4,
-        },
         'configurations': [{
             'type': 'EXPOSE',
             'instrument_name': '1M0-SCICAM-SBIG',
-            'filter': 'air',
-            'exposure_time': 100,
-            'exposure_count': 1,
-            'bin_x': 1,
-            'bin_y': 1,
-            'ag_name': '',
+            'target': {
+                'name': 'fake target',
+                'type': 'SIDEREAL',
+                'dec': 20,
+                'ra': 34.4,
+            },
+            'instrument_configs': [{
+                'exposure_time': 100,
+                'exposure_count': 1,
+                'bin_x': 1,
+                'bin_y': 1,
+                'optical_elements': {
+                    'filters': 'air'
+                }
+            }],
+            'guiding_config': {
+                'name': ''
+            },
+            'acquisition_config': {
+                'name': ''
+            },
+            'constraints': {
+                'max_airmass': 2.0,
+                'min_lunar_distance': 30.0,
+            }
         }],
         'windows': [{
             'start': '2016-09-29T21:12:18Z',
@@ -55,10 +68,6 @@ generic_payload = {
         'location': {
             'telescope_class': '1m0',
         },
-        'constraints': {
-            'max_airmass': 2.0,
-            'min_lunar_distance': 30.0,
-        }
     }]
 }
 

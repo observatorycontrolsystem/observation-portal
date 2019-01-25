@@ -677,7 +677,7 @@ class GuidingConfig(models.Model):
         help_text='The Configuration to which this GuidingConfig belongs'
     )
     name = models.CharField(
-        max_length=255,
+        max_length=255, default='', blank=True,
         help_text='Name of this GuidingConfig'
     )
     state = models.CharField(
@@ -692,7 +692,7 @@ class GuidingConfig(models.Model):
         default=dict,
         help_text='Optical Element specification for this GuidingConfig'
     )
-    exposure_time = models.FloatField(
+    exposure_time = models.FloatField(default=0.01,
         validators=[MinValueValidator(0.01)],
         help_text='Guiding exposure time'
     )
@@ -719,7 +719,7 @@ class AcquisitionConfig(models.Model):
         help_text='The Configuration to which this AcquisitionConfig belongs'
     )
     name = models.CharField(
-        max_length=255,
+        max_length=255, default='', blank=True,
         help_text='The name of this AcquisitionConfig'
     )
     mode = models.CharField(

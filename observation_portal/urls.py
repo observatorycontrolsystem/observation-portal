@@ -71,6 +71,7 @@ urlpatterns = [
     url(r'^', include(requestgroup_urls)),
     url(r'^accounts/', include(accounts_urls)),
     url(r'^api/', include(api_urlpatterns)),
+    url(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
     url(r'^proposals/', include(proposals_urls)),
     url(r'^apply/', include(sciapplications_urls)),
     path('admin/', admin.site.urls),

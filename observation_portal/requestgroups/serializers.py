@@ -69,7 +69,7 @@ class RegionOfInterestSerializer(serializers.ModelSerializer):
 
 class InstrumentConfigSerializer(serializers.ModelSerializer):
     fill_window = serializers.BooleanField(required=False, write_only=True)
-    rois = RegionOfInterestSerializer(many=True)
+    rois = RegionOfInterestSerializer(many=True, required=False)
 
     class Meta:
         model = InstrumentConfig
