@@ -41,9 +41,6 @@
                 {% bootstrap_label '<i class="fa fa-refresh"></i> State' label_for="id_state" %}
                 {% bootstrap_field filter.form.state show_label=False size='small' %}
 
-                {% bootstrap_label '<i class="fa fa-paragraph"></i> Title Contains' label_for="id_title" %}
-                {% bootstrap_field filter.form.title show_label=False size='small' addon_after='<span class="fa fa-times clearinput"></span>' %}
-
                 {% bootstrap_label '<i class="fa fa-crosshairs"></i> Target Name Contains' label_for="id_target" %}
                 {% bootstrap_field filter.form.target show_label=False size='small' %}
 
@@ -78,9 +75,6 @@
 
                 {% bootstrap_label '<i class="fa fa-user"></i> Username Contains' label_for="id_user" %}
                 {% bootstrap_field filter.form.user show_label=False show_help=False size='small' addon_after='<span class="fa fa-times clearinput"></span>' %}
-
-                {% bootstrap_label '<i class="fa fa-wpexplorer"></i> Telescope Class' label_for="id_telescope_class" %}
-                {% bootstrap_field filter.form.telescope_class show_label=False size='small' %}
 
                 <br/>
                 <input type="submit" class="btn btn-info" value="Filter Results"/>

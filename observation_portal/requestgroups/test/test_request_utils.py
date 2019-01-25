@@ -23,7 +23,7 @@ class BaseSetupRequest(ConfigDBTestMixin, SetTimeMixin, TestCase):
                                )
         self.time_allocation_1m0 = mixer.blend(TimeAllocation, proposal=self.proposal, semester=semester,
                                                telescope_class='1m0', std_allocation=100.0, std_time_used=0.0,
-                                               too_allocation=10, too_time_used=0.0, ipp_limit=10.0,
+                                               rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
                                                ipp_time_available=5.0, tc_time_available=10.0, tc_time_used=0.0)
 
         self.rg_single = mixer.blend(RequestGroup, proposal=self.proposal, operator='SINGLE')
@@ -320,7 +320,7 @@ class TestRequestTelescopeStates(TelescopeStatesFakeInput):
                                )
         self.time_allocation_1m0 = mixer.blend(TimeAllocation, proposal=self.proposal, semester=semester,
                                                telescope_class='1m0', std_allocation=100.0, std_time_used=0.0,
-                                               too_allocation=10, too_time_used=0.0, ipp_limit=10.0,
+                                               rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
                                                ipp_time_available=5.0, tc_time_available=10.0, tc_time_used=0.0)
 
         self.rg_single = mixer.blend(RequestGroup, proposal=self.proposal, operator='SINGLE')

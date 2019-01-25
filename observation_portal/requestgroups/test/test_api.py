@@ -124,13 +124,13 @@ class TestUserPostRequestApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         self.time_allocation_1m0_sbig = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=self.semester,
             telescope_class='1m0', instrument_name='1M0-SCICAM-SBIG', std_allocation=100.0, std_time_used=0.0,
-            too_allocation=10, too_time_used=0.0, ipp_limit=10.0, ipp_time_available=5.0
+            rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0, ipp_time_available=5.0
         )
 
         self.time_allocation_2m0_floyds = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=self.semester,
             telescope_class='2m0', instrument_name='2M0-FLOYDS-SCICAM', std_allocation=100.0, std_time_used=0.0,
-            too_allocation=10, too_time_used=0.0, ipp_limit=10.0, ipp_time_available=5.0
+            rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0, ipp_time_available=5.0
         )
 
         self.membership = mixer.blend(Membership, user=self.user, proposal=self.proposal)
@@ -214,18 +214,18 @@ class TestUserPostRequestApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('does not have enough time allocated', str(response.content))
 
-    def test_post_requestgroup_not_enough_too_time_allocation_for_instrument(self):
+    def test_post_requestgroup_not_enough_rr_time_allocation_for_instrument(self):
         bad_data = self.generic_payload.copy()
         bad_data['observation_type'] = RequestGroup.RAPID_RESPONSE
         bad_data['requests'][0]['windows'][0]['start'] = '2016-09-01T00:00:00Z'
         bad_data['requests'][0]['windows'][0]['end'] = '2016-09-01T05:59:59Z'
-        self.time_allocation_1m0_sbig.too_time_used = 9.99
+        self.time_allocation_1m0_sbig.rr_time_used = 9.99
         self.time_allocation_1m0_sbig.save()
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertEqual(response.status_code, 400)
         self.assertIn('does not have enough time allocated', str(response.content))
 
-    def test_post_requestgroup_too_future_start_time(self):
+    def test_post_requestgroup_rr_future_start_time(self):
         bad_data = self.generic_payload.copy()
         bad_data['observation_type'] = RequestGroup.RAPID_RESPONSE
         bad_data['requests'][0]['windows'][0]['start'] = timezone.now() + timedelta(0, 60)
@@ -234,7 +234,7 @@ class TestUserPostRequestApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('cannot be in the future.', str(response.content))
 
-    def test_post_requestgroup_too_within_six_hours(self):
+    def test_post_requestgroup_rr_within_six_hours(self):
         data = self.generic_payload.copy()
         data['observation_type'] = RequestGroup.RAPID_RESPONSE
         data['requests'][0]['windows'][0]['start'] = timezone.now() + timedelta(0)
@@ -242,7 +242,7 @@ class TestUserPostRequestApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:request_groups-list'), data=data)
         self.assertEqual(response.status_code, 201)
 
-    def test_post_requestgroup_too_not_within_six_hours(self):
+    def test_post_requestgroup_rr_not_within_six_hours(self):
         bad_data = self.generic_payload.copy()
         bad_data['observation_type'] = RequestGroup.RAPID_RESPONSE
         bad_data['requests'][0]['windows'][0]['start'] = timezone.now() + timedelta(0)
@@ -530,7 +530,7 @@ class TestRequestIPP(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         self.time_allocation_1m0 = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=semester,
             telescope_class='1m0', instrument_name='1M0-SCICAM-SBIG', std_allocation=100.0, std_time_used=0.0,
-            too_allocation=10, too_time_used=0.0, ipp_limit=10.0, ipp_time_available=5.0
+            rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0, ipp_time_available=5.0
         )
 
         self.generic_payload = copy.deepcopy(generic_payload)
@@ -636,7 +636,7 @@ class TestWindowApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         self.time_allocation_1m0 = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=self.semester,
             telescope_class='1m0', std_allocation=100.0, std_time_used=0.0,
-            too_allocation=10, too_time_used=0.0, ipp_limit=10.0,
+            rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
             ipp_time_available=5.0
         )
         self.generic_payload = copy.deepcopy(generic_payload)
@@ -703,7 +703,7 @@ class TestCadenceApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         self.time_allocation_1m0 = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=semester,
             telescope_class='1m0', std_allocation=100.0, std_time_used=0.0,
-            too_allocation=10, too_time_used=0.0, ipp_limit=10.0,
+            rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
             ipp_time_available=5.0, instrument_name='1M0-SCICAM-SBIG'
         )
 
@@ -814,14 +814,14 @@ class TestSiderealTarget(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         self.time_allocation_1m0_sbig = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=semester,
             telescope_class='1m0', instrument_name='1M0-SCICAM-SBIG', std_allocation=100.0,
-            std_time_used=0.0, too_allocation=10, too_time_used=0.0, ipp_limit=10.0,
+            std_time_used=0.0, rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
             ipp_time_available=5.0
         )
 
         self.time_allocation_2m0_floyds = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=semester,
             telescope_class='2m0', instrument_name='2M0-FLOYDS-SCICAM', std_allocation=100.0, std_time_used=0.0,
-            too_allocation=10, too_time_used=0.0, ipp_limit=10.0, ipp_time_available=5.0
+            rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0, ipp_time_available=5.0
         )
 
         mixer.blend(Membership, user=self.user, proposal=self.proposal)
@@ -902,7 +902,7 @@ class TestNonSiderealTarget(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         self.time_allocation_1m0 = mixer.blend(TimeAllocation, proposal=self.proposal, semester=semester,
                                                telescope_class='1m0', std_allocation=100.0, std_time_used=0.0,
                                                instrument_name='1M0-SCICAM-SBIG',
-                                               too_allocation=10, too_time_used=0.0, ipp_limit=10.0,
+                                               rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
                                                ipp_time_available=5.0)
 
         mixer.blend(Membership, user=self.user, proposal=self.proposal)
@@ -1009,7 +1009,7 @@ class TestSatelliteTarget(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         self.time_allocation_1m0 = mixer.blend(TimeAllocation, proposal=self.proposal, semester=semester,
                                                telescope_class='1m0', std_allocation=100.0, std_time_used=0.0,
                                                instrument_name='1M0-SCICAM-SBIG',
-                                               too_allocation=10, too_time_used=0.0, ipp_limit=10.0,
+                                               rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
                                                ipp_time_available=5.0)
 
         mixer.blend(Membership, user=self.user, proposal=self.proposal)
@@ -1057,11 +1057,11 @@ class TestLocationApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
 
         self.time_allocation_1m0 = mixer.blend(TimeAllocation, proposal=self.proposal, semester=semester,
                                                telescope_class='1m0', std_allocation=100.0, std_time_used=0.0,
-                                               too_allocation=10, too_time_used=0.0, ipp_limit=10.0,
+                                               rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
                                                ipp_time_available=5.0, instrument_name='1M0-SCICAM-SBIG')
         self.time_allocation_2m0 = mixer.blend(TimeAllocation, proposal=self.proposal, semester=semester,
                                                telescope_class='2m0', std_allocation=100.0, std_time_used=0.0,
-                                               too_allocation=10, too_time_used=0.0, ipp_limit=10.0,
+                                               rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
                                                ipp_time_available=5.0, instrument_name='2M0-FLOYDS-SCICAM')
 
         mixer.blend(Membership, user=self.user, proposal=self.proposal)
@@ -1528,7 +1528,7 @@ class TestBlocksApi(APITestCase):
         responses.add(
             responses.GET,
             '{0}/blocks/?request_num={1}&limit=1000'.format(
-                settings.POND_URL, self.request.get_id_display().zfill(10)
+                'http://configdbdev.lco.gtn', self.request.get_id_display().zfill(10)
             ),
             json={'next': None, 'results': []},
             status=200
@@ -1542,7 +1542,7 @@ class TestBlocksApi(APITestCase):
             responses.add(
                 responses.GET,
                 '{0}/blocks/?request_num={1}&limit=1000'.format(
-                    settings.POND_URL, self.request.get_id_display().zfill(10)
+                    'http://configdbdev.lco.gtn', self.request.get_id_display().zfill(10)
                 ),
                 json=json.loads(f.read()),
                 status=200
@@ -1556,7 +1556,7 @@ class TestBlocksApi(APITestCase):
             responses.add(
                 responses.GET,
                 '{0}/blocks/?request_num={1}&limit=1000'.format(
-                    settings.POND_URL, self.request.get_id_display().zfill(10)
+                    'http://configdbdev.lco.gtn', self.request.get_id_display().zfill(10)
                 ),
                 json=json.loads(f.read()),
                 status=200
@@ -1787,7 +1787,7 @@ class TestUpdateRequestStatesAPI(APITestCase):
         mixer.cycle(3).blend(Window, request=(r for r in self.requests), start=now - timedelta(days=2),
                              end=now + timedelta(days=1))
 
-        responses.add(responses.GET, settings.POND_URL + '/blocks/',
+        responses.add(responses.GET, 'http://configdbdev.lco.gtn' + '/blocks/',
                 json={'next': None, 'results': pond_blocks}, status=200)
         one_week_ahead = timezone.now() + timedelta(weeks=1)
         response = self.client.get(reverse('api:isDirty') + '?last_query_time=' + parse.quote(one_week_ahead.isoformat()))
@@ -1809,7 +1809,7 @@ class TestUpdateRequestStatesAPI(APITestCase):
         pond_blocks = basic_mixer.cycle(3).blend(PondBlock, molecules=(m for m in [molecules1, molecules2, molecules3]),
                                                  start=now + timedelta(minutes=30), end=now + timedelta(minutes=40))
         pond_blocks = [pb._to_dict() for pb in pond_blocks]
-        responses.add(responses.GET, settings.POND_URL + '/blocks/',
+        responses.add(responses.GET, 'http://configdbdev.lco.gtn' + '/blocks/',
                 json={'next': None, 'results': pond_blocks}, status=200)
 
         one_week_ahead = timezone.now() + timedelta(weeks=1)
@@ -1837,7 +1837,7 @@ class TestUpdateRequestStatesAPI(APITestCase):
         pond_blocks = basic_mixer.cycle(3).blend(PondBlock, molecules=(m for m in [molecules1, molecules2, molecules3]),
                                                  start=now - timedelta(minutes=30), end=now - timedelta(minutes=20))
         pond_blocks = [pb._to_dict() for pb in pond_blocks]
-        responses.add(responses.GET, settings.POND_URL + '/blocks/',
+        responses.add(responses.GET, 'http://configdbdev.lco.gtn' + '/blocks/',
                 json={'next': None, 'results': pond_blocks}, status=200)
 
         response = self.client.get(reverse('api:isDirty'))
@@ -1854,7 +1854,7 @@ class TestUpdateRequestStatesAPI(APITestCase):
 
     @responses.activate
     def test_bad_data_from_pond(self, modify_mock):
-        responses.add(responses.GET, settings.POND_URL + '/blocks/',
+        responses.add(responses.GET, 'http://configdbdev.lco.gtn' + '/blocks/',
                       body='Internal Server Error', status=500, content_type='application/json')
 
         response = self.client.get(reverse('api:isDirty'))
@@ -1877,7 +1877,7 @@ class TestSchedulableRequestsApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         self.time_allocation_1m0 = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=semester,
             telescope_class='1m0', instrument_name='1M0-SCICAM-SBIG', std_allocation=100.0, std_time_used=0.0,
-            too_allocation=10, too_time_used=0.0, ipp_limit=10.0,
+            rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
             ipp_time_available=5.0
         )
 
@@ -2214,12 +2214,12 @@ class TestMaxIppUserrequestApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         self.time_allocation_1m0_sbig = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=self.semester, telescope_class='1m0',
             instrument_name='1M0-SCICAM-SBIG', std_allocation=100.0, std_time_used=0.0,
-            too_allocation=10.0, too_time_used=0.0, ipp_limit=10.0, ipp_time_available=1.0
+            rr_allocation=10.0, rr_time_used=0.0, ipp_limit=10.0, ipp_time_available=1.0
         )
         self.time_allocation_0m4_sbig = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=self.semester, telescope_class='0m4',
             instrument_name='0M4-SCICAM-SBIG', std_allocation=100.0, std_time_used=0.0,
-            too_allocation=10.0, too_time_used=0.0, ipp_limit=10.0, ipp_time_available=1.0
+            rr_allocation=10.0, rr_time_used=0.0, ipp_limit=10.0, ipp_time_available=1.0
         )
         self.user = mixer.blend(User)
         mixer.blend(Membership, user=self.user, proposal=self.proposal)

@@ -13,7 +13,7 @@
       <div class="row">
         <div class="col-md-4 requestgroup-block border-right">
           <p><i class="fa fa-clock-o" ></i> <span class="tt" title="Total exposure time + observing overhead"> Duration: {{ request.duration }} seconds</span></p>
-          <p><i class="fa fa-camera"></i> Instrument: {{ request.molecules.all.0.instrument_name|instrument_code_to_name }}</p>
+          <p><i class="fa fa-camera"></i> Instrument: {{ request.configurations.all.0.instrument_name|instrument_code_to_name }}</p>
         </div>
         <div class="col-md-4 requestgroup-block border-right">
           <p>

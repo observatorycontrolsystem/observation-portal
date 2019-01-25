@@ -13,7 +13,7 @@ from observation_portal.common.test_telescope_states import TelescopeStatesFromF
 from observation_portal.common.test_helpers import ConfigDBTestMixin
 
 
-class TestUserRequestList(TestCase):
+class TestRequestGroupList(TestCase):
     def setUp(self):
         self.user = mixer.blend(User)
         mixer.blend(Profile, user=self.user)
@@ -30,17 +30,17 @@ class TestUserRequestList(TestCase):
         )
         self.client.force_login(self.user)
 
-    def test_userrequest_list(self):
+    def test_requestgroup_list(self):
         response = self.client.get(reverse('requestgroups:list'))
         for rg in self.request_groups:
             self.assertContains(response, rg.name)
 
-    def test_userrequest_no_auth(self):
+    def test_requestgroup_no_auth(self):
         self.client.logout()
         response = self.client.get(reverse('requestgroups:list'))
         self.assertContains(response, 'Register an Account')
 
-    def test_userrequest_admin(self):
+    def test_requestgroup_admin(self):
         user = mixer.blend(User, is_staff=True)
         mixer.blend(Profile, user=user)
         self.client.force_login(user)
@@ -48,15 +48,15 @@ class TestUserRequestList(TestCase):
         for rg in self.request_groups:
             self.assertNotContains(response, rg.name)
 
-    def test_userrequest_admin_staff_view_enabled(self):
+    def test_requestgroup_admin_staff_view_enabled(self):
         user = mixer.blend(User, is_staff=True)
         mixer.blend(Profile, user=user, staff_view=True)
         self.client.force_login(user)
         response = self.client.get(reverse('requestgroups:list'))
-        for ur in self.userrequests:
-            self.assertContains(response, ur.group_id)
+        for rg in self.requestgroups:
+            self.assertContains(response, rg.group_id)
 
-    def test_userrequest_list_only_authored(self):
+    def test_requestgroup_list_only_authored(self):
         self.user.profile.view_authored_requests_only = True
         self.user.profile.save()
         self.request_groups[0].submitter = self.user
@@ -67,9 +67,9 @@ class TestUserRequestList(TestCase):
 
     def test_no_other_requests(self):
         proposal = mixer.blend(Proposal)
-        other_ur = mixer.blend(RequestGroup, proposal=proposal, name=mixer.RANDOM)
+        other_rg = mixer.blend(RequestGroup, proposal=proposal, name=mixer.RANDOM)
         response = self.client.get(reverse('requestgroups:list'))
-        self.assertNotContains(response, other_ur.name)
+        self.assertNotContains(response, other_rg.name)
 
     def test_filtering(self):
         response = self.client.get(
@@ -93,24 +93,24 @@ class TestUserrequestDetail(ConfigDBTestMixin, TestCase):
             mixer.blend(Configuration, request=request, instrument_name='1M0-SCICAM-SBIG')
         self.client.force_login(self.user)
 
-    def test_userrequest_detail(self):
+    def test_requestgroup_detail(self):
         response = self.client.get(reverse('requestgroups:detail', kwargs={'pk': self.request_group.id}))
         for request in self.requests:
             self.assertContains(response, request.id)
 
-    def test_userrequest_detail_no_auth(self):
+    def test_requestgroup_detail_no_auth(self):
         self.client.logout()
         response = self.client.get(reverse('requestgroups:detail', kwargs={'pk': self.request_group.id}))
         self.assertEqual(response.status_code, 404)
 
-    def test_userrequest_detail_admin(self):
+    def test_requestgroup_detail_admin(self):
         user = mixer.blend(User, is_staff=True)
         mixer.blend(Profile, user=user)
         self.client.force_login(user)
         response = self.client.get(reverse('requestgroups:detail', kwargs={'pk': self.request_group.id}))
         self.assertEqual(response.status_code, 404)
 
-    def test_userrequest_detail_admin_staff_view_enabled(self):
+    def test_requestgroup_detail_admin_staff_view_enabled(self):
         user = mixer.blend(User, is_staff=True)
         mixer.blend(Profile, user=user, staff_view=True)
         self.client.force_login(user)
@@ -118,7 +118,7 @@ class TestUserrequestDetail(ConfigDBTestMixin, TestCase):
         for request in self.requests:
             self.assertContains(response, request.id)
 
-    def test_userrequest_detail_only_authored(self):
+    def test_requestgroup_detail_only_authored(self):
         self.user.profile.view_authored_requests_only = True
         self.user.profile.save()
         request_group = mixer.blend(RequestGroup, proposal=self.proposal, name=mixer.RANDOM, submitter=self.user)
@@ -127,7 +127,7 @@ class TestUserrequestDetail(ConfigDBTestMixin, TestCase):
         response = self.client.get(reverse('requestgroups:detail', kwargs={'pk': request_group.id}))
         self.assertContains(response, request_group.name)
 
-    def test_public_userrequest_no_auth(self):
+    def test_public_requestgroup_no_auth(self):
         proposal = mixer.blend(Proposal, public=True)
         self.request_group.proposal = proposal
         self.request_group.save()
