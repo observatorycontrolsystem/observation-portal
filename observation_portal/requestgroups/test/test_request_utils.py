@@ -7,7 +7,7 @@ from unittest.mock import patch
 from observation_portal.requestgroups.request_utils import (get_airmasses_for_request_at_sites, get_telescope_states_for_request,
                                                  get_rise_set_intervals)
 from observation_portal.requestgroups.models import (Request, Configuration, Target, RequestGroup, Window, Location,
-                                                     Constraints, InstrumentConfig)
+                                                     Constraints, InstrumentConfig, AcquisitionConfig, GuidingConfig)
 from observation_portal.proposals.models import Proposal, TimeAllocation, Semester
 from observation_portal.common.test_telescope_states import TelescopeStatesFakeInput
 from observation_portal.common.test_helpers import ConfigDBTestMixin, SetTimeMixin
@@ -37,7 +37,8 @@ class BaseSetupRequest(ConfigDBTestMixin, SetTimeMixin, TestCase):
             InstrumentConfig, configuration=self.configuration, exposure_time=600, exposure_count=2,
             optical_elements={'filter': 'blah'}, bin_x=2, bin_y=2
         )
-
+        self.acquisition_config = mixer.blend(AcquisitionConfig, configuration=self.configuration)
+        self.guiding_config = mixer.blend(GuidingConfig, configuration=self.configuration)
         mixer.blend(Window, request=self.request, start=datetime(2016, 10, 1, tzinfo=timezone.utc),
                     end=datetime(2016, 10, 8, tzinfo=timezone.utc))
 
@@ -45,7 +46,7 @@ class BaseSetupRequest(ConfigDBTestMixin, SetTimeMixin, TestCase):
                     proper_motion_ra=0.0, proper_motion_dec=0.0)
 
         self.location = mixer.blend(Location, request=self.request, telescope_class='1m0')
-        mixer.blend(Constraints, request=self.request)
+        mixer.blend(Constraints, configuration=self.configuration)
 
 
 class TestRequestIntervals(BaseSetupRequest):
@@ -334,6 +335,8 @@ class TestRequestTelescopeStates(TelescopeStatesFakeInput):
             InstrumentConfig, configuration=self.configuration, exposure_time=600, exposure_count=2,
             optical_elements={'filter': 'blah'}, bin_x=2, bin_y=2
         )
+        self.acquisition_config = mixer.blend(AcquisitionConfig, configuration=self.configuration)
+        self.guiding_config = mixer.blend(GuidingConfig, configuration=self.configuration)
 
         mixer.blend(Window, request=self.request, start=datetime(2016, 10, 1, tzinfo=timezone.utc),
                     end=datetime(2016, 10, 2, tzinfo=timezone.utc))
