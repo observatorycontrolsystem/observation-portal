@@ -18,18 +18,17 @@ class BaseSetupRequest(ConfigDBTestMixin, SetTimeMixin, TestCase):
         super().setUp()
 
         self.proposal = mixer.blend(Proposal)
-        semester = mixer.blend(Semester, id='2016B', start=datetime(2016, 9, 1, tzinfo=timezone.utc),
-                               end=datetime(2016, 12, 31, tzinfo=timezone.utc)
-                               )
-        self.time_allocation_1m0 = mixer.blend(TimeAllocation, proposal=self.proposal, semester=semester,
-                                               telescope_class='1m0', std_allocation=100.0, std_time_used=0.0,
-                                               rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
-                                               ipp_time_available=5.0, tc_time_available=10.0, tc_time_used=0.0)
-
+        semester = mixer.blend(
+            Semester, id='2016B', start=datetime(2016, 9, 1, tzinfo=timezone.utc),
+            end=datetime(2016, 12, 31, tzinfo=timezone.utc)
+        )
+        self.time_allocation_1m0 = mixer.blend(
+            TimeAllocation, proposal=self.proposal, semester=semester, std_allocation=100.0, std_time_used=0.0,
+            rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0, ipp_time_available=5.0, tc_time_available=10.0,
+            tc_time_used=0.0
+        )
         self.rg_single = mixer.blend(RequestGroup, proposal=self.proposal, operator='SINGLE')
-
         self.request = mixer.blend(Request, request_group=self.rg_single)
-
         self.configuration = mixer.blend(
             Configuration, request=self.request, instrument_name='1M0-SCICAM-SBIG', type='EXPOSE'
         )
@@ -39,12 +38,14 @@ class BaseSetupRequest(ConfigDBTestMixin, SetTimeMixin, TestCase):
         )
         self.acquisition_config = mixer.blend(AcquisitionConfig, configuration=self.configuration)
         self.guiding_config = mixer.blend(GuidingConfig, configuration=self.configuration)
-        mixer.blend(Window, request=self.request, start=datetime(2016, 10, 1, tzinfo=timezone.utc),
-                    end=datetime(2016, 10, 8, tzinfo=timezone.utc))
-
-        mixer.blend(Target, configuration=self.configuration, type='SIDEREAL', ra=22, dec=-33,
-                    proper_motion_ra=0.0, proper_motion_dec=0.0)
-
+        mixer.blend(
+            Window, request=self.request, start=datetime(2016, 10, 1, tzinfo=timezone.utc),
+            end=datetime(2016, 10, 8, tzinfo=timezone.utc)
+        )
+        mixer.blend(
+            Target, configuration=self.configuration, type='SIDEREAL', ra=22, dec=-33, proper_motion_ra=0.0,
+            proper_motion_dec=0.0
+        )
         self.location = mixer.blend(Location, request=self.request, telescope_class='1m0')
         mixer.blend(Constraints, configuration=self.configuration)
 
