@@ -27,6 +27,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+SITE_ID = 1
+ACCOUNT_ACTIVATION_DAYS = 7
 
 # Application definition
 
