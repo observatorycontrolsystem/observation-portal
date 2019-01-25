@@ -13,6 +13,7 @@ from observation_portal.celery import send_mail
 from observation_portal.proposals.models import (
     Semester, TimeAllocation, Proposal, ScienceCollaborationAllocation, Membership
 )
+from observation_portal.common.configdb import configdb
 
 
 class NoTimeAllocatedError(Exception):
@@ -130,20 +131,13 @@ class ScienceApplication(models.Model):
 
     @property
     def time_requested_by_class(self):
-        return {
-            '1m0': sum(
-                    sum([tr.std_time, tr.rr_time, tr.tc_time])
-                    for tr in self.timerequest_set.filter(instrument__telescope_class='1m0')
-                    ),
-            '2m0': sum(
-                    sum([tr.std_time, tr.rr_time, tr.tc_time])
-                    for tr in self.timerequest_set.filter(instrument__telescope_class='2m0')
-                    ),
-            '0m4': sum(
-                    sum([tr.std_time, tr.rr_time, tr.tc_time])
-                    for tr in self.timerequest_set.filter(instrument__telescope_class='0m4')
-                    )
-        }
+        telescope_instrument_types = configdb.get_instrument_types_per_telescope_class()
+        time_requests = {}
+        for tel_code, instrument_types in telescope_instrument_types.items():
+            time_requests[tel_code] = sum(
+                sum([tr.std_time, tr.rr_time, tr.tc_time]) for tr in self.timerequest_set.filter(
+                    instrument__code__in=list(instrument_types)))
+        return time_requests
 
     def get_absolute_url(self):
         return reverse('sciapplications:detail', args=(self.id,))

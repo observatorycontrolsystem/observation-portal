@@ -122,6 +122,21 @@ class ConfigDB(object):
 
         return telescope_instrument_types
 
+    def get_instrument_types_per_telescope_class(self, only_schedulable=False):
+        '''
+            Function returns a set of instrument types per class of telescope (1m0, 0m4)
+        :param only_schedulable:
+        :return:
+        '''
+        telescope_instrument_types = {}
+        for instrument in self.get_instruments(only_schedulable=only_schedulable):
+            tel_code = instrument['telescope_key'].telescope[:3]
+            if tel_code not in telescope_instrument_types:
+                telescope_instrument_types[tel_code] = set()
+            telescope_instrument_types[tel_code].add(instrument['science_camera']['camera_type']['code'].upper())
+
+        return telescope_instrument_types
+
     def get_telescopes_per_instrument_type(self, instrument_type, only_schedulable=False):
         '''
         Function returns a set of telescope keys that have an instrument of instrument_type

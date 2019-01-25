@@ -54,7 +54,8 @@ class ScienceCollaborationAllocation(models.Model):
         }
         for sciapp in self.admin.scienceapplication_set.filter(call__semester=semester, call__proposal_type='COLAB'):
             for k, v in sciapp.time_requested_by_class.items():
-                allocs[k] += v
+                if k in allocs:
+                    allocs[k] += v
 
         return allocs
 

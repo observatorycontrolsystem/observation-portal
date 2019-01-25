@@ -656,6 +656,7 @@ class TestSciAppIndex(TestCase):
         response = self.client.get(reverse('sciapplications:index'))
         self.assertContains(response, '{0}/{1}'.format(tr.std_time, sca.one_meter_alloc))
 
+
 class TestSciAppDetail(TestCase):
     def setUp(self):
         self.semester = mixer.blend(

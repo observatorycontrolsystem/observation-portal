@@ -159,7 +159,23 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
-STATIC_URL = '/static/'
+AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_BUCKET_NAME', 'observe.lco.global')
+AWS_REGION = os.getenv('AWS_REGION', 'us-west-2')
+AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID', None)
+AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY', None)
+AWS_S3_CUSTOM_DOMAIN = 's3-us-west-2.amazonaws.com/{}'.format(AWS_STORAGE_BUCKET_NAME)
+AWS_IS_GZIPPED = True
+AWS_DEFAULT_ACL = None
+
+STATICFILES_DIR = 'static'
+STATIC_URL = "https://{}/{}/".format(AWS_S3_CUSTOM_DOMAIN, STATICFILES_DIR) if AWS_ACCESS_KEY_ID else '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, '_static')
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+STATICFILES_STORAGE = os.getenv('STATIC_STORAGE', 'django.contrib.staticfiles.storage.StaticFilesStorage')
+MEDIAFILES_DIR = 'media'
+MEDIA_URL = "https://{}/{}/".format(AWS_S3_CUSTOM_DOMAIN, MEDIAFILES_DIR) if AWS_ACCESS_KEY_ID else '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+DEFAULT_FILE_STORAGE = os.getenv('MEDIA_STORAGE', 'django.core.files.storage.FileSystemStorage')
 
 EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
 EMAIL_USE_TLS = True
