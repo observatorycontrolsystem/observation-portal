@@ -2296,7 +2296,7 @@ class TestFiltering(APITestCase):
     def test_filtering_works(self):
         proposal = mixer.blend(Proposal, public=True)
         mixer.blend(RequestGroup, name='filter on me', proposal=proposal)
-        response = self.client.get(reverse('api:request_groups-list') + '?title=filter')
+        response = self.client.get(reverse('api:request_groups-list') + '?name=filter')
         self.assertEqual(response.json()['count'], 1)
-        response = self.client.get(reverse('api:request_groups-list') + '?title=philbobaggins')
+        response = self.client.get(reverse('api:request_groups-list') + '?name=philbobaggins')
         self.assertEqual(response.json()['count'], 0)
