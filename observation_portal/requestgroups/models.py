@@ -352,6 +352,7 @@ class Configuration(models.Model):
     def as_dict(self):
         cdict = model_to_dict(self, exclude=self.SERIALIZER_EXCLUDE)
         cdict['instrument_configs'] = [ic.as_dict for ic in self.instrument_configs.all()]
+        cdict['constraints'] = self.constraints.as_dict
         cdict['acquisition_config'] = self.acquisition_config.as_dict
         cdict['guiding_config'] = self.guiding_config.as_dict
         cdict['target'] = self.target.as_dict
