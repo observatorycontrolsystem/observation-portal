@@ -1,0 +1,288 @@
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+    font-size: 14px;
+    line-height: 1.42857143;
+    color: #333;
+    margin-bottom: 45px;
+}
+
+p {
+    margin: 0 0 10px;
+}
+
+a:hover {
+    color: #337ab7;
+    text-decoration: none;
+}
+
+#lco-name {
+    padding-top: 10px !important;
+    line-height: 1.1em;
+}
+
+.grey {
+    color: #333;
+}
+
+#lco-name > .basic {
+    font-size: 15px;
+    color: green;
+    font-weight: 600;
+}
+
+.nav > li > a:focus, .nav > li > a:hover {
+    background-color: inherit;
+}
+
+.footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  /* Set the fixed height of the footer here */
+  height: 45px;
+  text-align: center;
+}
+
+.progress-bar {
+    background-color: #009ec3;
+}
+
+.nav-tabs > li > a {
+    cursor: pointer;
+}
+
+.downPage .nav>li>a:hover {
+    color: inherit;
+}
+
+
+.btn-xs {
+    padding: 2px 4px;
+}
+
+.caret {
+    display: inline-block;
+}
+
+.noauth {
+    line-height: 1.4em;
+}
+
+.noauth li {
+    height: 75px;
+}
+
+.noauth span {
+    vertical-align: middle;
+    padding-top: 5px;
+}
+
+.empty-requests {
+    margin-top: 50px;
+}
+
+.sidebar-nav {
+    font-size: 1.3em;
+}
+
+.sidebar-nav li {
+    height: 50px;
+}
+
+.thumbnail {
+    margin-bottom: 0px;
+}
+
+.thumnail-small {
+    max-height: 75px;
+}
+
+.downPage ul.nav {
+    width: auto;
+}
+
+.navbar-main {
+    padding-top: 20px;
+    width: 80% !important;
+}
+
+.navbar-right {
+    padding-top: 20px;
+    width: auto;
+}
+
+
+.head.downPage .headNav {
+    font-size: 1.2em;
+    width: 75%;
+}
+
+.head {
+    box-shadow: none;
+}
+
+.head .headNav a {
+    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+}
+
+.btn {
+    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+    line-height: 1.42857143;
+    text-transform: none;
+    font-size: 14px;
+}
+
+.intro {
+    max-height: 10px;
+}
+
+.userrequest {
+    border: 1px solid #EFF0EC;
+    min-height: 75px;
+    margin: 0px;
+
+}
+
+.userrequest-title {
+    font-size: 1.2em;
+    font-weight: 900;
+    margin-left: 4px;
+}
+
+.userrequest-success {
+    background: linear-gradient(to right,#3c763d 0,#3c763d 10px,#fff 10px,#fff 100%) no-repeat;
+}
+
+.userrequest-warning {
+    background: linear-gradient(to right,#8a6d3b 0,#8a6d3b 10px,#fff 10px,#fff 100%) no-repeat;
+}
+
+.userrequest-danger {
+    background: linear-gradient(to right,#a94442 0,#a94442 10px,#fff 10px,#fff 100%) no-repeat;
+}
+
+.userrequest-info {
+    background: linear-gradient(to right,#31708f 0,#31708f 10px,#fff 10px,#fff 100%) no-repeat;
+}
+
+.userrequest-block > p {
+    margin: 3px;
+}
+
+.userrequest-block.border-right {
+    border-right: 1px solid #EFF0EC;
+}
+
+.request-block {
+    border: 1px solid #ffffff;
+    min-height: 75px;
+    background-color: #eee;
+}
+
+.request-id {
+    margin-left: -5px;
+}
+
+.request-icon {
+    margin-left: 5px;
+    margin-top: 10px;
+}
+
+.request-count {
+    font-size: 1.9em;
+    margin-top: 15px;
+    margin-bottom: 5px;
+}
+.request-additional {
+    padding-top: 20px;
+    font-size: 1.5em;
+}
+
+.no-requests {
+    font-size: 1.5em;
+}
+
+.no-requests > p {
+    margin-top: 20px;
+}
+
+.child-requests {
+    line-height: 0.9;
+    margin-bottom: 0px;
+}
+
+.request-detail {
+    border-left: 1px solid #EFF0EC;
+    border-right: 1px solid #EFF0EC;
+}
+
+.request-show {
+    border: 1px solid #EFF0EC;
+    border-top: 0px solid #EFF0EC;
+}
+
+.request-show:hover{
+    background-color: #F5F5F5;
+    cursor: pointer;
+}
+
+.request-show p {
+    margin: 0px;
+}
+
+.spacer {
+    margin-bottom: 10px;
+}
+
+.compose-help {
+    font-size: 0.9em;
+}
+
+#tabs > ul {
+    border-bottom: 0px;
+}
+
+.duration {
+    text-align: right;
+    margin-bottom: 10px;
+}
+
+.collapse-inline {
+    display: inline-block;
+    height: 20px;
+    margin-right: 15px;
+    margin-bottom: 15px;
+}
+
+.request-margin {
+    height: 40px;
+}
+
+.bg-grey {
+    background-color: #f9f9f9;
+}
+
+.progress-bar {
+    font-family: sans-serif;
+}
+
+.help-list > li {
+    height: 30px;
+}
+
+.pagination > li > a {
+    color: #009cc3;
+}
+
+.pagination > .active > a {
+    background-color: #009cc3;
+}
+
+.pagination > .active > a:hover {
+    background-color: #009cc3;
+}

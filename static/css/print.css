@@ -1,0 +1,51 @@
+@page {
+  size: 8.5in 11in;
+  margin: 2.5cm;
+}
+body {
+    margin: 15px;
+    font: 11pt sans-serif;
+    line-height: 1.1;
+}
+table {
+    border-collapse:collapse;
+    border-spacing: 10px;
+    table-layout: fixed;
+}
+th, td {
+  border: 1px solid black;
+}
+td, th {
+  padding: 5px;
+  max-width: 200px;
+  word-wrap: break-word;
+}
+h1 {
+    font-size: 24px;
+}
+h2 {
+    font-size: 16px;
+}
+p {
+    page-break-inside: avoid;
+    text-align: justify;
+}
+.page-break {
+  page-break-after: always;
+}
+.center {
+  text-align: center;
+}
+
+.coi td{
+  border: none;
+}
+
+.coi th {
+  border-top: none;
+  border-left: none;
+  border-right: none;
+}
+.coi{
+  border-bottom: 1px solid black;
+}

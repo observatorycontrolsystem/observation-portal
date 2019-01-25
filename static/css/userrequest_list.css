@@ -1,0 +1,17 @@
+#filter > .form-group {
+    margin-bottom: 5px;
+}
+
+.pagination {
+    padding-left: 15px;
+}
+
+.title {
+    font-size: 1.8em;
+}
+
+.userrequest p {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
