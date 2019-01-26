@@ -148,6 +148,15 @@ class ConfigDB(object):
                 instrument_telescopes.add(instrument['telescope_key'])
         return instrument_telescopes
 
+    def get_configuration_types(self, instrument_type):
+        configuration_types = set()
+        for instrument in self.get_instruments():
+            if (instrument_type.upper() == instrument['science_camera']['camera_type']['code'].upper() or
+                    instrument_type.upper() == instrument['science_camera']['code'].upper()):
+                configuration_types.update(instrument['science_camera']['camera_type']['configuration_types'])
+
+        return configuration_types
+
     def get_optical_elements(self, instrument_type):
         '''
         Function returns the optical elements available for the instrument type specified using configd
@@ -282,7 +291,7 @@ class ConfigDB(object):
                 valid_autoguiders.add(instrument['autoguider_camera']['camera_type']['code'].upper())
                 valid_autoguiders.add(instrument['autoguider_camera']['code'].upper())
 
-        return list(valid_autoguiders)
+        return valid_autoguiders
 
     def get_exposure_overhead(self, instrument_type, binning, readout_mode=''):
         # using the instrument type, build an instrument with the correct configdb parameters

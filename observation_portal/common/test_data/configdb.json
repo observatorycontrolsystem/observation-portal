@@ -39,6 +39,7 @@
                         "binning": 2,
                         "readout": 14.5
                       },
+                      "configuration_types": ["EXPOSE", "BIAS", "DARK", "SCRIPT"],
                       "default_acceptability_threshold": 90,
                       "config_change_time": 0,
                       "acquire_processing_time": 0,
@@ -142,6 +143,7 @@
                         "binning": 1,
                         "readout": 25
                       },
+                      "configuration_types": ["SPECTRUM", "LAMP_FLAT", "ARC", "SCRIPT"],
                       "default_acceptability_threshold": 100,
                       "mode_set": [
                         {
@@ -248,6 +250,7 @@
                         "binning": 2,
                         "readout": 14.5
                       },
+                      "configuration_types": ["EXPOSE", "BIAS", "DARK", "SCRIPT"],
                       "default_acceptability_threshold": 100,
                       "config_change_time": 0,
                       "acquire_processing_time": 0,
@@ -345,6 +348,7 @@
                         "binning": 2,
                         "readout": 90.5
                       },
+                      "configuration_types": ["NRES_SPECTRUM", "LAMP_FLAT", "ARC", "SCRIPT"],
                       "default_acceptability_threshold": 100,
                       "config_change_time": 0,
                       "acquire_processing_time": 90,
@@ -396,8 +400,6 @@
                     },
                     "filters": "air",
                     "optical_element_groups": [
-                      {
-                      }
                     ]
                   },
                   "__str__": "tst.domb.1m0a.nresXX-nresXX"
@@ -426,6 +428,7 @@
                         "binning": 1,
                         "readout": 25
                       },
+                      "configuration_types": ["SPECTRUM", "LAMP_FLAT", "ARC", "SCRIPT"],
                       "default_acceptability_threshold": 100,
                       "mode_set": [
                         {

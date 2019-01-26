@@ -1229,7 +1229,7 @@ class TestConfigurationApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         bad_data = self.generic_payload.copy()
         bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter'] = 'magic'
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertIn('Invalid filter', str(response.content))
+        self.assertIn('optical element magic of type filter is not available', str(response.content))
         self.assertEqual(response.status_code, 400)
 
     def test_filter_not_necessary_for_type(self):
@@ -1265,11 +1265,10 @@ class TestConfigurationApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
     def test_slit_not_necessary_for_nres(self):
         good_data = self.generic_payload.copy()
         del good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
+        good_data['requests'][0]['configurations'][0]['instrument_name'] = '1M0-NRES-SCICAM'
         good_data['requests'][0]['configurations'][0]['type'] = 'NRES_SPECTRUM'
         good_data['requests'][0]['configurations'][0]['guiding_config']['state'] = 'ON'
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
-        import logging
-        logging.critical(response.content)
         self.assertEqual(response.status_code, 201)
 
         good_data['requests'][0]['configurations'][0]['type'] = 'NRES_EXPOSE'
@@ -1315,7 +1314,7 @@ class TestConfigurationApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         del bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
         bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['slit'] = 'slit_really_small'
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertIn('Invalid spectra slit', str(response.content))
+        self.assertIn('optical element slit_really_small of type slit is not available', str(response.content))
         self.assertEqual(response.status_code, 400)
 
     def test_invalid_binning_for_instrument(self):

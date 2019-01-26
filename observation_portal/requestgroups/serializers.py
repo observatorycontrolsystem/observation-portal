@@ -204,6 +204,7 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                     raise serializers.ValidationError(_("Acquisition Mode {} required extra param of {} to be set"
                                                         .format(acquisition_mode['code'], field)))
 
+        available_optical_elements = configdb.get_optical_elements(data['instrument_name'])
         for instrument_config in data['instrument_configs']:
             if ('mode' not in instrument_config or not instrument_config['mode']) and 'readout' in default_modes:
                 if 'bin_x' not in instrument_config and 'bin_y' not in instrument_config:
@@ -225,10 +226,16 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                 elif instrument_config['bin_x'] != readout_mode['params']['binning']:
                     raise serializers.ValidationError(_("{} binning is not a valid binning on readout mode {} for instrument type {}"
                                                         .format(instrument_config['bin_x'], instrument_config['mode'], data['instrument_name'])))
+            for oe_type, value in instrument_config['optical_elements'].items():
+                plural_type = '{}s'.format(oe_type)
+                available_elements = [element['code'] for element in available_optical_elements[plural_type]]
+                if plural_type in available_optical_elements and value not in available_elements:
+                    raise serializers.ValidationError(_("optical element {} of type {} is not available".format(
+                        value, oe_type
+                    )))
 
 
-        # TODO: guiding config parameter for self-guiding rather than doing this check
-        # # Validate autoguiders - empty string for default behavior, or match with instrument name for self guiding
+        # Validate autoguiders - empty string for default behavior, or match with instrument name for self guiding
         valid_autoguiders = configdb.get_autoguiders_for_science_camera(data['instrument_name'])
         if guiding_config['name'].upper() not in valid_autoguiders:
             raise serializers.ValidationError(_("Guiding instrument {} is not allowed for science instrument {}")
@@ -239,6 +246,12 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     _("Must specify a script_name in extra_params for SCRIPT configuration type")
                 )
+
+        if data['type'] not in configdb.get_configuration_types(data['instrument_name']):
+            raise serializers.ValidationError(_("configuration type {} is not valid for instrument {}").format(
+                data['type'], data['instrument_name']
+            ))
+
 
         # # set special defaults if it is a spectrograph
         # if configdb.is_spectrograph(data['instrument_name']):
