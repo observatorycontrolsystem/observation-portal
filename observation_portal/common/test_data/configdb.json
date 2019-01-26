@@ -397,15 +397,6 @@
                     "filters": "air",
                     "optical_element_groups": [
                       {
-                        "type": "filters",
-                        "element_change_overhead": 2,
-                        "optical_elements": [
-                          {
-                            "name": "Air",
-                            "code": "air",
-                            "schedulable": false
-                          }
-                        ]
                       }
                     ]
                   },

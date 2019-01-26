@@ -221,12 +221,11 @@ class Request(models.Model):
         return TimeAllocationKey(self.semester.id, self.configurations.first().instrument_name)
 
     @property
-    def timeallocation(self):
-        # TODO: you can have multiple instrument types per configuration, so usage of this will need to change
-        return self.group.proposal.timeallocation_set.get(
+    def timeallocations(self):
+        return self.request_group.proposal.timeallocation_set.filter(
             semester__start__lte=self.min_window_time,
             semester__end__gte=self.max_window_time,
-            instrument_name=self.configurations.first().instrument_name
+            instrument_name__in=[conf.instrument_name for conf in self.configurations.all()]
         )
 
 

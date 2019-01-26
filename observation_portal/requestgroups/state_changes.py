@@ -127,23 +127,24 @@ def modify_ipp_time_from_requests(ipp_val, requests_list, modification='debit'):
         return
     try:
         for request in requests_list:
-            time_allocation = request.timeallocation
-            duration_hours = request.duration / 3600.0
-            modified_time = time_allocation.ipp_time_available
-            if modification == 'debit':
-                modified_time -= (duration_hours * ipp_value)
-            elif modification == 'credit':
-                modified_time += abs(ipp_value) * duration_hours
-            if modified_time < 0:
-                logger.warning(_("ipp debiting for request {} would set ipp_time_available < 0. "
-                                 "Time available after debiting will be capped at 0").format(request.id))
-                modified_time = 0
-            elif modified_time > time_allocation.ipp_limit:
-                logger.warning(_("ipp crediting for request {} would set ipp_time_available > ipp_limit. "
-                                 "Time available after crediting will be capped at ipp_limit"))
-                modified_time = time_allocation.ipp_limit
-            time_allocation.ipp_time_available = modified_time
-            time_allocation.save()
+            time_allocations = request.timeallocations
+            for time_allocation in time_allocations:
+                duration_hours = request.duration / 3600.0
+                modified_time = time_allocation.ipp_time_available
+                if modification == 'debit':
+                    modified_time -= (duration_hours * ipp_value)
+                elif modification == 'credit':
+                    modified_time += abs(ipp_value) * duration_hours
+                if modified_time < 0:
+                    logger.warning(_("ipp debiting for request {} would set ipp_time_available < 0. "
+                                     "Time available after debiting will be capped at 0").format(request.id))
+                    modified_time = 0
+                elif modified_time > time_allocation.ipp_limit:
+                    logger.warning(_("ipp crediting for request {} would set ipp_time_available > ipp_limit. "
+                                     "Time available after crediting will be capped at ipp_limit"))
+                    modified_time = time_allocation.ipp_limit
+                time_allocation.ipp_time_available = modified_time
+                time_allocation.save()
     except Exception as e:
         logger.warning(_("Problem {}ing ipp time for request {}: {}").format(modification, request.id, repr(e)))
 

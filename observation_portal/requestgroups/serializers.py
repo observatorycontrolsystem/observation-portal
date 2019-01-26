@@ -146,6 +146,11 @@ class ConfigurationSerializer(serializers.ModelSerializer):
         exclude = Configuration.SERIALIZER_EXCLUDE
         read_only_fields = ('priority',)
 
+    def validate_instrument_configs(self, value):
+        if [instrument_config.get('fill_window', False) for instrument_config in value].count(True) > 1:
+            raise serializers.ValidationError(_('Only one instrument_config can have `fill_window` set'))
+        return value
+
     def validate_instrument_name(self, value):
         if value and value not in configdb.get_active_instrument_types({}):
             raise serializers.ValidationError(
@@ -168,6 +173,9 @@ class ConfigurationSerializer(serializers.ModelSerializer):
         elif (guiding_config['state'] == GuidingConfig.OFF and 'mode' in guiding_config
               and guiding_config['mode']):
             raise serializers.ValidationError(_("Cannot set a guiding mode if the guiding state is OFF"))
+        elif configdb.is_spectrograph(data['instrument_name']) and (guiding_config['state'] != GuidingConfig.ON or
+                                                                    data['type'] == 'ARC'):
+            raise serializers.ValidationError(_("Guide state must be ON for spectrograph requests"))
 
         if 'mode' not in guiding_config:
             if guiding_config['state'] != GuidingConfig.OFF and 'guiding' in default_modes:
@@ -226,6 +234,12 @@ class ConfigurationSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(_("Guiding instrument {} is not allowed for science instrument {}")
                                               .format(guiding_config['name'], data['instrument_name']))
 
+        if data['type'] == 'SCRIPT':
+            if 'script_name' not in data['extra_params'] or not data['extra_params']['script_name']:
+                raise serializers.ValidationError(
+                    _("Must specify a script_name in extra_params for SCRIPT configuration type")
+                )
+
         # # set special defaults if it is a spectrograph
         # if configdb.is_spectrograph(data['instrument_name']):
         #     if 'state' not in data['guiding_config']:
@@ -247,11 +261,6 @@ class ConfigurationSerializer(serializers.ModelSerializer):
         # if data['type'].lower() in types_that_require_ag_mode_on:
         #     if data['ag_mode'] is not 'ON':
         #         raise serializers.ValidationError({'ag_mode': _('Autoguiding must be on for {} observations.'.format(data['type']))})
-
-        # Check if type is script, then args field is not blank
-        # if data['type'].lower() == 'script':
-        #     if 'args' not in data or not data['args']:
-        #         raise serializers.ValidationError({'args': _('Script type molecules must supply script name as args')})
 
         # check that the filter is available in the instrument type specified
         # available_filters = configdb.get_filters(data['instrument_name'])
@@ -402,10 +411,6 @@ class RequestSerializer(serializers.ModelSerializer):
         # Set the relative priority of molecules in order
         for i, configuration in enumerate(value):
             configuration['priority'] = i + 1
-
-        # TODO: Also restrict one fill window to either configuration or instrument_configuration level
-        if any([conf.get('fill_window', False) for conf in value]):
-            raise serializers.ValidationError(_('Only one configuration can have `fill_window` set'))
 
         return value
 
