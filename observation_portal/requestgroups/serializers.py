@@ -18,7 +18,7 @@ from observation_portal.common.configdb import configdb, ConfigDBException
 from observation_portal.requestgroups.request_utils import MOLECULE_TYPE_DISPLAY
 from observation_portal.requestgroups.duration_utils import (get_request_duration, get_request_duration_sum,
                                                              get_total_duration_dict, OVERHEAD_ALLOWANCE,
-                                                             get_configuration_duration, get_num_exposures,
+                                                             get_instrument_configuration_duration, get_num_exposures,
                                                              get_semester_in)
 from datetime import timedelta, datetime
 from observation_portal.common.rise_set_utils import get_rise_set_intervals
@@ -189,6 +189,7 @@ class ConfigurationSerializer(serializers.ModelSerializer):
         # check for any required fields for acquisition
         acquisition_mode = configdb.get_mode_with_code(data['instrument_name'], acquisition_config['mode'],
                                                        'acquisition')
+
         if 'required_fields' in acquisition_mode['params']:
             for field in acquisition_mode['params']['required_fields']:
                 if field not in acquisition_config['extra_params']:
@@ -196,18 +197,18 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                                                         .format(acquisition_mode['code'], field)))
 
         for instrument_config in data['instrument_configs']:
-            if 'readout_mode' not in instrument_config and 'readout' in default_modes:
+            if ('mode' not in instrument_config or not instrument_config['mode']) and 'readout' in default_modes:
                 if 'bin_x' not in instrument_config and 'bin_y' not in instrument_config:
-                    instrument_config['readout_mode'] = default_modes['readout']['code']
+                    instrument_config['mode'] = default_modes['readout']['code']
                     instrument_config['bin_x'] = default_modes['readout']['params']['binning']
                     instrument_config['bin_y'] = instrument_config['bin_x']
                 elif 'bin_x' in instrument_config:
-                    instrument_config['readout_mode'] = configdb.get_readout_mode_with_binning(data['instrument_name'],
+                    instrument_config['mode'] = configdb.get_readout_mode_with_binning(data['instrument_name'],
                                                                                                instrument_config['bin_x'])['code']
             else:
                 try:
                     readout_mode = configdb.get_mode_with_code(data['instrument_name'],
-                                                               instrument_config['readout_mode'], 'readout')
+                                                               instrument_config['mode'], 'readout')
                 except ConfigDBException as cdbe:
                     raise serializers.ValidationError(_(str(cdbe)))
                 if 'bin_x' not in instrument_config:
@@ -215,10 +216,15 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                     instrument_config['bin_y'] = readout_mode['params']['binning']
                 elif instrument_config['bin_x'] != readout_mode['params']['binning']:
                     raise serializers.ValidationError(_("{} binning is not a valid binning on readout mode {} for instrument type {}"
-                                                        .format(instrument_config['bin_x'], instrument_config['readout_mode'], data['instrument_name'])))
+                                                        .format(instrument_config['bin_x'], instrument_config['mode'], data['instrument_name'])))
 
 
-
+        # TODO: guiding config parameter for self-guiding rather than doing this check
+        # # Validate autoguiders - empty string for default behavior, or match with instrument name for self guiding
+        valid_autoguiders = configdb.get_autoguiders_for_science_camera(data['instrument_name'])
+        if guiding_config['name'].upper() not in valid_autoguiders:
+            raise serializers.ValidationError(_("Guiding instrument {} is not allowed for science instrument {}")
+                                              .format(guiding_config['name'], data['instrument_name']))
 
         # # set special defaults if it is a spectrograph
         # if configdb.is_spectrograph(data['instrument_name']):
@@ -227,9 +233,9 @@ class ConfigurationSerializer(serializers.ModelSerializer):
         #     if 'state' not in data['acquisition_config']:
         #         data['acquisition_config']['state'] = 'ON'
 
-        if data['acquisition_config']['state'] == 'ON':
-            if 'mode' not in data['acquisition_config']['extra_params']:
-                data['acquisition_config']['extra_params']['mode'] = modes['']
+        # if data['acquisition_config']['mode'] != 'OFF':
+        #     if 'mode' not in data['acquisition_config']['extra_params']:
+        #         data['acquisition_config']['extra_params']['mode'] = modes['']
             # if data['acquire_mode'] == 'BRIGHTEST' and not data.get('acquire_radius_arcsec'):
             #     raise serializers.ValidationError({'acquire_radius_arcsec': 'Acquire radius must be positive.'})
 
@@ -277,23 +283,19 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                     # TODO: Set default rot_mode for instrument here
                     pass
 
-        if 'acceptability_threshold' not in data:
-            # TODO: Set default acceptability threshold for the instrument class
-            data['acceptability_threshold'] = 100
-
         # check that the binning is available for the instrument type specified
-        if 'bin_x' not in data and 'bin_y' not in data:
-            data['bin_x'] = configdb.get_default_binning(data['instrument_name'])
-            data['bin_y'] = data['bin_x']
-        elif 'bin_x' in data and 'bin_y' in data:
-            available_binnings = configdb.get_binnings(data['instrument_name'])
-            if data['bin_x'] not in available_binnings:
-                msg = _("Invalid binning of {} for instrument {}. Valid binnings are: {}").format(
-                    data['bin_x'], data['instrument_name'].upper(), ", ".join([str(b) for b in available_binnings])
-                )
-                raise serializers.ValidationError(msg)
-        else:
-            raise serializers.ValidationError(_("Missing one of bin_x or bin_y. Specify both or neither."))
+        # if 'bin_x' not in data and 'bin_y' not in data:
+        #     data['bin_x'] = configdb.get_default_binning(data['instrument_name'])
+        #     data['bin_y'] = data['bin_x']
+        # elif 'bin_x' in data and 'bin_y' in data:
+        #     available_binnings = configdb.get_binnings(data['instrument_name'])
+        #     if data['bin_x'] not in available_binnings:
+        #         msg = _("Invalid binning of {} for instrument {}. Valid binnings are: {}").format(
+        #             data['bin_x'], data['instrument_name'].upper(), ", ".join([str(b) for b in available_binnings])
+        #         )
+        #         raise serializers.ValidationError(msg)
+        # else:
+        #     raise serializers.ValidationError(_("Missing one of bin_x or bin_y. Specify both or neither."))
 
         # check that the molecule type matches the instruemnt
         # imager_only_types = ['EXPOSE', 'SKY_FLAT', 'AUTO_FOCUS']
@@ -401,13 +403,6 @@ class RequestSerializer(serializers.ModelSerializer):
         for i, configuration in enumerate(value):
             configuration['priority'] = i + 1
 
-        # TODO: guiding config parameter for self-guiding rather than doing this check
-        # # Validate autoguiders - empty string for default behavior, or match with instrument name for self guiding
-        # for configuration in value:
-        #     allowed_autoguiders = ['', str(configuration['instrument_name']).lower()]
-        #     if 'ag_name' in configuration and str(configuration['ag_name']).lower() not in allowed_autoguiders:
-        #         raise serializers.ValidationError(_('Molecule `ag_name` must be blank or same as `instrument_name`'))
-
         # TODO: Also restrict one fill window to either configuration or instrument_configuration level
         if any([conf.get('fill_window', False) for conf in value]):
             raise serializers.ValidationError(_('Only one configuration can have `fill_window` set'))
@@ -432,7 +427,7 @@ class RequestSerializer(serializers.ModelSerializer):
         # check if the instrument specified is allowed
         # TODO: Check if ALL instruments are available at a resource defined by location
         valid_instruments = configdb.get_active_instrument_types(data['location'])
-        for configuration in data['configuration']:
+        for configuration in data['configurations']:
             if configuration['instrument_name'] not in valid_instruments:
                 msg = _("Invalid instrument name '{}' at site={}, obs={}, tel={}. \n").format(
                     configuration['instrument_name'], data['location'].get('site', 'Any'),
@@ -442,47 +437,56 @@ class RequestSerializer(serializers.ModelSerializer):
                     msg += inst_name + ', '
                 raise serializers.ValidationError(msg)
 
+        if 'acceptability_threshold' not in data:
+            data['acceptability_threshold'] = max(
+                [configdb.get_default_acceptability_threshold(configuration['instrument_name'])
+                 for configuration in data['configurations']]
+            )
+
         # check that the requests window has enough rise_set visible time to accomodate the requests duration
-        # if data.get('windows'):
-        #     duration = get_request_duration(data)
-        #     rise_set_intervals = get_rise_set_intervals(data)
-        #     largest_interval = timedelta(seconds=0)
-        #     for interval in rise_set_intervals:
-        #         largest_interval = max((interval[1] - interval[0]), largest_interval)
-        #
-        #     for configuration in data['configuration']:
-        #         if configuration.get('fill_window'):
-        #             configuration_duration = get_configuration_duration(configuration_dict=configuration)
-        #             num_exposures = get_num_exposures(
-        #                 configuration, largest_interval - timedelta(seconds=duration - configuration_duration)
-        #             )
-        #             configuration['exposure_count'] = num_exposures
-        #             duration = get_request_duration(data)
-        #         # delete the fill window attribute, it is only used for this validation
-        #         try:
-        #             del configuration['fill_window']
-        #         except KeyError:
-        #             pass
-        #     if largest_interval.total_seconds() <= 0:
-        #         raise serializers.ValidationError(
-        #             _(
-        #                 'According to the constraints of the request, the target is never visible within the time '
-        #                 'window. Check that the target is in the nighttime sky. Consider modifying the time '
-        #                 'window or loosening the airmass or lunar separation constraints. If the target is '
-        #                 'non sidereal, double check that the provided elements are correct.'
-        #             )
-        #         )
-        #     if largest_interval.total_seconds() <= duration:
-        #         raise serializers.ValidationError(
-        #             (
-        #                 'According to the constraints of the request, the target is visible for a maximum of {0:.2f} '
-        #                 'hours within the time window. This is less than the duration of your request {1:.2f} hours. Consider '
-        #                 'expanding the time window or loosening the airmass or lunar separation constraints.'
-        #             ).format(
-        #                 largest_interval.total_seconds() / 3600.0,
-        #                 duration / 3600.0
-        #             )
-        #         )
+        if data.get('windows'):
+            duration = get_request_duration(data)
+            rise_set_intervals = get_rise_set_intervals(data)
+            largest_interval = timedelta(seconds=0)
+            for interval in rise_set_intervals:
+                largest_interval = max((interval[1] - interval[0]), largest_interval)
+
+            for configuration in data['configurations']:
+                for instrument_config in configuration['instrument_configs']:
+                    if instrument_config.get('fill_window'):
+                        configuration_duration = get_instrument_configuration_duration(instrument_config,
+                                                                                       configuration['instrument_name'])
+                        num_exposures = get_num_exposures(
+                            instrument_config, configuration['instrument_name'],
+                            largest_interval - timedelta(seconds=duration - configuration_duration)
+                        )
+                        instrument_config['exposure_count'] = num_exposures
+                        duration = get_request_duration(data)
+                # delete the fill window attribute, it is only used for this validation
+                try:
+                    del instrument_config['fill_window']
+                except KeyError:
+                    pass
+            if largest_interval.total_seconds() <= 0:
+                raise serializers.ValidationError(
+                    _(
+                        'According to the constraints of the request, the target is never visible within the time '
+                        'window. Check that the target is in the nighttime sky. Consider modifying the time '
+                        'window or loosening the airmass or lunar separation constraints. If the target is '
+                        'non sidereal, double check that the provided elements are correct.'
+                    )
+                )
+            if largest_interval.total_seconds() <= duration:
+                raise serializers.ValidationError(
+                    (
+                        'According to the constraints of the request, the target is visible for a maximum of {0:.2f} '
+                        'hours within the time window. This is less than the duration of your request {1:.2f} hours. Consider '
+                        'expanding the time window or loosening the airmass or lunar separation constraints.'
+                    ).format(
+                        largest_interval.total_seconds() / 3600.0,
+                        duration / 3600.0
+                    )
+                )
         return data
 
 
@@ -533,18 +537,21 @@ class RequestGroupSerializer(serializers.ModelSerializer):
                 Window.objects.create(request=request, **window_data)
             for configuration_data in configurations_data:
                 instrument_configs_data = configuration_data.pop('instrument_configs')
-                acquisition_config_data = configuration_data.pop('acquisition_configs')
-                guiding_config_data = configuration_data.pop('guiding_configs')
+                acquisition_config_data = configuration_data.pop('acquisition_config')
+                guiding_config_data = configuration_data.pop('guiding_config')
                 target_data = configuration_data.pop('target')
-
+                constraints_data = configuration_data.pop('constraints')
                 configuration = Configuration.objects.create(request=request, **configuration_data)
 
                 AcquisitionConfig.objects.create(configuration=configuration, **acquisition_config_data)
                 GuidingConfig.objects.create(configuration=configuration, **guiding_config_data)
                 Target.objects.create(configuration=configuration, **target_data)
+                Constraints.objects.create(configuration=configuration, **constraints_data)
 
                 for instrument_config_data in instrument_configs_data:
-                    rois_data = instrument_config_data.pop('rois')
+                    rois_data = []
+                    if 'rois' in instrument_config_data:
+                        rois_data = instrument_config_data.pop('rois')
                     instrument_config = InstrumentConfig.objects.create(configuration=configuration,
                                                                         **instrument_config_data)
                     for roi_data in rois_data:
@@ -619,8 +626,8 @@ class RequestGroupSerializer(serializers.ModelSerializer):
 
                 if time_available <= 0.0:
                     raise serializers.ValidationError(
-                        _("Proposal {} does not have any time left allocated in semester {} on {} telescopes").format(
-                            data['proposal'], tak.semester, tak.telescope_class)
+                        _("Proposal {} does not have any time left allocated in semester {} on {} instruments").format(
+                            data['proposal'], tak.semester, tak.instrument_name)
                     )
                 elif time_available * OVERHEAD_ALLOWANCE < (duration / 3600.0):
                     raise serializers.ValidationError(

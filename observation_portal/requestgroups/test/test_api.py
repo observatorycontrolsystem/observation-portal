@@ -44,17 +44,20 @@ generic_payload = {
             'instrument_configs': [{
                 'exposure_time': 100,
                 'exposure_count': 1,
+                'mode': '',
                 'bin_x': 1,
                 'bin_y': 1,
                 'optical_elements': {
-                    'filters': 'air'
+                    'filter': 'air'
                 }
             }],
             'guiding_config': {
-                'name': ''
+                'name': '',
+                'extra_params': {}
             },
             'acquisition_config': {
-                'name': ''
+                'name': '',
+                'extra_params': {}
             },
             'constraints': {
                 'max_airmass': 2.0,
@@ -186,15 +189,15 @@ class TestUserPostRequestApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
     def test_post_requestgroup_validate_autoguider(self):
         data = self.generic_payload.copy()
         # Verify invalid autoguider string fails validation
-        data['requests'][0]['configurations'][0]['ag_name'] = 'invalidAutoguider'
+        data['requests'][0]['configurations'][0]['guiding_config']['name'] = 'invalidAutoguider'
         response = self.client.post(reverse('api:request_groups-list'), data=data)
         self.assertEqual(response.status_code, 400)
         # Verify empty string passes validation and creates UR
-        data['requests'][0]['configurations'][0]['ag_name'] = ''
+        data['requests'][0]['configurations'][0]['guiding_config']['name'] = ''
         response = self.client.post(reverse('api:request_groups-list'), data=data)
         self.assertEqual(response.status_code, 201)
         # Verify instrument_name as ag_name passes validation and creates UR
-        data['requests'][0]['configurations'][0]['ag_name'] = data['requests'][0]['configurations'][0]['instrument_name']
+        data['requests'][0]['configurations'][0]['guiding_config']['name'] = data['requests'][0]['configurations'][0]['instrument_name']
         response = self.client.post(reverse('api:request_groups-list'), data=data)
         self.assertEqual(response.status_code, 201)
 
@@ -210,7 +213,8 @@ class TestUserPostRequestApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         bad_data['requests'][0]['location']['telescope_class'] = '2m0'
         bad_data['requests'][0]['configurations'][0]['instrument_name'] = '2M0-FLOYDS-SCICAM'
         bad_data['requests'][0]['configurations'][0]['type'] = 'SPECTRUM'
-        bad_data['requests'][0]['configurations'][0]['spectra_slit'] = 'slit_6.0as'
+        del bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['slit'] = 'slit_6.0as'
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertEqual(response.status_code, 400)
         self.assertIn('You do not have sufficient time', str(response.content))
@@ -288,40 +292,40 @@ class TestUserPostRequestApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 400)
 
     def test_post_requestgroup_default_acquire_mode(self):
-        bad_data = self.generic_payload.copy()
+        good_data = self.generic_payload.copy()
         # verify default acquire mode is 'off' for non-floyds
-        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.json()['requests'][0]['configurations'][0]['acquire_mode'], 'OFF')
-        self.assertEqual(response.json()['requests'][0]['configurations'][0]['acquire_radius_arcsec'], 0)
+        self.assertEqual(response.json()['requests'][0]['configurations'][0]['acquisition_config']['mode'], 'OFF')
 
         # check that default acquire mode is 'wcs' for floyds
-        bad_data['requests'][0]['location']['telescope_class'] = '2m0'
-        bad_data['requests'][0]['configurations'][0]['instrument_name'] = '2M0-FLOYDS-SCICAM'
-        bad_data['requests'][0]['configurations'][0]['spectra_slit'] = 'slit_6.0as'
-        bad_data['requests'][0]['configurations'][0]['type'] = 'SPECTRUM'
-        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        good_data['requests'][0]['location']['telescope_class'] = '2m0'
+        good_data['requests'][0]['configurations'][0]['instrument_name'] = '2M0-FLOYDS-SCICAM'
+        del good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
+        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['slit'] = 'slit_6.0as'
+        good_data['requests'][0]['configurations'][0]['type'] = 'SPECTRUM'
+        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.json()['requests'][0]['configurations'][0]['acquire_mode'], 'WCS')
-        self.assertEqual(response.json()['requests'][0]['configurations'][0]['acquire_radius_arcsec'], 0)
+        self.assertEqual(response.json()['requests'][0]['configurations'][0]['acquisition_config']['mode'], 'WCS')
 
     def test_post_requestgroup_acquire_mode_brightest_no_radius(self):
         bad_data = self.generic_payload.copy()
         bad_data['requests'][0]['configurations'][0]['instrument_name'] = '2M0-FLOYDS-SCICAM'
-        bad_data['requests'][0]['configurations'][0]['acquire_mode'] = 'BRIGHTEST'
+        bad_data['requests'][0]['configurations'][0]['acquisition_config']['mode'] = 'BRIGHTEST'
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('Acquire radius must be positive', str(response.content))
+        self.assertIn('required extra param of acquire_radius to be set', str(response.content))
 
     def test_post_requestgroup_acquire_mode_brightest(self):
-        bad_data = self.generic_payload.copy()
-        bad_data['requests'][0]['location']['telescope_class'] = '2m0'
-        bad_data['requests'][0]['configurations'][0]['instrument_name'] = '2M0-FLOYDS-SCICAM'
-        bad_data['requests'][0]['configurations'][0]['type'] = 'SPECTRUM'
-        bad_data['requests'][0]['configurations'][0]['spectra_slit'] = 'slit_6.0as'
-        bad_data['requests'][0]['configurations'][0]['acquire_mode'] = 'BRIGHTEST'
-        bad_data['requests'][0]['configurations'][0]['acquire_radius_arcsec'] = 2
-        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        good_data = self.generic_payload.copy()
+        good_data['requests'][0]['location']['telescope_class'] = '2m0'
+        good_data['requests'][0]['configurations'][0]['instrument_name'] = '2M0-FLOYDS-SCICAM'
+        good_data['requests'][0]['configurations'][0]['type'] = 'SPECTRUM'
+        del good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
+        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['slit'] = 'slit_6.0as'
+        good_data['requests'][0]['configurations'][0]['acquisition_config']['mode'] = 'BRIGHTEST'
+        good_data['requests'][0]['configurations'][0]['acquisition_config']['extra_params']['acquire_radius'] = 2
+        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
         self.assertEqual(response.status_code, 201)
 
     def test_post_requestgroup_single_must_have_one_request(self):
@@ -331,19 +335,20 @@ class TestUserPostRequestApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('must have exactly one child request', str(response.content))
 
-    def test_post_requestgroup_and_must_have_greater_than_one_request(self):
-        bad_data = self.generic_payload.copy()
-        bad_data['operator'] = 'AND'
-        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn('must have more than one child request', str(response.content))
+    # Removed AND operator for now, so commenting out this test
+    # def test_post_requestgroup_and_must_have_greater_than_one_request(self):
+    #     bad_data = self.generic_payload.copy()
+    #     bad_data['operator'] = 'AND'
+    #     response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+    #     self.assertEqual(response.status_code, 400)
+    #     self.assertIn('must have more than one child request', str(response.content))
 
     def test_post_requestgroup_constraints_optional(self):
         good_data = self.generic_payload.copy()
-        good_data['requests'][0]['target']['dec'] = -30.0
-        good_data['requests'][0]['target']['ra'] = 50.0
-        del good_data['requests'][0]['constraints']['max_airmass']
-        del good_data['requests'][0]['constraints']['min_lunar_distance']
+        good_data['requests'][0]['configurations'][0]['target']['dec'] = -30.0
+        good_data['requests'][0]['configurations'][0]['target']['ra'] = 50.0
+        del good_data['requests'][0]['configurations'][0]['constraints']['max_airmass']
+        del good_data['requests'][0]['configurations'][0]['constraints']['min_lunar_distance']
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
         self.assertEqual(response.status_code, 201)
 
@@ -362,7 +367,7 @@ class TestUserPostRequestApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
 
     def test_post_requestgroup_duration_too_long(self):
         bad_data = self.generic_payload.copy()
-        bad_data['requests'][0]['configurations'][0]['exposure_time'] = 999999999999
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['exposure_time'] = 999999999999
         response = self.client.post(reverse('api:request_groups-list'), data=self.generic_payload)
         self.assertEqual(response.status_code, 400)
         self.assertIn('the target is visible for a maximum of', str(response.content))
@@ -377,7 +382,8 @@ class TestUserPostRequestApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         data['requests'][0]['location']['telescope_class'] = '2m0'
         data['requests'][0]['configurations'][0]['instrument_name'] = '2M0-FLOYDS-SCICAM'
         data['requests'][0]['configurations'][0]['type'] = 'SPECTRUM'
-        data['requests'][0]['configurations'][0]['spectra_slit'] = 'slit_6.0as'
+        del data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
+        data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['slit'] = 'slit_6.0as'
         response = self.client.post(reverse('api:request_groups-list'), data=data)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json()['requests'][0]['acceptability_threshold'], 100)
@@ -859,7 +865,6 @@ class TestSiderealTarget(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         target = response.json()['requests'][0]['target']
         self.assertEqual(target['proper_motion_ra'], 0.0)
         self.assertEqual(target['proper_motion_dec'], 0.0)
-        self.assertEqual(target['radvel'], 0.0)
         self.assertIsNone(target['vmag'])
         self.assertEqual(target['parallax'], 0.0)
         self.assertEqual(target['coordinate_system'], 'ICRS')

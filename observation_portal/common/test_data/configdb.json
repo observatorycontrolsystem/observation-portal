@@ -24,7 +24,14 @@
                 {
                   "state": "SCHEDULABLE",
                   "code": "xx01",
+                  "autoguider_camera": {
+                    "code": "ef01",
+                    "camera_type": {
+                      "code": "1M0-SCICAM-SBIG"
+                    }
+                  },
                   "science_camera": {
+                    "code": "xx01",
                     "camera_type": {
                       "code": "1M0-SCICAM-SBIG",
                       "name": "1M0-SCICAM-SBIG",
@@ -32,6 +39,7 @@
                         "binning": 2,
                         "readout": 14.5
                       },
+                      "default_acceptability_threshold": 90,
                       "config_change_time": 0,
                       "acquire_processing_time": 0,
                       "acquire_exposure_time": 0,
@@ -87,7 +95,8 @@
                             "code": "OFF",
                             "type": "acquisition",
                             "overhead": 0.0,
-                            "default": true
+                            "default": true,
+                            "params": {}
                           }
                         ]
                       }
@@ -112,7 +121,14 @@
                 {
                   "state": "SCHEDULABLE",
                   "code": "xx02",
+                  "autoguider_camera": {
+                    "code": "ef02",
+                    "camera_type": {
+                      "code": "2M0-FLOYDS-AG"
+                    }
+                  },
                   "science_camera": {
+                    "code": "xx02",
                     "camera_type": {
                       "code": "2M0-FLOYDS-SCICAM",
                       "name": "2M0-FLOYDS-SCICAM",
@@ -126,6 +142,7 @@
                         "binning": 1,
                         "readout": 25
                       },
+                      "default_acceptability_threshold": 100,
                       "mode_set": [
                         {
                           "binning": 1,
@@ -137,7 +154,7 @@
                           {
                             "code": "2m0_floyds_1",
                             "type": "readout",
-                            "default": false,
+                            "default": true,
                             "overhead": 25.0,
                             "params": {
                               "binning": 1
@@ -149,7 +166,15 @@
                             "code": "WCS",
                             "type": "acquisition",
                             "overhead": 90.0,
-                            "default": true
+                            "default": true,
+                            "params": {}
+                          },
+                          {
+                            "code": "BRIGHTEST",
+                            "type": "acquisition",
+                            "overhead": 90.0,
+                            "default": false,
+                            "params": {"required_fields": ["acquire_radius"]}
                           }
                         ]
                       }
@@ -208,7 +233,14 @@
                 {
                   "state": "SCHEDULABLE",
                   "code": "xx03",
+                  "autoguider_camera": {
+                    "code": "ef03",
+                    "camera_type": {
+                      "code": "1M0-SCICAM-AG"
+                    }
+                  },
                   "science_camera": {
+                    "code": "xx03",
                     "camera_type": {
                       "code": "1M0-SCICAM-SBIG",
                       "name": "1M0-SCICAM-SBIG",
@@ -216,6 +248,7 @@
                         "binning": 2,
                         "readout": 14.5
                       },
+                      "default_acceptability_threshold": 100,
                       "config_change_time": 0,
                       "acquire_processing_time": 0,
                       "acquire_exposure_time": 0,
@@ -271,7 +304,8 @@
                             "code": "OFF",
                             "type": "acquisition",
                             "overhead": 0.0,
-                            "default": true
+                            "default": true,
+                            "params": {}
                           }
                         ]
                       }
@@ -296,7 +330,14 @@
                 {
                   "state": "SCHEDULABLE",
                   "code": "nresXX",
+                  "autoguider_camera": {
+                    "code": "akXX",
+                    "camera_type": {
+                      "code": "1M0-NRES-AG"
+                    }
+                  },
                   "science_camera": {
+                    "code": "nresXX",
                     "camera_type": {
                       "code": "1M0-NRES-SCICAM",
                       "name": "1M0-NRES-SCICAM",
@@ -304,6 +345,7 @@
                         "binning": 2,
                         "readout": 90.5
                       },
+                      "default_acceptability_threshold": 100,
                       "config_change_time": 0,
                       "acquire_processing_time": 90,
                       "acquire_exposure_time": 10,
@@ -346,7 +388,8 @@
                             "code": "WCS",
                             "type": "acquisition",
                             "overhead": 0.0,
-                            "default": true
+                            "default": true,
+                            "params": {}
                           }
                         ]
                       }
@@ -371,7 +414,14 @@
                 {
                   "state": "SCHEDULABLE",
                   "code": "xx04",
+                  "autoguider_camera": {
+                    "code": "ef04",
+                    "camera_type": {
+                      "code": "2M0-FLOYDS-AG"
+                    }
+                  },
                   "science_camera": {
+                    "code": "xx04",
                     "camera_type": {
                       "code": "2M0-FLOYDS-SCICAM",
                       "name": "2M0-FLOYDS-SCICAM",
@@ -385,6 +435,7 @@
                         "binning": 1,
                         "readout": 25
                       },
+                      "default_acceptability_threshold": 100,
                       "mode_set": [
                         {
                           "binning": 1,
@@ -396,7 +447,7 @@
                           {
                             "code": "2m0_floyds_1",
                             "type": "readout",
-                            "default": false,
+                            "default": true,
                             "overhead": 25.0,
                             "params": {
                               "binning": 1
@@ -408,7 +459,8 @@
                             "code": "WCS",
                             "type": "acquisition",
                             "overhead": 90.0,
-                            "default": true
+                            "default": true,
+                            "params": {}
                           }
                         ]
                       }

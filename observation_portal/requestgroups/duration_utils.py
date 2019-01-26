@@ -119,8 +119,8 @@ def get_request_duration_sum(requestgroup_dict):
     return duration_sum
 
 
-def get_num_exposures(configuration_dict, time_available):
-    mol_duration_per_exp = get_instrument_configuration_duration_per_exposure(configuration_dict)
+def get_num_exposures(instrument_config_dict, instrument_name,  time_available):
+    mol_duration_per_exp = get_instrument_configuration_duration_per_exposure(instrument_config_dict, instrument_name)
     exposure_time = time_available.total_seconds() - PER_CONFIGURATION_GAP - PER_CONFIGURATION_STARTUP_TIME
     num_exposures = exposure_time // mol_duration_per_exp
 
@@ -159,13 +159,14 @@ def get_request_duration(request_dict):
 
         # Now add the Guiding overhead if this request requires it
         if configuration['guiding_config']['state'] == 'ON':
-            if configuration['guiding_config']['mode'] in request_overheads['guiding_overheads']:
+            if ('mode' in configuration['guiding_config'] and
+                    configuration['guiding_config']['mode'] in request_overheads['guiding_overheads']):
                 duration += request_overheads['guiding_overheads'][configuration['guiding_config']['mode']]
 
         # TODO: find out if we need to have a configuration type change time for spectrographs?
         if configdb.is_spectrograph(configuration['instrument_name']):
             if previous_conf_type != configuration['type']:
-                duration += request_overheads['config_change_time']
+                duration += request_overheads['config_change_overhead']
         previous_conf_type = configuration['type']
 
     duration += request_overheads['front_padding']
