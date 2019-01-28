@@ -99,12 +99,23 @@ class TestRequestDuration(ConfigDBTestMixin, SetTimeMixin, TestCase):
     def setUp(self):
         super().setUp()
         self.request = mixer.blend(Request)
-        mixer.blend(Target, request=self.request)
         mixer.blend(Location, request=self.request)
-        mixer.blend(Constraints, request=self.request)
-        self.target_acquire_on = mixer.blend(Target, acquire_mode='ON', type='SIDEREAL')
+        self.target = mixer.blend(Target, type='SIDEREAL')
+        self.constraints = mixer.blend(Constraints)
+        self.acquisition_config = mixer.blend(AcquisitionConfig)
+        self.guiding_config = mixer.blend(GuidingConfig)
 
-        self.target_acquire_off = mixer.blend(Target, acquire_mode='OFF', type='SIDEREAL')
+        self.configuration_sbig = mixer.blend(Configuration, instrument_name='1M0-SCICAM-SBIG', type='EXPOSE')
+        self.configuration_floyds = mixer.blend(Configuration, instrument_name='2M0-FLOYDS-SCICAM')
+
+        self.instrument_config_expose = mixer.blend(
+            InstrumentConfig, bin_x=2, bin_y=2, exposure_time=600, exposure_count=2,
+            optical_elements={'filter': 'blah'}
+        )
+
+
+
+
 
         self.configuration_expose = mixer.blend(
             Configuration, bin_x=2, bin_y=2, instrument_name='1M0-SCICAM-SBIG',
@@ -141,8 +152,10 @@ class TestRequestDuration(ConfigDBTestMixin, SetTimeMixin, TestCase):
             exposure_time=60, exposure_count=1, type='LAMPFLAT'
         )
 
+        self.instrument_change_overhead_1m = 0
+
         self.sbig_fixed_overhead_per_exposure = 1
-        self.sbig_filter_change_time = 2
+        self.sbig_filter_optical_element_change_overhead = 2
         self.sbig_front_padding = 90
         self.sbig_readout_time2 = 14.5
 
@@ -155,14 +168,32 @@ class TestRequestDuration(ConfigDBTestMixin, SetTimeMixin, TestCase):
         self.floyds_acquire_exposure_time = 30
 
     def test_ccd_single_configuration_request_duration(self):
-        self.configuration_expose.request = self.request
-        self.configuration_expose.save()
+        self.configuration_sbig.request = self.request
+        self.configuration_sbig.save()
+
+        self.constraints.configuration = self.configuration_sbig
+        self.constraints.save()
+
+        self.acquisition_config.configuration = self.configuration_sbig
+        self.acquisition_config.mode = 'OFF'
+        self.acquisition_config.save()
+
+        self.guiding_config.configuration = self.configuration_sbig
+        self.guiding_config.state = 'OFF'
+        self.guiding_config.save()
+
+        self.target.configuration = self.configuration_sbig
+        self.target.save()
+
+        self.instrument_config_expose.configuration = self.configuration_sbig
+        self.instrument_config_expose.mode = '1m0_sbig_2'
+        self.instrument_config_expose.save()
+
         duration = self.request.duration
+        exp_count = self.instrument_config_expose.exposure_count
+        exp_time = self.instrument_config_expose.exposure_time
 
-        exp_time = self.configuration_expose.exposure_time
-        exp_count = self.configuration_expose.exposure_count
-
-        self.assertEqual(duration, math.ceil(exp_count*(exp_time + self.sbig_readout_time2 + self.sbig_fixed_overhead_per_exposure) + self.sbig_front_padding + self.sbig_filter_change_time + PER_CONFIGURATION_GAP + PER_CONFIGURATION_STARTUP_TIME))
+        self.assertEqual(duration, math.ceil(exp_count*(exp_time + self.sbig_readout_time2 + self.sbig_fixed_overhead_per_exposure) + self.sbig_front_padding + self.sbig_filter_optical_element_change_overhead + PER_CONFIGURATION_GAP + PER_CONFIGURATION_STARTUP_TIME + self.instrument_change_overhead_1m))
 
     def test_ccd_single_configuration_unsupported_binning_duration(self):
         default_binning = mixer.blend(
