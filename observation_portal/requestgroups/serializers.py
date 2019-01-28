@@ -165,6 +165,7 @@ class ConfigurationSerializer(serializers.ModelSerializer):
         default_modes = configdb.get_default_modes(data['instrument_name'])
         guiding_config = data['guiding_config']
         # Set defaults for guiding and acquisition modes if they are not set
+        # TODO: Validate the guiding optical elements on the guiding instrument types
         if 'state' not in guiding_config:
             if configdb.is_spectrograph(data['instrument_name']):
                 guiding_config['state'] = GuidingConfig.ON
@@ -173,8 +174,8 @@ class ConfigurationSerializer(serializers.ModelSerializer):
         elif (guiding_config['state'] == GuidingConfig.OFF and 'mode' in guiding_config
               and guiding_config['mode']):
             raise serializers.ValidationError(_("Cannot set a guiding mode if the guiding state is OFF"))
-        elif configdb.is_spectrograph(data['instrument_name']) and (guiding_config['state'] != GuidingConfig.ON or
-                                                                    data['type'] == 'ARC'):
+        elif configdb.is_spectrograph(data['instrument_name']) and (guiding_config['state'] != GuidingConfig.ON and
+                                                                    data['type'] != 'ARC'):
             raise serializers.ValidationError(_("Guide state must be ON for spectrograph requests"))
 
         if 'mode' not in guiding_config:
@@ -212,8 +213,12 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                     instrument_config['bin_x'] = default_modes['readout']['params']['binning']
                     instrument_config['bin_y'] = instrument_config['bin_x']
                 elif 'bin_x' in instrument_config:
-                    instrument_config['mode'] = configdb.get_readout_mode_with_binning(data['instrument_name'],
-                                                                                               instrument_config['bin_x'])['code']
+                    try:
+                        instrument_config['mode'] = configdb.get_readout_mode_with_binning(data['instrument_name'],
+                                                                                           instrument_config['bin_x'])['code']
+                    except ConfigDBException as cdbe:
+                        raise serializers.ValidationError(_(str(cdbe)))
+
             else:
                 try:
                     readout_mode = configdb.get_mode_with_code(data['instrument_name'],
@@ -224,8 +229,9 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                     instrument_config['bin_x'] = readout_mode['params']['binning']
                     instrument_config['bin_y'] = readout_mode['params']['binning']
                 elif instrument_config['bin_x'] != readout_mode['params']['binning']:
-                    raise serializers.ValidationError(_("{} binning is not a valid binning on readout mode {} for instrument type {}"
+                    raise serializers.ValidationError(_("binning {} is not a valid binning on readout mode {} for instrument type {}"
                                                         .format(instrument_config['bin_x'], instrument_config['mode'], data['instrument_name'])))
+            # Check that the optical elements specified are valid in configdb
             for oe_type, value in instrument_config['optical_elements'].items():
                 plural_type = '{}s'.format(oe_type)
                 available_elements = [element['code'] for element in available_optical_elements[plural_type]]
@@ -233,6 +239,16 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                     raise serializers.ValidationError(_("optical element {} of type {} is not available".format(
                         value, oe_type
                     )))
+
+            # Also check that any optical element group in configdb is specified in the request unless we are a BIAS or
+            # DARK or SCRIPT type observation
+            observation_types_without_oe = ['BIAS', 'DARK', 'SCRIPT']
+            if data['type'].upper() not in observation_types_without_oe:
+                for oe_type in available_optical_elements.keys():
+                    singular_type = oe_type[:-1] if oe_type.endswith('s') else oe_type
+                    if singular_type not in instrument_config['optical_elements']:
+                        raise serializers.ValidationError(_("must specify optical element of type {} for instrument {}"
+                                                            .format(singular_type, data['instrument_name'])))
 
 
         # Validate autoguiders - empty string for default behavior, or match with instrument name for self guiding
@@ -242,7 +258,8 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                                               .format(guiding_config['name'], data['instrument_name']))
 
         if data['type'] == 'SCRIPT':
-            if 'script_name' not in data['extra_params'] or not data['extra_params']['script_name']:
+            if ('extra_params' not in data or 'script_name' not in data['extra_params']
+                    or not data['extra_params']['script_name']):
                 raise serializers.ValidationError(
                     _("Must specify a script_name in extra_params for SCRIPT configuration type")
                 )
@@ -480,11 +497,11 @@ class RequestSerializer(serializers.ModelSerializer):
                         )
                         instrument_config['exposure_count'] = num_exposures
                         duration = get_request_duration(data)
-                # delete the fill window attribute, it is only used for this validation
-                try:
-                    del instrument_config['fill_window']
-                except KeyError:
-                    pass
+                    # delete the fill window attribute, it is only used for this validation
+                    try:
+                        del instrument_config['fill_window']
+                    except KeyError:
+                        pass
             if largest_interval.total_seconds() <= 0:
                 raise serializers.ValidationError(
                     _(

@@ -1160,6 +1160,12 @@ class TestConfigurationApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
             ipp_time_available=5.0
         )
 
+        self.time_allocation_1m0_nres = mixer.blend(
+            TimeAllocation, proposal=self.proposal, semester=semester, instrument_name='1M0-NRES-SCICAM',
+            std_allocation=100.0, std_time_used=0.0, rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
+            ipp_time_available=5.0
+        )
+
         self.time_allocation_2m0_floyds = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=semester, instrument_name='2M0-FLOYDS-SCICAM',
             std_allocation=100.0, std_time_used=0.0, rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
@@ -1171,7 +1177,7 @@ class TestConfigurationApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         self.generic_payload['proposal'] = self.proposal.id
         self.extra_configuration = copy.deepcopy(self.generic_payload['requests'][0]['configurations'][0])
 
-    def test_default_ag_mode_for_spectrograph(self):
+    def test_default_guide_state_for_spectrograph(self):
         good_data = self.generic_payload.copy()
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
         self.assertEqual(response.status_code, 201)
@@ -1192,7 +1198,7 @@ class TestConfigurationApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         self.assertEqual(configuration['guiding_config']['state'], 'ON')
         self.assertEqual(configuration['instrument_configs'][0]['optical_elements']['slit'], 'slit_6.0as')
 
-    def test_ag_mode_off_not_allowed_for_nres_spectrum(self):
+    def test_guide_state_off_not_allowed_for_nres_spectrum(self):
         bad_data = self.generic_payload.copy()
         bad_data['requests'][0]['configurations'][0]['instrument_name'] = '1M0-NRES-SCICAM'
         bad_data['requests'][0]['configurations'][0]['type'] = 'NRES_SPECTRUM'
@@ -1202,7 +1208,7 @@ class TestConfigurationApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('Guide state must be ON', str(response.content))
 
-    def test_ag_mode_optional_not_allowed_for_spectrum(self):
+    def test_guide_state_optional_not_allowed_for_spectrum(self):
         bad_data = self.generic_payload.copy()
         bad_data['requests'][0]['location']['telescope_class'] = '2m0'
         bad_data['requests'][0]['configurations'][0]['instrument_name'] = '2M0-FLOYDS-SCICAM'
@@ -1213,7 +1219,7 @@ class TestConfigurationApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('Guide state must be ON', str(response.content))
 
-    def test_ag_mode_optional_allowed_for_arc(self):
+    def test_guide_state_optional_allowed_for_arc(self):
         good_data = self.generic_payload.copy()
         good_data['requests'][0]['location']['telescope_class'] = '2m0'
         good_data['requests'][0]['configurations'][0]['instrument_name'] = '2M0-FLOYDS-SCICAM'
@@ -1251,7 +1257,7 @@ class TestConfigurationApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 400)
 
         good_data = bad_data
-        good_data['requests'][0]['configurations'][0]['args'] = 'auto_focus'
+        good_data['requests'][0]['configurations'][0]['extra_params'] = {'script_name': 'auto_focus'}
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
         self.assertEqual(response.status_code, 201)
 
@@ -1270,12 +1276,10 @@ class TestConfigurationApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         good_data['requests'][0]['configurations'][0]['guiding_config']['state'] = 'ON'
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
         self.assertEqual(response.status_code, 201)
-
         good_data['requests'][0]['configurations'][0]['type'] = 'NRES_EXPOSE'
         good_data['requests'][0]['configurations'][0]['guiding_config']['state'] = 'ON'
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
         self.assertEqual(response.status_code, 201)
-
         good_data['requests'][0]['configurations'][0]['type'] = 'NRES_TEST'
         good_data['requests'][0]['configurations'][0]['guiding_config']['state'] = 'ON'
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
@@ -1283,13 +1287,16 @@ class TestConfigurationApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
 
     def test_nres_parameters_passthrough(self):
         good_data = self.generic_payload.copy()
-        del good_data['requests'][0]['configurations'][0]['filter']
+        del good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
+        good_data['requests'][0]['configurations'][0]['instrument_name'] = '1M0-NRES-SCICAM'
         good_data['requests'][0]['configurations'][0]['type'] = 'NRES_SPECTRUM'
         good_data['requests'][0]['configurations'][0]['guiding_config']['state'] = 'ON'
         good_data['requests'][0]['configurations'][0]['acquisition_config']['mode'] = 'WCS'
         good_data['requests'][0]['configurations'][0]['guiding_config']['mode'] = 'SUPER'
-        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params']['expmeter_snr'] = 10.0
-        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params']['expmeter_mode'] = 'OFF'
+        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params'] = {
+            'expmeter_snr': 10.0,
+            'expmeter_mode': 'OFF'
+        }
 
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
         self.assertEqual(response.status_code, 201)
@@ -1304,7 +1311,7 @@ class TestConfigurationApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         del bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('must specify a filter', str(response.content))
+        self.assertIn('must specify optical element of type filter', str(response.content))
 
     def test_invalid_spectra_slit_for_instrument(self):
         bad_data = self.generic_payload.copy()
@@ -1322,8 +1329,28 @@ class TestConfigurationApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_x'] = 5
         bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_y'] = 5
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertIn('Invalid binning', str(response.content))
+        self.assertIn('No readout mode found with binning 5', str(response.content))
         self.assertEqual(response.status_code, 400)
+
+    def test_invalid_binning_for_instrument_for_mode(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['mode'] = '1m0_sbig_2'
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_x'] = 5
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_y'] = 5
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertIn('binning 5 is not a valid binning on readout mode 1m0_sbig_2', str(response.content))
+        self.assertEqual(response.status_code, 400)
+
+    def test_readout_mode_sets_default_binning(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['mode'] = '1m0_sbig_2'
+        del bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_x']
+        del bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_y']
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertEqual(response.status_code, 201)
+        rg = response.json()
+        self.assertEqual(rg['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_x'], 2)
+        self.assertEqual(rg['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_y'], 2)
 
     def test_default_binning_for_instrument(self):
         good_data = self.generic_payload.copy()
@@ -1460,13 +1487,15 @@ class TestConfigurationApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         bad_data['requests'][0]['configurations'][0]['type'] = 'SPECTRUM'
         bad_data['requests'][0]['configurations'][0]['guiding_config']['state'] = 'ON'
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertIn('Invalid type SPECTRUM for an imager', str(response.content))
+        self.assertIn('configuration type SPECTRUM is not valid for instrument 1M0-SCICAM-SBIG', str(response.content))
         self.assertEqual(response.status_code, 400)
 
         bad_data['requests'][0]['configurations'][0]['type'] = 'EXPOSE'
         bad_data['requests'][0]['configurations'][0]['instrument_name'] = '2M0-FLOYDS-SCICAM'
+        del bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['slit'] = 'slit_1.6as'
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertIn('Invalid type EXPOSE for a spectrograph', str(response.content))
+        self.assertIn('configuration type EXPOSE is not valid for instrument 2M0-FLOYDS-SCICAM', str(response.content))
         self.assertEqual(response.status_code, 400)
 
 

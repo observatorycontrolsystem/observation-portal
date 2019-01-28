@@ -19,7 +19,7 @@
               "ha_limit_neg": -4.6,
               "slew_rate": 0.0,
               "minimum_slew_overhead": 2.0,
-              "instrument_change_overhead": 30.0,
+              "instrument_change_overhead": 0.0,
               "instrument_set": [
                 {
                   "state": "SCHEDULABLE",
@@ -348,7 +348,7 @@
                         "binning": 2,
                         "readout": 90.5
                       },
-                      "configuration_types": ["NRES_SPECTRUM", "LAMP_FLAT", "ARC", "SCRIPT"],
+                      "configuration_types": ["NRES_SPECTRUM", "NRES_EXPOSE", "NRES_TEST", "LAMP_FLAT", "ARC", "SCRIPT"],
                       "default_acceptability_threshold": 100,
                       "config_change_time": 0,
                       "acquire_processing_time": 90,
