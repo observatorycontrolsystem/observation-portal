@@ -4,7 +4,10 @@ from mixer.backend.django import mixer
 from datetime import datetime
 import math
 
-from observation_portal.requestgroups.models import Request, Configuration, Target, RequestGroup, Window, Location, Constraints
+from observation_portal.requestgroups.models import (
+    Request, Configuration, Target, RequestGroup, Window, Location, Constraints, InstrumentConfig,
+    AcquisitionConfig, GuidingConfig
+)
 from observation_portal.proposals.models import Proposal, TimeAllocation, Semester
 from observation_portal.common.configdb import ConfigDBException
 from observation_portal.common.test_helpers import ConfigDBTestMixin, SetTimeMixin
@@ -15,14 +18,15 @@ class TestRequestGroupTotalDuration(ConfigDBTestMixin, SetTimeMixin, TestCase):
     def setUp(self):
         super().setUp()
         self.proposal = mixer.blend(Proposal)
-        semester = mixer.blend(Semester, id='2016B', start=datetime(2016, 9, 1, tzinfo=timezone.utc),
-                               end=datetime(2016, 12, 31, tzinfo=timezone.utc)
-                               )
-        self.time_allocation_1m0 = mixer.blend(TimeAllocation, proposal=self.proposal, semester=semester,
-                                               telescope_class='1m0', std_allocation=100.0, std_time_used=0.0,
-                                               rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
-                                               ipp_time_available=5.0)
-
+        semester = mixer.blend(
+            Semester, id='2016B', start=datetime(2016, 9, 1, tzinfo=timezone.utc),
+            end=datetime(2016, 12, 31, tzinfo=timezone.utc)
+        )
+        self.time_allocation_1m0 = mixer.blend(
+            TimeAllocation, proposal=self.proposal, semester=semester, std_allocation=100.0, std_time_used=0.0,
+            instrument_name='1M0-SCICAM-SBIG', rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
+            ipp_time_available=5.0
+        )
         self.rg_single = mixer.blend(RequestGroup, proposal=self.proposal, operator='SINGLE')
         self.rg_many = mixer.blend(RequestGroup, proposal=self.proposal)
 
@@ -30,15 +34,19 @@ class TestRequestGroupTotalDuration(ConfigDBTestMixin, SetTimeMixin, TestCase):
         self.requests = mixer.cycle(3).blend(Request, request_group=self.rg_many)
 
         self.configuration_expose = mixer.blend(
-            Configuration, request=self.request, bin_x=2, bin_y=2, instrument_name='1M0-SCICAM-SBIG',
-            exposure_time=600, exposure_count=2, type='EXPOSE', filter='blah'
+            Configuration, request=self.request, instrument_name='1M0-SCICAM-SBIG', type='EXPOSE'
         )
-
         self.configuration_exposes = mixer.cycle(3).blend(
-            Configuration, request=(r for r in self.requests), filter=(f for f in ['uv', 'uv', 'ir']),
-            bin_x=2, bin_y=2, instrument_name='1M0-SCICAM-SBIG', exposure_time=1000, exposure_count=1, type='EXPOSE'
+            Configuration, request=(r for r in self.requests),  instrument_name='1M0-SCICAM-SBIG', type='EXPOSE'
         )
-
+        self.instrument_config = mixer.blend(
+            InstrumentConfig, configuration=self.configuration_expose, bin_x=2, bin_y=2,
+            optical_elements={'filter': 'blah'}, exposure_time=600, exposure_count=2
+        )
+        self.instrument_configs = mixer.cycle(3).blend(
+            InstrumentConfig, configuration=(c for c in self.configuration_exposes), bin_x=2, bin_y=2,
+            optical_elements=({'filter': f} for f in ('uv', 'uv', 'ir')), exposure_time=1000, exposure_count=1,
+        )
         mixer.blend(
             Window, request=self.request, start=datetime(2016, 9, 29, tzinfo=timezone.utc),
             end=datetime(2016, 10, 29, tzinfo=timezone.utc)
@@ -47,15 +55,20 @@ class TestRequestGroupTotalDuration(ConfigDBTestMixin, SetTimeMixin, TestCase):
             Window, request=(r for r in self.requests), start=datetime(2016, 9, 29, tzinfo=timezone.utc),
             end=datetime(2016, 10, 29, tzinfo=timezone.utc)
         )
-
-        mixer.blend(Target, request=self.request)
-        mixer.cycle(3).blend(Target, request=(r for r in self.requests))
+        mixer.blend(Target, configuration=self.configuration_expose)
+        mixer.cycle(3).blend(Target, configuration=(c for c in self.configuration_exposes))
 
         mixer.blend(Location, request=self.request, telescope_class='1m0')
         mixer.cycle(3).blend(Location, request=(r for r in self.requests), telescope_class='1m0')
 
-        mixer.blend(Constraints, request=self.request)
-        mixer.cycle(3).blend(Constraints, request=(r for r in self.requests))
+        mixer.blend(Constraints, configuration=self.configuration_expose)
+        mixer.cycle(3).blend(Constraints, configuration=(c for c in self.configuration_exposes))
+
+        mixer.blend(AcquisitionConfig, configuration=self.configuration_expose)
+        mixer.cycle(3).blend(AcquisitionConfig, configuration=(c for c in self.configuration_exposes))
+
+        mixer.blend(GuidingConfig, configuration=self.configuration_expose)
+        mixer.cycle(3).blend(GuidingConfig, configuration=(c for c in self.configuration_exposes))
 
     def test_single_rg_total_duration(self):
         request_duration = self.request.duration
