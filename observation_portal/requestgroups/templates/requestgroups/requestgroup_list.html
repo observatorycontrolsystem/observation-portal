@@ -106,7 +106,7 @@
             <div class="row">
               <div class="col-md-12">
                 <a class="requestgroup-title" href="{% url 'requestgroups:detail' rg %}">
-                  {{ rg.group_id|default:'Unnamed Request' }}
+                  {{ rg.name|default:'Unnamed Request' }}
                 </a>
               </div>
             </div>
