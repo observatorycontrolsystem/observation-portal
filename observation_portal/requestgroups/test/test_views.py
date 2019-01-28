@@ -53,8 +53,8 @@ class TestRequestGroupList(TestCase):
         mixer.blend(Profile, user=user, staff_view=True)
         self.client.force_login(user)
         response = self.client.get(reverse('requestgroups:list'))
-        for rg in self.requestgroups:
-            self.assertContains(response, rg.group_id)
+        for rg in self.request_groups:
+            self.assertContains(response, rg.name)
 
     def test_requestgroup_list_only_authored(self):
         self.user.profile.view_authored_requests_only = True
@@ -73,7 +73,7 @@ class TestRequestGroupList(TestCase):
 
     def test_filtering(self):
         response = self.client.get(
-            reverse('requestgroups:list') + '?title={}'.format(self.request_groups[0].name)
+            reverse('requestgroups:list') + '?name={}'.format(self.request_groups[0].name)
         )
         self.assertContains(response, self.request_groups[0].name)
         self.assertNotContains(response, self.request_groups[1].name)
