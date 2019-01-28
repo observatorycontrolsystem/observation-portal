@@ -603,11 +603,6 @@ class InstrumentConfig(models.Model):
         help_text='(Spectrograph only) How the slit is positioned on the sky. If set to VFLOAT, atmospheric '
                   'dispersion is along the slit.'
     )
-    rot_angle = models.FloatField(
-        verbose_name='rotation angle', default=0.0, blank=True,
-        help_text='(Spectrograph only) If rot_mode is set to SKY, this is the position angle of the slit in degrees '
-                  'east of north.'
-    )
     extra_params = JSONField(
         default=dict,
         verbose_name='extra parameters',

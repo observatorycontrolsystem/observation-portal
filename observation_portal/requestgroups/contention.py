@@ -20,20 +20,23 @@ class Contention(object):
             windows__end__gt=self.now,
             state='PENDING',
             configurations__instrument_name=instrument_name,
-            target__type='SIDEREAL'
+            configurations__target__type='SIDEREAL'
         ).prefetch_related(
-            'configurations', 'windows', 'target', 'location', 'request_group', 'request_group__proposal'
+            'configurations', 'windows', 'configurations__target', 'location', 'request_group',
+            'request_group__proposal', 'configurations__instrument_configs', 'configurations__acquisition_config',
+            'configurations__guiding_config'
         ).distinct()
 
     def _binned_durations_by_proposal_and_ra(self):
         ra_bins = [{} for x in range(0, 24)]
         for request in self.requests:
-            ra = math.floor(request.target.ra / 15)
-            proposal_id = request.request_group.proposal.id
-            if not ra_bins[ra].get(proposal_id):
-                ra_bins[ra][proposal_id] = request.duration
-            else:
-                ra_bins[ra][proposal_id] += request.duration
+            for conf in request.configurations.all():
+                ra = math.floor(conf.target.ra / 15)
+                proposal_id = request.request_group.proposal.id
+                if not ra_bins[ra].get(proposal_id):
+                    ra_bins[ra][proposal_id] = conf.duration
+                else:
+                    ra_bins[ra][proposal_id] += conf.duration
         return ra_bins
 
     def _anonymize(self, data):
@@ -69,13 +72,15 @@ class Pressure(object):
             windows__start__lte=self.now + timedelta(days=1),
             windows__end__gte=self.now,
             state='PENDING',
-            target__type='SIDEREAL'
+            configurations__target__type='SIDEREAL'
         )
         if instrument_name:
             requests = requests.filter(configurations__instrument_name=instrument_name)
 
         return requests.prefetch_related(
-            'configurations', 'windows', 'target', 'location', 'request_group', 'request_group__proposal'
+            'configurations', 'windows', 'configurations__target', 'location', 'request_group', 'request_group__proposal',
+            'configurations__instrument_configs', 'configurations__constraints', 'configurations__acquisition_config',
+            'configurations__guiding_config'
         ).distinct()
 
     def _telescopes(self, instrument_name):

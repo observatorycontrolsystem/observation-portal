@@ -1,5 +1,6 @@
-from observation_portal.requestgroups.models import RequestGroup, Request, DraftRequestGroup
-from observation_portal.requestgroups.models import Window, Target, Configuration, Location, Constraints
+from observation_portal.requestgroups.models import (RequestGroup, Request, DraftRequestGroup, Window, Target,
+                                                     Configuration, Location, Constraints, InstrumentConfig,
+                                                     AcquisitionConfig, GuidingConfig)
 from observation_portal.proposals.models import Proposal, Membership, TimeAllocation, Semester
 from observation_portal.common.test_helpers import ConfigDBTestMixin, SetTimeMixin
 import observation_portal.requestgroups.signals.handlers  # noqa
@@ -893,9 +894,10 @@ class TestSiderealTarget(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         good_data['requests'][0]['location']['telescope_class'] = '2m0'
         good_data['requests'][0]['configurations'][0]['instrument_name'] = '2M0-FLOYDS-SCICAM'
         good_data['requests'][0]['configurations'][0]['type'] = 'SPECTRUM'
+        del good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
         good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['slit'] = 'slit_6.0as'
         response = self.client.post(reverse('api:request_groups-list'), data=good_data, follow=True)
-        self.assertEqual(response.json()['requests'][0]['target']['rot_mode'], 'VFLOAT')
+        self.assertEqual(response.json()['requests'][0]['configurations'][0]['instrument_configs'][0]['rot_mode'], 'VFLOAT')
 
     def test_target_name_max_length(self):
         bad_data = self.generic_payload.copy()
@@ -1551,69 +1553,6 @@ class TestGetRequestApi(ConfigDBTestMixin, APITestCase):
         self.assertEqual(result.json()['observation_note'], request.observation_note)
 
 
-class TestBlocksApi(APITestCase):
-    def setUp(self):
-        self.proposal = mixer.blend(Proposal)
-        self.user = mixer.blend(User, is_staff=False, is_superuser=False)
-        self.staff_user = mixer.blend(User, is_staff=True)
-        mixer.blend(Membership, user=self.user, proposal=self.proposal)
-        self.request_group = mixer.blend(RequestGroup, submitter=self.user, proposal=self.proposal)
-        self.request = mixer.blend(Request, request_group=self.request_group)
-        self.client.force_login(self.user)
-        self.TESTDATA = os.path.join(os.path.dirname(__file__), 'data/blocks.json')
-
-    @responses.activate
-    def test_empty_blocks(self):
-        responses.add(
-            responses.GET,
-            '{0}/blocks/?request_num={1}&limit=1000'.format(
-                'http://configdbdev.lco.gtn', self.request.get_id_display().zfill(10)
-            ),
-            json={'next': None, 'results': []},
-            status=200
-        )
-        result = self.client.get(reverse('api:requests-blocks', args=(self.request.id,)))
-        self.assertFalse(result.json())
-
-    @responses.activate
-    def test_block_returns(self):
-        with open(self.TESTDATA) as f:
-            responses.add(
-                responses.GET,
-                '{0}/blocks/?request_num={1}&limit=1000'.format(
-                    'http://configdbdev.lco.gtn', self.request.get_id_display().zfill(10)
-                ),
-                json=json.loads(f.read()),
-                status=200
-            )
-            result = self.client.get(reverse('api:requests-blocks', args=(self.request.id,)))
-            self.assertEqual(len(result.json()), 251)
-
-    @responses.activate
-    def test_no_canceled(self):
-        with open(self.TESTDATA) as f:
-            responses.add(
-                responses.GET,
-                '{0}/blocks/?request_num={1}&limit=1000'.format(
-                    'http://configdbdev.lco.gtn', self.request.get_id_display().zfill(10)
-                ),
-                json=json.loads(f.read()),
-                status=200
-            )
-            result = self.client.get(reverse('api:requests-blocks', args=(self.request.id,)) + '?canceled=false')
-            self.assertEqual(len(result.json()), 2)
-
-    @patch('requests.get', side_effect=requests.exceptions.ConnectionError())
-    def test_no_connection(self, request_patch):
-        result = self.client.get(reverse('api:requests-blocks', args=(self.request.id,)))
-        self.assertFalse(result.json())
-
-    @patch('requests.get', side_effect=requests.exceptions.HTTPError())
-    def test_http_error(self, request_patch):
-        result = self.client.get(reverse('api:requests-blocks', args=(self.request.id,)))
-        self.assertFalse(result.json())
-
-
 class TestDraftRequestGroupApi(APITestCase):
     def setUp(self):
         self.user = mixer.blend(User)
@@ -1714,21 +1653,31 @@ class TestAirmassApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
             end=datetime(2016, 12, 31, tzinfo=timezone.utc)
         )
         self.request = {
-            'target': {
-                'name': 'fake target',
-                'type': 'SIDEREAL',
-                'dec': 20,
-                'ra': 34.4,
-            },
             'configurations': [{
                 'type': 'EXPOSE',
                 'instrument_name': '1M0-SCICAM-SBIG',
-                'filter': 'air',
-                'exposure_time': 100,
-                'exposure_count': 1,
-                'bin_x': 1,
-                'bin_y': 1,
-                'ag_name': ''
+                'instrument_configs': [
+                    {
+                        'exposure_time': 100,
+                        'exposure_count': 1,
+                        'bin_x': 1,
+                        'bin_y': 1,
+                        'optical_elements': {'filter': 'air'}
+                     }
+                ],
+                'guiding_config': {},
+                'acquisition_config': {},
+                'constraints': {
+                    'max_airmass': 2.0,
+                    'min_lunar_distance': 30.0,
+                },
+                'target': {
+                    'name': 'fake target',
+                    'type': 'SIDEREAL',
+                    'dec': 20,
+                    'ra': 34.4,
+                }
+
             }],
             'windows': [{
                 'start': '2016-09-29T21:12:18Z',
@@ -1737,10 +1686,6 @@ class TestAirmassApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
             'location': {
                 'telescope_class': '1m0',
             },
-            'constraints': {
-                'max_airmass': 2.0,
-                'min_lunar_distance': 30.0,
-            }
         }
 
     def test_airmass(self):
@@ -1915,7 +1860,7 @@ class TestSchedulableRequestsApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         )
         self.time_allocation_1m0 = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=semester,
-            telescope_class='1m0', instrument_name='1M0-SCICAM-SBIG', std_allocation=100.0, std_time_used=0.0,
+            instrument_name='1M0-SCICAM-SBIG', std_allocation=100.0, std_time_used=0.0,
             rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
             ipp_time_available=5.0
         )
@@ -1931,11 +1876,14 @@ class TestSchedulableRequestsApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
                 mixer.blend(Window, request=req, start=start, end=end)
                 start += timedelta(days=2)
                 end += timedelta(days=2)
-                mixer.blend(Configuration, request=req, exposure_time=60, exposure_count=10, type='EXPOSE', filter='air',
-                            instrument_name='1M0-SCICAM-SBIG', bin_x=1, bin_y=1)
-                mixer.blend(Target, request=req, type='SIDEREAL', dec=20, ra=34.4)
+                conf = mixer.blend(Configuration, request=req, type='EXPOSE', instrument_name='1M0-SCICAM-SBIG')
+                mixer.blend(InstrumentConfig, configuration=conf,  exposure_time=60, exposure_count=10,
+                            optical_elements={'filter': 'air'}, bin_x=1, bin_y=1)
+                mixer.blend(AcquisitionConfig, configuration=conf, )
+                mixer.blend(GuidingConfig, configuration=conf, )
+                mixer.blend(Target, configuration=conf, type='SIDEREAL', dec=20, ra=34.4)
                 mixer.blend(Location, request=req, telescope_class='1m0')
-                mixer.blend(Constraints, request=req, max_airmass=2.0, min_lunar_distance=30.0)
+                mixer.blend(Constraints, configuration=conf, max_airmass=2.0, min_lunar_distance=30.0)
 
         self.client.force_login(self.user)
 
@@ -2011,10 +1959,13 @@ class TestContention(ConfigDBTestMixin, APITestCase):
         mixer.blend(
             Window, start=timezone.now(), end=timezone.now() + timedelta(days=30), request=request
         )
-        mixer.blend(Target, ra=15.0, type='SIDEREAL', request=request)
-        mixer.blend(Configuration, instrument_name='1M0-SCICAM-SBIG', request=request)
         mixer.blend(Location, request=request)
-        mixer.blend(Constraints, request=request)
+        conf = mixer.blend(Configuration, instrument_name='1M0-SCICAM-SBIG', request=request)
+        mixer.blend(Target, ra=15.0, type='SIDEREAL', configuration=conf)
+        mixer.blend(InstrumentConfig, configuration=conf)
+        mixer.blend(AcquisitionConfig, configuration=conf)
+        mixer.blend(GuidingConfig, configuration=conf)
+        mixer.blend(Constraints, configuration=conf)
         self.request = request
 
     def test_contention_no_auth(self):
@@ -2052,13 +2003,16 @@ class TestPressure(ConfigDBTestMixin, APITestCase):
             mixer.blend(
                 Window, start=timezone.now(), end=timezone.now() + timedelta(hours=i), request=request
             )
+            conf = mixer.blend(Configuration, instrument_name='1M0-SCICAM-SBIG', request=request)
             mixer.blend(
                 Target, ra=random.randint(0, 360), dec=random.randint(-180, 180),
-                proper_motion_ra=0.0, proper_motion_dec=0.0, type='SIDEREAL', request=request
+                proper_motion_ra=0.0, proper_motion_dec=0.0, type='SIDEREAL', configuration=conf
             )
-            mixer.blend(Configuration, instrument_name='1M0-SCICAM-SBIG', request=request)
             mixer.blend(Location, request=request)
-            mixer.blend(Constraints, request=request)
+            mixer.blend(Constraints, configuration=conf)
+            mixer.blend(InstrumentConfig, configuration=conf)
+            mixer.blend(AcquisitionConfig, configuration=conf)
+            mixer.blend(GuidingConfig, configuration=conf)
 
     def tearDown(self):
         self.timezone_patch.stop()
@@ -2162,10 +2116,13 @@ class TestPressure(ConfigDBTestMixin, APITestCase):
     def test_visible_intervals(self, mock_intervals):
         request = mixer.blend(Request, state='PENDING', duration=70*60)  # Request duration is 70 minutes.
         mixer.blend(Window, request=request)
-        mixer.blend(Target, request=request)
-        mixer.blend(Configuration, request=request)
         mixer.blend(Location, request=request, site='tst')
-        mixer.blend(Constraints, request=request)
+        conf = mixer.blend(Configuration, request=request)
+        mixer.blend(InstrumentConfig, configuration=conf)
+        mixer.blend(AcquisitionConfig, configuration=conf)
+        mixer.blend(GuidingConfig, configuration=conf)
+        mixer.blend(Target, configuration=conf)
+        mixer.blend(Constraints, configuration=conf)
 
         mock_intervals.return_value = [
             [self.now - timedelta(hours=6), self.now - timedelta(hours=2)],  # Sets before now.
@@ -2221,10 +2178,13 @@ class TestPressure(ConfigDBTestMixin, APITestCase):
     def test_binned_pressure_by_hours_from_now_should_be_gtzero_pressure(self, mock_intervals):
         request = mixer.blend(Request, state='PENDING', duration=120*60)  # 2 hour duration.
         mixer.blend(Window, request=request)
-        mixer.blend(Target, request=request)
-        mixer.blend(Configuration, request=request, instrument_name='1M0-SCICAM-SBIG')
         mixer.blend(Location, request=request, site='tst')
-        mixer.blend(Constraints, request=request)
+        conf = mixer.blend(Configuration, request=request, instrument_name='1M0-SCICAM-SBIG')
+        mixer.blend(InstrumentConfig, configuration=conf)
+        mixer.blend(AcquisitionConfig, configuration=conf)
+        mixer.blend(GuidingConfig, configuration=conf)
+        mixer.blend(Constraints, configuration=conf)
+        mixer.blend(Target, configuration=conf)
 
         mock_intervals.return_value = [
             [self.now + timedelta(hours=2), self.now + timedelta(hours=6)],
@@ -2241,8 +2201,8 @@ class TestPressure(ConfigDBTestMixin, APITestCase):
         self.assertEqual(sum_of_pressure, 0)
 
 
-class TestMaxIppUserrequestApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
-    ''' Test getting max ipp allowable of user requests via API.'''
+class TestMaxIppRequestgroupApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
+    ''' Test getting max ipp allowable of requestgroups via API.'''
 
     def setUp(self):
         super().setUp()
@@ -2251,12 +2211,12 @@ class TestMaxIppUserrequestApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
                                     end=datetime(2016, 12, 31, tzinfo=timezone.utc))
 
         self.time_allocation_1m0_sbig = mixer.blend(
-            TimeAllocation, proposal=self.proposal, semester=self.semester, telescope_class='1m0',
+            TimeAllocation, proposal=self.proposal, semester=self.semester,
             instrument_name='1M0-SCICAM-SBIG', std_allocation=100.0, std_time_used=0.0,
             rr_allocation=10.0, rr_time_used=0.0, ipp_limit=10.0, ipp_time_available=1.0
         )
         self.time_allocation_0m4_sbig = mixer.blend(
-            TimeAllocation, proposal=self.proposal, semester=self.semester, telescope_class='0m4',
+            TimeAllocation, proposal=self.proposal, semester=self.semester,
             instrument_name='0M4-SCICAM-SBIG', std_allocation=100.0, std_time_used=0.0,
             rr_allocation=10.0, rr_time_used=0.0, ipp_limit=10.0, ipp_time_available=1.0
         )
@@ -2281,25 +2241,25 @@ class TestMaxIppUserrequestApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         ipp_dict = response.json()
         self.assertIn(self.semester.id, ipp_dict)
         self.assertEqual(
-            MAX_IPP_LIMIT, ipp_dict[self.semester.id]['1m0']['1M0-SCICAM-SBIG']['max_allowable_ipp_value']
+            MAX_IPP_LIMIT, ipp_dict[self.semester.id]['1M0-SCICAM-SBIG']['max_allowable_ipp_value']
         )
         self.assertEqual(
-            MIN_IPP_LIMIT, ipp_dict[self.semester.id]['1m0']['1M0-SCICAM-SBIG']['min_allowable_ipp_value']
+            MIN_IPP_LIMIT, ipp_dict[self.semester.id]['1M0-SCICAM-SBIG']['min_allowable_ipp_value']
         )
 
     def test_get_max_ipp_reduced_max_ipp(self):
         good_data = self.generic_payload.copy()
-        good_data['requests'][0]['configurations'][0]['exposure_time'] = 90.0 * 60.0  # 90 minute exposure (1.0 ipp available)
+        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['exposure_time'] = 90.0 * 60.0  # 90 minute exposure (1.0 ipp available)
         response = self.client.post(reverse('api:request_groups-max-allowable-ipp'), good_data)
         self.assertEqual(response.status_code, 200)
         ipp_dict = response.json()
         self.assertIn(self.semester.id, ipp_dict)
         # max ipp allowable is close to 1.0 ipp_available / 1.5 ~duration + 1.
-        self.assertEqual(1.649, ipp_dict[self.semester.id]['1m0']['1M0-SCICAM-SBIG']['max_allowable_ipp_value'])
+        self.assertEqual(1.649, ipp_dict[self.semester.id]['1M0-SCICAM-SBIG']['max_allowable_ipp_value'])
 
     def test_get_max_ipp_rounds_down(self):
         good_data = self.generic_payload.copy()
-        good_data['requests'][0]['configurations'][0]['exposure_time'] = 90.0 * 60.0  # 90 minute exposure (1.0 ipp available)
+        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['exposure_time'] = 90.0 * 60.0  # 90 minute exposure (1.0 ipp available)
         self.time_allocation_1m0_sbig.ipp_time_available = 1.33
         self.time_allocation_1m0_sbig.save()
         response = self.client.post(reverse('api:request_groups-max-allowable-ipp'), good_data)
@@ -2307,7 +2267,7 @@ class TestMaxIppUserrequestApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         ipp_dict = response.json()
         self.assertIn(self.semester.id, ipp_dict)
         # max ipp allowable is close to 1.0 ipp_available / 1.5 ~duration + 1.
-        self.assertEqual(1.863, ipp_dict[self.semester.id]['1m0']['1M0-SCICAM-SBIG']['max_allowable_ipp_value'])
+        self.assertEqual(1.863, ipp_dict[self.semester.id]['1M0-SCICAM-SBIG']['max_allowable_ipp_value'])
 
     def test_get_max_ipp_no_ipp_available(self):
         good_data = self.generic_payload.copy()
@@ -2319,7 +2279,7 @@ class TestMaxIppUserrequestApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         ipp_dict = response.json()
         self.assertIn(self.semester.id, ipp_dict)
         # max ipp allowable is close to 1.0 ipp_available / 1.5 ~duration + 1.
-        self.assertEqual(1.0, ipp_dict[self.semester.id]['1m0']['1M0-SCICAM-SBIG']['max_allowable_ipp_value'])
+        self.assertEqual(1.0, ipp_dict[self.semester.id]['1M0-SCICAM-SBIG']['max_allowable_ipp_value'])
 
 
 class TestFiltering(APITestCase):

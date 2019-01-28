@@ -87,7 +87,6 @@ class RequestGroupViewSet(viewsets.ModelViewSet):
                     time_allocation = TimeAllocation.objects.get(
                         semester=tak.semester,
                         instrument_name=tak.instrument_name,
-                        telescope_class=tak.telescope_class,
                         proposal=request_group.proposal.id,
                     )
                     tas[(tak, request_group.proposal.id)] = time_allocation

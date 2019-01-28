@@ -205,6 +205,7 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                     raise serializers.ValidationError(_("Acquisition Mode {} required extra param of {} to be set"
                                                         .format(acquisition_mode['code'], field)))
 
+        # Validate the optical elements, rotator and readout modes specified in the instrument configs
         available_optical_elements = configdb.get_optical_elements(data['instrument_name'])
         for instrument_config in data['instrument_configs']:
             if ('mode' not in instrument_config or not instrument_config['mode']) and 'readout' in default_modes:
@@ -231,6 +232,24 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                 elif instrument_config['bin_x'] != readout_mode['params']['binning']:
                     raise serializers.ValidationError(_("binning {} is not a valid binning on readout mode {} for instrument type {}"
                                                         .format(instrument_config['bin_x'], instrument_config['mode'], data['instrument_name'])))
+
+            # Validate the rotator modes if set in configdb
+            if 'rotator' in modes:
+                if 'rot_mode' not in instrument_config or not instrument_config['rot_mode']:
+                    instrument_config['rot_mode'] = default_modes['rotator']['code']
+
+                try:
+                    rotator_mode = configdb.get_mode_with_code(data['instrument_name'], instrument_config['rot_mode'],
+                                                               'rotator')
+                    if 'required_fields' in rotator_mode['params']:
+                        for field in rotator_mode['params']['required_fields']:
+                            if field not in instrument_config['extra_params']:
+                                raise serializers.ValidationError(
+                                    _("Rotator Mode {} required extra param of {} to be set"
+                                      .format(rotator_mode['code'], field)))
+                except ConfigDBException as cdbe:
+                    raise serializers.ValidationError(_(str(cdbe)))
+
             # Check that the optical elements specified are valid in configdb
             for oe_type, value in instrument_config['optical_elements'].items():
                 plural_type = '{}s'.format(oe_type)
@@ -253,7 +272,7 @@ class ConfigurationSerializer(serializers.ModelSerializer):
 
         # Validate autoguiders - empty string for default behavior, or match with instrument name for self guiding
         valid_autoguiders = configdb.get_autoguiders_for_science_camera(data['instrument_name'])
-        if guiding_config['name'].upper() not in valid_autoguiders:
+        if 'name' in guiding_config and guiding_config['name'].upper() not in valid_autoguiders:
             raise serializers.ValidationError(_("Guiding instrument {} is not allowed for science instrument {}")
                                               .format(guiding_config['name'], data['instrument_name']))
 

@@ -92,9 +92,7 @@ def get_max_ipp_for_requestgroup(requestgroup_dict):
         truncated_max_ipp_allowable = floor(max_ipp_allowable * 1000.0) / 1000.0
         if tak.semester not in ipp_dict:
             ipp_dict[tak.semester] = {}
-        if tak.telescope_class not in ipp_dict[tak.semester]:
-            ipp_dict[tak.semester][tak.telescope_class] = {}
-        ipp_dict[tak.semester][tak.telescope_class][tak.instrument_name] = {
+        ipp_dict[tak.semester][tak.instrument_name] = {
             'ipp_time_available': ipp_available,
             'ipp_limit': time_allocation.ipp_limit,
             'request_duration': duration_hours,

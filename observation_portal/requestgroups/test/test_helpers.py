@@ -39,8 +39,6 @@ class TestTargetHelper(TestCase):
             'proper_motion_ra': 0,
             'ra': 180.0,
             'roll': 0,
-            'rot_angle': 0.0,
-            'rot_mode': '',
             'scheme': '',
             'type': 'SIDEREAL'
         }

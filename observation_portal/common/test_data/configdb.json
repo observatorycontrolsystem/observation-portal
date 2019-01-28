@@ -178,6 +178,22 @@
                             "default": false,
                             "params": {"required_fields": ["acquire_radius"]}
                           }
+                        ],
+                        "rotator":[
+                          {
+                            "code": "VFLOAT",
+                            "default": true,
+                            "type": "rotator",
+                            "overhead": 0.0,
+                            "params": {}
+                          },
+                          {
+                            "code": "SKY",
+                            "type": "rotator",
+                            "overhead": 0.0,
+                            "default": false,
+                            "params": {"required_fields": ["rotator_angle"]}
+                          }
                         ]
                       }
                     },
