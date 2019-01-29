@@ -48,18 +48,10 @@ def get_instrument_configuration_duration(instrument_config_dict, instrument_nam
 
 
 def get_configuration_duration(configuration_dict):
-    request_overheads = configdb.get_request_overheads(configuration_dict['instrument_name'])
     duration = 0
-    previous_optical_elements = {}
     for inst_config in configuration_dict['instrument_configs']:
         duration += get_instrument_configuration_duration(inst_config, configuration_dict['instrument_name'])
-        change_overhead = 0
-        # Assume all optical element changes are done in parallel so just take the max of all elements changing
-        for oe_type, oe_value in inst_config['optical_elements'].items():
-            if oe_type not in previous_optical_elements or oe_value != previous_optical_elements[oe_type]:
-                change_overhead = max(request_overheads['optical_element_change_overheads']['{}s'.format(oe_type)], change_overhead)
-        previous_optical_elements = inst_config['optical_elements']
-        duration += change_overhead
+
     return duration + PER_CONFIGURATION_GAP + PER_CONFIGURATION_STARTUP_TIME
 
 
@@ -136,6 +128,7 @@ def get_request_duration(request_dict):
     previous_instrument = ''
     previous_target = {}
     previous_conf_type = ''
+    previous_optical_elements = {}
     configurations = sorted(request_dict['configurations'], key=lambda x: x['priority'])
     for configuration in configurations:
         duration += get_configuration_duration(configuration)
@@ -144,6 +137,15 @@ def get_request_duration(request_dict):
         if previous_instrument != configuration['instrument_name']:
             duration += request_overheads['instrument_change_overhead']
         previous_instrument = configuration['instrument_name']
+
+        # Now add in optical element change time if the set of optical elements has changed
+        for inst_config in configuration['instrument_configs']:
+            change_overhead = 0
+            for oe_type, oe_value in inst_config['optical_elements'].items():
+                if oe_type not in previous_optical_elements or oe_value != previous_optical_elements[oe_type]:
+                    change_overhead = max(request_overheads['optical_element_change_overheads']['{}s'.format(oe_type)], change_overhead)
+            previous_optical_elements = inst_config['optical_elements']
+            duration += change_overhead
 
         # Now add in the slew time between targets (configurations)
         if previous_target != configuration['target']:
