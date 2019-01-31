@@ -1,8 +1,8 @@
 from math import cos, radians
 from datetime import timedelta
 from time_intervals.intervals import Intervals
-from rise_set.astrometry import make_ra_dec_target, make_satellite_target, make_minor_planet_target
-from rise_set.astrometry import make_comet_target, make_major_planet_target
+from rise_set.astrometry import make_ra_dec_target, make_satellite_target, make_minor_planet_target, mean_to_apparent
+from rise_set.astrometry import make_comet_target, make_major_planet_target, angular_distance_between, date_to_tdb
 from rise_set.angle import Angle
 from rise_set.rates import ProperMotion
 from rise_set.visibility import Visibility
@@ -164,6 +164,20 @@ def get_rise_set_target(target_dict):
             raise TypeError('Invalid scheme ' + target_dict['scheme'])
     else:
         raise TypeError('Invalid target type' + target_dict['type'])
+
+
+def get_distance_between(rs_target_1, rs_target_2, start_time):
+    '''
+        Returns the angular distance between two Sidereal rise set targets as a rise_set Angle
+    :param rs_target_1:
+    :param rs_target_2:
+    :param start_time:
+    :return: Angle
+    '''
+    start_tdb = date_to_tdb(start_time)
+    apparent_ra_1, apparent_dec_1 = mean_to_apparent(rs_target_1, start_tdb)
+    apparent_ra_2, apparent_dec_2 = mean_to_apparent(rs_target_2, start_tdb)
+    return angular_distance_between(apparent_ra_1, apparent_dec_1, apparent_ra_2, apparent_dec_2)
 
 
 def get_rise_set_site(site_detail):

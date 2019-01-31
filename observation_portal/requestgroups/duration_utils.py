@@ -1,11 +1,13 @@
 import itertools
 from django.utils.translation import ugettext as _
 from math import ceil, floor
+from django.utils import timezone
 import logging
 
 from observation_portal.proposals.models import TimeAllocationKey, Proposal, Semester
 from observation_portal.common.configdb import configdb
-from observation_portal.common.rise_set_utils import get_rise_set_intervals, get_largest_interval
+from observation_portal.common.rise_set_utils import (get_rise_set_intervals, get_largest_interval,
+                                                      get_distance_between, get_rise_set_target)
 
 logger = logging.getLogger(__name__)
 
@@ -118,8 +120,17 @@ def get_num_exposures(instrument_config_dict, instrument_name,  time_available):
 
 
 # TODO: implement this (distance between two targets in arcsec)
-def get_slew_distance(target_dict1, target_dict2):
-    return 0
+def get_slew_distance(target_dict1, target_dict2, start_time):
+    '''
+        Get the angular distance between two targets, in units of arcseconds
+    :param target_dict1:
+    :param target_dict2:
+    :return:
+    '''
+    rs_target_1 = get_rise_set_target(target_dict1)
+    rs_target_2 = get_rise_set_target(target_dict2)
+    distance_between = get_distance_between(rs_target_1, rs_target_2, start_time)
+    return distance_between.in_degrees() * 3600
 
 
 def get_request_duration(request_dict):
@@ -129,6 +140,8 @@ def get_request_duration(request_dict):
     previous_target = {}
     previous_conf_type = ''
     previous_optical_elements = {}
+    start_time = (min([window['start'] for window in request_dict['windows']])
+                  if 'windows' in request_dict and request_dict['windows'] else timezone.now())
     configurations = sorted(request_dict['configurations'], key=lambda x: x['priority'])
     for configuration in configurations:
         duration += get_configuration_duration(configuration)
@@ -147,9 +160,13 @@ def get_request_duration(request_dict):
             previous_optical_elements = inst_config['optical_elements']
             duration += change_overhead
 
-        # Now add in the slew time between targets (configurations)
-        if previous_target != configuration['target']:
-            duration += max(get_slew_distance(previous_target, configuration['target']) * request_overheads['slew_rate'], request_overheads['minimum_slew_overhead'])
+        # Now add in the slew time between targets (configurations). Only Sidereal can be calculated based on position.
+        if not previous_target or 'ra' not in previous_target or 'ra' not in configuration['target']:
+            duration += request_overheads['maximum_slew_overhead']
+        elif previous_target != configuration['target']:
+            duration += min(max(get_slew_distance(previous_target, configuration['target'], start_time)
+                                * request_overheads['slew_rate'], request_overheads['minimum_slew_overhead']),
+                            request_overheads['maximum_slew_overhead'])
         previous_target = configuration['target']
 
         # Now add the Acquisition overhead if this request requires it

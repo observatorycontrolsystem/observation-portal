@@ -330,6 +330,7 @@ class ConfigDB(object):
                             return {'instrument_change_overhead': telescope['instrument_change_overhead'],
                                     'slew_rate': telescope['slew_rate'],
                                     'minimum_slew_overhead': telescope['minimum_slew_overhead'],
+                                    'maximum_slew_overhead': telescope.get('maximum_slew_overhead', 0.0),
                                     'config_change_overhead': camera_type['config_change_time'],
                                     'acquisition_overheads': {am['code']: am['overhead'] for am in camera_type['modes']['acquisition']} if 'acquisition' in camera_type['modes'] else {},
                                     'guiding_overheads': {gm['code']: gm['overhead'] for gm in camera_type['modes']['guiding']} if 'guiding' in camera_type['modes'] else {},

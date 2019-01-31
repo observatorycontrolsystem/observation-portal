@@ -19,6 +19,7 @@
               "ha_limit_neg": -4.6,
               "slew_rate": 0.0,
               "minimum_slew_overhead": 2.0,
+              "maximum_slew_overhead": 2.0,
               "instrument_change_overhead": 0.0,
               "instrument_set": [
                 {
@@ -246,6 +247,7 @@
               "ha_limit_neg": -4.6,
               "slew_rate": 0.0,
               "minimum_slew_overhead": 2.0,
+              "maximum_slew_overhead": 2.0,
               "instrument_change_overhead": 30.0,
               "instrument_set": [
                 {
@@ -530,6 +532,7 @@
             "ha_limit_neg": -4.6,
             "slew_rate": 0.0,
             "minimum_slew_overhead": 2.0,
+            "maximum_slew_overhead": 2.0,
             "instrument_change_overhead": 0.0,
             "instrument_set": [
             ]
