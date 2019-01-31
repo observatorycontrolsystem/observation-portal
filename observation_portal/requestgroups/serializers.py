@@ -235,7 +235,8 @@ class ConfigurationSerializer(serializers.ModelSerializer):
 
             # Validate the rotator modes if set in configdb
             if 'rotator' in modes:
-                if 'rot_mode' not in instrument_config or not instrument_config['rot_mode']:
+                if ('rot_mode' not in instrument_config or not instrument_config['rot_mode']
+                        and 'rotator' in default_modes):
                     instrument_config['rot_mode'] = default_modes['rotator']['code']
 
                 try:
@@ -269,7 +270,6 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                         raise serializers.ValidationError(_("must specify optical element of type {} for instrument {}"
                                                             .format(singular_type, data['instrument_name'])))
 
-
         # Validate autoguiders - empty string for default behavior, or match with instrument name for self guiding
         valid_autoguiders = configdb.get_autoguiders_for_science_camera(data['instrument_name'])
         if 'name' in guiding_config and guiding_config['name'].upper() not in valid_autoguiders:
@@ -283,89 +283,11 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                     _("Must specify a script_name in extra_params for SCRIPT configuration type")
                 )
 
+        # Validate the configuration type is available for the instrument requested
         if data['type'] not in configdb.get_configuration_types(data['instrument_name']):
             raise serializers.ValidationError(_("configuration type {} is not valid for instrument {}").format(
                 data['type'], data['instrument_name']
             ))
-
-
-        # # set special defaults if it is a spectrograph
-        # if configdb.is_spectrograph(data['instrument_name']):
-        #     if 'state' not in data['guiding_config']:
-        #         data['guiding_config']['state'] = 'ON'
-        #     if 'state' not in data['acquisition_config']:
-        #         data['acquisition_config']['state'] = 'ON'
-
-        # if data['acquisition_config']['mode'] != 'OFF':
-        #     if 'mode' not in data['acquisition_config']['extra_params']:
-        #         data['acquisition_config']['extra_params']['mode'] = modes['']
-            # if data['acquire_mode'] == 'BRIGHTEST' and not data.get('acquire_radius_arcsec'):
-            #     raise serializers.ValidationError({'acquire_radius_arcsec': 'Acquire radius must be positive.'})
-
-        # types_that_require_filter = ['expose', 'auto_focus', 'zero_pointing', 'standard', 'sky_flat']
-        # types_that_require_slit = ['spectrum', 'arc', 'lamp_flat']
-        # types_that_require_ag_mode_on = ['spectrum', 'nres_spectrum', 'nres_test', 'nres_expose']
-        #
-        # # Spectrum and NRES_SPECTRUM obs must have ag_mode 'ON'
-        # if data['type'].lower() in types_that_require_ag_mode_on:
-        #     if data['ag_mode'] is not 'ON':
-        #         raise serializers.ValidationError({'ag_mode': _('Autoguiding must be on for {} observations.'.format(data['type']))})
-
-        # check that the filter is available in the instrument type specified
-        # available_filters = configdb.get_filters(data['instrument_name'])
-        # if configdb.is_spectrograph(data['instrument_name']):
-        #     if (data['type'].lower() in types_that_require_slit
-        #             and data.get('spectra_slit', '').lower() not in available_filters):
-        #         raise serializers.ValidationError(
-        #             {'spectra_slit': _("Invalid spectra slit {} for instrument {}. Valid slits are: {}").format(
-        #                 data.get('spectra_slit', ''), data['instrument_name'], ", ".join(available_filters)
-        #             )}
-        #         )
-        # elif data['type'].lower() in types_that_require_filter:
-        #     if not data.get('filter'):
-        #         raise serializers.ValidationError(
-        #             {'filter': _("You must specify a filter for {} exposures.").format(
-        #                 MOLECULE_TYPE_DISPLAY[data['type']]
-        #             )}
-        #         )
-        #     elif data['filter'].lower() not in available_filters:
-        #         raise serializers.ValidationError(
-        #             {'filter': _("Invalid filter {} for instrument {}. Valid filters are: {}").format(
-        #                 data['filter'], data['instrument_name'], ", ".join(available_filters)
-        #             )}
-        #         )
-
-        if configdb.is_spectrograph(data['instrument_name']):
-            for instrument_config in data['instrument_configs']:
-                if 'rot_mode' not in instrument_config:
-                    # TODO: Set default rot_mode for instrument here
-                    pass
-
-        # check that the binning is available for the instrument type specified
-        # if 'bin_x' not in data and 'bin_y' not in data:
-        #     data['bin_x'] = configdb.get_default_binning(data['instrument_name'])
-        #     data['bin_y'] = data['bin_x']
-        # elif 'bin_x' in data and 'bin_y' in data:
-        #     available_binnings = configdb.get_binnings(data['instrument_name'])
-        #     if data['bin_x'] not in available_binnings:
-        #         msg = _("Invalid binning of {} for instrument {}. Valid binnings are: {}").format(
-        #             data['bin_x'], data['instrument_name'].upper(), ", ".join([str(b) for b in available_binnings])
-        #         )
-        #         raise serializers.ValidationError(msg)
-        # else:
-        #     raise serializers.ValidationError(_("Missing one of bin_x or bin_y. Specify both or neither."))
-
-        # check that the molecule type matches the instruemnt
-        # imager_only_types = ['EXPOSE', 'SKY_FLAT', 'AUTO_FOCUS']
-        # spec_only_types = ['SPECTRUM', 'ARC', 'LAMP_FLAT']
-        # if configdb.is_spectrograph(data['instrument_name']) and data['type'] in imager_only_types:
-        #     raise serializers.ValidationError(
-        #         _('Invalid type {0} for a spectrograph.'.format(data['type']))
-        #     )
-        # if not configdb.is_spectrograph(data['instrument_name']) and data['type'] in spec_only_types:
-        #     raise serializers.ValidationError(
-        #         _('Invalid type {0} for an imager.'.format(data['type']))
-        #     )
 
         return data
 
