@@ -10,7 +10,7 @@ from PyPDF2 import PdfFileMerger
 from weasyprint import HTML
 from unittest.mock import MagicMock, patch
 
-
+from observation_portal.common.test_helpers import ConfigDBTestMixin
 from observation_portal.proposals.models import Semester, ScienceCollaborationAllocation
 from observation_portal.accounts.models import Profile
 from observation_portal.sciapplications.models import ScienceApplication, Call, Instrument, TimeRequest, CoInvestigator
@@ -110,8 +110,9 @@ class TestGetCreateSciApp(TestCase):
 
 
 @patch('observation_portal.sciapplications.forms.PdfFileReader', new=MockPDFFileReader)
-class TestPostCreateSciApp(TestCase):
+class TestPostCreateSciApp(ConfigDBTestMixin, TestCase):
     def setUp(self):
+        super().setUp()
         self.semester = mixer.blend(
             Semester, start=timezone.now() + timedelta(days=1), end=timezone.now() + timedelta(days=365)
         )
@@ -579,8 +580,9 @@ class TestPostUpdateSciApp(TestCase):
         self.assertTrue(ScienceApplication.objects.get(pk=self.app.id).submitted)
 
 
-class TestSciAppIndex(TestCase):
+class TestSciAppIndex(ConfigDBTestMixin, TestCase):
     def setUp(self):
+        super().setUp()
         self.semester = mixer.blend(
             Semester, start=timezone.now() + timedelta(days=1), end=timezone.now() + timedelta(days=365)
         )
@@ -651,7 +653,7 @@ class TestSciAppIndex(TestCase):
             submitter=self.user,
             call=call
         )
-        instrument = mixer.blend(Instrument, code='1M0-SCICAM-SINISTRO', telescope_class='1m0')
+        instrument = mixer.blend(Instrument, code='1M0-SCICAM-SBIG', telescope_class='1m0')
         tr = mixer.blend(TimeRequest, science_application=app, instrument=instrument, std_time=8)
         response = self.client.get(reverse('sciapplications:index'))
         self.assertContains(response, '{0}/{1}'.format(tr.std_time, sca.one_meter_alloc))
