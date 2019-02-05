@@ -5,7 +5,7 @@ from observation_portal.requestgroups.models import Request, Configuration
 
 
 class Observation(models.Model):
-    request = models.ForeignKey(Request)
+    request = models.ForeignKey(Request, on_delete=models.PROTECT)
     site = models.CharField(
         max_length=10,
         help_text='3 character site code'
@@ -44,8 +44,8 @@ class ConfigurationStatus(models.Model):
         ('FAILED', 'FAILED')
     )
 
-    configuration = models.ForeignKey(Configuration)
-    observation = models.ForeignKey(Observation)
+    configuration = models.ForeignKey(Configuration, on_delete=models.PROTECT)
+    observation = models.ForeignKey(Observation, on_delete=models.CASCADE)
     state = models.CharField(
         max_length=40, choices=STATE_CHOICES, default=STATE_CHOICES[0][0],
         help_text='Current state of this RequestGroup'
@@ -61,7 +61,7 @@ class ConfigurationStatus(models.Model):
 
 
 class Summary(models.Model):
-    configuration_status = models.OneToOneField(ConfigurationStatus)
+    configuration_status = models.OneToOneField(ConfigurationStatus, on_delete=models.CASCADE)
     start = models.DateTimeField(
         db_index=True,
         help_text='Actual start time of configuration'
@@ -79,7 +79,7 @@ class Summary(models.Model):
     )
     state = models.CharField(
         max_length=50,
-        help_test='The overall state of the set of events'
+        help_text='The overall state of the set of events'
     )
     reason = models.CharField(
         max_length=200, default='',
