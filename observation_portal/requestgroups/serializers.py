@@ -161,8 +161,8 @@ class ConfigurationSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, data):
-        modes = configdb.get_modes(data['instrument_name'])
-        default_modes = configdb.get_default_modes(data['instrument_name'])
+        modes = configdb.get_modes_by_type(data['instrument_name'])
+        default_modes = configdb.get_default_modes_by_type(data['instrument_name'])
         guiding_config = data['guiding_config']
         # Set defaults for guiding and acquisition modes if they are not set
         # TODO: Validate the guiding optical elements on the guiding instrument types
@@ -183,7 +183,7 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                 guiding_config['mode'] = default_modes['guiding']['code']
         else:
             if ('guiding' in modes
-                    and guiding_config['mode'].lower() not in [gm['code'].lower() for gm in modes['guiding']]):
+                    and guiding_config['mode'].lower() not in [gm['code'].lower() for gm in modes['guiding']['modes']]):
                 raise serializers.ValidationError(_("guiding mode {} is not available for instrument type {}"
                                                     .format(guiding_config['mode'], data['instrument_name'])))
 
@@ -191,7 +191,7 @@ class ConfigurationSerializer(serializers.ModelSerializer):
         if 'mode' not in acquisition_config:
             if 'acquisition' in default_modes:
                 acquisition_config['mode'] = default_modes['acquisition']['code']
-        elif 'acquisition' in modes and acquisition_config['mode'] not in [am['code'] for am in modes['acquisition']]:
+        elif 'acquisition' in modes and acquisition_config['mode'] not in [am['code'] for am in modes['acquisition']['modes']]:
             raise serializers.ValidationError(_("Acquisition mode {} is not available for instrument type {}"
                                                 .format(acquisition_config['mode'], data['instrument_name'])))
 

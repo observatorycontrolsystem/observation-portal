@@ -173,7 +173,7 @@ class ConfigDB(object):
 
         return optical_elements
 
-    def get_modes(self, instrument_type, mode_type=''):
+    def get_modes_by_type(self, instrument_type, mode_type=''):
         '''
             Function returns the set of available modes of different types for the instrument_type specified
         :param instrument_type:
@@ -182,34 +182,34 @@ class ConfigDB(object):
         for instrument in self.get_instruments():
             if instrument_type.upper() == instrument['science_camera']['camera_type']['code'].upper():
                 if not mode_type:
-                    return instrument['science_camera']['camera_type']['modes']
+                    return {mode_group['type']: mode_group for mode_group in instrument['science_camera']['camera_type']['mode_types']}
                 else:
-                    for type, mode_details in instrument['science_camera']['camera_type']['modes'].items():
-                        if type == mode_type:
-                            return {type: mode_details}
+                    for mode_group in instrument['science_camera']['camera_type']['mode_types']:
+                        if mode_group['type'] == mode_type:
+                            return {mode_type: mode_group}
         return {}
 
     def get_mode_with_code(self, instrument_type, code, mode_type=''):
-        modes_by_type = self.get_modes(instrument_type, mode_type)
-        for type, modes in modes_by_type.items():
-            for mode in modes:
+        modes_by_type = self.get_modes_by_type(instrument_type, mode_type)
+        for _, mode_group in modes_by_type.items():
+            for mode in mode_group['modes']:
                 if mode['code'].lower() == code.lower():
                     return mode
 
         raise ConfigDBException("No mode named {} found for instrument type {}".format(code, instrument_type))
 
     def get_readout_mode_with_binning(self, instrument_type, binning):
-        readout_modes = self.get_modes(instrument_type, 'readout')
+        readout_modes = self.get_modes_by_type(instrument_type, 'readout')
         if readout_modes:
-            readout_modes = sorted(readout_modes['readout'], key=lambda x: x['default'], reverse=True)  # Start with the default
-            for readout_mode in readout_modes:
-                if readout_mode['params']['binning'] == binning:
-                    return readout_mode
+            modes = sorted(readout_modes['readout']['modes'], key=lambda x: x['code'] == readout_modes['readout']['default'], reverse=True)  # Start with the default
+            for mode in modes:
+                if mode['params'].get('binning', -1) == binning:
+                    return mode
 
         raise ConfigDBException("No readout mode found with binning {} for instrument type {}".format(binning,
                                                                                                       instrument_type))
 
-    def get_default_modes(self, instrument_type, mode_type=''):
+    def get_default_modes_by_type(self, instrument_type, mode_type=''):
         '''
             Function returns the default mode of each available mode_type (or the specified mode_type) for the given
             instrument_type
@@ -217,10 +217,10 @@ class ConfigDB(object):
         :param mode_type:
         :return:
         '''
-        modes = self.get_modes(instrument_type, mode_type)
+        modes = self.get_modes_by_type(instrument_type, mode_type)
         for type, mode_set in modes.items():
-            for mode in mode_set:
-                if mode['default']:
+            for mode in mode_set['modes']:
+                if mode['code'] == mode_set['default']:
                     modes[type] = mode
                     break
 
@@ -233,8 +233,8 @@ class ConfigDB(object):
         :return: returns the available set of binnings for an instrument_type
         '''
         available_binnings = set()
-        readout_modes = self.get_modes(instrument_type, 'readout')
-        for mode in readout_modes['readout'] if 'readout' in readout_modes else []:
+        readout_modes = self.get_modes_by_type(instrument_type, 'readout')
+        for mode in readout_modes['readout']['modes'] if 'readout' in readout_modes else []:
             if 'binning' in mode['params']:
                 available_binnings.add(mode['params']['binning'])
 
@@ -246,9 +246,9 @@ class ConfigDB(object):
         :param instrument_type:
         :return: binning default
         '''
-        readout_modes = self.get_modes(instrument_type, 'readout')
-        for mode in readout_modes['readout'] if 'readout' in readout_modes else []:
-            if mode['default'] and 'binning' in mode['params']:
+        readout_modes = self.get_modes_by_type(instrument_type, 'readout')
+        for mode in readout_modes['readout']['modes'] if 'readout' in readout_modes else []:
+            if readout_modes['readout']['default'] == mode['code'] and 'binning' in mode['params']:
                 return mode['params']['binning']
         return None
 
@@ -296,19 +296,21 @@ class ConfigDB(object):
     def get_exposure_overhead(self, instrument_type, binning, readout_mode=''):
         # using the instrument type, build an instrument with the correct configdb parameters
         for instrument in self.get_instruments():
-            camera_type = instrument['science_camera']['camera_type']
-            if camera_type['code'].upper() == instrument_type.upper():
-                # get the binnings and put them into a dictionary
-                default_mode = {}
-                for mode in camera_type['modes']['readout'] if 'readout' in camera_type['modes'] else []:
-                    if mode['default']:
-                        default_mode = mode
-                    if readout_mode and readout_mode.lower() != mode['code'].lower():
-                        continue
-                    if 'binning' in mode['params'] and mode['params']['binning'] == binning:
-                        return mode['overhead'] + camera_type['fixed_overhead_per_exposure']
-                # if the binning is not found, return the default binning (Added to support legacy 2x2 Sinistro obs)
-                return default_mode['overhead'] + camera_type['fixed_overhead_per_exposure']
+            if instrument['science_camera']['camera_type']['code'].upper() == instrument_type.upper():
+                camera_type = instrument['science_camera']['camera_type']
+
+        modes_by_type = self.get_modes_by_type(instrument_type, mode_type='readout')
+        if 'readout' in modes_by_type:
+            default_mode = {}
+            for mode in modes_by_type['readout']['modes']:
+                if mode['code'] == modes_by_type['readout']['default']:
+                    default_mode = mode
+                if readout_mode and readout_mode.lower() != mode['code'].lower():
+                    continue
+                if 'binning' in mode['params'] and mode['params']['binning'] == binning:
+                    return mode['overhead'] + camera_type['fixed_overhead_per_exposure']
+            # if the binning is not found, return the default binning (Added to support legacy 2x2 Sinistro obs)
+            return default_mode['overhead'] + camera_type['fixed_overhead_per_exposure']
 
         raise ConfigDBException("Instrument type {} not found in configdb.".format(instrument_type))
 
@@ -321,6 +323,7 @@ class ConfigDB(object):
         :return:
         '''
         site_data = self.get_site_data()
+        modes_by_type = self.get_modes_by_type(instrument_type)
         for site in site_data:
             for enclosure in site['enclosure_set']:
                 for telescope in enclosure['telescope_set']:
@@ -332,8 +335,8 @@ class ConfigDB(object):
                                     'minimum_slew_overhead': telescope['minimum_slew_overhead'],
                                     'maximum_slew_overhead': telescope.get('maximum_slew_overhead', 0.0),
                                     'config_change_overhead': camera_type['config_change_time'],
-                                    'acquisition_overheads': {am['code']: am['overhead'] for am in camera_type['modes']['acquisition']} if 'acquisition' in camera_type['modes'] else {},
-                                    'guiding_overheads': {gm['code']: gm['overhead'] for gm in camera_type['modes']['guiding']} if 'guiding' in camera_type['modes'] else {},
+                                    'acquisition_overheads': {am['code']: am['overhead'] for am in modes_by_type['acquisition']['modes']} if 'acquisition' in modes_by_type else {},
+                                    'guiding_overheads': {gm['code']: gm['overhead'] for gm in modes_by_type['guiding']['modes']} if 'guiding' in modes_by_type else {},
                                     'front_padding': camera_type['front_padding'],
                                     'optical_element_change_overheads':
                                         {oeg['type']: oeg['element_change_overhead'] for oeg in instrument['science_camera']['optical_element_groups']}
