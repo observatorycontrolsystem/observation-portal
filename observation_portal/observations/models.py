@@ -59,6 +59,9 @@ class ConfigurationStatus(models.Model):
         help_text='Time when this Configuration was created'
     )
 
+    class Meta:
+        verbose_name_plural = 'Configuration statuses'
+
 
 class Summary(models.Model):
     configuration_status = models.OneToOneField(ConfigurationStatus, on_delete=models.CASCADE)
@@ -82,13 +85,17 @@ class Summary(models.Model):
         help_text='The overall state of the set of events'
     )
     reason = models.CharField(
-        max_length=200, default='',
+        max_length=200, default='', blank=True,
         help_text='If state is not COMPLETED, this contains the failure reason'
     )
     time_completed = models.FloatField(
         help_text='The seconds of exposure time completed for this configuration'
     )
     events = JSONField(
+        default={}, blank=True,
         help_text='Raw set of telescope events during this observation, in json format'
     )
+
+    class Meta:
+        verbose_name_plural = 'Summaries'
 
