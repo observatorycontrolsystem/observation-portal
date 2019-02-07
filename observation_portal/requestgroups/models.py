@@ -26,6 +26,7 @@ class RequestGroup(models.Model):
     NORMAL = 'NORMAL'
     RAPID_RESPONSE = 'RAPID_RESPONSE'
     TIME_CRITICAL = 'TIME_CRITICAL'
+    DIRECT = 'DIRECT'
 
     STATE_CHOICES = (
         ('PENDING', 'PENDING'),
@@ -42,7 +43,8 @@ class RequestGroup(models.Model):
     OBSERVATION_TYPES = (
         ('NORMAL', NORMAL),
         ('RAPID_RESPONSE', RAPID_RESPONSE),
-        ('TIME_CRITICAL', TIME_CRITICAL)
+        ('TIME_CRITICAL', TIME_CRITICAL),
+        ('DIRECT', DIRECT)
     )
 
     submitter = models.ForeignKey(
@@ -313,7 +315,7 @@ class Configuration(models.Model):
         ('SCRIPT', 'SCRIPT')
     )
 
-    SERIALIZER_EXCLUDE = ('request', 'id')
+    SERIALIZER_EXCLUDE = ('request',)
 
     request = models.ForeignKey(
         Request, related_name='configurations', on_delete=models.CASCADE,
@@ -681,7 +683,7 @@ class GuidingConfig(models.Model):
         help_text='GuidingConfig state to use for the observations'
     )
     mode = models.CharField(
-        max_length=50, default='',
+        max_length=50, default='', blank=True,
         help_text='Guiding mode to use for the observations'
     )
     optical_elements = JSONField(

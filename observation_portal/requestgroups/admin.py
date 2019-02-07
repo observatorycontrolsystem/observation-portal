@@ -1,8 +1,8 @@
 from django.contrib import admin
 from django.urls import reverse
 
-from .models import RequestGroup, Request, Location, Target, Window, Configuration, Constraints, InstrumentConfig, \
-    AcquisitionConfig, GuidingConfig
+from observation_portal.requestgroups.models import (RequestGroup, Request, Location, Target, Window, Configuration,
+                                                     Constraints, InstrumentConfig, AcquisitionConfig, GuidingConfig)
 
 
 class ConfigurationInline(admin.TabularInline):

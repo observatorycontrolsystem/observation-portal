@@ -46,7 +46,7 @@ class ConfigurationStatus(models.Model):
 
     configuration = models.ForeignKey(Configuration, related_name='configuration_status',
                                       on_delete=models.PROTECT)
-    observation = models.ForeignKey(Observation, on_delete=models.CASCADE)
+    observation = models.ForeignKey(Observation, related_name='configuration_status', on_delete=models.CASCADE)
     state = models.CharField(
         max_length=40, choices=STATE_CHOICES, default=STATE_CHOICES[0][0],
         help_text='Current state of this RequestGroup'
@@ -61,6 +61,7 @@ class ConfigurationStatus(models.Model):
     )
 
     class Meta:
+        unique_together = ('configuration', 'observation')
         verbose_name_plural = 'Configuration statuses'
 
 
@@ -94,7 +95,7 @@ class Summary(models.Model):
         help_text='The seconds of exposure time completed for this configuration'
     )
     events = JSONField(
-        default={}, blank=True,
+        default=dict, blank=True,
         help_text='Raw set of telescope events during this observation, in json format'
     )
 

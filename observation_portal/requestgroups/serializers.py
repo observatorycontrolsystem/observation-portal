@@ -15,12 +15,11 @@ from observation_portal.requestgroups.models import DraftRequestGroup
 from observation_portal.requestgroups.state_changes import debit_ipp_time, TimeAllocationError, validate_ipp
 from observation_portal.requestgroups.target_helpers import TARGET_TYPE_HELPER_MAP
 from observation_portal.common.configdb import configdb, ConfigDBException
-from observation_portal.requestgroups.request_utils import MOLECULE_TYPE_DISPLAY
 from observation_portal.requestgroups.duration_utils import (get_request_duration, get_request_duration_sum,
                                                              get_total_duration_dict, OVERHEAD_ALLOWANCE,
                                                              get_instrument_configuration_duration, get_num_exposures,
                                                              get_semester_in)
-from datetime import timedelta, datetime
+from datetime import timedelta
 from observation_portal.common.rise_set_utils import get_rise_set_intervals
 
 
@@ -402,7 +401,7 @@ class RequestSerializer(serializers.ModelSerializer):
     def validate(self, data):
         # check if the instrument specified is allowed
         # TODO: Check if ALL instruments are available at a resource defined by location
-        valid_instruments = configdb.get_active_instrument_types(data['location'])
+        valid_instruments = configdb.get_active_instrument_types(data.get('location', {}))
         for configuration in data['configurations']:
             if configuration['instrument_name'] not in valid_instruments:
                 msg = _("Invalid instrument name '{}' at site={}, obs={}, tel={}. \n").format(
@@ -482,13 +481,14 @@ class CadenceRequestSerializer(RequestSerializer):
 
 class RequestGroupSerializer(serializers.ModelSerializer):
     requests = RequestSerializer(many=True)
-    submitter = serializers.StringRelatedField(default=serializers.CurrentUserDefault())
+    submitter = serializers.StringRelatedField(default=serializers.CurrentUserDefault(), read_only=True)
+    submitter_id = serializers.CharField(write_only=True, required=False)
 
     class Meta:
         model = RequestGroup
         fields = '__all__'
         read_only_fields = (
-            'id', 'submitter', 'created', 'state', 'modified'
+            'id', 'created', 'state', 'modified'
         )
         extra_kwargs = {
             'proposal': {'error_messages': {'null': 'Please provide a proposal.'}},
@@ -502,15 +502,17 @@ class RequestGroupSerializer(serializers.ModelSerializer):
         request_group = RequestGroup.objects.create(**validated_data)
 
         for r in request_data:
-            windows_data = r.pop('windows')
             configurations_data = r.pop('configurations')
-            location_data = r.pop('location')
 
+            location_data = r.pop('location', {})
+            windows_data = r.pop('windows', [])
             request = Request.objects.create(request_group=request_group, **r)
-            Location.objects.create(request=request, **location_data)
 
-            for window_data in windows_data:
-                Window.objects.create(request=request, **window_data)
+            if validated_data['observation_type'] != RequestGroup.DIRECT:
+                Location.objects.create(request=request, **location_data)
+                for window_data in windows_data:
+                    Window.objects.create(request=request, **window_data)
+
             for configuration_data in configurations_data:
                 instrument_configs_data = configuration_data.pop('instrument_configs')
                 acquisition_config_data = configuration_data.pop('acquisition_config')
@@ -533,7 +535,8 @@ class RequestGroupSerializer(serializers.ModelSerializer):
                     for roi_data in rois_data:
                         RegionOfInterest.objects.create(instrument_config=instrument_config, **roi_data)
 
-        debit_ipp_time(request_group)
+        if validated_data['observation_type'] != RequestGroup.DIRECT:
+            debit_ipp_time(request_group)
 
         logger.info('RequestGroup created', extra={'tags': {'user': request_group.submitter.username,
                                                            'tracking_num': request_group.id,
@@ -569,6 +572,10 @@ class RequestGroupSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     _('This request\'s duration will exceed the time limit set for your account on this proposal.')
                 )
+
+        if data['observation_type'] == RequestGroup.DIRECT:
+            # Don't do any time accounting stuff if it is a directly scheduled observation
+            return data
 
         try:
             total_duration_dict = get_total_duration_dict(data)
