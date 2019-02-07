@@ -47,7 +47,8 @@ class ObserveRequestGroupSerializer(RequestGroupSerializer):
         return data
 
 
-class ObservationWriteSerializer(serializers.ModelSerializer):
+class ObservationSerializer(serializers.ModelSerializer):
+    configuration_status = ConfigurationStatusSerializer(many=True, read_only=True)
     request = ObserveRequestSerializer()
     proposal = serializers.CharField(write_only=True)
     name = serializers.CharField(write_only=True)
@@ -84,43 +85,12 @@ class ObservationWriteSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         data['proposal'] = instance.request.request_group.proposal.id
+        data['submitter'] = instance.request.request_group.submitter.username
         data['name'] = instance.request.request_group.name
         data['ipp_value'] = instance.request.request_group.ipp_value
         data['observation_type'] = instance.request.request_group.observation_type
-        return data
 
-
-class ObservationReadSerializer(serializers.ModelSerializer):
-    configuration_status = ConfigurationStatusSerializer(many=True, read_only=True)
-    request = ObserveRequestSerializer()
-    proposal = serializers.SerializerMethodField()
-    submitter = serializers.SerializerMethodField()
-    observation_type = serializers.SerializerMethodField()
-    name = serializers.SerializerMethodField()
-    ipp_value = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Observation
-        exclude = ('modified', 'created')
-
-    def get_proposal(self, obj):
-        return obj.request.request_group.proposal.id
-
-    def get_submitter(self, obj):
-        return obj.request.request_group.submitter.username
-
-    def get_observation_type(self, obj):
-        return obj.request.request_group.observation_type
-
-    def get_name(self, obj):
-        return obj.request.request_group.name
-
-    def get_ipp_value(self, obj):
-        return obj.request.request_group.ipp_value
-
-    def to_representation(self, instance):
-        # Put the configuration status info with their corresponding configuration
-        data = super().to_representation(instance)
+        # Move the configuration statuses inline with their corresponding configuration section
         config_statuses = data.get('configuration_status', [])
         config_status_by_id = {cs['configuration']: cs for cs in config_statuses}
         for config in data['request']['configurations']:
@@ -132,6 +102,4 @@ class ObservationReadSerializer(serializers.ModelSerializer):
                 config.update(config_status_by_id[id])
         del data['configuration_status']
         return data
-
-
 

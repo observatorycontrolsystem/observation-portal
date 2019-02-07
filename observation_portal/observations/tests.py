@@ -9,6 +9,7 @@ from django.urls import reverse
 from observation_portal.requestgroups.models import (RequestGroup, Request, DraftRequestGroup, Window, Target,
                                                      Configuration, Location, Constraints, InstrumentConfig,
                                                      AcquisitionConfig, GuidingConfig)
+from observation_portal.observations.models import Observation, ConfigurationStatus, Summary
 from observation_portal.proposals.models import Proposal, Membership, TimeAllocation, Semester
 from observation_portal.accounts.models import Profile
 import copy
@@ -99,13 +100,13 @@ class TestPostObservationApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         self.observation = copy.deepcopy(observation)
         self.observation['proposal'] = self.proposal.id
 
-    def test_post_observation_not_admin(self):
+    def test_post_observation_user_not_admin(self):
         self.other_user = mixer.blend(User)
         self.client.force_login(self.other_user)
         response = self.client.post(reverse('api:observations-list'), data=self.observation)
         self.assertEqual(response.status_code, 403)
 
-    def test_post_observation_unauthenticated(self):
+    def test_post_observation_user_no_proposal(self):
         self.other_user = mixer.blend(User, is_staff=True)
         self.client.force_login(self.other_user)
         response = self.client.post(reverse('api:observations-list'), data=self.observation)
@@ -115,4 +116,12 @@ class TestPostObservationApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:observations-list'), data=self.observation)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json()['name'], self.observation['name'])
+
+    def test_post_observation_creates_config_status(self):
+        response = self.client.post(reverse('api:observations-list'), data=self.observation)
+        self.assertEqual(response.status_code, 201)
+        observation = Observation.objects.get(id=response.json()['id'])
+        config_status = ConfigurationStatus.objects.get(observation=observation)
+        logging.warning(response.json())
+        self.assertEqual(response.json()['request']['configurations'][0]['configuration_status'],config_status.id)
 
