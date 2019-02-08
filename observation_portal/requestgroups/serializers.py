@@ -401,16 +401,18 @@ class RequestSerializer(serializers.ModelSerializer):
     def validate(self, data):
         # check if the instrument specified is allowed
         # TODO: Check if ALL instruments are available at a resource defined by location
-        valid_instruments = configdb.get_active_instrument_types(data.get('location', {}))
-        for configuration in data['configurations']:
-            if configuration['instrument_name'] not in valid_instruments:
-                msg = _("Invalid instrument name '{}' at site={}, obs={}, tel={}. \n").format(
-                    configuration['instrument_name'], data['location'].get('site', 'Any'),
-                    data['location'].get('observatory', 'Any'), data['location'].get('telescope', 'Any'))
-                msg += _("Valid instruments include: ")
-                for inst_name in valid_instruments:
-                    msg += inst_name + ', '
-                raise serializers.ValidationError(msg)
+        if 'location' in data:
+            valid_instruments = configdb.get_active_instrument_types(data.get('location', {}))
+            for configuration in data['configurations']:
+                if configuration['instrument_name'] not in valid_instruments:
+                    msg = _("Invalid instrument name '{}' at site={}, obs={}, tel={}. \n").format(
+                        configuration['instrument_name'], data.get('location', {}).get('site', 'Any'),
+                        data.get('location', {}).get('observatory', 'Any'),
+                        data.get('location', {}).get('telescope', 'Any'))
+                    msg += _("Valid instruments include: ")
+                    for inst_name in valid_instruments:
+                        msg += inst_name + ', '
+                    raise serializers.ValidationError(msg)
 
         if 'acceptability_threshold' not in data:
             data['acceptability_threshold'] = max(

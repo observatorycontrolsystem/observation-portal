@@ -75,9 +75,8 @@ observation = {
     "proposal": "auto_focus",
     "observation_type": "NORMAL",
     "name": "Focus request.",
-    "ipp_value": 1.05,
     "site": "tst",
-    "observatory": "doma",
+    "enclosure": "doma",
     "telescope": "1m0a",
     "start": "2016-09-05T22:35:39Z",
     "end": "2016-09-05T23:35:40Z"
@@ -106,7 +105,7 @@ class TestPostObservationApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:observations-list'), data=self.observation)
         self.assertEqual(response.status_code, 403)
 
-    def test_post_observation_user_no_proposal(self):
+    def test_post_observation_user_not_on_proposal(self):
         self.other_user = mixer.blend(User, is_staff=True)
         self.client.force_login(self.other_user)
         response = self.client.post(reverse('api:observations-list'), data=self.observation)
@@ -122,6 +121,50 @@ class TestPostObservationApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 201)
         observation = Observation.objects.get(id=response.json()['id'])
         config_status = ConfigurationStatus.objects.get(observation=observation)
-        logging.warning(response.json())
-        self.assertEqual(response.json()['request']['configurations'][0]['configuration_status'],config_status.id)
+        self.assertEqual(response.json()['request']['configurations'][0]['configuration_status'], config_status.id)
 
+    def test_post_observation_requires_proposal(self):
+        bad_observation = copy.deepcopy(self.observation)
+        del bad_observation['proposal']
+        response = self.client.post(reverse('api:observations-list'), data=bad_observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('proposal', response.json())
+
+    def test_post_observation_requires_real_proposal(self):
+        bad_observation = copy.deepcopy(self.observation)
+        bad_observation['proposal'] = 'FAKE_PROPOSAL'
+        response = self.client.post(reverse('api:observations-list'), data=bad_observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('proposal', response.json())
+
+    def test_post_observation_validates_site(self):
+        bad_observation = copy.deepcopy(self.observation)
+        bad_observation['site'] = 'fake'
+        response = self.client.post(reverse('api:observations-list'), data=bad_observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('site', response.json())
+
+    def test_post_observation_time_in_past_rejected(self):
+        bad_observation = copy.deepcopy(self.observation)
+        bad_observation['start'] = "2014-09-05T22:35:39Z"
+        response = self.client.post(reverse('api:observations-list'), data=bad_observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('start', response.json())
+
+    def test_post_observation_end_before_start_rejected(self):
+        bad_observation = copy.deepcopy(self.observation)
+        bad_observation['end'] = "2016-09-05T21:35:40Z"
+        response = self.client.post(reverse('api:observations-list'), data=bad_observation)
+        self.assertEqual(response.status_code, 400)
+
+    def test_post_observation_invalid_instrument_name_rejected(self):
+        bad_observation = copy.deepcopy(self.observation)
+        bad_observation['request']['configurations'][0]['instrument_name'] = '1M0-FAKE-INSTRUMENT'
+        response = self.client.post(reverse('api:observations-list'), data=bad_observation)
+        self.assertEqual(response.status_code, 400)
+
+    def test_post_observation_specific_instrument_accepted(self):
+        observation = copy.deepcopy(self.observation)
+        observation['request']['configurations'][0]['instrument_name'] = 'xx01'
+        response = self.client.post(reverse('api:observations-list'), data=observation)
+        self.assertEqual(response.status_code, 201)

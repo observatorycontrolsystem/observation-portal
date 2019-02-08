@@ -1,10 +1,12 @@
 from rest_framework import serializers
+from django.utils import timezone
 from django.utils.translation import ugettext as _
 
+from observation_portal.common.configdb import configdb
 from observation_portal.observations.models import Observation, ConfigurationStatus, Summary
 from observation_portal.requestgroups.serializers import (RequestSerializer, RequestGroupSerializer,
                                                           ConfigurationSerializer)
-from observation_portal.requestgroups.models import (RequestGroup, Request)
+from observation_portal.requestgroups.models import RequestGroup
 import logging
 
 
@@ -22,7 +24,16 @@ class ConfigurationStatusSerializer(serializers.ModelSerializer):
         exclude = ('observation', 'modified', 'created')
 
 
+class ObservationConfigurationSerializer(ConfigurationSerializer):
+    def validate_instrument_name(self, value):
+        # Check with ALL instruments instead of just schedulable ones
+        if not configdb.is_valid_instrument(value):
+            raise serializers.ValidationError(_("Invalid Instrument Name {}".format(value)))
+        return value
+
+
 class ObserveRequestSerializer(RequestSerializer):
+    configurations = ObservationConfigurationSerializer(many=True)
     windows = None
     location = None
 
@@ -52,20 +63,38 @@ class ObservationSerializer(serializers.ModelSerializer):
     request = ObserveRequestSerializer()
     proposal = serializers.CharField(write_only=True)
     name = serializers.CharField(write_only=True)
-    ipp_value = serializers.FloatField(write_only=True)
 
     class Meta:
         model = Observation
         exclude = ('modified', 'created')
 
+    def validate_start(self, value):
+        if value < timezone.now():
+            raise serializers.ValidationError(_("Start time must be in the future"))
+        return value
+
     def validate(self, data):
+        # Validate the observation times
+        if data['end'] <= data['start']:
+            raise serializers.ValidationError(_("End time must be after start time"))
+
+        # Validate the site/obs/tel is a valid combination with the instrument requested
+        allowable_instruments = configdb.get_instruments_at_location(data['site'], data['enclosure'], data['telescope'])
+        for configuration in data['request']['configurations']:
+            if configuration['instrument_name'].lower() not in allowable_instruments:
+                raise serializers.ValidationError(_("instrument {} is not available at {}.{}.{}".format(
+                    configuration['instrument_name'], data['site'], data['enclosure'], data['telescope']
+                )))
+
+        # Add in the request group defaults for an observation
         data['observation_type'] = RequestGroup.DIRECT
         data['operator'] = 'SINGLE'
+        data['ipp_value'] = 1.0
         return data
 
     def create(self, validated_data):
         # separate out the observation and request_group fields
-        OBS_FIELDS = ['site', 'observatory', 'telescope', 'start', 'end']
+        OBS_FIELDS = ['site', 'enclosure', 'telescope', 'start', 'end']
         obs_fields = {}
         for field in OBS_FIELDS:
             obs_fields[field] = validated_data[field]

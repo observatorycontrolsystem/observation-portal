@@ -18,7 +18,7 @@ SITE_CHOICES = (
     ('cit', 'cit')
 )
 
-OBSERVATORY_CHOICES = (
+ENCLOSURE_CHOICES = (
     ('aqwa', 'aqwa'),
     ('aqwb', 'aqwb'),
     ('clma', 'clma'),
@@ -40,7 +40,7 @@ TELESCOPE_CHOICES = (
 
 class ObservationFilter(django_filters.FilterSet):
     site = django_filters.ChoiceFilter(choices=SITE_CHOICES)
-    observatory = django_filters.ChoiceFilter(choices=OBSERVATORY_CHOICES)
+    enclosure = django_filters.ChoiceFilter(choices=ENCLOSURE_CHOICES)
     telescope = django_filters.ChoiceFilter(choices=TELESCOPE_CHOICES)
     start_after = django_filters.CharFilter(field_name='start', method='filter_start_after', label='Start after',
                                             widget=forms.TextInput(attrs={'class': 'input', 'type': 'date'}))

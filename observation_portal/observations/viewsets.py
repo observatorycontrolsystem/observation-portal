@@ -25,8 +25,8 @@ class ObservationViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = Observation.objects.all()
-        return qs.prefetch_related('request', 'request__windows', 'request__configurations', 'request__location',
-                                   'request__configurations__instrument_configs', 'request__configurations__target',
+        return qs.prefetch_related('request', 'request__configurations', 'request__configurations__instrument_configs',
+                                   'request__configurations__target',
                                    'request__configurations__acquisition_config', 'request__request_group',
                                    'request__configurations__guiding_config', 'request__configurations__constraints',
                                    'request__configurations__instrument_configs__rois')

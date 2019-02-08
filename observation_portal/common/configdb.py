@@ -49,9 +49,9 @@ class ConfigDB(object):
         return self._get_configdb_data('sites')
 
     def get_sites_with_instrument_type_and_location(self, instrument_type='', site_code='',
-                                                    observatory_code='', telescope_code=''):
+                                                    enclosure_code='', telescope_code=''):
         telescope_details = self.get_telescopes_with_instrument_type_and_location(instrument_type, site_code,
-                                                                                  observatory_code, telescope_code)
+                                                                                  enclosure_code, telescope_code)
         site_details = {}
         for code in telescope_details.keys():
             site = code.split('.')[2]
@@ -60,14 +60,48 @@ class ConfigDB(object):
 
         return site_details
 
+    def get_site_tuples(self):
+        site_data = self.get_site_data()
+        return [(site['code'], site['code']) for site in site_data]
+
+    def get_enclosure_tuples(self):
+        enclosures = set()
+        site_data = self.get_site_data()
+        for site in site_data:
+            for enclosure in site['enclosure_set']:
+                enclosures.add(enclosure['code'])
+        return [(enclosure, enclosure) for enclosure in enclosures]
+
+    def get_telescope_tuples(self):
+        telescopes = set()
+        site_data = self.get_site_data()
+        for site in site_data:
+            for enclosure in site['enclosure_set']:
+                for telescope in enclosure['telescope_set']:
+                    telescopes.add(telescope['code'])
+        return [(telescope, telescope) for telescope in telescopes]
+
+    def get_instruments_at_location(self, site_code, enclosure_code, telescope_code):
+        instruments = set()
+        for site in self.get_site_data():
+            if site['code'].lower() == site_code.lower():
+                for enclosure in site['enclosure_set']:
+                    if enclosure['code'].lower() == enclosure_code:
+                        for telescope in enclosure['telescope_set']:
+                            if telescope['code'].lower() == telescope_code:
+                                for instrument in telescope['instrument_set']:
+                                    instruments.add(instrument['science_camera']['code'].lower())
+                                    instruments.add(instrument['science_camera']['camera_type']['code'].lower())
+        return instruments
+
     def get_telescopes_with_instrument_type_and_location(self, instrument_type='', site_code='',
-                                                    observatory_code='', telescope_code=''):
+                                                    enclosure_code='', telescope_code=''):
         site_data = self.get_site_data()
         telescope_details = {}
         for site in site_data:
             if not site_code or site_code == site['code']:
                 for enclosure in site['enclosure_set']:
-                    if not observatory_code or observatory_code == enclosure['code']:
+                    if not enclosure_code or enclosure_code == enclosure['code']:
                         for telescope in enclosure['telescope_set']:
                             if not telescope_code or telescope_code == telescope['code']:
                                 code = '.'.join([telescope['code'], enclosure['code'], site['code']])
@@ -86,6 +120,16 @@ class ConfigDB(object):
                                                 }
 
         return telescope_details
+
+    def is_valid_instrument(self, instrument_name):
+        for site in self.get_site_data():
+            for enclosure in site['enclosure_set']:
+                for telescope in enclosure['telescope_set']:
+                    for instrument in telescope['instrument_set']:
+                        if (instrument_name.upper() == instrument['science_camera']['code'].upper() or
+                                instrument_name.upper() == instrument['science_camera']['camera_type']['code'].upper()):
+                            return True
+        return False
 
     def get_instruments(self, only_schedulable=False):
         site_data = self.get_site_data()
@@ -165,7 +209,8 @@ class ConfigDB(object):
         '''
         optical_elements = {}
         for instrument in self.get_instruments(only_schedulable=True):
-            if instrument_type.upper() == instrument['science_camera']['camera_type']['code'].upper():
+            if (instrument_type.upper() == instrument['science_camera']['camera_type']['code'].upper() or
+                    instrument_type.upper() == instrument['science_camera']['code'].upper()):
                 for optical_element_group in instrument['science_camera']['optical_element_groups']:
                     optical_elements[optical_element_group['type']] = []
                     for element in optical_element_group['optical_elements']:
@@ -180,7 +225,8 @@ class ConfigDB(object):
         :return:
         '''
         for instrument in self.get_instruments():
-            if instrument_type.upper() == instrument['science_camera']['camera_type']['code'].upper():
+            if (instrument_type.upper() == instrument['science_camera']['camera_type']['code'].upper() or
+                    instrument_type.upper() == instrument['science_camera']['code'].upper()):
                 if not mode_type:
                     return {mode_group['type']: mode_group for mode_group in instrument['science_camera']['camera_type']['mode_types']}
                 else:
@@ -296,7 +342,8 @@ class ConfigDB(object):
     def get_exposure_overhead(self, instrument_type, binning, readout_mode=''):
         # using the instrument type, build an instrument with the correct configdb parameters
         for instrument in self.get_instruments():
-            if instrument['science_camera']['camera_type']['code'].upper() == instrument_type.upper():
+            if (instrument['science_camera']['camera_type']['code'].upper() == instrument_type.upper() or
+                    instrument_type.upper() == instrument['science_camera']['code'].upper()):
                 camera_type = instrument['science_camera']['camera_type']
 
         modes_by_type = self.get_modes_by_type(instrument_type, mode_type='readout')
@@ -329,7 +376,8 @@ class ConfigDB(object):
                 for telescope in enclosure['telescope_set']:
                     for instrument in telescope['instrument_set']:
                         camera_type = instrument['science_camera']['camera_type']
-                        if camera_type['code'].upper() == instrument_type.upper():
+                        if (camera_type['code'].upper() == instrument_type.upper() or
+                                instrument['science_camera']['code'].upper() == instrument_type.upper()):
                             return {'instrument_change_overhead': telescope['instrument_change_overhead'],
                                     'slew_rate': telescope['slew_rate'],
                                     'minimum_slew_overhead': telescope['minimum_slew_overhead'],
