@@ -25,7 +25,7 @@ class ProposalSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Proposal
-        fields = '__all__'
+        exclude = ('direct_submission', )
 
 
 class SemesterSerialzer(serializers.ModelSerializer):

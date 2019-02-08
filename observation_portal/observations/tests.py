@@ -86,7 +86,7 @@ observation = {
 class TestPostObservationApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
-        self.proposal = mixer.blend(Proposal)
+        self.proposal = mixer.blend(Proposal, direct_submission=True)
         self.user = mixer.blend(User, is_admin=True, is_superuser=True, is_staff=True)
         mixer.blend(Profile, user=self.user)
         self.client.force_login(self.user)
@@ -137,6 +137,14 @@ class TestPostObservationApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('proposal', response.json())
 
+    def test_post_observation_requires_proposal_with_direct_submission(self):
+        self.proposal.direct_submission = False
+        self.proposal.save()
+        bad_observation = copy.deepcopy(self.observation)
+        response = self.client.post(reverse('api:observations-list'), data=bad_observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('proposal', response.json())
+
     def test_post_observation_validates_site(self):
         bad_observation = copy.deepcopy(self.observation)
         bad_observation['site'] = 'fake'
@@ -168,3 +176,10 @@ class TestPostObservationApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         observation['request']['configurations'][0]['instrument_name'] = 'xx01'
         response = self.client.post(reverse('api:observations-list'), data=observation)
         self.assertEqual(response.status_code, 201)
+
+    def test_post_observation_invalid_instrument_name_for_site_rejected(self):
+        bad_observation = copy.deepcopy(self.observation)
+        bad_observation['site'] = 'non'
+        bad_observation['request']['configurations'][0]['instrument_name'] = '1M0-SBIG-INSTRUMENT'
+        response = self.client.post(reverse('api:observations-list'), data=bad_observation)
+        self.assertEqual(response.status_code, 400)

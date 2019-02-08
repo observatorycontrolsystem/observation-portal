@@ -7,6 +7,7 @@ from observation_portal.observations.models import Observation, ConfigurationSta
 from observation_portal.requestgroups.serializers import (RequestSerializer, RequestGroupSerializer,
                                                           ConfigurationSerializer)
 from observation_portal.requestgroups.models import RequestGroup
+from observation_portal.proposals.models import Proposal
 import logging
 
 
@@ -73,6 +74,17 @@ class ObservationSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(_("Start time must be in the future"))
         return value
 
+    def validate_proposal(self, value):
+        try:
+            proposal = Proposal.objects.get(id=value)
+        except Proposal.DoesNotExist:
+            raise serializers.ValidationError(_("Proposal {} does not exist".format(value)))
+        if not proposal.direct_submission:
+            raise serializers.ValidationError(_("Proposal {} is not allowed to submit observations directly".format(
+                value
+            )))
+        return value
+
     def validate(self, data):
         # Validate the observation times
         if data['end'] <= data['start']:
@@ -113,6 +125,7 @@ class ObservationSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
+        # Add in the indirect fields from the requestgroup parent
         data['proposal'] = instance.request.request_group.proposal.id
         data['submitter'] = instance.request.request_group.submitter.username
         data['name'] = instance.request.request_group.name
