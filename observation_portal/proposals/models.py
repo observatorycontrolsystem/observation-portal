@@ -70,6 +70,7 @@ class Proposal(models.Model):
     sca = models.ForeignKey(ScienceCollaborationAllocation, on_delete=models.CASCADE)
     public = models.BooleanField(default=False)
     non_science = models.BooleanField(default=False)
+    direct_submission = models.BooleanField(default=False)
     users = models.ManyToManyField(User, through='Membership')
 
     # Admin only notes
