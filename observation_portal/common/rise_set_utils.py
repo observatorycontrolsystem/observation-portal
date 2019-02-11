@@ -64,7 +64,7 @@ def get_rise_set_intervals(request_dict, site=''):
     telescope_details = configdb.get_telescopes_with_instrument_type_and_location(
             request_dict['configurations'][0]['instrument_name'],
             site,
-            request_dict['location'].get('observatory', ''),
+            request_dict['location'].get('enclosure', ''),
             request_dict['location'].get('telescope', '')
     )
     if not telescope_details:

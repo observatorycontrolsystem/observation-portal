@@ -1,7 +1,6 @@
 from observation_portal.common.telescope_states import (TelescopeStates, get_telescope_availability_per_day,
                                               combine_telescope_availabilities_by_site_and_class)
 from observation_portal.common.configdb import TelescopeKey
-from observation_portal.common.test_helpers import ConfigDBTestMixin
 from observation_portal.common import rise_set_utils
 
 from django.test import TestCase
@@ -11,7 +10,7 @@ from unittest.mock import patch
 import json
 
 
-class TelescopeStatesFakeInput(ConfigDBTestMixin, TestCase):
+class TelescopeStatesFakeInput(TestCase):
     def setUp(self):
         super().setUp()
         self.es_output = [
@@ -232,18 +231,18 @@ class TelescopeStatesFromFile(TestCase):
         self.configdb_patcher = patch('observation_portal.common.configdb.ConfigDB.get_instrument_types_per_telescope')
         self.mock_configdb = self.configdb_patcher.start()
         self.mock_configdb.return_value = {
-            TelescopeKey(site='coj', observatory='clma', telescope='2m0a'): ['2M0-FLOYDS-SCICAM',
+            TelescopeKey(site='coj', enclosure='clma', telescope='2m0a'): ['2M0-FLOYDS-SCICAM',
                                                                              '2M0-SCICAM-SPECTRAL'],
-            TelescopeKey(site='coj', observatory='doma', telescope='1m0a'): ['1M0-SCICAM-SINISTRO'],
-            TelescopeKey(site='coj', observatory='domb', telescope='1m0a'): ['1M0-SCICAM-SINISTRO'],
-            TelescopeKey(site='cpt', observatory='domb', telescope='1m0a'): ['1M0-SCICAM-SINISTRO'],
-            TelescopeKey(site='cpt', observatory='domc', telescope='1m0a'): ['1M0-SCICAM-SINISTRO'],
-            TelescopeKey(site='elp', observatory='doma', telescope='1m0a'): ['1M0-SCICAM-SINISTRO'],
-            TelescopeKey(site='lsc', observatory='domb', telescope='1m0a'): ['1M0-SCICAM-SINISTRO'],
-            TelescopeKey(site='lsc', observatory='domc', telescope='1m0a'): ['1M0-SCICAM-SINISTRO'],
-            TelescopeKey(site='ogg', observatory='clma', telescope='0m4b'): ['0M4-SCICAM-SBIG'],
-            TelescopeKey(site='ogg', observatory='clma', telescope='2m0a'): ['2M0-FLOYDS-SCICAM'],
-            TelescopeKey(site='sqa', observatory='doma', telescope='0m8a'): ['0M8-SCICAM-SBIG',
+            TelescopeKey(site='coj', enclosure='doma', telescope='1m0a'): ['1M0-SCICAM-SINISTRO'],
+            TelescopeKey(site='coj', enclosure='domb', telescope='1m0a'): ['1M0-SCICAM-SINISTRO'],
+            TelescopeKey(site='cpt', enclosure='domb', telescope='1m0a'): ['1M0-SCICAM-SINISTRO'],
+            TelescopeKey(site='cpt', enclosure='domc', telescope='1m0a'): ['1M0-SCICAM-SINISTRO'],
+            TelescopeKey(site='elp', enclosure='doma', telescope='1m0a'): ['1M0-SCICAM-SINISTRO'],
+            TelescopeKey(site='lsc', enclosure='domb', telescope='1m0a'): ['1M0-SCICAM-SINISTRO'],
+            TelescopeKey(site='lsc', enclosure='domc', telescope='1m0a'): ['1M0-SCICAM-SINISTRO'],
+            TelescopeKey(site='ogg', enclosure='clma', telescope='0m4b'): ['0M4-SCICAM-SBIG'],
+            TelescopeKey(site='ogg', enclosure='clma', telescope='2m0a'): ['2M0-FLOYDS-SCICAM'],
+            TelescopeKey(site='sqa', enclosure='doma', telescope='0m8a'): ['0M8-SCICAM-SBIG',
                                                                              '0M8-NRES-SCICAM']}
 
         with open('observation_portal/common/test_data/es_telescope_states_data.txt', 'r') as input_file:
@@ -266,7 +265,7 @@ class TelescopeStatesFromFile(TestCase):
 class TestTelescopeStatesFromFile(TelescopeStatesFromFile):
     def test_one_telescope_correctness(self):
         telescope_states = TelescopeStates(self.start, self.end).get()
-        tak = TelescopeKey(site='lsc', observatory='domb', telescope='1m0a')
+        tak = TelescopeKey(site='lsc', enclosure='domb', telescope='1m0a')
         expected_events = [{'end': datetime(2016, 10, 3, 10, 25, 5, tzinfo=timezone.utc),
                             'event_reason': 'Available for scheduling',
                             'event_type': 'AVAILABLE',
@@ -381,7 +380,7 @@ class TestTelescopeStatesFromFile(TelescopeStatesFromFile):
                 previous_event = event
 
 
-class TestRiseSetUtils(ConfigDBTestMixin, TestCase):
+class TestRiseSetUtils(TestCase):
     def setUp(self):
         super().setUp()
 

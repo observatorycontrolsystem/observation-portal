@@ -10,7 +10,6 @@ from observation_portal.proposals.models import Proposal, Membership
 from observation_portal.requestgroups.models import RequestGroup, Request, Configuration
 from observation_portal.common.telescope_states import ElasticSearchException
 from observation_portal.common.test_telescope_states import TelescopeStatesFromFile
-from observation_portal.common.test_helpers import ConfigDBTestMixin
 
 
 class TestRequestGroupList(TestCase):
@@ -80,7 +79,7 @@ class TestRequestGroupList(TestCase):
         self.assertNotContains(response, self.request_groups[2].name)
 
 
-class TestUserrequestDetail(ConfigDBTestMixin, TestCase):
+class TestUserrequestDetail(TestCase):
     def setUp(self):
         super().setUp()
         self.user = mixer.blend(User)
@@ -145,7 +144,7 @@ class TestUserrequestDetail(ConfigDBTestMixin, TestCase):
         self.assertRedirects(response, reverse('requestgroups:request-detail', args=(request.id,)))
 
 
-class TestRequestDetail(ConfigDBTestMixin, TestCase):
+class TestRequestDetail(TestCase):
     def setUp(self):
         self.user = mixer.blend(User)
         mixer.blend(Profile, user=self.user)
@@ -233,7 +232,7 @@ class TestTelescopeStates(TelescopeStatesFromFile):
         self.assertContains(response, 'ConnectionError')
 
 
-class TestInstrumentInformation(ConfigDBTestMixin, TestCase):
+class TestInstrumentInformation(TestCase):
     def test_instrument_information(self):
         response = self.client.get(reverse('api:instruments_information'))
         self.assertIn('1M0-SCICAM-SBIG', response.json())

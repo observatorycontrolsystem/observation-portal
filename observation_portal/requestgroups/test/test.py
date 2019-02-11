@@ -10,11 +10,11 @@ from observation_portal.requestgroups.models import (
 )
 from observation_portal.proposals.models import Proposal, TimeAllocation, Semester
 from observation_portal.common.configdb import ConfigDBException
-from observation_portal.common.test_helpers import ConfigDBTestMixin, SetTimeMixin
+from observation_portal.common.test_helpers import SetTimeMixin
 from observation_portal.requestgroups.duration_utils import PER_CONFIGURATION_STARTUP_TIME, PER_CONFIGURATION_GAP
 
 
-class TestRequestGroupTotalDuration(ConfigDBTestMixin, SetTimeMixin, TestCase):
+class TestRequestGroupTotalDuration(SetTimeMixin, TestCase):
     def setUp(self):
         super().setUp()
         self.proposal = mixer.blend(Proposal)
@@ -95,7 +95,7 @@ class TestRequestGroupTotalDuration(ConfigDBTestMixin, SetTimeMixin, TestCase):
         self.assertEqual(sum_duration, total_duration[tak])
 
 
-class TestRequestDuration(ConfigDBTestMixin, SetTimeMixin, TestCase):
+class TestRequestDuration(SetTimeMixin, TestCase):
     def setUp(self):
         super().setUp()
         self.request = mixer.blend(Request)

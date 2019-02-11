@@ -6,8 +6,10 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.core.cache import cache
 from django.urls import reverse
 from django.forms.models import model_to_dict
+from django.utils.functional import lazy
 import logging
 
+from observation_portal.common.configdb import configdb
 from observation_portal.proposals.models import Proposal, TimeAllocationKey
 from observation_portal.requestgroups.target_helpers import TARGET_TYPE_HELPER_MAP
 from observation_portal.common.rise_set_utils import get_rise_set_target
@@ -239,7 +241,6 @@ class Location(models.Model):
         Request, on_delete=models.CASCADE,
         help_text='The Request to which this Location applies'
     )
-    # TODO: Replace with telescope classes from configdb
     telescope_class = models.CharField(
         max_length=20,
         help_text='The telescope class on which to observe the Request. The class describes the aperture size, '
@@ -249,9 +250,9 @@ class Location(models.Model):
         max_length=20, default='', blank=True,
         help_text='Three-letter site code indicating the site at which to observe the Request'
     )
-    observatory = models.CharField(
+    enclosure = models.CharField(
         max_length=20, default='', blank=True,
-        help_text='Four-letter observatory code indicating the observatory from which to observe the Request'
+        help_text='Four-letter enclosure code indicating the enclosure from which to observe the Request'
     )
     telescope = models.CharField(
         max_length=20, default='', blank=True,
@@ -268,7 +269,7 @@ class Location(models.Model):
         return ret_dict
 
     def __str__(self):
-        return '{}.{}.{}'.format(self.site, self.observatory, self.telescope)
+        return '{}.{}.{}'.format(self.site, self.enclosure, self.telescope)
 
 
 class Window(models.Model):

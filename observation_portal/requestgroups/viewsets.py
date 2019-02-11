@@ -47,7 +47,11 @@ class RequestGroupViewSet(viewsets.ModelViewSet):
             )
         else:
             qs = RequestGroup.objects.filter(proposal__in=Proposal.objects.filter(public=True))
-        return qs.prefetch_related('requests', 'requests__windows', 'requests__configurations', 'requests__location')
+        return qs.prefetch_related('requests', 'requests__windows', 'requests__configurations', 'requests__location',
+                                   'requests__configurations__instrument_configs', 'requests__configurations__target',
+                                   'requests__configurations__acquisition_config',
+                                   'requests__configurations__guiding_config', 'requests__configurations__constraints',
+                                   'requests__configurations__instrument_configs__rois')
 
     def perform_create(self, serializer):
         serializer.save(submitter=self.request.user)
@@ -71,7 +75,10 @@ class RequestGroupViewSet(viewsets.ModelViewSet):
             proposal__active=True
         ).prefetch_related(
             'requests', 'requests__windows', 'proposal', 'proposal__timeallocation_set', 'requests__configurations',
-            'submitter', 'requests__location'
+            'submitter', 'requests__location', 'requests__configurations__target',
+            'requests__configurations__instrument_configs', 'requests__configurations__guiding_config',
+            'requests__configurations__constraints', 'requests__configurations__acquisition_config',
+            'requests__configurations__instrument_configs__rois'
         ).distinct()
 
         # queryset now contains all the schedulable URs and their associated requests and data
@@ -183,13 +190,18 @@ class RequestViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         if self.request.user.is_staff:
-            return Request.objects.all()
+            qs = Request.objects.all()
         elif self.request.user.is_authenticated:
-            return Request.objects.filter(
+            qs = Request.objects.filter(
                 request_group__proposal__in=self.request.user.proposal_set.all()
             )
         else:
-            return Request.objects.filter(request_group__proposal__in=Proposal.objects.filter(public=True))
+            qs = Request.objects.filter(request_group__proposal__in=Proposal.objects.filter(public=True))
+
+        return qs.prefetch_related('windows', 'configurations', 'location', 'configurations__instrument_configs',
+                                   'configurations__target', 'configurations__acquisition_config',
+                                   'configurations__guiding_config', 'configurations__constraints',
+                                   'configurations__instrument_configs__rois')
 
     @action(detail=True)
     def airmass(self, request, pk=None):

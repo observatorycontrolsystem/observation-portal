@@ -64,6 +64,9 @@ class ObservationSerializer(serializers.ModelSerializer):
     request = ObserveRequestSerializer()
     proposal = serializers.CharField(write_only=True)
     name = serializers.CharField(write_only=True)
+    site = serializers.ChoiceField(choices=configdb.get_site_tuples())
+    enclosure = serializers.ChoiceField(choices=configdb.get_enclosure_tuples())
+    telescope = serializers.ChoiceField(choices=configdb.get_telescope_tuples())
 
     class Meta:
         model = Observation

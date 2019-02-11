@@ -196,7 +196,7 @@ class TelescopeStates(object):
     def _telescope(event_source):
         return TelescopeKey(
             site=event_source['site'],
-            observatory=event_source['observatory'],
+            enclosure=event_source['observatory'],
             telescope=event_source['telescope']
         )
 

@@ -151,7 +151,6 @@ class TimeAllocation(models.Model):
     tc_time_used = models.FloatField(default=0)
     semester = models.ForeignKey(Semester, on_delete=models.CASCADE)
     proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE)
-    # TODO dynamically fill in choices in Form for these fields from configdb with caching
     instrument_name = models.CharField(max_length=200)
 
     class Meta:
