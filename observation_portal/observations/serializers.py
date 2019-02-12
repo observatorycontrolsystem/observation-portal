@@ -26,6 +26,8 @@ class ConfigurationStatusSerializer(serializers.ModelSerializer):
 
 
 class ObservationConfigurationSerializer(ConfigurationSerializer):
+    instrument_name = serializers.CharField(required=False)
+
     def validate_instrument_class(self, value):
         # Check with ALL instrument type instead of just schedulable ones
         if not configdb.is_valid_instrument_type(value):
@@ -133,14 +135,21 @@ class ObservationSerializer(serializers.ModelSerializer):
             obs_fields[field] = validated_data[field]
             del validated_data[field]
 
+        # pull out the instrument_names to store later
+        config_instrument_names = []
+        for configuration in validated_data['request']['configurations']:
+            config_instrument_names.append(configuration['instrument_name'])
+            del configuration['instrument_name']
+
         rgs = ObserveRequestGroupSerializer(data=validated_data, context=self.context)
         rgs.is_valid(True)
         rg = rgs.save()
 
         observation = Observation.objects.create(request=rg.requests.first(), **obs_fields)
 
-        for config in rg.requests.first().configurations.all():
-            ConfigurationStatus.objects.create(configuration=config, observation=observation)
+        for i, config in enumerate(rg.requests.first().configurations.all()):
+            ConfigurationStatus.objects.create(configuration=config, observation=observation,
+                                               instrument_name=config_instrument_names[i])
 
         return observation
 

@@ -169,11 +169,26 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:observations-list'), data=bad_observation)
         self.assertEqual(response.status_code, 400)
 
-    def test_post_observation_specific_instrument_not_accepted(self):
+    def test_post_observation_specific_instrument_accepted(self):
         observation = copy.deepcopy(self.observation)
-        observation['request']['configurations'][0]['instrument_class'] = 'xx01'
+        observation['request']['configurations'][0]['instrument_name'] = 'xx01'
         response = self.client.post(reverse('api:observations-list'), data=observation)
+        self.assertEqual(response.status_code, 201)
+
+    def test_post_observation_invalid_specific_instrument_for_instrument_class(self):
+        bad_observation = copy.deepcopy(self.observation)
+        bad_observation['request']['configurations'][0]['instrument_name'] = 'fake01'
+        response = self.client.post(reverse('api:observations-list'), data=bad_observation)
         self.assertEqual(response.status_code, 400)
+
+    def test_post_observation_no_instrument_name_sets_default_for_class(self):
+        observation = copy.deepcopy(self.observation)
+        response = self.client.post(reverse('api:observations-list'), data=observation)
+        obs_json = response.json()
+        self.assertEqual(response.status_code, 201)
+        import logging
+        logging.critical(obs_json)
+        self.assertEqual(obs_json['request']['configurations'][0]['instrument_name'], 'xx01')
 
     def test_post_observation_invalid_instrument_class_for_site_rejected(self):
         bad_observation = copy.deepcopy(self.observation)
