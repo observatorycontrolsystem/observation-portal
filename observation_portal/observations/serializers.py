@@ -31,7 +31,7 @@ class ObservationConfigurationSerializer(ConfigurationSerializer):
     def validate_instrument_class(self, value):
         # Check with ALL instrument type instead of just schedulable ones
         if not configdb.is_valid_instrument_type(value):
-            raise serializers.ValidationError(_("Invalid Instrument Name {}".format(value)))
+            raise serializers.ValidationError(_("Invalid Instrument Class {}".format(value)))
         return value
 
 
@@ -117,10 +117,12 @@ class ObservationSerializer(serializers.ModelSerializer):
                     configuration['instrument_name'] = instrument_names.pop()
 
             elif configuration['instrument_name'].lower() not in allowable_instruments['names']:
-                raise serializers.ValidationError(_('instrument {} is not available at {}.{}.{}'.format(
-                    configuration['instrument_name'], data['site'], data['enclosure'], data['telescope']
-                )))
-
+                raise serializers.ValidationError(_(
+                    '{} is not an available {} instrument on {}.{}.{}, available instruments are: {}'.format(
+                        configuration['instrument_name'], configuration['instrument_class'], data['site'],
+                        data['enclosure'], data['telescope'], allowable_instruments['names']
+                    )
+                ))
         # Add in the request group defaults for an observation
         data['observation_type'] = RequestGroup.DIRECT
         data['operator'] = 'SINGLE'
