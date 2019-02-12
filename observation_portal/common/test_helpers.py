@@ -1,36 +1,10 @@
-from django.conf import settings
 from unittest.mock import patch
 from datetime import datetime
 from django.utils import timezone
 from mixer.backend.django import mixer
-import responses
-import json
-import os
 
 from observation_portal.requestgroups.models import (RequestGroup, Request, Window, Configuration, Constraints, Target,
                                                      Location, InstrumentConfig, GuidingConfig, AcquisitionConfig)
-
-CONFIGDB_TEST_FILE = os.path.join(settings.BASE_DIR, 'observation_portal/common/test_data/configdb.json')
-FILTERWHEELS_FILE = os.path.join(settings.BASE_DIR, 'observation_portal/common/test_data/filterwheels.json')
-
-
-class ConfigDBTestMixin(object):
-    '''Mixin class to mock configdb calls'''
-    def setUp(self):
-        responses._default_mock.__enter__()
-        responses.add(
-            responses.GET, settings.CONFIGDB_URL + '/sites/',
-            json=json.loads(open(CONFIGDB_TEST_FILE).read()), status=200
-        )
-        responses.add(
-            responses.GET, settings.CONFIGDB_URL + '/filterwheels/',
-            json=json.loads(open(FILTERWHEELS_FILE).read()), status=200
-        )
-        super().setUp()
-
-    def tearDown(self):
-        super().tearDown()
-        responses._default_mock.__exit__(None, None, None)
 
 
 class SetTimeMixin(object):

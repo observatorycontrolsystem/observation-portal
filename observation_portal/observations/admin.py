@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from observation_portal.observations.models import Observation, ConfigurationStatus, Summary
+from observation_portal.observations.forms import ObservationForm
 
 
 class SummaryInline(admin.TabularInline):
@@ -18,6 +19,7 @@ class ObservationAdmin(admin.ModelAdmin):
     list_display = ('id', 'site', 'enclosure', 'telescope', 'start', 'end')
     list_filter = ('site',)
     raw_id_fields = ('request', )
+    form = ObservationForm
     inlines = [ConfigurationStatusInline]
 
 

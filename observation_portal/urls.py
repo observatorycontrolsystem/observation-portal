@@ -29,6 +29,7 @@ from observation_portal.requestgroups.views import InstrumentsInformationView, R
 from observation_portal.requestgroups.views import ContentionView, PressureView
 from observation_portal.accounts.views import ProfileApiView
 from observation_portal.proposals.viewsets import ProposalViewSet, SemesterViewSet
+from observation_portal.observations.viewsets import ObservationViewSet
 import observation_portal.sciapplications.urls as sciapplications_urls
 import observation_portal.requestgroups.urls as requestgroup_urls
 import observation_portal.proposals.urls as proposals_urls
@@ -40,6 +41,7 @@ router.register(r'requestgroups', RequestGroupViewSet, 'request_groups')
 router.register(r'drafts', DraftRequestGroupViewSet, 'drafts')
 router.register(r'proposals', ProposalViewSet, 'proposals')
 router.register(r'semesters', SemesterViewSet, 'semesters')
+router.register(r'observations', ObservationViewSet, 'observations')
 
 api_urlpatterns = ([
     url(r'^', include(router.urls)),

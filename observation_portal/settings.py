@@ -51,16 +51,19 @@ INSTALLED_APPS = [
     'django_extensions',
     'observation_portal.accounts',
     'observation_portal.requestgroups',
+    'observation_portal.observations',
     'observation_portal.proposals',
     'observation_portal.sciapplications',
 ]
 
 MIDDLEWARE = [
+    'django.middleware.gzip.GZipMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'silk.middleware.SilkyMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -102,11 +105,11 @@ DATABASES = {
 
 CACHES = {
     'default': {
-        'BACKEND': os.getenv('CACHE_BACKEND', 'django.core.cache.backends.dummy.DummyCache'),
+        'BACKEND': os.getenv('CACHE_BACKEND', 'django.core.cache.backends.locmem.LocMemCache'),
         'LOCATION': os.getenv('CACHE_LOCATION', 'unique-snowflake')
     },
     'locmem': {
-        'BACKEND': os.getenv('LOCAL_CACHE_BACKEND', 'django.core.cache.backends.dummy.DummyCache'),
+        'BACKEND': os.getenv('LOCAL_CACHE_BACKEND', 'django.core.cache.backends.locmem.LocMemCache'),
         'LOCATION': 'locmem-cache'
     }
 }
@@ -235,3 +238,5 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': 86400.0
     }
 }
+
+TEST_RUNNER = 'observation_portal.test_runner.MyDiscoverRunner'

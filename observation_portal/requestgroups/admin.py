@@ -3,6 +3,7 @@ from django.urls import reverse
 
 from observation_portal.requestgroups.models import (RequestGroup, Request, Location, Target, Window, Configuration,
                                                      Constraints, InstrumentConfig, AcquisitionConfig, GuidingConfig)
+from observation_portal.requestgroups.forms import LocationForm
 
 
 class ConfigurationInline(admin.TabularInline):
@@ -13,6 +14,7 @@ class ConfigurationInline(admin.TabularInline):
 class LocationInline(admin.TabularInline):
     model = Location
     extra = 0
+    forms = LocationForm
 
 
 class TargetInline(admin.TabularInline):
@@ -99,9 +101,10 @@ class LocationAdmin(admin.ModelAdmin):
         'request',
         'telescope_class',
         'site',
-        'observatory',
+        'enclosure',
         'telescope',
     )
+    form = LocationForm
     list_filter = ('telescope_class',)
 
 

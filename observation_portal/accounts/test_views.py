@@ -6,7 +6,6 @@ from django.contrib import auth
 from mixer.backend.django import mixer
 from django.core import mail
 
-from observation_portal.common.test_helpers import ConfigDBTestMixin
 from observation_portal.accounts.models import Profile
 from observation_portal.proposals.models import ProposalInvite, Membership, Proposal, TimeAllocation
 
@@ -140,7 +139,7 @@ class TestRegistration(TestCase):
         self.assertFalse(User.objects.count())
 
 
-class TestProfile(ConfigDBTestMixin, TestCase):
+class TestProfile(TestCase):
     def setUp(self):
         super().setUp()
         self.profile = mixer.blend(Profile, notifications_enabled=True)

@@ -292,32 +292,37 @@ class ConfigurationSerializer(serializers.ModelSerializer):
 
 
 class LocationSerializer(serializers.ModelSerializer):
+    site = serializers.ChoiceField(choices=configdb.get_site_tuples(), required=False)
+    enclosure = serializers.ChoiceField(choices=configdb.get_enclosure_tuples(), required=False)
+    telescope = serializers.ChoiceField(choices=configdb.get_telescope_tuples(), required=False)
+    telescope_class = serializers.ChoiceField(choices=configdb.get_telescope_class_tuples(), required=True)
+
     class Meta:
         model = Location
         exclude = Location.SERIALIZER_EXCLUDE
 
     def validate(self, data):
-        if 'observatory' in data and 'site' not in data:
-            raise serializers.ValidationError(_("Must specify a site with an observatory."))
-        if 'telescope' in data and 'observatory' not in data:
-            raise serializers.ValidationError(_("Must specify an observatory with a telescope."))
+        if 'enclosure' in data and 'site' not in data:
+            raise serializers.ValidationError(_("Must specify a site with an enclosure."))
+        if 'telescope' in data and 'enclosure' not in data:
+            raise serializers.ValidationError(_("Must specify an enclosure with a telescope."))
 
         site_data_dict = {site['code']: site for site in configdb.get_site_data()}
         if 'site' in data:
             if data['site'] not in site_data_dict:
                 msg = _('Site {} not valid. Valid choices: {}').format(data['site'], ', '.join(site_data_dict.keys()))
                 raise serializers.ValidationError(msg)
-            obs_set = site_data_dict[data['site']]['enclosure_set']
-            obs_dict = {obs['code']: obs for obs in obs_set}
-            if 'observatory' in data:
-                if data['observatory'] not in obs_dict:
-                    msg = _('Observatory {} not valid. Valid choices: {}').format(
-                        data['observatory'],
-                        ', '.join(obs_dict.keys())
+            enc_set = site_data_dict[data['site']]['enclosure_set']
+            enc_dict = {enc['code']: enc for enc in enc_set}
+            if 'enclosure' in data:
+                if data['enclosure'] not in enc_dict:
+                    msg = _('Enclosure {} not valid. Valid choices: {}').format(
+                        data['enclosure'],
+                        ', '.join(enc_dict.keys())
                     )
                     raise serializers.ValidationError(msg)
 
-                tel_set = obs_dict[data['observatory']]['telescope_set']
+                tel_set = enc_dict[data['enclosure']]['telescope_set']
                 tel_list = [tel['code'] for tel in tel_set]
                 if 'telescope' in data and data['telescope'] not in tel_list:
                     msg = _('Telescope {} not valid. Valid choices: {}').format(data['telescope'], ', '.join(tel_list))
@@ -407,7 +412,7 @@ class RequestSerializer(serializers.ModelSerializer):
                 if configuration['instrument_name'] not in valid_instruments:
                     msg = _("Invalid instrument name '{}' at site={}, obs={}, tel={}. \n").format(
                         configuration['instrument_name'], data.get('location', {}).get('site', 'Any'),
-                        data.get('location', {}).get('observatory', 'Any'),
+                        data.get('location', {}).get('enclosure', 'Any'),
                         data.get('location', {}).get('telescope', 'Any'))
                     msg += _("Valid instruments include: ")
                     for inst_name in valid_instruments:

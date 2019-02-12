@@ -10,7 +10,6 @@ from PyPDF2 import PdfFileMerger
 from weasyprint import HTML
 from unittest.mock import MagicMock, patch
 
-from observation_portal.common.test_helpers import ConfigDBTestMixin
 from observation_portal.proposals.models import Semester, ScienceCollaborationAllocation
 from observation_portal.accounts.models import Profile
 from observation_portal.sciapplications.models import ScienceApplication, Call, Instrument, TimeRequest, CoInvestigator
@@ -110,7 +109,7 @@ class TestGetCreateSciApp(TestCase):
 
 
 @patch('observation_portal.sciapplications.forms.PdfFileReader', new=MockPDFFileReader)
-class TestPostCreateSciApp(ConfigDBTestMixin, TestCase):
+class TestPostCreateSciApp(TestCase):
     def setUp(self):
         super().setUp()
         self.semester = mixer.blend(
@@ -580,7 +579,7 @@ class TestPostUpdateSciApp(TestCase):
         self.assertTrue(ScienceApplication.objects.get(pk=self.app.id).submitted)
 
 
-class TestSciAppIndex(ConfigDBTestMixin, TestCase):
+class TestSciAppIndex(TestCase):
     def setUp(self):
         super().setUp()
         self.semester = mixer.blend(

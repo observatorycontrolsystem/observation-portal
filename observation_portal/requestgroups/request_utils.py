@@ -34,7 +34,7 @@ def get_telescope_states_for_request(request):
     site_data = configdb.get_sites_with_instrument_type_and_location(
       instrument_type=instrument_type,
       site_code=request.location.site,
-      observatory_code=request.location.observatory,
+      enclosure_code=request.location.enclosure,
       telescope_code=request.location.telescope
     )
     for site, details in site_data.items():
@@ -77,7 +77,7 @@ def get_airmasses_for_request_at_sites(request_dict):
     site_data = configdb.get_sites_with_instrument_type_and_location(
       instrument_type=instrument_type,
       site_code=request_dict['location'].get('site'),
-      observatory_code=request_dict['location'].get('observatory'),
+      enclosure_code=request_dict['location'].get('enclosure'),
       telescope_code=request_dict['location'].get('telescope')
     )
 
