@@ -109,6 +109,15 @@ class ConfigDB(object):
                         instrument_types.add(instrument['science_camera']['camera_type']['code'].upper())
         return [(instrument_type, instrument_type) for instrument_type in instrument_types]
 
+    def get_instrument_name_tuples(self):
+        instrument_names = set()
+        for site in self.get_site_data():
+            for enclosure in site['enclosure_set']:
+                for telescope in enclosure['telescope_set']:
+                    for instrument in telescope['instrument_set']:
+                        instrument_names.add(instrument['code'].lower())
+        return [(instrument_name, instrument_name) for instrument_name in instrument_names]
+
     def get_instruments_at_location(self, site_code, enclosure_code, telescope_code):
         instrument_names = set()
         instrument_types = set()

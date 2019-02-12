@@ -2,46 +2,14 @@ import django_filters
 from django import forms
 from dateutil import parser
 
-from observation_portal.observations.models import Observation
-
-SITE_CHOICES = (
-    ('bpl', 'bpl'),
-    ('coj', 'coj'),
-    ('cpt', 'cpt'),
-    ('elp', 'elp'),
-    ('lsc', 'lsc'),
-    ('ogg', 'ogg'),
-    ('sqa', 'sqa'),
-    ('tfn', 'tfn'),
-    ('tlv', 'tlv'),
-    ('tst', 'tst'),
-    ('cit', 'cit')
-)
-
-ENCLOSURE_CHOICES = (
-    ('aqwa', 'aqwa'),
-    ('aqwb', 'aqwb'),
-    ('clma', 'clma'),
-    ('doma', 'doma'),
-    ('domb', 'domb'),
-    ('domc', 'domc'),
-    ('igla', 'igla')
-)
-
-TELESCOPE_CHOICES = (
-    ('0m4a', '0m4a'),
-    ('0m4b', '0m4b'),
-    ('0m4c', '0m4c'),
-    ('0m8a', '0m8a'),
-    ('1m0a', '1m0a'),
-    ('2m0a', '2m0a')
-)
+from observation_portal.observations.models import Observation, ConfigurationStatus
+from observation_portal.common.configdb import configdb
 
 
 class ObservationFilter(django_filters.FilterSet):
-    site = django_filters.ChoiceFilter(choices=SITE_CHOICES)
-    enclosure = django_filters.ChoiceFilter(choices=ENCLOSURE_CHOICES)
-    telescope = django_filters.ChoiceFilter(choices=TELESCOPE_CHOICES)
+    site = django_filters.ChoiceFilter(choices=configdb.get_site_tuples())
+    enclosure = django_filters.ChoiceFilter(choices=configdb.get_enclosure_tuples())
+    telescope = django_filters.ChoiceFilter(choices=configdb.get_telescope_tuples())
     start_after = django_filters.CharFilter(field_name='start', method='filter_start_after', label='Start after',
                                             widget=forms.TextInput(attrs={'class': 'input', 'type': 'date'}))
     start_before = django_filters.CharFilter(field_name='start', method='filter_start_before', label='Start before',
@@ -83,3 +51,11 @@ class ObservationFilter(django_filters.FilterSet):
 
     def filter_tracking_num(self, queryset, name, value):
         return queryset.filter(request__request_group__id=value.zfill(10)).distinct()
+
+
+class ConfigurationStatusFilter(django_filters.FilterSet):
+    instrument_name = django_filters.ChoiceFilter(choices=configdb.get_instrument_name_tuples())
+
+    class Meta:
+        model = ConfigurationStatus
+        fields = '__all__'
