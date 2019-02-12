@@ -28,10 +28,10 @@ class ConfigurationStatusSerializer(serializers.ModelSerializer):
 class ObservationConfigurationSerializer(ConfigurationSerializer):
     instrument_name = serializers.CharField(required=False, write_only=True)
 
-    def validate_instrument_class(self, value):
+    def validate_instrument_type(self, value):
         # Check with ALL instrument type instead of just schedulable ones
         if not configdb.is_valid_instrument_type(value):
-            raise serializers.ValidationError(_("Invalid Instrument Class {}".format(value)))
+            raise serializers.ValidationError(_("Invalid Instrument Type {}".format(value)))
         return value
 
 
@@ -100,13 +100,13 @@ class ObservationSerializer(serializers.ModelSerializer):
             data['site'], data['enclosure'], data['telescope']
         )
         for configuration in data['request']['configurations']:
-            if configuration['instrument_class'].lower() not in allowable_instruments['types']:
+            if configuration['instrument_type'].lower() not in allowable_instruments['types']:
                 raise serializers.ValidationError(_("instrument type {} is not available at {}.{}.{}".format(
-                    configuration['instrument_class'], data['site'], data['enclosure'], data['telescope']
+                    configuration['instrument_type'], data['site'], data['enclosure'], data['telescope']
                 )))
             if not configuration.get('instrument_name', ''):
                 instrument_names = configdb.get_instrument_names(
-                    configuration['instrument_class'], data['site'], data['enclosure'], data['telescope']
+                    configuration['instrument_type'], data['site'], data['enclosure'], data['telescope']
                 )
                 if len(instrument_names) > 1:
                     raise serializers.ValidationError(_(
@@ -119,7 +119,7 @@ class ObservationSerializer(serializers.ModelSerializer):
             elif configuration['instrument_name'].lower() not in allowable_instruments['names']:
                 raise serializers.ValidationError(_(
                     '{} is not an available {} instrument on {}.{}.{}, available instruments are: {}'.format(
-                        configuration['instrument_name'], configuration['instrument_class'], data['site'],
+                        configuration['instrument_name'], configuration['instrument_type'], data['site'],
                         data['enclosure'], data['telescope'], allowable_instruments['names']
                     )
                 ))

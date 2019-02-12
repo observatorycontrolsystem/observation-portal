@@ -24,7 +24,7 @@ class TestRequestGroupTotalDuration(SetTimeMixin, TestCase):
         )
         self.time_allocation_1m0 = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=semester, std_allocation=100.0, std_time_used=0.0,
-            instrument_class='1M0-SCICAM-SBIG', rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
+            instrument_type='1M0-SCICAM-SBIG', rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
             ipp_time_available=5.0
         )
         self.rg_single = mixer.blend(RequestGroup, proposal=self.proposal, operator='SINGLE')
@@ -34,10 +34,10 @@ class TestRequestGroupTotalDuration(SetTimeMixin, TestCase):
         self.requests = mixer.cycle(3).blend(Request, request_group=self.rg_many)
 
         self.configuration_expose = mixer.blend(
-            Configuration, request=self.request, instrument_class='1M0-SCICAM-SBIG', type='EXPOSE'
+            Configuration, request=self.request, instrument_type='1M0-SCICAM-SBIG', type='EXPOSE'
         )
         self.configuration_exposes = mixer.cycle(3).blend(
-            Configuration, request=(r for r in self.requests),  instrument_class='1M0-SCICAM-SBIG', type='EXPOSE'
+            Configuration, request=(r for r in self.requests),  instrument_type='1M0-SCICAM-SBIG', type='EXPOSE'
         )
         self.instrument_config = mixer.blend(
             InstrumentConfig, configuration=self.configuration_expose, bin_x=2, bin_y=2,
@@ -101,13 +101,13 @@ class TestRequestDuration(SetTimeMixin, TestCase):
         self.request = mixer.blend(Request)
         mixer.blend(Location, request=self.request)
 
-        self.configuration_expose = mixer.blend(Configuration, instrument_class='1M0-SCICAM-SBIG', type='EXPOSE')
-        self.configuration_expose_2 = mixer.blend(Configuration, instrument_class='1M0-SCICAM-SBIG', type='EXPOSE')
-        self.configuration_expose_3 = mixer.blend(Configuration, instrument_class='1M0-SCICAM-SBIG', type='EXPOSE')
-        self.configuration_spectrum = mixer.blend(Configuration, instrument_class='2M0-FLOYDS-SCICAM', type='SPECTRUM')
-        self.configuration_spectrum_2 = mixer.blend(Configuration, instrument_class='2M0-FLOYDS-SCICAM', type='SPECTRUM')
-        self.configuration_arc = mixer.blend(Configuration, instrument_class='2M0-FLOYDS-SCICAM', type='ARC')
-        self.configuration_lampflat = mixer.blend(Configuration, instrument_class='2M0-FLOYDS-SCICAM', type='LAMP_FLAT')
+        self.configuration_expose = mixer.blend(Configuration, instrument_type='1M0-SCICAM-SBIG', type='EXPOSE')
+        self.configuration_expose_2 = mixer.blend(Configuration, instrument_type='1M0-SCICAM-SBIG', type='EXPOSE')
+        self.configuration_expose_3 = mixer.blend(Configuration, instrument_type='1M0-SCICAM-SBIG', type='EXPOSE')
+        self.configuration_spectrum = mixer.blend(Configuration, instrument_type='2M0-FLOYDS-SCICAM', type='SPECTRUM')
+        self.configuration_spectrum_2 = mixer.blend(Configuration, instrument_type='2M0-FLOYDS-SCICAM', type='SPECTRUM')
+        self.configuration_arc = mixer.blend(Configuration, instrument_type='2M0-FLOYDS-SCICAM', type='ARC')
+        self.configuration_lampflat = mixer.blend(Configuration, instrument_type='2M0-FLOYDS-SCICAM', type='LAMP_FLAT')
 
         configurations = [self.configuration_expose, self.configuration_spectrum, self.configuration_arc,
                           self.configuration_lampflat, self.configuration_expose_2, self.configuration_expose_3,
@@ -374,7 +374,7 @@ class TestRequestDuration(SetTimeMixin, TestCase):
         self.assertEqual(duration, (exp_s_duration + exp_a_duration + exp_l_duration + num_configurations*(PER_CONFIGURATION_GAP + PER_CONFIGURATION_STARTUP_TIME)))
 
     def test_get_duration_from_non_existent_camera(self):
-        self.configuration_expose.instrument_class = 'FAKE-CAMERA'
+        self.configuration_expose.instrument_type = 'FAKE-CAMERA'
         self.configuration_expose.save()
         self.instrument_config_expose.configuration = self.configuration_expose
         self.instrument_config_expose.save()

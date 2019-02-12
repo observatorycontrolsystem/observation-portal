@@ -61,7 +61,7 @@ observation = {
                     "dec": -33.0,
                     "proper_motion_dec": 0.0
                 },
-                "instrument_class": "1M0-SCICAM-SBIG",
+                "instrument_type": "1M0-SCICAM-SBIG",
                 "type": "EXPOSE",
                 "extra_params": {},
             }
@@ -168,12 +168,12 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('end time must be after start time', str(response.content).lower())
 
-    def test_post_observation_invalid_instrument_class_rejected(self):
+    def test_post_observation_invalid_instrument_type_rejected(self):
         bad_observation = copy.deepcopy(self.observation)
-        bad_observation['request']['configurations'][0]['instrument_class'] = '1M0-FAKE-INSTRUMENT'
+        bad_observation['request']['configurations'][0]['instrument_type'] = '1M0-FAKE-INSTRUMENT'
         response = self.client.post(reverse('api:observations-list'), data=bad_observation)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('invalid instrument class', str(response.content).lower())
+        self.assertIn('invalid instrument type', str(response.content).lower())
 
     def test_post_observation_specific_instrument_accepted(self):
         observation = copy.deepcopy(self.observation)
@@ -181,24 +181,24 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:observations-list'), data=observation)
         self.assertEqual(response.status_code, 201)
 
-    def test_post_observation_invalid_specific_instrument_for_instrument_class(self):
+    def test_post_observation_invalid_specific_instrument_for_instrument_type(self):
         bad_observation = copy.deepcopy(self.observation)
         bad_observation['request']['configurations'][0]['instrument_name'] = 'fake01'
         response = self.client.post(reverse('api:observations-list'), data=bad_observation)
         self.assertEqual(response.status_code, 400)
         self.assertIn('is not an available', str(response.content))
 
-    def test_post_observation_no_instrument_name_sets_default_for_class(self):
+    def test_post_observation_no_instrument_name_sets_default_for_instrument_type(self):
         observation = copy.deepcopy(self.observation)
         response = self.client.post(reverse('api:observations-list'), data=observation)
         obs_json = response.json()
         self.assertEqual(response.status_code, 201)
         self.assertEqual(obs_json['request']['configurations'][0]['instrument_name'], 'xx03')
 
-    def test_post_observation_invalid_instrument_class_for_site_rejected(self):
+    def test_post_observation_invalid_instrument_type_for_site_rejected(self):
         bad_observation = copy.deepcopy(self.observation)
         bad_observation['site'] = 'lco'
-        bad_observation['request']['configurations'][0]['instrument_class'] = '1M0-SCICAM-SBIG'
+        bad_observation['request']['configurations'][0]['instrument_type'] = '1M0-SCICAM-SBIG'
         response = self.client.post(reverse('api:observations-list'), data=bad_observation)
         self.assertEqual(response.status_code, 400)
         self.assertIn('is not available at', str(response.content))
@@ -226,7 +226,7 @@ class TestPostObservationMultiConfigApi(SetTimeMixin, APITestCase):
         self.observation['request']['configurations'].append(copy.deepcopy(
             self.observation['request']['configurations'][0]
         ))
-        self.observation['request']['configurations'][2]['instrument_class'] = '1M0-NRES-SCICAM'
+        self.observation['request']['configurations'][2]['instrument_type'] = '1M0-NRES-SCICAM'
         self.observation['request']['configurations'][2]['guiding_config']['state'] = 'ON'
         self.observation['request']['configurations'][2]['acquisition_config']['mode'] = 'WCS'
         self.observation['request']['configurations'][2]['type'] = 'NRES_SPECTRUM'
@@ -241,9 +241,9 @@ class TestPostObservationMultiConfigApi(SetTimeMixin, APITestCase):
         self.assertEqual(obs_json['request']['configurations'][0]['instrument_name'], 'xx03')
         self.assertEqual(obs_json['request']['configurations'][1]['instrument_name'], 'xx03')
         self.assertEqual(obs_json['request']['configurations'][2]['instrument_name'], 'nres02')
-        self.assertEqual(obs_json['request']['configurations'][0]['instrument_class'], '1M0-SCICAM-SBIG')
-        self.assertEqual(obs_json['request']['configurations'][1]['instrument_class'], '1M0-SCICAM-SBIG')
-        self.assertEqual(obs_json['request']['configurations'][2]['instrument_class'], '1M0-NRES-SCICAM')
+        self.assertEqual(obs_json['request']['configurations'][0]['instrument_type'], '1M0-SCICAM-SBIG')
+        self.assertEqual(obs_json['request']['configurations'][1]['instrument_type'], '1M0-SCICAM-SBIG')
+        self.assertEqual(obs_json['request']['configurations'][2]['instrument_type'], '1M0-NRES-SCICAM')
 
     def test_post_observation_multiple_configurations_with_instrument_names(self):
         observation = copy.deepcopy(self.observation)

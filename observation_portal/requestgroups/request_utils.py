@@ -28,7 +28,7 @@ MOLECULE_TYPE_DISPLAY = {
 
 def get_telescope_states_for_request(request):
     # TODO: update to support multiple instruments in a list
-    instrument_type = request.configurations.first().instrument_class
+    instrument_type = request.configurations.first().instrument_type
     site_intervals = {}
     # Build up the list of telescopes and their rise set intervals for the target on this request
     site_data = configdb.get_sites_with_instrument_type_and_location(
@@ -71,7 +71,7 @@ def date_range_from_interval(start_time, end_time, dt=timedelta(minutes=15)):
 
 def get_airmasses_for_request_at_sites(request_dict):
     # TODO: Change to work with multiple instrument types and multiple constraints and multiple targets
-    instrument_type = request_dict['configurations'][0]['instrument_class']
+    instrument_type = request_dict['configurations'][0]['instrument_type']
     constraints = request_dict['configurations'][0]['constraints']
 
     site_data = configdb.get_sites_with_instrument_type_and_location(

@@ -7,7 +7,6 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAdminUser
 from django.http import HttpResponseBadRequest, HttpResponseServerError, HttpResponseRedirect
 from django.utils import timezone
-from django.conf import settings
 from django.urls import reverse
 from django.core.cache import cache
 from dateutil.parser import parse
@@ -16,9 +15,10 @@ from rest_framework.views import APIView
 import logging
 
 from observation_portal.common.configdb import configdb
-from observation_portal.common.telescope_states import (TelescopeStates, get_telescope_availability_per_day,
-                                              combine_telescope_availabilities_by_site_and_class,
-                                              ElasticSearchException)
+from observation_portal.common.telescope_states import (
+    TelescopeStates, get_telescope_availability_per_day, combine_telescope_availabilities_by_site_and_class,
+    ElasticSearchException
+)
 from observation_portal.requestgroups.request_utils import get_airmasses_for_request_at_sites, return_paginated_results
 from observation_portal.requestgroups.models import RequestGroup, Request
 from observation_portal.requestgroups.serializers import RequestSerializer

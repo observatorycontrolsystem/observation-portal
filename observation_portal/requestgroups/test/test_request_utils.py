@@ -30,7 +30,7 @@ class BaseSetupRequest(SetTimeMixin, TestCase):
         self.rg_single = mixer.blend(RequestGroup, proposal=self.proposal, operator='SINGLE')
         self.request = mixer.blend(Request, request_group=self.rg_single)
         self.configuration = mixer.blend(
-            Configuration, request=self.request, instrument_class='1M0-SCICAM-SBIG', type='EXPOSE'
+            Configuration, request=self.request, instrument_type='1M0-SCICAM-SBIG', type='EXPOSE'
         )
         self.instrument_config = mixer.blend(
             InstrumentConfig, configuration=self.configuration, exposure_time=600, exposure_count=2,
@@ -330,7 +330,7 @@ class TestRequestTelescopeStates(TelescopeStatesFakeInput):
         self.request = mixer.blend(Request, request_group=self.rg_single)
 
         self.configuration = mixer.blend(
-            Configuration, request=self.request, instrument_class='1M0-SCICAM-SBIG', type='EXPOSE'
+            Configuration, request=self.request, instrument_type='1M0-SCICAM-SBIG', type='EXPOSE'
         )
         self.instrument_config = mixer.blend(
             InstrumentConfig, configuration=self.configuration, exposure_time=600, exposure_count=2,

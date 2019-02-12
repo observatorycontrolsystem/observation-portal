@@ -23,7 +23,7 @@ class TestSciAppToProposal(TestCase):
         self.assertEqual(app.proposal, proposal)
         self.assertEqual(self.user, proposal.membership_set.get(role=Membership.PI).user)
         self.assertEqual(proposal.timeallocation_set.first().std_allocation, tr.std_time)
-        self.assertEqual(proposal.timeallocation_set.first().instrument_class, tr.instrument.code)
+        self.assertEqual(proposal.timeallocation_set.first().instrument_type, tr.instrument.code)
         self.assertFalse(ProposalInvite.objects.filter(proposal=proposal).exists())
 
     def test_create_proposal_with_supplied_noexistant_pi(self):
@@ -82,10 +82,10 @@ class TestSciAppToProposal(TestCase):
         self.assertFalse(ProposalInvite.objects.filter(proposal=proposal).exists())
 
         self.assertEqual(proposal.timeallocation_set.get(semester=self.semester).std_allocation, tr.std_time)
-        self.assertEqual(proposal.timeallocation_set.get(semester=self.semester).instrument_class, tr.instrument.code)
+        self.assertEqual(proposal.timeallocation_set.get(semester=self.semester).instrument_type, tr.instrument.code)
 
         self.assertEqual(proposal.timeallocation_set.get(semester=other_semester).std_allocation, tr2.std_time)
-        self.assertEqual(proposal.timeallocation_set.get(semester=other_semester).instrument_class, tr2.instrument.code)
+        self.assertEqual(proposal.timeallocation_set.get(semester=other_semester).instrument_type, tr2.instrument.code)
 
     def test_create_collab_proposal(self):
         pi = mixer.blend(User)
