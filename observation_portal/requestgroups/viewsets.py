@@ -201,7 +201,7 @@ class RequestViewSet(viewsets.ReadOnlyModelViewSet):
         return qs.prefetch_related('windows', 'configurations', 'location', 'configurations__instrument_configs',
                                    'configurations__target', 'configurations__acquisition_config',
                                    'configurations__guiding_config', 'configurations__constraints',
-                                   'configurations__instrument_configs__rois')
+                                   'configurations__instrument_configs__rois').distinct()
 
     @action(detail=True)
     def airmass(self, request, pk=None):

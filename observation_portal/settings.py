@@ -193,7 +193,7 @@ DEFAULT_FROM_EMAIL = 'Webmaster <portal@lco.global>'
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
 ELASTICSEARCH_URL = os.getenv('ELASTICSEARCH_URL', 'http://elasticsearchdev.lco.gtn')
-CONFIGDB_URL = os.getenv('CONFIGDB_URL', 'http://configdb.lco.gtn')
+CONFIGDB_URL = os.getenv('CONFIGDB_URL', 'http://configdbdev.lco.gtn')
 DOWNTIMEDB_URL = os.getenv('DOWNTIMEDB_URL', 'http://downtimedb.lco.gtn')
 
 REST_FRAMEWORK = {

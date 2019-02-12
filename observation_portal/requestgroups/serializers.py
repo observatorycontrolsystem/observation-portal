@@ -312,17 +312,17 @@ class LocationSerializer(serializers.ModelSerializer):
             if data['site'] not in site_data_dict:
                 msg = _('Site {} not valid. Valid choices: {}').format(data['site'], ', '.join(site_data_dict.keys()))
                 raise serializers.ValidationError(msg)
-            obs_set = site_data_dict[data['site']]['enclosure_set']
-            obs_dict = {obs['code']: obs for obs in obs_set}
+            enc_set = site_data_dict[data['site']]['enclosure_set']
+            enc_dict = {enc['code']: enc for enc in enc_set}
             if 'enclosure' in data:
-                if data['enclosure'] not in obs_dict:
+                if data['enclosure'] not in enc_dict:
                     msg = _('Enclosure {} not valid. Valid choices: {}').format(
                         data['enclosure'],
-                        ', '.join(obs_dict.keys())
+                        ', '.join(enc_dict.keys())
                     )
                     raise serializers.ValidationError(msg)
 
-                tel_set = obs_dict[data['enclosure']]['telescope_set']
+                tel_set = enc_dict[data['enclosure']]['telescope_set']
                 tel_list = [tel['code'] for tel in tel_set]
                 if 'telescope' in data and data['telescope'] not in tel_list:
                     msg = _('Telescope {} not valid. Valid choices: {}').format(data['telescope'], ', '.join(tel_list))
