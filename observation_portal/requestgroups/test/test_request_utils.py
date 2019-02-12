@@ -10,10 +10,10 @@ from observation_portal.requestgroups.models import (Request, Configuration, Tar
                                                      Constraints, InstrumentConfig, AcquisitionConfig, GuidingConfig)
 from observation_portal.proposals.models import Proposal, TimeAllocation, Semester
 from observation_portal.common.test_telescope_states import TelescopeStatesFakeInput
-from observation_portal.common.test_helpers import ConfigDBTestMixin, SetTimeMixin
+from observation_portal.common.test_helpers import SetTimeMixin
 
 
-class BaseSetupRequest(ConfigDBTestMixin, SetTimeMixin, TestCase):
+class BaseSetupRequest(SetTimeMixin, TestCase):
     def setUp(self):
         super().setUp()
 

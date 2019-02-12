@@ -2,26 +2,20 @@ from observation_portal.requestgroups.models import (RequestGroup, Request, Draf
                                                      Configuration, Location, Constraints, InstrumentConfig,
                                                      AcquisitionConfig, GuidingConfig)
 from observation_portal.proposals.models import Proposal, Membership, TimeAllocation, Semester
-from observation_portal.common.test_helpers import ConfigDBTestMixin, SetTimeMixin
+from observation_portal.common.test_helpers import SetTimeMixin
 import observation_portal.requestgroups.signals.handlers  # noqa
 from observation_portal.requestgroups.test.test_state_changes import PondMolecule, PondBlock
 from observation_portal.requestgroups.contention import Pressure
 from observation_portal.accounts.models import Profile
 
 from django.urls import reverse
-from django.core.serializers.json import DjangoJSONEncoder
 from django.contrib.auth.models import User
-from django.conf import settings
 from rest_framework.test import APITestCase
 from mixer.backend.django import mixer
 from mixer.main import mixer as basic_mixer
 from django.utils import timezone
 from datetime import datetime, timedelta
-import responses
-import requests
-import os
 import copy
-import json
 import random
 from urllib import parse
 from unittest.mock import patch
@@ -76,7 +70,7 @@ generic_payload = {
 }
 
 
-class TestUserGetRequestApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
+class TestUserGetRequestApi(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
         self.proposal = mixer.blend(Proposal)
@@ -123,7 +117,7 @@ class TestUserGetRequestApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         self.assertContains(result, request_group.name)
 
 
-class TestUserPostRequestApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
+class TestUserPostRequestApi(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
         self.proposal = mixer.blend(Proposal)
@@ -405,7 +399,7 @@ class TestDisallowedMethods(APITestCase):
         self.assertEqual(response.status_code, 405)
 
 
-class TestRequestGroupIPP(ConfigDBTestMixin, SetTimeMixin, APITestCase):
+class TestRequestGroupIPP(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
         self.proposal = mixer.blend(Proposal)
@@ -526,7 +520,7 @@ class TestRequestGroupIPP(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         self.assertEqual(time_allocation_2m0.ipp_time_available, 5.0)
 
 
-class TestRequestIPP(ConfigDBTestMixin, SetTimeMixin, APITestCase):
+class TestRequestIPP(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
         self.proposal = mixer.blend(Proposal)
@@ -633,7 +627,7 @@ class TestRequestIPP(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         self.assertGreater(time_allocation.ipp_time_available, 5.0)
 
 
-class TestWindowApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
+class TestWindowApi(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
         self.proposal = mixer.blend(Proposal)
@@ -704,7 +698,7 @@ class TestWindowApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         self.assertIn('The observation windows must all be in the same semester', str(response.content))
 
 
-class TestCadenceApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
+class TestCadenceApi(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
 
@@ -816,7 +810,7 @@ class TestCadenceApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         self.assertIn('No visible requests within cadence window parameters', str(response.content))
 
 
-class TestSiderealTarget(ConfigDBTestMixin, SetTimeMixin, APITestCase):
+class TestSiderealTarget(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
         self.proposal = mixer.blend(Proposal)
@@ -905,7 +899,7 @@ class TestSiderealTarget(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         self.assertIn('50 characters', str(response.content))
 
 
-class TestNonSiderealTarget(ConfigDBTestMixin, SetTimeMixin, APITestCase):
+class TestNonSiderealTarget(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
         self.proposal = mixer.blend(Proposal)
@@ -1011,7 +1005,7 @@ class TestNonSiderealTarget(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 400)
 
 
-class TestSatelliteTarget(ConfigDBTestMixin, SetTimeMixin, APITestCase):
+class TestSatelliteTarget(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
         self.proposal = mixer.blend(Proposal)
@@ -1060,7 +1054,7 @@ class TestSatelliteTarget(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         self.assertIn('diff_pitch_acceleration', str(response.content))
 
 
-class TestLocationApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
+class TestLocationApi(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
         self.proposal = mixer.blend(Proposal)
@@ -1086,14 +1080,14 @@ class TestLocationApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
     def test_post_requestgroup_all_location_info(self):
         good_data = self.generic_payload.copy()
         good_data['requests'][0]['location']['site'] = 'tst'
-        good_data['requests'][0]['location']['observatory'] = 'doma'
+        good_data['requests'][0]['location']['enclosure'] = 'doma'
         good_data['requests'][0]['location']['telescope'] = '1m0a'
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
         self.assertEqual(response.status_code, 201)
 
     def test_post_requestgroup_observatory_no_site(self):
         good_data = self.generic_payload.copy()
-        good_data['requests'][0]['location']['observatory'] = 'doma'
+        good_data['requests'][0]['location']['enclosure'] = 'doma'
         good_data['requests'][0]['location']['telescope'] = '1m0a'
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
         self.assertEqual(response.status_code, 400)
@@ -1108,7 +1102,7 @@ class TestLocationApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
     def test_post_requestgroup_observatory_bad_observatory(self):
         bad_data = self.generic_payload.copy()
         bad_data['requests'][0]['location']['site'] = 'tst'
-        bad_data['requests'][0]['location']['observatory'] = 'domx'
+        bad_data['requests'][0]['location']['enclosure'] = 'domx'
         bad_data['requests'][0]['location']['telescope'] = '1m0a'
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertEqual(response.status_code, 400)
@@ -1116,7 +1110,7 @@ class TestLocationApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
     def test_post_requestgroup_observatory_bad_site(self):
         bad_data = self.generic_payload.copy()
         bad_data['requests'][0]['location']['site'] = 'bpl'
-        bad_data['requests'][0]['location']['observatory'] = 'doma'
+        bad_data['requests'][0]['location']['enclosure'] = 'doma'
         bad_data['requests'][0]['location']['telescope'] = '1m0a'
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertEqual(response.status_code, 400)
@@ -1124,7 +1118,7 @@ class TestLocationApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
     def test_post_requestgroup_observatory_bad_telescope(self):
         bad_data = self.generic_payload.copy()
         bad_data['requests'][0]['location']['site'] = 'tst'
-        bad_data['requests'][0]['location']['observatory'] = 'doma'
+        bad_data['requests'][0]['location']['enclosure'] = 'doma'
         bad_data['requests'][0]['location']['telescope'] = '1m0b'
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertEqual(response.status_code, 400)
@@ -1144,7 +1138,7 @@ class TestLocationApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         self.assertNotEqual(response.status_code, 201)
 
 
-class TestConfigurationApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
+class TestConfigurationApi(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
         self.proposal = mixer.blend(Proposal)
@@ -1371,7 +1365,7 @@ class TestConfigurationApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
 
     def test_request_invalid_instrument_class_for_location(self):
         bad_data = self.generic_payload.copy()
-        bad_data['requests'][0]['location']['site'] = 'non'
+        bad_data['requests'][0]['location']['site'] = "lco"
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertIn("Invalid instrument name \\\'1M0-SCICAM-SBIG\\\' at site", str(response.content))
         self.assertEqual(response.status_code, 400)
@@ -1499,7 +1493,7 @@ class TestConfigurationApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 400)
 
 
-class TestGetRequestApi(ConfigDBTestMixin, APITestCase):
+class TestGetRequestApi(APITestCase):
     def setUp(self):
         super().setUp()
         self.proposal = mixer.blend(Proposal)
@@ -1642,7 +1636,7 @@ class TestDraftRequestGroupApi(APITestCase):
         self.assertEqual(response.status_code, 404)
 
 
-class TestAirmassApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
+class TestAirmassApi(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
         mixer.blend(
@@ -1693,7 +1687,7 @@ class TestAirmassApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
 
 
 @patch('observation_portal.requestgroups.state_changes.modify_ipp_time_from_requests')
-class TestCancelRequestGroupApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
+class TestCancelRequestGroupApi(SetTimeMixin, APITestCase):
     ''' Test canceling user requests via API. Mocking out modify_ipp_time_from_requets
         as it is called on state change, but tested elsewhere '''
     def setUp(self):
@@ -1762,90 +1756,91 @@ class TestUpdateRequestStatesAPI(APITestCase):
         self.rg = mixer.blend(RequestGroup, operator='MANY', state='PENDING', proposal=self.proposal, modified=timezone.now() - timedelta(weeks=2))
         self.requests = mixer.cycle(3).blend(Request, request_group=self.rg, state='PENDING', modified=timezone.now() - timedelta(weeks=2))
 
-    @responses.activate
-    def test_no_pond_blocks_no_state_changed(self, modify_mock):
-        pond_blocks = []
-        now = timezone.now()
-        mixer.cycle(3).blend(Window, request=(r for r in self.requests), start=now - timedelta(days=2),
-                             end=now + timedelta(days=1))
-
-        responses.add(responses.GET, 'http://configdbdev.lco.gtn' + '/blocks/',
-                json={'next': None, 'results': pond_blocks}, status=200)
-        one_week_ahead = timezone.now() + timedelta(weeks=1)
-        response = self.client.get(reverse('api:isDirty') + '?last_query_time=' + parse.quote(one_week_ahead.isoformat()))
-        response_json = response.json()
-
-        self.assertFalse(response_json['isDirty'])
-
-    @responses.activate
-    def test_pond_blocks_no_state_changed(self, modify_mock):
-        now = timezone.now()
-        mixer.cycle(3).blend(Window, request=(r for r in self.requests), start=now - timedelta(days=2),
-                             end=now + timedelta(days=1))
-        molecules1 = basic_mixer.cycle(3).blend(PondMolecule, completed=False, failed=False, request_num=self.requests[0].id,
-                                                tracking_num=self.rg.id, events=[])
-        molecules2 = basic_mixer.cycle(3).blend(PondMolecule, completed=False, failed=False, request_num=self.requests[1].id,
-                                                tracking_num=self.rg.id, events=[])
-        molecules3 = basic_mixer.cycle(3).blend(PondMolecule, completed=False, failed=False, request_num=self.requests[2].id,
-                                                tracking_num=self.rg.id, events=[])
-        pond_blocks = basic_mixer.cycle(3).blend(PondBlock, molecules=(m for m in [molecules1, molecules2, molecules3]),
-                                                 start=now + timedelta(minutes=30), end=now + timedelta(minutes=40))
-        pond_blocks = [pb._to_dict() for pb in pond_blocks]
-        responses.add(responses.GET, 'http://configdbdev.lco.gtn' + '/blocks/',
-                json={'next': None, 'results': pond_blocks}, status=200)
-
-        one_week_ahead = timezone.now() + timedelta(weeks=1)
-        response = self.client.get(reverse('api:isDirty') + '?last_query_time=' + parse.quote(one_week_ahead.isoformat()))
-        response_json = response.json()
-
-        self.assertFalse(response_json['isDirty'])
-        for i, req in enumerate(self.requests):
-            req.refresh_from_db()
-            self.assertEqual(req.state, 'PENDING')
-        self.rg.refresh_from_db()
-        self.assertEqual(self.rg.state, 'PENDING')
-
-    @responses.activate
-    def test_pond_blocks_state_change_completed(self, modify_mock):
-        now = timezone.now()
-        mixer.cycle(3).blend(Window, request=(r for r in self.requests), start=now - timedelta(days=2),
-                             end=now - timedelta(days=1))
-        molecules1 = basic_mixer.cycle(3).blend(PondMolecule, completed=True, failed=False, request_num=self.requests[0].id,
-                                                tracking_num=self.rg.id, events=[])
-        molecules2 = basic_mixer.cycle(3).blend(PondMolecule, completed=False, failed=False, request_num=self.requests[1].id,
-                                                tracking_num=self.rg.id, events=[])
-        molecules3 = basic_mixer.cycle(3).blend(PondMolecule, completed=False, failed=False, request_num=self.requests[2].id,
-                                                tracking_num=self.rg.id, events=[])
-        pond_blocks = basic_mixer.cycle(3).blend(PondBlock, molecules=(m for m in [molecules1, molecules2, molecules3]),
-                                                 start=now - timedelta(minutes=30), end=now - timedelta(minutes=20))
-        pond_blocks = [pb._to_dict() for pb in pond_blocks]
-        responses.add(responses.GET, 'http://configdbdev.lco.gtn' + '/blocks/',
-                json={'next': None, 'results': pond_blocks}, status=200)
-
-        response = self.client.get(reverse('api:isDirty'))
-        response_json = response.json()
-
-        self.assertTrue(response_json['isDirty'])
-
-        request_states = ['COMPLETED', 'WINDOW_EXPIRED', 'WINDOW_EXPIRED']
-        for i, req in enumerate(self.requests):
-            req.refresh_from_db()
-            self.assertEqual(req.state, request_states[i])
-        self.rg.refresh_from_db()
-        self.assertEqual(self.rg.state, 'COMPLETED')
-
-    @responses.activate
-    def test_bad_data_from_pond(self, modify_mock):
-        responses.add(responses.GET, 'http://configdbdev.lco.gtn' + '/blocks/',
-                      body='Internal Server Error', status=500, content_type='application/json')
-
-        response = self.client.get(reverse('api:isDirty'))
-
-        self.assertEqual(response.status_code, 500)
+    ## TODO update to remove mocked lake stuff
+    # @responses.activate
+    # def test_no_pond_blocks_no_state_changed(self, modify_mock):
+    #     pond_blocks = []
+    #     now = timezone.now()
+    #     mixer.cycle(3).blend(Window, request=(r for r in self.requests), start=now - timedelta(days=2),
+    #                          end=now + timedelta(days=1))
+    #
+    #     responses.add(responses.GET, 'http://configdbdev.lco.gtn' + '/blocks/',
+    #             json={'next': None, 'results': pond_blocks}, status=200)
+    #     one_week_ahead = timezone.now() + timedelta(weeks=1)
+    #     response = self.client.get(reverse('api:isDirty') + '?last_query_time=' + parse.quote(one_week_ahead.isoformat()))
+    #     response_json = response.json()
+    #
+    #     self.assertFalse(response_json['isDirty'])
+    #
+    # @responses.activate
+    # def test_pond_blocks_no_state_changed(self, modify_mock):
+    #     now = timezone.now()
+    #     mixer.cycle(3).blend(Window, request=(r for r in self.requests), start=now - timedelta(days=2),
+    #                          end=now + timedelta(days=1))
+    #     molecules1 = basic_mixer.cycle(3).blend(PondMolecule, completed=False, failed=False, request_num=self.requests[0].id,
+    #                                             tracking_num=self.rg.id, events=[])
+    #     molecules2 = basic_mixer.cycle(3).blend(PondMolecule, completed=False, failed=False, request_num=self.requests[1].id,
+    #                                             tracking_num=self.rg.id, events=[])
+    #     molecules3 = basic_mixer.cycle(3).blend(PondMolecule, completed=False, failed=False, request_num=self.requests[2].id,
+    #                                             tracking_num=self.rg.id, events=[])
+    #     pond_blocks = basic_mixer.cycle(3).blend(PondBlock, molecules=(m for m in [molecules1, molecules2, molecules3]),
+    #                                              start=now + timedelta(minutes=30), end=now + timedelta(minutes=40))
+    #     pond_blocks = [pb._to_dict() for pb in pond_blocks]
+    #     responses.add(responses.GET, 'http://configdbdev.lco.gtn' + '/blocks/',
+    #             json={'next': None, 'results': pond_blocks}, status=200)
+    #
+    #     one_week_ahead = timezone.now() + timedelta(weeks=1)
+    #     response = self.client.get(reverse('api:isDirty') + '?last_query_time=' + parse.quote(one_week_ahead.isoformat()))
+    #     response_json = response.json()
+    #
+    #     self.assertFalse(response_json['isDirty'])
+    #     for i, req in enumerate(self.requests):
+    #         req.refresh_from_db()
+    #         self.assertEqual(req.state, 'PENDING')
+    #     self.rg.refresh_from_db()
+    #     self.assertEqual(self.rg.state, 'PENDING')
+    #
+    # @responses.activate
+    # def test_pond_blocks_state_change_completed(self, modify_mock):
+    #     now = timezone.now()
+    #     mixer.cycle(3).blend(Window, request=(r for r in self.requests), start=now - timedelta(days=2),
+    #                          end=now - timedelta(days=1))
+    #     molecules1 = basic_mixer.cycle(3).blend(PondMolecule, completed=True, failed=False, request_num=self.requests[0].id,
+    #                                             tracking_num=self.rg.id, events=[])
+    #     molecules2 = basic_mixer.cycle(3).blend(PondMolecule, completed=False, failed=False, request_num=self.requests[1].id,
+    #                                             tracking_num=self.rg.id, events=[])
+    #     molecules3 = basic_mixer.cycle(3).blend(PondMolecule, completed=False, failed=False, request_num=self.requests[2].id,
+    #                                             tracking_num=self.rg.id, events=[])
+    #     pond_blocks = basic_mixer.cycle(3).blend(PondBlock, molecules=(m for m in [molecules1, molecules2, molecules3]),
+    #                                              start=now - timedelta(minutes=30), end=now - timedelta(minutes=20))
+    #     pond_blocks = [pb._to_dict() for pb in pond_blocks]
+    #     responses.add(responses.GET, 'http://configdbdev.lco.gtn' + '/blocks/',
+    #             json={'next': None, 'results': pond_blocks}, status=200)
+    #
+    #     response = self.client.get(reverse('api:isDirty'))
+    #     response_json = response.json()
+    #
+    #     self.assertTrue(response_json['isDirty'])
+    #
+    #     request_states = ['COMPLETED', 'WINDOW_EXPIRED', 'WINDOW_EXPIRED']
+    #     for i, req in enumerate(self.requests):
+    #         req.refresh_from_db()
+    #         self.assertEqual(req.state, request_states[i])
+    #     self.rg.refresh_from_db()
+    #     self.assertEqual(self.rg.state, 'COMPLETED')
+    #
+    # @responses.activate
+    # def test_bad_data_from_pond(self, modify_mock):
+    #     responses.add(responses.GET, 'http://configdbdev.lco.gtn' + '/blocks/',
+    #                   body='Internal Server Error', status=500, content_type='application/json')
+    #
+    #     response = self.client.get(reverse('api:isDirty'))
+    #
+    #     self.assertEqual(response.status_code, 500)
 
 
 @patch('observation_portal.requestgroups.state_changes.modify_ipp_time_from_requests')
-class TestSchedulableRequestsApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
+class TestSchedulableRequestsApi(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
 
@@ -1950,7 +1945,7 @@ class TestSchedulableRequestsApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 403)
 
 
-class TestContention(ConfigDBTestMixin, APITestCase):
+class TestContention(APITestCase):
     def setUp(self):
         super().setUp()
         request = mixer.blend(Request, state='PENDING')
@@ -1983,7 +1978,7 @@ class TestContention(ConfigDBTestMixin, APITestCase):
         self.assertNotIn(self.request.request_group.proposal.id, response.json()['contention_data'][2])
 
 
-class TestPressure(ConfigDBTestMixin, APITestCase):
+class TestPressure(APITestCase):
     def setUp(self):
         super().setUp()
 
@@ -2199,7 +2194,7 @@ class TestPressure(ConfigDBTestMixin, APITestCase):
         self.assertEqual(sum_of_pressure, 0)
 
 
-class TestMaxIppRequestgroupApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
+class TestMaxIppRequestgroupApi(SetTimeMixin, APITestCase):
     ''' Test getting max ipp allowable of requestgroups via API.'''
 
     def setUp(self):

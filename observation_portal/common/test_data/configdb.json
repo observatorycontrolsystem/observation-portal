@@ -40,7 +40,12 @@
                         "binning": 2,
                         "readout": 14.5
                       },
-                      "configuration_types": ["EXPOSE", "BIAS", "DARK", "SCRIPT"],
+                      "configuration_types": [
+                        "EXPOSE",
+                        "BIAS",
+                        "DARK",
+                        "SCRIPT"
+                      ],
                       "default_acceptability_threshold": 90,
                       "config_change_time": 0,
                       "acquire_processing_time": 0,
@@ -62,7 +67,7 @@
                           "readout": 11.5
                         }
                       ],
-                      "mode_types":[
+                      "mode_types": [
                         {
                           "type": "readout",
                           "default": "1m0_sbig_2",
@@ -95,9 +100,9 @@
                           "default": "OFF",
                           "modes": [
                             {
-                            "code": "OFF",
-                            "overhead": 0.0,
-                            "params": {}
+                              "code": "OFF",
+                              "overhead": 0.0,
+                              "params": {}
                             }
                           ]
                         }
@@ -119,7 +124,21 @@
                     ]
                   },
                   "__str__": "tst.doma.1m0a.xx01-xx01"
-                },
+                }
+              ]
+            },
+            {
+              "code": "2m0a",
+              "lat": -32.3805542,
+              "long": 20.8100352,
+              "horizon": 15.0,
+              "ha_limit_pos": 4.6,
+              "ha_limit_neg": -4.6,
+              "slew_rate": 0.0,
+              "minimum_slew_overhead": 2.0,
+              "maximum_slew_overhead": 2.0,
+              "instrument_change_overhead": 0.0,
+              "instrument_set": [
                 {
                   "state": "SCHEDULABLE",
                   "code": "xx02",
@@ -144,7 +163,12 @@
                         "binning": 1,
                         "readout": 25
                       },
-                      "configuration_types": ["SPECTRUM", "LAMP_FLAT", "ARC", "SCRIPT"],
+                      "configuration_types": [
+                        "SPECTRUM",
+                        "LAMP_FLAT",
+                        "ARC",
+                        "SCRIPT"
+                      ],
                       "default_acceptability_threshold": 100,
                       "mode_set": [
                         {
@@ -278,7 +302,12 @@
                         "binning": 2,
                         "readout": 14.5
                       },
-                      "configuration_types": ["EXPOSE", "BIAS", "DARK", "SCRIPT"],
+                      "configuration_types": [
+                        "EXPOSE",
+                        "BIAS",
+                        "DARK",
+                        "SCRIPT"
+                      ],
                       "default_acceptability_threshold": 100,
                       "config_change_time": 0,
                       "acquire_processing_time": 0,
@@ -300,7 +329,7 @@
                           "readout": 11.5
                         }
                       ],
-                      "mode_types":[
+                      "mode_types": [
                         {
                           "type": "readout",
                           "default": "1m0_sbig_2",
@@ -333,9 +362,9 @@
                           "default": "OFF",
                           "modes": [
                             {
-                            "code": "OFF",
-                            "overhead": 0.0,
-                            "params": {}
+                              "code": "OFF",
+                              "overhead": 0.0,
+                              "params": {}
                             }
                           ]
                         }
@@ -376,7 +405,14 @@
                         "binning": 2,
                         "readout": 90.5
                       },
-                      "configuration_types": ["NRES_SPECTRUM", "NRES_EXPOSE", "NRES_TEST", "LAMP_FLAT", "ARC", "SCRIPT"],
+                      "configuration_types": [
+                        "NRES_SPECTRUM",
+                        "NRES_EXPOSE",
+                        "NRES_TEST",
+                        "LAMP_FLAT",
+                        "ARC",
+                        "SCRIPT"
+                      ],
                       "default_acceptability_threshold": 100,
                       "config_change_time": 0,
                       "acquire_processing_time": 90,
@@ -433,7 +469,22 @@
                     ]
                   },
                   "__str__": "tst.domb.1m0a.nresXX-nresXX"
-                },
+                }
+              ]
+            },
+            {
+              "code": "2m0a",
+              "lat": -32.3805542,
+              "long": 20.8100352,
+              "horizon": 15.0,
+              "ha_limit_pos": 4.6,
+              "ha_limit_neg": -4.6,
+              "ha_limit_neg": -4.6,
+              "slew_rate": 0.0,
+              "minimum_slew_overhead": 2.0,
+              "maximum_slew_overhead": 2.0,
+              "instrument_change_overhead": 0.0,
+              "instrument_set": [
                 {
                   "state": "SCHEDULABLE",
                   "code": "xx04",
@@ -458,7 +509,12 @@
                         "binning": 1,
                         "readout": 25
                       },
-                      "configuration_types": ["SPECTRUM", "LAMP_FLAT", "ARC", "SCRIPT"],
+                      "configuration_types": [
+                        "SPECTRUM",
+                        "LAMP_FLAT",
+                        "ARC",
+                        "SCRIPT"
+                      ],
                       "default_acceptability_threshold": 100,
                       "mode_set": [
                         {
@@ -559,32 +615,31 @@
           ]
         }
       ]
-  },
-  {
-    "code": "non",
-    "elevation": 10,
-    "enclosure_set": [
-      {
-        "code": "doma",
-        "telescope_set": [
-          {
-            "code": "1m0a",
-            "lat": -32.3805542,
-            "long": 20.8100352,
-            "horizon": 15.0,
-            "ha_limit_pos": 4.6,
-            "ha_limit_neg": -4.6,
-            "ha_limit_neg": -4.6,
-            "slew_rate": 0.0,
-            "minimum_slew_overhead": 2.0,
-            "maximum_slew_overhead": 2.0,
-            "instrument_change_overhead": 0.0,
-            "instrument_set": [
-            ]
-          }
-        ]
-      }
-    ]
-  }
+    },
+    {
+      "code": "lco",
+      "elevation": 10,
+      "enclosure_set": [
+        {
+          "code": "doma",
+          "telescope_set": [
+            {
+              "code": "1m0a",
+              "lat": -32.3805542,
+              "long": 20.8100352,
+              "horizon": 15.0,
+              "ha_limit_pos": 4.6,
+              "ha_limit_neg": -4.6,
+              "ha_limit_neg": -4.6,
+              "slew_rate": 0.0,
+              "minimum_slew_overhead": 2.0,
+              "maximum_slew_overhead": 2.0,
+              "instrument_change_overhead": 0.0,
+              "instrument_set": []
+            }
+          ]
+        }
+      ]
+    }
   ]
 }

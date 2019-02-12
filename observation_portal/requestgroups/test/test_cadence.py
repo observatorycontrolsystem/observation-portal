@@ -3,14 +3,14 @@ from mixer.backend.django import mixer
 from django.utils import timezone
 import datetime
 
-from observation_portal.common.test_helpers import ConfigDBTestMixin, SetTimeMixin
+from observation_portal.common.test_helpers import SetTimeMixin
 from observation_portal.requestgroups.cadence import expand_cadence_request
 from observation_portal.requestgroups.models import (
     Request, Configuration, Target, Constraints, Location, InstrumentConfig, AcquisitionConfig, GuidingConfig
 )
 
 
-class TestCadence(SetTimeMixin, ConfigDBTestMixin, TestCase):
+class TestCadence(SetTimeMixin, TestCase):
     def setUp(self):
         super().setUp()
         self.req = mixer.blend(Request)

@@ -8,7 +8,6 @@ from django.utils import timezone
 from mixer.backend.django import mixer
 from unittest.mock import patch
 from requests import HTTPError
-import responses
 import datetime
 
 from observation_portal.proposals.models import ProposalInvite, Proposal, Membership, ProposalNotification, TimeAllocation, Semester
@@ -16,7 +15,7 @@ from observation_portal.requestgroups.models import RequestGroup, Configuration,
 from observation_portal.accounts.models import Profile
 from observation_portal.proposals.accounting import split_time, get_time_totals_from_pond, query_pond
 from observation_portal.proposals.tasks import run_accounting
-from observation_portal.common.test_helpers import create_simple_requestgroup, ConfigDBTestMixin
+from observation_portal.common.test_helpers import create_simple_requestgroup
 from observation_portal.requestgroups.signals import handlers  # DO NOT DELETE, needed to active signals
 
 
@@ -130,7 +129,7 @@ class TestProposalNotifications(TestCase):
         self.assertEqual(len(mail.outbox), 0)
 
 
-class TestProposalUserLimits(ConfigDBTestMixin, TestCase):
+class TestProposalUserLimits(TestCase):
     def setUp(self):
         super().setUp()
         self.proposal = mixer.blend(Proposal)
@@ -173,22 +172,22 @@ class TestAccounting(TestCase):
 
         self.assertEqual(qa_mock.call_count, 4)
 
-    @responses.activate
-    def test_query_pond(self):
-        responses.add(
-            responses.GET,
-            '{0}/accounting/{1}/'.format('http://lake.lco.gtn', 'NORMAL'),
-            body='{ "block_bounded_attempted_hours": 1, "attempted_hours": 2 }',
-            content_type='application/json'
-        )
-        responses.add(
-            responses.GET,
-            '{0}/accounting/{1}/'.format('http://lake.lco.gtn', 'RAPID_RESPONSE'),
-            body='{ "block_bounded_attempted_hours": 1, "attempted_hours": 2 }',
-            content_type='application/json'
-        )
-        self.assertEqual(query_pond(None, datetime.datetime(2017, 1, 1), datetime.datetime(2017, 2, 1), None, False), 2)
-        self.assertEqual(query_pond(None, datetime.datetime(2017, 1, 1), datetime.datetime(2017, 2, 1), None, True), 1)
+    # @responses.activate
+    # def test_query_pond(self):
+    #     responses.add(
+    #         responses.GET,
+    #         '{0}/accounting/{1}/'.format('http://lake.lco.gtn', 'NORMAL'),
+    #         body='{ "block_bounded_attempted_hours": 1, "attempted_hours": 2 }',
+    #         content_type='application/json'
+    #     )
+    #     responses.add(
+    #         responses.GET,
+    #         '{0}/accounting/{1}/'.format('http://lake.lco.gtn', 'RAPID_RESPONSE'),
+    #         body='{ "block_bounded_attempted_hours": 1, "attempted_hours": 2 }',
+    #         content_type='application/json'
+    #     )
+    #     self.assertEqual(query_pond(None, datetime.datetime(2017, 1, 1), datetime.datetime(2017, 2, 1), None, False), 2)
+    #     self.assertEqual(query_pond(None, datetime.datetime(2017, 1, 1), datetime.datetime(2017, 2, 1), None, True), 1)
 
     @patch('observation_portal.proposals.accounting.query_pond', return_value=1)
     def test_run_accounting(self, qa_mock):

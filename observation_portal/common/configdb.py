@@ -15,11 +15,11 @@ class ConfigDBException(Exception):
     pass
 
 
-class TelescopeKey(namedtuple('TelescopeKey', ['site', 'observatory', 'telescope'])):
+class TelescopeKey(namedtuple('TelescopeKey', ['site', 'enclosure', 'telescope'])):
     __slots__ = ()
 
     def __str__(self):
-        return ".".join(s for s in [self.site, self.observatory, self.telescope] if s)
+        return ".".join(s for s in [self.site, self.enclosure, self.telescope] if s)
 
 
 class ConfigDB(object):
@@ -60,26 +60,54 @@ class ConfigDB(object):
 
         return site_details
 
-    def get_site_tuples(self):
+    def get_site_tuples(self, include_blank=False):
         site_data = self.get_site_data()
-        return [(site['code'], site['code']) for site in site_data]
+        sites = [(site['code'], site['code']) for site in site_data]
+        if include_blank:
+            sites.append(('', ''))
+        return sites
 
-    def get_enclosure_tuples(self):
-        enclosures = set()
+    def get_enclosure_tuples(self, include_blank=False):
+        enclosure_set = set()
         site_data = self.get_site_data()
         for site in site_data:
             for enclosure in site['enclosure_set']:
-                enclosures.add(enclosure['code'])
-        return [(enclosure, enclosure) for enclosure in enclosures]
+                enclosure_set.add(enclosure['code'])
 
-    def get_telescope_tuples(self):
-        telescopes = set()
+        enclosures = [(enclosure, enclosure) for enclosure in enclosure_set]
+        if include_blank:
+            enclosures.append(('', ''))
+        return enclosures
+
+    def get_telescope_tuples(self, include_blank=False):
+        telescope_set = set()
         site_data = self.get_site_data()
         for site in site_data:
             for enclosure in site['enclosure_set']:
                 for telescope in enclosure['telescope_set']:
-                    telescopes.add(telescope['code'])
-        return [(telescope, telescope) for telescope in telescopes]
+                    telescope_set.add(telescope['code'])
+
+        telescopes = [(telescope, telescope) for telescope in telescope_set]
+        if include_blank:
+            telescopes.append(('', ''))
+        return telescopes
+
+    def get_telescope_class_tuples(self):
+        telescope_classes = set()
+        for site in self.get_site_data():
+            for enclosure in site['enclosure_set']:
+                for telescope in enclosure['telescope_set']:
+                    telescope_classes.add(telescope['code'][:-1])
+        return [(telescope_class, telescope_class) for telescope_class in telescope_classes]
+
+    def get_instrument_type_tuples(self):
+        instrument_types = set()
+        for site in self.get_site_data():
+            for enclosure in site['enclosure_set']:
+                for telescope in enclosure['telescope_set']:
+                    for instrument in telescope['instrument_set']:
+                        instrument_types.add(instrument['science_camera']['camera_type']['code'].upper())
+        return [(instrument_type, instrument_type) for instrument_type in instrument_types]
 
     def get_instruments_at_location(self, site_code, enclosure_code, telescope_code):
         instrument_names = set()
@@ -152,7 +180,7 @@ class ConfigDB(object):
                         else:
                             telescope_key = TelescopeKey(
                                 site=site['code'],
-                                observatory=enclosure['code'],
+                                enclosure=enclosure['code'],
                                 telescope=telescope['code']
                             )
                             instrument['telescope_key'] = telescope_key
@@ -183,7 +211,7 @@ class ConfigDB(object):
         instrument_names = set()
         for instrument in self.get_instruments():
             if (instrument['telescope_key'].site == site_code
-                    and instrument['telescope_key'].observatory == enclosure_code
+                    and instrument['telescope_key'].enclosure == enclosure_code
                     and instrument['telescope_key'].telescope == telescope_code
                     and instrument['science_camera']['camera_type']['code'] == instrument_type):
                 instrument_names.add(instrument['science_camera']['code'].lower())
@@ -336,14 +364,14 @@ class ConfigDB(object):
     def get_active_instrument_types(self, location):
         '''
             Function uses the configdb to get a set of the available instrument_types.
-            Location should be a dictionary of the location, with class, site, observatory, and telescope fields
+            Location should be a dictionary of the location, with class, site, enclosure, and telescope fields
         :return: Set of available instrument_types (i.e. 1M0-SCICAM-SBIG, etc.)
         '''
         instrument_types = set()
         for instrument in self.get_instruments(only_schedulable=True):
             split_string = instrument['__str__'].lower().split('.')
             if (location.get('site', '').lower() in split_string[0]
-                    and location.get('observatory', '').lower() in split_string[1]
+                    and location.get('enclosure', '').lower() in split_string[1]
                     and location.get('telescope_class', '').lower() in split_string[2]
                     and location.get('telescope', '').lower() in split_string[2]):
                 instrument_types.add(instrument['science_camera']['camera_type']['code'].upper())

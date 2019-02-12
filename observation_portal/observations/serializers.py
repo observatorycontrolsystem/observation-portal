@@ -64,6 +64,9 @@ class ObservationSerializer(serializers.ModelSerializer):
     request = ObserveRequestSerializer()
     proposal = serializers.CharField(write_only=True)
     name = serializers.CharField(write_only=True)
+    site = serializers.ChoiceField(choices=configdb.get_site_tuples())
+    enclosure = serializers.ChoiceField(choices=configdb.get_enclosure_tuples())
+    telescope = serializers.ChoiceField(choices=configdb.get_telescope_tuples())
 
     class Meta:
         model = Observation
@@ -109,7 +112,7 @@ class ObservationSerializer(serializers.ModelSerializer):
                         .format(instrument_names)
                     ))
                 else:
-                    configuration['instrument_name'] = instrument_names[0]
+                    configuration['instrument_name'] = instrument_names.pop()
 
             elif configuration['instrument_name'].lower() not in allowable_instruments['names']:
                 raise serializers.ValidationError(_('instrument {} is not available at {}.{}.{}'.format(

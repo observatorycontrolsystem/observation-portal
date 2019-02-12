@@ -8,16 +8,16 @@ from observation_portal.common.configdb import configdb
 class Observation(models.Model):
     request = models.ForeignKey(Request, on_delete=models.PROTECT)
     site = models.CharField(
-        max_length=10, choices=configdb.get_site_tuples(),
+        max_length=10,
         help_text='3 character site code'
     )
     enclosure = models.CharField(
-        max_length=10, choices=configdb.get_enclosure_tuples(),
-        help_text='3 character enclosure code'
+        max_length=10,
+        help_text='4 character enclosure code'
     )
     telescope = models.CharField(
-        max_length=10, choices=configdb.get_telescope_tuples(),
-        help_text='3 character telescope code'
+        max_length=10,
+        help_text='4 character telescope code'
     )
     start = models.DateTimeField(
         db_index=True,

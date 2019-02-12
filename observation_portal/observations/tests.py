@@ -1,5 +1,5 @@
 from rest_framework.test import APITestCase
-from observation_portal.common.test_helpers import ConfigDBTestMixin, SetTimeMixin
+from observation_portal.common.test_helpers import SetTimeMixin
 from django.utils import timezone
 from mixer.backend.django import mixer
 from django.contrib.auth.models import User
@@ -81,7 +81,7 @@ observation = {
 }
 
 
-class TestPostObservationApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
+class TestPostObservationApi(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
         self.proposal = mixer.blend(Proposal, direct_submission=True)
