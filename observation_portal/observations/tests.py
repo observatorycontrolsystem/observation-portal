@@ -97,7 +97,7 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
         self.observation = copy.deepcopy(observation)
         self.observation['proposal'] = self.proposal.id
 
-    def test_post_observation_user_not_admin(self):
+    def test_post_observation_user_not_logged_in(self):
         self.other_user = mixer.blend(User)
         self.client.force_login(self.other_user)
         response = self.client.post(reverse('api:observations-list'), data=self.observation)
@@ -175,13 +175,13 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('invalid instrument type', str(response.content).lower())
 
-    def test_post_observation_specific_instrument_accepted(self):
+    def test_post_observation_instrument_name_accepted(self):
         observation = copy.deepcopy(self.observation)
         observation['request']['configurations'][0]['instrument_name'] = 'xx03'
         response = self.client.post(reverse('api:observations-list'), data=observation)
         self.assertEqual(response.status_code, 201)
 
-    def test_post_observation_invalid_specific_instrument_for_instrument_type(self):
+    def test_post_observation_invalid_instrument_name_for_instrument_type(self):
         bad_observation = copy.deepcopy(self.observation)
         bad_observation['request']['configurations'][0]['instrument_name'] = 'fake01'
         response = self.client.post(reverse('api:observations-list'), data=bad_observation)
