@@ -52,7 +52,7 @@ def get_instrument_configuration_duration(instrument_config_dict, instrument_nam
 def get_configuration_duration(configuration_dict):
     duration = 0
     for inst_config in configuration_dict['instrument_configs']:
-        duration += get_instrument_configuration_duration(inst_config, configuration_dict['instrument_name'])
+        duration += get_instrument_configuration_duration(inst_config, configuration_dict['instrument_class'])
 
     return duration + PER_CONFIGURATION_GAP + PER_CONFIGURATION_STARTUP_TIME
 
@@ -78,7 +78,7 @@ def get_max_ipp_for_requestgroup(requestgroup_dict):
     ipp_dict = {}
     for tak, duration in request_durations.items():
         time_allocation = proposal.timeallocation_set.get(
-            semester=tak.semester, instrument_name=tak.instrument_name
+            semester=tak.semester, instrument_class=tak.instrument_class
         )
         duration_hours = duration / 3600.0
         ipp_available = time_allocation.ipp_time_available
@@ -86,7 +86,7 @@ def get_max_ipp_for_requestgroup(requestgroup_dict):
         truncated_max_ipp_allowable = floor(max_ipp_allowable * 1000.0) / 1000.0
         if tak.semester not in ipp_dict:
             ipp_dict[tak.semester] = {}
-        ipp_dict[tak.semester][tak.instrument_name] = {
+        ipp_dict[tak.semester][tak.instrument_class] = {
             'ipp_time_available': ipp_available,
             'ipp_limit': time_allocation.ipp_limit,
             'request_duration': duration_hours,
@@ -101,7 +101,7 @@ def get_request_duration_sum(requestgroup_dict):
     for req in requestgroup_dict['requests']:
         duration = get_request_duration(req)
         tak = get_time_allocation_key(
-            instrument_name=req['configurations'][0]['instrument_name'],
+            instrument_class=req['configurations'][0]['instrument_class'],
             min_window_time=min([w['start'] for w in req['windows']]),
             max_window_time=max([w['end'] for w in req['windows']])
         )
@@ -145,11 +145,11 @@ def get_request_duration(request_dict):
     configurations = sorted(request_dict['configurations'], key=lambda x: x['priority'])
     for configuration in configurations:
         duration += get_configuration_duration(configuration)
-        request_overheads = configdb.get_request_overheads(configuration['instrument_name'])
+        request_overheads = configdb.get_request_overheads(configuration['instrument_class'])
         # Add the instrument change time if the instrument has changed
-        if previous_instrument != configuration['instrument_name']:
+        if previous_instrument != configuration['instrument_class']:
             duration += request_overheads['instrument_change_overhead']
-        previous_instrument = configuration['instrument_name']
+        previous_instrument = configuration['instrument_class']
 
         # Now add in optical element change time if the set of optical elements has changed
         for inst_config in configuration['instrument_configs']:
@@ -181,7 +181,7 @@ def get_request_duration(request_dict):
                 duration += request_overheads['guiding_overheads'][configuration['guiding_config']['mode']]
 
         # TODO: find out if we need to have a configuration type change time for spectrographs?
-        if configdb.is_spectrograph(configuration['instrument_name']):
+        if configdb.is_spectrograph(configuration['instrument_class']):
             if previous_conf_type != configuration['type']:
                 duration += request_overheads['config_change_overhead']
         previous_conf_type = configuration['type']
@@ -192,24 +192,21 @@ def get_request_duration(request_dict):
     return duration
 
 
-def get_time_allocation(telescope_class, instrument_name, proposal_id, min_window_time, max_window_time):
+def get_time_allocation(instrument_class, proposal_id, min_window_time, max_window_time):
     timeall = None
     try:
         timeall = Proposal.objects.get(pk=proposal_id).timeallocation_set.get(
             semester__start__lte=min_window_time,
             semester__end__gte=max_window_time,
-            telescope_class=telescope_class,
-            instrument_name=instrument_name)
+            instrument_class=instrument_class)
     except Exception:
-        logger.warn(_("proposal {0} has overlapping time allocations for {1} {2}").format(
-            proposal_id, telescope_class, instrument_name
-        ))
+        logger.warn(_("proposal {0} has overlapping time allocations for {1}").format(proposal_id, instrument_name))
     return timeall
 
 
-def get_time_allocation_key(instrument_name, min_window_time, max_window_time):
+def get_time_allocation_key(instrument_class, min_window_time, max_window_time):
     semester = get_semester_in(min_window_time, max_window_time)
-    return TimeAllocationKey(semester.id, instrument_name)
+    return TimeAllocationKey(semester.id, instrument_class)
 
 
 def get_total_duration_dict(requestgroup_dict):
@@ -217,7 +214,7 @@ def get_total_duration_dict(requestgroup_dict):
     for request in requestgroup_dict['requests']:
         min_window_time = min([window['start'] for window in request['windows']])
         max_window_time = max([window['end'] for window in request['windows']])
-        tak = get_time_allocation_key(request['configurations'][0]['instrument_name'],
+        tak = get_time_allocation_key(request['configurations'][0]['instrument_class'],
                                       min_window_time,
                                       max_window_time
                                       )

@@ -14,8 +14,6 @@ from observation_portal.proposals.models import Proposal, Membership, TimeAlloca
 from observation_portal.accounts.models import Profile
 import copy
 
-import logging
-
 observation = {
     "request": {
         "configurations": [
@@ -63,7 +61,7 @@ observation = {
                     "dec": -33.0,
                     "proper_motion_dec": 0.0
                 },
-                "instrument_name": "1M0-SCICAM-SBIG",
+                "instrument_class": "1M0-SCICAM-SBIG",
                 "type": "EXPOSE",
                 "extra_params": {},
             }
@@ -165,21 +163,21 @@ class TestPostObservationApi(ConfigDBTestMixin, SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:observations-list'), data=bad_observation)
         self.assertEqual(response.status_code, 400)
 
-    def test_post_observation_invalid_instrument_name_rejected(self):
+    def test_post_observation_invalid_instrument_class_rejected(self):
         bad_observation = copy.deepcopy(self.observation)
-        bad_observation['request']['configurations'][0]['instrument_name'] = '1M0-FAKE-INSTRUMENT'
+        bad_observation['request']['configurations'][0]['instrument_class'] = '1M0-FAKE-INSTRUMENT'
         response = self.client.post(reverse('api:observations-list'), data=bad_observation)
         self.assertEqual(response.status_code, 400)
 
-    def test_post_observation_specific_instrument_accepted(self):
+    def test_post_observation_specific_instrument_not_accepted(self):
         observation = copy.deepcopy(self.observation)
-        observation['request']['configurations'][0]['instrument_name'] = 'xx01'
+        observation['request']['configurations'][0]['instrument_class'] = 'xx01'
         response = self.client.post(reverse('api:observations-list'), data=observation)
-        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.status_code, 400)
 
-    def test_post_observation_invalid_instrument_name_for_site_rejected(self):
+    def test_post_observation_invalid_instrument_class_for_site_rejected(self):
         bad_observation = copy.deepcopy(self.observation)
         bad_observation['site'] = 'non'
-        bad_observation['request']['configurations'][0]['instrument_name'] = '1M0-SBIG-INSTRUMENT'
+        bad_observation['request']['configurations'][0]['instrument_class'] = '1M0-SBIG-INSTRUMENT'
         response = self.client.post(reverse('api:observations-list'), data=bad_observation)
         self.assertEqual(response.status_code, 400)

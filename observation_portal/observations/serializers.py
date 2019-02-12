@@ -8,7 +8,6 @@ from observation_portal.requestgroups.serializers import (RequestSerializer, Req
                                                           ConfigurationSerializer)
 from observation_portal.requestgroups.models import RequestGroup
 from observation_portal.proposals.models import Proposal
-import logging
 
 
 class SummarySerializer(serializers.ModelSerializer):
@@ -19,6 +18,7 @@ class SummarySerializer(serializers.ModelSerializer):
 
 class ConfigurationStatusSerializer(serializers.ModelSerializer):
     summary = SummarySerializer()
+    instrument_name = serializers.CharField(required=False)
 
     class Meta:
         model = ConfigurationStatus
@@ -26,9 +26,9 @@ class ConfigurationStatusSerializer(serializers.ModelSerializer):
 
 
 class ObservationConfigurationSerializer(ConfigurationSerializer):
-    def validate_instrument_name(self, value):
-        # Check with ALL instruments instead of just schedulable ones
-        if not configdb.is_valid_instrument(value):
+    def validate_instrument_class(self, value):
+        # Check with ALL instrument type instead of just schedulable ones
+        if not configdb.is_valid_instrument_type(value):
             raise serializers.ValidationError(_("Invalid Instrument Name {}".format(value)))
         return value
 
@@ -90,11 +90,29 @@ class ObservationSerializer(serializers.ModelSerializer):
         if data['end'] <= data['start']:
             raise serializers.ValidationError(_("End time must be after start time"))
 
-        # Validate the site/obs/tel is a valid combination with the instrument requested
-        allowable_instruments = configdb.get_instruments_at_location(data['site'], data['enclosure'], data['telescope'])
+        # Validate the site/obs/tel is a valid combination with the instrument class requested
+        allowable_instruments = configdb.get_instruments_at_location(
+            data['site'], data['enclosure'], data['telescope']
+        )
         for configuration in data['request']['configurations']:
-            if configuration['instrument_name'].lower() not in allowable_instruments:
-                raise serializers.ValidationError(_("instrument {} is not available at {}.{}.{}".format(
+            if configuration['instrument_class'].lower() not in allowable_instruments['types']:
+                raise serializers.ValidationError(_("instrument type {} is not available at {}.{}.{}".format(
+                    configuration['instrument_class'], data['site'], data['enclosure'], data['telescope']
+                )))
+            if not configuration.get('instrument_name', ''):
+                instrument_names = configdb.get_instrument_names(
+                    configuration['instrument_class'], data['site'], data['enclosure'], data['telescope']
+                )
+                if len(instrument_names) > 1:
+                    raise serializers.ValidationError(_(
+                        'There is more than one valid instrument on the specified telescope, please select from: {}'
+                        .format(instrument_names)
+                    ))
+                else:
+                    configuration['instrument_name'] = instrument_names[0]
+
+            elif configuration['instrument_name'].lower() not in allowable_instruments['names']:
+                raise serializers.ValidationError(_('instrument {} is not available at {}.{}.{}'.format(
                     configuration['instrument_name'], data['site'], data['enclosure'], data['telescope']
                 )))
 

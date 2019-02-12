@@ -26,7 +26,7 @@ def get_time_totals_from_pond(timeallocation, start, end, too, recur=0):
     total = 0
     try:
         total += query_pond(
-            timeallocation.proposal.id, start, end, timeallocation.instrument_name, too
+            timeallocation.proposal.id, start, end, timeallocation.instrument_class, too
         )
     except requests.HTTPError:
         logger.warning('We got a pond inception. Splitting further.')

@@ -15,7 +15,7 @@ class TestCadence(SetTimeMixin, ConfigDBTestMixin, TestCase):
         super().setUp()
         self.req = mixer.blend(Request)
         self.configuration = mixer.blend(
-            Configuration, request=self.req, instrument_name='1M0-SCICAM-SBIG', type='EXPOSE'
+            Configuration, request=self.req, instrument_class='1M0-SCICAM-SBIG', type='EXPOSE'
         )
         self.instrument_config = mixer.blend(
             InstrumentConfig, configuration=self.configuration, exposure_time=10, exposure_count=1,

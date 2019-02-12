@@ -150,7 +150,7 @@ class ConfigurationSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(_('Only one instrument_config can have `fill_window` set'))
         return value
 
-    def validate_instrument_name(self, value):
+    def validate_instrument_class(self, value):
         if value and value not in configdb.get_active_instrument_types({}):
             raise serializers.ValidationError(
                 _("Invalid instrument name {}. Valid instruments may include: {}").format(
@@ -160,20 +160,20 @@ class ConfigurationSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, data):
-        modes = configdb.get_modes_by_type(data['instrument_name'])
-        default_modes = configdb.get_default_modes_by_type(data['instrument_name'])
+        modes = configdb.get_modes_by_type(data['instrument_class'])
+        default_modes = configdb.get_default_modes_by_type(data['instrument_class'])
         guiding_config = data['guiding_config']
         # Set defaults for guiding and acquisition modes if they are not set
         # TODO: Validate the guiding optical elements on the guiding instrument types
         if 'state' not in guiding_config:
-            if configdb.is_spectrograph(data['instrument_name']):
+            if configdb.is_spectrograph(data['instrument_class']):
                 guiding_config['state'] = GuidingConfig.ON
             else:
                 guiding_config['state'] = GuidingConfig.OPTIONAL
         elif (guiding_config['state'] == GuidingConfig.OFF and 'mode' in guiding_config
               and guiding_config['mode']):
             raise serializers.ValidationError(_("Cannot set a guiding mode if the guiding state is OFF"))
-        elif configdb.is_spectrograph(data['instrument_name']) and (guiding_config['state'] != GuidingConfig.ON and
+        elif configdb.is_spectrograph(data['instrument_class']) and (guiding_config['state'] != GuidingConfig.ON and
                                                                     data['type'] != 'ARC'):
             raise serializers.ValidationError(_("Guide state must be ON for spectrograph requests"))
 
@@ -184,7 +184,7 @@ class ConfigurationSerializer(serializers.ModelSerializer):
             if ('guiding' in modes
                     and guiding_config['mode'].lower() not in [gm['code'].lower() for gm in modes['guiding']['modes']]):
                 raise serializers.ValidationError(_("guiding mode {} is not available for instrument type {}"
-                                                    .format(guiding_config['mode'], data['instrument_name'])))
+                                                    .format(guiding_config['mode'], data['instrument_class'])))
 
         acquisition_config = data['acquisition_config']
         if 'mode' not in acquisition_config:
@@ -192,10 +192,10 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                 acquisition_config['mode'] = default_modes['acquisition']['code']
         elif 'acquisition' in modes and acquisition_config['mode'] not in [am['code'] for am in modes['acquisition']['modes']]:
             raise serializers.ValidationError(_("Acquisition mode {} is not available for instrument type {}"
-                                                .format(acquisition_config['mode'], data['instrument_name'])))
+                                                .format(acquisition_config['mode'], data['instrument_class'])))
 
         # check for any required fields for acquisition
-        acquisition_mode = configdb.get_mode_with_code(data['instrument_name'], acquisition_config['mode'],
+        acquisition_mode = configdb.get_mode_with_code(data['instrument_class'], acquisition_config['mode'],
                                                        'acquisition')
 
         if 'required_fields' in acquisition_mode['params']:
@@ -205,7 +205,7 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                                                         .format(acquisition_mode['code'], field)))
 
         # Validate the optical elements, rotator and readout modes specified in the instrument configs
-        available_optical_elements = configdb.get_optical_elements(data['instrument_name'])
+        available_optical_elements = configdb.get_optical_elements(data['instrument_class'])
         for instrument_config in data['instrument_configs']:
             if ('mode' not in instrument_config or not instrument_config['mode']) and 'readout' in default_modes:
                 if 'bin_x' not in instrument_config and 'bin_y' not in instrument_config:
@@ -214,14 +214,14 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                     instrument_config['bin_y'] = instrument_config['bin_x']
                 elif 'bin_x' in instrument_config:
                     try:
-                        instrument_config['mode'] = configdb.get_readout_mode_with_binning(data['instrument_name'],
+                        instrument_config['mode'] = configdb.get_readout_mode_with_binning(data['instrument_class'],
                                                                                            instrument_config['bin_x'])['code']
                     except ConfigDBException as cdbe:
                         raise serializers.ValidationError(_(str(cdbe)))
 
             else:
                 try:
-                    readout_mode = configdb.get_mode_with_code(data['instrument_name'],
+                    readout_mode = configdb.get_mode_with_code(data['instrument_class'],
                                                                instrument_config['mode'], 'readout')
                 except ConfigDBException as cdbe:
                     raise serializers.ValidationError(_(str(cdbe)))
@@ -230,7 +230,7 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                     instrument_config['bin_y'] = readout_mode['params']['binning']
                 elif instrument_config['bin_x'] != readout_mode['params']['binning']:
                     raise serializers.ValidationError(_("binning {} is not a valid binning on readout mode {} for instrument type {}"
-                                                        .format(instrument_config['bin_x'], instrument_config['mode'], data['instrument_name'])))
+                                                        .format(instrument_config['bin_x'], instrument_config['mode'], data['instrument_class'])))
 
             # Validate the rotator modes if set in configdb
             if 'rotator' in modes:
@@ -239,7 +239,7 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                     instrument_config['rot_mode'] = default_modes['rotator']['code']
 
                 try:
-                    rotator_mode = configdb.get_mode_with_code(data['instrument_name'], instrument_config['rot_mode'],
+                    rotator_mode = configdb.get_mode_with_code(data['instrument_class'], instrument_config['rot_mode'],
                                                                'rotator')
                     if 'required_fields' in rotator_mode['params']:
                         for field in rotator_mode['params']['required_fields']:
@@ -267,13 +267,13 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                     singular_type = oe_type[:-1] if oe_type.endswith('s') else oe_type
                     if singular_type not in instrument_config['optical_elements']:
                         raise serializers.ValidationError(_("must specify optical element of type {} for instrument {}"
-                                                            .format(singular_type, data['instrument_name'])))
+                                                            .format(singular_type, data['instrument_class'])))
 
         # Validate autoguiders - empty string for default behavior, or match with instrument name for self guiding
-        valid_autoguiders = configdb.get_autoguiders_for_science_camera(data['instrument_name'])
+        valid_autoguiders = configdb.get_autoguiders_for_science_camera(data['instrument_class'])
         if 'name' in guiding_config and guiding_config['name'].upper() not in valid_autoguiders:
             raise serializers.ValidationError(_("Guiding instrument {} is not allowed for science instrument {}")
-                                              .format(guiding_config['name'], data['instrument_name']))
+                                              .format(guiding_config['name'], data['instrument_class']))
 
         if data['type'] == 'SCRIPT':
             if ('extra_params' not in data or 'script_name' not in data['extra_params']
@@ -283,9 +283,9 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                 )
 
         # Validate the configuration type is available for the instrument requested
-        if data['type'] not in configdb.get_configuration_types(data['instrument_name']):
+        if data['type'] not in configdb.get_configuration_types(data['instrument_class']):
             raise serializers.ValidationError(_("configuration type {} is not valid for instrument {}").format(
-                data['type'], data['instrument_name']
+                data['type'], data['instrument_class']
             ))
 
         return data
@@ -404,9 +404,9 @@ class RequestSerializer(serializers.ModelSerializer):
         if 'location' in data:
             valid_instruments = configdb.get_active_instrument_types(data.get('location', {}))
             for configuration in data['configurations']:
-                if configuration['instrument_name'] not in valid_instruments:
+                if configuration['instrument_class'] not in valid_instruments:
                     msg = _("Invalid instrument name '{}' at site={}, obs={}, tel={}. \n").format(
-                        configuration['instrument_name'], data.get('location', {}).get('site', 'Any'),
+                        configuration['instrument_class'], data.get('location', {}).get('site', 'Any'),
                         data.get('location', {}).get('observatory', 'Any'),
                         data.get('location', {}).get('telescope', 'Any'))
                     msg += _("Valid instruments include: ")
@@ -416,7 +416,7 @@ class RequestSerializer(serializers.ModelSerializer):
 
         if 'acceptability_threshold' not in data:
             data['acceptability_threshold'] = max(
-                [configdb.get_default_acceptability_threshold(configuration['instrument_name'])
+                [configdb.get_default_acceptability_threshold(configuration['instrument_class'])
                  for configuration in data['configurations']]
             )
 
@@ -432,9 +432,9 @@ class RequestSerializer(serializers.ModelSerializer):
                 for instrument_config in configuration['instrument_configs']:
                     if instrument_config.get('fill_window'):
                         configuration_duration = get_instrument_configuration_duration(instrument_config,
-                                                                                       configuration['instrument_name'])
+                                                                                       configuration['instrument_class'])
                         num_exposures = get_num_exposures(
-                            instrument_config, configuration['instrument_name'],
+                            instrument_config, configuration['instrument_class'],
                             largest_interval - timedelta(seconds=duration - configuration_duration)
                         )
                         instrument_config['exposure_count'] = num_exposures
@@ -584,7 +584,7 @@ class RequestGroupSerializer(serializers.ModelSerializer):
             for tak, duration in total_duration_dict.items():
                 time_allocation = TimeAllocation.objects.get(
                     semester=tak.semester,
-                    instrument_name=tak.instrument_name,
+                    instrument_class=tak.instrument_class,
                     proposal=data['proposal'],
                 )
                 time_available = 0
@@ -612,7 +612,7 @@ class RequestGroupSerializer(serializers.ModelSerializer):
                 if time_available <= 0.0:
                     raise serializers.ValidationError(
                         _("Proposal {} does not have any time left allocated in semester {} on {} instruments").format(
-                            data['proposal'], tak.semester, tak.instrument_name)
+                            data['proposal'], tak.semester, tak.instrument_class)
                     )
                 elif time_available * OVERHEAD_ALLOWANCE < (duration / 3600.0):
                     raise serializers.ValidationError(

@@ -142,7 +142,7 @@ class TestProposalUserLimits(ConfigDBTestMixin, TestCase):
 
     def test_time_used_for_user(self):
         self.assertEqual(self.user.profile.time_used_in_proposal(self.proposal), 0)
-        configuration = mixer.blend(Configuration, instrument_name='1M0-SCICAM-SBIG')
+        configuration = mixer.blend(Configuration, instrument_class='1M0-SCICAM-SBIG')
         instrument_config = mixer.blend(InstrumentConfig, configuration=configuration, exposure_time=30)
         create_simple_requestgroup(self.user, self.proposal, configuration=configuration,
                                    instrument_config=instrument_config)

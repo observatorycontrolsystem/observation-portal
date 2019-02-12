@@ -99,7 +99,7 @@ class Proposal(models.Model):
     def current_allocation(self):
         allocs = {}
         for ta in self.timeallocation_set.filter(semester=self.current_semester):
-            allocs[ta.instrument_name.replace('-', '')] = {
+            allocs[ta.instrument_class.replace('-', '')] = {
                 'std': ta.std_allocation,
                 'std_used': ta.std_time_used,
                 'rr': ta.rr_allocation,
@@ -137,7 +137,7 @@ class Proposal(models.Model):
         return self.id
 
 
-TimeAllocationKey = namedtuple('TimeAllocationKey', ['semester', 'instrument_name'])
+TimeAllocationKey = namedtuple('TimeAllocationKey', ['semester', 'instrument_class'])
 
 
 class TimeAllocation(models.Model):
@@ -152,7 +152,7 @@ class TimeAllocation(models.Model):
     semester = models.ForeignKey(Semester, on_delete=models.CASCADE)
     proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE)
     # TODO dynamically fill in choices in Form for these fields from configdb with caching
-    instrument_name = models.CharField(max_length=200)
+    instrument_class = models.CharField(max_length=200)
 
     class Meta:
         ordering = ('-semester__id',)

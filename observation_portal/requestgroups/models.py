@@ -221,14 +221,14 @@ class Request(models.Model):
 
     @property
     def time_allocation_key(self):
-        return TimeAllocationKey(self.semester.id, self.configurations.first().instrument_name)
+        return TimeAllocationKey(self.semester.id, self.configurations.first().instrument_class)
 
     @property
     def timeallocations(self):
         return self.request_group.proposal.timeallocation_set.filter(
             semester__start__lte=self.min_window_time,
             semester__end__gte=self.max_window_time,
-            instrument_name__in=[conf.instrument_name for conf in self.configurations.all()]
+            instrument_class__in=[conf.instrument_class for conf in self.configurations.all()]
         )
 
 
@@ -321,9 +321,9 @@ class Configuration(models.Model):
         Request, related_name='configurations', on_delete=models.CASCADE,
         help_text='The Request to which this Configuration belongs'
     )
-    instrument_name = models.CharField(
+    instrument_class = models.CharField(
         max_length=255,
-        help_text='The type of instrument used for the observations under this Configuration'
+        help_text='The instrument class used for the observations under this Configuration'
     )
     # The type of configuration being requested.
     # Valid types are in TYPES
@@ -623,7 +623,7 @@ class InstrumentConfig(models.Model):
 
     @cached_property
     def duration(self):
-        return get_instrument_configuration_duration(self.as_dict, self.configuration.instrument_name)
+        return get_instrument_configuration_duration(self.as_dict, self.configuration.instrument_class)
 
 
 class RegionOfInterest(models.Model):

@@ -161,7 +161,7 @@ class ScienceApplication(models.Model):
                 std_allocation=tr.std_time,
                 rr_allocation=tr.rr_time,
                 tc_allocation=tr.tc_time,
-                instrument_name=tr.instrument.code,
+                instrument_class=tr.instrument.code,
                 semester=tr.semester,
                 proposal=proposal
             )
