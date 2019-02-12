@@ -26,7 +26,7 @@ class ConfigurationStatusSerializer(serializers.ModelSerializer):
 
 
 class ObservationConfigurationSerializer(ConfigurationSerializer):
-    instrument_name = serializers.CharField(required=False)
+    instrument_name = serializers.CharField(required=False, write_only=True)
 
     def validate_instrument_class(self, value):
         # Check with ALL instrument type instead of just schedulable ones

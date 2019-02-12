@@ -389,7 +389,7 @@
                 },
                 {
                   "state": "SCHEDULABLE",
-                  "code": "nresXX",
+                  "code": "nres02",
                   "autoguider_camera": {
                     "code": "akXX",
                     "camera_type": {
@@ -397,7 +397,7 @@
                     }
                   },
                   "science_camera": {
-                    "code": "nresXX",
+                    "code": "nres02",
                     "camera_type": {
                       "code": "1M0-NRES-SCICAM",
                       "name": "1M0-NRES-SCICAM",
@@ -468,7 +468,7 @@
                     "optical_element_groups": [
                     ]
                   },
-                  "__str__": "tst.domb.1m0a.nresXX-nresXX"
+                  "__str__": "tst.domb.1m0a.nres02-nres02"
                 }
               ]
             },
