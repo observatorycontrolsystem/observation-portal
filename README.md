@@ -39,6 +39,11 @@ After creating the database, the migrations must be run to set up the tables.
 python manage.py migrate
 ```
 
+## Run the tests
+```
+python manage.py test --settings=test_settings
+```
+
 ## Run the portal
 
 ```
