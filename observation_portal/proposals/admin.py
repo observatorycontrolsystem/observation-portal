@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 from django.contrib import admin
 
-from .models import (
+from observation_portal.proposals.forms import TimeAllocationForm
+
+from observation_portal.proposals.models import (
     Semester,
     ScienceCollaborationAllocation,
     Proposal,
@@ -30,6 +32,7 @@ class ScienceCollaborationAllocationAdmin(admin.ModelAdmin):
 
 class TimeAllocationAdminInline(admin.TabularInline):
     model = TimeAllocation
+    form = TimeAllocationForm
 
 
 class ProposalAdmin(admin.ModelAdmin):
