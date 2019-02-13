@@ -19,6 +19,7 @@ class SummarySerializer(serializers.ModelSerializer):
 class ConfigurationStatusSerializer(serializers.ModelSerializer):
     summary = SummarySerializer()
     instrument_name = serializers.CharField(required=False)
+    guide_camera_name = serializers.CharField(required=False)
 
     class Meta:
         model = ConfigurationStatus
@@ -27,6 +28,7 @@ class ConfigurationStatusSerializer(serializers.ModelSerializer):
 
 class ObservationConfigurationSerializer(ConfigurationSerializer):
     instrument_name = serializers.CharField(required=False, write_only=True)
+    guide_camera_name = serializers.CharField(required=False, write_only=True)
 
     def validate_instrument_type(self, value):
         # Check with ALL instrument type instead of just schedulable ones
@@ -115,7 +117,6 @@ class ObservationSerializer(serializers.ModelSerializer):
                     ))
                 else:
                     configuration['instrument_name'] = instrument_names.pop()
-
             elif configuration['instrument_name'].lower() not in allowable_instruments['names']:
                 raise serializers.ValidationError(_(
                     '{} is not an available {} instrument on {}.{}.{}, available instruments are: {}'.format(
@@ -123,6 +124,22 @@ class ObservationSerializer(serializers.ModelSerializer):
                         data['enclosure'], data['telescope'], allowable_instruments['names']
                     )
                 ))
+
+            # Also check the guide and acquisition cameras are valid if specified
+            if not configuration.get('guide_camera_name', ''):
+                if 'self_guide' in configuration['extra_params'] and configuration['extra_params']['self_guide']:
+                    configuration['guide_camera_name'] = configuration['instrument_name']
+                else:
+                    configuration['guide_camera_name'] = configdb.get_guider_for_instrument_name(
+                        configuration['instrument_name']
+                    )
+            if not configdb.is_valid_guider_for_instrument_name(configuration['instrument_name'],
+                                                                configuration['guide_camera_name']):
+                raise serializers.ValidationError(_("Invalid guide camera {} for instrument {}".format(
+                    configuration['guide_camera_name'],
+                    configuration['instrument_name']
+                )))
+
         # Add in the request group defaults for an observation
         data['observation_type'] = RequestGroup.DIRECT
         data['operator'] = 'SINGLE'
@@ -140,8 +157,9 @@ class ObservationSerializer(serializers.ModelSerializer):
         # pull out the instrument_names to store later
         config_instrument_names = []
         for configuration in validated_data['request']['configurations']:
-            config_instrument_names.append(configuration['instrument_name'])
+            config_instrument_names.append((configuration['instrument_name'], configuration['guide_camera_name']))
             del configuration['instrument_name']
+            del configuration['guide_camera_name']
 
         rgs = ObserveRequestGroupSerializer(data=validated_data, context=self.context)
         rgs.is_valid(True)
@@ -151,7 +169,8 @@ class ObservationSerializer(serializers.ModelSerializer):
 
         for i, config in enumerate(rg.requests.first().configurations.all()):
             ConfigurationStatus.objects.create(configuration=config, observation=observation,
-                                               instrument_name=config_instrument_names[i])
+                                               instrument_name=config_instrument_names[i][0],
+                                               guide_camera_name=config_instrument_names[i][1])
 
         return observation
 

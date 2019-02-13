@@ -25,6 +25,7 @@
                 {
                   "state": "SCHEDULABLE",
                   "code": "xx01",
+                  "allow_self_guiding": true,
                   "autoguider_camera": {
                     "code": "ef01",
                     "camera_type": {
@@ -142,6 +143,7 @@
                 {
                   "state": "SCHEDULABLE",
                   "code": "xx02",
+                  "allow_self_guiding": false,
                   "autoguider_camera": {
                     "code": "ef02",
                     "camera_type": {
@@ -287,6 +289,7 @@
                 {
                   "state": "SCHEDULABLE",
                   "code": "xx03",
+                  "allow_self_guiding": true,
                   "autoguider_camera": {
                     "code": "ef03",
                     "camera_type": {
@@ -390,8 +393,9 @@
                 {
                   "state": "SCHEDULABLE",
                   "code": "nres02",
+                  "allow_self_guiding": false,
                   "autoguider_camera": {
-                    "code": "akXX",
+                    "code": "ak02",
                     "camera_type": {
                       "code": "1M0-NRES-AG"
                     }
@@ -488,6 +492,7 @@
                 {
                   "state": "SCHEDULABLE",
                   "code": "xx04",
+                  "allow_self_guiding": false,
                   "autoguider_camera": {
                     "code": "ef04",
                     "camera_type": {

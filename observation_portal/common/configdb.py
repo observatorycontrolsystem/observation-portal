@@ -384,17 +384,22 @@ class ConfigDB(object):
                 instrument_types.add(instrument['science_camera']['camera_type']['code'].upper())
         return instrument_types
 
-    def get_autoguiders_for_science_camera(self, instrument_type):
+    def get_guider_for_instrument_name(self, instrument_name):
         instruments = self.get_instruments(only_schedulable=False)
-        valid_autoguiders = {''}
         for instrument in instruments:
-            if instrument['science_camera']['camera_type']['code'].upper() == instrument_type.upper():
-                valid_autoguiders.add(instrument['science_camera']['code'].upper())
-                valid_autoguiders.add(instrument['science_camera']['camera_type']['code'].upper())
-                valid_autoguiders.add(instrument['autoguider_camera']['camera_type']['code'].upper())
-                valid_autoguiders.add(instrument['autoguider_camera']['code'].upper())
+            if instrument['code'].lower() == instrument_name.lower():
+                return instrument['autoguider_camera']['code'].lower()
+        raise ConfigDBException(_("Instrument not found: {}".format(instrument_name)))
 
-        return valid_autoguiders
+    def is_valid_guider_for_instrument_name(self, instrument_name, guide_camera_name):
+        instruments = self.get_instruments(only_schedulable=False)
+        for instrument in instruments:
+            if instrument['code'].upper() == instrument_name.upper():
+                if instrument['autoguider_camera']['code'].lower() == guide_camera_name.lower():
+                    return True
+                elif instrument['allow_self_guiding'] and guide_camera_name.lower() == instrument_name.lower():
+                    return True
+        return False
 
     def get_exposure_overhead(self, instrument_type, binning, readout_mode=''):
         # using the instrument type, build an instrument with the correct configdb parameters

@@ -675,10 +675,6 @@ class GuidingConfig(models.Model):
         Configuration, related_name='guiding_config', on_delete=models.CASCADE,
         help_text='The Configuration to which this GuidingConfig belongs'
     )
-    name = models.CharField(
-        max_length=255, default='', blank=True,
-        help_text='Name of this GuidingConfig'
-    )
     state = models.CharField(
         max_length=50, choices=STATES, default=OPTIONAL,
         help_text='GuidingConfig state to use for the observations'
@@ -716,10 +712,6 @@ class AcquisitionConfig(models.Model):
     configuration = models.OneToOneField(
         Configuration, related_name='acquisition_config', on_delete=models.CASCADE,
         help_text='The Configuration to which this AcquisitionConfig belongs'
-    )
-    name = models.CharField(
-        max_length=255, default='', blank=True,
-        help_text='The name of this AcquisitionConfig'
     )
     mode = models.CharField(
         max_length=50, default=OFF,

@@ -203,6 +203,28 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('is not available at', str(response.content))
 
+    def test_post_observation_invalid_guide_camera_name_rejected(self):
+        bad_observation = copy.deepcopy(self.observation)
+        # ef01 is only on doma, this observation is on domb so it should fail to validate ef01
+        bad_observation['request']['configurations'][0]['guide_camera_name'] = 'ef01'
+
+        response = self.client.post(reverse('api:observations-list'), data=bad_observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Invalid guide camera', str(response.content))
+
+    def test_post_observation_good_guide_camera_name_accepted(self):
+        observation = copy.deepcopy(self.observation)
+        observation['request']['configurations'][0]['guide_camera_name'] = 'ef03'
+        response = self.client.post(reverse('api:observations-list'), data=observation)
+        self.assertEqual(response.status_code, 201)
+
+    def test_post_observation_no_guide_camera_sets_default(self):
+        observation = copy.deepcopy(self.observation)
+        response = self.client.post(reverse('api:observations-list'), data=observation)
+        obs_json = response.json()
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(obs_json['request']['configurations'][0]['guide_camera_name'], 'ef03')
+
 
 class TestPostObservationMultiConfigApi(SetTimeMixin, APITestCase):
     def setUp(self):

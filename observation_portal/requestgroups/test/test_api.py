@@ -179,21 +179,6 @@ class TestUserPostRequestApi(SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertEqual(response.status_code, 400)
 
-    def test_post_requestgroup_validate_autoguider(self):
-        data = self.generic_payload.copy()
-        # Verify invalid autoguider string fails validation
-        data['requests'][0]['configurations'][0]['guiding_config']['name'] = 'invalidAutoguider'
-        response = self.client.post(reverse('api:request_groups-list'), data=data)
-        self.assertEqual(response.status_code, 400)
-        # Verify empty string passes validation and creates UR
-        data['requests'][0]['configurations'][0]['guiding_config']['name'] = ''
-        response = self.client.post(reverse('api:request_groups-list'), data=data)
-        self.assertEqual(response.status_code, 201)
-        # Verify instrument_type as ag_name passes validation and creates UR
-        data['requests'][0]['configurations'][0]['guiding_config']['name'] = data['requests'][0]['configurations'][0]['instrument_type']
-        response = self.client.post(reverse('api:request_groups-list'), data=data)
-        self.assertEqual(response.status_code, 201)
-
     def test_post_requestgroup_no_requests(self):
         bad_data = self.generic_payload.copy()
         bad_data['requests'] = []

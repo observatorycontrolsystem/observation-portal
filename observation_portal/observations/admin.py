@@ -24,7 +24,7 @@ class ObservationAdmin(admin.ModelAdmin):
 
 
 class ConfigurationStatusAdmin(admin.ModelAdmin):
-    list_display = ('id', 'state', )
+    list_display = ('id', 'state', 'instrument_name', 'guide_camera_name')
     list_filter = ('state', )
     raw_id_fields = ('observation', 'configuration')
     inlines = [SummaryInline]

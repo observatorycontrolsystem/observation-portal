@@ -273,11 +273,6 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                                 singular_type, data['instrument_type']
                             ))
                         )
-        # Validate autoguiders - empty string for default behavior, or match with instrument name for self guiding
-        valid_autoguiders = configdb.get_autoguiders_for_science_camera(data['instrument_type'])
-        if 'name' in guiding_config and guiding_config['name'].upper() not in valid_autoguiders:
-            raise serializers.ValidationError(_("Guiding instrument {} is not allowed for science instrument type {}")
-                                              .format(guiding_config['name'], data['instrument_type']))
 
         if data['type'] == 'SCRIPT':
             if ('extra_params' not in data or 'script_name' not in data['extra_params']
