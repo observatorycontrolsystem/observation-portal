@@ -206,7 +206,12 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
     def test_post_observation_invalid_guide_camera_name_rejected(self):
         bad_observation = copy.deepcopy(self.observation)
         # ef01 is only on doma, this observation is on domb so it should fail to validate ef01
-        bad_observation['request']['configurations'][0]['guide_camera_name'] = 'ef01'
+        bad_observation['request']['configurations'][0]['guide_camera_name'] = 'ak03'
+        bad_observation['request']['configurations'][0]['instrument_type'] = '1M0-NRES-SCICAM'
+        bad_observation['request']['configurations'][0]['guiding_config']['state'] = 'ON'
+        bad_observation['request']['configurations'][0]['acquisition_config']['mode'] = 'WCS'
+        bad_observation['request']['configurations'][0]['type'] = 'NRES_SPECTRUM'
+        del bad_observation['request']['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
 
         response = self.client.post(reverse('api:observations-list'), data=bad_observation)
         self.assertEqual(response.status_code, 400)
@@ -214,16 +219,28 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
 
     def test_post_observation_good_guide_camera_name_accepted(self):
         observation = copy.deepcopy(self.observation)
-        observation['request']['configurations'][0]['guide_camera_name'] = 'ef03'
+        observation['request']['configurations'][0]['guide_camera_name'] = 'ak02'
+        observation['request']['configurations'][0]['instrument_type'] = '1M0-NRES-SCICAM'
+        observation['request']['configurations'][0]['guiding_config']['state'] = 'ON'
+        observation['request']['configurations'][0]['acquisition_config']['mode'] = 'WCS'
+        observation['request']['configurations'][0]['type'] = 'NRES_SPECTRUM'
+        del observation['request']['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
+
         response = self.client.post(reverse('api:observations-list'), data=observation)
         self.assertEqual(response.status_code, 201)
 
     def test_post_observation_no_guide_camera_sets_default(self):
         observation = copy.deepcopy(self.observation)
+        observation['request']['configurations'][0]['instrument_type'] = '1M0-NRES-SCICAM'
+        observation['request']['configurations'][0]['guiding_config']['state'] = 'ON'
+        observation['request']['configurations'][0]['acquisition_config']['mode'] = 'WCS'
+        observation['request']['configurations'][0]['type'] = 'NRES_SPECTRUM'
+        del observation['request']['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
+
         response = self.client.post(reverse('api:observations-list'), data=observation)
         obs_json = response.json()
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(obs_json['request']['configurations'][0]['guide_camera_name'], 'ef03')
+        self.assertEqual(obs_json['request']['configurations'][0]['guide_camera_name'], 'ak02')
 
 
 class TestPostObservationMultiConfigApi(SetTimeMixin, APITestCase):

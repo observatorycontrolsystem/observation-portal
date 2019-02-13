@@ -54,7 +54,7 @@ class ConfigurationStatus(models.Model):
         help_text='The specific instrument used to observe the corresponding Configuration'
     )
     guide_camera_name = models.CharField(
-        max_length=255,
+        max_length=255, default='', blank=True,
         help_text='The specific autoguider camera name to observe in the corresponding Configuration'
     )
     state = models.CharField(

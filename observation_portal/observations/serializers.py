@@ -6,7 +6,7 @@ from observation_portal.common.configdb import configdb
 from observation_portal.observations.models import Observation, ConfigurationStatus, Summary
 from observation_portal.requestgroups.serializers import (RequestSerializer, RequestGroupSerializer,
                                                           ConfigurationSerializer)
-from observation_portal.requestgroups.models import RequestGroup
+from observation_portal.requestgroups.models import RequestGroup, AcquisitionConfig, GuidingConfig
 from observation_portal.proposals.models import Proposal
 
 
@@ -126,19 +126,24 @@ class ObservationSerializer(serializers.ModelSerializer):
                 ))
 
             # Also check the guide and acquisition cameras are valid if specified
-            if not configuration.get('guide_camera_name', ''):
-                if 'self_guide' in configuration['extra_params'] and configuration['extra_params']['self_guide']:
-                    configuration['guide_camera_name'] = configuration['instrument_name']
-                else:
-                    configuration['guide_camera_name'] = configdb.get_guider_for_instrument_name(
+            # But only if the guide mode is set
+            if (configuration['guiding_config']['state'] == GuidingConfig.ON or
+                    configuration['acquisition_config']['mode'] != AcquisitionConfig.OFF):
+                if not configuration.get('guide_camera_name', ''):
+                    if 'self_guide' in configuration['extra_params'] and configuration['extra_params']['self_guide']:
+                        configuration['guide_camera_name'] = configuration['instrument_name']
+                    else:
+                        configuration['guide_camera_name'] = configdb.get_guider_for_instrument_name(
+                            configuration['instrument_name']
+                        )
+                if not configdb.is_valid_guider_for_instrument_name(configuration['instrument_name'],
+                                                                    configuration['guide_camera_name']):
+                    raise serializers.ValidationError(_("Invalid guide camera {} for instrument {}".format(
+                        configuration['guide_camera_name'],
                         configuration['instrument_name']
-                    )
-            if not configdb.is_valid_guider_for_instrument_name(configuration['instrument_name'],
-                                                                configuration['guide_camera_name']):
-                raise serializers.ValidationError(_("Invalid guide camera {} for instrument {}".format(
-                    configuration['guide_camera_name'],
-                    configuration['instrument_name']
-                )))
+                    )))
+            else:
+                configuration['guide_camera_name'] = ''
 
         # Add in the request group defaults for an observation
         data['observation_type'] = RequestGroup.DIRECT
