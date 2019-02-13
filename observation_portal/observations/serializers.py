@@ -6,9 +6,8 @@ from observation_portal.common.configdb import configdb
 from observation_portal.observations.models import Observation, ConfigurationStatus, Summary
 from observation_portal.requestgroups.serializers import (RequestSerializer, RequestGroupSerializer,
                                                           ConfigurationSerializer)
-from observation_portal.requestgroups.models import RequestGroup
+from observation_portal.requestgroups.models import RequestGroup, AcquisitionConfig, GuidingConfig
 from observation_portal.proposals.models import Proposal
-import logging
 
 
 class SummarySerializer(serializers.ModelSerializer):
@@ -19,6 +18,8 @@ class SummarySerializer(serializers.ModelSerializer):
 
 class ConfigurationStatusSerializer(serializers.ModelSerializer):
     summary = SummarySerializer()
+    instrument_name = serializers.CharField(required=False)
+    guide_camera_name = serializers.CharField(required=False)
 
     class Meta:
         model = ConfigurationStatus
@@ -26,10 +27,13 @@ class ConfigurationStatusSerializer(serializers.ModelSerializer):
 
 
 class ObservationConfigurationSerializer(ConfigurationSerializer):
-    def validate_instrument_name(self, value):
-        # Check with ALL instruments instead of just schedulable ones
-        if not configdb.is_valid_instrument(value):
-            raise serializers.ValidationError(_("Invalid Instrument Name {}".format(value)))
+    instrument_name = serializers.CharField(required=False, write_only=True)
+    guide_camera_name = serializers.CharField(required=False, write_only=True)
+
+    def validate_instrument_type(self, value):
+        # Check with ALL instrument type instead of just schedulable ones
+        if not configdb.is_valid_instrument_type(value):
+            raise serializers.ValidationError(_("Invalid Instrument Type {}".format(value)))
         return value
 
 
@@ -93,13 +97,53 @@ class ObservationSerializer(serializers.ModelSerializer):
         if data['end'] <= data['start']:
             raise serializers.ValidationError(_("End time must be after start time"))
 
-        # Validate the site/obs/tel is a valid combination with the instrument requested
-        allowable_instruments = configdb.get_instruments_at_location(data['site'], data['enclosure'], data['telescope'])
+        # Validate the site/obs/tel is a valid combination with the instrument class requested
+        allowable_instruments = configdb.get_instruments_at_location(
+            data['site'], data['enclosure'], data['telescope']
+        )
         for configuration in data['request']['configurations']:
-            if configuration['instrument_name'].lower() not in allowable_instruments:
-                raise serializers.ValidationError(_("instrument {} is not available at {}.{}.{}".format(
-                    configuration['instrument_name'], data['site'], data['enclosure'], data['telescope']
+            if configuration['instrument_type'].lower() not in allowable_instruments['types']:
+                raise serializers.ValidationError(_("instrument type {} is not available at {}.{}.{}".format(
+                    configuration['instrument_type'], data['site'], data['enclosure'], data['telescope']
                 )))
+            if not configuration.get('instrument_name', ''):
+                instrument_names = configdb.get_instrument_names(
+                    configuration['instrument_type'], data['site'], data['enclosure'], data['telescope']
+                )
+                if len(instrument_names) > 1:
+                    raise serializers.ValidationError(_(
+                        'There is more than one valid instrument on the specified telescope, please select from: {}'
+                        .format(instrument_names)
+                    ))
+                else:
+                    configuration['instrument_name'] = instrument_names.pop()
+            elif configuration['instrument_name'].lower() not in allowable_instruments['names']:
+                raise serializers.ValidationError(_(
+                    '{} is not an available {} instrument on {}.{}.{}, available instruments are: {}'.format(
+                        configuration['instrument_name'], configuration['instrument_type'], data['site'],
+                        data['enclosure'], data['telescope'], allowable_instruments['names']
+                    )
+                ))
+
+            # Also check the guide and acquisition cameras are valid if specified
+            # But only if the guide mode is set
+            if (configuration['guiding_config']['state'] == GuidingConfig.ON or
+                    configuration['acquisition_config']['mode'] != AcquisitionConfig.OFF):
+                if not configuration.get('guide_camera_name', ''):
+                    if 'self_guide' in configuration['extra_params'] and configuration['extra_params']['self_guide']:
+                        configuration['guide_camera_name'] = configuration['instrument_name']
+                    else:
+                        configuration['guide_camera_name'] = configdb.get_guider_for_instrument_name(
+                            configuration['instrument_name']
+                        )
+                if not configdb.is_valid_guider_for_instrument_name(configuration['instrument_name'],
+                                                                    configuration['guide_camera_name']):
+                    raise serializers.ValidationError(_("Invalid guide camera {} for instrument {}".format(
+                        configuration['guide_camera_name'],
+                        configuration['instrument_name']
+                    )))
+            else:
+                configuration['guide_camera_name'] = ''
 
         # Add in the request group defaults for an observation
         data['observation_type'] = RequestGroup.DIRECT
@@ -115,14 +159,23 @@ class ObservationSerializer(serializers.ModelSerializer):
             obs_fields[field] = validated_data[field]
             del validated_data[field]
 
+        # pull out the instrument_names to store later
+        config_instrument_names = []
+        for configuration in validated_data['request']['configurations']:
+            config_instrument_names.append((configuration['instrument_name'], configuration['guide_camera_name']))
+            del configuration['instrument_name']
+            del configuration['guide_camera_name']
+
         rgs = ObserveRequestGroupSerializer(data=validated_data, context=self.context)
         rgs.is_valid(True)
         rg = rgs.save()
 
         observation = Observation.objects.create(request=rg.requests.first(), **obs_fields)
 
-        for config in rg.requests.first().configurations.all():
-            ConfigurationStatus.objects.create(configuration=config, observation=observation)
+        for i, config in enumerate(rg.requests.first().configurations.all()):
+            ConfigurationStatus.objects.create(configuration=config, observation=observation,
+                                               instrument_name=config_instrument_names[i][0],
+                                               guide_camera_name=config_instrument_names[i][1])
 
         return observation
 

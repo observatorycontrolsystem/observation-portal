@@ -34,5 +34,5 @@ def request_state_count(requestgroup, state):
 
 
 @register.filter
-def instrument_code_to_name(instrument_code):
-    return configdb.get_instrument_name(instrument_code)
+def instrument_type_to_full_name(instrument_code):
+    return configdb.get_instrument_type_full_name(instrument_code)

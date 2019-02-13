@@ -89,7 +89,7 @@ class TestUserrequestDetail(TestCase):
         self.request_group = mixer.blend(RequestGroup, proposal=self.proposal, name=mixer.RANDOM)
         self.requests = mixer.cycle(10).blend(Request, request_group=self.request_group)
         for request in self.requests:
-            mixer.blend(Configuration, request=request, instrument_name='1M0-SCICAM-SBIG')
+            mixer.blend(Configuration, request=request, instrument_type='1M0-SCICAM-SBIG')
         self.client.force_login(self.user)
 
     def test_requestgroup_detail(self):
@@ -139,7 +139,7 @@ class TestUserrequestDetail(TestCase):
     def test_single_request_redirect(self):
         request_group = mixer.blend(RequestGroup, proposal=self.proposal, name=mixer.RANDOM)
         request = mixer.blend(Request, request_group=request_group)
-        mixer.blend(Configuration, request=request, instrument_name='1M0-SCICAM-SBIG')
+        mixer.blend(Configuration, request=request, instrument_type='1M0-SCICAM-SBIG')
         response = self.client.get(reverse('requestgroups:detail', kwargs={'pk': request_group.id}))
         self.assertRedirects(response, reverse('requestgroups:request-detail', args=(request.id,)))
 
@@ -152,7 +152,7 @@ class TestRequestDetail(TestCase):
         mixer.blend(Membership, proposal=self.proposal, user=self.user)
         self.request_group = mixer.blend(RequestGroup, proposal=self.proposal, name=mixer.RANDOM)
         self.request = mixer.blend(Request, request_group=self.request_group)
-        mixer.blend(Configuration, request=self.request, instrument_name='1M0-SCICAM-SBIG')
+        mixer.blend(Configuration, request=self.request, instrument_type='1M0-SCICAM-SBIG')
         self.client.force_login(self.user)
         super().setUp()
 
@@ -184,7 +184,7 @@ class TestRequestDetail(TestCase):
         self.user.profile.save()
         request_group = mixer.blend(RequestGroup, proposal=self.proposal, name=mixer.RANDOM, submitter=self.user)
         request = mixer.blend(Request, request_group=request_group)
-        mixer.blend(Configuration, request=request, instrument_name='1M0-SCICAM-SBIG')
+        mixer.blend(Configuration, request=request, instrument_type='1M0-SCICAM-SBIG')
         response = self.client.get(reverse('requestgroups:request-detail', kwargs={'pk': self.request.id}))
         self.assertEqual(response.status_code, 404)
         response = self.client.get(reverse('requestgroups:request-detail', kwargs={'pk': request.id}))

@@ -19,7 +19,7 @@ class Contention(object):
             windows__start__lt=self.now + timedelta(days=1),
             windows__end__gt=self.now,
             state='PENDING',
-            configurations__instrument_name=instrument_name,
+            configurations__instrument_type=instrument_name,
             configurations__target__type='SIDEREAL'
         ).prefetch_related(
             'configurations', 'windows', 'configurations__target', 'location', 'request_group',
@@ -75,7 +75,7 @@ class Pressure(object):
             configurations__target__type='SIDEREAL'
         )
         if instrument_name:
-            requests = requests.filter(configurations__instrument_name=instrument_name)
+            requests = requests.filter(configurations__instrument_type=instrument_name)
 
         return requests.prefetch_related(
             'configurations', 'windows', 'configurations__target', 'location', 'request_group', 'request_group__proposal',
@@ -149,7 +149,7 @@ class Pressure(object):
         for request in self.requests:
             site_intervals = self._visible_intervals(request)
             total_time_visible = self._time_visible(site_intervals)
-            instrument_name = request.configurations.all()[0].instrument_name
+            instrument_name = request.configurations.all()[0].instrument_type
 
             if total_time_visible < 1:
                 continue

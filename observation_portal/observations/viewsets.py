@@ -3,8 +3,8 @@ from rest_framework.permissions import IsAdminUser
 from django_filters.rest_framework import DjangoFilterBackend
 
 from observation_portal.observations.models import Observation
-from observation_portal.observations.serializers import ObservationSerializer
-from observation_portal.observations.filters import ObservationFilter
+from observation_portal.observations.serializers import ObservationSerializer, ConfigurationStatusSerializer
+from observation_portal.observations.filters import ObservationFilter, ConfigurationStatusFilter
 
 import logging
 
@@ -30,4 +30,16 @@ class ObservationViewSet(viewsets.ModelViewSet):
                                    'request__configurations__acquisition_config', 'request__request_group',
                                    'request__configurations__guiding_config', 'request__configurations__constraints',
                                    'request__configurations__instrument_configs__rois')
+
+
+class ConfigurationStatusViewSet(viewsets.ModelViewSet):
+    permission_classes = (IsAdminUser,)
+    http_method_names = ['get', 'patch']
+    serializer_class = ConfigurationStatusSerializer
+    filter_class = ConfigurationStatusFilter
+    filter_backends = (
+        filters.OrderingFilter,
+        DjangoFilterBackend
+    )
+    ordering = ('-id',)
 

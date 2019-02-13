@@ -14,8 +14,6 @@ from observation_portal.proposals.models import Proposal, Membership, TimeAlloca
 from observation_portal.accounts.models import Profile
 import copy
 
-import logging
-
 observation = {
     "request": {
         "configurations": [
@@ -63,7 +61,7 @@ observation = {
                     "dec": -33.0,
                     "proper_motion_dec": 0.0
                 },
-                "instrument_name": "1M0-SCICAM-SBIG",
+                "instrument_type": "1M0-SCICAM-SBIG",
                 "type": "EXPOSE",
                 "extra_params": {},
             }
@@ -76,7 +74,7 @@ observation = {
     "observation_type": "NORMAL",
     "name": "Focus request.",
     "site": "tst",
-    "enclosure": "doma",
+    "enclosure": "domb",
     "telescope": "1m0a",
     "start": "2016-09-05T22:35:39Z",
     "end": "2016-09-05T23:35:40Z"
@@ -99,7 +97,7 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
         self.observation = copy.deepcopy(observation)
         self.observation['proposal'] = self.proposal.id
 
-    def test_post_observation_user_not_admin(self):
+    def test_post_observation_user_not_logged_in(self):
         self.other_user = mixer.blend(User)
         self.client.force_login(self.other_user)
         response = self.client.post(reverse('api:observations-list'), data=self.observation)
@@ -110,6 +108,7 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
         self.client.force_login(self.other_user)
         response = self.client.post(reverse('api:observations-list'), data=self.observation)
         self.assertEqual(response.status_code, 400)
+        self.assertIn('do not belong to the proposal', str(response.content))
 
     def test_post_observation_authenticated(self):
         response = self.client.post(reverse('api:observations-list'), data=self.observation)
@@ -129,6 +128,7 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:observations-list'), data=bad_observation)
         self.assertEqual(response.status_code, 400)
         self.assertIn('proposal', response.json())
+        self.assertIn('field is required', str(response.content))
 
     def test_post_observation_requires_real_proposal(self):
         bad_observation = copy.deepcopy(self.observation)
@@ -136,6 +136,7 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:observations-list'), data=bad_observation)
         self.assertEqual(response.status_code, 400)
         self.assertIn('proposal', response.json())
+        self.assertIn('does not exist', str(response.content))
 
     def test_post_observation_requires_proposal_with_direct_submission(self):
         self.proposal.direct_submission = False
@@ -143,7 +144,7 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
         bad_observation = copy.deepcopy(self.observation)
         response = self.client.post(reverse('api:observations-list'), data=bad_observation)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('proposal', response.json())
+        self.assertIn('is not allowed to submit observations directly', str(response.content))
 
     def test_post_observation_validates_site(self):
         bad_observation = copy.deepcopy(self.observation)
@@ -158,28 +159,144 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:observations-list'), data=bad_observation)
         self.assertEqual(response.status_code, 400)
         self.assertIn('start', response.json())
+        self.assertIn('must be in the future', str(response.content))
 
     def test_post_observation_end_before_start_rejected(self):
         bad_observation = copy.deepcopy(self.observation)
         bad_observation['end'] = "2016-09-05T21:35:40Z"
         response = self.client.post(reverse('api:observations-list'), data=bad_observation)
         self.assertEqual(response.status_code, 400)
+        self.assertIn('end time must be after start time', str(response.content).lower())
 
-    def test_post_observation_invalid_instrument_name_rejected(self):
+    def test_post_observation_invalid_instrument_type_rejected(self):
         bad_observation = copy.deepcopy(self.observation)
-        bad_observation['request']['configurations'][0]['instrument_name'] = '1M0-FAKE-INSTRUMENT'
+        bad_observation['request']['configurations'][0]['instrument_type'] = '1M0-FAKE-INSTRUMENT'
         response = self.client.post(reverse('api:observations-list'), data=bad_observation)
         self.assertEqual(response.status_code, 400)
+        self.assertIn('invalid instrument type', str(response.content).lower())
 
-    def test_post_observation_specific_instrument_accepted(self):
+    def test_post_observation_instrument_name_accepted(self):
         observation = copy.deepcopy(self.observation)
-        observation['request']['configurations'][0]['instrument_name'] = 'xx01'
+        observation['request']['configurations'][0]['instrument_name'] = 'xx03'
         response = self.client.post(reverse('api:observations-list'), data=observation)
         self.assertEqual(response.status_code, 201)
 
-    def test_post_observation_invalid_instrument_name_for_site_rejected(self):
+    def test_post_observation_invalid_instrument_name_for_instrument_type(self):
         bad_observation = copy.deepcopy(self.observation)
-        bad_observation['site'] = 'non'
-        bad_observation['request']['configurations'][0]['instrument_name'] = '1M0-SBIG-INSTRUMENT'
+        bad_observation['request']['configurations'][0]['instrument_name'] = 'fake01'
+        response = self.client.post(reverse('api:observations-list'), data=bad_observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('is not an available', str(response.content))
+
+    def test_post_observation_no_instrument_name_sets_default_for_instrument_type(self):
+        observation = copy.deepcopy(self.observation)
+        response = self.client.post(reverse('api:observations-list'), data=observation)
+        obs_json = response.json()
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(obs_json['request']['configurations'][0]['instrument_name'], 'xx03')
+
+    def test_post_observation_invalid_instrument_type_for_site_rejected(self):
+        bad_observation = copy.deepcopy(self.observation)
+        bad_observation['site'] = 'lco'
+        bad_observation['request']['configurations'][0]['instrument_type'] = '1M0-SCICAM-SBIG'
+        response = self.client.post(reverse('api:observations-list'), data=bad_observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('is not available at', str(response.content))
+
+    def test_post_observation_invalid_guide_camera_name_rejected(self):
+        bad_observation = copy.deepcopy(self.observation)
+        # ef01 is only on doma, this observation is on domb so it should fail to validate ef01
+        bad_observation['request']['configurations'][0]['guide_camera_name'] = 'ak03'
+        bad_observation['request']['configurations'][0]['instrument_type'] = '1M0-NRES-SCICAM'
+        bad_observation['request']['configurations'][0]['guiding_config']['state'] = 'ON'
+        bad_observation['request']['configurations'][0]['acquisition_config']['mode'] = 'WCS'
+        bad_observation['request']['configurations'][0]['type'] = 'NRES_SPECTRUM'
+        del bad_observation['request']['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
+
+        response = self.client.post(reverse('api:observations-list'), data=bad_observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Invalid guide camera', str(response.content))
+
+    def test_post_observation_good_guide_camera_name_accepted(self):
+        observation = copy.deepcopy(self.observation)
+        observation['request']['configurations'][0]['guide_camera_name'] = 'ak02'
+        observation['request']['configurations'][0]['instrument_type'] = '1M0-NRES-SCICAM'
+        observation['request']['configurations'][0]['guiding_config']['state'] = 'ON'
+        observation['request']['configurations'][0]['acquisition_config']['mode'] = 'WCS'
+        observation['request']['configurations'][0]['type'] = 'NRES_SPECTRUM'
+        del observation['request']['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
+
+        response = self.client.post(reverse('api:observations-list'), data=observation)
+        self.assertEqual(response.status_code, 201)
+
+    def test_post_observation_no_guide_camera_sets_default(self):
+        observation = copy.deepcopy(self.observation)
+        observation['request']['configurations'][0]['instrument_type'] = '1M0-NRES-SCICAM'
+        observation['request']['configurations'][0]['guiding_config']['state'] = 'ON'
+        observation['request']['configurations'][0]['acquisition_config']['mode'] = 'WCS'
+        observation['request']['configurations'][0]['type'] = 'NRES_SPECTRUM'
+        del observation['request']['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
+
+        response = self.client.post(reverse('api:observations-list'), data=observation)
+        obs_json = response.json()
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(obs_json['request']['configurations'][0]['guide_camera_name'], 'ak02')
+
+
+class TestPostObservationMultiConfigApi(SetTimeMixin, APITestCase):
+    def setUp(self):
+        super().setUp()
+        self.proposal = mixer.blend(Proposal, direct_submission=True)
+        self.user = mixer.blend(User, is_admin=True, is_superuser=True, is_staff=True)
+        mixer.blend(Profile, user=self.user)
+        self.client.force_login(self.user)
+        self.semester = mixer.blend(
+            Semester, id='2016B', start=datetime(2016, 9, 1, tzinfo=timezone.utc),
+            end=datetime(2016, 12, 31, tzinfo=timezone.utc)
+        )
+
+        self.membership = mixer.blend(Membership, user=self.user, proposal=self.proposal)
+        self.observation = copy.deepcopy(observation)
+        self.observation['proposal'] = self.proposal.id
+        # Add two more configurations, and modify their properties in tests
+        self.observation['request']['configurations'].append(copy.deepcopy(
+            self.observation['request']['configurations'][0]
+        ))
+        self.observation['request']['configurations'].append(copy.deepcopy(
+            self.observation['request']['configurations'][0]
+        ))
+        self.observation['request']['configurations'][2]['instrument_type'] = '1M0-NRES-SCICAM'
+        self.observation['request']['configurations'][2]['guiding_config']['state'] = 'ON'
+        self.observation['request']['configurations'][2]['acquisition_config']['mode'] = 'WCS'
+        self.observation['request']['configurations'][2]['type'] = 'NRES_SPECTRUM'
+        del self.observation['request']['configurations'][2]['instrument_configs'][0]['optical_elements']['filter']
+
+    def test_post_observation_multiple_configurations_accepted(self):
+        observation = copy.deepcopy(self.observation)
+        response = self.client.post(reverse('api:observations-list'), data=observation)
+        self.assertEqual(response.status_code, 201)
+        obs_json = response.json()
+        # verify instruments were set correctly
+        self.assertEqual(obs_json['request']['configurations'][0]['instrument_name'], 'xx03')
+        self.assertEqual(obs_json['request']['configurations'][1]['instrument_name'], 'xx03')
+        self.assertEqual(obs_json['request']['configurations'][2]['instrument_name'], 'nres02')
+        self.assertEqual(obs_json['request']['configurations'][0]['instrument_type'], '1M0-SCICAM-SBIG')
+        self.assertEqual(obs_json['request']['configurations'][1]['instrument_type'], '1M0-SCICAM-SBIG')
+        self.assertEqual(obs_json['request']['configurations'][2]['instrument_type'], '1M0-NRES-SCICAM')
+
+    def test_post_observation_multiple_configurations_with_instrument_names(self):
+        observation = copy.deepcopy(self.observation)
+        observation['request']['configurations'][0]['instrument_name'] = 'xx03'
+        observation['request']['configurations'][1]['instrument_name'] = 'xx03'
+        observation['request']['configurations'][2]['instrument_name'] = 'nres02'
+
+        response = self.client.post(reverse('api:observations-list'), data=observation)
+        self.assertEqual(response.status_code, 201)
+
+    def test_post_observation_multiple_configurations_with_bad_instrument_name_rejected(self):
+        bad_observation = copy.deepcopy(self.observation)
+        bad_observation['request']['configurations'][1]['instrument_name'] = 'nres03'
+        bad_observation['request']['configurations'][2]['instrument_name'] = 'xx03'
+
         response = self.client.post(reverse('api:observations-list'), data=bad_observation)
         self.assertEqual(response.status_code, 400)

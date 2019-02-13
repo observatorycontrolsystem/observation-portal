@@ -25,6 +25,7 @@
                 {
                   "state": "SCHEDULABLE",
                   "code": "xx01",
+                  "allow_self_guiding": true,
                   "autoguider_camera": {
                     "code": "ef01",
                     "camera_type": {
@@ -142,6 +143,7 @@
                 {
                   "state": "SCHEDULABLE",
                   "code": "xx02",
+                  "allow_self_guiding": false,
                   "autoguider_camera": {
                     "code": "ef02",
                     "camera_type": {
@@ -287,6 +289,7 @@
                 {
                   "state": "SCHEDULABLE",
                   "code": "xx03",
+                  "allow_self_guiding": true,
                   "autoguider_camera": {
                     "code": "ef03",
                     "camera_type": {
@@ -389,15 +392,16 @@
                 },
                 {
                   "state": "SCHEDULABLE",
-                  "code": "nresXX",
+                  "code": "nres02",
+                  "allow_self_guiding": false,
                   "autoguider_camera": {
-                    "code": "akXX",
+                    "code": "ak02",
                     "camera_type": {
                       "code": "1M0-NRES-AG"
                     }
                   },
                   "science_camera": {
-                    "code": "nresXX",
+                    "code": "nres02",
                     "camera_type": {
                       "code": "1M0-NRES-SCICAM",
                       "name": "1M0-NRES-SCICAM",
@@ -468,7 +472,7 @@
                     "optical_element_groups": [
                     ]
                   },
-                  "__str__": "tst.domb.1m0a.nresXX-nresXX"
+                  "__str__": "tst.domb.1m0a.nres02-nres02"
                 }
               ]
             },
@@ -488,6 +492,7 @@
                 {
                   "state": "SCHEDULABLE",
                   "code": "xx04",
+                  "allow_self_guiding": false,
                   "autoguider_camera": {
                     "code": "ef04",
                     "camera_type": {

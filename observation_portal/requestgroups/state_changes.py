@@ -82,7 +82,7 @@ def validate_ipp(request_group_dict, total_duration_dict):
 
     time_allocations_dict = {tak: TimeAllocation.objects.get(
         semester__id=tak.semester,
-        instrument_name=tak.instrument_name,
+        instrument_type=tak.instrument_type,
         proposal__id=request_group_dict['proposal']
     ).ipp_time_available for tak in total_duration_dict.keys()}
 
@@ -91,9 +91,9 @@ def validate_ipp(request_group_dict, total_duration_dict):
         if time_allocations_dict[tak] < (duration_hours * ipp_value):
             max_ipp_allowable = (time_allocations_dict[tak] / duration_hours) + 1.0
             truncated_max_ipp_allowable = floor(max_ipp_allowable * 1000.0) / 1000.0
-            msg = _(("{}'{}' ipp_value of {} requires more ipp_time then is available. "
+            msg = _(("{}'{}' ipp_value of {} requires more ipp_time than is available. "
                      "Please lower your ipp_value to <= {} and submit again.")).format(
-                tak.instrument_name,
+                tak.instrument_type,
                 request_group_dict['observation_type'],
                 (ipp_value + 1),
                 truncated_max_ipp_allowable
@@ -109,7 +109,7 @@ def debit_ipp_time(request_group):
     try:
         time_allocations = request_group.timeallocations
         time_allocations_dict = {
-            TimeAllocationKey(ta.semester.id, ta.instrument_name): ta for ta in time_allocations.all()
+            TimeAllocationKey(ta.semester.id, ta.instrument_type): ta for ta in time_allocations.all()
         }
         total_duration_dict = request_group.total_duration
         for tak, duration in total_duration_dict.items():

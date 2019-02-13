@@ -42,12 +42,21 @@ class ConfigurationStatus(models.Model):
         ('ATTEMPTED', 'ATTEMPTED'),
         ('COMPLETED', 'COMPLETED'),
         ('CANCELED', 'CANCELED'),
+        ('ABORTED', 'ABORTED'),
         ('FAILED', 'FAILED')
     )
 
     configuration = models.ForeignKey(Configuration, related_name='configuration_status',
                                       on_delete=models.PROTECT)
     observation = models.ForeignKey(Observation, related_name='configuration_status', on_delete=models.CASCADE)
+    instrument_name = models.CharField(
+        max_length=255,
+        help_text='The specific instrument used to observe the corresponding Configuration'
+    )
+    guide_camera_name = models.CharField(
+        max_length=255, default='', blank=True,
+        help_text='The specific autoguider camera name to observe in the corresponding Configuration'
+    )
     state = models.CharField(
         max_length=40, choices=STATE_CHOICES, default=STATE_CHOICES[0][0],
         help_text='Current state of this RequestGroup'

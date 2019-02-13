@@ -34,8 +34,8 @@ class UserSerializer(serializers.ModelSerializer):
         instrument_types = set()
         for proposal in obj.proposal_set.filter(active=True):
             for timeallocation in proposal.timeallocation_set.all():
-                if timeallocation.instrument_name:
-                    instrument_types.add(timeallocation.instrument_name)
+                if timeallocation.instrument_type:
+                    instrument_types.add(timeallocation.instrument_type)
         return list(instrument_types)
 
     def get_tokens(self, obj):

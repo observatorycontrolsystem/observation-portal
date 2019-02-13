@@ -29,7 +29,7 @@ generic_payload = {
     'requests': [{
         'configurations': [{
             'type': 'EXPOSE',
-            'instrument_name': '1M0-SCICAM-SBIG',
+            'instrument_type': '1M0-SCICAM-SBIG',
             'target': {
                 'name': 'fake target',
                 'type': 'SIDEREAL',
@@ -130,16 +130,14 @@ class TestUserPostRequestApi(SetTimeMixin, APITestCase):
         )
         self.time_allocation_1m0_sbig = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=self.semester,
-            telescope_class='1m0', instrument_name='1M0-SCICAM-SBIG', std_allocation=100.0, std_time_used=0.0,
+            instrument_type='1M0-SCICAM-SBIG', std_allocation=100.0, std_time_used=0.0,
             rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0, ipp_time_available=5.0
         )
-
         self.time_allocation_2m0_floyds = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=self.semester,
-            telescope_class='2m0', instrument_name='2M0-FLOYDS-SCICAM', std_allocation=100.0, std_time_used=0.0,
+            instrument_type='2M0-FLOYDS-SCICAM', std_allocation=100.0, std_time_used=0.0,
             rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0, ipp_time_available=5.0
         )
-
         self.membership = mixer.blend(Membership, user=self.user, proposal=self.proposal)
         self.generic_payload = copy.deepcopy(generic_payload)
         self.generic_payload['proposal'] = self.proposal.id
@@ -181,21 +179,6 @@ class TestUserPostRequestApi(SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertEqual(response.status_code, 400)
 
-    def test_post_requestgroup_validate_autoguider(self):
-        data = self.generic_payload.copy()
-        # Verify invalid autoguider string fails validation
-        data['requests'][0]['configurations'][0]['guiding_config']['name'] = 'invalidAutoguider'
-        response = self.client.post(reverse('api:request_groups-list'), data=data)
-        self.assertEqual(response.status_code, 400)
-        # Verify empty string passes validation and creates UR
-        data['requests'][0]['configurations'][0]['guiding_config']['name'] = ''
-        response = self.client.post(reverse('api:request_groups-list'), data=data)
-        self.assertEqual(response.status_code, 201)
-        # Verify instrument_name as ag_name passes validation and creates UR
-        data['requests'][0]['configurations'][0]['guiding_config']['name'] = data['requests'][0]['configurations'][0]['instrument_name']
-        response = self.client.post(reverse('api:request_groups-list'), data=data)
-        self.assertEqual(response.status_code, 201)
-
     def test_post_requestgroup_no_requests(self):
         bad_data = self.generic_payload.copy()
         bad_data['requests'] = []
@@ -206,7 +189,7 @@ class TestUserPostRequestApi(SetTimeMixin, APITestCase):
         self.time_allocation_2m0_floyds.delete()
         bad_data = self.generic_payload.copy()
         bad_data['requests'][0]['location']['telescope_class'] = '2m0'
-        bad_data['requests'][0]['configurations'][0]['instrument_name'] = '2M0-FLOYDS-SCICAM'
+        bad_data['requests'][0]['configurations'][0]['instrument_type'] = '2M0-FLOYDS-SCICAM'
         bad_data['requests'][0]['configurations'][0]['type'] = 'SPECTRUM'
         del bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
         bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['slit'] = 'slit_6.0as'
@@ -295,7 +278,7 @@ class TestUserPostRequestApi(SetTimeMixin, APITestCase):
 
         # check that default acquire mode is 'wcs' for floyds
         good_data['requests'][0]['location']['telescope_class'] = '2m0'
-        good_data['requests'][0]['configurations'][0]['instrument_name'] = '2M0-FLOYDS-SCICAM'
+        good_data['requests'][0]['configurations'][0]['instrument_type'] = '2M0-FLOYDS-SCICAM'
         del good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
         good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['slit'] = 'slit_6.0as'
         good_data['requests'][0]['configurations'][0]['type'] = 'SPECTRUM'
@@ -305,7 +288,7 @@ class TestUserPostRequestApi(SetTimeMixin, APITestCase):
 
     def test_post_requestgroup_acquire_mode_brightest_no_radius(self):
         bad_data = self.generic_payload.copy()
-        bad_data['requests'][0]['configurations'][0]['instrument_name'] = '2M0-FLOYDS-SCICAM'
+        bad_data['requests'][0]['configurations'][0]['instrument_type'] = '2M0-FLOYDS-SCICAM'
         bad_data['requests'][0]['configurations'][0]['acquisition_config']['mode'] = 'BRIGHTEST'
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertEqual(response.status_code, 400)
@@ -314,7 +297,7 @@ class TestUserPostRequestApi(SetTimeMixin, APITestCase):
     def test_post_requestgroup_acquire_mode_brightest(self):
         good_data = self.generic_payload.copy()
         good_data['requests'][0]['location']['telescope_class'] = '2m0'
-        good_data['requests'][0]['configurations'][0]['instrument_name'] = '2M0-FLOYDS-SCICAM'
+        good_data['requests'][0]['configurations'][0]['instrument_type'] = '2M0-FLOYDS-SCICAM'
         good_data['requests'][0]['configurations'][0]['type'] = 'SPECTRUM'
         del good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
         good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['slit'] = 'slit_6.0as'
@@ -375,7 +358,7 @@ class TestUserPostRequestApi(SetTimeMixin, APITestCase):
         self.assertEqual(response.json()['requests'][0]['acceptability_threshold'], 90)
         # Test that default threshold for floyds is 100
         data['requests'][0]['location']['telescope_class'] = '2m0'
-        data['requests'][0]['configurations'][0]['instrument_name'] = '2M0-FLOYDS-SCICAM'
+        data['requests'][0]['configurations'][0]['instrument_type'] = '2M0-FLOYDS-SCICAM'
         data['requests'][0]['configurations'][0]['type'] = 'SPECTRUM'
         del data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
         data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['slit'] = 'slit_6.0as'
@@ -418,13 +401,13 @@ class TestRequestGroupIPP(SetTimeMixin, APITestCase):
         )
 
         self.time_allocation_1m0_sbig = mixer.blend(
-            TimeAllocation, proposal=self.proposal, semester=semester, instrument_name='1M0-SCICAM-SBIG',
+            TimeAllocation, proposal=self.proposal, semester=semester, instrument_type='1M0-SCICAM-SBIG',
             std_allocation=100.0, std_time_used=0.0, rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
             ipp_time_available=5.0
         )
 
         self.time_allocation_2m0_floyds = mixer.blend(
-            TimeAllocation, proposal=self.proposal, semester=semester, instrument_name='2M0-FLOYDS-SCICAM',
+            TimeAllocation, proposal=self.proposal, semester=semester, instrument_type='2M0-FLOYDS-SCICAM',
             std_allocation=100.0, std_time_used=0.0, rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
             ipp_time_available=5.0
         )
@@ -436,7 +419,7 @@ class TestRequestGroupIPP(SetTimeMixin, APITestCase):
 
         self.generic_multi_payload = copy.deepcopy(self.generic_payload)
         self.second_request = copy.deepcopy(generic_payload['requests'][0])
-        self.second_request['configurations'][0]['instrument_name'] = '2M0-FLOYDS-SCICAM'
+        self.second_request['configurations'][0]['instrument_type'] = '2M0-FLOYDS-SCICAM'
         self.second_request['configurations'][0]['type'] = 'SPECTRUM'
         del self.second_request['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
         self.second_request['configurations'][0]['instrument_configs'][0]['optical_elements']['slit'] = 'slit_6.0as'
@@ -495,7 +478,7 @@ class TestRequestGroupIPP(SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:request_groups-list'), data=rg)
         self.assertEqual(response.status_code, 400)
         self.assertIn('TimeAllocationError', str(response.content))
-        self.assertIn('ipp_value of 2.0 requires more ipp_time then is available.', str(response.content))
+        self.assertIn('ipp_value of 2.0 requires more ipp_time than is available.', str(response.content))
 
         # verify that objects were not created by the send
         self.assertFalse(RequestGroup.objects.filter(name='ipp_request').exists())
@@ -540,7 +523,7 @@ class TestRequestIPP(SetTimeMixin, APITestCase):
 
         self.time_allocation_1m0 = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=semester,
-            instrument_name='1M0-SCICAM-SBIG', std_allocation=100.0, std_time_used=0.0,
+            instrument_type='1M0-SCICAM-SBIG', std_allocation=100.0, std_time_used=0.0,
             rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0, ipp_time_available=5.0
         )
 
@@ -715,7 +698,7 @@ class TestCadenceApi(SetTimeMixin, APITestCase):
             TimeAllocation, proposal=self.proposal, semester=semester,
             telescope_class='1m0', std_allocation=100.0, std_time_used=0.0,
             rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
-            ipp_time_available=5.0, instrument_name='1M0-SCICAM-SBIG'
+            ipp_time_available=5.0, instrument_type='1M0-SCICAM-SBIG'
         )
 
         self.client.force_login(self.user)
@@ -824,14 +807,14 @@ class TestSiderealTarget(SetTimeMixin, APITestCase):
                                )
         self.time_allocation_1m0_sbig = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=semester,
-            instrument_name='1M0-SCICAM-SBIG', std_allocation=100.0,
+            instrument_type='1M0-SCICAM-SBIG', std_allocation=100.0,
             std_time_used=0.0, rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
             ipp_time_available=5.0
         )
 
         self.time_allocation_2m0_floyds = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=semester,
-            instrument_name='2M0-FLOYDS-SCICAM', std_allocation=100.0, std_time_used=0.0,
+            instrument_type='2M0-FLOYDS-SCICAM', std_allocation=100.0, std_time_used=0.0,
             rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0, ipp_time_available=5.0
         )
 
@@ -886,7 +869,7 @@ class TestSiderealTarget(SetTimeMixin, APITestCase):
     def test_floyds_gets_vfloat_default(self):
         good_data = self.generic_payload.copy()
         good_data['requests'][0]['location']['telescope_class'] = '2m0'
-        good_data['requests'][0]['configurations'][0]['instrument_name'] = '2M0-FLOYDS-SCICAM'
+        good_data['requests'][0]['configurations'][0]['instrument_type'] = '2M0-FLOYDS-SCICAM'
         good_data['requests'][0]['configurations'][0]['type'] = 'SPECTRUM'
         del good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
         good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['slit'] = 'slit_6.0as'
@@ -907,15 +890,15 @@ class TestNonSiderealTarget(SetTimeMixin, APITestCase):
         self.proposal = mixer.blend(Proposal)
         self.user = mixer.blend(User)
         self.client.force_login(self.user)
-
-        semester = mixer.blend(Semester, id='2016B', start=datetime(2016, 9, 1, tzinfo=timezone.utc),
-                               end=datetime(2016, 12, 31, tzinfo=timezone.utc))
-        self.time_allocation_1m0 = mixer.blend(TimeAllocation, proposal=self.proposal, semester=semester,
-                                               std_allocation=100.0, std_time_used=0.0,
-                                               instrument_name='1M0-SCICAM-SBIG',
-                                               rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
-                                               ipp_time_available=5.0)
-
+        semester = mixer.blend(
+            Semester, id='2016B', start=datetime(2016, 9, 1, tzinfo=timezone.utc),
+            end=datetime(2016, 12, 31, tzinfo=timezone.utc)
+        )
+        self.time_allocation_1m0 = mixer.blend(
+            TimeAllocation, proposal=self.proposal, semester=semester, std_allocation=100.0, std_time_used=0.0,
+            instrument_type='1M0-SCICAM-SBIG', rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
+            ipp_time_available=5.0
+        )
         mixer.blend(Membership, user=self.user, proposal=self.proposal)
         self.generic_payload = copy.deepcopy(generic_payload)
         self.generic_payload['proposal'] = self.proposal.id
@@ -1014,15 +997,15 @@ class TestSatelliteTarget(SetTimeMixin, APITestCase):
         self.user = mixer.blend(User)
         self.client.force_login(self.user)
 
-        semester = mixer.blend(Semester, id='2016B', start=datetime(2016, 9, 1, tzinfo=timezone.utc),
-                               end=datetime(2016, 12, 31, tzinfo=timezone.utc))
-
-        self.time_allocation_1m0 = mixer.blend(TimeAllocation, proposal=self.proposal, semester=semester,
-                                               telescope_class='1m0', std_allocation=100.0, std_time_used=0.0,
-                                               instrument_name='1M0-SCICAM-SBIG',
-                                               rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
-                                               ipp_time_available=5.0)
-
+        semester = mixer.blend(
+            Semester, id='2016B', start=datetime(2016, 9, 1, tzinfo=timezone.utc),
+            end=datetime(2016, 12, 31, tzinfo=timezone.utc)
+        )
+        self.time_allocation_1m0 = mixer.blend(
+            TimeAllocation, proposal=self.proposal, semester=semester, telescope_class='1m0', std_allocation=100.0,
+            std_time_used=0.0, instrument_type='1M0-SCICAM-SBIG', rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
+            ipp_time_available=5.0
+        )
         mixer.blend(Membership, user=self.user, proposal=self.proposal)
         self.generic_payload = copy.deepcopy(generic_payload)
         self.generic_payload['proposal'] = self.proposal.id
@@ -1063,18 +1046,20 @@ class TestLocationApi(SetTimeMixin, APITestCase):
         self.user = mixer.blend(User)
         self.client.force_login(self.user)
 
-        semester = mixer.blend(Semester, id='2016B', start=datetime(2016, 9, 1, tzinfo=timezone.utc),
-                               end=datetime(2016, 12, 31, tzinfo=timezone.utc))
-
-        self.time_allocation_1m0 = mixer.blend(TimeAllocation, proposal=self.proposal, semester=semester,
-                                               telescope_class='1m0', std_allocation=100.0, std_time_used=0.0,
-                                               rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
-                                               ipp_time_available=5.0, instrument_name='1M0-SCICAM-SBIG')
-        self.time_allocation_2m0 = mixer.blend(TimeAllocation, proposal=self.proposal, semester=semester,
-                                               telescope_class='2m0', std_allocation=100.0, std_time_used=0.0,
-                                               rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
-                                               ipp_time_available=5.0, instrument_name='2M0-FLOYDS-SCICAM')
-
+        semester = mixer.blend(
+            Semester, id='2016B', start=datetime(2016, 9, 1, tzinfo=timezone.utc),
+            end=datetime(2016, 12, 31, tzinfo=timezone.utc)
+        )
+        self.time_allocation_1m0 = mixer.blend(
+            TimeAllocation, proposal=self.proposal, semester=semester, std_allocation=100.0, std_time_used=0.0,
+            rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0, ipp_time_available=5.0,
+            instrument_type='1M0-SCICAM-SBIG'
+        )
+        self.time_allocation_2m0 = mixer.blend(
+            TimeAllocation, proposal=self.proposal, semester=semester, std_allocation=100.0, std_time_used=0.0,
+            rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0, ipp_time_available=5.0,
+            instrument_type='2M0-FLOYDS-SCICAM'
+        )
         mixer.blend(Membership, user=self.user, proposal=self.proposal)
         self.generic_payload = copy.deepcopy(generic_payload)
         self.generic_payload['proposal'] = self.proposal.id
@@ -1135,7 +1120,7 @@ class TestLocationApi(SetTimeMixin, APITestCase):
     def test_post_requestgroup_location_instrument_doesnt_match_class(self):
         good_data = self.generic_payload.copy()
         good_data['requests'][0]['location']['telescope_class'] = '2m0'
-        good_data['requests'][0]['configurations'][0]['instrument_name'] = '1M0-SCICAM-SBIG'
+        good_data['requests'][0]['configurations'][0]['instrument_type'] = '1M0-SCICAM-SBIG'
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
         self.assertNotEqual(response.status_code, 201)
 
@@ -1147,27 +1132,25 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         self.user = mixer.blend(User)
         self.client.force_login(self.user)
 
-        semester = mixer.blend(Semester, id='2016B', start=datetime(2016, 9, 1, tzinfo=timezone.utc),
-                               end=datetime(2016, 12, 31, tzinfo=timezone.utc))
-
+        semester = mixer.blend(
+            Semester, id='2016B', start=datetime(2016, 9, 1, tzinfo=timezone.utc),
+            end=datetime(2016, 12, 31, tzinfo=timezone.utc)
+        )
         self.time_allocation_1m0_sbig = mixer.blend(
-            TimeAllocation, proposal=self.proposal, semester=semester, instrument_name='1M0-SCICAM-SBIG',
+            TimeAllocation, proposal=self.proposal, semester=semester, instrument_type='1M0-SCICAM-SBIG',
             std_allocation=100.0, std_time_used=0.0, rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
             ipp_time_available=5.0
         )
-
         self.time_allocation_1m0_nres = mixer.blend(
-            TimeAllocation, proposal=self.proposal, semester=semester, instrument_name='1M0-NRES-SCICAM',
+            TimeAllocation, proposal=self.proposal, semester=semester, instrument_type='1M0-NRES-SCICAM',
             std_allocation=100.0, std_time_used=0.0, rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
             ipp_time_available=5.0
         )
-
         self.time_allocation_2m0_floyds = mixer.blend(
-            TimeAllocation, proposal=self.proposal, semester=semester, instrument_name='2M0-FLOYDS-SCICAM',
+            TimeAllocation, proposal=self.proposal, semester=semester, instrument_type='2M0-FLOYDS-SCICAM',
             std_allocation=100.0, std_time_used=0.0, rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
             ipp_time_available=5.0
         )
-
         mixer.blend(Membership, user=self.user, proposal=self.proposal)
         self.generic_payload = copy.deepcopy(generic_payload)
         self.generic_payload['proposal'] = self.proposal.id
@@ -1183,7 +1166,7 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         self.assertNotIn('slit', configuration['instrument_configs'][0]['optical_elements'])
 
         good_data['requests'][0]['location']['telescope_class'] = '2m0'
-        good_data['requests'][0]['configurations'][0]['instrument_name'] = '2M0-FLOYDS-SCICAM'
+        good_data['requests'][0]['configurations'][0]['instrument_type'] = '2M0-FLOYDS-SCICAM'
         del good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
         good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['slit'] = 'slit_6.0as'
         good_data['requests'][0]['configurations'][0]['type'] = 'LAMP_FLAT'
@@ -1196,7 +1179,7 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
 
     def test_guide_state_off_not_allowed_for_nres_spectrum(self):
         bad_data = self.generic_payload.copy()
-        bad_data['requests'][0]['configurations'][0]['instrument_name'] = '1M0-NRES-SCICAM'
+        bad_data['requests'][0]['configurations'][0]['instrument_type'] = '1M0-NRES-SCICAM'
         bad_data['requests'][0]['configurations'][0]['type'] = 'NRES_SPECTRUM'
         bad_data['requests'][0]['configurations'][0]['guiding_config']['state'] = 'OFF'
 
@@ -1207,7 +1190,7 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
     def test_guide_state_optional_not_allowed_for_spectrum(self):
         bad_data = self.generic_payload.copy()
         bad_data['requests'][0]['location']['telescope_class'] = '2m0'
-        bad_data['requests'][0]['configurations'][0]['instrument_name'] = '2M0-FLOYDS-SCICAM'
+        bad_data['requests'][0]['configurations'][0]['instrument_type'] = '2M0-FLOYDS-SCICAM'
         bad_data['requests'][0]['configurations'][0]['type'] = 'SPECTRUM'
         bad_data['requests'][0]['configurations'][0]['guiding_config']['state'] = 'OPTIONAL'
 
@@ -1218,7 +1201,7 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
     def test_guide_state_optional_allowed_for_arc(self):
         good_data = self.generic_payload.copy()
         good_data['requests'][0]['location']['telescope_class'] = '2m0'
-        good_data['requests'][0]['configurations'][0]['instrument_name'] = '2M0-FLOYDS-SCICAM'
+        good_data['requests'][0]['configurations'][0]['instrument_type'] = '2M0-FLOYDS-SCICAM'
         good_data['requests'][0]['configurations'][0]['type'] = 'ARC'
         good_data['requests'][0]['configurations'][0]['guiding_config']['state'] = 'OPTIONAL'
         del good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
@@ -1239,7 +1222,7 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
 
         good_data['requests'][0]['location']['telescope_class'] = '2m0'
         good_data['requests'][0]['configurations'][0]['type'] = 'ARC'
-        good_data['requests'][0]['configurations'][0]['instrument_name'] = '2M0-FLOYDS-SCICAM'
+        good_data['requests'][0]['configurations'][0]['instrument_type'] = '2M0-FLOYDS-SCICAM'
         del good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
         good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['slit'] = 'slit_6.0as'
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
@@ -1267,7 +1250,7 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
     def test_slit_not_necessary_for_nres(self):
         good_data = self.generic_payload.copy()
         del good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
-        good_data['requests'][0]['configurations'][0]['instrument_name'] = '1M0-NRES-SCICAM'
+        good_data['requests'][0]['configurations'][0]['instrument_type'] = '1M0-NRES-SCICAM'
         good_data['requests'][0]['configurations'][0]['type'] = 'NRES_SPECTRUM'
         good_data['requests'][0]['configurations'][0]['guiding_config']['state'] = 'ON'
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
@@ -1284,7 +1267,7 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
     def test_nres_parameters_passthrough(self):
         good_data = self.generic_payload.copy()
         del good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
-        good_data['requests'][0]['configurations'][0]['instrument_name'] = '1M0-NRES-SCICAM'
+        good_data['requests'][0]['configurations'][0]['instrument_type'] = '1M0-NRES-SCICAM'
         good_data['requests'][0]['configurations'][0]['type'] = 'NRES_SPECTRUM'
         good_data['requests'][0]['configurations'][0]['guiding_config']['state'] = 'ON'
         good_data['requests'][0]['configurations'][0]['acquisition_config']['mode'] = 'WCS'
@@ -1293,7 +1276,6 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
             'expmeter_snr': 10.0,
             'expmeter_mode': 'OFF'
         }
-
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
         self.assertEqual(response.status_code, 201)
         configuration = response.json()['requests'][0]['configurations'][0]
@@ -1312,7 +1294,7 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
     def test_invalid_spectra_slit_for_instrument(self):
         bad_data = self.generic_payload.copy()
         bad_data['requests'][0]['configurations'][0]['type'] = 'SPECTRUM'
-        bad_data['requests'][0]['configurations'][0]['instrument_name'] = '2M0-FLOYDS-SCICAM'
+        bad_data['requests'][0]['configurations'][0]['instrument_type'] = '2M0-FLOYDS-SCICAM'
         bad_data['requests'][0]['location']['telescope_class'] = '2m0'
         del bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
         bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['slit'] = 'slit_really_small'
@@ -1358,18 +1340,18 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         self.assertEqual(configuration['instrument_configs'][0]['bin_x'], 2)
         self.assertEqual(configuration['instrument_configs'][0]['bin_y'], 2)
 
-    def test_request_invalid_instrument_name(self):
+    def test_request_invalid_instrument_type(self):
         bad_data = self.generic_payload.copy()
-        bad_data['requests'][0]['configurations'][0]['instrument_name'] = 'FAKE-INSTRUMENT'
+        bad_data['requests'][0]['configurations'][0]['instrument_type'] = 'FAKE-INSTRUMENT'
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertIn('Invalid instrument name', str(response.content))
+        self.assertIn('Invalid instrument type', str(response.content))
         self.assertEqual(response.status_code, 400)
 
-    def test_request_invalid_instrument_name_for_location(self):
+    def test_request_invalid_instrument_type_for_location(self):
         bad_data = self.generic_payload.copy()
         bad_data['requests'][0]['location']['site'] = "lco"
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertIn("Invalid instrument name \\\'1M0-SCICAM-SBIG\\\' at site", str(response.content))
+        self.assertIn("Invalid instrument type \\\'1M0-SCICAM-SBIG\\\' at site", str(response.content))
         self.assertEqual(response.status_code, 400)
 
     def test_configurations_automatically_have_priority_set(self):
@@ -1483,15 +1465,15 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         bad_data['requests'][0]['configurations'][0]['type'] = 'SPECTRUM'
         bad_data['requests'][0]['configurations'][0]['guiding_config']['state'] = 'ON'
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertIn('configuration type SPECTRUM is not valid for instrument 1M0-SCICAM-SBIG', str(response.content))
+        self.assertIn('configuration type SPECTRUM is not valid for instrument type 1M0-SCICAM-SBIG', str(response.content))
         self.assertEqual(response.status_code, 400)
 
         bad_data['requests'][0]['configurations'][0]['type'] = 'EXPOSE'
-        bad_data['requests'][0]['configurations'][0]['instrument_name'] = '2M0-FLOYDS-SCICAM'
+        bad_data['requests'][0]['configurations'][0]['instrument_type'] = '2M0-FLOYDS-SCICAM'
         del bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
         bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['slit'] = 'slit_1.6as'
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertIn('configuration type EXPOSE is not valid for instrument 2M0-FLOYDS-SCICAM', str(response.content))
+        self.assertIn('configuration type EXPOSE is not valid for instrument type 2M0-FLOYDS-SCICAM', str(response.content))
         self.assertEqual(response.status_code, 400)
 
 
@@ -1506,7 +1488,7 @@ class TestGetRequestApi(APITestCase):
 
     def test_get_request_list_authenticated(self):
         request = mixer.blend(Request, request_group=self.request_group, observation_note='testobsnote')
-        mixer.blend(Configuration, request=request, instrument_name='1M0-SCICAM-SBIG')
+        mixer.blend(Configuration, request=request, instrument_type='1M0-SCICAM-SBIG')
         self.client.force_login(self.user)
         result = self.client.get(reverse('api:requests-list'))
         self.assertEqual(result.json()['results'][0]['observation_note'], request.observation_note)
@@ -1519,7 +1501,7 @@ class TestGetRequestApi(APITestCase):
 
     def test_get_request_detail_authenticated(self):
         request = mixer.blend(Request, request_group=self.request_group, observation_note='testobsnote')
-        mixer.blend(Configuration, request=request, instrument_name='1M0-SCICAM-SBIG')
+        mixer.blend(Configuration, request=request, instrument_type='1M0-SCICAM-SBIG')
         self.client.force_login(self.user)
         result = self.client.get(reverse('api:requests-detail', args=(request.id,)))
         self.assertEqual(result.json()['observation_note'], request.observation_note)
@@ -1531,7 +1513,7 @@ class TestGetRequestApi(APITestCase):
 
     def test_get_request_list_staff(self):
         request = mixer.blend(Request, request_group=self.request_group, observation_note='testobsnote2')
-        mixer.blend(Configuration, request=request, instrument_name='1M0-SCICAM-SBIG')
+        mixer.blend(Configuration, request=request, instrument_type='1M0-SCICAM-SBIG')
         self.client.force_login(self.staff_user)
         result = self.client.get(reverse('api:requests-detail', args=(request.id,)))
         self.assertEqual(result.json()['observation_note'], request.observation_note)
@@ -1541,7 +1523,7 @@ class TestGetRequestApi(APITestCase):
         self.request_group.proposal = proposal
         self.request_group.save()
         request = mixer.blend(Request, request_group=self.request_group, observation_note='testobsnote2')
-        mixer.blend(Configuration, request=request, instrument_name='1M0-SCICAM-SBIG')
+        mixer.blend(Configuration, request=request, instrument_='1M0-SCICAM-SBIG')
         self.client.logout()
         result = self.client.get(reverse('api:requests-detail', args=(request.id,)))
         self.assertEqual(result.json()['observation_note'], request.observation_note)
@@ -1649,7 +1631,7 @@ class TestAirmassApi(SetTimeMixin, APITestCase):
         self.request = {
             'configurations': [{
                 'type': 'EXPOSE',
-                'instrument_name': '1M0-SCICAM-SBIG',
+                'instrument_type': '1M0-SCICAM-SBIG',
                 'instrument_configs': [
                     {
                         'exposure_time': 100,
@@ -1703,7 +1685,7 @@ class TestCancelRequestGroupApi(SetTimeMixin, APITestCase):
         requestgroup = mixer.blend(RequestGroup, state='PENDING', proposal=self.proposal)
         requests = mixer.cycle(3).blend(Request, state='PENDING', request_group=requestgroup)
         for request in requests:
-            mixer.blend(Configuration, request=request, instrument_name='1M0-SCICAM-SBIG')
+            mixer.blend(Configuration, request=request, instrument_type='1M0-SCICAM-SBIG')
 
         response = self.client.post(reverse('api:request_groups-cancel', kwargs={'pk': requestgroup.id}))
         self.assertEqual(response.status_code, 200)
@@ -1714,11 +1696,11 @@ class TestCancelRequestGroupApi(SetTimeMixin, APITestCase):
     def test_cancel_pending_rg_some_requests_not_pending(self, modify_mock):
         requestgroup = mixer.blend(RequestGroup, state='PENDING', proposal=self.proposal)
         pending_r = mixer.blend(Request, state='PENDING', request_group=requestgroup)
-        mixer.blend(Configuration, request=pending_r, instrument_name='1M0-SCICAM-SBIG')
+        mixer.blend(Configuration, request=pending_r, instrument_type='1M0-SCICAM-SBIG')
         completed_r = mixer.blend(Request, state='COMPLETED', request_group=requestgroup)
-        mixer.blend(Configuration, request=completed_r, instrument_name='1M0-SCICAM-SBIG')
+        mixer.blend(Configuration, request=completed_r, instrument_type='1M0-SCICAM-SBIG')
         we_r = mixer.blend(Request, state='WINDOW_EXPIRED', request_group=requestgroup)
-        mixer.blend(Configuration, request=we_r, instrument_name='1M0-SCICAM-SBIG')
+        mixer.blend(Configuration, request=we_r, instrument_type='1M0-SCICAM-SBIG')
         response = self.client.post(reverse('api:request_groups-cancel', kwargs={'pk': requestgroup.id}))
 
         self.assertEqual(response.status_code, 200)
@@ -1855,7 +1837,7 @@ class TestSchedulableRequestsApi(SetTimeMixin, APITestCase):
         )
         self.time_allocation_1m0 = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=semester,
-            instrument_name='1M0-SCICAM-SBIG', std_allocation=100.0, std_time_used=0.0,
+            instrument_type='1M0-SCICAM-SBIG', std_allocation=100.0, std_time_used=0.0,
             rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
             ipp_time_available=5.0
         )
@@ -1871,7 +1853,7 @@ class TestSchedulableRequestsApi(SetTimeMixin, APITestCase):
                 mixer.blend(Window, request=req, start=start, end=end)
                 start += timedelta(days=2)
                 end += timedelta(days=2)
-                conf = mixer.blend(Configuration, request=req, type='EXPOSE', instrument_name='1M0-SCICAM-SBIG')
+                conf = mixer.blend(Configuration, request=req, type='EXPOSE', instrument_type='1M0-SCICAM-SBIG')
                 mixer.blend(InstrumentConfig, configuration=conf,  exposure_time=60, exposure_count=10,
                             optical_elements={'filter': 'air'}, bin_x=1, bin_y=1)
                 mixer.blend(AcquisitionConfig, configuration=conf, )
@@ -1955,7 +1937,7 @@ class TestContention(APITestCase):
             Window, start=timezone.now(), end=timezone.now() + timedelta(days=30), request=request
         )
         mixer.blend(Location, request=request)
-        conf = mixer.blend(Configuration, instrument_name='1M0-SCICAM-SBIG', request=request)
+        conf = mixer.blend(Configuration, instrument_type='1M0-SCICAM-SBIG', request=request)
         mixer.blend(Target, ra=15.0, type='SIDEREAL', configuration=conf)
         mixer.blend(InstrumentConfig, configuration=conf)
         mixer.blend(AcquisitionConfig, configuration=conf)
@@ -1998,7 +1980,7 @@ class TestPressure(APITestCase):
             mixer.blend(
                 Window, start=timezone.now(), end=timezone.now() + timedelta(hours=i), request=request
             )
-            conf = mixer.blend(Configuration, instrument_name='1M0-SCICAM-SBIG', request=request)
+            conf = mixer.blend(Configuration, instrument_type='1M0-SCICAM-SBIG', request=request)
             mixer.blend(
                 Target, ra=random.randint(0, 360), dec=random.randint(-180, 180),
                 proper_motion_ra=0.0, proper_motion_dec=0.0, type='SIDEREAL', configuration=conf
@@ -2174,7 +2156,7 @@ class TestPressure(APITestCase):
         request = mixer.blend(Request, state='PENDING', duration=120*60)  # 2 hour duration.
         mixer.blend(Window, request=request)
         mixer.blend(Location, request=request, site='tst')
-        conf = mixer.blend(Configuration, request=request, instrument_name='1M0-SCICAM-SBIG')
+        conf = mixer.blend(Configuration, request=request, instrument_type='1M0-SCICAM-SBIG')
         mixer.blend(InstrumentConfig, configuration=conf)
         mixer.blend(AcquisitionConfig, configuration=conf)
         mixer.blend(GuidingConfig, configuration=conf)
@@ -2207,12 +2189,12 @@ class TestMaxIppRequestgroupApi(SetTimeMixin, APITestCase):
 
         self.time_allocation_1m0_sbig = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=self.semester,
-            instrument_name='1M0-SCICAM-SBIG', std_allocation=100.0, std_time_used=0.0,
+            instrument_type='1M0-SCICAM-SBIG', std_allocation=100.0, std_time_used=0.0,
             rr_allocation=10.0, rr_time_used=0.0, ipp_limit=10.0, ipp_time_available=1.0
         )
         self.time_allocation_0m4_sbig = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=self.semester,
-            instrument_name='0M4-SCICAM-SBIG', std_allocation=100.0, std_time_used=0.0,
+            instrument_type='0M4-SCICAM-SBIG', std_allocation=100.0, std_time_used=0.0,
             rr_allocation=10.0, rr_time_used=0.0, ipp_limit=10.0, ipp_time_available=1.0
         )
         self.user = mixer.blend(User)

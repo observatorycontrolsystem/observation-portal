@@ -223,14 +223,14 @@ class Request(models.Model):
 
     @property
     def time_allocation_key(self):
-        return TimeAllocationKey(self.semester.id, self.configurations.first().instrument_name)
+        return TimeAllocationKey(self.semester.id, self.configurations.first().instrument_type)
 
     @property
     def timeallocations(self):
         return self.request_group.proposal.timeallocation_set.filter(
             semester__start__lte=self.min_window_time,
             semester__end__gte=self.max_window_time,
-            instrument_name__in=[conf.instrument_name for conf in self.configurations.all()]
+            instrument_type__in=[conf.instrument_type for conf in self.configurations.all()]
         )
 
 
@@ -322,9 +322,9 @@ class Configuration(models.Model):
         Request, related_name='configurations', on_delete=models.CASCADE,
         help_text='The Request to which this Configuration belongs'
     )
-    instrument_name = models.CharField(
+    instrument_type = models.CharField(
         max_length=255,
-        help_text='The type of instrument used for the observations under this Configuration'
+        help_text='The instrument type used for the observations under this Configuration'
     )
     # The type of configuration being requested.
     # Valid types are in TYPES
@@ -624,7 +624,7 @@ class InstrumentConfig(models.Model):
 
     @cached_property
     def duration(self):
-        return get_instrument_configuration_duration(self.as_dict, self.configuration.instrument_name)
+        return get_instrument_configuration_duration(self.as_dict, self.configuration.instrument_type)
 
 
 class RegionOfInterest(models.Model):
@@ -675,10 +675,6 @@ class GuidingConfig(models.Model):
         Configuration, related_name='guiding_config', on_delete=models.CASCADE,
         help_text='The Configuration to which this GuidingConfig belongs'
     )
-    name = models.CharField(
-        max_length=255, default='', blank=True,
-        help_text='Name of this GuidingConfig'
-    )
     state = models.CharField(
         max_length=50, choices=STATES, default=OPTIONAL,
         help_text='GuidingConfig state to use for the observations'
@@ -716,10 +712,6 @@ class AcquisitionConfig(models.Model):
     configuration = models.OneToOneField(
         Configuration, related_name='acquisition_config', on_delete=models.CASCADE,
         help_text='The Configuration to which this AcquisitionConfig belongs'
-    )
-    name = models.CharField(
-        max_length=255, default='', blank=True,
-        help_text='The name of this AcquisitionConfig'
     )
     mode = models.CharField(
         max_length=50, default=OFF,
