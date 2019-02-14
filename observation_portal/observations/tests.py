@@ -319,25 +319,31 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
         self.membership = mixer.blend(Membership, user=self.user, proposal=self.proposal)
 
         self.requestgroup = create_simple_requestgroup(self.user, self.proposal)
-        self.requestgroup.requests.all()[0].configurations.all()[0].instrument_type = '1M0-SCICAM-SBIG'
-        self.requestgroup.requests.all()[0].configurations.all()[0].save()
+        self.requestgroup.requests.first().configurations.first().instrument_type = '1M0-SCICAM-SBIG'
+        self.requestgroup.requests.first().configurations.first().save()
 
-    def test_observation_with_valid_instrument_name_succeeds(self):
+    def _generate_observation_data(self, request_id, configuration_id_list):
         observation = {
-            "request": self.requestgroup.requests.all()[0].id,
+            "request": request_id,
             "site": "tst",
             "enclosure": "domb",
             "telescope": "1m0a",
             "start": "2016-09-05T22:35:39Z",
             "end": "2016-09-05T23:35:40Z",
-            "configuration_statuses": [
+            "configuration_statuses": []
+        }
+        for configuration_id in configuration_id_list:
+            observation['configuration_statuses'].append(
                 {
-                    "configuration": self.requestgroup.requests.all()[0].configurations.all()[0].id,
+                    "configuration": configuration_id,
                     "instrument_name": "xx03",
                     "guide_camera_name": "xx03"
                 }
-            ]
-        }
+            )
+        return observation
 
+    def test_observation_with_valid_instrument_name_succeeds(self):
+        observation = self._generate_observation_data( self.requestgroup.requests.first().id,
+                                                       [self.requestgroup.requests.first().configurations.first().id])
         response = self.client.post(reverse('api:observations-list'), data=observation)
         self.assertEqual(response.status_code, 201)
