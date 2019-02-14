@@ -13,11 +13,11 @@ from observation_portal.proposals.models import Proposal
 class SummarySerializer(serializers.ModelSerializer):
     class Meta:
         model = Summary
-        exclude = ('configuration_status', 'id')
+        fields = ('start', 'end', 'state', 'reason', 'time_completed')
 
 
 class ConfigurationStatusSerializer(serializers.ModelSerializer):
-    summary = SummarySerializer()
+    summary = SummarySerializer(required=False)
     instrument_name = serializers.CharField(required=False)
     guide_camera_name = serializers.CharField(required=False)
 
@@ -63,18 +63,20 @@ class ObserveRequestGroupSerializer(RequestGroupSerializer):
         return data
 
 
-class ObservationSerializer(serializers.ModelSerializer):
-    configuration_status = ConfigurationStatusSerializer(many=True, read_only=True)
+class ScheduleSerializer(serializers.ModelSerializer):
+    configuration_statuses = ConfigurationStatusSerializer(many=True, read_only=True)
     request = ObserveRequestSerializer()
     proposal = serializers.CharField(write_only=True)
     name = serializers.CharField(write_only=True)
     site = serializers.ChoiceField(choices=configdb.get_site_tuples())
     enclosure = serializers.ChoiceField(choices=configdb.get_enclosure_tuples())
     telescope = serializers.ChoiceField(choices=configdb.get_telescope_tuples())
+    state = serializers.ReadOnlyField()
 
     class Meta:
         model = Observation
-        exclude = ('modified', 'created')
+        fields = ('site', 'enclosure', 'telescope', 'start', 'end', 'state', 'configuration_statuses', 'request',
+                  'proposal', 'name', 'id')
 
     def validate_start(self, value):
         if value < timezone.now():
@@ -189,7 +191,7 @@ class ObservationSerializer(serializers.ModelSerializer):
         data['observation_type'] = instance.request.request_group.observation_type
 
         # Move the configuration statuses inline with their corresponding configuration section
-        config_statuses = data.get('configuration_status', [])
+        config_statuses = data.get('configuration_statuses', [])
         config_status_by_id = {cs['configuration']: cs for cs in config_statuses}
         for config in data['request']['configurations']:
             id = config['id']
@@ -198,6 +200,21 @@ class ObservationSerializer(serializers.ModelSerializer):
                 config['configuration_status'] = config_status_by_id[id]['id']
                 del config_status_by_id[id]['id']
                 config.update(config_status_by_id[id])
-        del data['configuration_status']
+        del data['configuration_statuses']
         return data
 
+
+class ObservationSerializer(serializers.ModelSerializer):
+    configuration_statuses = ConfigurationStatusSerializer(many=True)
+
+    class Meta:
+        model = Observation
+        fields = ('site', 'enclosure', 'telescope', 'start', 'end', 'configuration_statuses', 'request')
+
+    def create(self, validated_data):
+        configuration_statuses = validated_data.pop('configuration_statuses')
+        observation = Observation.objects.create(**validated_data)
+        for configuration_status in configuration_statuses:
+            ConfigurationStatus.objects.create(observation=observation, **configuration_status)
+
+        return observation

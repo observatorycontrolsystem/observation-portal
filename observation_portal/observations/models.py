@@ -1,11 +1,22 @@
 from django.db import models
 from django.contrib.postgres.fields import JSONField
+from django.utils import timezone
+from datetime import timedelta
 
 from observation_portal.requestgroups.models import Request, Configuration
 from observation_portal.common.configdb import configdb
 
 
 class Observation(models.Model):
+    STATE_CHOICES = (
+        ('PENDING', 'PENDING'),
+        ('IN_PROGRESS', 'IN_PROGRESS'),
+        ('COMPLETED', 'COMPLETED'),
+        ('CANCELED', 'CANCELED'),
+        ('ABORTED', 'ABORTED'),
+        ('FAILED', 'FAILED')
+    )
+
     request = models.ForeignKey(Request, on_delete=models.PROTECT)
     site = models.CharField(
         max_length=10,
@@ -35,6 +46,25 @@ class Observation(models.Model):
         help_text='Time when this Observation was created'
     )
 
+    @property
+    def state(self):
+        states = [config_status.state for config_status in self.configuration_statuses.all()]
+        if all([state == 'PENDING' for state in states]):
+            return 'PENDING'
+        elif (any([state == 'PENDING' or state == 'ATTEMPTED' for state in states]) and
+              self.end < (timezone.now() - timedelta(minutes=5))):
+            return 'IN_PROGRESS'
+        elif any([state == 'FAILED' for state in states]):
+            return 'FAILED'
+        elif any([state == 'ABORTED' for state in states]):
+            return 'ABORTED'
+        elif any([state == 'CANCELED' for state in states]):
+            return 'CANCELED'
+        elif any([state == 'COMPLETED' for state in states]):
+            return 'COMPLETED'
+        else:
+            return 'UNKNOWN'
+
 
 class ConfigurationStatus(models.Model):
     STATE_CHOICES = (
@@ -46,9 +76,8 @@ class ConfigurationStatus(models.Model):
         ('FAILED', 'FAILED')
     )
 
-    configuration = models.ForeignKey(Configuration, related_name='configuration_status',
-                                      on_delete=models.PROTECT)
-    observation = models.ForeignKey(Observation, related_name='configuration_status', on_delete=models.CASCADE)
+    configuration = models.ForeignKey(Configuration, related_name='configuration_status', on_delete=models.PROTECT)
+    observation = models.ForeignKey(Observation, related_name='configuration_statuses', on_delete=models.CASCADE)
     instrument_name = models.CharField(
         max_length=255,
         help_text='The specific instrument used to observe the corresponding Configuration'

@@ -12,6 +12,8 @@ from observation_portal.requestgroups.models import (RequestGroup, Request, Draf
 from observation_portal.observations.models import Observation, ConfigurationStatus, Summary
 from observation_portal.proposals.models import Proposal, Membership, TimeAllocation, Semester
 from observation_portal.accounts.models import Profile
+from observation_portal.common.test_helpers import create_simple_requestgroup
+
 import copy
 
 observation = {
@@ -81,7 +83,7 @@ observation = {
 }
 
 
-class TestPostObservationApi(SetTimeMixin, APITestCase):
+class TestPostScheduleApi(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
         self.proposal = mixer.blend(Proposal, direct_submission=True)
@@ -100,23 +102,23 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
     def test_post_observation_user_not_logged_in(self):
         self.other_user = mixer.blend(User)
         self.client.force_login(self.other_user)
-        response = self.client.post(reverse('api:observations-list'), data=self.observation)
+        response = self.client.post(reverse('api:schedule-list'), data=self.observation)
         self.assertEqual(response.status_code, 403)
 
     def test_post_observation_user_not_on_proposal(self):
         self.other_user = mixer.blend(User, is_staff=True)
         self.client.force_login(self.other_user)
-        response = self.client.post(reverse('api:observations-list'), data=self.observation)
+        response = self.client.post(reverse('api:schedule-list'), data=self.observation)
         self.assertEqual(response.status_code, 400)
         self.assertIn('do not belong to the proposal', str(response.content))
 
     def test_post_observation_authenticated(self):
-        response = self.client.post(reverse('api:observations-list'), data=self.observation)
+        response = self.client.post(reverse('api:schedule-list'), data=self.observation)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json()['name'], self.observation['name'])
 
     def test_post_observation_creates_config_status(self):
-        response = self.client.post(reverse('api:observations-list'), data=self.observation)
+        response = self.client.post(reverse('api:schedule-list'), data=self.observation)
         self.assertEqual(response.status_code, 201)
         observation = Observation.objects.get(id=response.json()['id'])
         config_status = ConfigurationStatus.objects.get(observation=observation)
@@ -125,7 +127,7 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
     def test_post_observation_requires_proposal(self):
         bad_observation = copy.deepcopy(self.observation)
         del bad_observation['proposal']
-        response = self.client.post(reverse('api:observations-list'), data=bad_observation)
+        response = self.client.post(reverse('api:schedule-list'), data=bad_observation)
         self.assertEqual(response.status_code, 400)
         self.assertIn('proposal', response.json())
         self.assertIn('field is required', str(response.content))
@@ -133,7 +135,7 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
     def test_post_observation_requires_real_proposal(self):
         bad_observation = copy.deepcopy(self.observation)
         bad_observation['proposal'] = 'FAKE_PROPOSAL'
-        response = self.client.post(reverse('api:observations-list'), data=bad_observation)
+        response = self.client.post(reverse('api:schedule-list'), data=bad_observation)
         self.assertEqual(response.status_code, 400)
         self.assertIn('proposal', response.json())
         self.assertIn('does not exist', str(response.content))
@@ -142,21 +144,21 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
         self.proposal.direct_submission = False
         self.proposal.save()
         bad_observation = copy.deepcopy(self.observation)
-        response = self.client.post(reverse('api:observations-list'), data=bad_observation)
+        response = self.client.post(reverse('api:schedule-list'), data=bad_observation)
         self.assertEqual(response.status_code, 400)
         self.assertIn('is not allowed to submit observations directly', str(response.content))
 
     def test_post_observation_validates_site(self):
         bad_observation = copy.deepcopy(self.observation)
         bad_observation['site'] = 'fake'
-        response = self.client.post(reverse('api:observations-list'), data=bad_observation)
+        response = self.client.post(reverse('api:schedule-list'), data=bad_observation)
         self.assertEqual(response.status_code, 400)
         self.assertIn('site', response.json())
 
     def test_post_observation_time_in_past_rejected(self):
         bad_observation = copy.deepcopy(self.observation)
         bad_observation['start'] = "2014-09-05T22:35:39Z"
-        response = self.client.post(reverse('api:observations-list'), data=bad_observation)
+        response = self.client.post(reverse('api:schedule-list'), data=bad_observation)
         self.assertEqual(response.status_code, 400)
         self.assertIn('start', response.json())
         self.assertIn('must be in the future', str(response.content))
@@ -164,33 +166,33 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
     def test_post_observation_end_before_start_rejected(self):
         bad_observation = copy.deepcopy(self.observation)
         bad_observation['end'] = "2016-09-05T21:35:40Z"
-        response = self.client.post(reverse('api:observations-list'), data=bad_observation)
+        response = self.client.post(reverse('api:schedule-list'), data=bad_observation)
         self.assertEqual(response.status_code, 400)
         self.assertIn('end time must be after start time', str(response.content).lower())
 
     def test_post_observation_invalid_instrument_type_rejected(self):
         bad_observation = copy.deepcopy(self.observation)
         bad_observation['request']['configurations'][0]['instrument_type'] = '1M0-FAKE-INSTRUMENT'
-        response = self.client.post(reverse('api:observations-list'), data=bad_observation)
+        response = self.client.post(reverse('api:schedule-list'), data=bad_observation)
         self.assertEqual(response.status_code, 400)
         self.assertIn('invalid instrument type', str(response.content).lower())
 
     def test_post_observation_instrument_name_accepted(self):
         observation = copy.deepcopy(self.observation)
         observation['request']['configurations'][0]['instrument_name'] = 'xx03'
-        response = self.client.post(reverse('api:observations-list'), data=observation)
+        response = self.client.post(reverse('api:schedule-list'), data=observation)
         self.assertEqual(response.status_code, 201)
 
     def test_post_observation_invalid_instrument_name_for_instrument_type(self):
         bad_observation = copy.deepcopy(self.observation)
         bad_observation['request']['configurations'][0]['instrument_name'] = 'fake01'
-        response = self.client.post(reverse('api:observations-list'), data=bad_observation)
+        response = self.client.post(reverse('api:schedule-list'), data=bad_observation)
         self.assertEqual(response.status_code, 400)
         self.assertIn('is not an available', str(response.content))
 
     def test_post_observation_no_instrument_name_sets_default_for_instrument_type(self):
         observation = copy.deepcopy(self.observation)
-        response = self.client.post(reverse('api:observations-list'), data=observation)
+        response = self.client.post(reverse('api:schedule-list'), data=observation)
         obs_json = response.json()
         self.assertEqual(response.status_code, 201)
         self.assertEqual(obs_json['request']['configurations'][0]['instrument_name'], 'xx03')
@@ -199,7 +201,7 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
         bad_observation = copy.deepcopy(self.observation)
         bad_observation['site'] = 'lco'
         bad_observation['request']['configurations'][0]['instrument_type'] = '1M0-SCICAM-SBIG'
-        response = self.client.post(reverse('api:observations-list'), data=bad_observation)
+        response = self.client.post(reverse('api:schedule-list'), data=bad_observation)
         self.assertEqual(response.status_code, 400)
         self.assertIn('is not available at', str(response.content))
 
@@ -213,7 +215,7 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
         bad_observation['request']['configurations'][0]['type'] = 'NRES_SPECTRUM'
         del bad_observation['request']['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
 
-        response = self.client.post(reverse('api:observations-list'), data=bad_observation)
+        response = self.client.post(reverse('api:schedule-list'), data=bad_observation)
         self.assertEqual(response.status_code, 400)
         self.assertIn('Invalid guide camera', str(response.content))
 
@@ -226,7 +228,7 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
         observation['request']['configurations'][0]['type'] = 'NRES_SPECTRUM'
         del observation['request']['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
 
-        response = self.client.post(reverse('api:observations-list'), data=observation)
+        response = self.client.post(reverse('api:schedule-list'), data=observation)
         self.assertEqual(response.status_code, 201)
 
     def test_post_observation_no_guide_camera_sets_default(self):
@@ -237,13 +239,13 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
         observation['request']['configurations'][0]['type'] = 'NRES_SPECTRUM'
         del observation['request']['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
 
-        response = self.client.post(reverse('api:observations-list'), data=observation)
+        response = self.client.post(reverse('api:schedule-list'), data=observation)
         obs_json = response.json()
         self.assertEqual(response.status_code, 201)
         self.assertEqual(obs_json['request']['configurations'][0]['guide_camera_name'], 'ak02')
 
 
-class TestPostObservationMultiConfigApi(SetTimeMixin, APITestCase):
+class TestPostScheduleMultiConfigApi(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
         self.proposal = mixer.blend(Proposal, direct_submission=True)
@@ -273,7 +275,7 @@ class TestPostObservationMultiConfigApi(SetTimeMixin, APITestCase):
 
     def test_post_observation_multiple_configurations_accepted(self):
         observation = copy.deepcopy(self.observation)
-        response = self.client.post(reverse('api:observations-list'), data=observation)
+        response = self.client.post(reverse('api:schedule-list'), data=observation)
         self.assertEqual(response.status_code, 201)
         obs_json = response.json()
         # verify instruments were set correctly
@@ -290,7 +292,7 @@ class TestPostObservationMultiConfigApi(SetTimeMixin, APITestCase):
         observation['request']['configurations'][1]['instrument_name'] = 'xx03'
         observation['request']['configurations'][2]['instrument_name'] = 'nres02'
 
-        response = self.client.post(reverse('api:observations-list'), data=observation)
+        response = self.client.post(reverse('api:schedule-list'), data=observation)
         self.assertEqual(response.status_code, 201)
 
     def test_post_observation_multiple_configurations_with_bad_instrument_name_rejected(self):
@@ -298,5 +300,44 @@ class TestPostObservationMultiConfigApi(SetTimeMixin, APITestCase):
         bad_observation['request']['configurations'][1]['instrument_name'] = 'nres03'
         bad_observation['request']['configurations'][2]['instrument_name'] = 'xx03'
 
-        response = self.client.post(reverse('api:observations-list'), data=bad_observation)
+        response = self.client.post(reverse('api:schedule-list'), data=bad_observation)
         self.assertEqual(response.status_code, 400)
+
+
+class TestPostObservationApi(SetTimeMixin, APITestCase):
+    def setUp(self):
+        super().setUp()
+        self.proposal = mixer.blend(Proposal, direct_submission=True)
+        self.user = mixer.blend(User, is_admin=True, is_superuser=True, is_staff=True)
+        mixer.blend(Profile, user=self.user)
+        self.client.force_login(self.user)
+        self.semester = mixer.blend(
+            Semester, id='2016B', start=datetime(2016, 9, 1, tzinfo=timezone.utc),
+            end=datetime(2016, 12, 31, tzinfo=timezone.utc)
+        )
+
+        self.membership = mixer.blend(Membership, user=self.user, proposal=self.proposal)
+
+        self.requestgroup = create_simple_requestgroup(self.user, self.proposal)
+        self.requestgroup.requests.all()[0].configurations.all()[0].instrument_type = '1M0-SCICAM-SBIG'
+        self.requestgroup.requests.all()[0].configurations.all()[0].save()
+
+    def test_observation_with_valid_instrument_name_succeeds(self):
+        observation = {
+            "request": self.requestgroup.requests.all()[0].id,
+            "site": "tst",
+            "enclosure": "domb",
+            "telescope": "1m0a",
+            "start": "2016-09-05T22:35:39Z",
+            "end": "2016-09-05T23:35:40Z",
+            "configuration_statuses": [
+                {
+                    "configuration": self.requestgroup.requests.all()[0].configurations.all()[0].id,
+                    "instrument_name": "xx03",
+                    "guide_camera_name": "xx03"
+                }
+            ]
+        }
+
+        response = self.client.post(reverse('api:observations-list'), data=observation)
+        self.assertEqual(response.status_code, 201)
