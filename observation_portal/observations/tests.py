@@ -12,7 +12,7 @@ from observation_portal.requestgroups.models import (RequestGroup, Request, Draf
 from observation_portal.observations.models import Observation, ConfigurationStatus, Summary
 from observation_portal.proposals.models import Proposal, Membership, TimeAllocation, Semester
 from observation_portal.accounts.models import Profile
-from observation_portal.common.test_helpers import create_simple_requestgroup
+from observation_portal.common.test_helpers import create_simple_requestgroup, create_simple_configuration
 
 import copy
 
@@ -116,6 +116,13 @@ class TestPostScheduleApi(SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:schedule-list'), data=self.observation)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json()['name'], self.observation['name'])
+
+    def test_post_multiple_observations_succeeds(self):
+        observations = [self.observation, self.observation, self.observation]
+        response = self.client.post(reverse('api:schedule-list'), data=observations)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(len(Observation.objects.all()), 3)
+        self.assertEqual(len(RequestGroup.objects.all()), 3)
 
     def test_post_observation_creates_config_status(self):
         response = self.client.post(reverse('api:schedule-list'), data=self.observation)
@@ -347,3 +354,24 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
                                                        [self.requestgroup.requests.first().configurations.first().id])
         response = self.client.post(reverse('api:observations-list'), data=observation)
         self.assertEqual(response.status_code, 201)
+        self.assertEqual(len(Observation.objects.all()), 1)
+
+    def test_multiple_valid_observations_on_same_request_succeeds(self):
+        observation = self._generate_observation_data( self.requestgroup.requests.first().id,
+                                                       [self.requestgroup.requests.first().configurations.first().id])
+        observations = [observation, observation, observation]
+        response = self.client.post(reverse('api:observations-list'), data=observations)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(len(Observation.objects.all()), 3)
+
+    def test_multiple_configurations_within_an_observation_succeeds(self):
+        create_simple_configuration(self.requestgroup.requests.first())
+        create_simple_configuration(self.requestgroup.requests.first())
+        configuration_ids = [config.id for config in self.requestgroup.requests.first().configurations.all()]
+        observation = self._generate_observation_data(self.requestgroup.requests.first().id, configuration_ids)
+        response = self.client.post(reverse('api:observations-list'), data=observation)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(len(Observation.objects.all()), 1)
+        self.assertEqual(len(ConfigurationStatus.objects.all()), 3)
+        for cs in ConfigurationStatus.objects.all():
+            self.assertEqual(cs.configuration, self.requestgroup.requests.first().configurations.all()[cs.id-1])

@@ -36,12 +36,32 @@ def create_simple_requestgroup(user, proposal, state='PENDING', request=None, wi
         window.request = request
         window.save()
 
+    if not location:
+        mixer.blend(Location, request=request)
+    else:
+        location.request = request
+        location.save()
+
     if not configuration:
         configuration = mixer.blend(Configuration, request=request)
     else:
         configuration.request = request
         configuration.save()
 
+    fill_in_configuration_structures(configuration, instrument_config, constraints, target,
+                                                     acquisition_config, guiding_config)
+
+    return rg
+
+
+def create_simple_configuration(request, instrument_type='1M0-SCICAM-SBIG'):
+    configuration = mixer.blend(Configuration, request=request, instrument_type=instrument_type)
+    fill_in_configuration_structures(configuration)
+    return configuration
+
+
+def fill_in_configuration_structures(configuration, instrument_config=None, constraints=None, target=None,
+                               acquisition_config=None, guiding_config=None):
     if not constraints:
         mixer.blend(Constraints, configuration=configuration)
     else:
@@ -71,11 +91,3 @@ def create_simple_requestgroup(user, proposal, state='PENDING', request=None, wi
     else:
         target.configuration = configuration
         target.save()
-
-    if not location:
-        mixer.blend(Location, request=request)
-    else:
-        location.request = request
-        location.save()
-
-    return rg

@@ -10,7 +10,15 @@ from observation_portal.observations.filters import ObservationFilter, Configura
 import logging
 
 
-class ScheduleViewSet(viewsets.ModelViewSet):
+# from https://stackoverflow.com/questions/14666199/how-do-i-create-multiple-model-instances-with-django-rest-framework
+class CreateListModelMixin(object):
+    def get_serializer(self, *args, **kwargs):
+        if isinstance(kwargs.get('data', {}), list):
+            kwargs['many'] = True
+        return super().get_serializer(*args, **kwargs)
+
+
+class ScheduleViewSet(CreateListModelMixin, viewsets.ModelViewSet):
     permission_classes = (IsAdminUser,)
     http_method_names = ['get', 'post', 'head', 'options']
     serializer_class = ScheduleSerializer
@@ -33,7 +41,7 @@ class ScheduleViewSet(viewsets.ModelViewSet):
                                    'request__configurations__instrument_configs__rois').distinct()
 
 
-class ObservationViewSet(viewsets.ModelViewSet):
+class ObservationViewSet(CreateListModelMixin, viewsets.ModelViewSet):
     permission_classes = (IsAdminUser,)
     http_method_names = ['post', 'head', 'options']
     serializer_class = ObservationSerializer
