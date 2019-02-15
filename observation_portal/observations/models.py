@@ -65,6 +65,10 @@ class Observation(models.Model):
         else:
             return 'UNKNOWN'
 
+    @classmethod
+    def cancel(self, observations):
+        pass
+
 
 class ConfigurationStatus(models.Model):
     STATE_CHOICES = (
