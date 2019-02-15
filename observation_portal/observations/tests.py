@@ -322,12 +322,16 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
             Semester, id='2016B', start=datetime(2016, 9, 1, tzinfo=timezone.utc),
             end=datetime(2016, 12, 31, tzinfo=timezone.utc)
         )
-
         self.membership = mixer.blend(Membership, user=self.user, proposal=self.proposal)
+        self.window = mixer.blend(
+            Window, start=datetime(2016, 9, 3, tzinfo=timezone.utc), end=datetime(2016, 9, 6, tzinfo=timezone.utc)
+        )
+        self.location = mixer.blend(Location, telescope_class='1m0', telescope='1m0a', site='tst', enclosure='domb')
+        self.requestgroup = create_simple_requestgroup(self.user, self.proposal, window=self.window, location=self.location)
 
-        self.requestgroup = create_simple_requestgroup(self.user, self.proposal)
-        self.requestgroup.requests.first().configurations.first().instrument_type = '1M0-SCICAM-SBIG'
-        self.requestgroup.requests.first().configurations.first().save()
+        configuration = self.requestgroup.requests.first().configurations.first()
+        configuration.instrument_type = '1M0-SCICAM-SBIG'
+        configuration.save()
 
     def _generate_observation_data(self, request_id, configuration_id_list):
         observation = {
@@ -350,15 +354,17 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
         return observation
 
     def test_observation_with_valid_instrument_name_succeeds(self):
-        observation = self._generate_observation_data( self.requestgroup.requests.first().id,
-                                                       [self.requestgroup.requests.first().configurations.first().id])
+        observation = self._generate_observation_data(
+            self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
+        )
         response = self.client.post(reverse('api:observations-list'), data=observation)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(len(Observation.objects.all()), 1)
 
     def test_multiple_valid_observations_on_same_request_succeeds(self):
-        observation = self._generate_observation_data( self.requestgroup.requests.first().id,
-                                                       [self.requestgroup.requests.first().configurations.first().id])
+        observation = self._generate_observation_data(
+            self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
+        )
         observations = [observation, observation, observation]
         response = self.client.post(reverse('api:observations-list'), data=observations)
         self.assertEqual(response.status_code, 201)
@@ -375,3 +381,126 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
         self.assertEqual(len(ConfigurationStatus.objects.all()), 3)
         for cs in ConfigurationStatus.objects.all():
             self.assertEqual(cs.configuration, self.requestgroup.requests.first().configurations.all()[cs.id-1])
+
+    def test_observation_start_must_be_before_end(self):
+        observation = self._generate_observation_data(
+            self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
+        )
+        observation['start'] = "2016-09-06T22:35:39Z"
+        response = self.client.post(reverse('api:observations-list'), data=observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('End time must be after start time', str(response.content))
+
+    def test_observation_not_in_a_request_window_but_overlaps_with_window_start_rejected(self):
+        observation = self._generate_observation_data(
+            self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
+        )
+        observation['start'] = "2016-09-02T23:50:00Z"
+        observation['end'] = "2016-09-03T00:30:00Z"
+        response = self.client.post(reverse('api:observations-list'), data=observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('The start and end times do not fall within any window of the request', str(response.content))
+
+    def test_observation_not_in_a_request_window_but_overlaps_with_window_end_rejected(self):
+        observation = self._generate_observation_data(
+            self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
+        )
+        observation['start'] = "2016-09-05T23:50:00Z"
+        observation['end'] = "2016-09-06T00:30:00Z"
+        response = self.client.post(reverse('api:observations-list'), data=observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('The start and end times do not fall within any window of the request', str(response.content))
+
+    def test_observation_starting_after_request_window_end_rejected(self):
+        observation = self._generate_observation_data(
+            self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
+        )
+        observation['start'] = "2016-09-06T23:50:00Z"
+        observation['end'] = "2016-09-07T00:30:00Z"
+        response = self.client.post(reverse('api:observations-list'), data=observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('The start and end times do not fall within any window of the request', str(response.content))
+
+    def test_observation_ending_before_request_window_start_rejected(self):
+        observation = self._generate_observation_data(
+            self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
+        )
+        observation['start'] = "2016-09-02T00:00:00Z"
+        observation['end'] = "2016-09-02T00:30:00Z"
+        response = self.client.post(reverse('api:observations-list'), data=observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('The start and end times do not fall within any window of the request', str(response.content))
+
+    def test_observation_does_not_match_request_location_site_rejected(self):
+        observation = self._generate_observation_data(
+            self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
+        )
+        location = self.requestgroup.requests.first().location
+        location.site = 'bpl'
+        location.save()
+        response = self.client.post(reverse('api:observations-list'), data=observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('tst.domb.1m0a does not match the request location', str(response.content))
+
+    def test_observation_does_not_match_request_location_enclosure_rejected(self):
+        observation = self._generate_observation_data(
+            self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
+        )
+        location = self.requestgroup.requests.first().location
+        location.enclosure = 'domx'
+        location.save()
+        response = self.client.post(reverse('api:observations-list'), data=observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('tst.domb.1m0a does not match the request location', str(response.content))
+
+    def test_observation_does_not_match_request_location_telescope_rejected(self):
+        observation = self._generate_observation_data(
+            self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
+        )
+        location = self.requestgroup.requests.first().location
+        location.telescope = '1m0x'
+        location.save()
+        response = self.client.post(reverse('api:observations-list'), data=observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('tst.domb.1m0a does not match the request location', str(response.content))
+
+    def test_observation_does_not_match_request_location_telescope_class_rejected(self):
+        observation = self._generate_observation_data(
+            self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
+        )
+        location = self.requestgroup.requests.first().location
+        location.telescope_class = '0m4'
+        location.save()
+        response = self.client.post(reverse('api:observations-list'), data=observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('tst.domb.1m0a does not match the request location', str(response.content))
+
+    def test_unavailable_instrument_type_rejected(self):
+        observation = self._generate_observation_data(
+            self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
+        )
+        configuration = self.requestgroup.requests.first().configurations.first()
+        configuration.instrument_type = '1M0-SCICAM-SINISTRO'
+        configuration.save()
+        response = self.client.post(reverse('api:observations-list'), data=observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Instrument type 1M0-SCICAM-SINISTRO not available at tst.domb.1m0a', str(response.content))
+
+    def test_unavailable_instrument_name_rejected(self):
+        observation = self._generate_observation_data(
+            self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
+        )
+        observation['configuration_statuses'][0]['instrument_name'] = 'xx01'
+        observation['configuration_statuses'][0]['guide_camera_name'] = 'ef01'
+        response = self.client.post(reverse('api:observations-list'), data=observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Instrument xx01 not available at tst.domb.1m0a', str(response.content))
+
+    def test_guide_camera_doesnt_match_science_camera_rejected(self):
+        observation = self._generate_observation_data(
+            self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
+        )
+        observation['configuration_statuses'][0]['instrument_name'] = 'xx01'
+        response = self.client.post(reverse('api:observations-list'), data=observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('xx03 is not a valid guide camera for xx01', str(response.content))

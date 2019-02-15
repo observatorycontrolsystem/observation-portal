@@ -118,7 +118,7 @@ class ConfigDB(object):
                         instrument_names.add(instrument['code'].lower())
         return [(instrument_name, instrument_name) for instrument_name in instrument_names]
 
-    def get_instruments_at_location(self, site_code, enclosure_code, telescope_code):
+    def get_instruments_at_location(self, site_code, enclosure_code, telescope_code, only_schedulable=False):
         instrument_names = set()
         instrument_types = set()
         for site in self.get_site_data():
@@ -128,10 +128,10 @@ class ConfigDB(object):
                         for telescope in enclosure['telescope_set']:
                             if telescope['code'].lower() == telescope_code:
                                 for instrument in telescope['instrument_set']:
-                                    instrument_names.add(instrument['code'].lower())
-                                    instrument_types.add(instrument['science_camera']['camera_type']['code'].lower())
+                                    if only_schedulable and instrument['state'] == 'SCHEDULABLE' or not only_schedulable:
+                                        instrument_names.add(instrument['code'].lower())
+                                        instrument_types.add(instrument['science_camera']['camera_type']['code'].lower())
         return {'names': instrument_names, 'types': instrument_types}
-
 
     def get_telescopes_with_instrument_type_and_location(self, instrument_type='', site_code='',
                                                     enclosure_code='', telescope_code=''):
