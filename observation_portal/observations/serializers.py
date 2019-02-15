@@ -218,3 +218,21 @@ class ObservationSerializer(serializers.ModelSerializer):
             ConfigurationStatus.objects.create(observation=observation, **configuration_status)
 
         return observation
+
+
+class CancelObservationsSerializer(serializers.Serializer):
+    ids = serializers.ListField(child=serializers.IntegerField(), min_length=1, required=False)
+    start = serializers.DateTimeField(required=False)
+    end = serializers.DateTimeField(required=False)
+    cancel_reason = serializers.CharField(required=True)
+    site = serializers.CharField(required=False)
+    observatory = serializers.CharField(required=False)
+    telescope = serializers.CharField(required=False)
+    include_rr = serializers.BooleanField(required=False, default=False)
+    include_direct = serializers.BooleanField(required=False, default=False)
+
+    def validate(self, data):
+        if 'ids' not in data and ('start' not in data or 'end' not in data):
+            raise serializers.ValidationError("Must include either a observation id list or a start and end time")
+
+        return data
