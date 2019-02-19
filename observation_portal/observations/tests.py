@@ -432,6 +432,23 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
         observation_obj = Observation.objects.first()
         self.assertEqual(observation_obj.state, 'CANCELED')
 
+    def test_cancel_current_observations_aborts_them(self):
+        self.window.start = datetime(2016, 8, 28, tzinfo=timezone.utc)
+        self.window.save()
+        observation = self._generate_observation_data(self.requestgroup.requests.first().id,
+                                                      [self.requestgroup.requests.first().configurations.first().id])
+        observation['start'] = "2016-08-31T23:35:39Z"
+        observation['end'] = "2016-09-01T01:35:39Z"
+        self._create_observation(observation)
+        cancel_dict = {'ids': [Observation.objects.first().id]}
+        response = self.client.post(reverse('api:observations-cancel'), data=cancel_dict)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['canceled'], 1)
+        self.assertEqual(len(Observation.objects.all()), 1)
+        self.assertEqual(len(ConfigurationStatus.objects.all()), 1)
+        observation_obj = Observation.objects.first()
+        self.assertEqual(observation_obj.state, 'ABORTED')
+
     def test_observation_start_must_be_before_end(self):
         observation = self._generate_observation_data(
             self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
