@@ -21,6 +21,13 @@ class ConfigurationStatusSerializer(serializers.ModelSerializer):
     instrument_name = serializers.CharField(required=False)
     guide_camera_name = serializers.CharField(required=False)
 
+    def validate(self, data):
+        if not configdb.is_valid_guider_for_instrument_name(data['instrument_name'], data['guide_camera_name']):
+            raise serializers.ValidationError(_('{} is not a valid guide camera for {}'.format(
+                data['guide_camera_name'], data['instrument_name']
+            )))
+        return data
+
     class Meta:
         model = ConfigurationStatus
         exclude = ('observation', 'modified', 'created')
@@ -210,6 +217,49 @@ class ObservationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Observation
         fields = ('site', 'enclosure', 'telescope', 'start', 'end', 'configuration_statuses', 'request')
+
+    def validate(self, data):
+        if data['end'] <= data['start']:
+            raise serializers.ValidationError(_('End time must be after start time'))
+
+        # Validate that the start and end times are in one of the requests windows
+        in_a_window = False
+        for window in data['request'].windows.all():
+            if data['start'] >= window.start and data['end'] <= window.end:
+                in_a_window = True
+                break
+
+        if not in_a_window:
+            raise serializers.ValidationError(_('The start and end times do not fall within any window of the request'))
+
+        # Validate that the site, enclosure, and telescope match the location of the request
+        if (
+            data['request'].location.site and data['request'].location.site != data['site'] or
+            data['request'].location.enclosure and data['request'].location.enclosure != data['enclosure'] or
+            data['request'].location.telescope and data['request'].location.telescope != data['telescope'] or
+            data['request'].location.telescope_class != data['telescope'][0:3]
+        ):
+            raise serializers.ValidationError(_('{}.{}.{} does not match the request location'.format(
+                data['site'], data['enclosure'], data['telescope']
+            )))
+
+        # Validate that the site, enclosure, telescope has the appropriate instrument
+        available_instruments = configdb.get_instruments_at_location(
+            data['site'], data['enclosure'], data['telescope'], only_schedulable=True
+        )
+        for configuration in data['request'].configurations.all():
+            if configuration.instrument_type.lower() not in available_instruments['types']:
+                raise serializers.ValidationError(_('Instrument type {} not available at {}.{}.{}'.format(
+                    configuration.instrument_type, data['site'], data['enclosure'], data['telescope']
+                )))
+
+        for configuration_status in data['configuration_statuses']:
+            if configuration_status['instrument_name'].lower() not in available_instruments['names']:
+                raise serializers.ValidationError(_('Instrument {} not available at {}.{}.{}'.format(
+                    configuration_status['instrument_name'], data['site'], data['enclosure'], data['telescope']
+                )))
+
+        return data
 
     def create(self, validated_data):
         configuration_statuses = validated_data.pop('configuration_statuses')
