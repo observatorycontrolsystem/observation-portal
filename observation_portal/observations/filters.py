@@ -21,6 +21,7 @@ class ObservationFilter(django_filters.FilterSet):
     request_num = django_filters.CharFilter(field_name='request__id', method='filter_request_num',
                                             widget=forms.TextInput(attrs={'class': 'input'}))
     tracking_num = django_filters.CharFilter(field_name='molecules__tracking_num', method='filter_tracking_num', widget=forms.TextInput(attrs={'class': 'input'}))
+    state = django_filters.ChoiceFilter(choices=Observation.STATE_CHOICES)
 
     class Meta:
         model = Observation

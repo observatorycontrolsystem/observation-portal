@@ -45,28 +45,45 @@ class Observation(models.Model):
         auto_now_add=True,
         help_text='Time when this Observation was created'
     )
+    state = models.CharField(
+        max_length=40, choices=STATE_CHOICES, default=STATE_CHOICES[0][0],
+        help_text='Current State of this Observation'
+    )
 
-    @property
-    def state(self):
-        states = [config_status.state for config_status in self.configuration_statuses.all()]
-        if all([state == 'PENDING' for state in states]):
-            return 'PENDING'
-        elif (any([state == 'PENDING' or state == 'ATTEMPTED' for state in states]) and
-              self.end < (timezone.now() - timedelta(minutes=5))):
-            return 'IN_PROGRESS'
-        elif any([state == 'FAILED' for state in states]):
-            return 'FAILED'
-        elif any([state == 'ABORTED' for state in states]):
-            return 'ABORTED'
-        elif any([state == 'CANCELED' for state in states]):
-            return 'CANCELED'
-        elif any([state == 'COMPLETED' for state in states]):
-            return 'COMPLETED'
-        else:
-            return 'UNKNOWN'
+    # @property
+    # def state(self):
+    #     states = [config_status.state for config_status in self.configuration_statuses.all()]
+    #     if all([state == 'PENDING' for state in states]):
+    #         return 'PENDING'
+    #     elif (any([state == 'PENDING' or state == 'ATTEMPTED' for state in states]) and
+    #           self.end < (timezone.now() - timedelta(minutes=5))):
+    #         return 'IN_PROGRESS'
+    #     elif any([state == 'FAILED' for state in states]):
+    #         return 'FAILED'
+    #     elif any([state == 'ABORTED' for state in states]):
+    #         return 'ABORTED'
+    #     elif any([state == 'CANCELED' for state in states]):
+    #         return 'CANCELED'
+    #     elif any([state == 'COMPLETED' for state in states]):
+    #         return 'COMPLETED'
+    #     else:
+    #         return 'UNKNOWN'
 
     @classmethod
     def cancel(self, observations):
+        now = timezone.now()
+
+        _, deleted_observations = observations.filter(start__gte=now + timedelta(hours=72)).delete()
+
+        observation_ids_to_cancel = [observation.id for observation in observations if
+                                     now < observation.start < now + timedelta(hours=72)]
+        canceled = observations.filter(pk__in=observation_ids_to_cancel).update(state='CANCELED', modified=now)
+
+        observation_ids_to_abort = [observation.id for observation in observations if
+                                    observation.start <= now < observation.end]
+        aborted = observations.filter(pk__in=observation_ids_to_abort).update(state='ABORTED', modified=now)
+
+        return deleted_observations.get('observations.Observation', 0) + canceled + aborted
         pass
 
 
@@ -92,15 +109,15 @@ class ConfigurationStatus(models.Model):
     )
     state = models.CharField(
         max_length=40, choices=STATE_CHOICES, default=STATE_CHOICES[0][0],
-        help_text='Current state of this RequestGroup'
+        help_text='Current state of this Configuration Status'
     )
     modified = models.DateTimeField(
         auto_now=True,
-        help_text='Time when this Configuration was last changed'
+        help_text='Time when this Configuration Status was last changed'
     )
     created = models.DateTimeField(
         auto_now_add=True,
-        help_text='Time when this Configuration was created'
+        help_text='Time when this Configuration Status was created'
     )
 
     class Meta:

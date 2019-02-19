@@ -224,7 +224,6 @@ class CancelObservationsSerializer(serializers.Serializer):
     ids = serializers.ListField(child=serializers.IntegerField(), min_length=1, required=False)
     start = serializers.DateTimeField(required=False)
     end = serializers.DateTimeField(required=False)
-    cancel_reason = serializers.CharField(required=True)
     site = serializers.CharField(required=False)
     observatory = serializers.CharField(required=False)
     telescope = serializers.CharField(required=False)

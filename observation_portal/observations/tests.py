@@ -326,6 +326,8 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
         self.membership = mixer.blend(Membership, user=self.user, proposal=self.proposal)
 
         self.requestgroup = create_simple_requestgroup(self.user, self.proposal)
+        self.requestgroup.observation_type = RequestGroup.NORMAL
+        self.requestgroup.save()
         self.requestgroup.requests.first().configurations.first().instrument_type = '1M0-SCICAM-SBIG'
         self.requestgroup.requests.first().configurations.first().save()
 
@@ -349,19 +351,21 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
             )
         return observation
 
+    def _create_observation(self, observation_json):
+        response = self.client.post(reverse('api:observations-list'), data=observation_json)
+        self.assertEqual(response.status_code, 201)
+
     def test_observation_with_valid_instrument_name_succeeds(self):
         observation = self._generate_observation_data( self.requestgroup.requests.first().id,
                                                        [self.requestgroup.requests.first().configurations.first().id])
-        response = self.client.post(reverse('api:observations-list'), data=observation)
-        self.assertEqual(response.status_code, 201)
+        self._create_observation(observation)
         self.assertEqual(len(Observation.objects.all()), 1)
 
     def test_multiple_valid_observations_on_same_request_succeeds(self):
         observation = self._generate_observation_data( self.requestgroup.requests.first().id,
                                                        [self.requestgroup.requests.first().configurations.first().id])
         observations = [observation, observation, observation]
-        response = self.client.post(reverse('api:observations-list'), data=observations)
-        self.assertEqual(response.status_code, 201)
+        self._create_observation(observations)
         self.assertEqual(len(Observation.objects.all()), 3)
 
     def test_multiple_configurations_within_an_observation_succeeds(self):
@@ -369,9 +373,19 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
         create_simple_configuration(self.requestgroup.requests.first())
         configuration_ids = [config.id for config in self.requestgroup.requests.first().configurations.all()]
         observation = self._generate_observation_data(self.requestgroup.requests.first().id, configuration_ids)
-        response = self.client.post(reverse('api:observations-list'), data=observation)
-        self.assertEqual(response.status_code, 201)
+        self._create_observation(observation)
         self.assertEqual(len(Observation.objects.all()), 1)
         self.assertEqual(len(ConfigurationStatus.objects.all()), 3)
         for cs in ConfigurationStatus.objects.all():
-            self.assertEqual(cs.configuration, self.requestgroup.requests.first().configurations.all()[cs.id-1])
+            self.assertEqual(cs.configuration, self.requestgroup.requests.first().configurations.all()[cs.id-2])
+
+    def test_cancel_distant_observations_deletes_them(self):
+        observation = self._generate_observation_data(self.requestgroup.requests.first().id,
+                                                      [self.requestgroup.requests.first().configurations.first().id])
+        self._create_observation(observation)
+        cancel_dict = {'ids': [Observation.objects.first().id]}
+        response = self.client.post(reverse('api:observations-cancel'), data=cancel_dict)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['canceled'], 1)
+        self.assertEqual(len(Observation.objects.all()), 0)
+        self.assertEqual(len(ConfigurationStatus.objects.all()), 0)
