@@ -370,6 +370,26 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(len(Observation.objects.all()), 3)
 
+    def test_multiple_valid_observations_for_multiple_requests_succeeds(self):
+        observation1 = self._generate_observation_data(
+            self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
+        )
+        window = mixer.blend(
+            Window, start=datetime(2016, 9, 3, tzinfo=timezone.utc), end=datetime(2016, 9, 6, tzinfo=timezone.utc)
+        )
+        location = mixer.blend(Location, telescope_class='1m0', telescope='1m0a', site='tst', enclosure='domb')
+        requestgroup2 = create_simple_requestgroup(self.user, self.proposal, window=window, location=location)
+        configuration = requestgroup2.requests.first().configurations.first()
+        configuration.instrument_type = '1M0-SCICAM-SBIG'
+        configuration.save()
+        observation2 = self._generate_observation_data(
+            requestgroup2.requests.first().id, [requestgroup2.requests.first().configurations.first().id]
+        )
+        observations = [observation1, observation2]
+        response = self.client.post(reverse('api:observations-list'), data=observations)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(len(Observation.objects.all()), 2)
+
     def test_multiple_configurations_within_an_observation_succeeds(self):
         create_simple_configuration(self.requestgroup.requests.first())
         create_simple_configuration(self.requestgroup.requests.first())
