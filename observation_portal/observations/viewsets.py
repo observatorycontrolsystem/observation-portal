@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 
 from observation_portal.requestgroups.models import RequestGroup
-from observation_portal.observations.models import Observation
+from observation_portal.observations.models import Observation, ConfigurationStatus
 from observation_portal.observations.serializers import (ObservationSerializer, ConfigurationStatusSerializer,
                                                          ScheduleSerializer, CancelObservationsSerializer)
 from observation_portal.observations.filters import ObservationFilter, ConfigurationStatusFilter
@@ -95,5 +95,6 @@ class ConfigurationStatusViewSet(viewsets.ModelViewSet):
         filters.OrderingFilter,
         DjangoFilterBackend
     )
+    queryset = ConfigurationStatus.objects.all().prefetch_related('summary')
     ordering = ('-id',)
 

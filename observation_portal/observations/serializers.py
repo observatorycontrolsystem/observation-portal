@@ -27,6 +27,10 @@ class ConfigurationStatusSerializer(serializers.ModelSerializer):
         exclude = ('observation', 'modified', 'created')
 
     def validate(self, data):
+        if self.context.get('request').method == 'PATCH':
+            # For a partial update, don't try to validate the field set
+            return data
+
         if not configdb.is_valid_guider_for_instrument_name(data['instrument_name'], data['guide_camera_name']):
             raise serializers.ValidationError(_('{} is not a valid guide camera for {}'.format(
                 data['guide_camera_name'], data['instrument_name']

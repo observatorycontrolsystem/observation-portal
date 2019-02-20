@@ -692,3 +692,19 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('xx03 is not a valid guide camera for xx01', str(response.content))
 
+
+class TestUpdateConfigurationStatusApi(TestPostObservationApi):
+    def setUp(self):
+        super().setUp()
+
+    def test_update_configuration_state_only_succeeds(self):
+        observation = self._generate_observation_data(
+            self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
+        )
+        self._create_observation(observation)
+
+        update_data = {'state': 'ATTEMPTED'}
+        configuration_status = ConfigurationStatus.objects.first()
+        self.client.patch(reverse('api:configurationstatus-detail', args=(configuration_status.id,)), update_data)
+        configuration_status.refresh_from_db()
+        self.assertEqual(configuration_status.state, 'ATTEMPTED')
