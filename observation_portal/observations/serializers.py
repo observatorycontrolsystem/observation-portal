@@ -17,9 +17,14 @@ class SummarySerializer(serializers.ModelSerializer):
 
 
 class ConfigurationStatusSerializer(serializers.ModelSerializer):
+    TERMINAL_STATES = ['COMPLETED', 'ABORTED', 'FAILED']
     summary = SummarySerializer(required=False)
     instrument_name = serializers.CharField(required=False)
     guide_camera_name = serializers.CharField(required=False)
+
+    class Meta:
+        model = ConfigurationStatus
+        exclude = ('observation', 'modified', 'created')
 
     def validate(self, data):
         if not configdb.is_valid_guider_for_instrument_name(data['instrument_name'], data['guide_camera_name']):
@@ -28,9 +33,26 @@ class ConfigurationStatusSerializer(serializers.ModelSerializer):
             )))
         return data
 
-    class Meta:
-        model = ConfigurationStatus
-        exclude = ('observation', 'modified', 'created')
+    def update(self, instance, validated_data):
+        update_fields = ['state']
+        if instance.state not in ConfigurationStatusSerializer.TERMINAL_STATES:
+            instance.state = validated_data.get('state', instance.state)
+            instance.save(update_fields=update_fields)
+
+        if 'summary' in validated_data:
+            summary = validated_data.get('summary')
+            Summary.objects.update_or_create(
+                configuration_status=instance,
+                defaults={'reason': summary.get('reason', ''),
+                          'start': summary.get('start'),
+                          'end': summary.get('end'),
+                          'state': summary.get('state'),
+                          'time_completed': summary.get('time_completed'),
+                          'events': summary.get('events', {})
+                          }
+            )
+
+        return instance
 
 
 class ObservationConfigurationSerializer(ConfigurationSerializer):
