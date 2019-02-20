@@ -326,7 +326,7 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
         self.window = mixer.blend(
             Window, start=datetime(2016, 9, 3, tzinfo=timezone.utc), end=datetime(2016, 9, 6, tzinfo=timezone.utc)
         )
-        self.location = mixer.blend(Location, telescope_class='1m0', telescope='1m0a', site='tst', enclosure='domb')
+        self.location = mixer.blend(Location, telescope_class='1m0')
         self.requestgroup = create_simple_requestgroup(self.user, self.proposal, window=self.window, location=self.location)
         self.requestgroup.observation_type = RequestGroup.NORMAL
         self.requestgroup.save()
@@ -449,6 +449,125 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
         observation_obj = Observation.objects.first()
         self.assertEqual(observation_obj.state, 'ABORTED')
 
+    def test_cancel_by_time_range_observations_succeeds(self):
+        observation = self._generate_observation_data(self.requestgroup.requests.first().id,
+                                                      [self.requestgroup.requests.first().configurations.first().id])
+        observation2 = copy.deepcopy(observation)
+        observation2['start'] = "2016-09-03T22:35:39Z"
+        observation2['end'] = "2016-09-03T23:35:39Z"
+        self._create_observation([observation, observation2])
+        cancel_dict = {'start': "2016-09-04T15:00:00Z", 'end': "2016-09-08T00:00:00Z"}
+        response = self.client.post(reverse('api:observations-cancel'), data=cancel_dict)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['canceled'], 1)
+        self.assertEqual(len(Observation.objects.all()), 1)
+        self.assertEqual(len(ConfigurationStatus.objects.all()), 1)
+        self.assertEqual(Observation.objects.first().start, datetime(2016, 9, 3, 22, 35, 39, tzinfo=timezone.utc))
+
+    def test_cancel_by_time_range_and_id_observations_succeeds(self):
+        observation = self._generate_observation_data(self.requestgroup.requests.first().id,
+                                                      [self.requestgroup.requests.first().configurations.first().id])
+        observation2 = copy.deepcopy(observation)
+        observation2['start'] = "2016-09-04T22:35:39Z"
+        observation2['end'] = "2016-09-04T23:35:39Z"
+        self._create_observation([observation, observation2])
+        cancel_dict = {'ids': [Observation.objects.first().id], 'end': "2016-09-18T00:00:00Z"}
+        response = self.client.post(reverse('api:observations-cancel'), data=cancel_dict)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['canceled'], 1)
+        self.assertEqual(len(Observation.objects.all()), 1)
+        self.assertEqual(len(ConfigurationStatus.objects.all()), 1)
+        self.assertEqual(Observation.objects.first().start, datetime(2016, 9, 4, 22, 35, 39, tzinfo=timezone.utc))
+
+    def test_cancel_by_time_range_and_location_observations_succeeds(self):
+        observation = self._generate_observation_data(self.requestgroup.requests.first().id,
+                                                      [self.requestgroup.requests.first().configurations.first().id])
+        observation2 = copy.deepcopy(observation)
+        observation2['start'] = "2016-09-04T22:35:39Z"
+        observation2['end'] = "2016-09-04T23:35:39Z"
+        observation2['enclosure'] = 'doma'
+        observation2['configuration_statuses'][0]['instrument_name'] = 'xx01'
+        observation2['configuration_statuses'][0]['guide_camera_name'] = 'xx01'
+        self._create_observation([observation, observation2])
+        cancel_dict = {'start': "2016-09-01T15:00:00Z",  'end': "2016-09-18T00:00:00Z", 'enclosure': 'domb',
+                       'site': 'tst', 'telescope': '1m0a'}
+        response = self.client.post(reverse('api:observations-cancel'), data=cancel_dict)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['canceled'], 1)
+        self.assertEqual(len(Observation.objects.all()), 1)
+        self.assertEqual(len(ConfigurationStatus.objects.all()), 1)
+        self.assertEqual(Observation.objects.first().start, datetime(2016, 9, 4, 22, 35, 39, tzinfo=timezone.utc))
+
+    def test_cancel_by_time_range_rapid_response_observations(self):
+        observation = self._generate_observation_data(self.requestgroup.requests.first().id,
+                                                      [self.requestgroup.requests.first().configurations.first().id])
+        window = mixer.blend(
+            Window, start=datetime(2016, 9, 3, tzinfo=timezone.utc), end=datetime(2016, 9, 6, tzinfo=timezone.utc)
+        )
+        location = mixer.blend(Location, telescope_class='1m0')
+        requestgroup2 = create_simple_requestgroup(self.user, self.proposal, window=window, location=location)
+        requestgroup2.observation_type = RequestGroup.RAPID_RESPONSE
+        requestgroup2.save()
+        configuration = requestgroup2.requests.first().configurations.first()
+        configuration.instrument_type = '1M0-SCICAM-SBIG'
+        configuration.save()
+        observation2 = self._generate_observation_data(
+            requestgroup2.requests.first().id, [requestgroup2.requests.first().configurations.first().id]
+        )
+        observation2['enclosure'] = 'doma'
+        observation2['configuration_statuses'][0]['instrument_name'] = 'xx01'
+        observation2['configuration_statuses'][0]['guide_camera_name'] = 'xx01'
+
+        self._create_observation([observation, observation2])
+        cancel_dict = {'start': "2016-09-01T15:00:00Z",  'end': "2016-09-18T00:00:00Z"}
+        response = self.client.post(reverse('api:observations-cancel'), data=cancel_dict)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['canceled'], 1)
+        self.assertEqual(len(Observation.objects.all()), 1)
+        self.assertEqual(len(ConfigurationStatus.objects.all()), 1)
+        self.assertEqual(Observation.objects.first().enclosure, 'doma')
+        cancel_dict['include_rr'] = True
+        response = self.client.post(reverse('api:observations-cancel'), data=cancel_dict)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['canceled'], 1)
+        self.assertEqual(len(Observation.objects.all()), 0)
+        self.assertEqual(len(ConfigurationStatus.objects.all()), 0)
+
+    def test_cancel_by_time_range_direct_observations(self):
+        observation = self._generate_observation_data(self.requestgroup.requests.first().id,
+                                                      [self.requestgroup.requests.first().configurations.first().id])
+        window = mixer.blend(
+            Window, start=datetime(2016, 9, 3, tzinfo=timezone.utc), end=datetime(2016, 9, 6, tzinfo=timezone.utc)
+        )
+        location = mixer.blend(Location, telescope_class='1m0')
+        requestgroup2 = create_simple_requestgroup(self.user, self.proposal, window=window, location=location)
+        requestgroup2.observation_type = RequestGroup.DIRECT
+        requestgroup2.save()
+        configuration = requestgroup2.requests.first().configurations.first()
+        configuration.instrument_type = '1M0-SCICAM-SBIG'
+        configuration.save()
+        observation2 = self._generate_observation_data(
+            requestgroup2.requests.first().id, [requestgroup2.requests.first().configurations.first().id]
+        )
+        observation2['enclosure'] = 'doma'
+        observation2['configuration_statuses'][0]['instrument_name'] = 'xx01'
+        observation2['configuration_statuses'][0]['guide_camera_name'] = 'xx01'
+
+        self._create_observation([observation, observation2])
+        cancel_dict = {'start': "2016-09-01T15:00:00Z",  'end': "2016-09-18T00:00:00Z"}
+        response = self.client.post(reverse('api:observations-cancel'), data=cancel_dict)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['canceled'], 1)
+        self.assertEqual(len(Observation.objects.all()), 1)
+        self.assertEqual(len(ConfigurationStatus.objects.all()), 1)
+        self.assertEqual(Observation.objects.first().enclosure, 'doma')
+        cancel_dict['include_direct'] = True
+        response = self.client.post(reverse('api:observations-cancel'), data=cancel_dict)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['canceled'], 1)
+        self.assertEqual(len(Observation.objects.all()), 0)
+        self.assertEqual(len(ConfigurationStatus.objects.all()), 0)
+
     def test_observation_start_must_be_before_end(self):
         observation = self._generate_observation_data(
             self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
@@ -514,6 +633,7 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
             self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
         )
         location = self.requestgroup.requests.first().location
+        location.site = 'tst'
         location.enclosure = 'domx'
         location.save()
         response = self.client.post(reverse('api:observations-list'), data=observation)

@@ -275,7 +275,7 @@ class CancelObservationsSerializer(serializers.Serializer):
     start = serializers.DateTimeField(required=False)
     end = serializers.DateTimeField(required=False)
     site = serializers.CharField(required=False)
-    observatory = serializers.CharField(required=False)
+    enclosure = serializers.CharField(required=False)
     telescope = serializers.CharField(required=False)
     include_rr = serializers.BooleanField(required=False, default=False)
     include_direct = serializers.BooleanField(required=False, default=False)
