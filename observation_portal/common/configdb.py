@@ -362,6 +362,19 @@ class ConfigDB(object):
             if instrument_type.upper() == instrument['science_camera']['camera_type']['code'].upper():
                 return instrument['science_camera']['camera_type']['default_acceptability_threshold']
 
+    def get_max_rois(self, instrument_type):
+        for instrument in self.get_instruments():
+            if instrument_type.upper() == instrument['science_camera']['camera_type']['code'].upper():
+                return instrument['science_camera']['camera_type']['max_rois']
+
+    def get_ccd_size(self, instrument_type):
+        for instrument in self.get_instruments():
+            if instrument_type.upper() == instrument['science_camera']['camera_type']['code'].upper():
+                return {
+                    'x': instrument['science_camera']['camera_type']['pixels_x'],
+                    'y': instrument['science_camera']['camera_type']['pixels_y']
+                }
+
     def get_instrument_type_full_name(self, instrument_type):
         for instrument in self.get_instruments():
             if instrument_type.upper() == instrument['science_camera']['camera_type']['code'].upper():

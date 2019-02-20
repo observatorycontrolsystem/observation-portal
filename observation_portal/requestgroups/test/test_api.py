@@ -47,11 +47,9 @@ generic_payload = {
                 }
             }],
             'guiding_config': {
-                'name': '',
                 'extra_params': {}
             },
             'acquisition_config': {
-                'name': '',
                 'extra_params': {}
             },
             'constraints': {
@@ -1340,6 +1338,30 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         self.assertEqual(configuration['instrument_configs'][0]['bin_x'], 2)
         self.assertEqual(configuration['instrument_configs'][0]['bin_y'], 2)
 
+    def test_different_x_and_y_binnings_rejected(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_x'] = 1
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_y'] = 2
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Currently only square binnings are supported. Please submit with bin_x == bin_y', str(response.content))
+
+    def test_binx_set_if_only_biny_is_input(self):
+        data = self.generic_payload.copy()
+        del data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_x']
+        response = self.client.post(reverse('api:request_groups-list'), data=data)
+        self.assertEqual(response.status_code, 201)
+        instrument_configuration = response.json()['requests'][0]['configurations'][0]['instrument_configs'][0]
+        self.assertEqual(instrument_configuration['bin_x'], instrument_configuration['bin_y'])
+
+    def test_biny_set_if_only_binx_is_input(self):
+        data = self.generic_payload.copy()
+        del data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_y']
+        response = self.client.post(reverse('api:request_groups-list'), data=data)
+        self.assertEqual(response.status_code, 201)
+        instrument_configuration = response.json()['requests'][0]['configurations'][0]['instrument_configs'][0]
+        self.assertEqual(instrument_configuration['bin_x'], instrument_configuration['bin_y'])
+
     def test_request_invalid_instrument_type(self):
         bad_data = self.generic_payload.copy()
         bad_data['requests'][0]['configurations'][0]['instrument_type'] = 'FAKE-INSTRUMENT'
@@ -1475,6 +1497,58 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertIn('configuration type EXPOSE is not valid for instrument type 2M0-FLOYDS-SCICAM', str(response.content))
         self.assertEqual(response.status_code, 400)
+
+    def test_more_than_max_rois_rejected(self):
+        roi_data = {'x1': 0, 'x2': 20, 'y1': 0, 'y2': 100}
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['rois'] = [roi_data, roi_data]
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertIn('Instrument type 1M0-SCICAM-SBIG supports up to 1 regions of interest', str(response.content))
+        self.assertEqual(response.status_code, 400)
+
+    def test_rois_outside_ccd_area_rejected(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['rois'] = [{'x2': 2000}]
+        response1 = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['rois'] = [{'y2': 3000}]
+        response2 = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        for response in [response1, response2]:
+            self.assertIn('Regions of interest for instrument type 1M0-SCICAM-SBIG must be in range', str(response.content))
+            self.assertEqual(response.status_code, 400)
+
+    def test_rois_start_pixels_larger_than_end_pixels_rejected(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['rois'] = [{'x1': 1000, 'x2': 400}]
+        response1 = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['rois'] = [{'y1': 500, 'y2': 300}]
+        response2 = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        for response in [response1, response2]:
+            self.assertIn('Region of interest pixels start must be less than pixels end', str(response.content))
+            self.assertEqual(response.status_code, 400)
+
+    def test_valid_rois_accepted(self):
+        good_data = self.generic_payload.copy()
+        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['rois'] = [{'x1': 0, 'x2': 20, 'y1': 0, 'y2': 100}]
+        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(len(response.json()['requests'][0]['configurations'][0]['instrument_configs'][0]['rois']), 1)
+
+    def test_sparse_roi_fields_sets_defaults(self):
+        good_data = self.generic_payload.copy()
+        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['rois'] = [{'x1': 100}]
+        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(len(response.json()['requests'][0]['configurations'][0]['instrument_configs'][0]['rois']), 1)
+        self.assertEqual(response.json()['requests'][0]['configurations'][0]['instrument_configs'][0]['rois'][0]['x2'], 1000)
+        self.assertEqual(response.json()['requests'][0]['configurations'][0]['instrument_configs'][0]['rois'][0]['y2'], 1000)
+        self.assertEqual(response.json()['requests'][0]['configurations'][0]['instrument_configs'][0]['rois'][0]['y1'], 0)
+
+    def test_empty_roi_rejected(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['rois'] = [{}]
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Must submit at least one bound for a region of interest', str(response.content))
 
 
 class TestGetRequestApi(APITestCase):

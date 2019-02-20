@@ -273,6 +273,40 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                                 singular_type, data['instrument_type']
                             ))
                         )
+            # Validate any regions of interest
+            if 'rois' in instrument_config:
+                max_rois = configdb.get_max_rois(data['instrument_type'])
+                ccd_size = configdb.get_ccd_size(data['instrument_type'])
+                if len(instrument_config['rois']) > max_rois:
+                    raise serializers.ValidationError(_(
+                        'Instrument type {} supports up to {} regions of interest'.format(
+                            data['instrument_type'], max_rois
+                        )
+                    ))
+                for roi in instrument_config['rois']:
+                    if 'x1' not in roi and 'x2' not in roi and 'y1' not in roi and 'y2' not in roi:
+                        raise serializers.ValidationError(_('Must submit at least one bound for a region of interest'))
+
+                    if 'x1' not in roi:
+                        roi['x1'] = 0
+                    if 'x2' not in roi:
+                        roi['x2'] = ccd_size['x']
+                    if 'y1' not in roi:
+                        roi['y1'] = 0
+                    if 'y2' not in roi:
+                        roi['y2'] = ccd_size['y']
+
+                    if roi['x1'] >= roi['x2'] or roi['y1'] >= roi['y2']:
+                        raise serializers.ValidationError(_(
+                            'Region of interest pixels start must be less than pixels end'
+                        ))
+
+                    if roi['x2'] > ccd_size['x'] or roi['y2'] > ccd_size['y']:
+                        raise serializers.ValidationError(_(
+                            'Regions of interest for instrument type {} must be in range 0<=x<={} and 0<=y<={}'.format(
+                                data['instrument_type'], ccd_size['x'], ccd_size['y']
+                            ))
+                        )
 
         if data['type'] == 'SCRIPT':
             if ('extra_params' not in data or 'script_name' not in data['extra_params']

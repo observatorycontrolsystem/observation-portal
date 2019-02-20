@@ -39,12 +39,10 @@ observation = {
                     }
                 ],
                 "acquisition_config": {
-                    "name": "",
                     "mode": "OFF",
                     "extra_params": {}
                 },
                 "guiding_config": {
-                    "name": "",
                     "state": "OFF",
                     "mode": "",
                     "optical_elements": {},
@@ -250,6 +248,18 @@ class TestPostScheduleApi(SetTimeMixin, APITestCase):
         obs_json = response.json()
         self.assertEqual(response.status_code, 201)
         self.assertEqual(obs_json['request']['configurations'][0]['guide_camera_name'], 'ak02')
+
+    def test_self_guiding_with_no_guide_camera_set_sets_same_instrument_for_guide_camera(self):
+        observation = copy.deepcopy(self.observation)
+        observation['request']['configurations'][0]['guiding_config']['state'] = 'ON'
+        observation['request']['configurations'][0]['extra_params']['self_guide'] = True
+        response = self.client.post(reverse('api:schedule-list'), data=observation)
+        obs_json = response.json()
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(
+            obs_json['request']['configurations'][0]['instrument_name'],
+            obs_json['request']['configurations'][0]['guide_camera_name']
+        )
 
 
 class TestPostScheduleMultiConfigApi(SetTimeMixin, APITestCase):
