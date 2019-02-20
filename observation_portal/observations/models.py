@@ -50,25 +50,6 @@ class Observation(models.Model):
         help_text='Current State of this Observation'
     )
 
-    # @property
-    # def state(self):
-    #     states = [config_status.state for config_status in self.configuration_statuses.all()]
-    #     if all([state == 'PENDING' for state in states]):
-    #         return 'PENDING'
-    #     elif (any([state == 'PENDING' or state == 'ATTEMPTED' for state in states]) and
-    #           self.end < (timezone.now() - timedelta(minutes=5))):
-    #         return 'IN_PROGRESS'
-    #     elif any([state == 'FAILED' for state in states]):
-    #         return 'FAILED'
-    #     elif any([state == 'ABORTED' for state in states]):
-    #         return 'ABORTED'
-    #     elif any([state == 'CANCELED' for state in states]):
-    #         return 'CANCELED'
-    #     elif any([state == 'COMPLETED' for state in states]):
-    #         return 'COMPLETED'
-    #     else:
-    #         return 'UNKNOWN'
-
     @classmethod
     def cancel(self, observations):
         now = timezone.now()
@@ -92,7 +73,6 @@ class ConfigurationStatus(models.Model):
         ('PENDING', 'PENDING'),
         ('ATTEMPTED', 'ATTEMPTED'),
         ('COMPLETED', 'COMPLETED'),
-        ('CANCELED', 'CANCELED'),
         ('ABORTED', 'ABORTED'),
         ('FAILED', 'FAILED')
     )
