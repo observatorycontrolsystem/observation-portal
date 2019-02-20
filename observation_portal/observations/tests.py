@@ -4,7 +4,9 @@ from django.utils import timezone
 from mixer.backend.django import mixer
 from django.contrib.auth.models import User
 from datetime import datetime, timedelta
+from dateutil.parser import parse
 from django.urls import reverse
+import json
 
 from observation_portal.requestgroups.models import (RequestGroup, Request, DraftRequestGroup, Window, Target,
                                                      Configuration, Location, Constraints, InstrumentConfig,
@@ -705,6 +707,34 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
 
 class TestUpdateConfigurationStatusApi(TestPostObservationApi):
     def setUp(self):
+        self.summary = {
+            'start': "2016-09-02T00:11:22Z",
+            'end': "2016-09-02T00:16:33Z",
+            'state': "COMPLETED",
+            'time_completed': 920,
+            'events': [
+                {
+                    'time': "2016-09-02T00:11:22Z",
+                    'description': "EnclosureOpen Command",
+                    'state': "IN_PROGRESS"
+                },
+                {
+                    'time': "2016-09-02T00:11:52Z",
+                    'description': "EnclosureOpen Command",
+                    'state': "COMPLETED"
+                },
+                {
+                    'time': "2016-09-02T00:12:12Z",
+                    'description': "StartExposureCommand",
+                    'state': "IN_PROGRESS"
+                },
+                {
+                    'time': "2016-09-02T00:15:43Z",
+                    'description': "StartExposureCommand",
+                    'state': "COMPLETED"
+                }
+            ]
+        }
         super().setUp()
 
     def test_update_configuration_state_only_succeeds(self):
@@ -718,3 +748,86 @@ class TestUpdateConfigurationStatusApi(TestPostObservationApi):
         self.client.patch(reverse('api:configurationstatus-detail', args=(configuration_status.id,)), update_data)
         configuration_status.refresh_from_db()
         self.assertEqual(configuration_status.state, 'ATTEMPTED')
+
+    def test_dont_update_configuration_state_from_terminal_state(self):
+        observation = self._generate_observation_data(
+            self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
+        )
+        self._create_observation(observation)
+
+        update_data = {'state': 'COMPLETED'}
+        configuration_status = ConfigurationStatus.objects.first()
+        self.client.patch(reverse('api:configurationstatus-detail', args=(configuration_status.id,)), update_data)
+        configuration_status.refresh_from_db()
+        self.assertEqual(configuration_status.state, 'COMPLETED')
+        update_data = {'state': 'ABORTED'}
+        self.client.patch(reverse('api:configurationstatus-detail', args=(configuration_status.id,)), update_data)
+        configuration_status.refresh_from_db()
+        self.assertEqual(configuration_status.state, 'COMPLETED')
+
+    def test_dont_update_other_fields_in_configuration_state(self):
+        observation = self._generate_observation_data(
+            self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
+        )
+        self._create_observation(observation)
+
+        update_data = {'state': 'COMPLETED', 'instrument_name': 'fake01', 'guide_camera_name': 'fake01'}
+        configuration_status = ConfigurationStatus.objects.first()
+        self.client.patch(reverse('api:configurationstatus-detail', args=(configuration_status.id,)), update_data)
+        configuration_status.refresh_from_db()
+        self.assertEqual(configuration_status.state, 'COMPLETED')
+        self.assertNotEqual(configuration_status.instrument_name, 'fake01')
+        self.assertNotEqual(configuration_status.guide_camera_name, 'fake01')
+
+    def test_update_summary_in_configuration_state_succeeds(self):
+        observation = self._generate_observation_data(
+            self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
+        )
+        self._create_observation(observation)
+
+        update_data = {'state': 'COMPLETED', 'summary': self.summary}
+        configuration_status = ConfigurationStatus.objects.first()
+        self.client.patch(reverse('api:configurationstatus-detail', args=(configuration_status.id,)), update_data)
+        configuration_status.refresh_from_db()
+        self.assertEqual(configuration_status.state, 'COMPLETED')
+        self.assertEqual(configuration_status.summary.state, self.summary['state'])
+        self.assertEqual(configuration_status.summary.reason, '')
+        self.assertEqual(configuration_status.summary.start, parse(self.summary['start']))
+        self.assertEqual(configuration_status.summary.end, parse(self.summary['end']))
+        self.assertEqual(configuration_status.summary.time_completed, self.summary['time_completed'])
+        self.assertEqual(configuration_status.summary.events, self.summary['events'])
+
+    def test_update_summary_already_exists_in_configuration_state_succeeds(self):
+        observation = self._generate_observation_data(
+            self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
+        )
+        self._create_observation(observation)
+
+        update_data = {'state': 'COMPLETED', 'summary': self.summary}
+        configuration_status = ConfigurationStatus.objects.first()
+        self.client.patch(reverse('api:configurationstatus-detail', args=(configuration_status.id,)), update_data)
+        configuration_status.refresh_from_db()
+        self.assertEqual(configuration_status.state, 'COMPLETED')
+        self.assertEqual(configuration_status.summary.state, self.summary['state'])
+        summary = copy.deepcopy(self.summary)
+        summary['state'] = 'ABORTED'
+        summary['reason'] = 'Ran out of time'
+        update_data = {'summary': summary}
+        self.client.patch(reverse('api:configurationstatus-detail', args=(configuration_status.id,)), update_data)
+        configuration_status.refresh_from_db()
+        self.assertEqual(configuration_status.summary.state, 'ABORTED')
+        self.assertEqual(len(Summary.objects.all()), 1)
+
+    def test_update_incomplete_summary_fails(self):
+        observation = self._generate_observation_data(
+            self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
+        )
+        self._create_observation(observation)
+        summary = copy.deepcopy(self.summary)
+        del summary['state']
+
+        update_data = {'state': 'COMPLETED', 'summary': summary}
+        configuration_status = ConfigurationStatus.objects.first()
+        response = self.client.patch(reverse('api:configurationstatus-detail', args=(configuration_status.id,)), update_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('state', response.json().keys())

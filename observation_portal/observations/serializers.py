@@ -13,7 +13,7 @@ from observation_portal.proposals.models import Proposal
 class SummarySerializer(serializers.ModelSerializer):
     class Meta:
         model = Summary
-        fields = ('start', 'end', 'state', 'reason', 'time_completed')
+        fields = ('start', 'end', 'state', 'reason', 'time_completed', 'events')
 
 
 class ConfigurationStatusSerializer(serializers.ModelSerializer):
@@ -27,6 +27,7 @@ class ConfigurationStatusSerializer(serializers.ModelSerializer):
         exclude = ('observation', 'modified', 'created')
 
     def validate(self, data):
+        data = super().validate(data)
         if self.context.get('request').method == 'PATCH':
             # For a partial update, don't try to validate the field set
             return data
@@ -44,17 +45,19 @@ class ConfigurationStatusSerializer(serializers.ModelSerializer):
             instance.save(update_fields=update_fields)
 
         if 'summary' in validated_data:
-            summary = validated_data.get('summary')
-            Summary.objects.update_or_create(
-                configuration_status=instance,
-                defaults={'reason': summary.get('reason', ''),
-                          'start': summary.get('start'),
-                          'end': summary.get('end'),
-                          'state': summary.get('state'),
-                          'time_completed': summary.get('time_completed'),
-                          'events': summary.get('events', {})
-                          }
-            )
+            summary_serializer = SummarySerializer(data=validated_data['summary'])
+            if summary_serializer.is_valid(raise_exception=True):
+                summary = validated_data.get('summary')
+                Summary.objects.update_or_create(
+                    configuration_status=instance,
+                    defaults={'reason': summary.get('reason', ''),
+                              'start': summary.get('start'),
+                              'end': summary.get('end'),
+                              'state': summary.get('state'),
+                              'time_completed': summary.get('time_completed'),
+                              'events': summary.get('events', {})
+                              }
+                )
 
         return instance
 
