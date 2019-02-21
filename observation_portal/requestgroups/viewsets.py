@@ -18,10 +18,12 @@ from observation_portal.requestgroups.duration_utils import (get_request_duratio
 from observation_portal.requestgroups.state_changes import InvalidStateChange, TERMINAL_STATES
 from observation_portal.requestgroups.request_utils import (get_airmasses_for_request_at_sites,
                                                  get_telescope_states_for_request)
+from observation_portal.common.mixins import ListAsDictMixin
+
 logger = logging.getLogger(__name__)
 
 
-class RequestGroupViewSet(viewsets.ModelViewSet):
+class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
     permission_classes = (IsAuthenticatedOrReadOnly,)
     http_method_names = ['get', 'post', 'head', 'options']
     serializer_class = RequestGroupSerializer
@@ -49,12 +51,13 @@ class RequestGroupViewSet(viewsets.ModelViewSet):
             qs = RequestGroup.objects.filter(proposal__in=Proposal.objects.filter(public=True))
         return qs.prefetch_related('requests', 'requests__windows', 'requests__configurations', 'requests__location',
                                    'requests__configurations__instrument_configs', 'requests__configurations__target',
-                                   'requests__configurations__acquisition_config',
+                                   'requests__configurations__acquisition_config', 'submitter', 'proposal',
                                    'requests__configurations__guiding_config', 'requests__configurations__constraints',
                                    'requests__configurations__instrument_configs__rois')
 
     def perform_create(self, serializer):
         serializer.save(submitter=self.request.user)
+
 
     @action(detail=False, methods=['get'], permission_classes=(IsAdminUser,))
     def schedulable_requests(self, request):
@@ -104,7 +107,7 @@ class RequestGroupViewSet(viewsets.ModelViewSet):
                 else:
                     time_left = time_allocation.tc_allocation - time_allocation.tc_time_used
                 if time_left * OVERHEAD_ALLOWANCE >= (duration / 3600.0):
-                    request_group_data.append(request_group.as_dict)
+                    request_group_data.append(request_group.as_dict())
                     break
                 else:
                     logger.warning(
@@ -177,7 +180,7 @@ class RequestGroupViewSet(viewsets.ModelViewSet):
         return Response(ret_data)
 
 
-class RequestViewSet(viewsets.ReadOnlyModelViewSet):
+class RequestViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
     permission_classes = (IsAuthenticatedOrReadOnly,)
     serializer_class = RequestSerializer
     filter_class = RequestFilter
@@ -205,7 +208,7 @@ class RequestViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=True)
     def airmass(self, request, pk=None):
-        return Response(get_airmasses_for_request_at_sites(self.get_object().as_dict))
+        return Response(get_airmasses_for_request_at_sites(self.get_object().as_dict()))
 
     @action(detail=True)
     def telescope_states(self, request, pk=None):

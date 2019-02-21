@@ -1562,7 +1562,13 @@ class TestGetRequestApi(APITestCase):
 
     def test_get_request_list_authenticated(self):
         request = mixer.blend(Request, request_group=self.request_group, observation_note='testobsnote')
-        mixer.blend(Configuration, request=request, instrument_type='1M0-SCICAM-SBIG')
+        mixer.blend(Location, request=request)
+        mixer.blend(Window, request=request)
+        config = mixer.blend(Configuration, request=request, instrument_type='1M0-SCICAM-SBIG')
+        mixer.blend(Constraints, configuration=config)
+        mixer.blend(InstrumentConfig, configuration=config)
+        mixer.blend(AcquisitionConfig, configuration=config)
+        mixer.blend(GuidingConfig, configuration=config)
         self.client.force_login(self.user)
         result = self.client.get(reverse('api:requests-list'))
         self.assertEqual(result.json()['results'][0]['observation_note'], request.observation_note)
