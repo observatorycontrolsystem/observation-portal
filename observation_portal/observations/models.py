@@ -4,7 +4,6 @@ from django.utils import timezone
 from datetime import timedelta
 
 from observation_portal.requestgroups.models import Request, Configuration
-from observation_portal.common.configdb import configdb
 
 
 class Observation(models.Model):
@@ -17,7 +16,9 @@ class Observation(models.Model):
         ('FAILED', 'FAILED')
     )
 
-    request = models.ForeignKey(Request, on_delete=models.PROTECT)
+    request = models.ForeignKey(
+        Request, on_delete=models.PROTECT
+    )
     site = models.CharField(
         max_length=10,
         help_text='3 character site code'
@@ -65,7 +66,6 @@ class Observation(models.Model):
         aborted = observations.filter(pk__in=observation_ids_to_abort).update(state='ABORTED', modified=now)
 
         return deleted_observations.get('observations.Observation', 0) + canceled + aborted
-        pass
 
 
 class ConfigurationStatus(models.Model):
@@ -77,8 +77,12 @@ class ConfigurationStatus(models.Model):
         ('FAILED', 'FAILED')
     )
 
-    configuration = models.ForeignKey(Configuration, related_name='configuration_status', on_delete=models.PROTECT)
-    observation = models.ForeignKey(Observation, related_name='configuration_statuses', on_delete=models.CASCADE)
+    configuration = models.ForeignKey(
+        Configuration, related_name='configuration_status', on_delete=models.PROTECT
+    )
+    observation = models.ForeignKey(
+        Observation, related_name='configuration_statuses', on_delete=models.CASCADE
+    )
     instrument_name = models.CharField(
         max_length=255,
         help_text='The specific instrument used to observe the corresponding Configuration'
@@ -106,8 +110,9 @@ class ConfigurationStatus(models.Model):
 
 
 class Summary(models.Model):
-    configuration_status = models.OneToOneField(ConfigurationStatus, related_name='summary',
-                                                on_delete=models.CASCADE)
+    configuration_status = models.OneToOneField(
+        ConfigurationStatus, related_name='summary', on_delete=models.CASCADE
+    )
     start = models.DateTimeField(
         db_index=True,
         help_text='Actual start time of configuration'
