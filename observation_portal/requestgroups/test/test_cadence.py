@@ -31,7 +31,7 @@ class TestCadence(SetTimeMixin, TestCase):
         mixer.blend(Location, request=self.req, telecope_class='1m0')
 
     def test_correct_number_of_requests_small_cadence(self):
-        r_dict = self.req.as_dict
+        r_dict = self.req.as_dict()
         r_dict['cadence'] = {
             'start': datetime.datetime(2016, 9, 1, tzinfo=timezone.utc),
             'end': datetime.datetime(2016, 9, 3, tzinfo=timezone.utc),
@@ -42,7 +42,7 @@ class TestCadence(SetTimeMixin, TestCase):
         self.assertEqual(len(requests), 2)
 
     def test_correct_number_of_requests_large_cadence(self):
-        r_dict = self.req.as_dict
+        r_dict = self.req.as_dict()
         r_dict['cadence'] = {
             'start': datetime.datetime(2016, 9, 1, tzinfo=timezone.utc),
             'end': datetime.datetime(2016, 10, 1, tzinfo=timezone.utc),
@@ -53,7 +53,7 @@ class TestCadence(SetTimeMixin, TestCase):
         self.assertEqual(len(requests), 26)
 
     def test_correct_number_of_requests_bounded_window(self):
-        r_dict = self.req.as_dict
+        r_dict = self.req.as_dict()
         r_dict['cadence'] = {
             'start': datetime.datetime(2016, 9, 1, tzinfo=timezone.utc),
             'end': datetime.datetime(2016, 9, 2, tzinfo=timezone.utc),
@@ -64,7 +64,7 @@ class TestCadence(SetTimeMixin, TestCase):
         self.assertEqual(len(requests), 1)
 
     def test_correct_number_of_requests_overlapping_windows(self):
-        r_dict = self.req.as_dict
+        r_dict = self.req.as_dict()
         r_dict['cadence'] = {
             'start': datetime.datetime(2016, 9, 1, tzinfo=timezone.utc),
             'end': datetime.datetime(2016, 9, 2, tzinfo=timezone.utc),

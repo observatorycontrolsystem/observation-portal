@@ -39,7 +39,7 @@ def get_telescope_states_for_request(request):
     )
     for site, details in site_data.items():
         if site not in site_intervals:
-            site_intervals[site] = get_rise_set_intervals(request.as_dict, site)
+            site_intervals[site] = get_rise_set_intervals(request.as_dict(), site)
     # If you have no sites, return the empty dict here
     if not site_intervals:
         return {}

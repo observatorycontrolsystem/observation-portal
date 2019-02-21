@@ -10,19 +10,12 @@ from observation_portal.observations.models import Observation, ConfigurationSta
 from observation_portal.observations.serializers import (ObservationSerializer, ConfigurationStatusSerializer,
                                                          ScheduleSerializer, CancelObservationsSerializer)
 from observation_portal.observations.filters import ObservationFilter, ConfigurationStatusFilter
+from observation_portal.common.mixins import ListAsDictMixin, CreateListModelMixin
 
 import logging
 
 
-# from https://stackoverflow.com/questions/14666199/how-do-i-create-multiple-model-instances-with-django-rest-framework
-class CreateListModelMixin(object):
-    def get_serializer(self, *args, **kwargs):
-        if isinstance(kwargs.get('data', {}), list):
-            kwargs['many'] = True
-        return super().get_serializer(*args, **kwargs)
-
-
-class ScheduleViewSet(CreateListModelMixin, viewsets.ModelViewSet):
+class ScheduleViewSet(ListAsDictMixin, CreateListModelMixin, viewsets.ModelViewSet):
     permission_classes = (IsAdminUser,)
     http_method_names = ['get', 'post', 'head', 'options']
     serializer_class = ScheduleSerializer
@@ -39,13 +32,16 @@ class ScheduleViewSet(CreateListModelMixin, viewsets.ModelViewSet):
     def get_queryset(self):
         qs = Observation.objects.all()
         return qs.prefetch_related('request', 'request__configurations', 'request__configurations__instrument_configs',
-                                   'request__configurations__target',
+                                   'request__configurations__target', 'request__request_group__proposal',
                                    'request__configurations__acquisition_config', 'request__request_group',
                                    'request__configurations__guiding_config', 'request__configurations__constraints',
-                                   'request__configurations__instrument_configs__rois').distinct()
+                                   'request__configurations__instrument_configs__rois',
+                                   'configuration_statuses', 'configuration_statuses__summary',
+                                   'configuration_statuses__configuration',
+                                   'request__request_group__submitter').distinct()
 
 
-class ObservationViewSet(CreateListModelMixin, viewsets.ModelViewSet):
+class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelViewSet):
     permission_classes = (IsAdminUser,)
     http_method_names = ['post', 'head', 'options']
     serializer_class = ObservationSerializer

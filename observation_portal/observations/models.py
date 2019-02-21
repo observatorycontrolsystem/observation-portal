@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.postgres.fields import JSONField
+from django.forms.models import model_to_dict
 from django.utils import timezone
 from datetime import timedelta
 
@@ -67,6 +68,28 @@ class Observation(models.Model):
 
         return deleted_observations.get('observations.Observation', 0) + canceled + aborted
 
+    def as_dict(self):
+        ret_dict = model_to_dict(self)
+        ret_dict['request'] = self.request.as_dict(for_observation=True)
+        ret_dict['proposal'] = self.request.request_group.proposal.id
+        ret_dict['submitter'] = self.request.request_group.submitter.username
+        ret_dict['name'] = self.request.request_group.name
+        ret_dict['ipp_value'] = self.request.request_group.ipp_value
+        ret_dict['observation_type'] = self.request.request_group.observation_type
+        configuration_status_by_config = {config_status.configuration.id: config_status
+                                          for config_status in self.configuration_statuses.all()}
+        for configuration in ret_dict['request']['configurations']:
+            config_status = configuration_status_by_config[configuration['id']]
+            configuration['configuration_status'] = config_status.id
+            configuration['state'] = config_status.state
+            configuration['instrument_name'] = config_status.instrument_name
+            configuration['guide_camera_name'] = config_status.guide_camera_name
+            try:
+                configuration['summary'] = config_status.summary.as_dict()
+            except Exception:
+                configuration['summary'] = {}
+        return ret_dict
+
 
 class ConfigurationStatus(models.Model):
     STATE_CHOICES = (
@@ -110,6 +133,8 @@ class ConfigurationStatus(models.Model):
 
 
 class Summary(models.Model):
+    SERIALIZER_EXCLUDE = ('modified', 'created')
+
     configuration_status = models.OneToOneField(
         ConfigurationStatus, related_name='summary', on_delete=models.CASCADE
     )
@@ -147,3 +172,6 @@ class Summary(models.Model):
     class Meta:
         verbose_name_plural = 'Summaries'
 
+    def as_dict(self):
+        ret_dict = model_to_dict(self, exclude=self.SERIALIZER_EXCLUDE)
+        return ret_dict

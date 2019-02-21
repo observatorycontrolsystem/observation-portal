@@ -109,12 +109,11 @@ class RequestGroup(models.Model):
     def get_absolute_url(self):
         return reverse('requestgroups:detail', kwargs={'pk': self.pk})
 
-    @property
     def as_dict(self):
         ret_dict = model_to_dict(self)
         ret_dict['submitter'] = self.submitter.username
         ret_dict['proposal'] = self.proposal.id
-        ret_dict['requests'] = [r.as_dict for r in self.requests.all()]
+        ret_dict['requests'] = [r.as_dict() for r in self.requests.all()]
         return ret_dict
 
     @property
@@ -136,7 +135,7 @@ class RequestGroup(models.Model):
     def total_duration(self):
         cached_duration = cache.get('requestgroup_duration_{}'.format(self.id))
         if not cached_duration:
-            duration = get_total_duration_dict(self.as_dict)
+            duration = get_total_duration_dict(self.as_dict())
             cache.set('requestgroup_duration_{}'.format(self.id), duration, 86400 * 30 * 6)
             return duration
         else:
@@ -189,21 +188,21 @@ class Request(models.Model):
     def get_id_display(self):
         return str(self.id)
 
-    @property
-    def as_dict(self):
+    def as_dict(self, for_observation=False):
         ret_dict = model_to_dict(self, exclude=self.SERIALIZER_EXCLUDE)
         ret_dict['duration'] = self.duration
-        ret_dict['configurations'] = [c.as_dict for c in self.configurations.all()]
-        ret_dict['location'] = self.location.as_dict
-        ret_dict['windows'] = [w.as_dict for w in self.windows.all()]
+        ret_dict['configurations'] = [c.as_dict() for c in self.configurations.all()]
+        if not for_observation:
+            ret_dict['location'] = self.location.as_dict()
+            ret_dict['windows'] = [w.as_dict() for w in self.windows.all()]
         return ret_dict
 
     @cached_property
     def duration(self):
         cached_duration = cache.get('request_duration_{}'.format(self.id))
         if not cached_duration:
-            duration = get_request_duration({'configurations': [c.as_dict for c in self.configurations.all()],
-                                             'windows': [w.as_dict for w in self.windows.all()]})
+            duration = get_request_duration({'configurations': [c.as_dict() for c in self.configurations.all()],
+                                             'windows': [w.as_dict() for w in self.windows.all()]})
             cache.set('request_duration_{}'.format(self.id), duration, 86400 * 30 * 6)
             return duration
         else:
@@ -262,7 +261,6 @@ class Location(models.Model):
     class Meta:
         ordering = ('id',)
 
-    @property
     def as_dict(self):
         ret_dict = model_to_dict(self, exclude=self.SERIALIZER_EXCLUDE)
         ret_dict = {field: value for field, value in ret_dict.items() if value}
@@ -291,7 +289,6 @@ class Window(models.Model):
     class Meta:
         ordering = ('id',)
 
-    @property
     def as_dict(self):
         return model_to_dict(self, exclude=self.SERIALIZER_EXCLUDE)
 
@@ -351,19 +348,21 @@ class Configuration(models.Model):
     def __str__(self):
         return 'Configuration {0}: {1} type'.format(self.id, self.type)
 
-    @property
     def as_dict(self):
         cdict = model_to_dict(self, exclude=self.SERIALIZER_EXCLUDE)
-        cdict['instrument_configs'] = [ic.as_dict for ic in self.instrument_configs.all()]
-        cdict['constraints'] = self.constraints.as_dict
-        cdict['acquisition_config'] = self.acquisition_config.as_dict
-        cdict['guiding_config'] = self.guiding_config.as_dict
-        cdict['target'] = self.target.as_dict
+        cdict['instrument_configs'] = [ic.as_dict() for ic in self.instrument_configs.all()]
+        cdict['constraints'] = self.constraints.as_dict()
+        cdict['acquisition_config'] = self.acquisition_config.as_dict()
+        cdict['guiding_config'] = self.guiding_config.as_dict()
+        try:
+            cdict['target'] = self.target.as_dict()
+        except Exception:
+            cdict['target'] = {}
         return cdict
 
     @cached_property
     def duration(self):
-        return get_configuration_duration(self.as_dict)
+        return get_configuration_duration(self.as_dict())
 
 
 class Target(models.Model):
@@ -554,7 +553,6 @@ class Target(models.Model):
     def __str__(self):
         return 'Target {}: {} type'.format(self.id, self.type)
 
-    @property
     def as_dict(self):
         ret_dict = model_to_dict(self, exclude=self.SERIALIZER_EXCLUDE)
         target_helper = TARGET_TYPE_HELPER_MAP[ret_dict['type'].upper()](ret_dict)
@@ -563,7 +561,7 @@ class Target(models.Model):
 
     @property
     def rise_set_target(self):
-        return get_rise_set_target(self.as_dict)
+        return get_rise_set_target(self.as_dict())
 
 
 class InstrumentConfig(models.Model):
@@ -616,15 +614,14 @@ class InstrumentConfig(models.Model):
     class Meta:
         ordering = ('id',)
 
-    @property
     def as_dict(self):
         ic = model_to_dict(self, exclude=self.SERIALIZER_EXCLUDE)
-        ic['rois'] = [roi.as_dict for roi in self.rois.all()]
+        ic['rois'] = [roi.as_dict() for roi in self.rois.all()]
         return ic
 
     @cached_property
     def duration(self):
-        return get_instrument_configuration_duration(self.as_dict, self.configuration.instrument_type)
+        return get_instrument_configuration_duration(self.as_dict(), self.configuration.instrument_type)
 
 
 class RegionOfInterest(models.Model):
@@ -654,7 +651,6 @@ class RegionOfInterest(models.Model):
     class Meta:
         ordering = ('id',)
 
-    @property
     def as_dict(self):
         return model_to_dict(self, exclude=self.SERIALIZER_EXCLUDE)
 
@@ -700,7 +696,6 @@ class GuidingConfig(models.Model):
     class Meta:
         ordering = ('id',)
 
-    @property
     def as_dict(self):
         return model_to_dict(self, exclude=self.SERIALIZER_EXCLUDE)
 
@@ -726,7 +721,6 @@ class AcquisitionConfig(models.Model):
     class Meta:
         ordering = ('id',)
 
-    @property
     def as_dict(self):
         return model_to_dict(self, exclude=self.SERIALIZER_EXCLUDE)
 
@@ -771,7 +765,6 @@ class Constraints(models.Model):
         ordering = ('id',)
         verbose_name_plural = 'Constraints'
 
-    @property
     def as_dict(self):
         return model_to_dict(self, exclude=self.SERIALIZER_EXCLUDE)
 
