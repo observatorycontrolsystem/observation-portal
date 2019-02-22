@@ -9,6 +9,4 @@ from observation_portal.common.state_changes import on_configuration_status_stat
 def cb_configurationstatus_post_save(sender, instance, created, *args, **kwargs):
     # Ensure this is an update to the model and not a new model
     if not created:
-        current_data = ConfigurationStatus.objects.get(pk=instance.pk)
-        if current_data.state != instance.state:
-            on_configuration_status_state_change(instance)
+        on_configuration_status_state_change(instance)
