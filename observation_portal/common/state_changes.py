@@ -97,8 +97,8 @@ def on_requestgroup_state_change(old_requestgroup, new_requestgroup):
 
 
 def update_observation_state(observation):
-    states = [config_status.state for config_status in observation.configuration_statuses]
-    if all([state == 'PENDING'] for state in states):
+    states = [config_status.state for config_status in observation.configuration_statuses.all()]
+    if all([state == 'PENDING' for state in states]):
         observation.state = 'PENDING'
     elif all([state == 'PENDING' or state == 'ATTEMPTED' for state in states]):
         observation.state = 'IN_PROGRESS'
