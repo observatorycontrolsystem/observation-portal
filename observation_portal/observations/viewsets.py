@@ -12,8 +12,6 @@ from observation_portal.observations.serializers import (ObservationSerializer, 
 from observation_portal.observations.filters import ObservationFilter, ConfigurationStatusFilter
 from observation_portal.common.mixins import ListAsDictMixin, CreateListModelMixin
 
-import logging
-
 
 class ScheduleViewSet(ListAsDictMixin, CreateListModelMixin, viewsets.ModelViewSet):
     permission_classes = (IsAdminUser,)
@@ -52,6 +50,13 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
 
     @action(detail=False, methods=['post'])
     def cancel(self, request):
+        '''
+        Filters a set of observations based on the parameters provided, and then either deletes them if they are 
+        scheduled >72 hours in the future, cancels them if they are in the future, or aborts them if they are currently 
+        in progress. 
+        :param request: 
+        :return: 
+        '''
         cancel_serializer = CancelObservationsSerializer(data=request.data)
         if cancel_serializer.is_valid():
             observations = self.get_queryset()
