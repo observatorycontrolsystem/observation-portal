@@ -2,7 +2,7 @@ from django.dispatch import receiver
 from django.db.models.signals import pre_save, post_save
 
 from observation_portal.requestgroups.models import RequestGroup, Request
-from observation_portal.requestgroups.state_changes import on_request_state_change, on_requestgroup_state_change
+from observation_portal.common.state_changes import on_request_state_change, on_requestgroup_state_change
 from observation_portal.proposals.notifications import requestgroup_notifications
 
 

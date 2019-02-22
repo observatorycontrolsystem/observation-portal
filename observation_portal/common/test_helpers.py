@@ -21,7 +21,7 @@ class SetTimeMixin(object):
 
 def create_simple_requestgroup(user, proposal, state='PENDING', request=None, window=None, configuration=None,
                                constraints=None, target=None, location=None, instrument_config=None,
-                               acquisition_config=None, guiding_config=None):
+                               acquisition_config=None, guiding_config=None, instrument_type=None):
     rg = mixer.blend(RequestGroup, state=state, submitter=user, proposal=proposal)
 
     if not request:
@@ -48,9 +48,25 @@ def create_simple_requestgroup(user, proposal, state='PENDING', request=None, wi
         configuration.request = request
         configuration.save()
 
+    if instrument_type:
+        configuration.instrument_type = instrument_type
+        configuration.save()
+
     fill_in_configuration_structures(configuration, instrument_config, constraints, target,
                                                      acquisition_config, guiding_config)
 
+    return rg
+
+
+def create_simple_many_requestgroup(user, proposal, n_requests, state='PENDING'):
+    operator = 'SINGLE' if n_requests == 1 else 'MANY'
+    rg = mixer.blend(RequestGroup, state=state, submitter=user, proposal=proposal, operator=operator)
+    for i in range(n_requests):
+        request = mixer.blend(Request, request_group=rg)
+        mixer.blend(Window, request=request)
+        mixer.blend(Location, request=request)
+        configuration = mixer.blend(Configuration, request=request)
+        fill_in_configuration_structures(configuration)
     return rg
 
 

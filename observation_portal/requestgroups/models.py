@@ -170,7 +170,7 @@ class Request(models.Model):
     )
     created = models.DateTimeField(auto_now_add=True, help_text='Time at which the Request was created')
 
-    # Minimum completable block threshold (percentage, 0-100)
+    # Minimum completable observation threshold
     acceptability_threshold = models.FloatField(
         default=90.0, validators=[MinValueValidator(0.0), MaxValueValidator(100.0)],
         help_text='The percentage of this Request that must be completed to mark it as complete and avert '

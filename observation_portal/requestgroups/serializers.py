@@ -14,7 +14,7 @@ from observation_portal.requestgroups.models import (
     AcquisitionConfig, GuidingConfig, RegionOfInterest
 )
 from observation_portal.requestgroups.models import DraftRequestGroup
-from observation_portal.requestgroups.state_changes import debit_ipp_time, TimeAllocationError, validate_ipp
+from observation_portal.common.state_changes import debit_ipp_time, TimeAllocationError, validate_ipp
 from observation_portal.requestgroups.target_helpers import TARGET_TYPE_HELPER_MAP
 from observation_portal.common.configdb import configdb, ConfigDBException
 from observation_portal.requestgroups.duration_utils import (

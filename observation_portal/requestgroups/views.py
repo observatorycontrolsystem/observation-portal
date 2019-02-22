@@ -4,11 +4,10 @@ from django.views.generic.base import TemplateView
 from django.views.generic.detail import DetailView
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny, IsAdminUser
-from django.http import HttpResponseBadRequest, HttpResponseServerError, HttpResponseRedirect
+from rest_framework.permissions import AllowAny
+from django.http import HttpResponseBadRequest, HttpResponseRedirect
 from django.utils import timezone
 from django.urls import reverse
-from django.core.cache import cache
 from dateutil.parser import parse
 from datetime import timedelta
 from rest_framework.views import APIView
@@ -19,17 +18,16 @@ from observation_portal.common.telescope_states import (
     TelescopeStates, get_telescope_availability_per_day, combine_telescope_availabilities_by_site_and_class,
     ElasticSearchException
 )
-from observation_portal.requestgroups.request_utils import get_airmasses_for_request_at_sites, return_paginated_results
+from observation_portal.requestgroups.request_utils import get_airmasses_for_request_at_sites
 from observation_portal.requestgroups.models import RequestGroup, Request
 from observation_portal.requestgroups.serializers import RequestSerializer
 from observation_portal.requestgroups.filters import RequestGroupFilter
-from observation_portal.requestgroups.state_changes import update_request_states_from_pond_blocks
 from observation_portal.requestgroups.contention import Contention, Pressure
 
 logger = logging.getLogger(__name__)
 
 
-def get_start_end_paramters(request, default_days_back):
+def get_start_end_parameters(request, default_days_back):
     try:
         start = parse(request.query_params.get('start'))
     except TypeError:
@@ -116,7 +114,7 @@ class RequestDetailView(DetailView):
 
 
 class RequestCreateView(LoginRequiredMixin, TemplateView):
-    template_name = 'requestgroupss/request_create.html'
+    template_name = 'requestgroups/request_create.html'
 
 
 class TelescopeStatesView(APIView):
@@ -127,7 +125,7 @@ class TelescopeStatesView(APIView):
 
     def get(self, request):
         try:
-            start, end = get_start_end_paramters(request, default_days_back=0)
+            start, end = get_start_end_parameters(request, default_days_back=0)
         except ValueError as e:
             return HttpResponseBadRequest(str(e))
         sites = request.query_params.getlist('site')
@@ -146,7 +144,7 @@ class TelescopeAvailabilityView(APIView):
 
     def get(self, request):
         try:
-            start, end = get_start_end_paramters(request, default_days_back=1)
+            start, end = get_start_end_parameters(request, default_days_back=1)
         except ValueError as e:
             return HttpResponseBadRequest(str(e))
         combine = request.query_params.get('combine')
@@ -179,6 +177,7 @@ class AirmassView(APIView):
         else:
             return Response(serializer.errors)
 
+
 # TODO: Modify where this is used in the vue to use modes/optical_elements structures
 class InstrumentsInformationView(APIView):
     permission_classes = (AllowAny,)
@@ -195,38 +194,6 @@ class InstrumentsInformationView(APIView):
                 'default_binning': configdb.get_default_binning(instrument_type),
             }
         return Response(info)
-
-
-class RequestGroupStatusIsDirty(APIView):
-    '''
-        Gets the pond blocks changed since last call, and updates request and request group statuses with them.
-        Returns boolean indicating if any pond_blocks were received from the pond (isDirty)
-    '''
-    permission_classes = (IsAdminUser,)
-
-    def get(self, request):
-        try:
-            last_query_time = parse(request.query_params.get('last_query_time'))
-        except (TypeError, ValueError):
-            last_query_time = cache.get('isDirty_query_time', (timezone.now() - timedelta(days=7)))
-
-        url = 'http://configdbdev.lco.gtn' + '/blocks/?modified_after={0}&canceled=False&limit=1000'.format(last_query_time.strftime('%Y-%m-%dT%H:%M:%S.%f'))
-        now = timezone.now()
-        pond_blocks = []
-        try:
-            pond_blocks = return_paginated_results(pond_blocks, url)
-        except Exception as e:
-            return HttpResponseServerError({'error': repr(e)})
-
-        is_dirty = update_request_states_from_pond_blocks(pond_blocks)
-        cache.set('isDirty_query_time', now, None)
-
-        # also factor in if a change in requests (added, updated, cancelled) has occurred since we last checked
-        last_update_time = max(Request.objects.latest('modified').modified,
-                               RequestGroup.objects.latest('modified').modified)
-        is_dirty |= last_update_time >= last_query_time
-
-        return Response({'isDirty': is_dirty})
 
 
 class ContentionView(APIView):

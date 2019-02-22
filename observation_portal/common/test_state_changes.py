@@ -1,0 +1,854 @@
+from django.test import TestCase
+from mixer.backend.django import mixer as dmixer
+from django.utils import timezone
+from datetime import timedelta
+from unittest.mock import patch
+from django.contrib.auth.models import User
+
+from observation_portal.common.test_helpers import create_simple_requestgroup, create_simple_configuration
+from observation_portal.proposals.models import Proposal
+from observation_portal.accounts.models import Profile
+from observation_portal.observations.models import Observation, ConfigurationStatus, Summary
+from observation_portal.requestgroups.models import Request, RequestGroup, Window
+from observation_portal.common.state_changes import (
+    get_request_state_from_configuration_statuses,
+    update_request_state, aggregate_request_states,
+    update_request_states_for_window_expiration
+)
+
+
+# TODO: Add tests to check that Request, RequestGroup, and Observation states change as expected when a
+# TODO: ConfigurationStatus is changed
+
+# # TODO: Update these tests when we remove all pond stuff
+# class PondMolecule:
+#     completed = bool
+#     failed = bool
+#     request_num = int
+#     tracking_num = int
+#     exposure_time = float
+#     exposure_count = int
+#     events = list
+#
+#     def _to_dict(self):
+#         return {'completed': self.completed, 'failed': self.failed, 'request_num': self.request_num,
+#                 'tracking_num': self.tracking_num, 'events': self.events, 'exposure_time': self.exposure_time,
+#                 'exposure_count': self.exposure_count}
+#
+#
+# class PondBlock:
+#     start = datetime
+#     end = datetime
+#     canceled = bool
+#     molecules = list
+#
+#     def _to_dict(self):
+#         return {'start': self.start.isoformat(), 'end': self.end.isoformat(), 'canceled': self.canceled,
+#                 'molecules': [m._to_dict() for m in self.molecules]}
+#
+#
+# @patch('observation_portal.common.state_changes.modify_ipp_time_from_requests')
+# class TestUpdateRequestStates(TestCase):
+#     def setUp(self):
+#         self.proposal = dmixer.blend(Proposal, direct_submission=True)
+#         self.user = dmixer.blend(User, is_admin=True, is_superuser=True, is_staff=True)
+#         dmixer.blend(Profile, user=self.user)
+#         self.client.force_login(self.user)
+#         self.requestgroup = create_simple_many_requestgroup(user=self.user, proposal=self.proposal, n_requests=3)
+#
+#     def test_many_requests_expire_after_last_window(self, modify_mock):
+#         now = timezone.now()
+#
+#         for request in self.requestgroup.requests.all():
+#             window = request.windows.first()
+#             window.start = now - timedelta(days=2)
+#             window.end = now - timedelta(days=1)
+#             window.save()
+#
+#         now = timezone.now()
+#         dmixer.cycle(3).blend(Window, request=(r for r in self.requests), start=now - timedelta(days=2),
+#                               end=now - timedelta(days=1))
+#         molecules1 = mixer.cycle(3).blend(PondMolecule, completed=False, failed=False, request_num=self.requests[0].id,
+#                                           tracking_num=self.rg.id, events=[])
+#         molecules2 = mixer.cycle(3).blend(PondMolecule, completed=False, failed=False, request_num=self.requests[1].id,
+#                                           tracking_num=self.rg.id, events=[])
+#         molecules3 = mixer.cycle(3).blend(PondMolecule, completed=False, failed=False, request_num=self.requests[2].id,
+#                                           tracking_num=self.rg.id, events=[])
+#         pond_blocks = mixer.cycle(3).blend(PondBlock, molecules=(m for m in [molecules1, molecules2, molecules3]),
+#                                            start=now - timedelta(minutes=30), end=now - timedelta(minutes=20))
+#         pond_blocks = [pb._to_dict() for pb in pond_blocks]
+#
+#         update_request_states_from_pond_blocks(pond_blocks)
+#
+#         for req in self.requests:
+#             req.refresh_from_db()
+#             self.assertEqual(req.state, 'WINDOW_EXPIRED')
+#         self.rg.refresh_from_db()
+#         self.assertEqual(self.rg.state, 'WINDOW_EXPIRED')
+#
+#     def test_many_requests_complete_and_expired(self, modify_mock):
+#         now = timezone.now()
+#         dmixer.cycle(3).blend(Window, request=(r for r in self.requests), start=now - timedelta(days=2),
+#                               end=now - timedelta(days=1))
+#         molecules1 = mixer.cycle(3).blend(PondMolecule, completed=True, failed=False, request_num=self.requests[0].id,
+#                                           tracking_num=self.rg.id, events=[])
+#         molecules2 = mixer.cycle(3).blend(PondMolecule, completed=False, failed=False, request_num=self.requests[1].id,
+#                                           tracking_num=self.rg.id, events=[])
+#         molecules3 = mixer.cycle(3).blend(PondMolecule, completed=False, failed=False, request_num=self.requests[2].id,
+#                                           tracking_num=self.rg.id, events=[])
+#         pond_blocks = mixer.cycle(3).blend(PondBlock, molecules=(m for m in [molecules1, molecules2, molecules3]),
+#                                            start=now - timedelta(minutes=30), end=now - timedelta(minutes=20))
+#         pond_blocks = [pb._to_dict() for pb in pond_blocks]
+#
+#         update_request_states_from_pond_blocks(pond_blocks)
+#
+#         request_states = ['COMPLETED', 'WINDOW_EXPIRED', 'WINDOW_EXPIRED']
+#         for i, req in enumerate(self.requests):
+#             req.refresh_from_db()
+#             self.assertEqual(req.state, request_states[i])
+#         self.rg.refresh_from_db()
+#         self.assertEqual(self.rg.state, 'COMPLETED')
+#
+#     def test_many_requests_complete_and_failed(self, modify_mock):
+#         now = timezone.now()
+#         dmixer.cycle(3).blend(Window, request=(r for r in self.requests), start=now - timedelta(days=2),
+#                               end=now + timedelta(days=1))
+#         molecules1 = mixer.cycle(3).blend(PondMolecule, completed=True, failed=False, request_num=self.requests[0].id,
+#                                           tracking_num=self.rg.id, events=[])
+#         molecules2 = mixer.cycle(3).blend(PondMolecule, completed=True, failed=False, request_num=self.requests[1].id,
+#                                           tracking_num=self.rg.id, events=[])
+#         molecules3 = mixer.cycle(3).blend(PondMolecule, completed=False, failed=True, request_num=self.requests[2].id,
+#                                           tracking_num=self.rg.id, events=[])
+#         pond_blocks = mixer.cycle(3).blend(PondBlock, molecules=(m for m in [molecules1, molecules2, molecules3]),
+#                                            start=now - timedelta(minutes=30), end=now - timedelta(minutes=20))
+#         pond_blocks = [pb._to_dict() for pb in pond_blocks]
+#
+#         update_request_states_from_pond_blocks(pond_blocks)
+#
+#         request_states = ['COMPLETED', 'COMPLETED', 'PENDING']
+#         for i, req in enumerate(self.requests):
+#             req.refresh_from_db()
+#             self.assertEqual(req.state, request_states[i])
+#         self.rg.refresh_from_db()
+#         self.assertEqual(self.rg.state, 'PENDING')
+#
+#     def test_many_requests_window_expired_and_failed(self, modify_mock):
+#         now = timezone.now()
+#         self.requests[0].state = 'WINDOW_EXPIRED'
+#         self.requests[0].save()
+#         dmixer.cycle(3).blend(Window, request=(r for r in self.requests), start=now - timedelta(days=2),
+#                               end=now + timedelta(days=1))
+#         molecules1 = mixer.cycle(3).blend(PondMolecule, completed=False, failed=False, request_num=self.requests[0].id,
+#                                           tracking_num=self.rg.id, events=[])
+#         molecules2 = mixer.cycle(3).blend(PondMolecule, completed=False, failed=True, request_num=self.requests[1].id,
+#                                           tracking_num=self.rg.id, events=[])
+#         molecules3 = mixer.cycle(3).blend(PondMolecule, completed=False, failed=True, request_num=self.requests[2].id,
+#                                           tracking_num=self.rg.id, events=[])
+#         pond_blocks = mixer.cycle(3).blend(PondBlock, molecules=(m for m in [molecules1, molecules2, molecules3]),
+#                                            start=now - timedelta(minutes=30), end=now - timedelta(minutes=20))
+#         pond_blocks = [pb._to_dict() for pb in pond_blocks]
+#
+#         update_request_states_from_pond_blocks(pond_blocks)
+#
+#         request_states = ['WINDOW_EXPIRED', 'PENDING', 'PENDING']
+#         for i, req in enumerate(self.requests):
+#             req.refresh_from_db()
+#             self.assertEqual(req.state, request_states[i])
+#         self.rg.refresh_from_db()
+#         self.assertEqual(self.rg.state, 'PENDING')
+#
+#     def test_many_requests_complete_and_complete(self, modify_mock):
+#         now = timezone.now()
+#         self.requests[0].state = 'COMPLETED'
+#         self.requests[0].save()
+#         self.requests[1].state = 'COMPLETED'
+#         self.requests[1].save()
+#         dmixer.cycle(3).blend(Window, request=(r for r in self.requests), start=now - timedelta(days=2),
+#                               end=now + timedelta(days=1))
+#         molecules3 = mixer.cycle(3).blend(PondMolecule, completed=True, failed=False, request_num=self.requests[2].id,
+#                                           tracking_num=self.rg.id)
+#         pond_blocks = [mixer.blend(PondBlock, molecules=molecules3, start=now - timedelta(minutes=30),
+#                                    end=now - timedelta(minutes=20))._to_dict()]
+#
+#         update_request_states_from_pond_blocks(pond_blocks)
+#
+#         request_states = ['COMPLETED', 'COMPLETED', 'COMPLETED']
+#         for i, req in enumerate(self.requests):
+#             req.refresh_from_db()
+#             self.assertEqual(req.state, request_states[i])
+#         self.rg.refresh_from_db()
+#         self.assertEqual(self.rg.state, 'COMPLETED')
+#
+#     def test_many_requests_complete_and_window_expired(self, modify_mock):
+#         now = timezone.now()
+#         self.requests[0].state = 'COMPLETED'
+#         self.requests[0].save()
+#         self.requests[1].state = 'COMPLETED'
+#         self.requests[1].save()
+#         dmixer.cycle(3).blend(Window, request=(r for r in self.requests), start=now - timedelta(days=2),
+#                               end=now - timedelta(days=1))
+#         molecules3 = mixer.cycle(3).blend(PondMolecule, completed=False, failed=True, request_num=self.requests[2].id,
+#                                           tracking_num=self.rg.id, events=[])
+#         pond_blocks = [mixer.blend(PondBlock, molecules=molecules3, start=now - timedelta(minutes=30),
+#                                    end=now - timedelta(minutes=20))._to_dict()]
+#
+#         update_request_states_from_pond_blocks(pond_blocks)
+#
+#         request_states = ['COMPLETED', 'COMPLETED', 'WINDOW_EXPIRED']
+#         for i, req in enumerate(self.requests):
+#             req.refresh_from_db()
+#             self.assertEqual(req.state, request_states[i])
+#         self.rg.refresh_from_db()
+#         self.assertEqual(self.rg.state, 'COMPLETED')
+#
+#     def test_many_requests_window_expired_to_completed(self, modify_mock):
+#         now = timezone.now()
+#         for req in self.requests:
+#             req.state = 'WINDOW_EXPIRED'
+#             req.save()
+#
+#         self.rg.state = 'WINDOW_EXPIRED'
+#         self.rg.save()
+#
+#         dmixer.cycle(3).blend(Window, request=(r for r in self.requests), start=now - timedelta(days=2),
+#                               end=now - timedelta(days=1))
+#         molecules3 = mixer.cycle(3).blend(PondMolecule, completed=True, failed=False, request_num=self.requests[2].id,
+#                                           tracking_num=self.rg.id)
+#         pond_blocks = [mixer.blend(PondBlock, molecules=molecules3, start=now - timedelta(minutes=30),
+#                                    end=now - timedelta(minutes=20))._to_dict()]
+#
+#         update_request_states_from_pond_blocks(pond_blocks)
+#
+#         request_states = ['WINDOW_EXPIRED', 'WINDOW_EXPIRED', 'COMPLETED']
+#         for i, req in enumerate(self.requests):
+#             req.refresh_from_db()
+#             self.assertEqual(req.state, request_states[i])
+#         self.rg.refresh_from_db()
+#         self.assertEqual(self.rg.state, 'COMPLETED')
+#
+#     def test_many_requests_canceled_to_completed(self, modify_mock):
+#         now = timezone.now()
+#         for req in self.requests:
+#             req.state = 'CANCELED'
+#             req.save()
+#
+#         self.rg.state = 'CANCELED'
+#         self.rg.save()
+#
+#         dmixer.cycle(3).blend(Window, request=(r for r in self.requests), start=now - timedelta(days=2),
+#                               end=now - timedelta(days=1))
+#         molecules3 = mixer.cycle(3).blend(PondMolecule, completed=True, failed=False, request_num=self.requests[2].id,
+#                                           tracking_num=self.rg.id)
+#         pond_blocks = [mixer.blend(PondBlock, molecules=molecules3, start=now - timedelta(minutes=30),
+#                                    end=now - timedelta(minutes=20))._to_dict()]
+#
+#         update_request_states_from_pond_blocks(pond_blocks)
+#
+#         request_states = ['CANCELED', 'CANCELED', 'COMPLETED']
+#         for i, req in enumerate(self.requests):
+#             req.refresh_from_db()
+#             self.assertEqual(req.state, request_states[i])
+#         self.rg.refresh_from_db()
+#         self.assertEqual(self.rg.state, 'COMPLETED')
+
+
+class TestStateFromConfigurationStatuses(TestCase):
+    def setUp(self):
+        super().setUp()
+        self.proposal = dmixer.blend(Proposal)
+        self.user = dmixer.blend(User)
+        dmixer.blend(Profile, user=self.user)
+        self.client.force_login(self.user)
+
+        self.requestgroup = create_simple_requestgroup(
+            user=self.user, proposal=self.proposal, instrument_type='1M0-SCICAM-SBIG'
+        )
+
+    def test_all_configuration_statuses_complete(self):
+        request = self.requestgroup.requests.first()
+        request.state = 'COMPLETED'
+        request.save()
+
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+
+        now = timezone.now()
+        observation = dmixer.blend(Observation, request=request, start=now - timedelta(minutes=30), end=now - timedelta(minutes=20))
+
+        for configuration in request.configurations.all():
+            cs = dmixer.blend(ConfigurationStatus, observation=observation, configuration=configuration, state='COMPLETED')
+            for inst_config in configuration.instrument_configs.all():
+                inst_config.exposure_time = 100
+                inst_config.exposure_count = 10
+                inst_config.save()
+            dmixer.blend(Summary, configuration_status=cs, time_completed=1000)
+
+        request_state = get_request_state_from_configuration_statuses(request.state, 100, observation.configuration_statuses.all())
+        self.assertEqual(request_state, 'COMPLETED')
+
+    def test_configuration_statuses_not_complete_or_failed_use_initial(self):
+        request = self.requestgroup.requests.first()
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+
+        now = timezone.now()
+        observation = dmixer.blend(Observation, request=request, start=now - timedelta(minutes=30), end=now + timedelta(minutes=20))
+        for configuration in request.configurations.all():
+            cs = dmixer.blend(ConfigurationStatus, observation=observation, configuration=configuration, state='PENDING')
+            dmixer.blend(Summary, configuration_status=cs)
+
+        initial_state = 'INITIAL'
+        request_state = get_request_state_from_configuration_statuses(initial_state, 100, observation.configuration_statuses.all())
+        self.assertEqual(request_state, initial_state)
+
+    def test_observation_in_past_failed(self):
+        request = self.requestgroup.requests.first()
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+
+        now = timezone.now()
+        observation = dmixer.blend(Observation, request=request, start=now - timedelta(minutes=30), end=now - timedelta(minutes=20))
+
+        for configuration in request.configurations.all():
+            cs = dmixer.blend(ConfigurationStatus, observation=observation, configuration=configuration, state='PENDING')
+            dmixer.blend(Summary, configuration_status=cs)
+
+        initial_state = 'INITIAL'
+        request_state = get_request_state_from_configuration_statuses(initial_state, 100, observation.configuration_statuses.all())
+        self.assertEqual(request_state, 'FAILED')
+
+    def test_pond_blocks_failed(self):
+        request = self.requestgroup.requests.first()
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+
+        now = timezone.now()
+        observation = dmixer.blend(Observation, request=request, start=now - timedelta(minutes=30), end=now + timedelta(minutes=20))
+
+        for configuration in request.configurations.all():
+            cs = dmixer.blend(ConfigurationStatus, observation=observation, configuration=configuration, state='PENDING')
+            dmixer.blend(Summary, configuration_status=cs)
+
+        # Make another configuration whose status is failed
+        failed_configuration = create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        completed_cs = dmixer.blend(ConfigurationStatus, observation=observation, configuration=failed_configuration, state='FAILED')
+        dmixer.blend(Summary, configuration_status=completed_cs)
+
+        initial_state = 'INITIAL'
+        request_state = get_request_state_from_configuration_statuses(initial_state, 100, observation.configuration_statuses.all())
+        self.assertEqual(request_state, 'FAILED')
+
+    def test_pond_blocks_in_future_use_initial(self):
+        request = self.requestgroup.requests.first()
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+
+        now = timezone.now()
+        observation = dmixer.blend(Observation, request=request, start=now + timedelta(minutes=20), end=now + timedelta(minutes=30))
+
+        for configuration in request.configurations.all():
+            cs = dmixer.blend(ConfigurationStatus, observation=observation, configuration=configuration, state='PENDING')
+            dmixer.blend(Summary, configuration_status=cs)
+
+        # Make another configuration whose status is failed
+        failed_configuration = create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        completed_cs = dmixer.blend(ConfigurationStatus, observation=observation, configuration=failed_configuration, state='FAILED')
+        dmixer.blend(Summary, configuration_status=completed_cs)
+
+        initial_state = 'INITIAL'
+        request_state = get_request_state_from_configuration_statuses(initial_state, 100, observation.configuration_statuses.all())
+        self.assertEqual(request_state, initial_state)
+
+    def test_pond_blocks_failed_but_threshold_complete(self):
+        request = self.requestgroup.requests.first()
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+
+        now = timezone.now()
+        observation = dmixer.blend(
+            Observation, request=request, start=now - timedelta(minutes=30), end=now + timedelta(minutes=30)
+        )
+        for configuration in request.configurations.all():
+            cs = dmixer.blend(ConfigurationStatus, observation=observation, configuration=configuration, state='FAILED')
+            for inst_config in configuration.instrument_configs.all():
+                inst_config.exposure_time = 100
+                inst_config.exposure_count = 10
+                inst_config.save()
+            dmixer.blend(Summary, configuration_status=cs, time_completed=900)
+        initial_state = 'INITIAL'
+        request_state = get_request_state_from_configuration_statuses(initial_state, 90, observation.configuration_statuses.all())
+        self.assertEqual(request_state, 'COMPLETED')
+
+    def test_pond_blocks_failed_and_threshold_failed(self):
+        request = self.requestgroup.requests.first()
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+
+        now = timezone.now()
+        observation = dmixer.blend(
+            Observation, request=request, start=now - timedelta(minutes=30), end=now + timedelta(minutes=30)
+        )
+        for configuration in request.configurations.all():
+            cs = dmixer.blend(ConfigurationStatus, observation=observation, configuration=configuration, state='FAILED')
+            for inst_config in configuration.instrument_configs.all():
+                inst_config.exposure_time = 100
+                inst_config.exposure_count = 10
+                inst_config.save()
+            dmixer.blend(Summary, configuration_status=cs, time_completed=900)
+        initial_state = 'INITIAL'
+        request_state = get_request_state_from_configuration_statuses(initial_state, 91, observation.configuration_statuses.all())
+        self.assertEqual(request_state, 'FAILED')
+
+    def test_pond_blocks_failed_but_threshold_complete_multi(self):
+        request = self.requestgroup.requests.first()
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+
+        now = timezone.now()
+        observation = dmixer.blend(
+            Observation, request=request, start=now - timedelta(minutes=30), end=now + timedelta(minutes=30)
+        )
+        for configuration in request.configurations.all():
+            cs = dmixer.blend(ConfigurationStatus, observation=observation, configuration=configuration, state='FAILED')
+            for inst_config in configuration.instrument_configs.all():
+                inst_config.exposure_time = 10
+                inst_config.exposure_count = 1
+                inst_config.save()
+            dmixer.blend(Summary, configuration_status=cs, time_completed=0)
+
+        # Make another configuration whose status is completed, so that we reach the acceptability threshold
+        completed_configuration = create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        completed_cs = dmixer.blend(ConfigurationStatus, observation=observation, configuration=completed_configuration, state='COMPLETED')
+        inst_config_completed = completed_configuration.instrument_configs.first()
+        inst_config_completed.exposure_count = 10
+        inst_config_completed.exposure_time = 100
+        inst_config_completed.save()
+        dmixer.blend(Summary, configuration_status=completed_cs, time_completed=1000)
+
+        initial_state = 'INITIAL'
+        request_state = get_request_state_from_configuration_statuses(initial_state, 95, observation.configuration_statuses.all())
+        self.assertEqual(request_state, 'COMPLETED')
+
+
+class TestRequestState(TestCase):
+    def setUp(self):
+        super().setUp()
+        self.proposal = dmixer.blend(Proposal)
+        self.user = dmixer.blend(User)
+        dmixer.blend(Profile, user=self.user)
+        self.client.force_login(self.user)
+
+        self.requestgroup = create_simple_requestgroup(
+            user=self.user, proposal=self.proposal, instrument_type='1M0-SCICAM-SBIG'
+        )
+
+    def test_request_state_complete(self):
+        request = self.requestgroup.requests.first()
+        request.state = 'COMPLETED'
+        request.save()
+
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+
+        observation = dmixer.blend(Observation, request=request)
+
+        for configuration in request.configurations.all():
+            cs = dmixer.blend(ConfigurationStatus, observation=observation, configuration=configuration)
+            dmixer.blend(Summary, configuration_status=cs)
+
+        state_changed = update_request_state(request, observation.configuration_statuses.all(), True)
+        request.refresh_from_db()
+        self.assertFalse(state_changed)
+        self.assertEqual(request.state, 'COMPLETED')
+
+    def test_request_state_configuration_statuses_complete(self):
+        request = self.requestgroup.requests.first()
+        request.state = 'PENDING'
+        request.save()
+
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+
+        observation = dmixer.blend(Observation, request=request)
+
+        for configuration in request.configurations.all():
+            for inst_config in configuration.instrument_configs.all():
+                inst_config.exposure_time = 60
+                inst_config.exposure_count = 1
+                inst_config.save()
+            cs = dmixer.blend(ConfigurationStatus, observation=observation, configuration=configuration, state='COMPLETED')
+            dmixer.blend(Summary, configuration_status=cs, time_completed=60)
+
+        state_changed = update_request_state(request, observation.configuration_statuses.all(), True)
+        request.refresh_from_db()
+        self.assertTrue(state_changed)
+        self.assertEqual(request.state, 'COMPLETED')
+
+    def test_request_state_initial_state_expired(self):
+        request = self.requestgroup.requests.first()
+        request.state = 'WINDOW_EXPIRED'
+        request.save()
+
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+
+        now = timezone.now()
+        observation = dmixer.blend(
+            Observation, request=request, start=now - timedelta(minutes=30), end=now + timedelta(minutes=30)
+        )
+        for configuration in request.configurations.all():
+            cs = dmixer.blend(ConfigurationStatus, observation=observation, configuration=configuration, state='PENDING')
+            dmixer.blend(Summary, configuration_status=cs)
+
+        state_changed = update_request_state(request, observation.configuration_statuses.all(), True)
+        request.refresh_from_db()
+        self.assertFalse(state_changed)
+        self.assertEqual(request.state, 'WINDOW_EXPIRED')
+
+    def test_request_state_initial_state_canceled(self):
+        request = self.requestgroup.requests.first()
+        request.state = 'CANCELED'
+        request.save()
+
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+
+        now = timezone.now()
+        observation = dmixer.blend(
+            Observation, request=request, start=now - timedelta(minutes=30), end=now + timedelta(minutes=30)
+        )
+        for configuration in request.configurations.all():
+            cs = dmixer.blend(ConfigurationStatus, observation=observation, configuration=configuration, state='PENDING')
+            dmixer.blend(Summary, configuration_status=cs)
+
+        state_changed = update_request_state(request, observation.configuration_statuses.all(), True)
+        request.refresh_from_db()
+        self.assertFalse(state_changed)
+        self.assertEqual(request.state, 'CANCELED')
+
+    def test_request_state_initial_state_pending(self):
+        request = self.requestgroup.requests.first()
+        request.state = 'PENDING'
+        request.save()
+
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+
+        now = timezone.now()
+        observation = dmixer.blend(
+            Observation, request=request, start=now - timedelta(minutes=30), end=now + timedelta(minutes=30)
+        )
+        for configuration in request.configurations.all():
+            cs = dmixer.blend(ConfigurationStatus, observation=observation, configuration=configuration, state='PENDING')
+            dmixer.blend(Summary, configuration_status=cs)
+
+        state_changed = update_request_state(request, observation.configuration_statuses.all(), False)
+        request.refresh_from_db()
+        self.assertFalse(state_changed)
+        self.assertEqual(request.state, 'PENDING')
+
+    def test_request_state_initial_state_pending_ur_expired(self):
+        request = self.requestgroup.requests.first()
+        request.state = 'PENDING'
+        request.save()
+
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+
+        now = timezone.now()
+        observation = dmixer.blend(
+            Observation, request=request, start=now - timedelta(minutes=30), end=now + timedelta(minutes=30)
+        )
+        for configuration in request.configurations.all():
+            cs = dmixer.blend(ConfigurationStatus, observation=observation, configuration=configuration, state='PENDING')
+            dmixer.blend(Summary, configuration_status=cs)
+
+        state_changed = update_request_state(request, observation.configuration_statuses.all(), True)
+        request.refresh_from_db()
+        self.assertTrue(state_changed)
+        self.assertEqual(request.state, 'WINDOW_EXPIRED')
+
+    def test_request_state_configuration_status_failed_initial_state_expired(self):
+        request = self.requestgroup.requests.first()
+        request.state = 'WINDOW_EXPIRED'
+        request.save()
+
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+
+        now = timezone.now()
+        observation = dmixer.blend(
+            Observation, request=request, start=now - timedelta(minutes=30), end=now + timedelta(minutes=30)
+        )
+        for configuration in request.configurations.all():
+            cs = dmixer.blend(ConfigurationStatus, observation=observation, configuration=configuration, state='FAILED')
+            dmixer.blend(Summary, configuration_status=cs)
+
+        state_changed = update_request_state(request, observation.configuration_statuses.all(), True)
+        request.refresh_from_db()
+        self.assertFalse(state_changed)
+        self.assertEqual(request.state, 'WINDOW_EXPIRED')
+
+    def test_request_state_configuration_status_failed_initial_state_canceled(self):
+        request = self.requestgroup.requests.first()
+        request.state = 'CANCELED'
+        request.save()
+
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+
+        now = timezone.now()
+        observation = dmixer.blend(
+            Observation, request=request, start=now - timedelta(minutes=30), end=now + timedelta(minutes=30)
+        )
+        for configuration in request.configurations.all():
+            cs = dmixer.blend(ConfigurationStatus, observation=observation, configuration=configuration, state='FAILED')
+            dmixer.blend(Summary, configuration_status=cs)
+
+        state_changed = update_request_state(request, observation.configuration_statuses.all(), False)
+        request.refresh_from_db()
+        self.assertFalse(state_changed)
+        self.assertEqual(request.state, 'CANCELED')
+
+    def test_request_state_configuration_status_failed(self):
+        request = self.requestgroup.requests.first()
+        request.state = 'PENDING'
+        request.save()
+
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+
+        now = timezone.now()
+        observation = dmixer.blend(
+            Observation, request=request, start=now - timedelta(minutes=30), end=now + timedelta(minutes=30)
+        )
+        for configuration in request.configurations.all():
+            cs = dmixer.blend(ConfigurationStatus, observation=observation, configuration=configuration, state='FAILED')
+            dmixer.blend(Summary, configuration_status=cs)
+
+        state_changed = update_request_state(request, observation.configuration_statuses.all(), False)
+        request.refresh_from_db()
+        self.assertTrue(state_changed)
+        self.assertEqual(request.state, 'PENDING')
+
+    def test_request_state_configuration_status_failed_but_threshold_complete(self):
+        request = self.requestgroup.requests.first()
+        request.state = 'PENDING'
+        request.acceptability_threshold = 90
+        request.save()
+
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+
+        now = timezone.now()
+        observation = dmixer.blend(
+            Observation, request=request, start=now - timedelta(minutes=30), end=now + timedelta(minutes=30)
+        )
+        for configuration in request.configurations.all():
+            cs = dmixer.blend(ConfigurationStatus, observation=observation, configuration=configuration, state='FAILED')
+            for inst_config in configuration.instrument_configs.all():
+                inst_config.exposure_time = 100
+                inst_config.exposure_count = 10
+                inst_config.save()
+            dmixer.blend(Summary, configuration_status=cs, time_completed=900)
+
+        state_changed = update_request_state(request, observation.configuration_statuses.all(), False)
+        request.refresh_from_db()
+        self.assertTrue(state_changed)
+        self.assertEqual(request.state, 'COMPLETED')
+
+    def test_request_state_configuration_status_failed_but_threshold_complete_2(self):
+        request = self.requestgroup.requests.first()
+        request.state = 'PENDING'
+        request.acceptability_threshold = 70
+        request.save()
+
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+
+        now = timezone.now()
+        observation = dmixer.blend(
+            Observation, request=request, start=now - timedelta(minutes=30), end=now + timedelta(minutes=30)
+        )
+        for configuration in request.configurations.all():
+            cs = dmixer.blend(ConfigurationStatus, observation=observation, configuration=configuration, state='FAILED')
+            for inst_config in configuration.instrument_configs.all():
+                inst_config.exposure_time = 100
+                inst_config.exposure_count = 1
+                inst_config.save()
+            dmixer.blend(Summary, configuration_status=cs, time_completed=0)
+
+        # Make another configuration whose status is completed, so that we reach the acceptability threshold
+        completed_configuration = create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        completed_cs = dmixer.blend(ConfigurationStatus, observation=observation, configuration=completed_configuration, state='COMPLETED')
+        inst_config_completed = completed_configuration.instrument_configs.first()
+        inst_config_completed.exposure_count = 10
+        inst_config_completed.exposure_time = 100
+        inst_config_completed.save()
+        dmixer.blend(Summary, configuration_status=completed_cs, time_completed=1000)
+
+        state_changed = update_request_state(request, observation.configuration_statuses.all(), False)
+        request.refresh_from_db()
+        self.assertTrue(state_changed)
+        self.assertEqual(request.state, 'COMPLETED')
+
+    def test_request_state_configuration_status_failed_and_threshold_failed(self):
+        request = self.requestgroup.requests.first()
+        request.state = 'PENDING'
+        request.acceptability_threshold = 95
+        request.save()
+
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+
+        now = timezone.now()
+        observation = dmixer.blend(
+            Observation, request=request, start=now - timedelta(minutes=30), end=now + timedelta(minutes=30)
+        )
+        for configuration in request.configurations.all():
+            cs = dmixer.blend(ConfigurationStatus, observation=observation, configuration=configuration, state='FAILED')
+            for inst_config in configuration.instrument_configs.all():
+                inst_config.exposure_time = 100
+                inst_config.exposure_count = 10
+                inst_config.save()
+            dmixer.blend(Summary, configuration_status=cs, time_completed=900)
+
+        state_changed = update_request_state(request, observation.configuration_statuses.all(), False)
+        request.refresh_from_db()
+        self.assertTrue(state_changed)
+        self.assertEqual(request.state, 'PENDING')
+
+    def test_request_state_configuration_status_failed_2(self):
+        request = self.requestgroup.requests.first()
+        request.state = 'PENDING'
+        request.save()
+
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+        create_simple_configuration(request=request, instrument_type='1M0-SCICAM-SBIG')
+
+        now = timezone.now()
+        observation = dmixer.blend(
+            Observation, request=request, start=now - timedelta(minutes=30), end=now - timedelta(minutes=20)
+        )
+        for configuration in request.configurations.all():
+            cs = dmixer.blend(ConfigurationStatus, observation=observation, configuration=configuration, state='FAILED')
+            dmixer.blend(Summary, configuration_status=cs)
+
+        state_changed = update_request_state(request, observation.configuration_statuses.all(), False)
+        request.refresh_from_db()
+        self.assertTrue(state_changed)
+        self.assertEqual(request.state, 'PENDING')
+
+
+class TestAggregateRequestStates(TestCase):
+    def test_many_all_complete(self):
+        request_states = ['COMPLETED', 'COMPLETED', 'COMPLETED']
+        rg = dmixer.blend(RequestGroup, operator='MANY')
+        dmixer.cycle(3).blend(Request, state=(state for state in request_states), request_group=rg)
+
+        aggregate_state = aggregate_request_states(rg)
+
+        self.assertEqual(aggregate_state, 'COMPLETED')
+
+    def test_many_any_pending(self):
+        request_states = ['COMPLETED', 'CANCELED', 'PENDING']
+        rg = dmixer.blend(RequestGroup, operator='MANY')
+        dmixer.cycle(3).blend(Request, state=(state for state in request_states), request_group=rg)
+
+        aggregate_state = aggregate_request_states(rg)
+
+        self.assertEqual(aggregate_state, 'PENDING')
+
+    def test_many_expired_and_complete(self):
+        request_states = ['WINDOW_EXPIRED', 'COMPLETED', 'WINDOW_EXPIRED']
+        rg = dmixer.blend(RequestGroup, operator='MANY')
+        dmixer.cycle(3).blend(Request, state=(state for state in request_states), request_group=rg)
+
+        aggregate_state = aggregate_request_states(rg)
+
+        self.assertEqual(aggregate_state, 'COMPLETED')
+
+    def test_many_canceled_and_complete(self):
+        request_states = ['CANCELED', 'COMPLETED', 'CANCELED']
+        rg = dmixer.blend(RequestGroup, operator='MANY')
+        dmixer.cycle(3).blend(Request, state=(state for state in request_states), request_group=rg)
+
+        aggregate_state = aggregate_request_states(rg)
+
+        self.assertEqual(aggregate_state, 'COMPLETED')
+
+    def test_many_all_canceled(self):
+        request_states = ['CANCELED', 'CANCELED', 'CANCELED']
+        rg = dmixer.blend(RequestGroup, operator='MANY')
+        dmixer.cycle(3).blend(Request, state=(state for state in request_states), request_group=rg)
+
+        aggregate_state = aggregate_request_states(rg)
+
+        self.assertEqual(aggregate_state, 'CANCELED')
+
+    def test_many_all_expired(self):
+        request_states = ['WINDOW_EXPIRED', 'WINDOW_EXPIRED', 'WINDOW_EXPIRED']
+        rg = dmixer.blend(RequestGroup, operator='MANY')
+        dmixer.cycle(3).blend(Request, state=(state for state in request_states), request_group=rg)
+
+        aggregate_state = aggregate_request_states(rg)
+
+        self.assertEqual(aggregate_state, 'WINDOW_EXPIRED')
+
+
+@patch('observation_portal.common.state_changes.modify_ipp_time_from_requests')
+class TestExpireRequests(TestCase):
+    def setUp(self):
+        self.request_group = dmixer.blend(RequestGroup, state='PENDING')
+
+    def test_request_is_set_to_expired(self, ipp_mock):
+        request = dmixer.blend(Request, state='PENDING', request_group=self.request_group)
+        dmixer.blend(
+            Window, start=timezone.now() - timedelta(days=2), end=timezone.now() - timedelta(days=1), request=request
+        )
+
+        result = update_request_states_for_window_expiration()
+        request.refresh_from_db()
+        self.assertTrue(result)
+        self.assertEqual(request.state, 'WINDOW_EXPIRED')
+
+    def test_request_is_not_set_to_expired(self, ipp_mock):
+        request = dmixer.blend(Request, state='PENDING', request_group=self.request_group)
+        dmixer.blend(
+            Window, start=timezone.now() - timedelta(days=2), end=timezone.now() + timedelta(days=1), request=request
+        )
+        result = update_request_states_for_window_expiration()
+        request.refresh_from_db()
+        self.assertFalse(result)
+        self.assertEqual(request.state, 'PENDING')
+
+    def test_completed_request_is_not_set_to_expired(self, ipp_mock):
+        request = dmixer.blend(Request, state='COMPLETED', request_group=self.request_group)
+        dmixer.blend(
+            Window, start=timezone.now() - timedelta(days=2), end=timezone.now() - timedelta(days=1), request=request
+        )
+        result = update_request_states_for_window_expiration()
+        request.refresh_from_db()
+        self.assertFalse(result)
+        self.assertEqual(request.state, 'COMPLETED')

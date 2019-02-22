@@ -4,7 +4,7 @@ from observation_portal.requestgroups.models import (RequestGroup, Request, Draf
 from observation_portal.proposals.models import Proposal, Membership, TimeAllocation, Semester
 from observation_portal.common.test_helpers import SetTimeMixin
 import observation_portal.requestgroups.signals.handlers  # noqa
-from observation_portal.requestgroups.test.test_state_changes import PondMolecule, PondBlock
+# from observation_portal.common.test.test_state_changes import PondMolecule, PondBlock
 from observation_portal.requestgroups.contention import Pressure
 from observation_portal.accounts.models import Profile
 
@@ -555,7 +555,7 @@ class TestRequestIPP(SetTimeMixin, APITestCase):
         time_allocation = TimeAllocation.objects.get(pk=self.time_allocation_1m0.id)
         self.assertEqual(time_allocation.ipp_time_available, debitted_ipp_value)
 
-    @patch('observation_portal.requestgroups.state_changes.logger')
+    @patch('observation_portal.common.state_changes.logger')
     def test_request_debit_on_completion_after_expired_not_enough_time(self, mock_logger):
         request_group = self._build_request_group(self.generic_payload.copy())
         # verify that now that the TimeAllocation has been debited
@@ -1750,7 +1750,7 @@ class TestAirmassApi(SetTimeMixin, APITestCase):
         self.assertTrue(response.json()['airmass_data']['tst']['times'])
 
 
-@patch('observation_portal.requestgroups.state_changes.modify_ipp_time_from_requests')
+@patch('observation_portal.common.state_changes.modify_ipp_time_from_requests')
 class TestCancelRequestGroupApi(SetTimeMixin, APITestCase):
     ''' Test canceling user requests via API. Mocking out modify_ipp_time_from_requets
         as it is called on state change, but tested elsewhere '''
@@ -1810,7 +1810,7 @@ class TestCancelRequestGroupApi(SetTimeMixin, APITestCase):
         self.assertEqual(Request.objects.get(pk=completed_r.id).state, 'COMPLETED')
 
 
-@patch('observation_portal.requestgroups.state_changes.modify_ipp_time_from_requests')
+@patch('observation_portal.common.state_changes.modify_ipp_time_from_requests')
 class TestUpdateRequestStatesAPI(APITestCase):
     def setUp(self):
         self.user = mixer.blend(User, is_staff=True)
@@ -1903,7 +1903,7 @@ class TestUpdateRequestStatesAPI(APITestCase):
     #     self.assertEqual(response.status_code, 500)
 
 
-@patch('observation_portal.requestgroups.state_changes.modify_ipp_time_from_requests')
+@patch('observation_portal.common.state_changes.modify_ipp_time_from_requests')
 class TestSchedulableRequestsApi(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()

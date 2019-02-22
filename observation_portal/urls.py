@@ -25,7 +25,7 @@ from drf_yasg import openapi
 
 from observation_portal.requestgroups.viewsets import RequestGroupViewSet, RequestViewSet, DraftRequestGroupViewSet
 from observation_portal.requestgroups.views import TelescopeStatesView, TelescopeAvailabilityView, AirmassView
-from observation_portal.requestgroups.views import InstrumentsInformationView, RequestGroupStatusIsDirty
+from observation_portal.requestgroups.views import InstrumentsInformationView
 from observation_portal.requestgroups.views import ContentionView, PressureView
 from observation_portal.accounts.views import ProfileApiView
 from observation_portal.proposals.viewsets import ProposalViewSet, SemesterViewSet
@@ -53,7 +53,6 @@ api_urlpatterns = ([
     url(r'profile/', ProfileApiView.as_view(), name='profile'),
     url(r'airmass/', AirmassView.as_view(), name='airmass'),
     url(r'instruments/', InstrumentsInformationView.as_view(), name='instruments_information'),
-    url(r'isDirty/', RequestGroupStatusIsDirty.as_view(), name='isDirty'),
     url(r'contention/(?P<instrument_name>.+)/', ContentionView.as_view(), name='contention'),
     url(r'pressure/', PressureView.as_view(), name='pressure'),
 ], 'api')
