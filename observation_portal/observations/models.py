@@ -21,7 +21,7 @@ class Observation(models.Model):
         Request, on_delete=models.PROTECT
     )
     site = models.CharField(
-        max_length=10,
+        max_length=10, db_index=True,
         help_text='3 character site code'
     )
     enclosure = models.CharField(
@@ -48,7 +48,7 @@ class Observation(models.Model):
         help_text='Time when this Observation was created'
     )
     state = models.CharField(
-        max_length=40, choices=STATE_CHOICES, default=STATE_CHOICES[0][0],
+        max_length=40, choices=STATE_CHOICES, default=STATE_CHOICES[0][0], db_index=True,
         help_text='Current State of this Observation'
     )
 
@@ -96,7 +96,6 @@ class ConfigurationStatus(models.Model):
         ('PENDING', 'PENDING'),
         ('ATTEMPTED', 'ATTEMPTED'),
         ('COMPLETED', 'COMPLETED'),
-        ('ABORTED', 'ABORTED'),
         ('FAILED', 'FAILED')
     )
 
@@ -136,8 +135,9 @@ class Summary(models.Model):
     SERIALIZER_EXCLUDE = ('modified', 'created')
 
     configuration_status = models.OneToOneField(
-        ConfigurationStatus, related_name='summary', on_delete=models.CASCADE
+        ConfigurationStatus, null=True, blank=True, related_name='summary', on_delete=models.CASCADE
     )
+
     start = models.DateTimeField(
         db_index=True,
         help_text='Actual start time of configuration'
@@ -175,3 +175,7 @@ class Summary(models.Model):
     def as_dict(self):
         ret_dict = model_to_dict(self, exclude=self.SERIALIZER_EXCLUDE)
         return ret_dict
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self.configuration_status.save()

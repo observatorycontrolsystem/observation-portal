@@ -1,6 +1,3 @@
-from rest_framework.response import Response
-
-
 class ListAsDictMixin(object):
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())

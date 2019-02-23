@@ -15,6 +15,8 @@ from observation_portal.observations.models import Observation, ConfigurationSta
 from observation_portal.proposals.models import Proposal, Membership, TimeAllocation, Semester
 from observation_portal.accounts.models import Profile
 from observation_portal.common.test_helpers import create_simple_requestgroup, create_simple_configuration
+import observation_portal.observations.signals.handlers  # noqa
+
 
 import copy
 
@@ -831,3 +833,28 @@ class TestUpdateConfigurationStatusApi(TestPostObservationApi):
         response = self.client.patch(reverse('api:configurationstatus-detail', args=(configuration_status.id,)), update_data)
         self.assertEqual(response.status_code, 400)
         self.assertIn('state', response.json().keys())
+
+    def test_update_summary_triggers_request_status_update(self):
+        # set up request group to have a configuration with just enough time to be completed
+        # self.requestgroup.state = 'PENDING'
+        # self.requestgroup.save()
+        # self.requestgroup.requests.first().state = 'PENDING'
+        # self.requestgroup.requ
+        instrument_config = self.requestgroup.requests.first().configurations.first().instrument_configs.first()
+        instrument_config.exposure_time = 92
+        instrument_config.exposure_count = 10
+        instrument_config.save()
+        observation = self._generate_observation_data(
+            self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
+        )
+        self._create_observation(observation)
+        update_data = {'state': 'COMPLETED', 'summary': self.summary}
+        configuration_status = ConfigurationStatus.objects.first()
+        self.client.patch(reverse('api:configurationstatus-detail', args=(configuration_status.id,)), update_data)
+        configuration_status.refresh_from_db()
+        self.assertEqual(configuration_status.state, 'COMPLETED')
+        request = self.requestgroup.requests.first()
+        request.refresh_from_db()
+        self.assertEqual(request.state, 'COMPLETED')
+        self.requestgroup.refresh_from_db()
+        self.assertEqual(self.requestgroup.state, 'COMPLETED')

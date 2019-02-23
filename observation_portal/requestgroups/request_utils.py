@@ -111,7 +111,8 @@ def exposure_completion_percentage(observation):
     total_exposure_time = 0
     completed_exposure_time = 0
     for configuration_status in observation.configuration_statuses.all():
-        completed_exposure_time += configuration_status.summary.time_completed
+        if hasattr(configuration_status, 'summary'):
+            completed_exposure_time += configuration_status.summary.time_completed
         configuration_exposure_time = 0
         for instrument_config in configuration_status.configuration.instrument_configs.all():
             configuration_exposure_time += instrument_config.exposure_count * instrument_config.exposure_time
