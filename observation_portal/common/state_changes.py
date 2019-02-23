@@ -195,23 +195,6 @@ def get_request_state_from_configuration_statuses(request_state, acceptability_t
     completion_percent = exposure_completion_percentage(observation)
     if isclose(acceptability_threshold, completion_percent) or completion_percent >= acceptability_threshold:
         return 'COMPLETED'
-
-    # TODO: This stuff here can probably be deleted...
-    active_blocks = False
-    future_blocks = False
-    now = timezone.now()
-    if (
-            not observation.state == 'CANCELED'
-            and not any([cs.state == 'FAILED' for cs in configuration_statuses])
-            and observation.start < now < observation.end
-    ):
-        active_blocks = True
-    if now < observation.start:
-        future_blocks = True
-    if not (future_blocks or active_blocks):
-        return 'FAILED'
-    # TODO: ... down to here. Just make sure the behavior is the same.
-
     return request_state
 
 
@@ -229,13 +212,6 @@ def update_request_state(request, configuration_statuses, request_group_expired)
     # If the state is not a terminal state and the request group has expired, mark the request as expired
     if new_request_state not in TERMINAL_REQUEST_STATES and request_group_expired:
         new_request_state = 'WINDOW_EXPIRED'
-
-    # TODO: This stuff here can probably be deleted...
-    # If the state was the 'FAILED' fake state, switch it to pending but record that the state has changed
-    elif new_request_state == 'FAILED' and request.state not in TERMINAL_REQUEST_STATES:
-        new_request_state = 'PENDING'
-        state_changed = True
-    # TODO: ... down to here. Just make sure the behavior is the same.
 
     with transaction.atomic():
         # Re-get the request and lock. If the new state is a valid state transition, set it on the request atomically.

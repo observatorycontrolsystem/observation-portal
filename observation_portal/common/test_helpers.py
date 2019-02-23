@@ -19,6 +19,29 @@ class SetTimeMixin(object):
         self.time_patcher.stop()
 
 
+class disconnect_signal(object):
+    """Temporarily disconnect a model from a signal. Can use as a context manager."""
+    def __init__(self, signal, receiver, sender, dispatch_uid=None):
+        self.signal = signal
+        self.receiver = receiver
+        self.sender = sender
+        self.dispatch_uid = dispatch_uid
+
+    def __enter__(self):
+        self.signal.disconnect(
+            receiver=self.receiver,
+            sender=self.sender,
+            dispatch_uid=self.dispatch_uid
+        )
+
+    def __exit__(self, type, value, traceback):
+        self.signal.connect(
+            receiver=self.receiver,
+            sender=self.sender,
+            dispatch_uid=self.dispatch_uid
+        )
+
+
 def create_simple_requestgroup(user, proposal, state='PENDING', request=None, window=None, configuration=None,
                                constraints=None, target=None, location=None, instrument_config=None,
                                acquisition_config=None, guiding_config=None, instrument_type=None):
@@ -62,11 +85,10 @@ def create_simple_many_requestgroup(user, proposal, n_requests, state='PENDING')
     operator = 'SINGLE' if n_requests == 1 else 'MANY'
     rg = mixer.blend(RequestGroup, state=state, submitter=user, proposal=proposal, operator=operator)
     for i in range(n_requests):
-        request = mixer.blend(Request, request_group=rg)
+        request = mixer.blend(Request, request_group=rg, state=state)
         mixer.blend(Window, request=request)
         mixer.blend(Location, request=request)
-        configuration = mixer.blend(Configuration, request=request)
-        fill_in_configuration_structures(configuration)
+        create_simple_configuration(request)
     return rg
 
 
