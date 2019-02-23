@@ -844,11 +844,11 @@ class TestUpdateConfigurationStatusApi(TestPostObservationApi):
             self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
         )
         self._create_observation(observation)
-        update_data = {'state': 'COMPLETED', 'summary': self.summary}
+        update_data = {'state': 'FAILED', 'summary': self.summary}
         configuration_status = ConfigurationStatus.objects.first()
         self.client.patch(reverse('api:configurationstatus-detail', args=(configuration_status.id,)), update_data)
         configuration_status.refresh_from_db()
-        self.assertEqual(configuration_status.state, 'COMPLETED')
+        self.assertEqual(configuration_status.state, 'FAILED')
         request = self.requestgroup.requests.first()
         request.refresh_from_db()
         self.assertEqual(request.state, 'COMPLETED')
