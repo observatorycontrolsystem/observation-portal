@@ -842,7 +842,6 @@ class TestSiderealTarget(SetTimeMixin, APITestCase):
         target = response.json()['requests'][0]['configurations'][0]['target']
         self.assertEqual(target['proper_motion_ra'], 0.0)
         self.assertEqual(target['proper_motion_dec'], 0.0)
-        self.assertIsNone(target['vmag'])
         self.assertEqual(target['parallax'], 0.0)
         self.assertEqual(target['coordinate_system'], 'ICRS')
         self.assertEqual(target['equinox'], 'J2000')

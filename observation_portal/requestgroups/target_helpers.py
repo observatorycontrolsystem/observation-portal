@@ -43,7 +43,7 @@ class SiderealTargetHelper(BaseTargetHelper):
     def __init__(self, target):
         self.fields = (
             'type', 'name', 'ra', 'dec', 'proper_motion_ra', 'proper_motion_dec', 'parallax',
-            'coordinate_system', 'equinox', 'epoch', 'vmag'
+            'coordinate_system', 'equinox', 'epoch'
         )
 
         self.required_fields = ('ra', 'dec')
@@ -62,7 +62,7 @@ class SiderealTargetHelper(BaseTargetHelper):
 class NonSiderealTargetHelper(BaseTargetHelper):
     def __init__(self, target):
         self.defaults = {}
-        self.fields = ('vmag',)
+        self.fields = ()
         self.required_fields = (
             'type', 'name', 'epochofel', 'orbinc', 'longascnode', 'eccentricity', 'scheme'
         )
@@ -103,7 +103,7 @@ class SatelliteTargetHelper(BaseTargetHelper):
             'diff_epoch_rate', 'diff_pitch_acceleration', 'diff_roll_acceleration'
         )
         self.required_fields = self.fields
-        self.fields += ('vmag',)
+        self.fields += ()
         self.defaults = {}
         super().__init__(target)
 
