@@ -239,3 +239,14 @@ CELERY_BEAT_SCHEDULE = {
 }
 
 TEST_RUNNER = 'observation_portal.test_runner.MyDiscoverRunner'
+
+try:
+    from local_settings import *  # noqa
+except ImportError:
+    pass
+
+try:
+    INSTALLED_APPS += LOCAL_INSTALLED_APPS  # noqa
+    ALLOWED_HOSTS += LOCAL_ALLOWED_HOSTS  # noqa
+except NameError:
+    pass
