@@ -766,7 +766,9 @@ class Constraints(models.Model):
         verbose_name_plural = 'Constraints'
 
     def as_dict(self):
-        return model_to_dict(self, exclude=self.SERIALIZER_EXCLUDE)
+        constraints = model_to_dict(self, exclude=self.SERIALIZER_EXCLUDE)
+        constraints = {field: value for field, value in constraints.items() if value is not None}
+        return constraints
 
     def __str__(self):
         return 'Constraints {}: {} max airmass, {} min_lunar_distance'.format(self.id, self.max_airmass,
