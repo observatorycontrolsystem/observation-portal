@@ -58,6 +58,13 @@ class ConstraintsSerializer(serializers.ModelSerializer):
         model = Constraints
         exclude = Constraints.SERIALIZER_EXCLUDE
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        for field in data.keys():
+            if data[field] is None:
+                del data[field]
+        return data
+
 
 class RegionOfInterestSerializer(serializers.ModelSerializer):
     class Meta:
