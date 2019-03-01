@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% load bootstrap3 %}
+{% block content %}
+<div class="row">
+  <div class="col-md-10">
+    {% if paginator.num_pages > 1 %}
+      {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
+    {% endif %}
+  </div>
+  <div class="col-md-2">
+    <p>{{ filter.qs.count }} observations</p>
+    <p>Last Update: <br/> <strong>{{ filter.qs.first.modified }}</strong></p>
+  </div>
+</div>
+<div class="row">
+  <div class="col-md-10">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Site</th>
+          <th>Enclosure</th>
+          <th>Telescope</th>
+          <th>Start</th>
+          <th>End</th>
+          <th>State</th>
+          <th>Modified</th>
+          <th>Created</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for obs in object_list %}
+        <tr>
+          <td><a href="{% url 'observations:observation-detail' pk=obs.id %}" title="Observation detail">{{ obs.id }}</a></td>
+          <td>{{ obs.site }}</td>
+          <td>{{ obs.enclosure }}</td>
+          <td>{{ obs.telescope }}</td>
+          <td>{{ obs.start }}</td>
+          <td>{{ obs.end }}</td>
+          <td>{{ obs.state }}</td>
+          <td>{{ obs.modified }}</td>
+          <td>{{ obs.created }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if paginator.num_pages > 1 %}
+      {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
+    {% endif %}
+  </div>
+  <div class="col-md-2">
+    <form class="form" method="GET" action="{% url 'observations:observation-list' %}">
+    {% bootstrap_form filter.form %}
+    {% buttons submit="Filter" reset="Reset" %}{% endbuttons %}
+    </form>
+  </div>
+</div>
+{% endblock %}

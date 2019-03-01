@@ -34,6 +34,7 @@ import observation_portal.sciapplications.urls as sciapplications_urls
 import observation_portal.requestgroups.urls as requestgroup_urls
 import observation_portal.proposals.urls as proposals_urls
 import observation_portal.accounts.urls as accounts_urls
+import observation_portal.observations.urls as observations_urls
 
 router = DefaultRouter()
 router.register(r'requests', RequestViewSet, 'requests')
@@ -76,6 +77,7 @@ urlpatterns = [
     url(r'^api/', include(api_urlpatterns)),
     url(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
     url(r'^proposals/', include(proposals_urls)),
+    url(r'^observations/', include(observations_urls)),
     url(r'^apply/', include(sciapplications_urls)),
     path('admin/', admin.site.urls),
     url(r'^help/', TemplateView.as_view(template_name='help.html'), name='help'),

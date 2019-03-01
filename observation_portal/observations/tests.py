@@ -3,16 +3,13 @@ from observation_portal.common.test_helpers import SetTimeMixin
 from django.utils import timezone
 from mixer.backend.django import mixer
 from django.contrib.auth.models import User
-from datetime import datetime, timedelta
+from datetime import datetime
 from dateutil.parser import parse
 from django.urls import reverse
-import json
 
-from observation_portal.requestgroups.models import (RequestGroup, Request, DraftRequestGroup, Window, Target,
-                                                     Configuration, Location, Constraints, InstrumentConfig,
-                                                     AcquisitionConfig, GuidingConfig)
+from observation_portal.requestgroups.models import RequestGroup, Window, Location
 from observation_portal.observations.models import Observation, ConfigurationStatus, Summary
-from observation_portal.proposals.models import Proposal, Membership, TimeAllocation, Semester
+from observation_portal.proposals.models import Proposal, Membership, Semester
 from observation_portal.accounts.models import Profile
 from observation_portal.common.test_helpers import create_simple_requestgroup, create_simple_configuration
 import observation_portal.observations.signals.handlers  # noqa
