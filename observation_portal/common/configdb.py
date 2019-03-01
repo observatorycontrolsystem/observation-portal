@@ -1,63 +1,91 @@
+import logging
+from typing import Union
+from collections import namedtuple
+
 import requests
 from django.core.cache import caches
 from django.utils.translation import ugettext as _
 from django.conf import settings
-from collections import namedtuple
-import logging
 
 logger = logging.getLogger(__name__)
 
-CONFIGDB_ERROR_MSG = _(("ConfigDB connection is currently down, please wait a few minutes and try again."
-                       " If this problem persists then please contact support."))
-
 
 class ConfigDBException(Exception):
+    """Raise on error retrieving or processing configuration data."""
     pass
 
 
 class TelescopeKey(namedtuple('TelescopeKey', ['site', 'enclosure', 'telescope'])):
+    """Generate the key of a telescope."""
     __slots__ = ()
 
     def __str__(self):
-        return ".".join(s for s in [self.site, self.enclosure, self.telescope] if s)
+        return '.'.join(s for s in [self.site, self.enclosure, self.telescope] if s)
 
 
 class ConfigDB(object):
-    def _get_configdb_data(self, resource):
-        ''' Gets all the data from configdb (the sites structure with everything in it)
-        :return: list of dictionaries of site data
-        '''
+    """Class to retrieve and process configuration data."""
 
+    @staticmethod
+    def _get_configdb_data(resource: str):
+        """Return all configuration data.
+
+        Return all data from ConfigDB at the given endpoint. Check first if the data is already cached, and
+        if so, return that.
+
+        Parameters:
+            resource: ConfigDB endpoint
+        Returns:
+            Data retrieved
+        """
+        error_message = _((
+            'ConfigDB connection is currently down, please wait a few minutes and try again. If this problem '
+            'persists then please contact support.'
+        ))
         data = caches['locmem'].get(resource)
         if not data:
             try:
-                r = requests.get(settings.CONFIGDB_URL + '/{}/'.format(resource))
+                r = requests.get(settings.CONFIGDB_URL + f'/{resource}/')
                 r.raise_for_status()
             except (requests.exceptions.RequestException, requests.exceptions.HTTPError) as e:
-                msg = "{}: {}".format(e.__class__.__name__, CONFIGDB_ERROR_MSG)
+                msg = f'{e.__class__.__name__}: {error_message}'
                 raise ConfigDBException(msg)
             try:
                 data = r.json()['results']
             except KeyError:
-                raise ConfigDBException(CONFIGDB_ERROR_MSG)
-            # cache the results for 15 minutes
+                raise ConfigDBException(error_message)
+            # Cache the results for 15 minutes.
             caches['locmem'].set(resource, data, 900)
-
         return data
 
     def get_site_data(self):
+        """Return ConfigDB sites data."""
         return self._get_configdb_data('sites')
 
-    def get_sites_with_instrument_type_and_location(self, instrument_type='', site_code='',
-                                                    enclosure_code='', telescope_code=''):
-        telescope_details = self.get_telescopes_with_instrument_type_and_location(instrument_type, site_code,
-                                                                                  enclosure_code, telescope_code)
+    def get_sites_with_instrument_type_and_location(
+        self, instrument_type: str='', site_code: str='', enclosure_code: str='', telescope_code: str=''
+    ) -> dict:
+        """Get the location details for each site for which a resource exists.
+
+        The results are filtered by any arguments passed in. If no arguments are provided,
+        get location details for all sites.
+
+        Parameters:
+            instrument_type: Instrument type
+            site_code: 3-letter site code
+            enclosure_code: 4-letter enclosure code
+            telescope_code: 4-letter telescope code
+        Returns:
+            Site location details
+        """
+        telescope_details = self.get_telescopes_with_instrument_type_and_location(
+            instrument_type, site_code, enclosure_code, telescope_code
+        )
         site_details = {}
         for code in telescope_details.keys():
             site = code.split('.')[2]
             if site not in site_details:
                 site_details[site] = telescope_details[code]
-
         return site_details
 
     def get_site_tuples(self, include_blank=False):
@@ -133,8 +161,9 @@ class ConfigDB(object):
                                         instrument_types.add(instrument['science_camera']['camera_type']['code'].lower())
         return {'names': instrument_names, 'types': instrument_types}
 
-    def get_telescopes_with_instrument_type_and_location(self, instrument_type='', site_code='',
-                                                    enclosure_code='', telescope_code=''):
+    def get_telescopes_with_instrument_type_and_location(
+            self, instrument_type='', site_code='', enclosure_code='', telescope_code=''
+    ):
         site_data = self.get_site_data()
         telescope_details = {}
         for site in site_data:
@@ -199,11 +228,14 @@ class ConfigDB(object):
 
         return instruments
 
-    def get_instrument_types_per_telescope(self, only_schedulable=False):
-        '''
-        Function uses the configdb to get a set of available instrument types per telescope
-        :return: set of available instrument types per TelescopeKey
-        '''
+    def get_instrument_types_per_telescope(self, only_schedulable: bool=False) -> dict:
+        """Get a set of available instrument types per telescope.
+
+        Parameters:
+            only_schedulable: Whether to only include schedulable telescopes
+        Returns:
+            Available instrument types
+        """
         telescope_instrument_types = {}
         for instrument in self.get_instruments(only_schedulable=only_schedulable):
             if instrument['telescope_key'] not in telescope_instrument_types:
@@ -211,14 +243,21 @@ class ConfigDB(object):
             instrument_type = instrument['science_camera']['camera_type']['code'].upper()
             if instrument_type not in telescope_instrument_types[instrument['telescope_key']]:
                 telescope_instrument_types[instrument['telescope_key']].append(instrument_type)
-
         return telescope_instrument_types
 
-    def get_instrument_names(self, instrument_type, site_code, enclosure_code, telescope_code):
-        '''
-        Function uses the configdb to get a set of available instruments per telescope
-        :return: set of available instrument types per TelescopeKey
-        '''
+    def get_instrument_names(
+            self, instrument_type: str, site_code: str, enclosure_code: str, telescope_code: str
+    ) -> set:
+        """Get a set of available instrument names.
+
+        Parameters:
+            instrument_type: Instrument type
+            site_code: 3-letter site code
+            enclosure_code: 4-letter enclosure
+            telescope_code: 4-letter telescope code
+        Returns:
+            Available instrument names
+        """
         instrument_names = set()
         for instrument in self.get_instruments():
             if (instrument['telescope_key'].site == site_code
@@ -228,26 +267,33 @@ class ConfigDB(object):
                 instrument_names.add(instrument['science_camera']['code'].lower())
         return instrument_names
 
-    def get_instrument_types_per_telescope_class(self, only_schedulable=False):
-        '''
-            Function returns a set of instrument types per class of telescope (1m0, 0m4)
-        :param only_schedulable:
-        :return:
-        '''
+    def get_instrument_types_per_telescope_class(self, only_schedulable: bool=False) -> dict:
+        """Get a set of instrument types.
+
+        Instrument types are returned by telescope class (0m4, 1m0, etc...)
+
+        Parameters:
+            only_schedulable: Whether to only include schedulable telescopes
+        Returns:
+            Instrument types separated by class
+        """
         telescope_instrument_types = {}
         for instrument in self.get_instruments(only_schedulable=only_schedulable):
             tel_code = instrument['telescope_key'].telescope[:3]
             if tel_code not in telescope_instrument_types:
                 telescope_instrument_types[tel_code] = set()
             telescope_instrument_types[tel_code].add(instrument['science_camera']['camera_type']['code'].upper())
-
         return telescope_instrument_types
 
-    def get_telescopes_per_instrument_type(self, instrument_type, only_schedulable=False):
-        '''
-        Function returns a set of telescope keys that have an instrument of instrument_type
-        associated with them
-        '''
+    def get_telescopes_per_instrument_type(self, instrument_type: str, only_schedulable: bool=False) -> set:
+        """Get a set of telescope keys.
+
+        Parameters:
+            instrument_type: Telescopes must have this instrument type available
+            only_schedulable: Whether to only include schedulable telescopes
+        Returns:
+             Telescope keys
+        """
         instrument_telescopes = set()
         for instrument in self.get_instruments(only_schedulable=only_schedulable):
             if instrument['science_camera']['camera_type']['code'].upper() == instrument_type:
@@ -259,15 +305,16 @@ class ConfigDB(object):
         for instrument in self.get_instruments():
             if instrument_type.upper() == instrument['science_camera']['camera_type']['code'].upper():
                 configuration_types.update(instrument['science_camera']['camera_type']['configuration_types'])
-
         return configuration_types
 
-    def get_optical_elements(self, instrument_type):
-        '''
-        Function returns the optical elements available for the instrument type specified using configdb
-        :param instrument_type:
-        :return:
-        '''
+    def get_optical_elements(self, instrument_type: str) -> dict:
+        """Get the available optical elements.
+
+        Parameters:
+            instrument_type: Instrument type for which to get the optical elements
+        Returns:
+             Available optical elements
+        """
         optical_elements = {}
         for instrument in self.get_instruments(only_schedulable=True):
             if instrument_type.upper() == instrument['science_camera']['camera_type']['code'].upper():
@@ -275,15 +322,17 @@ class ConfigDB(object):
                     optical_elements[optical_element_group['type']] = []
                     for element in optical_element_group['optical_elements']:
                         optical_elements[optical_element_group['type']].append(element)
-
         return optical_elements
 
-    def get_modes_by_type(self, instrument_type, mode_type=''):
-        '''
-            Function returns the set of available modes of different types for the instrument_type specified
-        :param instrument_type:
-        :return:
-        '''
+    def get_modes_by_type(self, instrument_type: str, mode_type: str='') -> dict:
+        """Get the set of available modes.
+
+        Parameters:
+            instrument_type: Instrument type for which to retrieve the modes
+            mode_type: Mode type to restrict to
+        Returns:
+            Available modes by type
+        """
         for instrument in self.get_instruments():
             if instrument_type.upper() == instrument['science_camera']['camera_type']['code'].upper():
                 if not mode_type:
@@ -314,43 +363,49 @@ class ConfigDB(object):
         raise ConfigDBException("No readout mode found with binning {} for instrument type {}".format(binning,
                                                                                                       instrument_type))
 
-    def get_default_modes_by_type(self, instrument_type, mode_type=''):
-        '''
-            Function returns the default mode of each available mode_type (or the specified mode_type) for the given
-            instrument_type
-        :param instrument_type:
-        :param mode_type:
-        :return:
-        '''
+    def get_default_modes_by_type(self, instrument_type: str, mode_type: str='') -> dict:
+        """Get the default mode of each available mode_type.
+
+        Parameters:
+            instrument_type: Instrument type for which to get the default mode
+            mode_type: Mode type to restrict to, empty string is no restriction
+        Returns:
+             Default modes
+        """
         modes = self.get_modes_by_type(instrument_type, mode_type)
         for type, mode_set in modes.items():
             for mode in mode_set['modes']:
                 if mode['code'] == mode_set['default']:
                     modes[type] = mode
                     break
-
         return modes
 
-    def get_binnings(self, instrument_type):
-        '''
-            Function creates a set of available binning modes for the instrument_type specified
-        :param instrument_type:
-        :return: returns the available set of binnings for an instrument_type
-        '''
+    def get_binnings(self, instrument_type: str) -> set:
+        """Create a set of available binning modes.
+
+        Parameters:
+            instrument_type: Instrument type for which to create binning modes
+        Returns:
+             Available set of binnings
+        Examples:
+            >>> configdb.get_binnings('1M0-SCICAM-SBIG')
+            1
+        """
         available_binnings = set()
         readout_modes = self.get_modes_by_type(instrument_type, 'readout')
         for mode in readout_modes['readout']['modes'] if 'readout' in readout_modes else []:
             if 'binning' in mode['params']:
                 available_binnings.add(mode['params']['binning'])
-
         return available_binnings
 
-    def get_default_binning(self, instrument_type):
-        '''
-            Function returns the default binning for the instrument type specified
-        :param instrument_type:
-        :return: binning default
-        '''
+    def get_default_binning(self, instrument_type: str) -> Union[None, int]:
+        """Get the default binning.
+
+        Parameters:
+            instrument_type: Instrument type
+        Returns:
+             Default binning
+        """
         readout_modes = self.get_modes_by_type(instrument_type, 'readout')
         for mode in readout_modes['readout']['modes'] if 'readout' in readout_modes else []:
             if readout_modes['readout']['default'] == mode['code'] and 'binning' in mode['params']:
@@ -381,12 +436,14 @@ class ConfigDB(object):
                 return instrument['science_camera']['camera_type']['name']
         return instrument_type
 
-    def get_active_instrument_types(self, location):
-        '''
-            Function uses the configdb to get a set of the available instrument_types.
-            Location should be a dictionary of the location, with class, site, enclosure, and telescope fields
-        :return: Set of available instrument_types (i.e. 1M0-SCICAM-SBIG, etc.)
-        '''
+    def get_active_instrument_types(self, location: dict) -> set:
+        """Get the available instrument_types.
+
+        Parameters:
+            location: Dictionary of the location, with class, site, enclosure, and telescope fields
+        Returns:
+            Available instrument_types (i.e. 1M0-SCICAM-SBIG, etc.)
+        """
         instrument_types = set()
         for instrument in self.get_instruments(only_schedulable=True):
             split_string = instrument['__str__'].lower().split('.')
@@ -435,14 +492,19 @@ class ConfigDB(object):
 
         raise ConfigDBException("Instrument type {} not found in configdb.".format(instrument_type))
 
-    def get_request_overheads(self, instrument_type):
-        '''
-            Gets the set of overheads needed to compute the duration of an request using the instrument_type given.
-            This assumes a fixed set of overheads per instrument_type, but we could in the future split these off
-            further by specific telescopes, or by specific instruments.
-        :param instrument_type:
-        :return:
-        '''
+    def get_request_overheads(self, instrument_type: str) -> dict:
+        """Get the set of overheads needed to compute the duration of a request.
+
+        This assumes a fixed set of overheads per instrument_type, but in the future these could split off
+        further by specific telescopes or instruments.
+
+        Parameters:
+            instrument_type: Instrument type for which to get overheads
+        Raises:
+            ConfigDBException: If the instrument type is not found
+        Returns:
+            Request overheads
+        """
         site_data = self.get_site_data()
         modes_by_type = self.get_modes_by_type(instrument_type)
         for site in site_data:
@@ -462,7 +524,6 @@ class ConfigDB(object):
                                     'optical_element_change_overheads':
                                         {oeg['type']: oeg['element_change_overhead'] for oeg in instrument['science_camera']['optical_element_groups']}
                                     }
-
         raise ConfigDBException("Instrument type {} not found in configdb.".format(instrument_type))
 
     @staticmethod
