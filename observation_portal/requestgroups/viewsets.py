@@ -80,7 +80,7 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
             requests__windows__start__gte=start,
             proposal__active=True
         ).prefetch_related(
-            'requests', 'requests__windows', 'proposal', 'proposal__timeallocation_set', 'requests__configurations',
+            'requests', 'requests__windows', 'proposal', 'requests__configurations',
             'submitter', 'requests__location', 'requests__configurations__target',
             'requests__configurations__instrument_configs', 'requests__configurations__guiding_config',
             'requests__configurations__constraints', 'requests__configurations__acquisition_config',
