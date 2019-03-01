@@ -72,10 +72,10 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
         current_semester = Semester.current_semesters().first()
         start = parse(request.query_params.get('start', str(current_semester.start))).replace(tzinfo=timezone.utc)
         end = parse(request.query_params.get('end', str(current_semester.end))).replace(tzinfo=timezone.utc)
-
         # Schedulable requests are not in a terminal state, are part of an active proposal,
         # and have a window within this semester
-        queryset = RequestGroup.objects.exclude(state__in=TERMINAL_REQUEST_STATES).filter(
+        queryset = RequestGroup.objects.exclude(state__in=TERMINAL_REQUEST_STATES,
+                                                observation_type=RequestGroup.DIRECT).filter(
             requests__windows__start__lte=end,
             requests__windows__start__gte=start,
             proposal__active=True
@@ -107,8 +107,14 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
                     time_left = time_allocation.std_allocation - time_allocation.std_time_used
                 elif request_group.observation_type == RequestGroup.RAPID_RESPONSE:
                     time_left = time_allocation.rr_allocation - time_allocation.rr_time_used
-                else:
+                elif request_group.observation_type == RequestGroup.TIME_CRITICAL:
                     time_left = time_allocation.tc_allocation - time_allocation.tc_time_used
+                else:
+                    logger.critical('request_group {} observation_type {} is not allowed'.format(
+                        request_group.id,
+                        request_group.observation_type)
+                    )
+                    continue
                 if time_left * OVERHEAD_ALLOWANCE >= (duration / 3600.0):
                     request_group_data.append(request_group.as_dict())
                     break
