@@ -74,8 +74,11 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
         end = parse(request.query_params.get('end', str(current_semester.end))).replace(tzinfo=timezone.utc)
         # Schedulable requests are not in a terminal state, are part of an active proposal,
         # and have a window within this semester
-        queryset = RequestGroup.objects.exclude(state__in=TERMINAL_REQUEST_STATES,
-                                                observation_type=RequestGroup.DIRECT).filter(
+        queryset = RequestGroup.objects.exclude(
+            state__in=TERMINAL_REQUEST_STATES
+        ).exclude(
+            observation_type=RequestGroup.DIRECT
+        ).filter(
             requests__windows__start__lte=end,
             requests__windows__start__gte=start,
             proposal__active=True
