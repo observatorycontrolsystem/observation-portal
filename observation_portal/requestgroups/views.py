@@ -3,8 +3,9 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.base import TemplateView
 from django.views.generic.detail import DetailView
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.core.cache import cache
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAdminUser
 from django.http import HttpResponseBadRequest, HttpResponseRedirect
 from django.utils import timezone
 from django.urls import reverse
@@ -218,3 +219,14 @@ class PressureView(APIView):
         else:
             pressure = Pressure(instrument_name, site)
         return Response(pressure.data())
+
+
+class ObservationPortalLastChangedView(APIView):
+    '''
+        Returns the datetime of the last status of requests change or new requests addition
+    '''
+    permission_classes = (IsAdminUser,)
+
+    def get(self, request):
+        last_change_time = cache.get('observation_portal_last_change_time', timezone.now() - timedelta(days=7))
+        return Response({'last_change_time': last_change_time})

@@ -1,6 +1,7 @@
 from django.utils import timezone
 from django.db import transaction
 from django.utils.translation import ugettext as _
+from django.core.cache import cache
 
 from observation_portal.proposals.models import TimeAllocation, TimeAllocationKey
 from observation_portal.requestgroups.request_utils import exposure_completion_percentage
@@ -64,6 +65,7 @@ def on_configuration_status_state_change(instance):
 def on_request_state_change(old_request, new_request):
     if old_request.state == new_request.state:
         return
+    cache.set('observation_portal_last_change_time', timezone.now(), None)
     valid_request_state_change(old_request.state, new_request.state, old_request)
     # Must be a valid transition, so do time accounting here
     if new_request.state == 'COMPLETED':
@@ -108,6 +110,11 @@ def update_observation_state(observation):
         observation.state = 'ABORTED'
     elif all([state == 'COMPLETED' for state in states]):
         observation.state = 'COMPLETED'
+
+    if observation.state in ['FAILED', 'ABORTED']:
+        # If the observation has failed, trigger a reschedule
+        cache.set('observation_portal_last_change_time', timezone.now(), None)
+
     observation.save()
 
 

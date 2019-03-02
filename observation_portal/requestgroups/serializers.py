@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.utils.translation import ugettext as _
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.cache import cache
 from django.db import transaction
 from django.utils import timezone
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -586,6 +587,8 @@ class RequestGroupSerializer(serializers.ModelSerializer):
             'tracking_num': request_group.id,
             'name': request_group.name
         }})
+        cache.set('observation_portal_last_change_time', timezone.now(), None)
+
         return request_group
 
     def validate(self, data):
