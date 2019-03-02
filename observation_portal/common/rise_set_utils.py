@@ -1,5 +1,6 @@
 from math import cos, radians
-from datetime import timedelta
+from datetime import datetime, timedelta
+
 from time_intervals.intervals import Intervals
 from rise_set.astrometry import make_ra_dec_target, make_satellite_target, make_minor_planet_target, mean_to_apparent
 from rise_set.astrometry import make_comet_target, make_major_planet_target, angular_distance_between, date_to_tdb
@@ -24,37 +25,43 @@ def get_largest_interval(intervals):
 
 
 # TODO: rewrite to handle multiple targets per request
-def get_rise_set_intervals_by_site(request_dict):
-    ''' Computes or Retrieves from cache a dictionary of rise_set intervals by site for the request
-    '''
+def get_rise_set_intervals_by_site(request: dict) -> dict:
+    """Get rise_set intervals by site for a request
+
+    Computes the intervals only if they do not already exist in cache.
+
+    Parameters:
+        request: The request for which to get the intervals
+    Returns:
+        rise_set intervals by site
+    """
     site_details = configdb.get_sites_with_instrument_type_and_location()
     intervals_by_site = {}
     for site in site_details:
         intervals_by_site[site] = None
-        if request_dict.get('id'):
-            cache_key = '{}.{}.rsi'.format(request_dict['id'], site)
+        if request.get('id'):
+            cache_key = '{}.{}.rsi'.format(request['id'], site)
             intervals_by_site[site] = cache.get(cache_key, None)
 
         if intervals_by_site[site] is None:
             # There is no cached rise_set intervals for this request and site, so recalculate it now
             intervals_by_site[site] = []
             rise_set_site = get_rise_set_site(site_details[site])
-            rise_set_target = get_rise_set_target(request_dict['configurations'][0]['target'])
-            for window in request_dict['windows']:
+            rise_set_target = get_rise_set_target(request['configurations'][0]['target'])
+            for window in request['windows']:
                 visibility = get_rise_set_visibility(rise_set_site, window['start'], window['end'], site_details[site])
                 try:
                     intervals_by_site[site].extend(
                         visibility.get_observable_intervals(
                             rise_set_target,
-                            airmass=request_dict['configurations'][0]['constraints']['max_airmass'],
-                            moon_distance=Angle(degrees=request_dict['configurations'][0]['constraints']['min_lunar_distance'])
+                            airmass=request['configurations'][0]['constraints']['max_airmass'],
+                            moon_distance=Angle(degrees=request['configurations'][0]['constraints']['min_lunar_distance'])
                         )
                     )
                 except MovingViolation:
                     pass
-            if request_dict.get('id'):
-                cache.set(cache_key, intervals_by_site[site], 86400 * 30) # cache for 30 days
-
+            if request.get('id'):
+                cache.set(cache_key, intervals_by_site[site], 86400 * 30)  # cache for 30 days
     return intervals_by_site
 
 
@@ -79,10 +86,18 @@ def get_rise_set_intervals(request_dict, site=''):
     return filtered_intervals
 
 
-def intervals_by_site_to_intervalsets_by_telescope(intervals_by_site, telescopes):
-    ''' Takes in a dictionary of rise_set intervals by sites and a dictionary of telescope details for the request.
-        Returns a dictionary by telescopes of rise_set intervals for the request
-    '''
+def intervals_by_site_to_intervalsets_by_telescope(intervals_by_site: dict, telescopes: list) -> dict:
+    """Convert rise_set intervals ordered by site to be ordered by telescope
+
+     `telescopes` must be telescope details for the request that the `intervals_by_site` were
+     calculated for.
+
+    Parameters:
+        intervals_by_site: rise_set intervals ordered by site
+        telescopes: Available telescope details for the request
+    Returns:
+        rise_set intervals ordered by telescope
+    """
     intervalsets_by_telescope = {}
     for telescope in telescopes:
         if telescope not in intervalsets_by_telescope:
@@ -92,13 +107,17 @@ def intervals_by_site_to_intervalsets_by_telescope(intervals_by_site, telescopes
                 datetime_intervals.append({'type': 'start', 'time': start})
                 datetime_intervals.append({'type': 'end', 'time': end})
             intervalsets_by_telescope[telescope] = Intervals(datetime_intervals)
-
     return intervalsets_by_telescope
 
 
-def filter_out_downtime_from_intervalsets(intervalsets_by_telescope):
-    ''' Takes a dictionary of rise_set intervalsets by telescopes and returns the same with downtime intervals removed
-    '''
+def filter_out_downtime_from_intervalsets(intervalsets_by_telescope: dict) -> dict:
+    """Remove downtime intervals.
+
+    Parameters:
+        intervalsets_by_telescope: rise_set intervals by telescope
+    Returns:
+        rise_set intervals by telescope with downtimes filtered out
+    """
     downtime_intervals = DowntimeDB.get_downtime_intervals()
     filtered_intervalsets_by_telescope = {}
     for telescope in intervalsets_by_telescope.keys():
@@ -106,7 +125,6 @@ def filter_out_downtime_from_intervalsets(intervalsets_by_telescope):
             filtered_intervalsets_by_telescope[telescope] = intervalsets_by_telescope[telescope]
         else:
             filtered_intervalsets_by_telescope[telescope] = intervalsets_by_telescope[telescope].subtract(downtime_intervals[telescope])
-
     return filtered_intervalsets_by_telescope
 
 
@@ -166,14 +184,16 @@ def get_rise_set_target(target_dict):
         raise TypeError('Invalid target type' + target_dict['type'])
 
 
-def get_distance_between(rs_target_1, rs_target_2, start_time):
-    '''
-        Returns the angular distance between two Sidereal rise set targets as a rise_set Angle
-    :param rs_target_1:
-    :param rs_target_2:
-    :param start_time:
-    :return: Angle
-    '''
+def get_distance_between(rs_target_1: dict, rs_target_2: dict, start_time: datetime) -> Angle:
+    """Get the angular distance between two sidereal rise_set targets as a rise_set Angle.
+
+    Parameters:
+        rs_target_1: First sidereal rise_set target
+        rs_target_2: Second sidereal rise_set target
+        start_time: Time of computation
+    Returns:
+         rise_set Angle
+    """
     start_tdb = date_to_tdb(start_time)
     apparent_ra_1, apparent_dec_1 = mean_to_apparent(rs_target_1, start_tdb)
     apparent_ra_2, apparent_dec_2 = mean_to_apparent(rs_target_2, start_tdb)
