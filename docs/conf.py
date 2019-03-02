@@ -158,7 +158,6 @@ todo_include_todos = True
 autodoc_mock_imports = [
     'django',
     'celery',
-    'rise_set',
     'elasticsearch',
     'dateutil',
     'time_intervals'
