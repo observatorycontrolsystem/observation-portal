@@ -78,7 +78,7 @@
   function openEvents(events_text){
     var y = window.top.outerHeight / 2 + window.top.screenY - 300
     var x = window.top.outerWidth / 2 + window.top.screenX - 300
-    var newWin = open('','Events', 'toolbar=no, location=no, menubar=no, width='+ 600 +', height='+ 600 +', top='+y+', left='+x);
+    var newWin = open('','Events', 'scrollbars=yes, toolbar=no, location=no, menubar=no, width='+ 600 +', height='+ 600 +', top='+y+', left='+x);
     newWin.document.write('<pre>' + JSON.stringify(events_text, null, 2) + '</pre>');
   }
 </script>
