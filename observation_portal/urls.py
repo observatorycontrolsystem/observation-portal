@@ -25,7 +25,7 @@ from drf_yasg import openapi
 
 from observation_portal.requestgroups.viewsets import RequestGroupViewSet, RequestViewSet, DraftRequestGroupViewSet
 from observation_portal.requestgroups.views import TelescopeStatesView, TelescopeAvailabilityView, AirmassView
-from observation_portal.requestgroups.views import InstrumentsInformationView
+from observation_portal.requestgroups.views import InstrumentsInformationView, ObservationPortalLastChangedView
 from observation_portal.requestgroups.views import ContentionView, PressureView
 from observation_portal.accounts.views import ProfileApiView
 from observation_portal.proposals.viewsets import ProposalViewSet, SemesterViewSet
@@ -55,6 +55,7 @@ api_urlpatterns = ([
     url(r'instruments/', InstrumentsInformationView.as_view(), name='instruments_information'),
     url(r'contention/(?P<instrument_name>.+)/', ContentionView.as_view(), name='contention'),
     url(r'pressure/', PressureView.as_view(), name='pressure'),
+    url(r'last_changed/', ObservationPortalLastChangedView.as_view(), name='last_changed')
 ], 'api')
 
 schema_view = get_schema_view(
