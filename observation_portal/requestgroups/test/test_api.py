@@ -2395,6 +2395,7 @@ class TestLastChanged(SetTimeMixin, APITestCase):
         self.window = mixer.blend(Window, start=timezone.now() - timedelta(days=1), end=timezone.now() + timedelta(days=1))
 
     def tearDown(self):
+        super().tearDown()
         self.patch1.stop()
         self.patch2.stop()
         self.patch3.stop()
