@@ -1,26 +1,16 @@
 from django_filters.views import FilterView
 from django.views.generic import DetailView
-from django_filters.filterset import FilterSet
-from django_filters import filters
 
 from observation_portal.observations.models import Observation
+from observation_portal.common.mixins import StaffRequiredMixin
+from observation_portal.observations.filters import ObservationFilter
 
 
-class ObservationDetailView(DetailView):
+class ObservationDetailView(StaffRequiredMixin, DetailView):
     model = Observation
 
 
-class ObservationFilter(FilterSet):
-    ordering = filters.OrderingFilter(
-        fields=['start', 'end', 'modified', 'created', 'state']
-    )
-
-    class Meta:
-        model = Observation
-        exclude = ['request']
-
-
-class ObservationListView(FilterView):
+class ObservationListView(StaffRequiredMixin, FilterView):
     model = Observation
     filterset_class = ObservationFilter
     paginate_by = 50

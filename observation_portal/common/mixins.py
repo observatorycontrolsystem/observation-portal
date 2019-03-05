@@ -1,3 +1,6 @@
+from django.contrib.auth.mixins import UserPassesTestMixin
+
+
 class ListAsDictMixin(object):
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
@@ -13,3 +16,8 @@ class CreateListModelMixin(object):
         if isinstance(kwargs.get('data', {}), list):
             kwargs['many'] = True
         return super().get_serializer(*args, **kwargs)
+
+
+class StaffRequiredMixin(UserPassesTestMixin):
+    def test_func(self):
+        return self.request.user.is_staff

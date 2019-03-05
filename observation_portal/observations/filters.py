@@ -15,10 +15,13 @@ class ObservationFilter(django_filters.FilterSet):
                                             widget=forms.TextInput(attrs={'class': 'input', 'type': 'date'}))
     start_before = django_filters.CharFilter(field_name='start', method='filter_start_before', label='Start before',
                                              widget=forms.TextInput(attrs={'class': 'input', 'type': 'date'}))
-    end_after = django_filters.CharFilter(field_name='end', method='filter_end_after', label='End after')
-    end_before = django_filters.CharFilter(field_name='end', method='filter_end_before', label='End before')
+    end_after = django_filters.CharFilter(field_name='end', method='filter_end_after', label='End after',
+                                          widget=forms.TextInput(attrs={'class': 'input', 'type': 'date'}))
+    end_before = django_filters.CharFilter(field_name='end', method='filter_end_before', label='End before',
+                                           widget=forms.TextInput(attrs={'class': 'input', 'type': 'date'}))
     modified_after = django_filters.CharFilter(field_name='modified', method='filter_modified_after',
-                                               label='Modified After')
+                                               label='Modified After',
+                                               widget=forms.TextInput(attrs={'class': 'input', 'type': 'date'}))
     request_id = django_filters.CharFilter(field_name='request__id', method='filter_request_id',
                                             widget=forms.TextInput(attrs={'class': 'input'}))
     request_group_id = django_filters.CharFilter(field_name='request__request_group__id',
@@ -29,10 +32,18 @@ class ObservationFilter(django_filters.FilterSet):
                                                                    field_name='request__request_group__observation_type',
                                                                    exclude=True)
     request_state = django_filters.MultipleChoiceFilter(choices=Request.STATE_CHOICES, field_name='request__state')
+    proposal = django_filters.CharFilter(field_name='request__request_group__proposal__id', label='Proposal')
+    instrument_type = django_filters.CharFilter(
+        label='Instrument type',
+        field_name='configuration_statuses__configuration__instrument_type'
+    )
+    ordering = django_filters.OrderingFilter(
+        fields=['start', 'end', 'modified', 'created', 'state']
+    )
 
     class Meta:
         model = Observation
-        fields = '__all__'
+        exclude = ['start', 'end']
 
     def filter_start_after(self, queryset, name, value):
         start = parser.parse(value, ignoretz=True)

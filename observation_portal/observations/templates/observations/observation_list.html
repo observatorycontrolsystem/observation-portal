@@ -19,11 +19,13 @@
         <tr>
           <th>ID</th>
           <th>Site</th>
-          <th>Enclosure</th>
-          <th>Telescope</th>
+          <th>Enc.</th>
+          <th>Tel.</th>
           <th>Start</th>
           <th>End</th>
           <th>State</th>
+          <th>Proposal</th>
+          <th>Instruments</th>
           <th>Modified</th>
           <th>Created</th>
         </tr>
@@ -38,6 +40,8 @@
           <td>{{ obs.start }}</td>
           <td>{{ obs.end }}</td>
           <td>{{ obs.state }}</td>
+          <td>{{ obs.request.request_group.proposal.id }}</td>
+          <td>{% for inst in obs.instrument_types %}{{ inst }}<br/>{% endfor %}</td>
           <td>{{ obs.modified }}</td>
           <td>{{ obs.created }}</td>
         </tr>
