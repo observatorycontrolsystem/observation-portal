@@ -160,6 +160,7 @@ USE_L10N = False
 
 USE_TZ = True
 
+DATETIME_FORMAT = 'Y-m-d H:i:s'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
@@ -239,3 +240,14 @@ CELERY_BEAT_SCHEDULE = {
 }
 
 TEST_RUNNER = 'observation_portal.test_runner.MyDiscoverRunner'
+
+try:
+    from local_settings import *  # noqa
+except ImportError:
+    pass
+
+try:
+    INSTALLED_APPS += LOCAL_INSTALLED_APPS  # noqa
+    ALLOWED_HOSTS += LOCAL_ALLOWED_HOSTS  # noqa
+except NameError:
+    pass

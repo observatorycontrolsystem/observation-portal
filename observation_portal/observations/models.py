@@ -90,6 +90,14 @@ class Observation(models.Model):
                 configuration['summary'] = {}
         return ret_dict
 
+    @property
+    def instrument_types(self):
+        return set(
+            Configuration.objects.filter(
+                configuration_status__in=self.configuration_statuses.all()
+            ).values_list('instrument_type', flat=True)
+        )
+
 
 class ConfigurationStatus(models.Model):
     STATE_CHOICES = (
