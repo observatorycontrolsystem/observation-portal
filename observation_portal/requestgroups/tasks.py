@@ -1,7 +1,7 @@
 from celery import shared_task
 import logging
 
-from observation_portal.requestgroups.state_changes import update_request_states_for_window_expiration
+from observation_portal.common.state_changes import update_request_states_for_window_expiration
 
 logger = logging.getLogger(__name__)
 

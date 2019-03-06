@@ -15,6 +15,8 @@ WeasyPrint
 PyPDF2
 psycopg2-binary
 boto3
+redis
+django-redis-cache<2.1
 
 mixer
 responses

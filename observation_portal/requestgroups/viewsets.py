@@ -13,15 +13,19 @@ from observation_portal.requestgroups.filters import RequestGroupFilter, Request
 from observation_portal.requestgroups.cadence import expand_cadence_request
 from observation_portal.requestgroups.serializers import RequestSerializer, RequestGroupSerializer
 from observation_portal.requestgroups.serializers import DraftRequestGroupSerializer, CadenceRequestSerializer
-from observation_portal.requestgroups.duration_utils import (get_request_duration_dict, get_max_ipp_for_requestgroup,
-                                                  OVERHEAD_ALLOWANCE)
-from observation_portal.requestgroups.state_changes import InvalidStateChange, TERMINAL_STATES
-from observation_portal.requestgroups.request_utils import (get_airmasses_for_request_at_sites,
-                                                 get_telescope_states_for_request)
+from observation_portal.requestgroups.duration_utils import (
+    get_request_duration_dict, get_max_ipp_for_requestgroup, OVERHEAD_ALLOWANCE
+)
+from observation_portal.common.state_changes import InvalidStateChange, TERMINAL_REQUEST_STATES
+from observation_portal.requestgroups.request_utils import (
+    get_airmasses_for_request_at_sites, get_telescope_states_for_request
+)
+from observation_portal.common.mixins import ListAsDictMixin
+
 logger = logging.getLogger(__name__)
 
 
-class RequestGroupViewSet(viewsets.ModelViewSet):
+class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
     permission_classes = (IsAuthenticatedOrReadOnly,)
     http_method_names = ['get', 'post', 'head', 'options']
     serializer_class = RequestGroupSerializer
@@ -47,34 +51,39 @@ class RequestGroupViewSet(viewsets.ModelViewSet):
             )
         else:
             qs = RequestGroup.objects.filter(proposal__in=Proposal.objects.filter(public=True))
-        return qs.prefetch_related('requests', 'requests__windows', 'requests__configurations', 'requests__location',
-                                   'requests__configurations__instrument_configs', 'requests__configurations__target',
-                                   'requests__configurations__acquisition_config',
-                                   'requests__configurations__guiding_config', 'requests__configurations__constraints',
-                                   'requests__configurations__instrument_configs__rois')
+        return qs.prefetch_related(
+            'requests', 'requests__windows', 'requests__configurations', 'requests__location',
+            'requests__configurations__instrument_configs', 'requests__configurations__target',
+            'requests__configurations__acquisition_config', 'submitter', 'proposal',
+            'requests__configurations__guiding_config', 'requests__configurations__constraints',
+            'requests__configurations__instrument_configs__rois'
+        ).distinct()
 
     def perform_create(self, serializer):
         serializer.save(submitter=self.request.user)
 
     @action(detail=False, methods=['get'], permission_classes=(IsAdminUser,))
     def schedulable_requests(self, request):
-        '''
+        """
             Gets the set of schedulable User requests for the scheduler, should be called right after isDirty finishes
             Needs a start and end time specified as the range of time to get requests in. Usually this is the entire
             semester for a scheduling run.
-        '''
+        """
         current_semester = Semester.current_semesters().first()
         start = parse(request.query_params.get('start', str(current_semester.start))).replace(tzinfo=timezone.utc)
         end = parse(request.query_params.get('end', str(current_semester.end))).replace(tzinfo=timezone.utc)
-
         # Schedulable requests are not in a terminal state, are part of an active proposal,
         # and have a window within this semester
-        queryset = RequestGroup.objects.exclude(state__in=TERMINAL_STATES).filter(
+        queryset = RequestGroup.objects.exclude(
+            state__in=TERMINAL_REQUEST_STATES
+        ).exclude(
+            observation_type=RequestGroup.DIRECT
+        ).filter(
             requests__windows__start__lte=end,
             requests__windows__start__gte=start,
             proposal__active=True
         ).prefetch_related(
-            'requests', 'requests__windows', 'proposal', 'proposal__timeallocation_set', 'requests__configurations',
+            'requests', 'requests__windows', 'proposal', 'requests__configurations',
             'submitter', 'requests__location', 'requests__configurations__target',
             'requests__configurations__instrument_configs', 'requests__configurations__guiding_config',
             'requests__configurations__constraints', 'requests__configurations__acquisition_config',
@@ -101,10 +110,16 @@ class RequestGroupViewSet(viewsets.ModelViewSet):
                     time_left = time_allocation.std_allocation - time_allocation.std_time_used
                 elif request_group.observation_type == RequestGroup.RAPID_RESPONSE:
                     time_left = time_allocation.rr_allocation - time_allocation.rr_time_used
-                else:
+                elif request_group.observation_type == RequestGroup.TIME_CRITICAL:
                     time_left = time_allocation.tc_allocation - time_allocation.tc_time_used
+                else:
+                    logger.critical('request_group {} observation_type {} is not allowed'.format(
+                        request_group.id,
+                        request_group.observation_type)
+                    )
+                    continue
                 if time_left * OVERHEAD_ALLOWANCE >= (duration / 3600.0):
-                    request_group_data.append(request_group.as_dict)
+                    request_group_data.append(request_group.as_dict())
                     break
                 else:
                     logger.warning(
@@ -177,7 +192,7 @@ class RequestGroupViewSet(viewsets.ModelViewSet):
         return Response(ret_data)
 
 
-class RequestViewSet(viewsets.ReadOnlyModelViewSet):
+class RequestViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
     permission_classes = (IsAuthenticatedOrReadOnly,)
     serializer_class = RequestSerializer
     filter_class = RequestFilter
@@ -198,28 +213,28 @@ class RequestViewSet(viewsets.ReadOnlyModelViewSet):
         else:
             qs = Request.objects.filter(request_group__proposal__in=Proposal.objects.filter(public=True))
 
-        return qs.prefetch_related('windows', 'configurations', 'location', 'configurations__instrument_configs',
-                                   'configurations__target', 'configurations__acquisition_config',
-                                   'configurations__guiding_config', 'configurations__constraints',
-                                   'configurations__instrument_configs__rois').distinct()
+        return qs.prefetch_related(
+            'windows', 'configurations', 'location', 'configurations__instrument_configs', 'configurations__target',
+            'configurations__acquisition_config', 'configurations__guiding_config', 'configurations__constraints',
+            'configurations__instrument_configs__rois'
+        ).distinct()
 
     @action(detail=True)
     def airmass(self, request, pk=None):
-        return Response(get_airmasses_for_request_at_sites(self.get_object().as_dict))
+        return Response(get_airmasses_for_request_at_sites(self.get_object().as_dict()))
 
     @action(detail=True)
     def telescope_states(self, request, pk=None):
         telescope_states = get_telescope_states_for_request(self.get_object())
         str_telescope_states = {str(k): v for k, v in telescope_states.items()}
-
         return Response(str_telescope_states)
 
     @action(detail=True)
-    def blocks(self, request, pk=None):
-        blocks = self.get_object().blocks
-        if request.GET.get('canceled'):
-            return Response([b for b in blocks if not b['canceled']])
-        return Response(blocks)
+    def observations(self, request, pk=None):
+        observations = self.get_object().observation_set.all()
+        if request.GET.get('exclude_canceled'):
+            return Response([o.as_dict() for o in observations if o.state != 'CANCELED'])
+        return Response([o.as_dict() for o in observations])
 
 
 class DraftRequestGroupViewSet(viewsets.ModelViewSet):

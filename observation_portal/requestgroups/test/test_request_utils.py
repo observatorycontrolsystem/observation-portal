@@ -52,7 +52,7 @@ class BaseSetupRequest(SetTimeMixin, TestCase):
 
 class TestRequestIntervals(BaseSetupRequest):
     def test_request_intervals_for_one_week(self):
-        intervals = get_rise_set_intervals(self.request.as_dict)
+        intervals = get_rise_set_intervals(self.request.as_dict())
 
         truth_intervals = [(datetime(2016, 10, 1, 0, 0, tzinfo=timezone.utc),
                             datetime(2016, 10, 1, 3, 20, 31, 366820, tzinfo=timezone.utc)),
@@ -89,7 +89,7 @@ class TestRequestIntervals(BaseSetupRequest):
                                        'reason': 'Whatever'}
                                       ]
 
-        intervals = get_rise_set_intervals(self.request.as_dict)
+        intervals = get_rise_set_intervals(self.request.as_dict())
 
         truth_intervals = [(datetime(2016, 10, 1, 0, 0, tzinfo=timezone.utc),
                             datetime(2016, 10, 1, 3, 20, 31, 366820, tzinfo=timezone.utc)),
@@ -150,7 +150,7 @@ class TestRequestIntervals(BaseSetupRequest):
                                        'reason': 'Whatever'},
                                       ]
 
-        intervals = get_rise_set_intervals(self.request.as_dict)
+        intervals = get_rise_set_intervals(self.request.as_dict())
 
         truth_intervals = [(datetime(2016, 10, 1, 0, 0, tzinfo=timezone.utc),
                             datetime(2016, 10, 1, 3, 20, 31, 366820, tzinfo=timezone.utc)),
@@ -179,7 +179,7 @@ class TestRequestIntervals(BaseSetupRequest):
                                        'reason': 'Whatever'}
                                       ]
 
-        intervals = get_rise_set_intervals(self.request.as_dict)
+        intervals = get_rise_set_intervals(self.request.as_dict())
 
         truth_intervals = []
 
@@ -213,7 +213,7 @@ class TestRequestIntervals(BaseSetupRequest):
                                        'reason': 'Whatever'}
                                       ]
 
-        intervals = get_rise_set_intervals(self.request.as_dict)
+        intervals = get_rise_set_intervals(self.request.as_dict())
 
         truth_intervals = [(datetime(2016, 10, 1, 0, 0, tzinfo=timezone.utc),
                             datetime(2016, 10, 1, 3, 20, 31, 366820, tzinfo=timezone.utc)),
@@ -274,7 +274,7 @@ class TestRequestIntervals(BaseSetupRequest):
                                        'reason': 'Whatever'}
                                       ]
 
-        intervals = get_rise_set_intervals(self.request.as_dict)
+        intervals = get_rise_set_intervals(self.request.as_dict())
 
         truth_intervals = [(datetime(2016, 10, 1, 0, 0, tzinfo=timezone.utc),
                             datetime(2016, 10, 1, 3, 20, 31, 366820, tzinfo=timezone.utc)),
@@ -292,7 +292,7 @@ class TestRequestIntervals(BaseSetupRequest):
 
 class TestRequestAirmass(BaseSetupRequest):
     def test_airmass_calculation(self):
-        airmasses = get_airmasses_for_request_at_sites(self.request.as_dict)
+        airmasses = get_airmasses_for_request_at_sites(self.request.as_dict())
 
         # Should be no data betwee 3:30AM and 18:30PM acording to pure rise set for this target, so verify that
         expected_null_range = (datetime(2016, 10, 1, 3, 30, 0), datetime(2016, 10, 1, 18, 30, 0))
@@ -305,7 +305,7 @@ class TestRequestAirmass(BaseSetupRequest):
     def test_airmass_calculation_empty(self):
         self.location.site = 'cpt'
         self.location.save()
-        airmasses = get_airmasses_for_request_at_sites(self.request.as_dict)
+        airmasses = get_airmasses_for_request_at_sites(self.request.as_dict())
 
         self.assertFalse(airmasses['airmass_data'])
 

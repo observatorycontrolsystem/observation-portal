@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.utils.translation import ugettext as _
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.cache import cache
 from django.db import transaction
 from django.utils import timezone
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -14,7 +15,7 @@ from observation_portal.requestgroups.models import (
     AcquisitionConfig, GuidingConfig, RegionOfInterest
 )
 from observation_portal.requestgroups.models import DraftRequestGroup
-from observation_portal.requestgroups.state_changes import debit_ipp_time, TimeAllocationError, validate_ipp
+from observation_portal.common.state_changes import debit_ipp_time, TimeAllocationError, validate_ipp
 from observation_portal.requestgroups.target_helpers import TARGET_TYPE_HELPER_MAP
 from observation_portal.common.configdb import configdb, ConfigDBException
 from observation_portal.requestgroups.duration_utils import (
@@ -271,6 +272,40 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                         raise serializers.ValidationError(
                             _("must specify optical element of type {} for instrument type {}".format(
                                 singular_type, data['instrument_type']
+                            ))
+                        )
+            # Validate any regions of interest
+            if 'rois' in instrument_config:
+                max_rois = configdb.get_max_rois(data['instrument_type'])
+                ccd_size = configdb.get_ccd_size(data['instrument_type'])
+                if len(instrument_config['rois']) > max_rois:
+                    raise serializers.ValidationError(_(
+                        'Instrument type {} supports up to {} regions of interest'.format(
+                            data['instrument_type'], max_rois
+                        )
+                    ))
+                for roi in instrument_config['rois']:
+                    if 'x1' not in roi and 'x2' not in roi and 'y1' not in roi and 'y2' not in roi:
+                        raise serializers.ValidationError(_('Must submit at least one bound for a region of interest'))
+
+                    if 'x1' not in roi:
+                        roi['x1'] = 0
+                    if 'x2' not in roi:
+                        roi['x2'] = ccd_size['x']
+                    if 'y1' not in roi:
+                        roi['y1'] = 0
+                    if 'y2' not in roi:
+                        roi['y2'] = ccd_size['y']
+
+                    if roi['x1'] >= roi['x2'] or roi['y1'] >= roi['y2']:
+                        raise serializers.ValidationError(_(
+                            'Region of interest pixels start must be less than pixels end'
+                        ))
+
+                    if roi['x2'] > ccd_size['x'] or roi['y2'] > ccd_size['y']:
+                        raise serializers.ValidationError(_(
+                            'Regions of interest for instrument type {} must be in range 0<=x<={} and 0<=y<={}'.format(
+                                data['instrument_type'], ccd_size['x'], ccd_size['y']
                             ))
                         )
 
@@ -552,6 +587,8 @@ class RequestGroupSerializer(serializers.ModelSerializer):
             'tracking_num': request_group.id,
             'name': request_group.name
         }})
+        cache.set('observation_portal_last_change_time', timezone.now(), None)
+
         return request_group
 
     def validate(self, data):

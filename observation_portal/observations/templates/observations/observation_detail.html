@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row">
+  <div class="col-md-12">
+    <h1>Observation {{ object.id }}</h1>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Request</th>
+          <th>Site</th>
+          <th>Enclosure</th>
+          <th>Telescope</th>
+          <th>Start</th>
+          <th>End</th>
+          <th>State</th>
+          <th>Modified</th>
+          <th>Created</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><a href="{% url 'requestgroups:request-detail' object.request.id %}">{{ object.request.id }}</a></td>
+          <td>{{ object.site }}</td>
+          <td>{{ object.enclosure }}</td>
+          <td>{{ object.telescope }}</td>
+          <td>{{ object.start }}</td>
+          <td>{{ object.end }}</td>
+          <td>{{ object.state }}</td>
+          <td>{{ object.modified }}</td>
+          <td>{{ object.created }}</td>
+        </tr>
+      </body>
+    </table>
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th colspan="3">Config Status</th>
+          <th colspan="6">Summary</th>
+        </tr>
+        <tr>
+          <th>Instrument</th>
+          <th>Guider</th>
+          <th>State</th>
+          <th>State</th>
+          <th>Start</th>
+          <th>End</th>
+          <th>Reason</th>
+          <th>Time</th>
+          <th>Events</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c_status in object.configuration_statuses.all %}
+        <tr>
+          <td>{{ c_status.instrument_name }}</td>
+          <td>{{ c_status.guide_camera_name }}</td>
+          <td>{{ c_status.state }}</td>
+          {% if c_status.summary %}
+          <td>{{ c_status.summary.state }}</td>
+          <td>{{ c_status.summary.start }}</td>
+          <td>{{ c_status.summary.end }}</td>
+          <td>{{ c_status.summary.reason }}</td>
+          <td>{{ c_status.summary.time_completed }}</td>
+          <td><a href="#" onClick='openEvents({{ c_status.summary.events }})'>View</a></td>
+          {% else %}
+          <td colspan="6">No summary</td>
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{{ object.configurationstatus_set.all }}
+{% endblock %}
+{% block extra_javascript %}
+<script type="text/javascript">
+  function openEvents(events_text){
+    var y = window.top.outerHeight / 2 + window.top.screenY - 300
+    var x = window.top.outerWidth / 2 + window.top.screenX - 300
+    var newWin = open('','Events', 'scrollbars=yes, toolbar=no, location=no, menubar=no, width='+ 600 +', height='+ 600 +', top='+y+', left='+x);
+    newWin.document.write('<pre>' + JSON.stringify(events_text, null, 2) + '</pre>');
+  }
+</script>
+{% endblock %}
+

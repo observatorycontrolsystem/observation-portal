@@ -1,18 +1,22 @@
 from rest_framework import viewsets, filters
 from rest_framework.permissions import IsAdminUser
+from rest_framework.decorators import action
+from rest_framework.response import Response
+
 from django_filters.rest_framework import DjangoFilterBackend
 
-from observation_portal.observations.models import Observation
-from observation_portal.observations.serializers import ObservationSerializer, ConfigurationStatusSerializer
+from observation_portal.requestgroups.models import RequestGroup
+from observation_portal.observations.models import Observation, ConfigurationStatus
+from observation_portal.observations.serializers import (ObservationSerializer, ConfigurationStatusSerializer,
+                                                         ScheduleSerializer, CancelObservationsSerializer)
 from observation_portal.observations.filters import ObservationFilter, ConfigurationStatusFilter
+from observation_portal.common.mixins import ListAsDictMixin, CreateListModelMixin
 
-import logging
 
-
-class ObservationViewSet(viewsets.ModelViewSet):
+class ScheduleViewSet(ListAsDictMixin, CreateListModelMixin, viewsets.ModelViewSet):
     permission_classes = (IsAdminUser,)
     http_method_names = ['get', 'post', 'head', 'options']
-    serializer_class = ObservationSerializer
+    serializer_class = ScheduleSerializer
     filter_class = ObservationFilter
     filter_backends = (
         filters.OrderingFilter,
@@ -26,10 +30,61 @@ class ObservationViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         qs = Observation.objects.all()
         return qs.prefetch_related('request', 'request__configurations', 'request__configurations__instrument_configs',
-                                   'request__configurations__target',
+                                   'request__configurations__target', 'request__request_group__proposal',
                                    'request__configurations__acquisition_config', 'request__request_group',
                                    'request__configurations__guiding_config', 'request__configurations__constraints',
-                                   'request__configurations__instrument_configs__rois')
+                                   'request__configurations__instrument_configs__rois',
+                                   'configuration_statuses', 'configuration_statuses__summary',
+                                   'configuration_statuses__configuration',
+                                   'request__request_group__submitter').distinct()
+
+
+class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelViewSet):
+    permission_classes = (IsAdminUser,)
+    http_method_names = ['post', 'head', 'options']
+    serializer_class = ObservationSerializer
+
+    def get_queryset(self):
+        qs = Observation.objects.all()
+        return qs.prefetch_related('request', 'request__request_group').distinct()
+
+    @action(detail=False, methods=['post'])
+    def cancel(self, request):
+        '''
+        Filters a set of observations based on the parameters provided, and then either deletes them if they are 
+        scheduled >72 hours in the future, cancels them if they are in the future, or aborts them if they are currently 
+        in progress. 
+        :param request: 
+        :return: 
+        '''
+        cancel_serializer = CancelObservationsSerializer(data=request.data)
+        if cancel_serializer.is_valid():
+            observations = self.get_queryset()
+            if 'ids' in cancel_serializer.data:
+                observations = observations.filter(pk__in=cancel_serializer.data['ids'])
+
+            if 'start' in cancel_serializer.data:
+                observations = observations.filter(end__gt=cancel_serializer.data['start'])
+            if 'end' in cancel_serializer.data:
+                observations = observations.filter(start__lt=cancel_serializer.data['end'])
+            if 'site' in cancel_serializer.data:
+                observations = observations.filter(site=cancel_serializer.data['site'])
+            if 'enclosure' in cancel_serializer.data:
+                observations = observations.filter(enclosure=cancel_serializer.data['enclosure'])
+            if 'telescope' in cancel_serializer.data:
+                observations = observations.filter(telescope=cancel_serializer.data['telescope'])
+            if not cancel_serializer.data.get('include_rr', False):
+                observations = observations.exclude(
+                    request__request_group__observation_type=RequestGroup.RAPID_RESPONSE)
+            if not cancel_serializer.data.get('include_direct', False):
+                observations = observations.exclude(request__request_group__observation_type=RequestGroup.DIRECT)
+            observations = observations.filter(state__in=['PENDING', 'IN_PROGRESS'])
+            # Receive a list of observation id's to cancel
+            num_canceled = Observation.cancel(observations)
+
+            return Response({'canceled': num_canceled}, status=200)
+        else:
+            return Response(cancel_serializer.errors, status=400)
 
 
 class ConfigurationStatusViewSet(viewsets.ModelViewSet):
@@ -41,5 +96,6 @@ class ConfigurationStatusViewSet(viewsets.ModelViewSet):
         filters.OrderingFilter,
         DjangoFilterBackend
     )
+    queryset = ConfigurationStatus.objects.all().prefetch_related('summary')
     ordering = ('-id',)
 

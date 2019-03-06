@@ -13,17 +13,53 @@ from observation_portal.proposals.models import Proposal
 class SummarySerializer(serializers.ModelSerializer):
     class Meta:
         model = Summary
-        exclude = ('configuration_status', 'id')
+        fields = ('start', 'end', 'state', 'reason', 'time_completed', 'events')
 
 
 class ConfigurationStatusSerializer(serializers.ModelSerializer):
-    summary = SummarySerializer()
+    TERMINAL_STATES = ['COMPLETED', 'ABORTED', 'FAILED']
+    summary = SummarySerializer(required=False)
     instrument_name = serializers.CharField(required=False)
     guide_camera_name = serializers.CharField(required=False)
 
     class Meta:
         model = ConfigurationStatus
         exclude = ('observation', 'modified', 'created')
+
+    def validate(self, data):
+        data = super().validate(data)
+        if self.context.get('request').method == 'PATCH':
+            # For a partial update, don't try to validate the field set
+            return data
+
+        if not configdb.is_valid_guider_for_instrument_name(data['instrument_name'], data['guide_camera_name']):
+            raise serializers.ValidationError(_('{} is not a valid guide camera for {}'.format(
+                data['guide_camera_name'], data['instrument_name']
+            )))
+        return data
+
+    def update(self, instance, validated_data):
+        update_fields = ['state']
+        if instance.state not in ConfigurationStatusSerializer.TERMINAL_STATES:
+            instance.state = validated_data.get('state', instance.state)
+            instance.save(update_fields=update_fields)
+
+        if 'summary' in validated_data:
+            summary_serializer = SummarySerializer(data=validated_data['summary'])
+            if summary_serializer.is_valid(raise_exception=True):
+                summary = validated_data.get('summary')
+                Summary.objects.update_or_create(
+                    configuration_status=instance,
+                    defaults={'reason': summary.get('reason', ''),
+                              'start': summary.get('start'),
+                              'end': summary.get('end'),
+                              'state': summary.get('state'),
+                              'time_completed': summary.get('time_completed'),
+                              'events': summary.get('events', {})
+                              }
+                )
+
+        return instance
 
 
 class ObservationConfigurationSerializer(ConfigurationSerializer):
@@ -63,18 +99,20 @@ class ObserveRequestGroupSerializer(RequestGroupSerializer):
         return data
 
 
-class ObservationSerializer(serializers.ModelSerializer):
-    configuration_status = ConfigurationStatusSerializer(many=True, read_only=True)
+class ScheduleSerializer(serializers.ModelSerializer):
+    configuration_statuses = ConfigurationStatusSerializer(many=True, read_only=True)
     request = ObserveRequestSerializer()
     proposal = serializers.CharField(write_only=True)
     name = serializers.CharField(write_only=True)
     site = serializers.ChoiceField(choices=configdb.get_site_tuples())
     enclosure = serializers.ChoiceField(choices=configdb.get_enclosure_tuples())
     telescope = serializers.ChoiceField(choices=configdb.get_telescope_tuples())
+    state = serializers.ReadOnlyField()
 
     class Meta:
         model = Observation
-        exclude = ('modified', 'created')
+        fields = ('site', 'enclosure', 'telescope', 'start', 'end', 'state', 'configuration_statuses', 'request',
+                  'proposal', 'name', 'id')
 
     def validate_start(self, value):
         if value < timezone.now():
@@ -189,7 +227,7 @@ class ObservationSerializer(serializers.ModelSerializer):
         data['observation_type'] = instance.request.request_group.observation_type
 
         # Move the configuration statuses inline with their corresponding configuration section
-        config_statuses = data.get('configuration_status', [])
+        config_statuses = data.get('configuration_statuses', [])
         config_status_by_id = {cs['configuration']: cs for cs in config_statuses}
         for config in data['request']['configurations']:
             id = config['id']
@@ -198,6 +236,81 @@ class ObservationSerializer(serializers.ModelSerializer):
                 config['configuration_status'] = config_status_by_id[id]['id']
                 del config_status_by_id[id]['id']
                 config.update(config_status_by_id[id])
-        del data['configuration_status']
+        del data['configuration_statuses']
         return data
 
+
+class ObservationSerializer(serializers.ModelSerializer):
+    configuration_statuses = ConfigurationStatusSerializer(many=True)
+
+    class Meta:
+        model = Observation
+        fields = ('site', 'enclosure', 'telescope', 'start', 'end', 'configuration_statuses', 'request')
+
+    def validate(self, data):
+        if data['end'] <= data['start']:
+            raise serializers.ValidationError(_('End time must be after start time'))
+
+        # Validate that the start and end times are in one of the requests windows
+        in_a_window = False
+        for window in data['request'].windows.all():
+            if data['start'] >= window.start and data['end'] <= window.end:
+                in_a_window = True
+                break
+
+        if not in_a_window:
+            raise serializers.ValidationError(_('The start and end times do not fall within any window of the request'))
+
+        # Validate that the site, enclosure, and telescope match the location of the request
+        if (
+            data['request'].location.site and data['request'].location.site != data['site'] or
+            data['request'].location.enclosure and data['request'].location.enclosure != data['enclosure'] or
+            data['request'].location.telescope and data['request'].location.telescope != data['telescope'] or
+            data['request'].location.telescope_class != data['telescope'][0:3]
+        ):
+            raise serializers.ValidationError(_('{}.{}.{} does not match the request location'.format(
+                data['site'], data['enclosure'], data['telescope']
+            )))
+
+        # Validate that the site, enclosure, telescope has the appropriate instrument
+        available_instruments = configdb.get_instruments_at_location(
+            data['site'], data['enclosure'], data['telescope'], only_schedulable=True
+        )
+        for configuration in data['request'].configurations.all():
+            if configuration.instrument_type.lower() not in available_instruments['types']:
+                raise serializers.ValidationError(_('Instrument type {} not available at {}.{}.{}'.format(
+                    configuration.instrument_type, data['site'], data['enclosure'], data['telescope']
+                )))
+
+        for configuration_status in data['configuration_statuses']:
+            if configuration_status['instrument_name'].lower() not in available_instruments['names']:
+                raise serializers.ValidationError(_('Instrument {} not available at {}.{}.{}'.format(
+                    configuration_status['instrument_name'], data['site'], data['enclosure'], data['telescope']
+                )))
+
+        return data
+
+    def create(self, validated_data):
+        configuration_statuses = validated_data.pop('configuration_statuses')
+        observation = Observation.objects.create(**validated_data)
+        for configuration_status in configuration_statuses:
+            ConfigurationStatus.objects.create(observation=observation, **configuration_status)
+
+        return observation
+
+
+class CancelObservationsSerializer(serializers.Serializer):
+    ids = serializers.ListField(child=serializers.IntegerField(), min_length=1, required=False)
+    start = serializers.DateTimeField(required=False)
+    end = serializers.DateTimeField(required=False)
+    site = serializers.CharField(required=False)
+    enclosure = serializers.CharField(required=False)
+    telescope = serializers.CharField(required=False)
+    include_rr = serializers.BooleanField(required=False, default=False)
+    include_direct = serializers.BooleanField(required=False, default=False)
+
+    def validate(self, data):
+        if 'ids' not in data and ('start' not in data or 'end' not in data):
+            raise serializers.ValidationError("Must include either a observation id list or a start and end time")
+
+        return data

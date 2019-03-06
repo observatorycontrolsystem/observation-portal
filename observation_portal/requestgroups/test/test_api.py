@@ -2,14 +2,24 @@ from observation_portal.requestgroups.models import (RequestGroup, Request, Draf
                                                      Configuration, Location, Constraints, InstrumentConfig,
                                                      AcquisitionConfig, GuidingConfig)
 from observation_portal.proposals.models import Proposal, Membership, TimeAllocation, Semester
-from observation_portal.common.test_helpers import SetTimeMixin
+from observation_portal.observations.models import Observation, ConfigurationStatus
+from observation_portal.common.test_helpers import SetTimeMixin, create_simple_requestgroup
 import observation_portal.requestgroups.signals.handlers  # noqa
-from observation_portal.requestgroups.test.test_state_changes import PondMolecule, PondBlock
+
+# imports for cache based tests
+import observation_portal.observations.signals.handlers  # noqa
+from observation_portal.requestgroups import serializers
+from observation_portal.requestgroups import views
+from observation_portal.common import state_changes
+
 from observation_portal.requestgroups.contention import Pressure
 from observation_portal.accounts.models import Profile
 
 from django.urls import reverse
 from django.contrib.auth.models import User
+from django.core import cache
+from dateutil.parser import parse as datetime_parser
+from datetime import timedelta
 from rest_framework.test import APITestCase
 from mixer.backend.django import mixer
 from mixer.main import mixer as basic_mixer
@@ -47,11 +57,9 @@ generic_payload = {
                 }
             }],
             'guiding_config': {
-                'name': '',
                 'extra_params': {}
             },
             'acquisition_config': {
-                'name': '',
                 'extra_params': {}
             },
             'constraints': {
@@ -557,7 +565,7 @@ class TestRequestIPP(SetTimeMixin, APITestCase):
         time_allocation = TimeAllocation.objects.get(pk=self.time_allocation_1m0.id)
         self.assertEqual(time_allocation.ipp_time_available, debitted_ipp_value)
 
-    @patch('observation_portal.requestgroups.state_changes.logger')
+    @patch('observation_portal.common.state_changes.logger')
     def test_request_debit_on_completion_after_expired_not_enough_time(self, mock_logger):
         request_group = self._build_request_group(self.generic_payload.copy())
         # verify that now that the TimeAllocation has been debited
@@ -844,7 +852,6 @@ class TestSiderealTarget(SetTimeMixin, APITestCase):
         target = response.json()['requests'][0]['configurations'][0]['target']
         self.assertEqual(target['proper_motion_ra'], 0.0)
         self.assertEqual(target['proper_motion_dec'], 0.0)
-        self.assertIsNone(target['vmag'])
         self.assertEqual(target['parallax'], 0.0)
         self.assertEqual(target['coordinate_system'], 'ICRS')
         self.assertEqual(target['equinox'], 'J2000')
@@ -1340,6 +1347,30 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         self.assertEqual(configuration['instrument_configs'][0]['bin_x'], 2)
         self.assertEqual(configuration['instrument_configs'][0]['bin_y'], 2)
 
+    def test_different_x_and_y_binnings_rejected(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_x'] = 1
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_y'] = 2
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Currently only square binnings are supported. Please submit with bin_x == bin_y', str(response.content))
+
+    def test_binx_set_if_only_biny_is_input(self):
+        data = self.generic_payload.copy()
+        del data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_x']
+        response = self.client.post(reverse('api:request_groups-list'), data=data)
+        self.assertEqual(response.status_code, 201)
+        instrument_configuration = response.json()['requests'][0]['configurations'][0]['instrument_configs'][0]
+        self.assertEqual(instrument_configuration['bin_x'], instrument_configuration['bin_y'])
+
+    def test_biny_set_if_only_binx_is_input(self):
+        data = self.generic_payload.copy()
+        del data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_y']
+        response = self.client.post(reverse('api:request_groups-list'), data=data)
+        self.assertEqual(response.status_code, 201)
+        instrument_configuration = response.json()['requests'][0]['configurations'][0]['instrument_configs'][0]
+        self.assertEqual(instrument_configuration['bin_x'], instrument_configuration['bin_y'])
+
     def test_request_invalid_instrument_type(self):
         bad_data = self.generic_payload.copy()
         bad_data['requests'][0]['configurations'][0]['instrument_type'] = 'FAKE-INSTRUMENT'
@@ -1476,6 +1507,58 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         self.assertIn('configuration type EXPOSE is not valid for instrument type 2M0-FLOYDS-SCICAM', str(response.content))
         self.assertEqual(response.status_code, 400)
 
+    def test_more_than_max_rois_rejected(self):
+        roi_data = {'x1': 0, 'x2': 20, 'y1': 0, 'y2': 100}
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['rois'] = [roi_data, roi_data]
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertIn('Instrument type 1M0-SCICAM-SBIG supports up to 1 regions of interest', str(response.content))
+        self.assertEqual(response.status_code, 400)
+
+    def test_rois_outside_ccd_area_rejected(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['rois'] = [{'x2': 2000}]
+        response1 = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['rois'] = [{'y2': 3000}]
+        response2 = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        for response in [response1, response2]:
+            self.assertIn('Regions of interest for instrument type 1M0-SCICAM-SBIG must be in range', str(response.content))
+            self.assertEqual(response.status_code, 400)
+
+    def test_rois_start_pixels_larger_than_end_pixels_rejected(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['rois'] = [{'x1': 1000, 'x2': 400}]
+        response1 = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['rois'] = [{'y1': 500, 'y2': 300}]
+        response2 = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        for response in [response1, response2]:
+            self.assertIn('Region of interest pixels start must be less than pixels end', str(response.content))
+            self.assertEqual(response.status_code, 400)
+
+    def test_valid_rois_accepted(self):
+        good_data = self.generic_payload.copy()
+        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['rois'] = [{'x1': 0, 'x2': 20, 'y1': 0, 'y2': 100}]
+        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(len(response.json()['requests'][0]['configurations'][0]['instrument_configs'][0]['rois']), 1)
+
+    def test_sparse_roi_fields_sets_defaults(self):
+        good_data = self.generic_payload.copy()
+        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['rois'] = [{'x1': 100}]
+        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(len(response.json()['requests'][0]['configurations'][0]['instrument_configs'][0]['rois']), 1)
+        self.assertEqual(response.json()['requests'][0]['configurations'][0]['instrument_configs'][0]['rois'][0]['x2'], 1000)
+        self.assertEqual(response.json()['requests'][0]['configurations'][0]['instrument_configs'][0]['rois'][0]['y2'], 1000)
+        self.assertEqual(response.json()['requests'][0]['configurations'][0]['instrument_configs'][0]['rois'][0]['y1'], 0)
+
+    def test_empty_roi_rejected(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['rois'] = [{}]
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Must submit at least one bound for a region of interest', str(response.content))
+
 
 class TestGetRequestApi(APITestCase):
     def setUp(self):
@@ -1488,7 +1571,13 @@ class TestGetRequestApi(APITestCase):
 
     def test_get_request_list_authenticated(self):
         request = mixer.blend(Request, request_group=self.request_group, observation_note='testobsnote')
-        mixer.blend(Configuration, request=request, instrument_type='1M0-SCICAM-SBIG')
+        mixer.blend(Location, request=request)
+        mixer.blend(Window, request=request)
+        config = mixer.blend(Configuration, request=request, instrument_type='1M0-SCICAM-SBIG')
+        mixer.blend(Constraints, configuration=config)
+        mixer.blend(InstrumentConfig, configuration=config)
+        mixer.blend(AcquisitionConfig, configuration=config)
+        mixer.blend(GuidingConfig, configuration=config)
         self.client.force_login(self.user)
         result = self.client.get(reverse('api:requests-list'))
         self.assertEqual(result.json()['results'][0]['observation_note'], request.observation_note)
@@ -1670,7 +1759,7 @@ class TestAirmassApi(SetTimeMixin, APITestCase):
         self.assertTrue(response.json()['airmass_data']['tst']['times'])
 
 
-@patch('observation_portal.requestgroups.state_changes.modify_ipp_time_from_requests')
+@patch('observation_portal.common.state_changes.modify_ipp_time_from_requests')
 class TestCancelRequestGroupApi(SetTimeMixin, APITestCase):
     ''' Test canceling user requests via API. Mocking out modify_ipp_time_from_requets
         as it is called on state change, but tested elsewhere '''
@@ -1730,7 +1819,7 @@ class TestCancelRequestGroupApi(SetTimeMixin, APITestCase):
         self.assertEqual(Request.objects.get(pk=completed_r.id).state, 'COMPLETED')
 
 
-@patch('observation_portal.requestgroups.state_changes.modify_ipp_time_from_requests')
+@patch('observation_portal.common.state_changes.modify_ipp_time_from_requests')
 class TestUpdateRequestStatesAPI(APITestCase):
     def setUp(self):
         self.user = mixer.blend(User, is_staff=True)
@@ -1823,7 +1912,7 @@ class TestUpdateRequestStatesAPI(APITestCase):
     #     self.assertEqual(response.status_code, 500)
 
 
-@patch('observation_portal.requestgroups.state_changes.modify_ipp_time_from_requests')
+@patch('observation_portal.common.state_changes.modify_ipp_time_from_requests')
 class TestSchedulableRequestsApi(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
@@ -2267,3 +2356,138 @@ class TestFiltering(APITestCase):
         self.assertEqual(response.json()['count'], 1)
         response = self.client.get(reverse('api:request_groups-list') + '?name=philbobaggins')
         self.assertEqual(response.json()['count'], 0)
+
+
+class TestLastChanged(SetTimeMixin, APITestCase):
+    def setUp(self):
+        super().setUp()
+        # Mock the cache with a real one for these tests
+        self.locmem_cache = cache._create_cache('django.core.cache.backends.locmem.LocMemCache')
+        self.locmem_cache.clear()
+        self.patch1 = patch.object(views, 'cache', self.locmem_cache)
+        self.patch1.start()
+        self.patch2 = patch.object(state_changes, 'cache', self.locmem_cache)
+        self.patch2.start()
+        self.patch3 = patch.object(serializers, 'cache', self.locmem_cache)
+        self.patch3.start()
+
+        self.proposal = mixer.blend(Proposal)
+        self.user = mixer.blend(User, is_staff=True)
+        mixer.blend(Profile, user=self.user)
+        self.client.force_login(self.user)
+        self.semester = mixer.blend(
+            Semester, id='2016B', start=datetime(2016, 9, 1, tzinfo=timezone.utc),
+            end=datetime(2016, 12, 31, tzinfo=timezone.utc)
+        )
+        self.time_allocation_1m0_sbig = mixer.blend(
+            TimeAllocation, proposal=self.proposal, semester=self.semester,
+            instrument_type='1M0-SCICAM-SBIG', std_allocation=100.0, std_time_used=0.0,
+            rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0, ipp_time_available=5.0
+        )
+        self.time_allocation_2m0_floyds = mixer.blend(
+            TimeAllocation, proposal=self.proposal, semester=self.semester,
+            instrument_type='2M0-FLOYDS-SCICAM', std_allocation=100.0, std_time_used=0.0,
+            rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0, ipp_time_available=5.0
+        )
+        self.membership = mixer.blend(Membership, user=self.user, proposal=self.proposal)
+        self.generic_payload = copy.deepcopy(generic_payload)
+        self.generic_payload['proposal'] = self.proposal.id
+        self.window = mixer.blend(Window, start=timezone.now() - timedelta(days=1), end=timezone.now() + timedelta(days=1))
+
+    def tearDown(self):
+        super().tearDown()
+        self.patch1.stop()
+        self.patch2.stop()
+        self.patch3.stop()
+
+    def test_last_change_date_is_7_days_out_if_no_cached_value(self):
+        last_change_cached = self.locmem_cache.get('observation_portal_last_change_time')
+        self.assertIsNone(last_change_cached)
+
+        response = self.client.get(reverse('api:last_changed'))
+        last_change = response.json()['last_change_time']
+        self.assertAlmostEqual(datetime_parser(last_change), timezone.now() - timedelta(days=7),
+                               delta=timedelta(minutes=1))
+
+    def test_last_change_date_is_updated_when_request_is_submitted(self):
+        last_change_cached = self.locmem_cache.get('observation_portal_last_change_time')
+        self.assertIsNone(last_change_cached)
+        rg = self.generic_payload.copy()
+        response = self.client.post(reverse('api:request_groups-list'), data=self.generic_payload)
+
+        response = self.client.get(reverse('api:last_changed'))
+        last_change = response.json()['last_change_time']
+        self.assertAlmostEqual(datetime_parser(last_change), timezone.now(), delta=timedelta(minutes=1))
+
+    def test_last_change_date_is_not_updated_when_request_is_mixed(self):
+        requestgroup = create_simple_requestgroup(
+            user=self.user, proposal=self.proposal, instrument_type='1M0-SCICAM-SBIG', window=self.window
+        )
+        last_change_cached = self.locmem_cache.get('observation_portal_last_change_time')
+        self.assertIsNone(last_change_cached)
+        response = self.client.get(reverse('api:last_changed'))
+        last_change = response.json()['last_change_time']
+        self.assertAlmostEqual(datetime_parser(last_change), timezone.now() - timedelta(days=7),
+                               delta=timedelta(minutes=1))
+
+    def test_last_change_date_is_updated_when_request_changes_state_completed(self):
+        requestgroup = create_simple_requestgroup(
+            user=self.user, proposal=self.proposal, instrument_type='1M0-SCICAM-SBIG', window=self.window
+        )
+        last_change_cached = self.locmem_cache.get('observation_portal_last_change_time')
+        self.assertIsNone(last_change_cached)
+        request = requestgroup.requests.first()
+        request.state = 'COMPLETED'
+        request.save()
+        response = self.client.get(reverse('api:last_changed'))
+        last_change = response.json()['last_change_time']
+        self.assertAlmostEqual(datetime_parser(last_change), timezone.now(), delta=timedelta(minutes=1))
+
+    def test_last_change_date_is_updated_when_requestgroup_canceled(self):
+        requestgroup = create_simple_requestgroup(
+            user=self.user, proposal=self.proposal, instrument_type='1M0-SCICAM-SBIG', window=self.window
+        )
+        last_change_cached = self.locmem_cache.get('observation_portal_last_change_time')
+        self.assertIsNone(last_change_cached)
+        requestgroup.state = 'CANCELED'
+        requestgroup.save()
+        response = self.client.get(reverse('api:last_changed'))
+        last_change = response.json()['last_change_time']
+        self.assertAlmostEqual(datetime_parser(last_change), timezone.now(), delta=timedelta(minutes=1))
+
+    def test_last_change_date_is_updated_when_configuration_status_failed(self):
+        requestgroup = create_simple_requestgroup(
+            user=self.user, proposal=self.proposal, instrument_type='1M0-SCICAM-SBIG', window=self.window
+        )
+        request = requestgroup.requests.first()
+        configuration = request.configurations.first()
+        observation = mixer.blend(Observation, request=request)
+        configuration_status = mixer.blend(ConfigurationStatus, observation=observation, configuration=configuration)
+        last_change_cached = self.locmem_cache.get('observation_portal_last_change_time')
+        self.assertIsNone(last_change_cached)
+
+        configuration_status.state = 'FAILED'
+        configuration_status.save()
+
+        response = self.client.get(reverse('api:last_changed'))
+        last_change = response.json()['last_change_time']
+        self.assertAlmostEqual(datetime_parser(last_change), timezone.now(), delta=timedelta(minutes=1))
+
+    def test_last_change_date_is_not_updated_when_configuration_status_attempted(self):
+        requestgroup = create_simple_requestgroup(
+            user=self.user, proposal=self.proposal, instrument_type='1M0-SCICAM-SBIG', window=self.window
+        )
+        request = requestgroup.requests.first()
+        configuration = request.configurations.first()
+        observation = mixer.blend(Observation, request=request)
+        configuration_status = mixer.blend(ConfigurationStatus, observation=observation, configuration=configuration)
+        last_change_cached = self.locmem_cache.get('observation_portal_last_change_time')
+        self.assertIsNone(last_change_cached)
+
+        configuration_status.state = 'ATTEMPTED'
+        configuration_status.save()
+
+        response = self.client.get(reverse('api:last_changed'))
+        last_change = response.json()['last_change_time']
+        self.assertAlmostEqual(datetime_parser(last_change), timezone.now() - timedelta(days=7),
+                               delta=timedelta(minutes=1))

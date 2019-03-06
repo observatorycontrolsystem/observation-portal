@@ -2,12 +2,13 @@ from rest_framework import viewsets, filters
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
+from observation_portal.common.mixins import ListAsDictMixin
 from observation_portal.proposals.filters import SemesterFilter, ProposalFilter
 from observation_portal.proposals.models import Proposal, Semester
 from observation_portal.proposals.serializers import ProposalSerializer, SemesterSerialzer
 
 
-class ProposalViewSet(viewsets.ReadOnlyModelViewSet):
+class ProposalViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
     permission_classes = (IsAuthenticated,)
     serializer_class = ProposalSerializer
     filter_class = ProposalFilter
@@ -16,9 +17,13 @@ class ProposalViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         if self.request.user.is_staff:
-            return Proposal.objects.all()
+            return Proposal.objects.all().prefetch_related(
+                'users', 'sca', 'membership_set', 'membership_set__user', 'timeallocation_set'
+            )
         else:
-            return self.request.user.proposal_set.all()
+            return self.request.user.proposal_set.all().prefetch_related(
+                'users', 'sca', 'membership_set', 'membership_set__user', 'timeallocation_set'
+            )
 
 
 class SemesterViewSet(viewsets.ReadOnlyModelViewSet):
@@ -28,3 +33,4 @@ class SemesterViewSet(viewsets.ReadOnlyModelViewSet):
     filter_class = SemesterFilter
     ordering = ('-start',)
     queryset = Semester.objects.all()
+

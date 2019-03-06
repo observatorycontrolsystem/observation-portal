@@ -48,6 +48,9 @@
                         "SCRIPT"
                       ],
                       "default_acceptability_threshold": 90,
+                      "pixels_x": 1000,
+                      "pixels_y": 1000,
+                      "max_rois": 1,
                       "config_change_time": 0,
                       "acquire_processing_time": 0,
                       "acquire_exposure_time": 0,
@@ -172,6 +175,9 @@
                         "SCRIPT"
                       ],
                       "default_acceptability_threshold": 100,
+                      "pixels_x": 1000,
+                      "pixels_y": 1000,
+                      "max_rois": 0,
                       "mode_set": [
                         {
                           "binning": 1,
@@ -312,6 +318,9 @@
                         "SCRIPT"
                       ],
                       "default_acceptability_threshold": 100,
+                      "pixels_x": 1000,
+                      "pixels_y": 1000,
+                      "max_rois": 0,
                       "config_change_time": 0,
                       "acquire_processing_time": 0,
                       "acquire_exposure_time": 0,
@@ -418,6 +427,9 @@
                         "SCRIPT"
                       ],
                       "default_acceptability_threshold": 100,
+                      "pixels_x": 1000,
+                      "pixels_y": 1000,
+                      "max_rois": 0,
                       "config_change_time": 0,
                       "acquire_processing_time": 90,
                       "acquire_exposure_time": 10,
@@ -521,6 +533,9 @@
                         "SCRIPT"
                       ],
                       "default_acceptability_threshold": 100,
+                      "pixels_x": 1000,
+                      "pixels_y": 1000,
+                      "max_rois": 0,
                       "mode_set": [
                         {
                           "binning": 1,

@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from django.utils.functional import cached_property
+from django.forms import model_to_dict
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import ugettext as _
@@ -136,6 +137,19 @@ class Proposal(models.Model):
     def __str__(self):
         return self.id
 
+    def as_dict(self):
+        proposal = model_to_dict(self, exclude=[])
+        proposal['sca'] = self.sca.id
+        proposal['timeallocation_set'] = [ta.as_dict() for ta in self.timeallocation_set.all()]
+        proposal['users'] = {
+            mem.user.username: {
+                'first_name': mem.user.first_name,
+                'last_name': mem.user.last_name,
+                'time_limit': mem.time_limit
+            } for mem in self.membership_set.all()
+        }
+        return proposal
+
 
 TimeAllocationKey = namedtuple('TimeAllocationKey', ['semester', 'instrument_type'])
 
@@ -158,6 +172,10 @@ class TimeAllocation(models.Model):
 
     def __str__(self):
         return 'Timeallocation for {0}-{1}'.format(self.proposal, self.semester)
+
+    def as_dict(self):
+        time_allocation = model_to_dict(self, exclude=[])
+        return time_allocation
 
 
 class Membership(models.Model):

@@ -39,7 +39,7 @@ def get_telescope_states_for_request(request):
     )
     for site, details in site_data.items():
         if site not in site_intervals:
-            site_intervals[site] = get_rise_set_intervals(request.as_dict, site)
+            site_intervals[site] = get_rise_set_intervals(request.as_dict(), site)
     # If you have no sites, return the empty dict here
     if not site_intervals:
         return {}
@@ -107,21 +107,16 @@ def get_airmasses_for_request_at_sites(request_dict):
     return data
 
 
-def exposure_completion_percentage_from_pond_block(pond_block):
+def exposure_completion_percentage(observation):
     total_exposure_time = 0
     completed_exposure_time = 0
-    for molecule in pond_block['molecules']:
-        event = molecule['events'][0] if molecule['events'] else {}
-        exp_time = float(molecule['exposure_time'])
-        exp_cnt = molecule['exposure_count']
-        if molecule['completed']:
-            completed_exp_cnt = exp_cnt
-        elif 'completed_exposures' in event:
-            completed_exp_cnt = event['completed_exposures']
-        else:
-            completed_exp_cnt = 0
-        total_exposure_time += exp_time * exp_cnt
-        completed_exposure_time += exp_time * completed_exp_cnt
+    for configuration_status in observation.configuration_statuses.all():
+        if hasattr(configuration_status, 'summary'):
+            completed_exposure_time += configuration_status.summary.time_completed
+        configuration_exposure_time = 0
+        for instrument_config in configuration_status.configuration.instrument_configs.all():
+            configuration_exposure_time += instrument_config.exposure_count * instrument_config.exposure_time
+        total_exposure_time += configuration_exposure_time
 
     if float(total_exposure_time) == 0:
         return 100.0

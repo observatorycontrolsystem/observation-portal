@@ -25,15 +25,16 @@ from drf_yasg import openapi
 
 from observation_portal.requestgroups.viewsets import RequestGroupViewSet, RequestViewSet, DraftRequestGroupViewSet
 from observation_portal.requestgroups.views import TelescopeStatesView, TelescopeAvailabilityView, AirmassView
-from observation_portal.requestgroups.views import InstrumentsInformationView, RequestGroupStatusIsDirty
+from observation_portal.requestgroups.views import InstrumentsInformationView, ObservationPortalLastChangedView
 from observation_portal.requestgroups.views import ContentionView, PressureView
 from observation_portal.accounts.views import ProfileApiView
 from observation_portal.proposals.viewsets import ProposalViewSet, SemesterViewSet
-from observation_portal.observations.viewsets import ObservationViewSet
+from observation_portal.observations.viewsets import ObservationViewSet, ScheduleViewSet, ConfigurationStatusViewSet
 import observation_portal.sciapplications.urls as sciapplications_urls
 import observation_portal.requestgroups.urls as requestgroup_urls
 import observation_portal.proposals.urls as proposals_urls
 import observation_portal.accounts.urls as accounts_urls
+import observation_portal.observations.urls as observations_urls
 
 router = DefaultRouter()
 router.register(r'requests', RequestViewSet, 'requests')
@@ -42,6 +43,8 @@ router.register(r'drafts', DraftRequestGroupViewSet, 'drafts')
 router.register(r'proposals', ProposalViewSet, 'proposals')
 router.register(r'semesters', SemesterViewSet, 'semesters')
 router.register(r'observations', ObservationViewSet, 'observations')
+router.register(r'schedule', ScheduleViewSet, 'schedule')
+router.register(r'configurationstatus', ConfigurationStatusViewSet, 'configurationstatus')
 
 api_urlpatterns = ([
     url(r'^', include(router.urls)),
@@ -51,9 +54,9 @@ api_urlpatterns = ([
     url(r'profile/', ProfileApiView.as_view(), name='profile'),
     url(r'airmass/', AirmassView.as_view(), name='airmass'),
     url(r'instruments/', InstrumentsInformationView.as_view(), name='instruments_information'),
-    url(r'isDirty/', RequestGroupStatusIsDirty.as_view(), name='isDirty'),
     url(r'contention/(?P<instrument_name>.+)/', ContentionView.as_view(), name='contention'),
     url(r'pressure/', PressureView.as_view(), name='pressure'),
+    url(r'last_changed/', ObservationPortalLastChangedView.as_view(), name='last_changed')
 ], 'api')
 
 schema_view = get_schema_view(
@@ -75,6 +78,7 @@ urlpatterns = [
     url(r'^api/', include(api_urlpatterns)),
     url(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
     url(r'^proposals/', include(proposals_urls)),
+    url(r'^observations/', include(observations_urls)),
     url(r'^apply/', include(sciapplications_urls)),
     path('admin/', admin.site.urls),
     url(r'^help/', TemplateView.as_view(template_name='help.html'), name='help'),
