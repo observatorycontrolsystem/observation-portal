@@ -32,7 +32,8 @@ class ConfigurationStatusSerializer(serializers.ModelSerializer):
             # For a partial update, don't try to validate the field set
             return data
 
-        if not configdb.is_valid_guider_for_instrument_name(data['instrument_name'], data['guide_camera_name']):
+        if ('guide_camera_name' in data and
+                not configdb.is_valid_guider_for_instrument_name(data['instrument_name'], data['guide_camera_name'])):
             raise serializers.ValidationError(_('{} is not a valid guide camera for {}'.format(
                 data['guide_camera_name'], data['instrument_name']
             )))
@@ -225,6 +226,7 @@ class ScheduleSerializer(serializers.ModelSerializer):
         data['name'] = instance.request.request_group.name
         data['ipp_value'] = instance.request.request_group.ipp_value
         data['observation_type'] = instance.request.request_group.observation_type
+        data['request_group_id'] = instance.request.request_group.id
 
         # Move the configuration statuses inline with their corresponding configuration section
         config_statuses = data.get('configuration_statuses', [])

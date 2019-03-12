@@ -31,6 +31,8 @@ class ObservationFilter(django_filters.FilterSet):
     exclude_observation_type = django_filters.MultipleChoiceFilter(choices=RequestGroup.OBSERVATION_TYPES,
                                                                    field_name='request__request_group__observation_type',
                                                                    exclude=True)
+    observation_type = django_filters.MultipleChoiceFilter(choices=RequestGroup.OBSERVATION_TYPES,
+                                                           field_name='request__request_group__observation_type')
     request_state = django_filters.MultipleChoiceFilter(choices=Request.STATE_CHOICES, field_name='request__state')
     proposal = django_filters.CharFilter(field_name='request__request_group__proposal__id', label='Proposal')
     instrument_type = django_filters.CharFilter(

@@ -76,6 +76,7 @@ class Observation(models.Model):
         ret_dict['name'] = self.request.request_group.name
         ret_dict['ipp_value'] = self.request.request_group.ipp_value
         ret_dict['observation_type'] = self.request.request_group.observation_type
+        ret_dict['request_group_id'] = self.request.request_group.id
         configuration_status_by_config = {config_status.configuration.id: config_status
                                           for config_status in self.configuration_statuses.all()}
         for configuration in ret_dict['request']['configurations']:
