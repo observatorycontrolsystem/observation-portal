@@ -22,6 +22,8 @@ from rest_framework.authtoken.views import obtain_auth_token
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+from django.conf.urls.static import static
 
 from observation_portal.requestgroups.viewsets import RequestGroupViewSet, RequestViewSet, DraftRequestGroupViewSet
 from observation_portal.requestgroups.views import TelescopeStatesView, TelescopeAvailabilityView, AirmassView
@@ -35,6 +37,7 @@ import observation_portal.requestgroups.urls as requestgroup_urls
 import observation_portal.proposals.urls as proposals_urls
 import observation_portal.accounts.urls as accounts_urls
 import observation_portal.observations.urls as observations_urls
+from observation_portal import settings
 
 router = DefaultRouter()
 router.register(r'requests', RequestViewSet, 'requests')
@@ -84,3 +87,7 @@ urlpatterns = [
     url(r'^help/', TemplateView.as_view(template_name='help.html'), name='help'),
     url(r'^redoc/$', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 ]
+
+if settings.DEBUG:
+    urlpatterns += staticfiles_urlpatterns()
+    static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
