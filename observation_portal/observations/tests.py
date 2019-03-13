@@ -322,7 +322,7 @@ class TestPostScheduleMultiConfigApi(SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 400)
 
 
-class TestPostObservationApi(SetTimeMixin, APITestCase):
+class TestObservationApiBase(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
         self.proposal = mixer.blend(Proposal, direct_submission=True)
@@ -345,7 +345,7 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
         configuration.instrument_type = '1M0-SCICAM-SBIG'
         configuration.save()
 
-    def _generate_observation_data(self, request_id, configuration_id_list):
+    def _generate_observation_data(self, request_id, configuration_id_list, guide_camera_name='xx03'):
         observation = {
             "request": request_id,
             "site": "tst",
@@ -356,18 +356,23 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
             "configuration_statuses": []
         }
         for configuration_id in configuration_id_list:
-            observation['configuration_statuses'].append(
-                {
-                    "configuration": configuration_id,
-                    "instrument_name": "xx03",
-                    "guide_camera_name": "xx03"
-                }
-            )
+            config_status = {
+                "configuration": configuration_id,
+                "instrument_name": "xx03",
+            }
+            if guide_camera_name:
+                config_status["guide_camera_name"] = guide_camera_name
+            observation['configuration_statuses'].append(config_status)
         return observation
 
     def _create_observation(self, observation_json):
         response = self.client.post(reverse('api:observations-list'), data=observation_json)
         self.assertEqual(response.status_code, 201)
+
+
+class TestPostObservationApi(TestObservationApiBase):
+    def setUp(self):
+        super().setUp()
 
     def test_observation_with_valid_instrument_name_succeeds(self):
         observation = self._generate_observation_data(
@@ -694,6 +699,15 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('Instrument xx01 not available at tst.domb.1m0a', str(response.content))
 
+    def test_guide_camera_name_not_required(self):
+        observation = self._generate_observation_data(
+            self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id],
+            guide_camera_name=None
+        )
+        response = self.client.post(reverse('api:observations-list'), data=observation)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(len(Observation.objects.all()), 1)
+
     def test_guide_camera_doesnt_match_science_camera_rejected(self):
         observation = self._generate_observation_data(
             self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
@@ -704,7 +718,7 @@ class TestPostObservationApi(SetTimeMixin, APITestCase):
         self.assertIn('xx03 is not a valid guide camera for xx01', str(response.content))
 
 
-class TestUpdateConfigurationStatusApi(TestPostObservationApi):
+class TestUpdateConfigurationStatusApi(TestObservationApiBase):
     def setUp(self):
         self.summary = {
             'start': "2016-09-02T00:11:22Z",

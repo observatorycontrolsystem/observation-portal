@@ -26,12 +26,17 @@ class ObservationFilter(django_filters.FilterSet):
                                             widget=forms.TextInput(attrs={'class': 'input'}))
     request_group_id = django_filters.CharFilter(field_name='request__request_group__id',
                                                  method='filter_request_group_id',
-                                                 widget=forms.TextInput(attrs={'class': 'input'}))
+                                                 widget=forms.TextInput(attrs={'class': 'input'}),
+                                                 label='Request Group ID')
     state = django_filters.MultipleChoiceFilter(choices=Observation.STATE_CHOICES)
     exclude_observation_type = django_filters.MultipleChoiceFilter(choices=RequestGroup.OBSERVATION_TYPES,
                                                                    field_name='request__request_group__observation_type',
-                                                                   exclude=True)
-    request_state = django_filters.MultipleChoiceFilter(choices=Request.STATE_CHOICES, field_name='request__state')
+                                                                   exclude=True, label='Exclude Observation Type')
+    observation_type = django_filters.MultipleChoiceFilter(choices=RequestGroup.OBSERVATION_TYPES,
+                                                           field_name='request__request_group__observation_type',
+                                                           label='Include Observation Type')
+    request_state = django_filters.MultipleChoiceFilter(choices=Request.STATE_CHOICES, field_name='request__state',
+                                                        label='Request State')
     proposal = django_filters.CharFilter(field_name='request__request_group__proposal__id', label='Proposal')
     instrument_type = django_filters.CharFilter(
         label='Instrument type',
@@ -43,7 +48,7 @@ class ObservationFilter(django_filters.FilterSet):
 
     class Meta:
         model = Observation
-        exclude = ['start', 'end']
+        exclude = ['start', 'end', 'request']
 
     def filter_start_after(self, queryset, name, value):
         start = parser.parse(value, ignoretz=True)
