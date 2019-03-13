@@ -2,6 +2,7 @@ from rest_framework import viewsets, filters
 from rest_framework.permissions import IsAdminUser
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.serializers import ValidationError
 
 from django_filters.rest_framework import DjangoFilterBackend
 
@@ -73,6 +74,9 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
                 observations = observations.filter(enclosure=cancel_serializer.data['enclosure'])
             if 'telescope' in cancel_serializer.data:
                 observations = observations.filter(telescope=cancel_serializer.data['telescope'])
+            if not cancel_serializer.data.get('include_normal', True):
+                observations = observations.exclude(
+                    request__request_group__observation_type__in=[RequestGroup.TIME_CRITICAL, RequestGroup.NORMAL])
             if not cancel_serializer.data.get('include_rr', False):
                 observations = observations.exclude(
                     request__request_group__observation_type=RequestGroup.RAPID_RESPONSE)
@@ -85,6 +89,34 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
             return Response({'canceled': num_canceled}, status=200)
         else:
             return Response(cancel_serializer.errors, status=400)
+
+    def create(self, request, *args, **kwargs):
+        ''' This overrides the create mixin create method, but does the same thing minus the serializing of the
+            data into the response at the end
+        '''
+        if not isinstance(request.data, list):
+            # Just do the default create for the single block case
+            return super().create(request, args, kwargs)
+        else:
+            serializer = self.get_serializer(data=request.data)
+            errors = {}
+            try:
+                serializer.is_valid(raise_exception=True)
+                observations = serializer.save()
+            except ValidationError:
+                # fall back to individually serializing and saving requests if there are any with errors
+                observations = []
+                for i, error in enumerate(serializer.errors):
+                    if error:
+                        errors[i] = error
+                    else:
+                        individual_serializer = self.get_serializer(data=serializer.initial_data[i])
+                        if individual_serializer.is_valid():
+                            observations.append(individual_serializer.save())
+                        else:
+                            errors[i] = individual_serializer.error
+            return Response({'num_created': len(observations),
+                                 'errors': errors}, status=201)
 
 
 class ConfigurationStatusViewSet(viewsets.ModelViewSet):
