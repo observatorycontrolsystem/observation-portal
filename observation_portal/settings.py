@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'drf_yasg',
     'django_filters',
     'rest_framework.authtoken',
+    # 'silk',
     'bootstrap3',
     'oauth2_provider',
     'django_extensions',
@@ -62,10 +63,15 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    # 'silk.middleware.SilkyMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+# SILKY_PYTHON_PROFILER = True
+# SILKY_PYTHON_PROFILER_BINARY = True
+
 
 ROOT_URLCONF = 'observation_portal.urls'
 
@@ -103,14 +109,14 @@ DATABASES = {
 }
 
 CACHES = {
-    'default': {
-        'BACKEND': os.getenv('CACHE_BACKEND', 'django.core.cache.backends.locmem.LocMemCache'),
-        'LOCATION': os.getenv('CACHE_LOCATION', 'unique-snowflake')
-    },
-    'locmem': {
-        'BACKEND': os.getenv('LOCAL_CACHE_BACKEND', 'django.core.cache.backends.locmem.LocMemCache'),
-        'LOCATION': 'locmem-cache'
-    }
+     'default': {
+         'BACKEND': os.getenv('CACHE_BACKEND', 'django.core.cache.backends.locmem.LocMemCache'),
+         'LOCATION': os.getenv('CACHE_LOCATION', 'unique-snowflake')
+     },
+     'locmem': {
+         'BACKEND': os.getenv('LOCAL_CACHE_BACKEND', 'django.core.cache.backends.locmem.LocMemCache'),
+         'LOCATION': 'locmem-cache'
+     }
 }
 
 # Password validation
@@ -207,7 +213,7 @@ REST_FRAMEWORK = {
         'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
-    'PAGE_SIZE': 50,
+    'PAGE_SIZE': 10,
     'DEFAULT_THROTTLE_CLASSES': (
         'observation_portal.accounts.throttling.AllowStaffUserRateThrottle',
         'rest_framework.throttling.ScopedRateThrottle',
@@ -217,6 +223,29 @@ REST_FRAMEWORK = {
         'requestgroups.cancel': '1000/day',
         'requestgroups.create': '2500/day',
         'requestgroups.validate': '10000/day'
+    }
+}
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        '': {
+            'handlers': ['console'],
+            'level': 'INFO'
+        },
+        'rise_set': {
+            'level': 'WARNING'
+        },
+        'valhalla_request': {
+            'level': 'INFO',
+            'propogate': False
+        }
     }
 }
 

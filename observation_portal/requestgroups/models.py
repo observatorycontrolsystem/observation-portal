@@ -332,6 +332,7 @@ class Configuration(models.Model):
     )
     extra_params = JSONField(
         default=dict,
+        blank=True,
         verbose_name='extra parameters',
         help_text='Extra Configuration parameters'
     )
@@ -543,6 +544,7 @@ class Target(models.Model):
 
     extra_params = JSONField(
         default=dict,
+        blank=True,
         verbose_name='extra parameters',
         help_text='Extra Target parameters'
     )
@@ -573,6 +575,7 @@ class InstrumentConfig(models.Model):
     )
     optical_elements = JSONField(
         default=dict,
+        blank=True,
         help_text='Specification of optical elements used for this InstrumentConfig'
     )
     mode = models.CharField(
@@ -607,6 +610,7 @@ class InstrumentConfig(models.Model):
     )
     extra_params = JSONField(
         default=dict,
+        blank=True,
         verbose_name='extra parameters',
         help_text='Extra InstrumentConfig parameters'
     )
@@ -681,6 +685,7 @@ class GuidingConfig(models.Model):
     )
     optical_elements = JSONField(
         default=dict,
+        blank=True,
         help_text='Optical Element specification for this GuidingConfig'
     )
     exposure_time = models.FloatField(default=0.01,
@@ -689,6 +694,7 @@ class GuidingConfig(models.Model):
     )
     extra_params = JSONField(
         default=dict,
+        blank=True,
         verbose_name='extra parameters',
         help_text='Extra GuidingConfig parameters'
     )
@@ -714,6 +720,7 @@ class AcquisitionConfig(models.Model):
     )
     extra_params = JSONField(
         default=dict,
+        blank=True,
         verbose_name='extra parameters',
         help_text='Extra AcquisitionConfig parameters'
     )
@@ -757,6 +764,7 @@ class Constraints(models.Model):
     )
     extra_params = JSONField(
         default=dict,
+        blank=True,
         verbose_name='extra parameters',
         help_text='Extra Constraints parameters'
     )
