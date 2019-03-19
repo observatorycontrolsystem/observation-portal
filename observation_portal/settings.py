@@ -25,7 +25,7 @@ SECRET_KEY = '2xou30pi2va&ed@n2l79n807k%@szj1+^uj&)y09_w62eji!m^'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['observation-portal-dev.lco.gtn']
+ALLOWED_HOSTS = ['observation-portal-dev.lco.global', '*']
 
 SITE_ID = 1
 ACCOUNT_ACTIVATION_DAYS = 7
