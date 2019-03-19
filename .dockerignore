@@ -1,0 +1,14 @@
+celerybeat-schedule
+celerybeat.pid
+static/bundles/
+node_modules/
+local_settings.py
+db.sqlite3
+scratch/
+media/
+.tox/
+.git/
+.venv/
+**/*.swp
+**/*.pyc
+**/__pycache__
