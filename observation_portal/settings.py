@@ -50,11 +50,11 @@ INSTALLED_APPS = [
     'bootstrap3',
     'oauth2_provider',
     'django_extensions',
-    'observation_portal.accounts',
-    'observation_portal.requestgroups',
-    'observation_portal.observations',
-    'observation_portal.proposals',
-    'observation_portal.sciapplications',
+    'observation_portal.accounts.apps.AccountsConfig',
+    'observation_portal.requestgroups.apps.RequestGroupsConfig',
+    'observation_portal.observations.apps.ObservationsConfig',
+    'observation_portal.proposals.apps.ProposalsConfig',
+    'observation_portal.sciapplications.apps.SciapplicationsConfig',
 ]
 
 MIDDLEWARE = [
