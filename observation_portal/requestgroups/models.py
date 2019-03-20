@@ -718,8 +718,8 @@ class AcquisitionConfig(models.Model):
         max_length=50, default=OFF,
         help_text='AcquisitionConfig mode to use for the observations'
     )
-    exposure_time = models.FloatField(default=0.01,
-        validators=[MinValueValidator(0.01)],
+    exposure_time = models.FloatField(blank=True, null=True,
+        validators=[MinValueValidator(0.0), MaxValueValidator(60.0)],
         help_text='Acquisition exposure time'
     )
     extra_params = JSONField(
