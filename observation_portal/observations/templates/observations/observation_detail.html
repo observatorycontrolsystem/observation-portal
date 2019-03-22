@@ -38,6 +38,7 @@
           <th colspan="6">Summary</th>
         </tr>
         <tr>
+          <th>Id</th>
           <th>Instrument</th>
           <th>Guider</th>
           <th>State</th>
@@ -52,6 +53,7 @@
       <tbody>
         {% for c_status in object.configuration_statuses.all %}
         <tr>
+          <td><a href="{% url 'api:configurationstatus-detail' c_status.id %}">{{ c_status.id }}</a></td>
           <td>{{ c_status.instrument_name }}</td>
           <td>{{ c_status.guide_camera_name }}</td>
           <td>{{ c_status.state }}</td>
