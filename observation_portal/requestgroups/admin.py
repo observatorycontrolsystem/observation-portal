@@ -188,7 +188,7 @@ class AcquisitionConfigAdmin(admin.ModelAdmin):
     list_display = (
         'id',
         'configuration',
-        'mode'
+        'mode',
     )
 
 
@@ -197,6 +197,7 @@ class GuidingConfigAdmin(admin.ModelAdmin):
         'id',
         'configuration',
         'state',
+        'mode',
         'exposure_time'
     )
 

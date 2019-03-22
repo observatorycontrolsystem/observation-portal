@@ -156,7 +156,8 @@ def get_request_duration(request_dict):
             change_overhead = 0
             for oe_type, oe_value in inst_config['optical_elements'].items():
                 if oe_type not in previous_optical_elements or oe_value != previous_optical_elements[oe_type]:
-                    change_overhead = max(request_overheads['optical_element_change_overheads']['{}s'.format(oe_type)], change_overhead)
+                    if '{}s'.format(oe_type) in request_overheads['optical_element_change_overheads']:
+                        change_overhead = max(request_overheads['optical_element_change_overheads']['{}s'.format(oe_type)], change_overhead)
             previous_optical_elements = inst_config['optical_elements']
             duration += change_overhead
 

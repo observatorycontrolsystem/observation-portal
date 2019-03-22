@@ -25,7 +25,7 @@ SECRET_KEY = '2xou30pi2va&ed@n2l79n807k%@szj1+^uj&)y09_w62eji!m^'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['observation-portal-dev.lco.global', '*']
 
 SITE_ID = 1
 ACCOUNT_ACTIVATION_DAYS = 7
@@ -49,11 +49,11 @@ INSTALLED_APPS = [
     'bootstrap3',
     'oauth2_provider',
     'django_extensions',
-    'observation_portal.accounts',
-    'observation_portal.requestgroups',
-    'observation_portal.observations',
-    'observation_portal.proposals',
-    'observation_portal.sciapplications',
+    'observation_portal.accounts.apps.AccountsConfig',
+    'observation_portal.requestgroups.apps.RequestGroupsConfig',
+    'observation_portal.observations.apps.ObservationsConfig',
+    'observation_portal.proposals.apps.ProposalsConfig',
+    'observation_portal.sciapplications.apps.SciapplicationsConfig',
 ]
 
 MIDDLEWARE = [
@@ -103,14 +103,14 @@ DATABASES = {
 }
 
 CACHES = {
-    'default': {
-        'BACKEND': os.getenv('CACHE_BACKEND', 'django.core.cache.backends.locmem.LocMemCache'),
-        'LOCATION': os.getenv('CACHE_LOCATION', 'unique-snowflake')
-    },
-    'locmem': {
-        'BACKEND': os.getenv('LOCAL_CACHE_BACKEND', 'django.core.cache.backends.locmem.LocMemCache'),
-        'LOCATION': 'locmem-cache'
-    }
+     'default': {
+         'BACKEND': os.getenv('CACHE_BACKEND', 'django.core.cache.backends.locmem.LocMemCache'),
+         'LOCATION': os.getenv('CACHE_LOCATION', 'unique-snowflake')
+     },
+     'locmem': {
+         'BACKEND': os.getenv('LOCAL_CACHE_BACKEND', 'django.core.cache.backends.locmem.LocMemCache'),
+         'LOCATION': 'locmem-cache'
+     }
 }
 
 # Password validation
@@ -207,7 +207,7 @@ REST_FRAMEWORK = {
         'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
-    'PAGE_SIZE': 50,
+    'PAGE_SIZE': 10,
     'DEFAULT_THROTTLE_CLASSES': (
         'observation_portal.accounts.throttling.AllowStaffUserRateThrottle',
         'rest_framework.throttling.ScopedRateThrottle',
@@ -217,6 +217,29 @@ REST_FRAMEWORK = {
         'requestgroups.cancel': '1000/day',
         'requestgroups.create': '2500/day',
         'requestgroups.validate': '10000/day'
+    }
+}
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        '': {
+            'handlers': ['console'],
+            'level': 'INFO'
+        },
+        'rise_set': {
+            'level': 'WARNING'
+        },
+        'valhalla_request': {
+            'level': 'INFO',
+            'propogate': False
+        }
     }
 }
 

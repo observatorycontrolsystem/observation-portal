@@ -308,6 +308,7 @@ class CancelObservationsSerializer(serializers.Serializer):
     site = serializers.CharField(required=False)
     enclosure = serializers.CharField(required=False)
     telescope = serializers.CharField(required=False)
+    include_normal = serializers.BooleanField(required=False, default=True)
     include_rr = serializers.BooleanField(required=False, default=False)
     include_direct = serializers.BooleanField(required=False, default=False)
 

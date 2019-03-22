@@ -246,7 +246,7 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                                                                'rotator')
                     if 'required_fields' in rotator_mode['params']:
                         for field in rotator_mode['params']['required_fields']:
-                            if field not in instrument_config['extra_params']:
+                            if 'extra_params' not in instrument_config or field not in instrument_config['extra_params']:
                                 raise serializers.ValidationError(
                                     _("Rotator Mode {} required extra param of {} to be set"
                                       .format(rotator_mode['code'], field)))
