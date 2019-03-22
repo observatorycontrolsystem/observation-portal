@@ -733,7 +733,9 @@ class AcquisitionConfig(models.Model):
         ordering = ('id',)
 
     def as_dict(self):
-        return model_to_dict(self, exclude=self.SERIALIZER_EXCLUDE)
+        config = model_to_dict(self, exclude=self.SERIALIZER_EXCLUDE)
+        config = {field: value for field, value in config.items() if value is not None}
+        return config
 
 
 class Constraints(models.Model):

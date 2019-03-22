@@ -518,6 +518,7 @@ class ConfigDB(object):
                                     'minimum_slew_overhead': telescope['minimum_slew_overhead'],
                                     'maximum_slew_overhead': telescope.get('maximum_slew_overhead', 0.0),
                                     'config_change_overhead': camera_type['config_change_time'],
+                                    'default_acquisition_exposure_time': camera_type['acquire_exposure_time'],
                                     'acquisition_overheads': {am['code']: am['overhead'] for am in modes_by_type['acquisition']['modes']} if 'acquisition' in modes_by_type else {},
                                     'guiding_overheads': {gm['code']: gm['overhead'] for gm in modes_by_type['guiding']['modes']} if 'guiding' in modes_by_type else {},
                                     'front_padding': camera_type['front_padding'],
