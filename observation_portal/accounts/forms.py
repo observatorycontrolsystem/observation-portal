@@ -4,7 +4,7 @@ from registration.forms import RegistrationFormTermsOfService, RegistrationFormU
 
 from observation_portal.accounts.models import Profile
 from observation_portal.proposals.models import ProposalInvite
-from observation_portal.celery import send_mail
+from observation_portal.accounts.tasks import send_mail
 
 
 class CustomRegistrationForm(RegistrationFormTermsOfService, RegistrationFormUniqueEmail):
@@ -95,6 +95,6 @@ class AccountRemovalForm(forms.Form):
         message = 'User {0} would like their account removed.\nReason:\n {1}'.format(
             user.email, self.cleaned_data['reason']
         )
-        send_mail.delay(
+        send_mail.send(
            'Account removal request submitted', message, 'portal@lco.global', ['science-support@lco.global']
         )

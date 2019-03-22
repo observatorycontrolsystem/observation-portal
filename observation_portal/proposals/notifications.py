@@ -1,6 +1,6 @@
 from django.template.loader import render_to_string
 
-from observation_portal.celery import send_mass_mail
+from observation_portal.accounts.tasks import send_mass_mail
 
 
 def users_to_notify(requestgroup):
@@ -29,4 +29,4 @@ def requestgroup_notifications(requestgroup):
             )
             email_messages.append(email_tuple)
         if email_messages:
-            send_mass_mail.delay(email_messages)
+            send_mass_mail.send(email_messages)

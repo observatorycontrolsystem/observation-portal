@@ -1,4 +1,4 @@
-from celery import shared_task
+import dramatiq
 import logging
 
 from observation_portal.common.state_changes import update_request_states_for_window_expiration
@@ -6,7 +6,7 @@ from observation_portal.common.state_changes import update_request_states_for_wi
 logger = logging.getLogger(__name__)
 
 
-@shared_task
+@dramatiq.actor()
 def expire_requests():
     logger.info('Expiring requests')
     update_request_states_for_window_expiration()

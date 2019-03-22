@@ -9,7 +9,7 @@ from weasyprint import HTML, CSS
 from PyPDF2 import PdfFileMerger
 import io
 
-from observation_portal.celery import send_mail
+from observation_portal.accounts.tasks import send_mail
 from observation_portal.proposals.models import (
     Semester, TimeAllocation, Proposal, ScienceCollaborationAllocation, Membership
 )
@@ -210,7 +210,7 @@ class ScienceApplication(models.Model):
                 'semester_already_started': self.call.semester.start < timezone.now(),
             }
         )
-        send_mail.delay(subject, message, 'portal@lco.global', [self.proposal.pi.email])
+        send_mail.send(subject, message, 'portal@lco.global', [self.proposal.pi.email])
 
 
 class TimeRequest(models.Model):

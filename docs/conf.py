@@ -157,7 +157,7 @@ todo_include_todos = True
 # https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html#confval-autodoc_mock_imports
 autodoc_mock_imports = [
     'django',
-    'celery',
+    'dramatiq',
     'rise_set',
     'elasticsearch',
     'dateutil',
