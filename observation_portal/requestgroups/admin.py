@@ -189,7 +189,6 @@ class AcquisitionConfigAdmin(admin.ModelAdmin):
         'id',
         'configuration',
         'mode',
-        'exposure_time'
     )
 
 

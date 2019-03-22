@@ -33,6 +33,7 @@ class ScienceCollaborationAllocationAdmin(admin.ModelAdmin):
 class TimeAllocationAdminInline(admin.TabularInline):
     model = TimeAllocation
     form = TimeAllocationForm
+    extra = 0
 
 
 class ProposalAdmin(admin.ModelAdmin):
