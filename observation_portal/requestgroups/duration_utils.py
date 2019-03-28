@@ -6,7 +6,7 @@ import logging
 
 from observation_portal.proposals.models import TimeAllocationKey, Proposal, Semester
 from observation_portal.common.configdb import configdb
-from observation_portal.common.rise_set_utils import (get_rise_set_intervals, get_largest_interval,
+from observation_portal.common.rise_set_utils import (get_filtered_rise_set_intervals_by_site, get_largest_interval,
                                                       get_distance_between, get_rise_set_target)
 
 logger = logging.getLogger(__name__)
@@ -64,7 +64,7 @@ def get_request_duration_dict(request_dict):
         # TODO: Have configuration duration as well as instrument configuration duration
         conf_durations = [{'duration': get_configuration_duration(conf)} for conf in req['configurations']]
         req_info['configurations'] = conf_durations
-        req_info['largest_interval'] = get_largest_interval(get_rise_set_intervals(req)).total_seconds()
+        req_info['largest_interval'] = get_largest_interval(get_filtered_rise_set_intervals_by_site(req)).total_seconds()
         req_info['largest_interval'] -= (PER_CONFIGURATION_STARTUP_TIME + PER_CONFIGURATION_GAP)
         req_durations['requests'].append(req_info)
     req_durations['duration'] = sum([req['duration'] for req in req_durations['requests']])
