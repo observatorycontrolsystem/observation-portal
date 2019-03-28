@@ -80,6 +80,7 @@ class ObservationFilter(django_filters.FilterSet):
 class ConfigurationStatusFilter(django_filters.FilterSet):
     instrument_name = django_filters.ChoiceFilter(choices=configdb.get_instrument_name_tuples())
     state = django_filters.MultipleChoiceFilter(choices=ConfigurationStatus.STATE_CHOICES)
+    site = django_filters.ChoiceFilter(choices=configdb.get_site_tuples(), field_name='observation__site')
 
     class Meta:
         model = ConfigurationStatus
