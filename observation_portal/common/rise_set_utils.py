@@ -98,7 +98,7 @@ def intervalsets_by_telescope_to_intervals_by_site(intervalsets_by_telescope: di
         if site not in intervals_by_site:
             intervals_by_site[site] = intervalset
         else:
-            intervals_by_site[site] = intervals_by_site[site].union(intervalset)
+            intervals_by_site[site] = intervals_by_site[site].union([intervalset])
 
     return {site: intervalset.toTupleList() for site, intervalset in intervals_by_site.items()}
 
