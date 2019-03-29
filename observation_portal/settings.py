@@ -247,7 +247,7 @@ LOGGING = {
 DRAMATIQ_BROKER = {
     "BROKER": "dramatiq.brokers.redis.RedisBroker",
     "OPTIONS": {
-        "url": "redis://localhost:6379",
+        "url": "redis://" + os.getenv("DRAMATIQ_BROKER_HOST", "redis") + ":" + os.getenv("DRAMATIQ_BROKER_PORT", 6379),
     },
     "MIDDLEWARE": [
         "dramatiq.middleware.Prometheus",
