@@ -42,7 +42,7 @@ class ScheduleViewSet(ListAsDictMixin, CreateListModelMixin, viewsets.ModelViewS
 
 class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelViewSet):
     permission_classes = (IsAdminUser,)
-    http_method_names = ['post', 'head', 'options']
+    http_method_names = ['get', 'post', 'head', 'options']
     serializer_class = ObservationSerializer
 
     def get_queryset(self):

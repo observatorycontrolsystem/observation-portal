@@ -29,17 +29,15 @@ class ObservationFilter(django_filters.FilterSet):
                                                  widget=forms.TextInput(attrs={'class': 'input'}),
                                                  label='Request Group ID')
     state = django_filters.MultipleChoiceFilter(choices=Observation.STATE_CHOICES)
-    exclude_observation_type = django_filters.MultipleChoiceFilter(choices=RequestGroup.OBSERVATION_TYPES,
-                                                                   field_name='request__request_group__observation_type',
-                                                                   exclude=True, label='Exclude Observation Type')
     observation_type = django_filters.MultipleChoiceFilter(choices=RequestGroup.OBSERVATION_TYPES,
                                                            field_name='request__request_group__observation_type',
-                                                           label='Include Observation Type')
+                                                           label='Observation Type')
     request_state = django_filters.MultipleChoiceFilter(choices=Request.STATE_CHOICES, field_name='request__state',
                                                         label='Request State')
     proposal = django_filters.CharFilter(field_name='request__request_group__proposal__id', label='Proposal')
-    instrument_type = django_filters.CharFilter(
-        label='Instrument type',
+    instrument_type = django_filters.MultipleChoiceFilter(
+        choices=configdb.get_instrument_type_tuples(),
+        label='Instrument Type',
         field_name='configuration_statuses__configuration__instrument_type'
     )
     ordering = django_filters.OrderingFilter(
@@ -48,7 +46,7 @@ class ObservationFilter(django_filters.FilterSet):
 
     class Meta:
         model = Observation
-        exclude = ['start', 'end', 'request']
+        exclude = ['start', 'end', 'request', 'created', 'modified']
 
     def filter_start_after(self, queryset, name, value):
         start = parser.parse(value, ignoretz=True)
