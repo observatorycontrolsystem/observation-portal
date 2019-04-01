@@ -15,8 +15,8 @@ from observation_portal.observations.models import Observation, ConfigurationSta
 from observation_portal.proposals.models import Proposal, Membership, Semester
 from observation_portal.accounts.models import Profile
 from observation_portal.common.test_helpers import create_simple_requestgroup, create_simple_configuration
-from observation_portal.requestgroups import views
-from observation_portal.requestgroups import viewsets
+from observation_portal.observations import views
+from observation_portal.observations import viewsets
 import observation_portal.observations.signals.handlers  # noqa
 
 from unittest.mock import patch
