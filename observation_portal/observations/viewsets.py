@@ -3,7 +3,8 @@ from rest_framework.permissions import IsAdminUser
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
-
+from django.core.cache import cache
+from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 
 from observation_portal.requestgroups.models import RequestGroup
@@ -96,7 +97,9 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
         '''
         if not isinstance(request.data, list):
             # Just do the default create for the single block case
-            return super().create(request, args, kwargs)
+            created_obs = super().create(request, args, kwargs)
+            cache.set('observation_portal_last_schedule_time', timezone.now(), None)
+            return created_obs
         else:
             serializer = self.get_serializer(data=request.data)
             errors = {}
@@ -115,6 +118,7 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
                             observations.append(individual_serializer.save())
                         else:
                             errors[i] = individual_serializer.error
+            cache.set('observation_portal_last_schedule_time', timezone.now(), None)
             return Response({'num_created': len(observations),
                                  'errors': errors}, status=201)
 
