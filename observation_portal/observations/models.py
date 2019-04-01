@@ -138,6 +138,7 @@ class ConfigurationStatus(models.Model):
     class Meta:
         unique_together = ('configuration', 'observation')
         verbose_name_plural = 'Configuration statuses'
+        ordering = ['id']
 
 
 class Summary(models.Model):
