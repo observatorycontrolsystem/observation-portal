@@ -25,9 +25,13 @@ class ObservationListView(StaffRequiredMixin, FilterView):
 
 
 class LastScheduledView(APIView):
-    '''
-        Returns the datetime of the last status of requests change or new requests addition
-    '''
+    """
+        Returns the datetime of the last time new observations were submitted. This endpoint is expected to be polled
+        frequently (~every 5 seconds) to for a client to decide if it needs to pull down the schedule or not.
+
+        We are only updating when observations are submitted, and not when they are cancelled, because a site should
+        not really care if the only change was removing things from it's schedule.
+    """
     permission_classes = (IsAdminUser,)
 
     def get(self, request):
