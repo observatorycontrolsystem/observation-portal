@@ -9,6 +9,7 @@ from datetime import timedelta
 
 from observation_portal.observations.models import Observation
 from observation_portal.common.mixins import StaffRequiredMixin
+from observation_portal.common.configdb import configdb
 from observation_portal.observations.filters import ObservationFilter
 
 
@@ -39,5 +40,11 @@ class LastScheduledView(APIView):
         cache_key = 'observation_portal_last_schedule_time'
         if site:
             cache_key += f"_{site}"
-        last_schedule_time = cache.get(cache_key, timezone.now() - timedelta(days=7))
+            last_schedule_time = cache.get(cache_key, timezone.now() - timedelta(days=7))
+        else:
+            sites = configdb.get_site_tuples()
+            keys = [cache_key + "_" + s[0] for s in sites]
+            cache_dict = cache.get_many(keys)
+            last_schedule_time = max(list(cache_dict.values()) + [timezone.now() - timedelta(days=7)])
+
         return Response({'last_schedule_time': last_schedule_time})
