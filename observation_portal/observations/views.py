@@ -35,5 +35,9 @@ class LastScheduledView(APIView):
     permission_classes = (IsAdminUser,)
 
     def get(self, request):
-        last_schedule_time = cache.get('observation_portal_last_schedule_time', timezone.now() - timedelta(days=7))
+        site = request.query_params.get('site')
+        cache_key = 'observation_portal_last_schedule_time'
+        if site:
+            cache_key += f"_{site}"
+        last_schedule_time = cache.get(cache_key, timezone.now() - timedelta(days=7))
         return Response({'last_schedule_time': last_schedule_time})

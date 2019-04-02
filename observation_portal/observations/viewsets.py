@@ -95,10 +95,12 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
         ''' This overrides the create mixin create method, but does the same thing minus the serializing of the
             data into the response at the end
         '''
+        cache_key = 'observation_portal_last_schedule_time'
         if not isinstance(request.data, list):
             # Just do the default create for the single block case
             created_obs = super().create(request, args, kwargs)
-            cache.set('observation_portal_last_schedule_time', timezone.now(), None)
+            site = request.data['site']
+            cache.set(cache_key + f"_{site}", timezone.now(), None)
             return created_obs
         else:
             serializer = self.get_serializer(data=request.data)
@@ -118,7 +120,8 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
                             observations.append(individual_serializer.save())
                         else:
                             errors[i] = individual_serializer.error
-            cache.set('observation_portal_last_schedule_time', timezone.now(), None)
+            site = request.data[0]['site']
+            cache.set(cache_key + f"_{site}", timezone.now(), None)
             return Response({'num_created': len(observations),
                                  'errors': errors}, status=201)
 
