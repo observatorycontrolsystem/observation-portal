@@ -392,6 +392,72 @@ class TestRiseSetUtils(TestCase):
         end = timezone.datetime(year=2017, month=5, day=6, tzinfo=timezone.utc)
         self.assertTrue(rise_set_utils.get_site_rise_set_intervals(start=start, end=end, site_code='tst'))
 
+    def test_get_largest_rise_set_interval_only_uses_one_site(self):
+        configdb_patcher = patch('observation_portal.common.configdb.ConfigDB.get_sites_with_instrument_type_and_location')
+        mock_configdb = configdb_patcher.start()
+        mock_configdb.return_value = {'tst': {'latitude': -32.3805542,
+                                              'longitude': 20.8100352,
+                                              'horizon': 15.0,
+                                              'altitude': 100.0,
+                                              'ha_limit_pos': 4.6,
+                                              'ha_limit_neg': -4.6},
+                                      'abc': {'latitude': -32.3805542,
+                                              'longitude': 50.8100352,
+                                              'horizon': 15.0,
+                                              'altitude': 100.0,
+                                              'ha_limit_pos': 4.6,
+                                              'ha_limit_neg': -4.6}
+                                      }
+        configdb_patcher2 = patch(
+            'observation_portal.common.configdb.ConfigDB.get_telescopes_with_instrument_type_and_location')
+        mock_configdb2 = configdb_patcher2.start()
+        mock_configdb2.return_value = {'1m0a.doma.tst': {'latitude': -32.3805542,
+                                              'longitude': 20.8100352,
+                                              'horizon': 15.0,
+                                              'altitude': 100.0,
+                                              'ha_limit_pos': 4.6,
+                                              'ha_limit_neg': -4.6},
+                                      '1m0a.doma.abc': {'latitude': -32.3805542,
+                                              'longitude': 50.8100352,
+                                              'horizon': 15.0,
+                                              'altitude': 100.0,
+                                              'ha_limit_pos': 4.6,
+                                              'ha_limit_neg': -4.6}
+                                      }
+        configdb_patcher.stop()
+        configdb_patcher2.stop()
+        request_dict = {'location': {'telescope_class': '1m0'},
+                        'windows': [
+                            {
+                                'start': datetime(2016, 9, 4),
+                                'end': datetime(2016, 9, 5)
+                            }
+                        ],
+                        'configurations': [
+                            {
+                                'instrument_type': '1M0-SCICAM-SINISTRO',
+                                'instrument_configs': [
+                                    {
+                                        'exposure_time': 5000,
+                                        'exposure_count': 4
+                                    }
+                                ],
+                                'target': {
+                                    'ra': 142.0,
+                                    'dec': -53.0,
+                                    'proper_motion_ra': 0.0,
+                                    'proper_motion_dec': 0.0,
+                                    'epoch': 2000,
+                                    'parallax': 0.0
+                                },
+                                'constraints': {
+                                    'max_airmass': 2.0,
+                                    'min_lunar_distance': 30.0
+                                }
+                            }
+                        ]}
+        filtered_intervals = rise_set_utils.get_filtered_rise_set_intervals_by_site(request_dict)
+
     def test_get_site_rise_set_intervals_should_not_return_an_interval(self):
         start = timezone.datetime(year=2017, month=5, day=5, tzinfo=timezone.utc)
         end = timezone.datetime(year=2017, month=5, day=6, tzinfo=timezone.utc)
