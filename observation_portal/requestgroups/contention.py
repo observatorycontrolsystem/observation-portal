@@ -126,8 +126,9 @@ class Pressure(object):
         visible_intervals = {}
         for site in self.sites:
             if not request.location.site or request.location.site == site['code']:
-                intervals = get_filtered_rise_set_intervals_by_site(request.as_dict(), site['code']).get(
-                    site['code'], [])
+                intervals = get_filtered_rise_set_intervals_by_site(
+                    request.as_dict(), site['code']
+                ).get(site['code'], [])
                 for r, s in intervals:
                     effective_rise = max(r, self.now)
                     if s > self.now and (s-effective_rise).seconds >= request.duration:

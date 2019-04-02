@@ -1,4 +1,5 @@
 from math import cos, radians
+from collections import defaultdict
 from datetime import datetime, timedelta
 
 from time_intervals.intervals import Intervals
@@ -92,13 +93,10 @@ def intervalsets_by_telescope_to_intervals_by_site(intervalsets_by_telescope: di
     :param intervalsets_by_telescope:
     :return: intervals by site
     """
-    intervals_by_site = {}
+    intervals_by_site = defaultdict(Intervals)
     for telescope, intervalset in intervalsets_by_telescope.items():
         site = telescope.split('.')[2]
-        if site not in intervals_by_site:
-            intervals_by_site[site] = intervalset
-        else:
-            intervals_by_site[site] = intervals_by_site[site].union([intervalset])
+        intervals_by_site[site] = intervals_by_site[site].union([intervalset])
 
     return {site: intervalset.toTupleList() for site, intervalset in intervals_by_site.items()}
 
