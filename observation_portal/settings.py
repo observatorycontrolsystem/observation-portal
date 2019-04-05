@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'django_extensions',
     'observation_portal.accounts.apps.AccountsConfig',
     'observation_portal.requestgroups.apps.RequestGroupsConfig',
+    'observation_portal.userrequests.apps.UserRequestsConfig',
     'observation_portal.observations.apps.ObservationsConfig',
     'observation_portal.proposals.apps.ProposalsConfig',
     'observation_portal.sciapplications.apps.SciapplicationsConfig',
