@@ -6,15 +6,20 @@ from django.contrib.auth.models import User
 from datetime import datetime
 from dateutil.parser import parse
 from django.urls import reverse
+from django.core import cache
+from dateutil.parser import parse as datetime_parser
+from datetime import timedelta
 
 from observation_portal.requestgroups.models import RequestGroup, Window, Location
 from observation_portal.observations.models import Observation, ConfigurationStatus, Summary
 from observation_portal.proposals.models import Proposal, Membership, Semester
 from observation_portal.accounts.models import Profile
 from observation_portal.common.test_helpers import create_simple_requestgroup, create_simple_configuration
+from observation_portal.observations import views
+from observation_portal.observations import viewsets
 import observation_portal.observations.signals.handlers  # noqa
 
-
+from unittest.mock import patch
 import copy
 
 observation = {
@@ -886,3 +891,69 @@ class TestUpdateConfigurationStatusApi(TestObservationApiBase):
         self.assertEqual(request.state, 'PENDING')
         self.requestgroup.refresh_from_db()
         self.assertEqual(self.requestgroup.state, 'PENDING')
+
+
+class TestLastScheduled(TestObservationApiBase):
+    def setUp(self):
+        super().setUp()
+        # Mock the cache with a real one for these tests
+        self.locmem_cache = cache._create_cache('django.core.cache.backends.locmem.LocMemCache')
+        self.locmem_cache.clear()
+        self.patch1 = patch.object(views, 'cache', self.locmem_cache)
+        self.patch1.start()
+        self.patch2 = patch.object(viewsets, 'cache', self.locmem_cache)
+        self.patch2.start()
+
+    def tearDown(self):
+        super().tearDown()
+        self.patch1.stop()
+        self.patch2.stop()
+
+    def test_last_schedule_date_is_7_days_out_if_no_cached_value(self):
+        last_schedule_cached = self.locmem_cache.get('observation_portal_last_schedule_time_tst')
+        self.assertIsNone(last_schedule_cached)
+
+        response = self.client.get(reverse('api:last_scheduled'))
+        last_schedule = response.json()['last_schedule_time']
+        self.assertAlmostEqual(datetime_parser(last_schedule), timezone.now() - timedelta(days=7),
+                               delta=timedelta(minutes=1))
+
+    def test_last_schedule_date_is_updated_when_single_observation_is_submitted(self):
+        last_schedule_cached = self.locmem_cache.get('observation_portal_last_schedule_time_tst')
+        self.assertIsNone(last_schedule_cached)
+        observation = self._generate_observation_data(
+            self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
+        )
+        self._create_observation(observation)
+
+        response = self.client.get(reverse('api:last_scheduled') + "?site=tst")
+        last_schedule = response.json()['last_schedule_time']
+        self.assertAlmostEqual(datetime_parser(last_schedule), timezone.now(), delta=timedelta(minutes=1))
+
+        # Verify that the last scheduled time for a different site isn't updated
+        response = self.client.get(reverse('api:last_scheduled') + "?site=non")
+        last_schedule = response.json()['last_schedule_time']
+        self.assertAlmostEqual(datetime_parser(last_schedule), timezone.now() - timedelta(days=7),
+                               delta=timedelta(minutes=1))
+
+    def test_last_schedule_date_is_updated_when_multiple_observations_are_submitted(self):
+        last_schedule_cached = self.locmem_cache.get('observation_portal_last_schedule_time_tst')
+        self.assertIsNone(last_schedule_cached)
+        observation = self._generate_observation_data(
+            self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
+        )
+        observations = [observation, observation, observation]
+        self._create_observation(observations)
+
+        response = self.client.get(reverse('api:last_scheduled'))
+        last_schedule = response.json()['last_schedule_time']
+        self.assertAlmostEqual(datetime_parser(last_schedule), timezone.now(), delta=timedelta(minutes=1))
+
+    def test_last_schedule_date_is_not_updated_when_observation_is_mixed(self):
+        mixer.blend(Observation, request=self.requestgroup.requests.first())
+        last_schedule_cached = self.locmem_cache.get('observation_portal_last_schedule_time_tst')
+        self.assertIsNone(last_schedule_cached)
+        response = self.client.get(reverse('api:last_scheduled'))
+        last_schedule = response.json()['last_schedule_time']
+        self.assertAlmostEqual(datetime_parser(last_schedule), timezone.now() - timedelta(days=7),
+                               delta=timedelta(minutes=1))
