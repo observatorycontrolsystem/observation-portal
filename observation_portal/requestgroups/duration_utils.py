@@ -174,6 +174,10 @@ def get_request_duration(request_dict):
         if configuration['acquisition_config']['mode'] != 'OFF':
             if configuration['acquisition_config']['mode'] in request_overheads['acquisition_overheads']:
                 duration += request_overheads['acquisition_overheads'][configuration['acquisition_config']['mode']]
+                if 'exposure_time' in configuration['acquisition_config']:
+                    duration += configuration['acquisition_config']['exposure_time']
+                else:
+                    duration += request_overheads['default_acquisition_exposure_time']
 
         # Now add the Guiding overhead if this request requires it
         if configuration['guiding_config']['state'] == 'ON':

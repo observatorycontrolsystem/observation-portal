@@ -162,6 +162,7 @@ class TestRequestDuration(SetTimeMixin, TestCase):
         self.floyds_readout_time1 = 25
         self.floyds_config_change_time = 30
         self.floyds_acquire_processing_time = 90
+        self.floyds_acquire_exposure_time = 30
 
     def test_ccd_single_configuration_request_duration(self):
         self.configuration_expose.request = self.request
@@ -293,7 +294,24 @@ class TestRequestDuration(SetTimeMixin, TestCase):
         exp_time = 1800
         exp_count = 1
 
-        self.assertEqual(duration, math.ceil(exp_count*(exp_time + self.floyds_readout_time1 + self.floyds_fixed_overhead_per_exposure) + self.floyds_front_padding + self.floyds_config_change_time + self.floyds_acquire_processing_time + PER_CONFIGURATION_GAP + PER_CONFIGURATION_STARTUP_TIME + self.minimum_slew_time))
+        self.assertEqual(duration, math.ceil(exp_count*(exp_time + self.floyds_readout_time1 + self.floyds_fixed_overhead_per_exposure) + self.floyds_front_padding + self.floyds_config_change_time + self.floyds_acquire_processing_time + self.floyds_acquire_exposure_time + PER_CONFIGURATION_GAP + PER_CONFIGURATION_STARTUP_TIME + self.minimum_slew_time))
+
+    def test_floyds_uses_supplied_acquisition_config_exposure_time(self):
+        self.configuration_spectrum.request = self.request
+        self.configuration_spectrum.acquisition_config.mode = 'WCS'
+        self.configuration_spectrum.acquisition_config.save()
+        self.configuration_spectrum.save()
+
+        duration = self.request.duration
+
+        self.configuration_spectrum.acquisition_config.exposure_time = 20.0  # Default for test floyds is 30sec
+        self.configuration_spectrum.acquisition_config.save()
+        self.configuration_spectrum.save()
+
+        del self.request.duration
+        new_duration = self.request.duration
+
+        self.assertEqual(new_duration, duration - 10)
 
     def test_floyds_multiple_spectrum_configuration_request_duration_with_acquire_on(self):
         self.configuration_spectrum.request = self.request
@@ -316,7 +334,7 @@ class TestRequestDuration(SetTimeMixin, TestCase):
         exp_count = 1
         num_spectrum_configurations = 2
 
-        self.assertEqual(duration, math.ceil(exp_count*num_spectrum_configurations*(exp_time + self.floyds_readout_time1 + self.floyds_fixed_overhead_per_exposure) + self.floyds_front_padding + self.floyds_config_change_time + num_spectrum_configurations*(self.floyds_acquire_processing_time + PER_CONFIGURATION_GAP + PER_CONFIGURATION_STARTUP_TIME + self.minimum_slew_time)))
+        self.assertEqual(duration, math.ceil(exp_count*num_spectrum_configurations*(exp_time + self.floyds_readout_time1 + self.floyds_fixed_overhead_per_exposure) + self.floyds_front_padding + self.floyds_config_change_time + num_spectrum_configurations*(self.floyds_acquire_processing_time + PER_CONFIGURATION_GAP + PER_CONFIGURATION_STARTUP_TIME + self.minimum_slew_time + self.floyds_acquire_exposure_time)))
 
     def test_floyds_single_configuration_duration(self):
         duration = self.configuration_spectrum.duration
@@ -351,7 +369,7 @@ class TestRequestDuration(SetTimeMixin, TestCase):
 
         num_configurations = 3
 
-        self.assertEqual(duration, math.ceil(exp_s_duration + exp_a_duration + exp_l_duration + self.floyds_front_padding + self.floyds_acquire_processing_time + num_configurations*(self.floyds_config_change_time + PER_CONFIGURATION_GAP + PER_CONFIGURATION_STARTUP_TIME + self.minimum_slew_time)))
+        self.assertEqual(duration, math.ceil(exp_s_duration + exp_a_duration + exp_l_duration + self.floyds_front_padding + self.floyds_acquire_processing_time + self.floyds_acquire_exposure_time + num_configurations*(self.floyds_config_change_time + PER_CONFIGURATION_GAP + PER_CONFIGURATION_STARTUP_TIME + self.minimum_slew_time)))
 
     def test_floyds_multiple_configuration_duration(self):
         duration = self.configuration_lampflat.duration
