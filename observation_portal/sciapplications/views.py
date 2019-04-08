@@ -10,7 +10,7 @@ from django.urls import reverse, reverse_lazy
 from django.template.loader import render_to_string
 from django.utils import timezone
 
-from observation_portal.celery import send_mail
+from observation_portal.accounts.tasks import send_mail
 from observation_portal.sciapplications.models import Call, ScienceApplication, ScienceCollaborationAllocation
 from observation_portal.sciapplications.forms import (
     ScienceProposalAppForm, DDTProposalAppForm, KeyProjectAppForm, SciCollabAppForm, timerequest_formset, ci_formset
@@ -230,7 +230,7 @@ class SciApplicationPDFView(LoginRequiredMixin, DetailView):
 
 def ddt_submitted_email(sciproposal):
     message = render_to_string('sciapplications/ddt_submitted.txt', {'ddt': sciproposal})
-    send_mail.delay(
+    send_mail.send(
         'LCO Director\'s Discretionary Time Submission',
         message,
         'portal@lco.global',

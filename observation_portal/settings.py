@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'bootstrap3',
     'oauth2_provider',
     'django_extensions',
+    'django_dramatiq',
     'observation_portal.accounts.apps.AccountsConfig',
     'observation_portal.requestgroups.apps.RequestGroupsConfig',
     'observation_portal.observations.apps.ObservationsConfig',
@@ -243,24 +244,22 @@ LOGGING = {
     }
 }
 
-CELERY_TASK_ALWAYS_EAGER = not os.getenv('CELERY_ENABLED', False)
-CELERY_BROKER_URL = os.getenv('BROKER_URL', 'memory://localhost')
-CELERY_WORKER_HIJACK_ROOT_LOGGER = False
-
-CELERY_BEAT_SCHEDULE = {
-    'time-accounting-every-hour': {
-        'task': 'observation_portal.proposals.tasks.run_accounting',
-        'schedule': 3600.0
+DRAMATIQ_BROKER = {
+    "BROKER": "dramatiq.brokers.redis.RedisBroker",
+    "OPTIONS": {
+        "url": "redis://" + os.getenv("DRAMATIQ_BROKER_HOST", "redis") + ":" +
+               str(os.getenv("DRAMATIQ_BROKER_PORT", 6379)),
     },
-    'expire-requests-every-5-minutes': {
-        'task': 'observation_portal.userrequests.tasks.expire_requests',
-        'schedule': 300.0
-    },
-    'expire-access-tokens-every-day': {
-        'task': 'observation_portal.accounts.tasks.expire_access_tokens',
-        'schedule': 86400.0
-    }
+    "MIDDLEWARE": [
+        "dramatiq.middleware.Prometheus",
+        "dramatiq.middleware.AgeLimit",
+        "dramatiq.middleware.TimeLimit",
+        "dramatiq.middleware.Callbacks",
+        "dramatiq.middleware.Retries",
+        "django_dramatiq.middleware.DbConnectionsMiddleware",
+    ]
 }
+
 
 TEST_RUNNER = 'observation_portal.test_runner.MyDiscoverRunner'
 
