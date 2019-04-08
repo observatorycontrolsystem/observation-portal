@@ -52,13 +52,13 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
 
     @action(detail=False, methods=['post'])
     def cancel(self, request):
-        '''
+        """
         Filters a set of observations based on the parameters provided, and then either deletes them if they are 
         scheduled >72 hours in the future, cancels them if they are in the future, or aborts them if they are currently 
         in progress. 
         :param request: 
         :return: 
-        '''
+        """
         cancel_serializer = CancelObservationsSerializer(data=request.data)
         if cancel_serializer.is_valid():
             observations = self.get_queryset()
@@ -92,9 +92,9 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
             return Response(cancel_serializer.errors, status=400)
 
     def create(self, request, *args, **kwargs):
-        ''' This overrides the create mixin create method, but does the same thing minus the serializing of the
+        """ This overrides the create mixin create method, but does the same thing minus the serializing of the
             data into the response at the end
-        '''
+        """
         cache_key = 'observation_portal_last_schedule_time'
         if not isinstance(request.data, list):
             # Just do the default create for the single block case

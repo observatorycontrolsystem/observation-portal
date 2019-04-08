@@ -1,4 +1,5 @@
 from math import cos, radians
+from collections import defaultdict
 from datetime import datetime, timedelta
 
 from time_intervals.intervals import Intervals
@@ -16,10 +17,11 @@ from observation_portal.common.downtimedb import DowntimeDB
 HOURS_PER_DEGREES = 15.0
 
 
-def get_largest_interval(intervals):
+def get_largest_interval(intervals_by_site):
     largest_interval = timedelta(seconds=0)
-    for interval in intervals:
-        largest_interval = max((interval[1] - interval[0]), largest_interval)
+    for intervals in intervals_by_site.values():
+        for interval in intervals:
+            largest_interval = max((interval[1] - interval[0]), largest_interval)
 
     return largest_interval
 
@@ -65,7 +67,7 @@ def get_rise_set_intervals_by_site(request: dict) -> dict:
     return intervals_by_site
 
 
-def get_rise_set_intervals(request_dict, site=''):
+def get_filtered_rise_set_intervals_by_site(request_dict, site=''):
     intervals = []
     site = site if site else request_dict['location'].get('site', '')
     telescope_details = configdb.get_telescopes_with_instrument_type_and_location(
@@ -80,10 +82,23 @@ def get_rise_set_intervals(request_dict, site=''):
     intervals_by_site = get_rise_set_intervals_by_site(request_dict)
     intervalsets_by_telescope = intervals_by_site_to_intervalsets_by_telescope(intervals_by_site, telescope_details.keys())
     filtered_intervalsets_by_telescope = filter_out_downtime_from_intervalsets(intervalsets_by_telescope)
-    filtered_intervalset = Intervals().union(filtered_intervalsets_by_telescope.values())
-    filtered_intervals = filtered_intervalset.toTupleList()
+    filtered_intervals_by_site = intervalsets_by_telescope_to_intervals_by_site(filtered_intervalsets_by_telescope)
 
-    return filtered_intervals
+    return filtered_intervals_by_site
+
+
+def intervalsets_by_telescope_to_intervals_by_site(intervalsets_by_telescope: dict) -> dict:
+    """Convert rise_sets ordered by telescope to rise_set ordered by site. Also convert from intervalset
+        to datetime tuple lists per site.
+    :param intervalsets_by_telescope:
+    :return: intervals by site
+    """
+    intervals_by_site = defaultdict(Intervals)
+    for telescope, intervalset in intervalsets_by_telescope.items():
+        site = telescope.split('.')[2]
+        intervals_by_site[site] = intervals_by_site[site].union([intervalset])
+
+    return {site: intervalset.toTupleList() for site, intervalset in intervals_by_site.items()}
 
 
 def intervals_by_site_to_intervalsets_by_telescope(intervals_by_site: dict, telescopes: list) -> dict:
