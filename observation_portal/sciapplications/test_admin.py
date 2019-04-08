@@ -5,13 +5,13 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from datetime import timedelta
 from mixer.backend.django import mixer
-
+from django_dramatiq.test import DramatiqTestCase
 
 from observation_portal.proposals.models import Semester, Proposal
 from observation_portal.sciapplications.models import ScienceApplication, Call, Instrument, TimeRequest
 
 
-class TestSciAppAdmin(TestCase):
+class TestSciAppAdmin(DramatiqTestCase):
     def setUp(self):
         self.semester = mixer.blend(Semester)
         self.user = mixer.blend(User)

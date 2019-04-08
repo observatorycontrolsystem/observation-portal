@@ -23,7 +23,7 @@ from observation_portal.requestgroups.duration_utils import (
     get_instrument_configuration_duration, get_num_exposures, get_semester_in
 )
 from datetime import timedelta
-from observation_portal.common.rise_set_utils import get_rise_set_intervals
+from observation_portal.common.rise_set_utils import get_filtered_rise_set_intervals_by_site, get_largest_interval
 
 
 logger = logging.getLogger(__name__)
@@ -464,11 +464,8 @@ class RequestSerializer(serializers.ModelSerializer):
         # check that the requests window has enough rise_set visible time to accomodate the requests duration
         if data.get('windows'):
             duration = get_request_duration(data)
-            rise_set_intervals = get_rise_set_intervals(data)
-            largest_interval = timedelta(seconds=0)
-            for interval in rise_set_intervals:
-                largest_interval = max((interval[1] - interval[0]), largest_interval)
-
+            rise_set_intervals_by_site = get_filtered_rise_set_intervals_by_site(data)
+            largest_interval = get_largest_interval(rise_set_intervals_by_site)
             for configuration in data['configurations']:
                 for instrument_config in configuration['instrument_configs']:
                     if instrument_config.get('fill_window'):

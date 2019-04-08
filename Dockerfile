@@ -19,7 +19,7 @@ FROM python:3.7-slim
 
 EXPOSE 80
 WORKDIR /observation-portal
-CMD gunicorn observation_portal.wsgi -w 4 -k gevent -b 0.0.0.0:80 --timeout=300
+CMD gunicorn observation_portal.wsgi -c observation_portal/config.py
 
 COPY requirements.txt .
 RUN apt-get update \

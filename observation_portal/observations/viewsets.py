@@ -3,7 +3,8 @@ from rest_framework.permissions import IsAdminUser
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
-
+from django.core.cache import cache
+from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 
 from observation_portal.requestgroups.models import RequestGroup
@@ -51,13 +52,13 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
 
     @action(detail=False, methods=['post'])
     def cancel(self, request):
-        '''
+        """
         Filters a set of observations based on the parameters provided, and then either deletes them if they are 
         scheduled >72 hours in the future, cancels them if they are in the future, or aborts them if they are currently 
         in progress. 
         :param request: 
         :return: 
-        '''
+        """
         cancel_serializer = CancelObservationsSerializer(data=request.data)
         if cancel_serializer.is_valid():
             observations = self.get_queryset()
@@ -91,12 +92,16 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
             return Response(cancel_serializer.errors, status=400)
 
     def create(self, request, *args, **kwargs):
-        ''' This overrides the create mixin create method, but does the same thing minus the serializing of the
+        """ This overrides the create mixin create method, but does the same thing minus the serializing of the
             data into the response at the end
-        '''
+        """
+        cache_key = 'observation_portal_last_schedule_time'
         if not isinstance(request.data, list):
             # Just do the default create for the single block case
-            return super().create(request, args, kwargs)
+            created_obs = super().create(request, args, kwargs)
+            site = request.data['site']
+            cache.set(cache_key + f"_{site}", timezone.now(), None)
+            return created_obs
         else:
             serializer = self.get_serializer(data=request.data)
             errors = {}
@@ -115,6 +120,8 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
                             observations.append(individual_serializer.save())
                         else:
                             errors[i] = individual_serializer.error
+            site = request.data[0]['site']
+            cache.set(cache_key + f"_{site}", timezone.now(), None)
             return Response({'num_created': len(observations),
                                  'errors': errors}, status=201)
 

@@ -1,13 +1,15 @@
 django
 django-rest-framework
 drf-yasg
-celery
+dramatiq[redis, watch]
+apscheduler
 requests
 django-filter
 django-extensions
 django-registration-redux
 django-oauth-toolkit
 django-bootstrap3
+django-dramatiq
 time_intervals
 rise_set
 elasticsearch<6.0

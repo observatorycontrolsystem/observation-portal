@@ -3,7 +3,7 @@ from datetime import timedelta
 import math
 
 from observation_portal.requestgroups.models import Request
-from observation_portal.common.rise_set_utils import get_rise_set_intervals, get_site_rise_set_intervals
+from observation_portal.common.rise_set_utils import get_filtered_rise_set_intervals_by_site, get_site_rise_set_intervals
 from observation_portal.common.configdb import configdb
 
 
@@ -126,7 +126,9 @@ class Pressure(object):
         visible_intervals = {}
         for site in self.sites:
             if not request.location.site or request.location.site == site['code']:
-                intervals = get_rise_set_intervals(request.as_dict(), site['code'])
+                intervals = get_filtered_rise_set_intervals_by_site(
+                    request.as_dict(), site['code']
+                ).get(site['code'], [])
                 for r, s in intervals:
                     effective_rise = max(r, self.now)
                     if s > self.now and (s-effective_rise).seconds >= request.duration:

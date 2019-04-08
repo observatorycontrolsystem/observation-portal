@@ -5,7 +5,7 @@ from datetime import datetime
 from unittest.mock import patch
 
 from observation_portal.requestgroups.request_utils import (get_airmasses_for_request_at_sites, get_telescope_states_for_request,
-                                                 get_rise_set_intervals)
+                                                            get_filtered_rise_set_intervals_by_site)
 from observation_portal.requestgroups.models import (Request, Configuration, Target, RequestGroup, Window, Location,
                                                      Constraints, InstrumentConfig, AcquisitionConfig, GuidingConfig)
 from observation_portal.proposals.models import Proposal, TimeAllocation, Semester
@@ -52,7 +52,7 @@ class BaseSetupRequest(SetTimeMixin, TestCase):
 
 class TestRequestIntervals(BaseSetupRequest):
     def test_request_intervals_for_one_week(self):
-        intervals = get_rise_set_intervals(self.request.as_dict())
+        intervals = get_filtered_rise_set_intervals_by_site(self.request.as_dict()).get('tst', [])
 
         truth_intervals = [(datetime(2016, 10, 1, 0, 0, tzinfo=timezone.utc),
                             datetime(2016, 10, 1, 3, 20, 31, 366820, tzinfo=timezone.utc)),
@@ -89,7 +89,7 @@ class TestRequestIntervals(BaseSetupRequest):
                                        'reason': 'Whatever'}
                                       ]
 
-        intervals = get_rise_set_intervals(self.request.as_dict())
+        intervals = get_filtered_rise_set_intervals_by_site(self.request.as_dict()).get('tst', [])
 
         truth_intervals = [(datetime(2016, 10, 1, 0, 0, tzinfo=timezone.utc),
                             datetime(2016, 10, 1, 3, 20, 31, 366820, tzinfo=timezone.utc)),
@@ -150,7 +150,7 @@ class TestRequestIntervals(BaseSetupRequest):
                                        'reason': 'Whatever'},
                                       ]
 
-        intervals = get_rise_set_intervals(self.request.as_dict())
+        intervals = get_filtered_rise_set_intervals_by_site(self.request.as_dict()).get('tst', [])
 
         truth_intervals = [(datetime(2016, 10, 1, 0, 0, tzinfo=timezone.utc),
                             datetime(2016, 10, 1, 3, 20, 31, 366820, tzinfo=timezone.utc)),
@@ -179,7 +179,7 @@ class TestRequestIntervals(BaseSetupRequest):
                                        'reason': 'Whatever'}
                                       ]
 
-        intervals = get_rise_set_intervals(self.request.as_dict())
+        intervals = get_filtered_rise_set_intervals_by_site(self.request.as_dict()).get('tst', [])
 
         truth_intervals = []
 
@@ -213,7 +213,7 @@ class TestRequestIntervals(BaseSetupRequest):
                                        'reason': 'Whatever'}
                                       ]
 
-        intervals = get_rise_set_intervals(self.request.as_dict())
+        intervals = get_filtered_rise_set_intervals_by_site(self.request.as_dict()).get('tst', [])
 
         truth_intervals = [(datetime(2016, 10, 1, 0, 0, tzinfo=timezone.utc),
                             datetime(2016, 10, 1, 3, 20, 31, 366820, tzinfo=timezone.utc)),
@@ -274,7 +274,7 @@ class TestRequestIntervals(BaseSetupRequest):
                                        'reason': 'Whatever'}
                                       ]
 
-        intervals = get_rise_set_intervals(self.request.as_dict())
+        intervals = get_filtered_rise_set_intervals_by_site(self.request.as_dict()).get('tst', [])
 
         truth_intervals = [(datetime(2016, 10, 1, 0, 0, tzinfo=timezone.utc),
                             datetime(2016, 10, 1, 3, 20, 31, 366820, tzinfo=timezone.utc)),

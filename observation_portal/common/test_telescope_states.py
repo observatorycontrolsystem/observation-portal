@@ -3,8 +3,9 @@ from observation_portal.common.telescope_states import (TelescopeStates, get_tel
 from observation_portal.common.configdb import TelescopeKey
 from observation_portal.common import rise_set_utils
 
+from time_intervals.intervals import Intervals
 from django.test import TestCase
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.utils import timezone
 from unittest.mock import patch
 import json
@@ -391,6 +392,85 @@ class TestRiseSetUtils(TestCase):
         start = timezone.datetime(year=2017, month=5, day=5, tzinfo=timezone.utc)
         end = timezone.datetime(year=2017, month=5, day=6, tzinfo=timezone.utc)
         self.assertTrue(rise_set_utils.get_site_rise_set_intervals(start=start, end=end, site_code='tst'))
+
+    def test_get_largest_rise_set_interval_only_uses_one_site(self):
+        configdb_patcher = patch(
+            'observation_portal.common.configdb.ConfigDB.get_sites_with_instrument_type_and_location'
+        )
+        mock_configdb = configdb_patcher.start()
+        mock_configdb.return_value = {'tst': {'latitude': -30.1673833333,
+                                              'longitude': -70.8047888889,
+                                              'horizon': 15.0,
+                                              'altitude': 100.0,
+                                              'ha_limit_pos': 4.6,
+                                              'ha_limit_neg': -4.6},
+                                      'abc': {'latitude': -32.3805542,
+                                              'longitude': 20.8101815,
+                                              'horizon': 15.0,
+                                              'altitude': 100.0,
+                                              'ha_limit_pos': 4.6,
+                                              'ha_limit_neg': -4.6}
+                                      }
+        configdb_patcher2 = patch(
+            'observation_portal.common.configdb.ConfigDB.get_telescopes_with_instrument_type_and_location')
+        mock_configdb2 = configdb_patcher2.start()
+        mock_configdb2.return_value = {'1m0a.doma.tst': {'latitude': -30.1673833333,
+                                              'longitude':-70.8047888889,
+                                              'horizon': 15.0,
+                                              'altitude': 100.0,
+                                              'ha_limit_pos': 4.6,
+                                              'ha_limit_neg': -4.6},
+                                      '1m0a.doma.abc': {'latitude': -32.3805542,
+                                              'longitude': 20.8101815,
+                                              'horizon': 15.0,
+                                              'altitude': 100.0,
+                                              'ha_limit_pos': 4.6,
+                                              'ha_limit_neg': -4.6}
+                                      }
+
+        request_dict = {'location': {'telescope_class': '1m0'},
+                        'windows': [
+                            {
+                                'start': datetime(2016, 9, 4),
+                                'end': datetime(2016, 9, 5)
+                            }
+                        ],
+                        'configurations': [
+                            {
+                                'instrument_type': '1M0-SCICAM-SINISTRO',
+                                'instrument_configs': [
+                                    {
+                                        'exposure_time': 6000,
+                                        'exposure_count': 5
+                                    }
+                                ],
+                                'target': {
+                                    'type': 'SIDEREAL',
+                                    'ra': 35.0,
+                                    'dec': -53.0,
+                                    'proper_motion_ra': 0.0,
+                                    'proper_motion_dec': 0.0,
+                                    'epoch': 2000,
+                                    'parallax': 0.0
+                                },
+                                'constraints': {
+                                    'max_airmass': 2.0,
+                                    'min_lunar_distance': 30.0
+                                }
+                            }
+                        ]}
+        filtered_intervals = rise_set_utils.get_filtered_rise_set_intervals_by_site(request_dict)
+        largest_interval = rise_set_utils.get_largest_interval(filtered_intervals)
+        duration = timedelta(seconds=30000)
+        self.assertGreater(duration, largest_interval)  # The duration is greater than the largest interval at a site
+
+        combined_intervals = Intervals().union(
+            [Intervals(timepoints=fi) for fi in filtered_intervals.values()]).toTupleList()
+        largest_combined_interval = rise_set_utils.get_largest_interval({'tst': combined_intervals})
+        self.assertLess(duration, largest_combined_interval)  # The duration is less then combined largest intervals
+
+        configdb_patcher.stop()
+        configdb_patcher2.stop()
 
     def test_get_site_rise_set_intervals_should_not_return_an_interval(self):
         start = timezone.datetime(year=2017, month=5, day=5, tzinfo=timezone.utc)

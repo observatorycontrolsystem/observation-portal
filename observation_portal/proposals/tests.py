@@ -9,25 +9,29 @@ from mixer.backend.django import mixer
 from unittest.mock import patch
 from requests import HTTPError
 import datetime
+from django_dramatiq.test import DramatiqTestCase
 
 from observation_portal.proposals.models import ProposalInvite, Proposal, Membership, ProposalNotification, TimeAllocation, Semester
 from observation_portal.requestgroups.models import RequestGroup, Configuration, InstrumentConfig, AcquisitionConfig, GuidingConfig, Target
 from observation_portal.accounts.models import Profile
 from observation_portal.proposals.accounting import split_time, get_time_totals_from_pond, query_pond
-from observation_portal.proposals.tasks import run_accounting
 from observation_portal.common.test_helpers import create_simple_requestgroup
 from observation_portal.requestgroups.signals import handlers  # DO NOT DELETE, needed to active signals
 
 
-class TestProposal(TestCase):
+class TestProposal(DramatiqTestCase):
     def test_add_existing_user(self):
         proposal = mixer.blend(Proposal)
         user = mixer.blend(User, email='email1@lcogt.net')
         emails = ['email1@lcogt.net']
         proposal.add_users(emails, Membership.CI)
+
+        self.broker.join("default")
+        self.worker.join()
+
         self.assertIn(proposal, user.proposal_set.all())
-        self.assertIn(proposal.title, str(mail.outbox[0].message()))
         self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(proposal.title, str(mail.outbox[0].message()))
         self.assertEqual(mail.outbox[0].to, [user.email])
 
     def test_add_nonexisting_user(self):
@@ -59,12 +63,16 @@ class TestProposal(TestCase):
         self.assertEqual(len(mail.outbox), 0)
 
 
-class TestProposalInvitation(TestCase):
+class TestProposalInvitation(DramatiqTestCase):
     def test_send_invitation(self):
         invitation = mixer.blend(ProposalInvite)
         invitation.send_invitation()
-        self.assertIn(invitation.proposal.id, str(mail.outbox[0].message()))
+
+        self.broker.join("default")
+        self.worker.join()
+
         self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(invitation.proposal.id, str(mail.outbox[0].message()))
         self.assertEqual(mail.outbox[0].to, [invitation.email])
 
     def test_accept(self):
@@ -74,7 +82,7 @@ class TestProposalInvitation(TestCase):
         self.assertIn(invitation.proposal, user.proposal_set.all())
 
 
-class TestProposalNotifications(TestCase):
+class TestProposalNotifications(DramatiqTestCase):
     def setUp(self):
         self.proposal = mixer.blend(Proposal)
         self.user = mixer.blend(User)
@@ -85,8 +93,12 @@ class TestProposalNotifications(TestCase):
         mixer.blend(Profile, user=self.user, notifications_enabled=True)
         self.requestgroup.state = 'COMPLETED'
         self.requestgroup.save()
-        self.assertIn(self.requestgroup.name, str(mail.outbox[0].message()))
+
+        self.broker.join("default")
+        self.worker.join()
+
         self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(self.requestgroup.name, str(mail.outbox[0].message()))
         self.assertEqual(mail.outbox[0].to, [self.user.email])
 
     def test_single_proposal_notification(self):
@@ -94,8 +106,12 @@ class TestProposalNotifications(TestCase):
         mixer.blend(ProposalNotification, user=self.user, proposal=self.proposal)
         self.requestgroup.state = 'COMPLETED'
         self.requestgroup.save()
-        self.assertIn(self.requestgroup.name, str(mail.outbox[0].message()))
+
+        self.broker.join("default")
+        self.worker.join()
+
         self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(self.requestgroup.name, str(mail.outbox[0].message()))
         self.assertEqual(mail.outbox[0].to, [self.user.email])
 
     def test_user_loves_notifications(self):
@@ -103,8 +119,12 @@ class TestProposalNotifications(TestCase):
         mixer.blend(ProposalNotification, user=self.user, proposal=self.proposal)
         self.requestgroup.state = 'COMPLETED'
         self.requestgroup.save()
-        self.assertIn(self.requestgroup.name, str(mail.outbox[0].message()))
+
+        self.broker.join("default")
+        self.worker.join()
+
         self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(self.requestgroup.name, str(mail.outbox[0].message()))
         self.assertEqual(mail.outbox[0].to, [self.user.email])
 
     def test_notifications_only_authored(self):
@@ -112,8 +132,12 @@ class TestProposalNotifications(TestCase):
         self.requestgroup.submitter = self.user
         self.requestgroup.state = 'COMPLETED'
         self.requestgroup.save()
-        self.assertIn(self.requestgroup.name, str(mail.outbox[0].message()))
+
+        self.broker.join("default")
+        self.worker.join()
+
         self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(self.requestgroup.name, str(mail.outbox[0].message()))
         self.assertEqual(mail.outbox[0].to, [self.user.email])
 
     def test_no_notifications_only_authored(self):
@@ -121,11 +145,19 @@ class TestProposalNotifications(TestCase):
         self.requestgroup.submitter = mixer.blend(User)
         self.requestgroup.state = 'COMPLETED'
         self.requestgroup.save()
+
+        self.broker.join("default")
+        self.worker.join()
+
         self.assertEqual(len(mail.outbox), 0)
 
     def test_no_notifications(self):
         self.requestgroup.state = 'COMPLETED'
         self.requestgroup.save()
+
+        self.broker.join("default")
+        self.worker.join()
+
         self.assertEqual(len(mail.outbox), 0)
 
 
@@ -171,35 +203,6 @@ class TestAccounting(TestCase):
             get_time_totals_from_pond(ta, ta.semester.start, ta.semester.end, False)
 
         self.assertEqual(qa_mock.call_count, 4)
-
-    # @responses.activate
-    # def test_query_pond(self):
-    #     responses.add(
-    #         responses.GET,
-    #         '{0}/accounting/{1}/'.format('http://lake.lco.gtn', 'NORMAL'),
-    #         body='{ "block_bounded_attempted_hours": 1, "attempted_hours": 2 }',
-    #         content_type='application/json'
-    #     )
-    #     responses.add(
-    #         responses.GET,
-    #         '{0}/accounting/{1}/'.format('http://lake.lco.gtn', 'RAPID_RESPONSE'),
-    #         body='{ "block_bounded_attempted_hours": 1, "attempted_hours": 2 }',
-    #         content_type='application/json'
-    #     )
-    #     self.assertEqual(query_pond(None, datetime.datetime(2017, 1, 1), datetime.datetime(2017, 2, 1), None, False), 2)
-    #     self.assertEqual(query_pond(None, datetime.datetime(2017, 1, 1), datetime.datetime(2017, 2, 1), None, True), 1)
-
-    @patch('observation_portal.proposals.accounting.query_pond', return_value=1)
-    def test_run_accounting(self, qa_mock):
-        semester = mixer.blend(
-            Semester, start=datetime.datetime(2017, 1, 1, tzinfo=timezone.utc), end=datetime.datetime(2017, 4, 30, tzinfo=timezone.utc))
-        talloc = mixer.blend(
-            TimeAllocation, semester=semester, std_allocation=10, rr_allocation=10, std_time_used=0, rr_time_used=0
-        )
-        run_accounting([semester])
-        talloc.refresh_from_db()
-        self.assertEqual(talloc.std_time_used, 1)
-        self.assertEqual(talloc.rr_time_used, 1)
 
 
 class TestDefaultIPP(TestCase):

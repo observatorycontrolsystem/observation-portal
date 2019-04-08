@@ -1507,6 +1507,24 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         self.assertIn('configuration type EXPOSE is not valid for instrument type 2M0-FLOYDS-SCICAM', str(response.content))
         self.assertEqual(response.status_code, 400)
 
+    def test_acquirition_config_exposure_time_limits(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['acquisition_config']['exposure_time'] = -1
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertEqual(response.status_code, 400)
+
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['acquisition_config']['exposure_time'] = 65
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertEqual(response.status_code, 400)
+
+        good_data = self.generic_payload.copy()
+        good_data['requests'][0]['configurations'][0]['acquisition_config']['exposure_time'] = 20
+        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
+        ur = response.json()
+        self.assertEqual(ur['requests'][0]['configurations'][0]['acquisition_config']['exposure_time'], 20)
+        self.assertEqual(response.status_code, 201)
+
     def test_more_than_max_rois_rejected(self):
         roi_data = {'x1': 0, 'x2': 20, 'y1': 0, 'y2': 100}
         bad_data = self.generic_payload.copy()
@@ -2178,7 +2196,7 @@ class TestPressure(APITestCase):
         # Check that the correct telescopes are returned.
         self.assertEqual(floyds_returned, p.telescopes['2M0-FLOYDS-SCICAM'])
 
-    @patch('observation_portal.requestgroups.contention.get_rise_set_intervals')
+    @patch('observation_portal.requestgroups.contention.get_filtered_rise_set_intervals_by_site')
     def test_visible_intervals(self, mock_intervals):
         request = mixer.blend(Request, state='PENDING', duration=70*60)  # Request duration is 70 minutes.
         mixer.blend(Window, request=request)
@@ -2190,13 +2208,13 @@ class TestPressure(APITestCase):
         mixer.blend(Target, configuration=conf)
         mixer.blend(Constraints, configuration=conf)
 
-        mock_intervals.return_value = [
+        mock_intervals.return_value = {'tst': [
             [self.now - timedelta(hours=6), self.now - timedelta(hours=2)],  # Sets before now.
             [self.now + timedelta(hours=2), self.now + timedelta(hours=6)],
             [self.now + timedelta(hours=8), self.now + timedelta(hours=12)],
             [self.now - timedelta(hours=1), self.now + timedelta(minutes=30)],  # Sets too soon after now.
             [self.now + timedelta(hours=14), self.now + timedelta(hours=15)]  # Duration longer than interval.
-        ]
+        ]}
         expected = {
             'tst': [
                 (self.now + timedelta(hours=2), self.now + timedelta(hours=6)),
@@ -2240,7 +2258,7 @@ class TestPressure(APITestCase):
         ]
         self.assertEqual(Pressure()._anonymize(data), expected)
 
-    @patch('observation_portal.requestgroups.contention.get_rise_set_intervals')
+    @patch('observation_portal.requestgroups.contention.get_filtered_rise_set_intervals_by_site')
     def test_binned_pressure_by_hours_from_now_should_be_gtzero_pressure(self, mock_intervals):
         request = mixer.blend(Request, state='PENDING', duration=120*60)  # 2 hour duration.
         mixer.blend(Window, request=request)
@@ -2252,9 +2270,9 @@ class TestPressure(APITestCase):
         mixer.blend(Constraints, configuration=conf)
         mixer.blend(Target, configuration=conf)
 
-        mock_intervals.return_value = [
+        mock_intervals.return_value = {'tst': [
             [self.now + timedelta(hours=2), self.now + timedelta(hours=6)],
-        ]
+        ]}
         p = Pressure()
         p.requests = [request]
         sum_of_pressure = sum(sum(time.values()) for i, time in enumerate(p._binned_pressure_by_hours_from_now()))

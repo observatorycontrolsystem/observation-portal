@@ -9,7 +9,7 @@ from django.urls import reverse
 from collections import namedtuple
 import logging
 
-from observation_portal.celery import send_mail
+from observation_portal.accounts.tasks import send_mail
 
 logger = logging.getLogger(__name__)
 
@@ -203,7 +203,7 @@ class Membership(models.Model):
                 'user': self.user,
             }
         )
-        send_mail.delay(subject, message, 'portal@lco.global', [self.user.email])
+        send_mail.send(subject, message, 'portal@lco.global', [self.user.email])
 
     def __str__(self):
         return '{0} {1} of {2}'.format(self.user, self.role, self.proposal)
@@ -242,7 +242,7 @@ class ProposalInvite(models.Model):
             }
         )
 
-        send_mail.delay(subject, message, 'portal@lco.global', [self.email])
+        send_mail.send(subject, message, 'portal@lco.global', [self.email])
         self.sent = timezone.now()
         self.save()
 

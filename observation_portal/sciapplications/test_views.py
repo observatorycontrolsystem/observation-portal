@@ -9,6 +9,7 @@ from mixer.backend.django import mixer
 from PyPDF2 import PdfFileMerger
 from weasyprint import HTML
 from unittest.mock import MagicMock, patch
+from django_dramatiq.test import DramatiqTestCase
 
 from observation_portal.proposals.models import Semester, ScienceCollaborationAllocation
 from observation_portal.accounts.models import Profile
@@ -109,7 +110,7 @@ class TestGetCreateSciApp(TestCase):
 
 
 @patch('observation_portal.sciapplications.forms.PdfFileReader', new=MockPDFFileReader)
-class TestPostCreateSciApp(TestCase):
+class TestPostCreateSciApp(DramatiqTestCase):
     def setUp(self):
         super().setUp()
         self.semester = mixer.blend(
