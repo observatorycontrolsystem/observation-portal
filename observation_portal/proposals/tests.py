@@ -9,6 +9,7 @@ from mixer.backend.django import mixer
 from unittest.mock import patch
 from requests import HTTPError
 import datetime
+from django_dramatiq.test import DramatiqTestCase
 
 from observation_portal.proposals.models import ProposalInvite, Proposal, Membership, ProposalNotification, TimeAllocation, Semester
 from observation_portal.requestgroups.models import RequestGroup, Configuration, InstrumentConfig, AcquisitionConfig, GuidingConfig, Target
@@ -18,15 +19,19 @@ from observation_portal.common.test_helpers import create_simple_requestgroup
 from observation_portal.requestgroups.signals import handlers  # DO NOT DELETE, needed to active signals
 
 
-class TestProposal(TestCase):
+class TestProposal(DramatiqTestCase):
     def test_add_existing_user(self):
         proposal = mixer.blend(Proposal)
         user = mixer.blend(User, email='email1@lcogt.net')
         emails = ['email1@lcogt.net']
         proposal.add_users(emails, Membership.CI)
+
+        self.broker.join("default")
+        self.worker.join()
+
         self.assertIn(proposal, user.proposal_set.all())
-        self.assertIn(proposal.title, str(mail.outbox[0].message()))
         self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(proposal.title, str(mail.outbox[0].message()))
         self.assertEqual(mail.outbox[0].to, [user.email])
 
     def test_add_nonexisting_user(self):
@@ -58,12 +63,16 @@ class TestProposal(TestCase):
         self.assertEqual(len(mail.outbox), 0)
 
 
-class TestProposalInvitation(TestCase):
+class TestProposalInvitation(DramatiqTestCase):
     def test_send_invitation(self):
         invitation = mixer.blend(ProposalInvite)
         invitation.send_invitation()
-        self.assertIn(invitation.proposal.id, str(mail.outbox[0].message()))
+
+        self.broker.join("default")
+        self.worker.join()
+
         self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(invitation.proposal.id, str(mail.outbox[0].message()))
         self.assertEqual(mail.outbox[0].to, [invitation.email])
 
     def test_accept(self):
@@ -73,7 +82,7 @@ class TestProposalInvitation(TestCase):
         self.assertIn(invitation.proposal, user.proposal_set.all())
 
 
-class TestProposalNotifications(TestCase):
+class TestProposalNotifications(DramatiqTestCase):
     def setUp(self):
         self.proposal = mixer.blend(Proposal)
         self.user = mixer.blend(User)
@@ -84,8 +93,12 @@ class TestProposalNotifications(TestCase):
         mixer.blend(Profile, user=self.user, notifications_enabled=True)
         self.requestgroup.state = 'COMPLETED'
         self.requestgroup.save()
-        self.assertIn(self.requestgroup.name, str(mail.outbox[0].message()))
+
+        self.broker.join("default")
+        self.worker.join()
+
         self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(self.requestgroup.name, str(mail.outbox[0].message()))
         self.assertEqual(mail.outbox[0].to, [self.user.email])
 
     def test_single_proposal_notification(self):
@@ -93,8 +106,12 @@ class TestProposalNotifications(TestCase):
         mixer.blend(ProposalNotification, user=self.user, proposal=self.proposal)
         self.requestgroup.state = 'COMPLETED'
         self.requestgroup.save()
-        self.assertIn(self.requestgroup.name, str(mail.outbox[0].message()))
+
+        self.broker.join("default")
+        self.worker.join()
+
         self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(self.requestgroup.name, str(mail.outbox[0].message()))
         self.assertEqual(mail.outbox[0].to, [self.user.email])
 
     def test_user_loves_notifications(self):
@@ -102,8 +119,12 @@ class TestProposalNotifications(TestCase):
         mixer.blend(ProposalNotification, user=self.user, proposal=self.proposal)
         self.requestgroup.state = 'COMPLETED'
         self.requestgroup.save()
-        self.assertIn(self.requestgroup.name, str(mail.outbox[0].message()))
+
+        self.broker.join("default")
+        self.worker.join()
+
         self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(self.requestgroup.name, str(mail.outbox[0].message()))
         self.assertEqual(mail.outbox[0].to, [self.user.email])
 
     def test_notifications_only_authored(self):
@@ -111,8 +132,12 @@ class TestProposalNotifications(TestCase):
         self.requestgroup.submitter = self.user
         self.requestgroup.state = 'COMPLETED'
         self.requestgroup.save()
-        self.assertIn(self.requestgroup.name, str(mail.outbox[0].message()))
+
+        self.broker.join("default")
+        self.worker.join()
+
         self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(self.requestgroup.name, str(mail.outbox[0].message()))
         self.assertEqual(mail.outbox[0].to, [self.user.email])
 
     def test_no_notifications_only_authored(self):
@@ -120,11 +145,19 @@ class TestProposalNotifications(TestCase):
         self.requestgroup.submitter = mixer.blend(User)
         self.requestgroup.state = 'COMPLETED'
         self.requestgroup.save()
+
+        self.broker.join("default")
+        self.worker.join()
+
         self.assertEqual(len(mail.outbox), 0)
 
     def test_no_notifications(self):
         self.requestgroup.state = 'COMPLETED'
         self.requestgroup.save()
+
+        self.broker.join("default")
+        self.worker.join()
+
         self.assertEqual(len(mail.outbox), 0)
 
 

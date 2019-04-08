@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django.contrib import auth
 from mixer.backend.django import mixer
 from django.core import mail
+from django_dramatiq.test import DramatiqTestCase
 
 from observation_portal.accounts.models import Profile
 from observation_portal.proposals.models import ProposalInvite, Membership, Proposal, TimeAllocation
@@ -228,7 +229,7 @@ class TestToken(TestCase):
         self.assertNotEqual(token_key, self.user.profile.api_token.key)
 
 
-class TestAccountRemovalRequest(TestCase):
+class TestAccountRemovalRequest(DramatiqTestCase):
     def setUp(self):
         self.user = mixer.blend(User)
         mixer.blend(Profile, user=self.user)
