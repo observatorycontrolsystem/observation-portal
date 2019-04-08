@@ -31,6 +31,7 @@ from observation_portal.requestgroups.views import InstrumentsInformationView, O
 from observation_portal.requestgroups.views import ContentionView, PressureView
 from observation_portal.accounts.views import ProfileApiView
 from observation_portal.proposals.viewsets import ProposalViewSet, SemesterViewSet
+from observation_portal.observations.views import LastScheduledView
 from observation_portal.observations.viewsets import ObservationViewSet, ScheduleViewSet, ConfigurationStatusViewSet
 import observation_portal.sciapplications.urls as sciapplications_urls
 import observation_portal.requestgroups.urls as requestgroup_urls
@@ -59,7 +60,8 @@ api_urlpatterns = ([
     url(r'instruments/', InstrumentsInformationView.as_view(), name='instruments_information'),
     url(r'contention/(?P<instrument_name>.+)/', ContentionView.as_view(), name='contention'),
     url(r'pressure/', PressureView.as_view(), name='pressure'),
-    url(r'last_changed/', ObservationPortalLastChangedView.as_view(), name='last_changed')
+    url(r'last_changed/', ObservationPortalLastChangedView.as_view(), name='last_changed'),
+    url(r'last_scheduled/', LastScheduledView.as_view(), name='last_scheduled')
 ], 'api')
 
 schema_view = get_schema_view(
@@ -91,4 +93,3 @@ urlpatterns = [
 if settings.DEBUG:
     urlpatterns += staticfiles_urlpatterns()
     static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-

@@ -1507,6 +1507,24 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         self.assertIn('configuration type EXPOSE is not valid for instrument type 2M0-FLOYDS-SCICAM', str(response.content))
         self.assertEqual(response.status_code, 400)
 
+    def test_acquirition_config_exposure_time_limits(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['acquisition_config']['exposure_time'] = -1
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertEqual(response.status_code, 400)
+
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['acquisition_config']['exposure_time'] = 65
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertEqual(response.status_code, 400)
+
+        good_data = self.generic_payload.copy()
+        good_data['requests'][0]['configurations'][0]['acquisition_config']['exposure_time'] = 20
+        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
+        ur = response.json()
+        self.assertEqual(ur['requests'][0]['configurations'][0]['acquisition_config']['exposure_time'], 20)
+        self.assertEqual(response.status_code, 201)
+
     def test_more_than_max_rois_rejected(self):
         roi_data = {'x1': 0, 'x2': 20, 'y1': 0, 'y2': 100}
         bad_data = self.generic_payload.copy()
