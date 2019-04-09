@@ -1,11 +1,13 @@
 import os
+import copy
 import requests
 
 VALHALLA_API_TOKEN = os.getenv('VALHALLA_API_TOKEN', '')
-VALHALLA_URL = os.getenv('VALHALLA_URL', 'https://valhalla-shim.lco.global/api/userrequests/')
+VALHALLA_URL = os.getenv('VALHALLA_URL', 'http://valhalladev.lco.gtn/api/userrequests/')
 if not VALHALLA_URL.endswith('/'):
     VALHALLA_URL += '/'
 VALHALLA_HEADERS = {'Authorization': 'Token ' + str(VALHALLA_API_TOKEN)}
+VALIDATION_PROPOSAL = os.getenv('VALHALLA_VALIDATE_PROPOSAL', 'LCOSchedulerTest')
 
 
 def validate_userrequest(userrequests):
@@ -16,7 +18,13 @@ def validate_userrequest(userrequests):
     :return: dictionary of validation errors
     """
     try:
-        response = requests.post(VALHALLA_URL + 'validate/', json=userrequests, headers=VALHALLA_HEADERS)
+        ur_copy = copy.deepcopy(userrequests)
+        if isinstance(ur_copy, list):
+            for ur in ur_copy:
+                ur['proposal'] = VALIDATION_PROPOSAL
+        else:
+            ur_copy['proposal'] = VALIDATION_PROPOSAL
+        response = requests.post(VALHALLA_URL + 'validate/', json=ur_copy, headers=VALHALLA_HEADERS)
         response.raise_for_status()
         body = response.json()
     except Exception as e:
@@ -32,7 +40,9 @@ def expand_cadence(userrequest):
     :return: expanded userrequests
     """
     try:
-        response = requests.post(VALHALLA_URL + 'cadence/', json=userrequest, headers=VALHALLA_HEADERS)
+        ur_copy = copy.deepcopy(userrequest)
+        ur_copy['proposal'] = VALIDATION_PROPOSAL
+        response = requests.post(VALHALLA_URL + 'cadence/', json=ur_copy, headers=VALHALLA_HEADERS)
         response.raise_for_status()
         body = response.json()
     except Exception as e:
@@ -55,6 +65,10 @@ def convert_userrequest_to_requestgroup(userrequest):
         target = request['target']
         constraints = request['constraints']
         configurations = []
+        if 'observatory' in request['location']:
+            request['location']['enclosure'] = request['location']['observatory']
+            del request['location']['observatory']
+
         for molecule in request['molecules']:
             conf_extra_params = {}
             if molecule.get('args', ''):
@@ -66,7 +80,9 @@ def convert_userrequest_to_requestgroup(userrequest):
             if molecule.get('filter', ''):
                 optical_elements['filter'] = molecule['filter']
             if molecule.get('spectra_slit', ''):
-                optical_elements['slit'] = molecule['spectra_slit']
+                if (molecule.get('type', '') != 'AUTO_FOCUS' or
+                        molecule.get('instrument_name', '').upper() in ['2M0-FLOYDS-SCICAM', '1M0-NRES-SCICAM', '1M0-NRES-COMMISSIONING']):
+                    optical_elements['slit'] = molecule['spectra_slit']
             if molecule.get('spectra_lamp', ''):
                 optical_elements['lamp'] = molecule['spectra_lamp']
 
@@ -124,7 +140,7 @@ def convert_userrequest_to_requestgroup(userrequest):
             if molecule.get('acquire_strategy', ''):
                 acquire_extra_params['strategy'] = molecule['acquire_strategy']
             if molecule.get('acquire_mode', '') == 'BRIGHTEST':
-                acquire_extra_params['radius'] = molecule['acquire_radius_arcsec']
+                acquire_extra_params['acquire_radius'] = molecule['acquire_radius_arcsec']
 
             acquisition_config = {
                 'mode': molecule.get('acquire_mode', 'OFF'),
@@ -169,6 +185,9 @@ def convert_requestgroup_to_userrequest(requestgroup):
         request['target']['radvel'] = request['target'].get('extra_params', {}).get('radial_velocity', 0.0)
         request['target']['vmag'] = request['target'].get('extra_params', {}).get('v_magnitude', None)
         request['constraints'] = request['configurations'][0]['constraints']
+        if 'enclosure' in request['location']:
+            request['location']['observatory'] = request['location']['enclosure']
+            del request['location']['enclosure']
         molecules = []
         for configuration in request['configurations']:
             first_inst_config = configuration['instrument_configs'][0]
