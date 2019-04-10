@@ -168,26 +168,21 @@ class ConfigurationSerializer(serializers.ModelSerializer):
         guiding_config = data['guiding_config']
         # Set defaults for guiding and acquisition modes if they are not set
         # TODO: Validate the guiding optical elements on the guiding instrument types
-        if 'state' not in guiding_config:
-            if configdb.is_spectrograph(data['instrument_type']):
-                guiding_config['state'] = GuidingConfig.ON
-            else:
-                guiding_config['state'] = GuidingConfig.OPTIONAL
-        elif (guiding_config['state'] == GuidingConfig.OFF and 'mode' in guiding_config
-              and guiding_config['mode']):
-            raise serializers.ValidationError(_("Cannot set a guiding mode if the guiding state is OFF"))
-        elif configdb.is_spectrograph(data['instrument_type']) and (guiding_config['state'] != GuidingConfig.ON and
-                                                                    data['type'] != 'ARC'):
-            raise serializers.ValidationError(_("Guide state must be ON for spectrograph requests"))
-
         if 'mode' not in guiding_config:
-            if guiding_config['state'] != GuidingConfig.OFF and 'guiding' in default_modes:
+            if 'guiding' in default_modes:
                 guiding_config['mode'] = default_modes['guiding']['code']
-        else:
-            if ('guiding' in modes
+            else:
+                # This should never happen if we have configdb filled out correctly
+                guiding_config['mode'] = GuidingConfig.OFF
+        elif ('guiding' in modes
                     and guiding_config['mode'].lower() not in [gm['code'].lower() for gm in modes['guiding']['modes']]):
-                raise serializers.ValidationError(_("guiding mode {} is not available for instrument type {}"
-                                                    .format(guiding_config['mode'], data['instrument_type'])))
+            raise serializers.ValidationError(_("Guiding mode {} is not available for instrument type {}"
+                                                .format(guiding_config['mode'], data['instrument_type'])))
+
+        if configdb.is_spectrograph(data['instrument_type']):
+            if 'optional' in guiding_config and guiding_config['optional'] and data['type'] != 'ARC':
+                raise serializers.ValidationError(_("Guiding must not be optional on spectrograph instruments and non-ARC observations."))
+            guiding_config['optional'] = False
 
         acquisition_config = data['acquisition_config']
         if 'mode' not in acquisition_config:
