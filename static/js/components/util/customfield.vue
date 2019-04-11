@@ -19,40 +19,40 @@
   </span>
 </template>
 <script>
-import moment from 'moment';
-import $ from 'jquery';
-import {datetimeFormat} from '../../utils';
-import 'eonasdan-bootstrap-datetimepicker';
-import 'vue-style-loader!eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.css';
-import tooltip from 'bootstrap';
+  import moment from 'moment';
+  import $ from 'jquery';
+  import {datetimeFormat} from '../../utils';
+  import 'eonasdan-bootstrap-datetimepicker';
+  import 'vue-style-loader!eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.css';
+  import tooltip from 'bootstrap';
 
-export default {
-  props: ['value', 'label', 'field', 'errors', 'type', 'desc'],
-  mounted: function(){
-    var that = this;
-    if(this.type === 'datetime'){
-      $(this.$el).find('input').datetimepicker({
-        format: datetimeFormat,
-        minDate: moment().subtract(1, 'days'),
-        keyBinds: {left: null, right: null, up: null, down: null}
-      }).on('dp.change', function(e){
-        that.update(moment(e.date).format(datetimeFormat));
+  export default {
+    props: ['value', 'label', 'field', 'errors', 'type', 'desc'],
+    mounted: function(){
+      var that = this;
+      if(this.type === 'datetime'){
+        $(this.$el).find('input').datetimepicker({
+          format: datetimeFormat,
+          minDate: moment().subtract(1, 'days'),
+          keyBinds: {left: null, right: null, up: null, down: null}
+        }).on('dp.change', function(e){
+          that.update(moment(e.date).format(datetimeFormat));
+        });
+      }
+      $(this.$el).find('label > span').tooltip({
+        html: true,
+        trigger: 'hover click',
+        placement: 'top',
+        delay: { "show": 200, "hide": 100 }
       });
-    }
-    $(this.$el).find('label > span').tooltip({
-      html: true,
-      trigger: 'hover click',
-      placement: 'top',
-      delay: { "show": 200, "hide": 100 }
-    });
-  },
-  methods: {
-    update: function(value){
-      this.$emit('input', value);
     },
-    blur: function(value){
-      this.$emit('blur', value);
-    }
-  },
-};
+    methods: {
+      update: function(value){
+        this.$emit('input', value);
+      },
+      blur: function(value){
+        this.$emit('blur', value);
+      }
+    },
+  };
 </script>

@@ -7,60 +7,60 @@
   </div>
 </template>
 <script>
-import $ from 'jquery';
-export default {
-  props: {
-    frame: {},
-    width: {
-      default: 200
+  import $ from 'jquery';
+  export default {
+    props: {
+      frame: {},
+      width: {
+        default: 200
+      },
+      height: {
+        default: 200
+      }
     },
-    height: {
-      default: 200
-    }
-  },
-  data: function(){
-    return {src: '', error: null, loadLarge: false};
-  },
-  watch: {
-    frame: function(){
-      this.src = '';
-      this.fetch();
-    }
-  },
-  computed: {
-    url: function(){
-      return 'https://thumbnails.lco.global/' + this.frame.id + '/?width=' + this.width + '&height=' + this.height + '&label=' + this.frame.filename;
+    data: function(){
+      return {src: '', error: null, loadLarge: false};
     },
-    largeUrl: function(){
-      if(this.frame){
-        return 'https://thumbnails.lco.global/' + this.frame.id + '/?width=4000&height=4000';
-      }else{
-        return '';
+    watch: {
+      frame: function(){
+        this.src = '';
+        this.fetch();
+      }
+    },
+    computed: {
+      url: function(){
+        return 'https://thumbnails.lco.global/' + this.frame.id + '/?width=' + this.width + '&height=' + this.height + '&label=' + this.frame.filename;
+      },
+      largeUrl: function(){
+        if(this.frame){
+          return 'https://thumbnails.lco.global/' + this.frame.id + '/?width=4000&height=4000';
+        }else{
+          return '';
+        }
+      }
+    },
+    methods: {
+      fetch: function(){
+        let that = this;
+        $.getJSON(this.url, function(data){
+          that.src = data.url;
+        }).fail(function(){
+          that.error = 'Could not load thumbnail for this image';
+        });
+      },
+      generateLarge: function(){
+        let that = this;
+        this.loadLarge = true;
+        $.getJSON(this.largeUrl, function(data){
+          that.loadLarge = false;
+          window.open(data['url'], '_blank');
+        });
       }
     }
-  },
-  methods: {
-    fetch: function(){
-      var that = this;
-      $.getJSON(this.url, function(data){
-        that.src = data.url;
-      }).fail(function(){
-        that.error = 'Could not load thumbnail for this image';
-      });
-    },
-    generateLarge: function(){
-      var that = this;
-      this.loadLarge = true;
-      $.getJSON(this.largeUrl, function(data){
-        that.loadLarge = false;
-        window.open(data['url'], '_blank');
-      });
-    }
-  }
-};
+  };
 </script>
 <style>
-.thumbnail {
-  cursor: pointer;
-}
+  .thumbnail {
+    cursor: pointer;
+  }
 </style>

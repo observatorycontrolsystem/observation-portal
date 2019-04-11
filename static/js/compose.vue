@@ -40,11 +40,11 @@
         <div class="tab-pane" :class="{ active: tab === 1 }">
           <div class="row">
             <div class="col-md-11 col-sm-12 col-sm-12">
-              <userrequest :errors="errors" :duration_data="duration_data" :userrequest="userrequest"
-                           v-on:userrequestupdate="userrequestUpdated"></userrequest>
+              <requestgroup :errors="errors" :duration_data="duration_data" :requestgroup="requestgroup"
+                            v-on:requestgroupupdate="requestgroupUpdated"></requestgroup>
             </div>
             <div class="col-md-1 hidden-sm hidden-xs">
-              <sidenav :userrequest="userrequest" :errors="errors"></sidenav>
+              <sidenav :requestgroup="requestgroup" :errors="errors"></sidenav>
             </div>
           </div>
         </div>
@@ -54,7 +54,7 @@
               <a id="dldjson" :href="dataAsEncodedStr" download="apiview.json" class="btn btn-default" title="download">
                 <i class="fa fa-download"></i> Download as JSON
               </a>
-              <pre>{{ JSON.stringify(userrequest, null, 4) }}</pre>
+              <pre>{{ JSON.stringify(requestgroup, null, 4) }}</pre>
             </div>
           </div>
         </div>
@@ -120,19 +120,19 @@
   import $ from 'jquery';
   import Vue from 'vue';
 
-  import userrequest from './components/userrequest.vue';
+  import requestgroup from './components/requestgroup.vue';
   import drafts from './components/drafts.vue';
   import sidenav from './components/sidenav.vue';
   import alert from './components/util/alert.vue';
   import {datetimeFormat} from './utils.js';
   export default {
     name: 'app',
-    components: {userrequest, drafts, sidenav, alert},
+    components: {requestgroup, drafts, sidenav, alert},
     data: function(){
       return {
         tab: 1,
         draftId: -1,
-        userrequest: {
+        requestgroup: {
           group_id: '',
           proposal: '',
           ipp_value: 1.05,
@@ -150,7 +150,7 @@
               epoch: 2000,
               parallax: 0,
             },
-            molecules:[{
+            configurationstatuses:[{
               type: 'EXPOSE',
               instrument_name: '',
               filter: '',
@@ -181,16 +181,16 @@
     },
     computed: {
       dataAsEncodedStr: function(){
-        return 'data:application/json;charset=utf-8,' +  encodeURIComponent(JSON.stringify(this.userrequest));
+        return 'data:application/json;charset=utf-8,' +  encodeURIComponent(JSON.stringify(this.requestgroup));
       }
     },
     methods: {
       validate: _.debounce(function(){
-        var that = this;
+        let that = this;
         $.ajax({
           type: 'POST',
-          url: '/api/userrequests/validate/',
-          data: JSON.stringify(that.userrequest),
+          url: '/api/requestgroups/validate/',
+          data: JSON.stringify(that.requestgroup),
           contentType: 'application/json',
           success: function(data){
             that.errors = data.errors;
@@ -199,49 +199,48 @@
         });
       }, 200),
       submit: function(){
-        var duration = moment.duration(this.duration_data.duration, 'seconds');
-        var duration_string = '';
+        let duration = moment.duration(this.duration_data.duration, 'seconds');
+        let duration_string = '';
         if(duration.hours() > 0){
           duration_string += duration.hours() + ' hours, ';
         }
         duration_string += duration.minutes() + ' minutes, ' + duration.seconds() + ' seconds';
         if(confirm('The request will take approximately ' + duration_string + ' of telescope time. Are you sure you want to submit the request?')){
-          var that = this;
+          let that = this;
           $.ajax({
             type: 'POST',
-            url: '/api/userrequests/',
-            data: JSON.stringify(that.userrequest),
+            url: '/api/requestgroups/',
+            data: JSON.stringify(that.requestgroup),
             contentType: 'application/json',
             success: function(data){
-              window.location = '/userrequests/' + data.id;
+              window.location = '/requestgroups/' + data.id;
             }
           });
         }
       },
-      userrequestUpdated: function(){
-        console.log('userrequest updated');
+      requestgroupUpdated: function(){
+        console.log('requestgroup updated');
         this.validate();
       },
       saveDraft: function(id){
-        if(!this.userrequest.group_id || !this.userrequest.proposal){
+        if(!this.requestgroup.group_id || !this.requestgroup.proposal){
           alert('Please give your draft a title and proposal');
           return;
         }
-        var url = '/api/drafts/';
-        var method = 'POST';
-
+        let url = '/api/drafts/';
+        let method = 'POST';
         if(id > -1){
           url += id + '/';
           method = 'PUT';
         }
-        var that = this;
+        let that = this;
         $.ajax({
           type: method,
           url: url,
           data: JSON.stringify({
-            proposal: that.userrequest.proposal,
-            title: that.userrequest.group_id,
-            content: JSON.stringify(that.userrequest)
+            proposal: that.requestgroup.proposal,
+            title: that.requestgroup.group_id,
+            content: JSON.stringify(that.requestgroup)
           }),
           contentType: 'application/json',
         }).done(function(data){
@@ -249,7 +248,7 @@
           that.alerts.push({class: 'alert-success', msg: 'Draft id: ' + data.id + ' saved successfully.' });
           console.log('Draft saved ' + that.draftId);
         }).fail(function(data){
-          for(var error in data.responseJSON.non_field_errors){
+          for(let error in data.responseJSON.non_field_errors){
             that.alerts.push({class: 'alert-danger', msg: data.responseJSON.non_field_errors[error]});
           }
         });
@@ -257,11 +256,11 @@
       loadDraft: function(id){
         this.draftId = id;
         this.tab = 1;
-        var that = this;
+        let that = this;
         $.getJSON('/api/drafts/' + id + '/', function(data){
-          that.userrequest = {};
+          that.requestgroup = {};
           Vue.nextTick(function() {
-            that.userrequest = JSON.parse(data.content);
+            that.requestgroup = JSON.parse(data.content);
           });
           that.validate();
         });
@@ -273,7 +272,7 @@
       }
     }
   };
-  </script>
+</script>
 <style>
   #dldjson {
     float: right;

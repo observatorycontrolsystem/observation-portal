@@ -41,11 +41,11 @@ function sexagesimalRaToDecimal(ra) {
   // algorithm: ra_decimal = 15 * ( hh + mm/60 + ss/(60 * 60) )
   /*                 (    hh     ):(     mm            ):  (   ss  ) */
   if(typeof ra === 'string') {
-    var m = ra.match('^([0-9]?[0-9])[: ]([0-5]?[0-9][.0-9]*)[: ]?([.0-9]+)?$');
+    let m = ra.match('^([0-9]?[0-9])[: ]([0-5]?[0-9][.0-9]*)[: ]?([.0-9]+)?$');
     if (m) {
-      var hh = parseInt(m[1], 10);
-      var mm = parseFloat(m[2]);
-      var ss = m[3] ? parseFloat(m[3]) : 0.0;
+      let hh = parseInt(m[1], 10);
+      let mm = parseFloat(m[2]);
+      let ss = m[3] ? parseFloat(m[3]) : 0.0;
       if (hh >= 0 && hh <= 23 && mm >= 0 && mm < 60 && ss >= 0 && ss < 60) {
         ra = (15.0 * (hh + mm / 60.0 + ss / (3600.0))).toFixed(10);
       }
@@ -58,12 +58,12 @@ function sexagesimalDecToDecimal(dec){
   // algorithm: dec_decimal = sign * ( dd + mm/60 + ss/(60 * 60) )
   /*                  ( +/-   ) (    dd     ):(     mm            ): (   ss   ) */
   if(typeof dec === 'string') {
-    var m = dec.match('^([+-])?([0-9]?[0-9])[: ]([0-5]?[0-9][.0-9]*)[: ]?([.0-9]+)?$');
+    let m = dec.match('^([+-])?([0-9]?[0-9])[: ]([0-5]?[0-9][.0-9]*)[: ]?([.0-9]+)?$');
     if (m) {
-      var sign = m[1] === '-' ? -1 : 1;
-      var dd = parseInt(m[2], 10);
-      var mm = parseFloat(m[3]);
-      var ss = m[4] ? parseFloat(m[4]) : 0.0;
+      let sign = m[1] === '-' ? -1 : 1;
+      let dd = parseInt(m[2], 10);
+      let mm = parseFloat(m[3]);
+      let ss = m[4] ? parseFloat(m[4]) : 0.0;
       if (dd >= 0 && dd <= 90 && mm >= 0 && mm <= 59 && ss >= 0 && ss < 60) {
         dec = (sign * (dd + mm / 60.0 + ss / 3600.0)).toFixed(10);
       }
@@ -73,15 +73,15 @@ function sexagesimalDecToDecimal(dec){
 }
 
 function QueryString() {
-  var qString = {};
-  var query = window.location.search.substring(1);
-  var vars = query.split('&');
-  for (var i = 0; i < vars.length; i++) {
-    var pair = vars[i].split('=');
+  let qString = {};
+  let query = window.location.search.substring(1);
+  let vars = query.split('&');
+  for (let i = 0; i < vars.length; i++) {
+    let pair = vars[i].split('=');
     if (typeof qString[pair[0]] === 'undefined') {
       qString[pair[0]] = decodeURIComponent(pair[1]);
     } else if (typeof qString[pair[0]] === 'string') {
-      var arr = [qString[pair[0]], decodeURIComponent(pair[1])];
+      let arr = [qString[pair[0]], decodeURIComponent(pair[1])];
       qString[pair[0]] = arr;
     } else {
       qString[pair[0]].push(decodeURIComponent(pair[1]));
@@ -98,12 +98,12 @@ function formatDate(date){
 
 function julianToModifiedJulian(jd){
   if(jd && jd >= 2400000.5){
-    var precision = (jd + "").split(".")[1].length;
+    let precision = (jd + "").split(".")[1].length;
     return Number((parseFloat(jd) - 2400000.5).toFixed(precision));
   }
 }
 
-var apiFieldToReadable = {
+let apiFieldToReadable = {
   'group_id': 'Title'
 };
 
@@ -111,7 +111,7 @@ function formatField(value){
   if(value in apiFieldToReadable){
     return apiFieldToReadable[value];
   }else{
-    var words = value.split('_');
+    let words = value.split('_');
     words = words.map(function(word){
       return word.charAt(0).toUpperCase() + word.substr(1);
     });
@@ -119,9 +119,9 @@ function formatField(value){
   }
 }
 
-var datetimeFormat = 'YYYY-MM-DD HH:mm:ss';
+let datetimeFormat = 'YYYY-MM-DD HH:mm:ss';
 
-var collapseMixin = {
+let collapseMixin = {
   watch: {
     parentshow: function(value){
       this.show = value;
@@ -129,7 +129,7 @@ var collapseMixin = {
   }
 };
 
-var siteToColor = {
+let siteToColor = {
   'tfn': '#263c6f',
   'elp': '#700000',
   'lsc': '#f04e23',
@@ -140,7 +140,7 @@ var siteToColor = {
   'tlv': '#8150d7'
 };
 
-var siteCodeToName = {
+let siteCodeToName = {
   'tfn': 'Teide',
   'elp': 'McDonald',
   'lsc': 'Cerro Tololo',
@@ -152,7 +152,7 @@ var siteCodeToName = {
   'tlv': 'Wise'
 };
 
-var observatoryCodeToNumber = {
+let observatoryCodeToNumber = {
   'doma': '1',
   'domb': '2',
   'domc': '3',
@@ -161,7 +161,7 @@ var observatoryCodeToNumber = {
   'aqwb': '2'
 };
 
-var telescopeCodeToName = {
+let telescopeCodeToName = {
   '1m0a': '1m',
   '0m4a': '0.4m A',
   '0m4b': '0.4m B',
@@ -170,7 +170,7 @@ var telescopeCodeToName = {
   '0m8a': '0.8m'
 };
 
-var colorPalette = [  // useful assigning colors to datasets.
+let colorPalette = [  // useful assigning colors to datasets.
   '#3366CC', '#DC3912', '#FF9900', '#109618', '#990099', '#3B3EAC', '#0099C6', '#DD4477',
   '#66AA00', '#B82E2E', '#316395', '#994499', '#22AA99', '#AAAA11', '#6633CC', '#E67300',
   '#8B0707', '#329262', '#5574A6', '#3B3EAC', '#FFFF00', '#1CE6FF', '#FF34FF', '#FF4A46',

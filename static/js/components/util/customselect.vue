@@ -20,6 +20,8 @@
   </span>
 </template>
 <script>
+  import $ from 'jquery';
+
   export default {
     props: ['value', 'label', 'field', 'options', 'errors', 'desc'],
     methods: {

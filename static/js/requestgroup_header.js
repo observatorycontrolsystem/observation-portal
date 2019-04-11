@@ -1,17 +1,17 @@
 import $ from 'jquery';
 
-export {cancelUserRequest};
+export {cancelRequestGroup};
 
-function cancelUserRequest(id) {
+function cancelRequestGroup(id) {
   if(confirm('Cancel this request? This action cannot be undone')){
     $.ajax({
       type: 'POST',
-      url: '/api/userrequests/' + id + '/cancel/',
-      contentType: 'application/json',
+      url: '/api/requestgroups/' + id + '/cancel/',
+      contentType: 'application/json'
     }).done(function(){
-      window.location = '/userrequests/' + id + '/';
+      window.location = '/requestgroups/' + id + '/';
     }).fail(function(data){
-      if(data.status == 429){
+      if(data.status === 429){
         alert('Too many cancel requests, your request to cancel has been throttled. Please contact support.');
       }else{
         alert(data.responseJSON.errors[0]);

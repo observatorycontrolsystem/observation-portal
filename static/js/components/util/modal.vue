@@ -20,48 +20,48 @@
 </template>
 
 <script>
-export default {
-  props: {
-    show: Boolean,
-    header: String,
-    showAccept: {
-      type: Boolean,
-      default: true
+  export default {
+    props: {
+      show: Boolean,
+      header: String,
+      showAccept: {
+        type: Boolean,
+        default: true
+      },
+      showCancel: {
+        type: Boolean,
+        default: true
+      }
     },
-    showCancel: {
-      type: Boolean,
-      default: true
-    }
-  },
-  data: function(){
-    return {
-      open: this.show
-    };
-  },
-  methods: {
-    close: function(){
-      this.open = false;
-      this.$emit('close');
+    data: function(){
+      return {
+        open: this.show
+      };
     },
-    submit: function(){
-      this.open = false;
-      this.$emit('submit');
+    methods: {
+      close: function(){
+        this.open = false;
+        this.$emit('close');
+      },
+      submit: function(){
+        this.open = false;
+        this.$emit('submit');
+      }
+    },
+    watch: {
+      show: function(value){
+        this.open = value;
+      }
+    },
+    computed: {
+      modalStyle: function(){
+        return this.open ? { 'padding-left': '0px;', display: 'block' } : {};
+      }
     }
-  },
-  watch: {
-    show: function(value){
-      this.open = value;
-    }
-  },
-  computed: {
-    modalStyle: function(){
-      return this.open ? { 'padding-left': '0px;', display: 'block' } : {};
-    }
-  }
-};
+  };
 </script>
 <style>
-.modal {
-  overflow: auto;
-}
+  .modal {
+    overflow: auto;
+  }
 </style>

@@ -9,13 +9,13 @@
   export default {
     props: ['alertclass'],
     data: function(){
-        return {show: true}
+      return {show: true}
     },
     created: function(){
-        var that = this;
-        setTimeout(function(){
-            that.show = false;
-        }, 10000)
+      let that = this;
+      setTimeout(function(){
+        that.show = false;
+      }, 10000)
     }
   };
 </script>

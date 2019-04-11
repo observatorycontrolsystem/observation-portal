@@ -28,7 +28,7 @@
                        v-show="observation_type != 'TARGET_OF_OPPORTUNITY'">
           </customfield>
           <customfield v-model="window.end" type="datetime" label="End (UT)" field="end" v-on:input="update"
-                      :errors="errors.end" desc="Time when the observing window closes.">
+                       :errors="errors.end" desc="Time when the observing window closes.">
           </customfield>
           <customselect v-model="cadence" label="Cadence" field="cadence" v-if="!simple_interface"
                         desc="A cadence will replace your current observing window with a set of windows, one for each cycle of the cadence."
@@ -48,54 +48,54 @@
   </panel>
 </template>
 <script>
-import $ from 'jquery';
-import _ from 'lodash';
+  import $ from 'jquery';
+  import _ from 'lodash';
 
-import {collapseMixin} from '../utils.js';
-import panel from './util/panel.vue';
-import customfield from './util/customfield.vue';
-import customselect from './util/customselect.vue';
-import airmass from './airmass.vue';
+  import {collapseMixin} from '../utils.js';
+  import panel from './util/panel.vue';
+  import customfield from './util/customfield.vue';
+  import customselect from './util/customselect.vue';
+  import airmass from './airmass.vue';
 
-export default {
-  props: ['window', 'index', 'errors', 'parentshow', 'simple_interface', 'observation_type'],
-  components: {customfield, customselect, panel, airmass},
-  mixins: [collapseMixin],
-  data: function(){
-    return {
-      show: this.parentshow,
-      airmassData: {},
-      showAirmass: false,
-      cadence: 'none',
-      period: 24.0,
-      jitter: 12.0
-    };
-  },
-  methods: {
-    update: function(){
-      this.$emit('windowupdate');
+  export default {
+    props: ['window', 'index', 'errors', 'parentshow', 'simple_interface', 'observation_type'],
+    components: {customfield, customselect, panel, airmass},
+    mixins: [collapseMixin],
+    data: function(){
+      return {
+        show: this.parentshow,
+        airmassData: {},
+        showAirmass: false,
+        cadence: 'none',
+        period: 24.0,
+        jitter: 12.0
+      };
     },
-    genCadence: function(){
-      this.$emit('cadence', {
-        'start': this.window.start, 'end': this.window.end, 'period': this.period, 'jitter': this.jitter
-      });
-    },
-    updateVisibility: function(req){
-      var request = _.cloneDeep(req);
-      //replace the window list with a single window with this start/end
-      request['windows'] = [{start:this.window.start, end:this.window.end}];
-      var that = this;
-      $.ajax({
-        type: 'POST',
-        url: '/api/airmass/',
-        data: JSON.stringify(request),
-        contentType: 'application/json',
-        success: function (data) {
-          that.airmassData = data;
-          that.showAirmass = 'airmass_limit' in data;
-        }
-      });
-    },
-  },
-};
+    methods: {
+      update: function(){
+        this.$emit('windowupdate');
+      },
+      genCadence: function(){
+        this.$emit('cadence', {
+          'start': this.window.start, 'end': this.window.end, 'period': this.period, 'jitter': this.jitter
+        });
+      },
+      updateVisibility: function(req) {
+        let request = _.cloneDeep(req);
+        //replace the window list with a single window with this start/end
+        request['windows'] = [{start: this.window.start, end: this.window.end}];
+        let that = this;
+        $.ajax({
+          type: 'POST',
+          url: '/api/airmass/',
+          data: JSON.stringify(request),
+          contentType: 'application/json',
+          success: function (data) {
+            that.airmassData = data;
+            that.showAirmass = 'airmass_limit' in data;
+          }
+        });
+      }
+    }
+  };
 </script>

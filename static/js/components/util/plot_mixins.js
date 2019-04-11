@@ -11,9 +11,9 @@ export var plotZoomMixin = {
     },
     updateWindow: function(window) {
       var currentWindow = this.plot.getWindow();
-      if(currentWindow.start != window.start || currentWindow.end != window.end){
+      if(currentWindow.start !== window.start || currentWindow.end !== window.end){
         this.plot.setWindow(window.start, window.end, {animation: false});
       }
     }
   }
-}
+};

@@ -16,7 +16,7 @@ Vue.filter('formatDate', function(value){
   return formatDate(value);
 });
 
-var vm = new Vue({
+let vm = new Vue({
   el: '#app',
   render: function(h){
     return h(App);

@@ -9,21 +9,19 @@
   </div>
 </template>
 <script>
-
-import 'vue-style-loader!../../../css/plot_style.css';
-
-export default {
-  props: {
-    zoomInPercent:{type:Number, default:-0.2},
-    zoomOutPercent:{type:Number, default:0.2}
-  },
-  methods: {
-    zoomIn: function(){
-      this.$emit('plotZoom', this.zoomInPercent);
+  import 'vue-style-loader!../../../css/plot_style.css';
+  export default {
+    props: {
+      zoomInPercent:{type:Number, default:-0.2},
+      zoomOutPercent:{type:Number, default:0.2}
     },
-    zoomOut: function(value){
-      this.$emit('plotZoom', this.zoomOutPercent);
+    methods: {
+      zoomIn: function(){
+        this.$emit('plotZoom', this.zoomInPercent);
+      },
+      zoomOut: function(value){
+        this.$emit('plotZoom', this.zoomOutPercent);
+      }
     }
-  }
-};
+  };
 </script>

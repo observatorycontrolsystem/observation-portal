@@ -31,21 +31,21 @@
   </panel>
 </template>
 <script>
-import {collapseMixin} from '../utils.js';
-import panel from './util/panel.vue';
-import customfield from './util/customfield.vue';
-import customselect from './util/customselect.vue';
-export default {
-  props: ['constraints', 'errors', 'parentshow'],
-  components: {customselect, customfield, panel},
-  mixins: [collapseMixin],
-  data: function(){
-    return {'show': true};
-  },
-  methods: {
-    update: function(){
-      this.$emit('constraintsupdate');
+  import {collapseMixin} from '../utils.js';
+  import panel from './util/panel.vue';
+  import customfield from './util/customfield.vue';
+
+  export default {
+    props: ['constraints', 'errors', 'parentshow'],
+    components: {customfield, panel},
+    mixins: [collapseMixin],
+    data: function(){
+      return {'show': true};
+    },
+    methods: {
+      update: function(){
+        this.$emit('constraintsupdate');
+      }
     }
-  }
-};
+  };
 </script>

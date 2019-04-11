@@ -1,6 +1,7 @@
 import $ from 'jquery';
 import moment from 'moment';
 import {datetimeFormat} from './utils.js';
+import tooltip from 'bootstrap';
 
 import {getThumbnail, getLatestFrame, downloadAll} from './archive.js';
 
@@ -34,15 +35,15 @@ $(document).ready(function(){
   });
 
   $('.pending-details').each(function(){
-    var that = $(this);
-    var requestId = $(this).data('request');
-    $.getJSON('/api/requests/' + requestId + '/blocks/?canceled=false', function(data){
-      var content = '';
+    let that = $(this);
+    let requestId = $(this).data('request');
+    $.getJSON('/api/requests/' + requestId + '/observations/?state=PENDING&state=IN_PROGRESS&state=COMPLETED&state=FAILED&state=ABORTED', function(data){
+      let content = '';
       if(data.length > 0){
-        data = data.reverse(); // get the latest non cancled block
+        data = data.reverse(); // get the latest non canceled block
         content = '<strong>' + data[0].site + '</strong> <br/>' +
-                  moment(data[0].start).format(datetimeFormat) +
-                 ' to ' + moment(data[0].end).format(datetimeFormat);
+          moment(data[0].start).format(datetimeFormat) +
+          ' to ' + moment(data[0].end).format(datetimeFormat);
       }else{
         content = 'No scheduling information found';
       }

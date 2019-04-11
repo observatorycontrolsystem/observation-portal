@@ -18,22 +18,22 @@
   </div>
 </template>
 <script>
-import airmass from './airmass.vue';
-import telescope_states from './telescope_states.vue';
+  import airmass from './airmass.vue';
+  import telescope_states from './telescope_states.vue';
 
-export default {
-  props: ['airmassData', 'telescopeStatesData', 'activeBlock'],
-  components: {airmass, telescope_states},
-  data: function(){
-    return {};
-  },
-  methods: {
-    updateAirmassRange: function(window) {
-      this.$refs.airmass.updateWindow(window);
+  export default {
+    props: ['airmassData', 'telescopeStatesData', 'activeBlock'],
+    components: {airmass, telescope_states},
+    data: function(){
+      return {};
     },
-    updateTelescopeStatesRange: function(window) {
-      this.$refs.telescope_states.updateWindow(window);
-    }
-  },
-};
+    methods: {
+      updateAirmassRange: function(window) {
+        this.$refs.airmass.updateWindow(window);
+      },
+      updateTelescopeStatesRange: function(window) {
+        this.$refs.telescope_states.updateWindow(window);
+      }
+    },
+  };
 </script>
