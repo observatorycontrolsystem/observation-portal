@@ -179,8 +179,8 @@ class ConfigurationSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(_("Guiding mode {} is not available for instrument type {}"
                                                 .format(guiding_config['mode'], data['instrument_type'])))
 
-        if configdb.is_spectrograph(data['instrument_type']):
-            if 'optional' in guiding_config and guiding_config['optional'] and data['type'] != 'ARC':
+        if configdb.is_spectrograph(data['instrument_type']) and data['type'] != 'ARC':
+            if 'optional' in guiding_config and guiding_config['optional']:
                 raise serializers.ValidationError(_("Guiding must not be optional on spectrograph instruments and non-ARC observations."))
             guiding_config['optional'] = False
 
