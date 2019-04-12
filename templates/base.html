@@ -1,5 +1,6 @@
 <!doctype html>
-{% load static bootstrap3 %}
+{% load static bootstrap4 %}
+{% load render_bundle from webpack_loader %}
 <html class="no-js" lang="">
     <head>
         <meta charset="utf-8">
@@ -86,11 +87,8 @@
       </div>
     </body>
     {% block javascript %}
-    <script type="text/javascript" src="{% static 'bundles/common.js' %}"></script>
-    <script type="text/javascript" src="{% static 'bundles/vendors~global.js' %}"></script>
-    <script type="text/javascript" src="{% static 'bundles/global.js' %}"></script>
-    {% endblock %}
-    {% block extra_javascript %}
+    {% render_bundle 'global' %}
+    {% render_bundle 'vendor' %}
     {% endblock %}
     <script>
       (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
