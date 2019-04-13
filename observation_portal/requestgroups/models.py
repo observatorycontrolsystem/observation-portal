@@ -661,23 +661,17 @@ class RegionOfInterest(models.Model):
 
 class GuidingConfig(models.Model):
     ON = 'ON'
-    OPTIONAL = 'OPTIONAL'
     OFF = 'OFF'
 
     SERIALIZER_EXCLUDE = ('id', 'configuration')
-    STATES = (
-        ('OPTIONAL', OPTIONAL),
-        ('ON', ON),
-        ('OFF', OFF)
-    )
 
     configuration = models.OneToOneField(
         Configuration, related_name='guiding_config', on_delete=models.CASCADE,
         help_text='The Configuration to which this GuidingConfig belongs'
     )
-    state = models.CharField(
-        max_length=50, choices=STATES, default=OPTIONAL,
-        help_text='GuidingConfig state to use for the observations'
+    optional = models.BooleanField(
+        default=True,
+        help_text='Whether the guiding is optional or not'
     )
     mode = models.CharField(
         max_length=50, default='', blank=True,

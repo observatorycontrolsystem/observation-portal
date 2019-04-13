@@ -180,9 +180,10 @@ def get_request_duration(request_dict):
                     duration += request_overheads['default_acquisition_exposure_time']
 
         # Now add the Guiding overhead if this request requires it
-        if configuration['guiding_config']['state'] == 'ON':
-            if ('mode' in configuration['guiding_config'] and
-                    configuration['guiding_config']['mode'] in request_overheads['guiding_overheads']):
+        guide_optional = configuration['guiding_config']['optional'] if 'optional' in configuration['guiding_config'] \
+            else True
+        if configuration['guiding_config']['mode'] != 'OFF' and not guide_optional:
+            if (configuration['guiding_config']['mode'] in request_overheads['guiding_overheads']):
                 duration += request_overheads['guiding_overheads'][configuration['guiding_config']['mode']]
 
         # TODO: find out if we need to have a configuration type change time for spectrographs?

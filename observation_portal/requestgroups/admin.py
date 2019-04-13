@@ -196,7 +196,7 @@ class GuidingConfigAdmin(admin.ModelAdmin):
     list_display = (
         'id',
         'configuration',
-        'state',
+        'optional',
         'mode',
         'exposure_time'
     )

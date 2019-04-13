@@ -1163,13 +1163,14 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         self.generic_payload['proposal'] = self.proposal.id
         self.extra_configuration = copy.deepcopy(self.generic_payload['requests'][0]['configurations'][0])
 
-    def test_default_guide_state_for_spectrograph(self):
+    def test_default_guide_mode_for_spectrograph(self):
         good_data = self.generic_payload.copy()
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
         self.assertEqual(response.status_code, 201)
         configuration = response.json()['requests'][0]['configurations'][0]
         # check that without spectral instrument, these defaults are different
-        self.assertEqual(configuration['guiding_config']['state'], 'OPTIONAL')
+        self.assertTrue(configuration['guiding_config']['optional'])
+        self.assertEqual(configuration['guiding_config']['mode'], 'OFF')
         self.assertNotIn('slit', configuration['instrument_configs'][0]['optical_elements'])
 
         good_data['requests'][0]['location']['telescope_class'] = '2m0'
@@ -1181,36 +1182,37 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 201)
         configuration = response.json()['requests'][0]['configurations'][0]
         # now with spectral instrument, defaults have changed
-        self.assertEqual(configuration['guiding_config']['state'], 'ON')
+        self.assertEqual(configuration['guiding_config']['mode'], 'ON')
+        self.assertFalse(configuration['guiding_config']['optional'])
         self.assertEqual(configuration['instrument_configs'][0]['optical_elements']['slit'], 'slit_6.0as')
 
-    def test_guide_state_off_not_allowed_for_nres_spectrum(self):
+    def test_guide_mode_off_not_allowed_for_nres_spectrum(self):
         bad_data = self.generic_payload.copy()
         bad_data['requests'][0]['configurations'][0]['instrument_type'] = '1M0-NRES-SCICAM'
         bad_data['requests'][0]['configurations'][0]['type'] = 'NRES_SPECTRUM'
-        bad_data['requests'][0]['configurations'][0]['guiding_config']['state'] = 'OFF'
+        bad_data['requests'][0]['configurations'][0]['guiding_config']['mode'] = 'OFF'
 
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('Guide state must be ON', str(response.content))
+        self.assertIn('Guiding mode OFF is not available for instrument type', str(response.content))
 
-    def test_guide_state_optional_not_allowed_for_spectrum(self):
+    def test_guide_optional_not_allowed_for_spectrum(self):
         bad_data = self.generic_payload.copy()
         bad_data['requests'][0]['location']['telescope_class'] = '2m0'
         bad_data['requests'][0]['configurations'][0]['instrument_type'] = '2M0-FLOYDS-SCICAM'
         bad_data['requests'][0]['configurations'][0]['type'] = 'SPECTRUM'
-        bad_data['requests'][0]['configurations'][0]['guiding_config']['state'] = 'OPTIONAL'
+        bad_data['requests'][0]['configurations'][0]['guiding_config']['optional'] = True
 
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('Guide state must be ON', str(response.content))
+        self.assertIn('Guiding must not be optional on spectrograph instruments', str(response.content))
 
-    def test_guide_state_optional_allowed_for_arc(self):
+    def test_guide_optional_allowed_for_arc(self):
         good_data = self.generic_payload.copy()
         good_data['requests'][0]['location']['telescope_class'] = '2m0'
         good_data['requests'][0]['configurations'][0]['instrument_type'] = '2M0-FLOYDS-SCICAM'
         good_data['requests'][0]['configurations'][0]['type'] = 'ARC'
-        good_data['requests'][0]['configurations'][0]['guiding_config']['state'] = 'OPTIONAL'
+        good_data['requests'][0]['configurations'][0]['guiding_config']['optional'] = True
         del good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
         good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['slit'] = 'slit_1.6as'
 
@@ -1259,15 +1261,15 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         del good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
         good_data['requests'][0]['configurations'][0]['instrument_type'] = '1M0-NRES-SCICAM'
         good_data['requests'][0]['configurations'][0]['type'] = 'NRES_SPECTRUM'
-        good_data['requests'][0]['configurations'][0]['guiding_config']['state'] = 'ON'
+        good_data['requests'][0]['configurations'][0]['guiding_config']['mode'] = 'ON'
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
         self.assertEqual(response.status_code, 201)
         good_data['requests'][0]['configurations'][0]['type'] = 'NRES_EXPOSE'
-        good_data['requests'][0]['configurations'][0]['guiding_config']['state'] = 'ON'
+        good_data['requests'][0]['configurations'][0]['guiding_config']['mode'] = 'ON'
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
         self.assertEqual(response.status_code, 201)
         good_data['requests'][0]['configurations'][0]['type'] = 'NRES_TEST'
-        good_data['requests'][0]['configurations'][0]['guiding_config']['state'] = 'ON'
+        good_data['requests'][0]['configurations'][0]['guiding_config']['mode'] = 'ON'
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
         self.assertEqual(response.status_code, 201)
 
@@ -1276,9 +1278,8 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         del good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
         good_data['requests'][0]['configurations'][0]['instrument_type'] = '1M0-NRES-SCICAM'
         good_data['requests'][0]['configurations'][0]['type'] = 'NRES_SPECTRUM'
-        good_data['requests'][0]['configurations'][0]['guiding_config']['state'] = 'ON'
+        good_data['requests'][0]['configurations'][0]['guiding_config']['mode'] = 'ON'
         good_data['requests'][0]['configurations'][0]['acquisition_config']['mode'] = 'WCS'
-        good_data['requests'][0]['configurations'][0]['guiding_config']['mode'] = 'SUPER'
         good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params'] = {
             'expmeter_snr': 10.0,
             'expmeter_mode': 'OFF'
@@ -1289,7 +1290,7 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         self.assertEqual(configuration['instrument_configs'][0]['extra_params']['expmeter_snr'], 10.0)
         self.assertEqual(configuration['instrument_configs'][0]['extra_params']['expmeter_mode'], 'OFF')
         self.assertEqual(configuration['acquisition_config']['mode'], 'WCS')
-        self.assertEqual(configuration['guiding_config']['mode'], 'SUPER')
+        self.assertEqual(configuration['guiding_config']['mode'], 'ON')
 
     def test_filter_necessary_for_type(self):
         bad_data = self.generic_payload.copy()
@@ -1494,7 +1495,6 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
     def test_configuration_type_matches_instrument(self):
         bad_data = self.generic_payload.copy()
         bad_data['requests'][0]['configurations'][0]['type'] = 'SPECTRUM'
-        bad_data['requests'][0]['configurations'][0]['guiding_config']['state'] = 'ON'
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertIn('configuration type SPECTRUM is not valid for instrument type 1M0-SCICAM-SBIG', str(response.content))
         self.assertEqual(response.status_code, 400)
