@@ -50,6 +50,38 @@
                     <b-card-body>
                       <b-row>
                         <b-col md="6">
+                          <h4>Target</h4>
+                          <dl class="twocol dl-horizontal">
+                            <span v-for="(x, idx) in configuration.target" :key="'target-' + idx">
+                              <dt v-if="configuration.target[idx]">{{ idx | formatField }}</dt>
+                              <dd v-if="x">
+                                <span v-if="idx === 'name'">{{ x }}</span>
+                                <span v-else>{{ x | formatValue }}</span>
+                              </dd>
+                            </span>
+                          </dl>
+                          <hr/>
+                          <h4>Instrument Configs</h4>
+                          <table class="table">
+                            <thead>
+                              <tr>
+                                <td><strong>Mode</strong></td>
+                                <td><strong>Exp Time</strong></td>
+                                <td><strong>Exp Count</strong></td>
+                                <td><strong>Optical Elements</strong></td>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr v-for="(instrument_config, index) in configuration.instrument_configs" :key="'instrument_config-' + index">
+                                <td>{{ instrument_config.mode }}</td>
+                                <td>{{ instrument_config.exposure_time | formatValue }}</td>
+                                <td>{{ instrument_config.exposure_count | formatValue }}</td>
+                                <td>{{ instrument_config.optical_elements | formatValue }}</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </b-col>
+                        <b-col md="6">
                           <h4>Acquisition</h4>
                           <dl class="twocol dl-horizontal">
                             <span v-for="(x, idx) in configuration.acquisition_config" :key="'acquisition-' + idx">
@@ -72,43 +104,11 @@
                             </span>
                           </dl>
                           <hr/>
-                          <h4>Instrument Configs</h4>
-                          <table class="table">
-                            <thead>
-                              <tr>
-                                <td><strong>Mode</strong></td>
-                                <td><strong>Exp Time</strong></td>
-                                <td><strong>Exp Count</strong></td>
-                                <td><strong>Optical Elements</strong></td>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              <tr v-for="(instrument_config, index) in configuration.instrument_configs" :key="'instrument_config-' + index">
-                                <td>{{ instrument_config.mode }}</td>
-                                <td>{{ instrument_config.exposure_time }}</td>
-                                <td>{{ instrument_config.exposure_count }}</td>
-                                <td>{{ instrument_config.optical_elements }}</td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        </b-col>
-                        <b-col md="6">
-                          <h4>Target</h4>
-                          <dl class="twocol dl-horizontal">
-                            <span v-for="(x, idx) in configuration.target" :key="'target-' + idx">
-                              <dt v-if="configuration.target[idx]">{{ idx | formatField }}</dt>
-                              <dd v-if="x">
-                                <span v-if="idx === 'name'">{{ x }}</span>
-                                <span v-else>{{ x | formatValue }}</span>
-                              </dd>
-                            </span>
-                          </dl>
-                          <hr/>
                           <h4>Constraints</h4>
                           <dl class="twocol dl-horizontal">
                             <span v-for="(x, idx) in configuration.constraints" :key="'constraints-' + idx">
                               <dt v-if="configuration.constraints[idx]">{{ idx | formatField }}</dt>
-                              <dd v-if="x">{{ x }}</dd>
+                              <dd v-if="x">{{ x | formatValue }}</dd>
                             </span>
                           </dl>
                         </b-col>
@@ -157,7 +157,7 @@
   import archivetable from './components/archivetable.vue';
   import observationhistory from './components/observationhistory.vue';
   import airmass_telescope_states from './components/airmass_telescope_states.vue';
-  import {formatDate, formatField} from './utils.js';
+  import {formatDate, formatField, formatValue} from './utils.js';
   import {login, getLatestFrame} from './archive.js';
 
   Vue.filter('formatDate', function(value){
@@ -169,10 +169,7 @@
   });
 
   Vue.filter('formatValue', function(value){
-    if(!isNaN(value)){
-      return Number(value).toFixed(4);
-    }
-    return value;
+    return formatValue(value);
   });
 
   export default {

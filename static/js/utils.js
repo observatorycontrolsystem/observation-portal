@@ -1,4 +1,5 @@
 import moment from 'moment';
+import _ from 'lodash';
 
 function slitWidthToExposureTime(slitWidth){
   // Lamp flats are affected by the slit width, so exposure time needs to scale with it
@@ -119,6 +120,29 @@ function formatField(value){
   }
 }
 
+function formatJson(dict){
+  let stringVal = '';
+  for(let key in dict){
+    if (!_.isEmpty(dict[key])) {
+      if (!_.isEmpty(stringVal)) {
+        stringVal += ', ';
+      }
+      stringVal += key + ': ' + dict[key];
+    }
+  }
+  return stringVal;
+}
+
+function formatValue(value){
+  if (_.isObject(value) && !_.isArray(value)){
+    return formatJson(value);
+  }
+  else if (_.isNumber(value) && !_.isInteger(value) && !isNaN(value)){
+    return Number(value).toFixed(4);
+  }
+  return value;
+}
+
 let datetimeFormat = 'YYYY-MM-DD HH:mm:ss';
 
 let collapseMixin = {
@@ -190,7 +214,7 @@ let colorPalette = [  // useful assigning colors to datasets.
 ];
 
 export {
-  semesterStart, semesterEnd, sexagesimalRaToDecimal, sexagesimalDecToDecimal, QueryString,
+  semesterStart, semesterEnd, sexagesimalRaToDecimal, sexagesimalDecToDecimal, QueryString, formatJson, formatValue,
   formatDate, formatField, datetimeFormat, collapseMixin, siteToColor, siteCodeToName, slitWidthToExposureTime,
   observatoryCodeToNumber, telescopeCodeToName, colorPalette, julianToModifiedJulian
 };
