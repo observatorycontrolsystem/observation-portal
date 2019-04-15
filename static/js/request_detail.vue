@@ -139,12 +139,12 @@
           </div>
         </div>
         <div class="tab-pane" :class="{ active: tab === 'scheduling' }">
-          <observationhistory v-show="blockData.length > 0" :data="blockData" :showPlotControls="true"></observationhistory>
-          <div v-show="blockData.length < 1" class="text-center"><h3>This request has not been scheduled.</h3></div>
+          <observationhistory v-show="observationData.length > 0" :data="observationData" :showPlotControls="true"></observationhistory>
+          <div v-show="observationData.length < 1" class="text-center"><h3>This request has not been scheduled.</h3></div>
         </div>
         <div class="tab-pane" :class="{ active: tab === 'visibility' }">
           <airmass_telescope_states v-show="'airmass_limit' in airmassData" :airmassData="airmassData"
-                                    :telescopeStatesData="telescopeStatesData" :activeBlock="activeBlock"></airmass_telescope_states>
+                                    :telescopeStatesData="telescopeStatesData" :activeObservation="activeObservation"></airmass_telescope_states>
         </div>
       </div>
     </div>
@@ -180,8 +180,8 @@
         request: {},
         frames: [],
         curFrame: null,
-        blockData: [],
-        activeBlock: null,
+        observationData: [],
+        activeObservation: null,
         airmassData: {},
         telescopeStatesData: {},
         tab: 'details',
@@ -204,8 +204,8 @@
     },
     watch: {
       'tab': function(tab){
-        if(tab === 'scheduling' && this.blockData.length === 0){
-          this.loadBlockData();
+        if(tab === 'scheduling' && this.observationData.length === 0){
+          this.loadObservationData();
         }
         else if (tab === 'visibility'){
           if($.isEmptyObject(this.airmassData)) {
@@ -213,8 +213,8 @@
           }
           if($.isEmptyObject(this.telescopeStatesData)){
             this.loadTelescopeStatesData();
-            if(this.blockData.length === 0){
-              this.loadBlockData();
+            if(this.observationData.length === 0){
+              this.loadObservationData();
             }
           }
         }
@@ -248,18 +248,18 @@
       }
     },
     methods: {
-      loadBlockData: function(){
+      loadObservationData: function(){
         let that = this;
         let requestId = $('#request-detail').data('requestid');
         $.getJSON('/api/requests/' + requestId + '/observations/', function(data){
-          that.blockData = data;
-          for(var blockIdx in that.blockData){
-            if(that.blockData[blockIdx].completed){
-              that.activeBlock = that.blockData[blockIdx];
+          that.observationData = data;
+          for(var observationIdx in that.observationData){
+            if(that.observationData[observationIdx].status === 'COMPLETED'){
+              that.activeObservation = that.observationData[observationIdx];
               break;
             }
-            else if(that.blockData[blockIdx].status === 'SCHEDULED'){
-              that.activeBlock = that.blockData[blockIdx];
+            else if(that.observationData[observationIdx].status === 'SCHEDULED'){
+              that.activeObservation = that.observationData[observationIdx];
             }
           }
         });

@@ -2,7 +2,7 @@
   <div class="airmassTelescopeStatesCombo">
     <airmass ref="airmass" v-on:rangechanged="updateTelescopeStatesRange" :data="airmassData" v-show="'airmass_limit' in airmassData" :showZoomControls="true" :alignleft="true"></airmass>
     <p></p>
-    <telescope_states ref="telescope_states" v-on:rangechanged="updateAirmassRange" :data="telescopeStatesData" :activeBlock="activeBlock" v-show="'airmass_limit' in airmassData" :showZoomControls="false"></telescope_states>
+    <telescope_states ref="telescope_states" v-on:rangechanged="updateAirmassRange" :data="telescopeStatesData" :activeObservation="activeObservation" v-show="'airmass_limit' in airmassData" :showZoomControls="false"></telescope_states>
     <div class="visibilityHistoryPlotLegend text-center">
       <ul class="list-inline">
         <li class="AVAILABLE legend-item"></li>
@@ -22,7 +22,7 @@
   import telescope_states from './telescope_states.vue';
 
   export default {
-    props: ['airmassData', 'telescopeStatesData', 'activeBlock'],
+    props: ['airmassData', 'telescopeStatesData', 'activeObservation'],
     components: {airmass, telescope_states},
     data: function(){
       return {};
