@@ -1,7 +1,7 @@
 {% load i18n request_extras %}
 <div class="row">
   <div class="col-md-12 ">
-    <h2>{{ requestgroup.name }} <br/><small>Tracking # {{ requestgroup.id }}</small></h2>
+    <h2>{{ requestgroup.name }} <br/><small>RequestGroup # {{ requestgroup.id }}</small></h2>
   </div>
 </div>
 <div class="row">
@@ -30,15 +30,14 @@
       <dt>{% trans 'Submitter' %}</dt>
       <dd>{{ requestgroup.submitter }}</dd>
     </dl>
-    <dl class="col-md-2">
+    <dl class="col-md-1">
       <dt>IPP</dt>
       <dd>{{ requestgroup.ipp_value }}</dd>
     </dl>
-    {% if requestgroup.observation_type == 'RAPID_RESPONSE' %}
-    <div class="col-md-1">
-      <p><i>{% trans 'Rapid Response' %}</i></p>
-    </div>
-    {% endif %}
+    <dl class="col-md-2">
+        <dt>{% trans 'Observation Type' %}</dt>
+        <dd>{{ requestgroup.observation_type }}</dd>
+    </dl>
     <span class="col-md-1">
       <div class="btn-group">
         <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

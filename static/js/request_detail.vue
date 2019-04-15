@@ -22,12 +22,12 @@
               <h4>Windows</h4>
               <table class="table">
                 <thead>
-                <tr><td><strong>Start</strong></td><td><strong>End</strong></td></tr>
+                  <tr><td><strong>Start</strong></td><td><strong>End</strong></td></tr>
                 </thead>
                 <tbody>
-                <tr v-for="(window, index) in request.windows" :key="'window-' + index">
-                  <td>{{ window.start | formatDate }}</td><td>{{ window.end | formatDate }}</td>
-                </tr>
+                  <tr v-for="(window, index) in request.windows" :key="'window-' + index">
+                    <td>{{ window.start | formatDate }}</td><td>{{ window.end | formatDate }}</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -50,6 +50,47 @@
                     <b-card-body>
                       <b-row>
                         <b-col md="6">
+                          <h4>Acquisition</h4>
+                          <dl class="twocol dl-horizontal">
+                            <span v-for="(x, idx) in configuration.acquisition_config" :key="'acquisition-' + idx">
+                              <dt v-if="configuration.acquisition_config[idx]">{{ idx | formatField }}</dt>
+                              <dd v-if="x">
+                                <span v-if="idx === 'name'">{{ x }}</span>
+                                <span v-else>{{ x | formatValue }}</span>
+                              </dd>
+                            </span>
+                          </dl>
+                          <hr/>
+                          <h4>Guiding</h4>
+                          <dl class="twocol dl-horizontal">
+                            <span v-for="(x, idx) in configuration.guiding_config" :key="'guiding-' + idx">
+                              <dt v-if="configuration.guiding_config[idx]">{{ idx | formatField }}</dt>
+                              <dd v-if="x">
+                                <span v-if="idx === 'name'">{{ x }}</span>
+                                <span v-else>{{ x | formatValue }}</span>
+                              </dd>
+                            </span>
+                          </dl>
+                          <hr/>
+                          <h4>Instrument Configs</h4>
+                          <table class="table">
+                            <thead>
+                              <tr>
+                                <td><strong>Mode</strong></td>
+                                <td><strong>Exp Time</strong></td>
+                                <td><strong>Exp Count</strong></td>
+                                <td><strong>Optical Elements</strong></td>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr v-for="(instrument_config, index) in configuration.instrument_configs" :key="'instrument_config-' + index">
+                                <td>{{ instrument_config.mode }}</td>
+                                <td>{{ instrument_config.exposure_time }}</td>
+                                <td>{{ instrument_config.exposure_count }}</td>
+                                <td>{{ instrument_config.optical_elements }}</td>
+                              </tr>
+                            </tbody>
+                          </table>
                         </b-col>
                         <b-col md="6">
                           <h4>Target</h4>
@@ -72,7 +113,6 @@
                           </dl>
                         </b-col>
                       </b-row>
-                      <b-card-text>{{ configuration.id }}</b-card-text>
                     </b-card-body>
                   </b-collapse>
                 </b-card>
