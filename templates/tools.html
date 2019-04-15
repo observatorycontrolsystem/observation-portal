@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
+{% load render_bundle from webpack_loader %}
 {% load static %}
 {% block title %}Planning Tools{% endblock %}
 {% block content %}
 <div id="app"></div>
 <br/>
-{% endblock %}
 {% block extra_javascript %}
-<script type="text/javascript" src="{% static 'bundles/tools.js' %}"></script>
-<script type="text/javascript" src="{% static 'bundles/vendors~tools.js' %}"></script>
+{% render_bundle 'tools' %}
+{% endblock %}
 {% endblock %}

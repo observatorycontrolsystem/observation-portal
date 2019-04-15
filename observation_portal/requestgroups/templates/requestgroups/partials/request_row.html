@@ -2,16 +2,12 @@
 <div class="row requestgroup requestgroup-{{ request.state|state_to_bs }}" data-request='{{ request.id }}'>
     <div class="col-md-10">
       <div class="row">
-        <div class="col-md-12">
+        <div class="col-md-4 requestgroup-block border-right">
           {% if link %}
             <a class="requestgroup-title" href="{% url 'requestgroups:request-detail' request %}"> # {{ request.id }}</a>
           {% else %}
             <span class="requestgroup-title"># {{ request.id }}</span>
           {% endif %}
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-md-4 requestgroup-block border-right">
           <p><i class="fa fa-clock-o" ></i> <span class="tt" title="Total exposure time + observing overhead"> Duration: {{ request.duration }} seconds</span></p>
           <p><i class="fa fa-camera"></i> Instrument: {{ request.configurations.all.0.instrument_type|instrument_type_to_full_name }}</p>
         </div>
@@ -22,13 +18,19 @@
               {{ request.state }}
             </span>
           </p>
+          <p>Acceptability Threshold: {{ request.acceptability_threshold }}%</p>
           <p><i class="fa fa-calendar"></i> {{ request.modified}}</p>
         </div>
-        <div class="col-md-4 requestgroup-block border-right">
-          <a href="{% url 'api:requests-detail' pk=request.id %}" class="btn btn-default btn-sm"><i class="fa fa-fw fa-code"></i> View in API</a>
-          {% if request.state == 'COMPLETED' %}
-          <button data-requestid="{{ request.id }}" class="downloadall btn btn-default btn-sm"><i class="fa fa-fw fa-download"></i> Download</button>
-          {% endif %}
+        <div class="col-md-4 requestgroup-block">
+          <br/>
+          <div class="row margin-top-md mt-md-3">
+            <div class="col-md-4 border-right">
+              <a href="{% url 'api:requests-detail' pk=request.id %}" class="btn btn-default btn-sm"><i class="fa fa-fw fa-code"></i> View in API</a>
+              {% if request.state == 'COMPLETED' %}
+              <button data-requestid="{{ request.id }}" class="downloadall btn btn-default btn-sm"><i class="fa fa-fw fa-download"></i> Download</button>
+              {% endif %}
+            </div>
+          </div>
         </div>
       </div>
     </div>

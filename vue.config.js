@@ -1,8 +1,11 @@
-var path = require('path');
+const path = require('path');
+const BundleTracker = require('webpack-bundle-tracker');
+const webpack = require('webpack');
 
 // https://cli.vuejs.org/config/
 module.exports = {
   outputDir: 'static/bundles',
+  publicPath: 'static/bundles',
   lintOnSave: process.env.NODE_ENV !== 'production',
   configureWebpack: config => {
 
@@ -13,22 +16,25 @@ module.exports = {
       entry: {
         global: './static/js/global',
         compose: './static/js/compose',
-        userrequest_detail: './static/js/requestgroup_detail',
+        requestgroup_detail: './static/js/requestgroup_detail',
         request_detail: './static/js/request_detail',
         telescope_availability: './static/js/telescope_availability_chart',
         tools: './static/js/tools'
       },
       output: {
-        filename: '[name].js'
+        filename: '[name].[hash].js'
       },
+      plugins: [
+        new BundleTracker({filename: './static/webpack-stats.json'}),
+        new webpack.HashedModuleIdsPlugin()
+      ],
       optimization: {
         splitChunks: {
-          chunks: 'all',
           cacheGroups: {
-            common: {
-              name: "common",
-              chunks: "initial",
-              minChunks: 2
+            vendor: {
+              test: /[\\/]node_modules[\\/]/,
+              name: 'vendor',
+              chunks: 'all'
             }
           }
         }

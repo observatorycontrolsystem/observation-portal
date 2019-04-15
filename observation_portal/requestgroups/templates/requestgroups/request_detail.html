@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load render_bundle from webpack_loader %}
 {% block title %} Request Group Detail {% endblock %}
 {% block content %}
 {% include 'requestgroups/partials/requestgroup_header.html' with requestgroup=object.request_group %}
@@ -15,8 +16,7 @@
 <div id="request-detail" data-requestid="{{ object.id }}">
   <div id="app"></div>
 </div>
-{% endblock %}
 {% block extra_javascript %}
-<script type="text/javascript" src="{% static 'bundles/vendors~request_detail.js' %}"></script>
-<script type="text/javascript" src="{% static 'bundles/request_detail.js' %}"></script>
+{% render_bundle 'request_detail' %}
+{% endblock %}
 {% endblock %}

@@ -7,8 +7,9 @@ requests
 django-filter
 django-extensions
 django-registration-redux
+django-webpack-loader
 django-oauth-toolkit
-django-bootstrap3
+django-bootstrap4
 django-dramatiq
 time_intervals
 rise_set

@@ -25,56 +25,58 @@
                 <tr><td><strong>Start</strong></td><td><strong>End</strong></td></tr>
                 </thead>
                 <tbody>
-                <tr v-for="window in request.windows">
+                <tr v-for="(window, index) in request.windows" :key="'window-' + index">
                   <td>{{ window.start | formatDate }}</td><td>{{ window.end | formatDate }}</td>
                 </tr>
                 </tbody>
               </table>
-              <h4>Configurations</h4>
-              <table class="table table-condensed">
-                <thead>
-                <tr>
-                  <td><strong>Instrument Code</strong></td>
-                  <td><strong>Filter</strong></td>
-                  <td><strong>Exposures</strong></td>
-                  <td><strong>Binning</strong></td>
-                  <td><strong>Defocus</strong></td>
-                </tr>
-                </thead>
-                <tbody>
-                <tr v-for="configurationstatus in request.configurationstatuses">
-                  <td>{{ configurationstatus.instrument_name }}</td>
-                  <td>{{ configurationstatus.filter }}</td>
-                  <td>{{ configurationstatus.exposure_time }}s x {{ configurationstatus.exposure_count }}</td>
-                  <td>{{ configurationstatus.bin_x }}</td>
-                  <td>{{ configurationstatus.defocus }}</td>
-                </tr>
-                </tbody>
-              </table>
             </div>
-            <div class="col-md-6">
-              <h4>Target</h4>
-              <dl class="twocol dl-horizontal">
-              <span v-for="x, idx in request.target">
-              <dt v-if="request.target[idx]">{{ idx | formatField }}</dt>
-              <dd v-if="x">
-                <span v-if="idx === 'name'">{{ x }}</span>
-                <span v-else>{{ x | formatValue }}</span>
-              </dd>
-              </span>
-              </dl>
-              <hr/>
-              <h4>Constraints</h4>
-              <dl class="twocol dl-horizontal">
-              <span v-for="x, idx in request.constraints">
-              <dt v-if="request.constraints[idx]">{{ idx | formatField }}</dt>
-              <dd v-if="x">{{ x }}</dd>
-              </span>
-              </dl>
-              <dl class="twocol dl-horizontal">
-                <dt>Acceptability Threshold</dt>
-                <dd>{{ request.acceptability_threshold }}%</dd>
-              </dl>
+          </div>
+          <div class="row">
+            <div class="col-md-12">
+              <h4>Configurations</h4>
+              <div role="tablist">
+                <b-card no-body class="mb-1" v-for="(configuration, index) in request.configurations" :key="configuration.id">
+                  <b-card-header header-tag="header" class="p-1" role="tab">
+                    <b-button block href="#" v-b-toggle="'accordion-' + index" variant="info">
+                      <b-row>
+                        <b-col md="4">Type: {{ configuration.type }}</b-col>
+                        <b-col md="4">Instrument Type: {{ configuration.instrument_type }}</b-col>
+                        <b-col md="4">Target: {{ configuration.target.name }}</b-col>
+                      </b-row>
+                    </b-button>
+                  </b-card-header>
+                  <b-collapse :id="'accordion-' + index" accordion="my-accordion" role="tabpanel">
+                    <b-card-body>
+                      <b-row>
+                        <b-col md="6">
+                        </b-col>
+                        <b-col md="6">
+                          <h4>Target</h4>
+                          <dl class="twocol dl-horizontal">
+                            <span v-for="(x, idx) in configuration.target" :key="'target-' + idx">
+                              <dt v-if="configuration.target[idx]">{{ idx | formatField }}</dt>
+                              <dd v-if="x">
+                                <span v-if="idx === 'name'">{{ x }}</span>
+                                <span v-else>{{ x | formatValue }}</span>
+                              </dd>
+                            </span>
+                          </dl>
+                          <hr/>
+                          <h4>Constraints</h4>
+                          <dl class="twocol dl-horizontal">
+                            <span v-for="(x, idx) in configuration.constraints" :key="'constraints-' + idx">
+                              <dt v-if="configuration.constraints[idx]">{{ idx | formatField }}</dt>
+                              <dd v-if="x">{{ x }}</dd>
+                            </span>
+                          </dl>
+                        </b-col>
+                      </b-row>
+                      <b-card-text>{{ configuration.id }}</b-card-text>
+                    </b-card-body>
+                  </b-collapse>
+                </b-card>
+              </div>
             </div>
           </div>
         </div>

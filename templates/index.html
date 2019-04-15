@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static i18n %}
+{% load render_bundle from webpack_loader %}
 {% block title %}Home{% endblock %}
 {% block content %}
 <div class="row">
@@ -68,7 +69,7 @@
         {% endif %}
     </div>
 </div>
-{% endblock %}
 {% block extra_javascript %}
-<script type="text/javascript" src="{% static 'bundles/telescope_availability.js' %}"></script>
+{% render_bundle 'telescope_availability' %}
+{% endblock %}
 {% endblock %}

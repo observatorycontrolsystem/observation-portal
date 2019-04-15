@@ -46,7 +46,8 @@ INSTALLED_APPS = [
     'drf_yasg',
     'django_filters',
     'rest_framework.authtoken',
-    'bootstrap3',
+    'bootstrap4',
+    'webpack_loader',
     'oauth2_provider',
     'django_extensions',
     'django_dramatiq',
@@ -260,6 +261,13 @@ DRAMATIQ_BROKER = {
     ]
 }
 
+WEBPACK_LOADER = {
+    'DEFAULT': {
+        'CACHE': not DEBUG,
+        'BUNDLE_DIR_NAME': os.path.join(BASE_DIR, 'static', 'bundles'),
+        'STATS_FILE': os.path.join(BASE_DIR, 'static', 'webpack-stats.json')
+    }
+}
 
 TEST_RUNNER = 'observation_portal.test_runner.MyDiscoverRunner'
 

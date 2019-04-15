@@ -32,6 +32,9 @@ function login(callback){
         success: function(data){
           sessionStorage.setItem('archiveAuthToken', data.token);
           callback();
+        },
+        error: function(jqXHR, textStatus){
+          callback();
         }
       });
     }).fail(function(){
