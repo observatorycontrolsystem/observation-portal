@@ -1,9 +1,9 @@
 <template>
   <div>
-    <div class="blockHistoryPlot" id="plot">
+    <div class="observationHistoryPlot" id="plot">
       <plot_controls v-show="showZoomControls" v-on:plotZoom="plotZoom"></plot_controls>
     </div>
-    <div class="blockHistoryPlotLegend text-center">
+    <div class="observationHistoryPlotLegend text-center">
       <ul class="list-inline">
         <li class="CANCELED legend-item"></li>
         <li>Superseded by new schedule</li>
@@ -66,56 +66,62 @@
         let timeline_min = 0;
         let timeline_max = 0;
         if(this.data.length > 0) {
-          let previousBlock = this.data[0];
-          let previousBlockIndex = 1;
+          let previousObservation = this.data[0];
+          let previousObservationIndex = 1;
           let index = 0;
           for (let i = 0; i < this.data.length; i++) {
-            let block = this.data[i];
-            block.start += 'Z';
-            block.end += 'Z';
-            if (block.failed) {
-              block.fail_reason = '<br/>reason: ' + block.fail_reason;
+            let observation = this.data[i];
+            let state = observation.state;
+            if (state === 'PENDING'){
+              if (new Date(observation.end) > new Date()){
+                state = 'SCHEDULED';
+              }
+              else{
+                state = 'NOT_ATTEMPTED';
+              }
             }
-            if (block.percent_completed > 0) {
-              block.percent_completed = '<br/>percent completed: ' + block.percent_completed.toFixed(1);
+            if (state != 'COMPLETED' && new Date(observation.end) < new Date() && observation.percent_completed > 0){
+              state = 'PARTIALLY-COMPLETED';
+            }
+            observation.state = state;
+
+            if (observation.fail_reason !== '') {
+              observation.fail_reason = '<br/>reason: ' + observation.fail_reason;
+            }
+            if (observation.percent_completed > 0) {
+              observation.percent_completed = '<br/>percent completed: ' + observation.percent_completed.toFixed(1);
             }
             else {
-              block.percent_completed = '';
+              observation.percent_completed = '';
             }
-            if (block.cancel_date !== null) {
-              block.cancel_date = '<br/>canceled: ' + block.cancel_date.replace('T', ' ');
-            }
-            else {
-              block.cancel_date = '';
-            }
-            if (block.start !== previousBlock.start || block.site !== previousBlock.site || block.status !== previousBlock.status
-              || block.observatory !== previousBlock.observatory || block.telescope !== previousBlock.telescope) {
-              let className = 'timeline_block ' + previousBlock.status;
-              visGroups.add({id: index, content: previousBlockIndex});
+            if (observation.start !== previousObservation.start || observation.site !== previousObservation.site || observation.state !== previousObservation.state
+              || observation.enclosure !== previousObservation.enclosure || observation.telescope !== previousObservation.telescope) {
+              let className = 'timeline_observation ' + previousObservation.state;
+              visGroups.add({id: index, content: previousObservationIndex});
               visData.add({
                 id: index,
                 group: index,
-                title: 'telescope: ' + previousBlock.site + '.' + previousBlock.observatory + '.' + previousBlock.telescope + previousBlock.percent_completed + previousBlock.fail_reason + previousBlock.cancel_date + '<br/>start: ' + previousBlock.start.replace('T', ' ') + '<br/>end: ' + previousBlock.end.replace('T', ' '),
+                title: 'telescope: ' + previousObservation.site + '.' + previousObservation.enclosure + '.' + previousObservation.telescope + previousObservation.percent_completed + previousObservation.fail_reason + '<br/>start: ' + previousObservation.start.replace('T', ' ') + '<br/>end: ' + previousObservation.end.replace('T', ' '),
                 className: className,
-                start: previousBlock.start,
-                end: previousBlock.end,
+                start: previousObservation.start,
+                end: previousObservation.end,
                 toggle: 'tooltip',
                 html: true,
                 type: 'range'
               });
               index++;
-              previousBlockIndex = i + 1;
+              previousObservationIndex = i + 1;
             }
-            previousBlock = block;
+            previousObservation = observation;
           }
-          visGroups.add({id: index, content: previousBlockIndex});
+          visGroups.add({id: index, content: previousObservationIndex});
           visData.add({
             id: index,
             group: index,
-            title: 'telescope: ' + previousBlock.site + '.' + previousBlock.observatory + '.' + previousBlock.telescope + previousBlock.percent_completed + previousBlock.fail_reason + previousBlock.cancel_date + '<br/>start: ' + previousBlock.start.replace('T', ' ') + '<br/>end: ' + previousBlock.end.replace('T', ' '),
-            className: 'timeline_block ' + previousBlock.status,
-            start: previousBlock.start,
-            end: previousBlock.end,
+            title: 'telescope: ' + previousObservation.site + '.' + previousObservation.enclosure + '.' + previousObservation.telescope + previousObservation.percent_completed + previousObservation.fail_reason + '<br/>start: ' + previousObservation.start.replace('T', ' ') + '<br/>end: ' + previousObservation.end.replace('T', ' '),
+            className: 'timeline_observation ' + previousObservation.state,
+            start: previousObservation.start,
+            end: previousObservation.end,
             toggle: 'tooltip',
             html: true,
             type: 'range'

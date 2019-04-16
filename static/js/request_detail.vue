@@ -153,12 +153,14 @@
 <script>
   import Vue from 'vue';
   import $ from 'jquery';
+  import _ from 'lodash';
   import thumbnail from './components/thumbnail.vue';
   import archivetable from './components/archivetable.vue';
   import observationhistory from './components/observationhistory.vue';
   import airmass_telescope_states from './components/airmass_telescope_states.vue';
   import {formatDate, formatField, formatValue} from './utils.js';
   import {login, getLatestFrame} from './archive.js';
+import observationhistoryVue from './components/observationhistory.vue';
 
   Vue.filter('formatDate', function(value){
     return formatDate(value);
@@ -253,13 +255,38 @@
         let requestId = $('#request-detail').data('requestid');
         $.getJSON('/api/requests/' + requestId + '/observations/', function(data){
           that.observationData = data;
-          for(var observationIdx in that.observationData){
+          for(let observationIdx in that.observationData){
             if(that.observationData[observationIdx].status === 'COMPLETED'){
               that.activeObservation = that.observationData[observationIdx];
               break;
             }
             else if(that.observationData[observationIdx].status === 'SCHEDULED'){
               that.activeObservation = that.observationData[observationIdx];
+            }
+          }
+          for(let observationIdx in that.observationData){
+            // Add in some top level fields that make plotting easier
+            let time_completed = 0.0;
+            let total_time = 0.0;
+            for(let configurationIdx in that.observationData[observationIdx].request.configurations){
+              let configuration = that.observationData[observationIdx].request.configurations[configurationIdx];
+              if(!_.isEmpty(configuration.summary)){
+                time_completed += configuration.summary.time_completed;
+              }
+              for(let inst_configIdx in configuration.instrument_configs){
+                let inst_config = configuration.instrument_configs[inst_configIdx];
+                total_time += inst_config.exposure_time * inst_config.exposure_count;
+              }
+            }
+            that.observationData[observationIdx].percent_completed = (time_completed / total_time) * 100.0;
+            that.observationData[observationIdx].fail_reason = '';
+            if (that.observationData[observationIdx].state === 'FAILED'){
+              for(let configurationIdx in that.observationData[observationIdx].request.configurations){
+                let configuration = that.observationData[observationIdx].request.configurations[configurationIdx];
+                if(configuration.state ==='FAILED' && !_.isEmpty(configuration.summary)){
+                  that.observationData[observationIdx].fail_reason = configuration.summary.reason;
+                }
+              }
             }
           }
         });
