@@ -154,14 +154,16 @@ let collapseMixin = {
 };
 
 let siteToColor = {
-  'tfn': '#263c6f',
-  'elp': '#700000',
-  'lsc': '#f04e23',
-  'cpt': '#004f00',
-  'coj': '#fac900',
-  'ogg': '#3366dd',
-  'sqa': '#009d00',
-  'tlv': '#8150d7'
+  'tfn': '#263c6f',  // dark blue
+  'elp': '#700000',  // dark red
+  'lsc': '#f04e23',  // red-orange
+  'cpt': '#004f00',  // dark green
+  'coj': '#fac900',  // golden-yellow
+  'ogg': '#3366dd',  // sky blue
+  'sqa': '#009d00',  // green
+  'tlv': '#8150d7',  // purple
+  'sor': '#7EF5C9',  // sea green
+  'ngq': '#FA5DEB',  // magenta
 };
 
 let siteCodeToName = {
@@ -173,6 +175,7 @@ let siteCodeToName = {
   'ogg': 'Haleakala',
   'sqa': 'Sedgwick',
   'ngq': 'Ali',
+  'sor': 'Cerro Pachón',
   'tlv': 'Wise'
 };
 
@@ -191,6 +194,7 @@ let telescopeCodeToName = {
   '0m4b': '0.4m B',
   '0m4c': '0.4m C',
   '2m0a': '2m',
+  '4m0a': '4m',
   '0m8a': '0.8m'
 };
 
