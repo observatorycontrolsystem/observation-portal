@@ -10,9 +10,6 @@ import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
 import '../css/main.css'
 
-import Collapse from 'bootstrap-vue/es/components/collapse'
-Vue.use(Collapse)
-
 Vue.use(BootstrapVue)
 
 $('#cancelrg').click(function(){
@@ -25,8 +22,3 @@ new Vue({
     return h(App);
   }
 });
-
-Vue.use(Collapse)
-
-Vue.use(BootstrapVue)
-
