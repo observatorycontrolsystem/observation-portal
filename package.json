@@ -11,8 +11,9 @@
   },
   "dependencies": {
     "babel-polyfill": "^6.26.0",
-    "bootstrap": "^3.4.0",
+    "bootstrap": "^4.3.1",
     "bootstrap-table": "^1.12.1",
+    "bootstrap-vue": "^2.0.0-rc.18",
     "chart.js": "^2.7.2",
     "chartjs-plugin-annotation": "^0.5.7",
     "core-js": "^2.6.5",
