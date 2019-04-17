@@ -1,22 +1,15 @@
 <template>
   <div class="row request-details">
     <div class="col-md-12">
-      <ul class="nav nav-tabs nav-justified">
-        <li :class="{ active: tab === 'details' }" v-on:click="tab = 'details'">
-          <a title="Details about the observed request.">Details</a>
-        </li>
-        <li :class="{ active: tab === 'scheduling' }" v-on:click="tab = 'scheduling'">
-          <a title="Scheduling history.">Scheduling</a>
-        </li>
-        <li :class="{ active: tab === 'visibility' }" v-on:click="tab = 'visibility'">
-          <a title="Target Visibility.">Visibility</a>
-        </li>
-        <li :class="{ active: tab === 'data' }" v-on:click="tab = 'data'">
-          <a title="Downloadable data.">Data</a>
-        </li>
-      </ul>
-      <div class="tab-content">
-        <div class="tab-pane" :class="{ active: tab === 'details' }">
+      <b-tabs 
+        content-class="mt-4" 
+        no-fade 
+        nav-class="nav-justified"
+      >
+        <b-tab active v-on:click="tab = 'details'">
+          <template slot="title">
+            <span title="Details about the observed request.">Details</span>
+          </template>
           <div class="row">
             <div class="col-md-6">
               <h4>Windows</h4>
@@ -25,7 +18,10 @@
                   <tr><td><strong>Start</strong></td><td><strong>End</strong></td></tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(window, index) in request.windows" :key="'window-' + index">
+                  <tr 
+                    v-for="(window, index) in request.windows" 
+                    :key="'window-' + index"
+                  >
                     <td>{{ window.start | formatDate }}</td><td>{{ window.end | formatDate }}</td>
                   </tr>
                 </tbody>
@@ -36,9 +32,18 @@
             <div class="col-md-12">
               <h4>Configurations</h4>
               <div role="tablist">
-                <b-card no-body class="mb-1" v-for="(configuration, index) in request.configurations" :key="configuration.id">
+                <b-card 
+                  no-body 
+                  class="mb-1" 
+                  v-for="(configuration, index) in request.configurations" 
+                  :key="configuration.id"
+                >
                   <b-card-header header-tag="header" class="p-1" role="tab">
-                    <b-button block href="#" v-b-toggle="'accordion-' + index" variant="info">
+                    <b-button 
+                      block href="#" 
+                      v-b-toggle="'accordion-' + index" 
+                      variant="outline-secondary"
+                    >
                       <b-row>
                         <b-col md="4">Type: {{ configuration.type }}</b-col>
                         <b-col md="4">Instrument Type: {{ configuration.instrument_type }}</b-col>
@@ -46,7 +51,12 @@
                       </b-row>
                     </b-button>
                   </b-card-header>
-                  <b-collapse :id="'accordion-' + index" accordion="my-accordion" role="tabpanel">
+                  <b-collapse 
+                    :visible="index === 0"
+                    :id="'accordion-' + index" 
+                    accordion="my-accordion" 
+                    role="tabpanel"
+                  >
                     <b-card-body>
                       <b-row>
                         <b-col md="6">
@@ -72,7 +82,10 @@
                               </tr>
                             </thead>
                             <tbody>
-                              <tr v-for="(instrument_config, index) in configuration.instrument_configs" :key="'instrument_config-' + index">
+                              <tr 
+                                v-for="(instrument_config, index) in configuration.instrument_configs" 
+                                :key="'instrument_config-' + index"
+                              >
                                 <td>{{ instrument_config.mode }}</td>
                                 <td>{{ instrument_config.exposure_time | formatValue }}</td>
                                 <td>{{ instrument_config.exposure_count | formatValue }}</td>
@@ -84,7 +97,10 @@
                         <b-col md="6">
                           <h4>Acquisition</h4>
                           <dl class="twocol dl-horizontal">
-                            <span v-for="(x, idx) in configuration.acquisition_config" :key="'acquisition-' + idx">
+                            <span 
+                              v-for="(x, idx) in configuration.acquisition_config" 
+                              :key="'acquisition-' + idx"
+                            >
                               <dt v-if="configuration.acquisition_config[idx]">{{ idx | formatField }}</dt>
                               <dd v-if="x">
                                 <span v-if="idx === 'name'">{{ x }}</span>
@@ -95,7 +111,10 @@
                           <hr/>
                           <h4>Guiding</h4>
                           <dl class="twocol dl-horizontal">
-                            <span v-for="(x, idx) in configuration.guiding_config" :key="'guiding-' + idx">
+                            <span 
+                              v-for="(x, idx) in configuration.guiding_config" 
+                              :key="'guiding-' + idx"
+                            >
                               <dt v-if="configuration.guiding_config[idx]">{{ idx | formatField }}</dt>
                               <dd v-if="x">
                                 <span v-if="idx === 'name'">{{ x }}</span>
@@ -106,7 +125,10 @@
                           <hr/>
                           <h4>Constraints</h4>
                           <dl class="twocol dl-horizontal">
-                            <span v-for="(x, idx) in configuration.constraints" :key="'constraints-' + idx">
+                            <span 
+                              v-for="(x, idx) in configuration.constraints" 
+                              :key="'constraints-' + idx"
+                            >
                               <dt v-if="configuration.constraints[idx]">{{ idx | formatField }}</dt>
                               <dd v-if="x">{{ x | formatValue }}</dd>
                             </span>
@@ -119,12 +141,42 @@
               </div>
             </div>
           </div>
-        </div>
-        <div class="tab-pane" :class="{ active: tab === 'data' }">
+        </b-tab>
+        <b-tab v-on:click="tab = 'scheduling'">
+          <template slot="title">
+            <span title="Scheduling history.">Scheduling</span>
+          </template>
+          <observationhistory 
+            v-show="observationData.length > 0" 
+            :data="observationData" 
+            :showPlotControls="true"
+          ></observationhistory>
+          <div v-show="observationData.length < 1" class="text-center"><h3>This request has not been scheduled.</h3></div>
+        </b-tab>
+        <b-tab v-on:click="tab = 'visibility'">
+          <template slot="title">
+            <span title="Target Visibility.">Visibility</span>
+          </template>
+          <airmass_telescope_states 
+            v-show="'airmass_limit' in airmassData" 
+            :airmassData="airmassData"
+            :telescopeStatesData="telescopeStatesData" 
+            :activeObservation="activeObservation"
+          ></airmass_telescope_states>
+        </b-tab>
+        <b-tab v-on:click="tab = 'data'">
+          <template slot="title">
+            <span title="Scheduling history.">Data</span>
+          </template>
           <div class="row">
             <div v-if="request.state === 'COMPLETED'" class="col-md-4">
               <p v-show="curFrame" class="thumb-help">Click a row in the data table to preview the file below. Click preview for a larger version.</p>
-              <thumbnail v-show="curFrame" :frame="curFrame" width="400" height="400"></thumbnail>
+              <thumbnail 
+                v-show="curFrame" 
+                :frame="curFrame" 
+                width="400" 
+                height="400"
+              ></thumbnail>
               <p v-show="curFrame && canViewColor">
                 RVB frames found.
                 <a v-on:click="viewColorImage" title="Color Image">
@@ -134,19 +186,15 @@
               </p>
             </div>
             <div :class="[(request.state === 'COMPLETED') ? 'col-md-8' : 'col-md-12']">
-              <archivetable :requestid="request.id" v-on:rowClicked="curFrame = $event" v-on:dataLoaded="frames = $event"></archivetable>
+              <archivetable 
+                :requestid="request.id" 
+                v-on:rowClicked="curFrame = $event" 
+                v-on:dataLoaded="frames = $event"
+              ></archivetable>
             </div>
           </div>
-        </div>
-        <div class="tab-pane" :class="{ active: tab === 'scheduling' }">
-          <observationhistory v-show="observationData.length > 0" :data="observationData" :showPlotControls="true"></observationhistory>
-          <div v-show="observationData.length < 1" class="text-center"><h3>This request has not been scheduled.</h3></div>
-        </div>
-        <div class="tab-pane" :class="{ active: tab === 'visibility' }">
-          <airmass_telescope_states v-show="'airmass_limit' in airmassData" :airmassData="airmassData"
-                                    :telescopeStatesData="telescopeStatesData" :activeObservation="activeObservation"></airmass_telescope_states>
-        </div>
-      </div>
+        </b-tab>
+      </b-tabs>
     </div>
   </div>
 </template>
@@ -160,7 +208,6 @@
   import airmass_telescope_states from './components/airmass_telescope_states.vue';
   import {formatDate, formatField, formatValue} from './utils.js';
   import {login, getLatestFrame} from './archive.js';
-import observationhistoryVue from './components/observationhistory.vue';
 
   Vue.filter('formatDate', function(value){
     return formatDate(value);
