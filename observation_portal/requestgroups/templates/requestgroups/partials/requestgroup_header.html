@@ -1,4 +1,6 @@
 {% load i18n request_extras %}
+{% load static bootstrap4 %}
+{% bootstrap_javascript jquery='full' %}
 <div class="row">
   <div class="col-md-12 ">
     <h2>{{ requestgroup.name }} <br/><small>RequestGroup # {{ requestgroup.id }}</small></h2>
@@ -39,24 +41,20 @@
         <dd>{{ requestgroup.observation_type }}</dd>
     </dl>
     <span class="col-md-1">
-      <div class="btn-group">
-        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-          Options <span class="caret"></span>
+      <div class="dropdown">
+        <button type="button" class="btn btn-default dropdown-toggle" id="rgOptionsButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          Options
         </button>
-        <ul class="dropdown-menu">
-          <li>
-            <a title="Copy this request" href="{% url 'requestgroups:create' %}?requestgroupid={{ requestgroup.id }}">
+        <div class="dropdown-menu" aria-labelledby="rgOptionsButton">
+            <a class="dropdown-item" title="Copy this request" href="{% url 'requestgroups:create' %}?requestgroupid={{ requestgroup.id }}">
               <i class="fa fa-copy"></i> Copy
             </a>
-          </li>
           {% if requestgroup.state == 'PENDING' and user.is_authenticated %}
-          <li>
-            <a title="Cancel this request" id="cancelrg" data-id="{{ requestgroup.id }}">
+            <a class="dropdown-item" title="Cancel this request" id="cancelrg" data-id="{{ requestgroup.id }}">
               <i class="fa fa-times"></i> Cancel
             </a>
-          </li>
           {% endif %}
-        </ul>
+        </div>
       </div>
     </span>
   </div>
