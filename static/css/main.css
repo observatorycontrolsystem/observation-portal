@@ -286,3 +286,7 @@ a:hover {
 .pagination > .active > a:hover {
     background-color: #009cc3;
 }
+
+.navbar-light .navbar-nav .nav-link{
+    color: #009ec3;
+}
