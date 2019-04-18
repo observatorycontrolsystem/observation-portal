@@ -1,6 +1,8 @@
 <!doctype html>
 {% load static bootstrap4 %}
 {% load render_bundle from webpack_loader %}
+{% bootstrap_css %}
+{% bootstrap_javascript jquery='full' %}
 <html class="no-js" lang="">
   <head>
     <meta charset="utf-8">
@@ -11,51 +13,46 @@
     <link rel="apple-touch-icon" href="https://cdn.lco.global/mainstyle/img/favicon.png">
     <link rel="shortcut icon" type="image/png" href="https://cdn.lco.global/mainstyle/img/favicon-trans.png"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">    {% block extra_css %}
+    <link href='https://cdn.lco.global/mainstyle/css/affogato-1.0.0.css' rel="stylesheet">
+    <link href='https://cdn.lco.global/mainstyle/css/lco-1.0.0.css' rel="stylesheet">
+    <link href="{% static 'css/main.css' %}" rel="stylesheet">   
+    {% block extra_css %}
     {% endblock %}
   </head>
   <body>
-    <!-- Static navbar -->
-    <nav class="navbar head downPage">
-      <div class="container-fluid">
-        <div class="innerHead">
-          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <div class="navbar-header branding branding-logo">
-            <a href="https://lco.global" title="LCO.global" rel="home" class="navbar-brand"><img src="https://cdn.lco.global/mainstyle/img/LCO-logo-web.jpg" alt="Las Cumbres Observatory" /></a>
-          </div>
-          <div class="navbar-header branding">
-            <div id="lco-name">
-              <a href="/" class="grey">Observing <br/> Portal</a> {% if user.profile.simple_interface %}<span class="basic">basic mode</span>{% endif %}
-            </div>
-          </div>
-          <div id="navbar" class="navbar-collapse collapse headNav">
-            <ul class="nav navbar-nav navbar-main">
-            <li><a href="{% url 'requestgroups:list' %}">Home</a>
-            <li><a href="{% url 'requestgroups:create' %}">Submit Observation</a></li>
-            <li><a href="{% url 'proposals:list' %}?active=True">Manage Proposals</a></li>
-            <li><a href="https://lco.global/observatory/tools/">Planning Tools</a></li>
-            <li><a href="{% url 'help' %}">Help</a></li>
-            </ul>
-            <ul class="nav navbar-nav navbar-right">
-              {% if user.is_authenticated %}
-              <li class="dropdown">
-                  <a class="dropdown-toggle" data-toggle="dropdown" href="#">{{ user.username }}<span class="caret"></span></a>
-                  <ul class="dropdown-menu">
-                      <li><a href="{% url 'profile' %}">Profile</a></li>
-                      <li><a href="{% url 'auth_logout' %}">Logout</a></li>
-                  </ul>
-              </li>
-              {% else %}
-              <li><a href="{% url 'auth_login' %}">Login</a></li>
-              {% endif %}
-            </ul>
-          </div><!--/.nav-collapse -->
+    <nav class="navbar navbar-expand-md navbar-light head downPage">
+      <div class="navbar-header branding branding-logo">
+        <a href="https://lco.global" title="LCO.global" rel="home"><img src="https://cdn.lco.global/mainstyle/img/LCO-logo-web.jpg" alt="Las Cumbres Observatory" /></a>
+      </div>
+      <div class="navbar-header branding pl-md-3">
+        <div id="lco-name">
+          <a href="/" class="grey">Observing <br/> Portal</a> {% if user.profile.simple_interface %}<span class="basic">basic mode</span>{% endif %}
         </div>
+      </div>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarOptions" aria-controls="navbarOptions" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="navbar-collapse collapse headNav" id="navbarOptions">
+        <ul class="nav navbar-nav navbar-main ml-auto">
+          <li class="nav-item"><a class="nav-link" href="{% url 'requestgroups:list' %}">Home</a>
+          <li class="nav-item"><a class="nav-link" href="{% url 'requestgroups:create' %}">Submit Observation</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'proposals:list' %}?active=True">Manage Proposals</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://lco.global/observatory/tools/">Planning Tools</a></li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'help' %}">Help</a></li>
+        </ul>
+        <ul class="nav navbar-nav navbar-right">
+          {% if user.is_authenticated %}
+          <li class="dropdown nav-item">
+              <a class="dropdown-toggle nav-link" id="userNavOptions" data-toggle="dropdown" href="#">{{ user.username }}</a>
+              <div class="dropdown-menu" aria-labelledby="userNavOptions">
+                <a class="dropdown-item" href="{% url 'profile' %}">Profile</a>
+                <a class="dropdown-item" href="{% url 'auth_logout' %}">Logout</a>
+              </div>
+          </li>
+          {% else %}
+          <li class="nav-item"><a class="nav-link" href="{% url 'auth_login' %}">Login</a></li>
+          {% endif %}
+        </ul>
       </div>
     </nav>
     <section>
