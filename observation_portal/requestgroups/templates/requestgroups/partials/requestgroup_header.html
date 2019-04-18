@@ -5,55 +5,53 @@
   </div>
 </div>
 <div class="row">
-  <div class="col-md-12">
-    <dl class="col-md-2">
-      <dt>{% trans 'State' %}</dt>
-      <dd class="text-{{ requestgroup.state|state_to_bs }}">
-        <i class="fa fa-{{ requestgroup.state|state_to_icon }}"></i> {{ requestgroup.state }}
-      </dd>
-    </dl>
-    <dl class="col-md-1">
-      <dt>{% trans 'Updated' %}</dt>
-      <dd>{{ requestgroup.modified }}</dd>
-    </dl>
-    <dl class="col-md-1">
-      <dt>{% trans 'Submitted' %}</dt>
-      <dd>{{ requestgroup.created }}</dd>
-    </dl>
-    <dl class="col-md-2">
-      <dt>{% trans 'Proposal' %}</dt>
-      <dd>
-        <a href="{% url 'proposals:detail' pk=requestgroup.proposal.id %}">{{ requestgroup.proposal }}</a>
-      </dd>
-    </dl>
-    <dl class="col-md-2">
-      <dt>{% trans 'Submitter' %}</dt>
-      <dd>{{ requestgroup.submitter }}</dd>
-    </dl>
-    <dl class="col-md-1">
-      <dt>IPP</dt>
-      <dd>{{ requestgroup.ipp_value }}</dd>
-    </dl>
-    <dl class="col-md-2">
-        <dt>{% trans 'Observation Type' %}</dt>
-        <dd>{{ requestgroup.observation_type }}</dd>
-    </dl>
-    <span class="col-md-1">
-      <div class="dropdown">
-        <button type="button" class="btn btn-default dropdown-toggle" id="rgOptionsButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-          Options
-        </button>
-        <div class="dropdown-menu" aria-labelledby="rgOptionsButton">
-            <a class="dropdown-item" title="Copy this request" href="{% url 'requestgroups:create' %}?requestgroupid={{ requestgroup.id }}">
-              <i class="fa fa-copy"></i> Copy
-            </a>
-          {% if requestgroup.state == 'PENDING' and user.is_authenticated %}
-            <a class="dropdown-item" title="Cancel this request" id="cancelrg" data-id="{{ requestgroup.id }}">
-              <i class="fa fa-times"></i> Cancel
-            </a>
-          {% endif %}
-        </div>
+  <dl class="col-md-2">
+    <dt>{% trans 'State' %}</dt>
+    <dd class="text-{{ requestgroup.state|state_to_bs }}">
+      <i class="fa fa-{{ requestgroup.state|state_to_icon }}"></i> {{ requestgroup.state }}
+    </dd>
+  </dl>
+  <dl class="col-md-1">
+    <dt>{% trans 'Updated' %}</dt>
+    <dd>{{ requestgroup.modified }}</dd>
+  </dl>
+  <dl class="col-md-1">
+    <dt>{% trans 'Submitted' %}</dt>
+    <dd>{{ requestgroup.created }}</dd>
+  </dl>
+  <dl class="col-md-2">
+    <dt>{% trans 'Proposal' %}</dt>
+    <dd>
+      <a href="{% url 'proposals:detail' pk=requestgroup.proposal.id %}">{{ requestgroup.proposal }}</a>
+    </dd>
+  </dl>
+  <dl class="col-md-2">
+    <dt>{% trans 'Submitter' %}</dt>
+    <dd>{{ requestgroup.submitter }}</dd>
+  </dl>
+  <dl class="col-md-1">
+    <dt>IPP</dt>
+    <dd>{{ requestgroup.ipp_value }}</dd>
+  </dl>
+  <dl class="col-md-2">
+      <dt>{% trans 'Observation Type' %}</dt>
+      <dd>{{ requestgroup.observation_type }}</dd>
+  </dl>
+  <span class="col-md-1">
+    <div class="dropdown">
+      <button type="button" class="btn btn-outline-secondary dropdown-toggle" id="rgOptionsButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        Options
+      </button>
+      <div class="dropdown-menu" aria-labelledby="rgOptionsButton">
+          <a class="dropdown-item" title="Copy this request" href="{% url 'requestgroups:create' %}?requestgroupid={{ requestgroup.id }}">
+            <i class="fa fa-copy"></i> Copy
+          </a>
+        {% if requestgroup.state == 'PENDING' and user.is_authenticated %}
+          <a class="dropdown-item" title="Cancel this request" id="cancelrg" data-id="{{ requestgroup.id }}">
+            <i class="fa fa-times"></i> Cancel
+          </a>
+        {% endif %}
       </div>
-    </span>
-  </div>
+    </div>
+  </span>
 </div>

@@ -33,7 +33,7 @@ function login(callback){
           sessionStorage.setItem('archiveAuthToken', data.token);
           callback();
         },
-        error: function(jqXHR, textStatus){
+        error: function(){
           callback();
         }
       });
