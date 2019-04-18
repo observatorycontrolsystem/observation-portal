@@ -1,44 +1,50 @@
 <template>
   <span>
-    <div class="form-group" :class="{ 'has-error': errors }" v-show="$parent.show">
-      <label :for="field" class="col-sm-5 control-label">
-        <span class="desc-tooltip" :title="desc">{{ label }}</span>
-      </label>
-      <div class="col-sm-7">
-        <select :id="field" v-bind:value="value" v-on:change="update($event.target.value)"
-                :name="field" class="form-control">
-          <option v-for="option in options" :value="option.value"
-                  :selected="isSelected(option.value)" v-html="option.text">
-          </option>
-        </select>
-        <span class="help-block text-danger" v-for="error in errors">{{ error }}</span>
-      </div>
-    </div>
-    <div class="collapse-inline" v-show="!$parent.show">
+    <b-form-group
+      v-show="$parent.show"
+      label-align-sm="right"
+      label-cols-sm="5"
+      :description="desc"
+      :label="label"
+      :label-for="field"
+    >
+      <b-form-select 
+        :id="field" 
+        :value="value"
+        :state="!hasErrors"
+        :options="options"
+        @input="update($event)"
+      />
+      <span class="text-danger" :key="error" v-for="error in errors">{{ error }}</span>
+    </b-form-group>
+    <!-- TODO: This is what is supposed to be displayed for this field when the parent object is collapsed -->
+    <span class="collapse-inline" v-show="!$parent.show">
       {{ label }}: <strong>{{ value || '...' }}</strong>
-    </div>
+    </span>
   </span>
 </template>
 <script>
+  import _ from 'lodash';
   import $ from 'jquery';
 
   export default {
-    props: ['value', 'label', 'field', 'options', 'errors', 'desc'],
-    methods: {
-      update: function(value){
-        this.$emit('input', value);
-      },
-      isSelected: function(option){
-        return option === this.value;
+    props: [
+      'value',
+      'label', 
+      'field', 
+      'options', 
+      'errors', 
+      'desc'
+    ],
+    computed: {
+      hasErrors: function() {
+        return !_.isEmpty(this.errors);
       }
     },
-    mounted: function(){
-      $(this.$el).find('label > span').tooltip({
-        html: true,
-        trigger: 'hover click ',
-        placement: 'top',
-        delay: { "show": 500, "hide": 100 }
-      });
+    methods: {
+      update: function(value) {
+        this.$emit('input', value);
+      }
     }
   };
 </script>

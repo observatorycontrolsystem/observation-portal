@@ -24,11 +24,11 @@
               <div class="errorlist text-danger" v-html="errorList(['requests', index, 'target'])"></div>
             </a>
           </li>
-          <li v-for="(configurationstatus, molIndex) in request.configurationstatuses">
-            <a :href="'#configurationstatus' + index + molIndex">
-              <i class="fa fa-fw" :class="hasError(['requests', index, 'configurationstatuses', molIndex]) ? 'fa-warning text-danger' : 'fa-check text-success'"></i>
-              Configuration #{{ molIndex + 1}}
-              <div class="errorlist text-danger" v-html="errorList(['requests', index, 'configurationstatuses', molIndex])"></div>
+          <li v-for="(configuration, confIndex) in request.configurations">
+            <a :href="'#configuration' + index + confIndex">
+              <i class="fa fa-fw" :class="hasError(['requests', index, 'configurations', confIndex]) ? 'fa-warning text-danger' : 'fa-check text-success'"></i>
+              Configuration #{{ confIndex + 1}}
+              <div class="errorlist text-danger" v-html="errorList(['requests', index, 'configurations', confIndex])"></div>
             </a>
           </li>
           <li v-for="(window, winIndex) in request.windows">
@@ -53,20 +53,24 @@
 
 <script>
   import _ from 'lodash';
-  import {formatField} from '../utils.js';
+
+  import { formatField } from '../utils.js';
 
   export default {
-    props: ['requestgroup', 'errors'],
+    props: [
+      'requestgroup', 
+      'errors'
+    ],
     computed: {
       rootError: function(){
         return !_.isEmpty(this.errors);
       },
-      rootErrorList: function(){
+      rootErrorList: function() {
         let errortext = '';
-        for(let k in this.errors){
-          if(k !== 'requests'){
+        for (let k in this.errors) {
+          if (k !== 'requests') {
             errortext += (formatField(k) + ': ');
-            for(let e in this.errors[k]){
+            for (let e in this.errors[k]) {
               errortext += (this.errors[k][e] + '<br/>');
             }
           }
@@ -75,18 +79,18 @@
       }
     },
     methods: {
-      getErrors: function(path){
+      getErrors: function(path) {
         return _.get(this.errors, path, []);
       },
-      hasError: function(path){
+      hasError: function(path) {
         return !_.isEmpty(this.getErrors(path));
       },
-      errorList: function(path){
+      errorList: function(path) {
         let errortext = '';
-        for(let k in this.getErrors(path)){
-          if(!['request', 'target', 'configurationstatuses', 'windows', 'constraints'].includes(k)){
+        for (let k in this.getErrors(path)) {
+          if (!['request', 'target', 'configurations', 'windows', 'constraints'].includes(k)) {
             errortext += (formatField(k) + ': ');
-            for(let e in this.getErrors(path)[k]){
+            for (let e in this.getErrors(path)[k]) {
               errortext += (this.getErrors(path)[k][e] + '<br/>');
             }
           }
@@ -97,7 +101,7 @@
   };
 </script>
 <style>
-  /* sidebar */
+  /* sidebar
   .bs-docs-sidebar {
     margin-top: 20px;
     margin-bottom: 20px;
@@ -105,55 +109,55 @@
   }
 
   /* all links */
-  .bs-docs-sidebar .nav>li>a {
+  /* .bs-docs-sidebar .nav>li>a {
     color: #999;
     border-left: 2px solid transparent;
     padding: 4px 20px;
     font-size: 16px;
     font-weight: 400;
-  }
+  } */
 
   /* nested links */
-  .bs-docs-sidebar .nav .nav>li>a {
+  /* .bs-docs-sidebar .nav .nav>li>a {
     padding-top: 1px;
     padding-bottom: 1px;
     padding-left: 30px;
     font-size: 14px;
-  }
+  } */
 
   /* active & hover links */
-  .bs-docs-sidebar .nav>.active>a,
+  /* .bs-docs-sidebar .nav>.active>a,
   .bs-docs-sidebar .nav>li>a:hover,
   .bs-docs-sidebar .nav>li>a:focus {
     color: #009ec3;
     text-decoration: none;
     background-color: transparent;
     border-left-color: #31b0d5;
-  }
+  } */
   /* all active links */
-  .bs-docs-sidebar .nav>.active>a,
+  /* .bs-docs-sidebar .nav>.active>a,
   .bs-docs-sidebar .nav>.active:hover>a,
   .bs-docs-sidebar .nav>.active:focus>a {
     font-weight: 700;
-  }
+  } */
   /* nested active links */
-  .bs-docs-sidebar .nav .nav>.active>a,
+  /* .bs-docs-sidebar .nav .nav>.active>a,
   .bs-docs-sidebar .nav .nav>.active:hover>a,
   .bs-docs-sidebar .nav .nav>.active:focus>a {
     font-weight: 500;
-  }
+  } */
 
   /* hide inactive nested list */
-  .bs-docs-sidebar .nav ul.nav {
+  /* .bs-docs-sidebar .nav ul.nav {
     display: none;
-  }
+  } */
   /* show active nested list */
-  .bs-docs-sidebar .nav>.active>ul.nav {
+  /* .bs-docs-sidebar .nav>.active>ul.nav {
     display: block;
-  }
-  .errorlist {
+  } */
+  /* .errorlist {
     padding-left: 22px;
     font-size: 14px;
     max-width: 300px;
-  }
+  } */
 </style>
