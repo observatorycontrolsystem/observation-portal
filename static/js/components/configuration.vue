@@ -11,11 +11,15 @@
     @copy="$emit('copy')" 
     @show="show = $event"
   >
-    <div class="alert alert-danger" v-show="errors.non_field_errors" role="alert">
-      <span v-for="error in errors.non_field_errors" :key="error">{{ error }}</span>
-    </div>
-
-    <b-container>
+    <alert 
+      v-for="error in errors.non_field_errors" 
+      :key="error" 
+      alertclass="danger" 
+      :dismissible="false"
+    >
+      {{ error }}
+    </alert>
+    <b-container class="p-0">
       <b-row>
         <b-col md="6" v-show="show">
           <ul>
@@ -105,7 +109,7 @@
       @remove="removeInstrumentConfiguration(idx)" 
       @copy="addInstrumentConfiguration(idx)" 
       @generateCalibs="generateCalibs"
-      @instrumentconfigurationupdated="instumentConfigurationUpdated" 
+      @instrumentconfigupdate="instumentConfigurationUpdated" 
     />
     <constraints v-if="!simple_interface"
       :constraints="configuration.constraints" 
@@ -120,6 +124,7 @@
 
   import { collapseMixin, slitWidthToExposureTime } from '../utils.js';
   import panel from './util/panel.vue';
+  import alert from './util/alert.vue';
   import customfield from './util/customfield.vue';
   import customselect from './util/customselect.vue';
   import instrumentconfig from './instrumentconfig.vue';
@@ -143,6 +148,7 @@
       customfield, 
       customselect, 
       panel,
+      alert,
       instrumentconfig,
       constraints,
       target

@@ -11,7 +11,15 @@
       @copy="$emit('copy')"
       @show="show = $event"
     >
-    <b-container>
+    <alert 
+      v-for="error in errors.non_field_errors" 
+      :key="error" 
+      alertclass="danger" 
+      :dismissible="false"
+    >
+      {{ error }}
+    </alert>
+    <b-container class="p-0">
       <b-row>
         <b-col md="6" v-show="show">
           <ul>
@@ -31,7 +39,7 @@
               label="Filter" 
               :errors="{}" 
               :options="filterOptions" 
-              @:input="update"
+              @input="update"
             />
             <!-- TODO: options should be slit options -->
             <customselect v-if="configuration.type === 'SPECTRUM' || configuration.type === 'LAMP_FLAT' || configuration.type === 'ARC'" 
@@ -92,6 +100,7 @@ import { collapseMixin, slitWidthToExposureTime } from '../utils.js';
 import customfield from './util/customfield.vue';
 import customselect from './util/customselect.vue';
 import panel from './util/panel.vue';
+import alert from './util/alert.vue';
 
 export default {
   props: [
@@ -108,7 +117,8 @@ export default {
   components: {
     customfield,
     customselect,
-    panel
+    panel,
+    alert
   },
   mixins: [
     collapseMixin

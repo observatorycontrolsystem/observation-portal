@@ -2,8 +2,9 @@
 <span>
   <b-form-group
     v-show="$parent.show"
+    label-size="sm"
     label-align-sm="right"
-    label-cols-sm="5"
+    label-cols-sm="4"
     :description="desc"
     :label="label"
     :label-for="field"
@@ -19,20 +20,13 @@
     <slot name="inlineButton"></slot>
     <span class="text-danger" v-for="error in errors" :key="error">{{ error }}</span>
   </b-form-group>
-  <!-- TODO: This is what is supposed to be displayed for this field when the parent object is collapsed -->
-  <span class="collapse-inline" v-show="!$parent.show">
+  <span v-show="!$parent.show">
     {{ label }}: <strong>{{ value || '...' }}</strong>
   </span>
 </span>
 </template>
 <script>
-  import moment from 'moment';
   import _ from 'lodash';
-  import $ from 'jquery';
-
-  import { datetimeFormat } from '../../utils';
-  import 'eonasdan-bootstrap-datetimepicker';
-  import 'vue-style-loader!eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.css';
   
   export default {
     props: [
@@ -41,21 +35,8 @@
       'field', 
       'errors', 
       'type', 
-      'desc'
+      'desc',
     ],
-    mounted: function() {
-      var that = this;
-      // TODO: The datetimepicker is not working quite right
-      if (this.type === 'datetime') {
-        $(this.$el).find('input').datetimepicker({
-          format: datetimeFormat,
-          minDate: moment().subtract(1, 'days'),
-          keyBinds: {left: null, right: null, up: null, down: null}
-        }).on('dp.change', function(e) {
-          that.update(moment(e.date).format(datetimeFormat));
-        });
-      }
-    },
     computed: {
       hasErrors: function() {
         return !_.isEmpty(this.errors);
