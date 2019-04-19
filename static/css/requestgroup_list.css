@@ -10,7 +10,7 @@
     font-size: 1.8em;
 }
 
-.userrequest p {
+.requestgroup p {
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
