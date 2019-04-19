@@ -29,11 +29,7 @@
   import moment from 'moment';
   import _ from 'lodash';
   import $ from 'jquery';
-
-  import { datetimeFormat } from '../../utils';
-  import 'eonasdan-bootstrap-datetimepicker';
-  import 'vue-style-loader!eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.css';
-  
+  import {datetimeFormat} from '../../utils';
   export default {
     props: [
       'value',

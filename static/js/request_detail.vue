@@ -1,88 +1,182 @@
 <template>
   <div class="row request-details">
     <div class="col-md-12">
-      <ul class="nav nav-tabs nav-justified">
-        <li :class="{ active: tab === 'details' }" v-on:click="tab = 'details'">
-          <a title="Details about the observed request.">Details</a>
-        </li>
-        <li :class="{ active: tab === 'scheduling' }" v-on:click="tab = 'scheduling'">
-          <a title="Scheduling history.">Scheduling</a>
-        </li>
-        <li :class="{ active: tab === 'visibility' }" v-on:click="tab = 'visibility'">
-          <a title="Target Visibility.">Visibility</a>
-        </li>
-        <li :class="{ active: tab === 'data' }" v-on:click="tab = 'data'">
-          <a title="Downloadable data.">Data</a>
-        </li>
-      </ul>
-      <div class="tab-content">
-        <div class="tab-pane" :class="{ active: tab === 'details' }">
+      <b-tabs 
+        content-class="mt-4" 
+        no-fade 
+        nav-class="nav-justified"
+      >
+        <b-tab active v-on:click="tab = 'details'">
+          <template slot="title">
+            <span title="Details about the observed request.">Details</span>
+          </template>
           <div class="row">
             <div class="col-md-6">
               <h4>Windows</h4>
               <table class="table">
                 <thead>
-                <tr><td><strong>Start</strong></td><td><strong>End</strong></td></tr>
+                  <tr><td><strong>Start</strong></td><td><strong>End</strong></td></tr>
                 </thead>
                 <tbody>
-                <tr v-for="window in request.windows">
-                  <td>{{ window.start | formatDate }}</td><td>{{ window.end | formatDate }}</td>
-                </tr>
+                  <tr 
+                    v-for="(window, index) in request.windows" 
+                    :key="'window-' + index"
+                  >
+                    <td>{{ window.start | formatDate }}</td><td>{{ window.end | formatDate }}</td>
+                  </tr>
                 </tbody>
               </table>
-              <h4>Configurations</h4>
-              <table class="table table-condensed">
-                <thead>
-                <tr>
-                  <td><strong>Instrument Code</strong></td>
-                  <td><strong>Filter</strong></td>
-                  <td><strong>Exposures</strong></td>
-                  <td><strong>Binning</strong></td>
-                  <td><strong>Defocus</strong></td>
-                </tr>
-                </thead>
-                <tbody>
-                <tr v-for="configurationstatus in request.configurationstatuses">
-                  <td>{{ configurationstatus.instrument_name }}</td>
-                  <td>{{ configurationstatus.filter }}</td>
-                  <td>{{ configurationstatus.exposure_time }}s x {{ configurationstatus.exposure_count }}</td>
-                  <td>{{ configurationstatus.bin_x }}</td>
-                  <td>{{ configurationstatus.defocus }}</td>
-                </tr>
-                </tbody>
-              </table>
-            </div>
-            <div class="col-md-6">
-              <h4>Target</h4>
-              <dl class="twocol dl-horizontal">
-              <span v-for="x, idx in request.target">
-              <dt v-if="request.target[idx]">{{ idx | formatField }}</dt>
-              <dd v-if="x">
-                <span v-if="idx === 'name'">{{ x }}</span>
-                <span v-else>{{ x | formatValue }}</span>
-              </dd>
-              </span>
-              </dl>
-              <hr/>
-              <h4>Constraints</h4>
-              <dl class="twocol dl-horizontal">
-              <span v-for="x, idx in request.constraints">
-              <dt v-if="request.constraints[idx]">{{ idx | formatField }}</dt>
-              <dd v-if="x">{{ x }}</dd>
-              </span>
-              </dl>
-              <dl class="twocol dl-horizontal">
-                <dt>Acceptability Threshold</dt>
-                <dd>{{ request.acceptability_threshold }}%</dd>
-              </dl>
             </div>
           </div>
-        </div>
-        <div class="tab-pane" :class="{ active: tab === 'data' }">
+          <div class="row">
+            <div class="col-md-12">
+              <h4>Configurations</h4>
+              <div role="tablist">
+                <b-card 
+                  no-body 
+                  class="mb-1" 
+                  v-for="(configuration, index) in request.configurations" 
+                  :key="configuration.id"
+                >
+                  <b-card-header header-tag="header" class="p-1" role="tab">
+                    <b-button 
+                      block href="#" 
+                      v-b-toggle="'accordion-' + index" 
+                      variant="outline-secondary"
+                    >
+                      <b-row>
+                        <b-col md="4">Type: {{ configuration.type }}</b-col>
+                        <b-col md="4">Instrument Type: {{ configuration.instrument_type }}</b-col>
+                        <b-col md="4">Target: {{ configuration.target.name }}</b-col>
+                      </b-row>
+                    </b-button>
+                  </b-card-header>
+                  <b-collapse 
+                    :visible="index === 0"
+                    :id="'accordion-' + index" 
+                    accordion="my-accordion" 
+                    role="tabpanel"
+                  >
+                    <b-card-body>
+                      <b-row>
+                        <b-col md="6">
+                          <h4>Target</h4>
+                          <dl class="twocol dl-horizontal">
+                            <span v-for="(x, idx) in configuration.target" :key="'target-' + idx">
+                              <dt v-if="configuration.target[idx]">{{ idx | formatField }}</dt>
+                              <dd v-if="x">
+                                <span v-if="idx === 'name'">{{ x }}</span>
+                                <span v-else>{{ x | formatValue }}</span>
+                              </dd>
+                            </span>
+                          </dl>
+                          <hr/>
+                          <h4>Instrument Configs</h4>
+                          <table class="table">
+                            <thead>
+                              <tr>
+                                <td><strong>Mode</strong></td>
+                                <td><strong>Exp Time</strong></td>
+                                <td><strong>Exp Count</strong></td>
+                                <td><strong>Optical Elements</strong></td>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr 
+                                v-for="(instrument_config, index) in configuration.instrument_configs" 
+                                :key="'instrument_config-' + index"
+                              >
+                                <td>{{ instrument_config.mode }}</td>
+                                <td>{{ instrument_config.exposure_time | formatValue }}</td>
+                                <td>{{ instrument_config.exposure_count | formatValue }}</td>
+                                <td>{{ instrument_config.optical_elements | formatValue }}</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </b-col>
+                        <b-col md="6">
+                          <h4>Acquisition</h4>
+                          <dl class="twocol dl-horizontal">
+                            <span 
+                              v-for="(x, idx) in configuration.acquisition_config" 
+                              :key="'acquisition-' + idx"
+                            >
+                              <dt v-if="configuration.acquisition_config[idx]">{{ idx | formatField }}</dt>
+                              <dd v-if="x">
+                                <span v-if="idx === 'name'">{{ x }}</span>
+                                <span v-else>{{ x | formatValue }}</span>
+                              </dd>
+                            </span>
+                          </dl>
+                          <hr/>
+                          <h4>Guiding</h4>
+                          <dl class="twocol dl-horizontal">
+                            <span 
+                              v-for="(x, idx) in configuration.guiding_config" 
+                              :key="'guiding-' + idx"
+                            >
+                              <dt v-if="configuration.guiding_config[idx]">{{ idx | formatField }}</dt>
+                              <dd v-if="x">
+                                <span v-if="idx === 'name'">{{ x }}</span>
+                                <span v-else>{{ x | formatValue }}</span>
+                              </dd>
+                            </span>
+                          </dl>
+                          <hr/>
+                          <h4>Constraints</h4>
+                          <dl class="twocol dl-horizontal">
+                            <span 
+                              v-for="(x, idx) in configuration.constraints" 
+                              :key="'constraints-' + idx"
+                            >
+                              <dt v-if="configuration.constraints[idx]">{{ idx | formatField }}</dt>
+                              <dd v-if="x">{{ x | formatValue }}</dd>
+                            </span>
+                          </dl>
+                        </b-col>
+                      </b-row>
+                    </b-card-body>
+                  </b-collapse>
+                </b-card>
+              </div>
+            </div>
+          </div>
+        </b-tab>
+        <b-tab v-on:click="tab = 'scheduling'">
+          <template slot="title">
+            <span title="Scheduling history.">Scheduling</span>
+          </template>
+          <observationhistory 
+            v-show="observationData.length > 0" 
+            :data="observationData" 
+            :showPlotControls="true"
+          ></observationhistory>
+          <div v-show="observationData.length < 1" class="text-center"><h3>This request has not been scheduled.</h3></div>
+        </b-tab>
+        <b-tab v-on:click="tab = 'visibility'">
+          <template slot="title">
+            <span title="Target Visibility.">Visibility</span>
+          </template>
+          <airmass_telescope_states 
+            v-show="'airmass_limit' in airmassData" 
+            :airmassData="airmassData"
+            :telescopeStatesData="telescopeStatesData" 
+            :activeObservation="activeObservation"
+          ></airmass_telescope_states>
+        </b-tab>
+        <b-tab v-on:click="tab = 'data'">
+          <template slot="title">
+            <span title="Scheduling history.">Data</span>
+          </template>
           <div class="row">
             <div v-if="request.state === 'COMPLETED'" class="col-md-4">
               <p v-show="curFrame" class="thumb-help">Click a row in the data table to preview the file below. Click preview for a larger version.</p>
-              <thumbnail v-show="curFrame" :frame="curFrame" width="400" height="400"></thumbnail>
+              <thumbnail 
+                v-show="curFrame" 
+                :frame="curFrame" 
+                width="400" 
+                height="400"
+              ></thumbnail>
               <p v-show="curFrame && canViewColor">
                 RVB frames found.
                 <a v-on:click="viewColorImage" title="Color Image">
@@ -92,30 +186,27 @@
               </p>
             </div>
             <div :class="[(request.state === 'COMPLETED') ? 'col-md-8' : 'col-md-12']">
-              <archivetable :requestid="request.id" v-on:rowClicked="curFrame = $event" v-on:dataLoaded="frames = $event"></archivetable>
+              <archivetable 
+                :requestid="request.id" 
+                v-on:rowClicked="curFrame = $event" 
+                v-on:dataLoaded="frames = $event"
+              ></archivetable>
             </div>
           </div>
-        </div>
-        <div class="tab-pane" :class="{ active: tab === 'scheduling' }">
-          <observationhistory v-show="blockData.length > 0" :data="blockData" :showPlotControls="true"></observationhistory>
-          <div v-show="blockData.length < 1" class="text-center"><h3>This request has not been scheduled.</h3></div>
-        </div>
-        <div class="tab-pane" :class="{ active: tab === 'visibility' }">
-          <airmass_telescope_states v-show="'airmass_limit' in airmassData" :airmassData="airmassData"
-                                    :telescopeStatesData="telescopeStatesData" :activeBlock="activeBlock"></airmass_telescope_states>
-        </div>
-      </div>
+        </b-tab>
+      </b-tabs>
     </div>
   </div>
 </template>
 <script>
   import Vue from 'vue';
   import $ from 'jquery';
+  import _ from 'lodash';
   import thumbnail from './components/thumbnail.vue';
   import archivetable from './components/archivetable.vue';
   import observationhistory from './components/observationhistory.vue';
   import airmass_telescope_states from './components/airmass_telescope_states.vue';
-  import {formatDate, formatField} from './utils.js';
+  import {formatDate, formatField, formatValue} from './utils.js';
   import {login, getLatestFrame} from './archive.js';
 
   Vue.filter('formatDate', function(value){
@@ -127,10 +218,7 @@
   });
 
   Vue.filter('formatValue', function(value){
-    if(!isNaN(value)){
-      return Number(value).toFixed(4);
-    }
-    return value;
+    return formatValue(value);
   });
 
   export default {
@@ -141,8 +229,8 @@
         request: {},
         frames: [],
         curFrame: null,
-        blockData: [],
-        activeBlock: null,
+        observationData: [],
+        activeObservation: null,
         airmassData: {},
         telescopeStatesData: {},
         tab: 'details',
@@ -165,8 +253,8 @@
     },
     watch: {
       'tab': function(tab){
-        if(tab === 'scheduling' && this.blockData.length === 0){
-          this.loadBlockData();
+        if(tab === 'scheduling' && this.observationData.length === 0){
+          this.loadObservationData();
         }
         else if (tab === 'visibility'){
           if($.isEmptyObject(this.airmassData)) {
@@ -174,8 +262,8 @@
           }
           if($.isEmptyObject(this.telescopeStatesData)){
             this.loadTelescopeStatesData();
-            if(this.blockData.length === 0){
-              this.loadBlockData();
+            if(this.observationData.length === 0){
+              this.loadObservationData();
             }
           }
         }
@@ -209,18 +297,43 @@
       }
     },
     methods: {
-      loadBlockData: function(){
+      loadObservationData: function(){
         let that = this;
         let requestId = $('#request-detail').data('requestid');
         $.getJSON('/api/requests/' + requestId + '/observations/', function(data){
-          that.blockData = data;
-          for(var blockIdx in that.blockData){
-            if(that.blockData[blockIdx].completed){
-              that.activeBlock = that.blockData[blockIdx];
+          that.observationData = data;
+          for(let observationIdx in that.observationData){
+            if(that.observationData[observationIdx].status === 'COMPLETED'){
+              that.activeObservation = that.observationData[observationIdx];
               break;
             }
-            else if(that.blockData[blockIdx].status === 'SCHEDULED'){
-              that.activeBlock = that.blockData[blockIdx];
+            else if(that.observationData[observationIdx].status === 'SCHEDULED'){
+              that.activeObservation = that.observationData[observationIdx];
+            }
+          }
+          for(let observationIdx in that.observationData){
+            // Add in some top level fields that make plotting easier
+            let time_completed = 0.0;
+            let total_time = 0.0;
+            for(let configurationIdx in that.observationData[observationIdx].request.configurations){
+              let configuration = that.observationData[observationIdx].request.configurations[configurationIdx];
+              if(!_.isEmpty(configuration.summary)){
+                time_completed += configuration.summary.time_completed;
+              }
+              for(let inst_configIdx in configuration.instrument_configs){
+                let inst_config = configuration.instrument_configs[inst_configIdx];
+                total_time += inst_config.exposure_time * inst_config.exposure_count;
+              }
+            }
+            that.observationData[observationIdx].percent_completed = (time_completed / total_time) * 100.0;
+            that.observationData[observationIdx].fail_reason = '';
+            if (that.observationData[observationIdx].state === 'FAILED'){
+              for(let configurationIdx in that.observationData[observationIdx].request.configurations){
+                let configuration = that.observationData[observationIdx].request.configurations[configurationIdx];
+                if(configuration.state ==='FAILED' && !_.isEmpty(configuration.summary)){
+                  that.observationData[observationIdx].fail_reason = configuration.summary.reason;
+                }
+              }
             }
           }
         });

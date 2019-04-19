@@ -15,7 +15,7 @@
   import {plotZoomMixin} from './util/plot_mixins.js';
 
   export default {
-    props: ['data', 'activeBlock', 'showZoomControls'],
+    props: ['data', 'activeObservation', 'showZoomControls'],
     mixins: [plotZoomMixin],
     components: {plot_controls},
     data: function () {
@@ -104,14 +104,14 @@
                 type: 'range'
               });
             }
-            if (this.activeBlock !== null && this.activeBlock.site === site && this.activeBlock.observatory === sorted_telescopes[telescope].split('.')[1] && this.activeBlock.telescope === sorted_telescopes[telescope].split('.')[2]) {
+            if (this.activeObservation !== null && this.activeObservation.site === site && this.activeObservation.enclosure === sorted_telescopes[telescope].split('.')[1] && this.activeObservation.telescope === sorted_telescopes[telescope].split('.')[2]) {
               visData.add({
                 group: g,
-                title: this.activeBlock.status.toLowerCase() + ' at ' + sorted_telescopes[telescope] + '<br/>start: ' + this.activeBlock.start +
-                '<br/>end: ' + this.activeBlock.end,
-                className: this.activeBlock.status,
-                start: this.activeBlock.start,
-                end: this.activeBlock.end,
+                title: this.activeObservation.state.toLowerCase() + ' at ' + sorted_telescopes[telescope] + '<br/>start: ' + this.activeObservation.start +
+                '<br/>end: ' + this.activeObservation.end,
+                className: this.activeObservation.state,
+                start: this.activeObservation.start,
+                end: this.activeObservation.end,
                 toggle: 'tooltip',
                 html: true,
                 type: 'range'

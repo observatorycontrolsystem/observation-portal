@@ -4,12 +4,16 @@
     <table class="availability_chart table table-bordered table-condensed" v-show="sortedTelescopes.length">
       <thead class="thead-default">
       <th>Telescope</th>
-      <th v-for="dateLabel in dateLabels">{{ dateLabel }}</th>
+      <th v-for="(dateLabel, dataLabelIdx) in dateLabels" :key="dataLabelIdx">{{ dateLabel }}</th>
       </thead>
       <tbody class="tbody-default">
-      <tr v-for="telescope in sortedTelescopes">
+      <tr v-for="(telescope, telescopeIdx) in sortedTelescopes" :key="telescopeIdx">
         <td>{{ telescope | readableSiteName}}</td>
-        <td v-for="availabilities in availabilityData[telescope]" :class="[availabilityToColor(availabilities[1])]">
+        <td 
+          v-for="(availabilities, availabilitiesIdx) in availabilityData[telescope]" 
+          :class="[availabilityToColor(availabilities[1])]"
+          :key="availabilitiesIdx"
+        >
           {{ (availabilities[1] * 100).toFixed() }}
         </td>
       </tr>
@@ -21,9 +25,6 @@
 <script>
   import _ from 'lodash';
   import $ from 'jquery';
-
-  import 'eonasdan-bootstrap-datetimepicker';
-  import 'eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.css';
 
   export default {
     name: 'app',
@@ -58,9 +59,9 @@
     },
     methods: {
       availabilityToColor: function(availability){
-        if(availability > 0.75) return 'success';
-        else if (availability > 0.25) return 'warning';
-        return 'danger';
+        if(availability > 0.75) return 'table-success';
+        else if (availability > 0.25) return 'table-warning';
+        return 'table-danger';
       }
     },
     watch: {

@@ -1,4 +1,5 @@
 import moment from 'moment';
+import _ from 'lodash';
 
 function slitWidthToExposureTime(slitWidth){
   // Lamp flats are affected by the slit width, so exposure time needs to scale with it
@@ -119,6 +120,29 @@ function formatField(value){
   }
 }
 
+function formatJson(dict){
+  let stringVal = '';
+  for(let key in dict){
+    if (!_.isEmpty(dict[key])) {
+      if (!_.isEmpty(stringVal)) {
+        stringVal += ', ';
+      }
+      stringVal += key + ': ' + dict[key];
+    }
+  }
+  return stringVal;
+}
+
+function formatValue(value){
+  if (_.isObject(value) && !_.isArray(value)){
+    return formatJson(value);
+  }
+  else if (_.isNumber(value) && !_.isInteger(value) && !isNaN(value)){
+    return Number(value).toFixed(4);
+  }
+  return value;
+}
+
 let datetimeFormat = 'YYYY-MM-DD HH:mm:ss';
 
 let collapseMixin = {
@@ -130,14 +154,16 @@ let collapseMixin = {
 };
 
 let siteToColor = {
-  'tfn': '#263c6f',
-  'elp': '#700000',
-  'lsc': '#f04e23',
-  'cpt': '#004f00',
-  'coj': '#fac900',
-  'ogg': '#3366dd',
-  'sqa': '#009d00',
-  'tlv': '#8150d7'
+  'tfn': '#263c6f',  // dark blue
+  'elp': '#700000',  // dark red
+  'lsc': '#f04e23',  // red-orange
+  'cpt': '#004f00',  // dark green
+  'coj': '#fac900',  // golden-yellow
+  'ogg': '#3366dd',  // sky blue
+  'sqa': '#009d00',  // green
+  'tlv': '#8150d7',  // purple
+  'sor': '#7EF5C9',  // sea green
+  'ngq': '#FA5DEB',  // magenta
 };
 
 let siteCodeToName = {
@@ -149,6 +175,7 @@ let siteCodeToName = {
   'ogg': 'Haleakala',
   'sqa': 'Sedgwick',
   'ngq': 'Ali',
+  'sor': 'Cerro Pachón',
   'tlv': 'Wise'
 };
 
@@ -167,6 +194,7 @@ let telescopeCodeToName = {
   '0m4b': '0.4m B',
   '0m4c': '0.4m C',
   '2m0a': '2m',
+  '4m0a': '4m',
   '0m8a': '0.8m'
 };
 
@@ -190,7 +218,7 @@ let colorPalette = [  // useful assigning colors to datasets.
 ];
 
 export {
-  semesterStart, semesterEnd, sexagesimalRaToDecimal, sexagesimalDecToDecimal, QueryString,
+  semesterStart, semesterEnd, sexagesimalRaToDecimal, sexagesimalDecToDecimal, QueryString, formatJson, formatValue,
   formatDate, formatField, datetimeFormat, collapseMixin, siteToColor, siteCodeToName, slitWidthToExposureTime,
   observatoryCodeToNumber, telescopeCodeToName, colorPalette, julianToModifiedJulian
 };

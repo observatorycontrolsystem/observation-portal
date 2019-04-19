@@ -27,9 +27,9 @@
         <div class="col-md-7">
           <p class="title">Submitted Observation Requests</p>
         </div>
-        <div class="col-md-5">
+        <div class="col-md-5 text-right">
           <li class="dropdown list-unstyled">
-            <a class="dropdown-toggle pull-right btn btn-default" href="#" data-toggle="dropdown">
+            <a class="dropdown-toggle pull-right btn btn-outline-secondary" href="#" data-toggle="dropdown">
               <i class="fa fa-filter"></i> Filter List
             </a>
             <div class="dropdown-menu" style="padding:17px;">
@@ -46,39 +46,43 @@
 
                 <div class="form-group">
                   <label class="control-label" for="id_proposal"><i class="fa fa-users"></i> Proposal</label>
-                    <select class="form-control input-sm" id="id_proposal" name="proposal" title="" name="id_proposal">
-                      <option value="">---------</option>
-                      {% if request.GET.proposal %}
-                        <!-- if an admin user is checking out proposals for a proposal they don't belong to, allow filtering to work -->
-                        <option value="{{ request.GET.proposal }}" selected="selected">{{ request.GET.proposal }}</option>
-                      {% endif %}
-                      {% for proposal in user.profile.current_proposals %}
-                      <option value="{{ proposal }}" {% if proposal.id == filter.form.proposal.value %} selected="selected"%}{% endif %}>
-                        {{ proposal.title }} ({{ proposal.semester_set.first }})
-                      </option>
-                      {% endfor %}
-                      {% for proposal in user.proposal_set.all %}
-                      {% if proposal not in user.profile.current_proposals %}
-                      <option value="{{ proposal }}" {% if proposal.id == filter.form.proposal.value %} selected="selected"%}{% endif %}>
-                        {{ proposal.title }} ({{ proposal.semester_set.first }})
-                      </option>
-                      {% endif %}
-                      {% endfor %}
-                    </select>
+                  <select class="form-control input-sm" id="id_proposal" name="proposal" title="" name="id_proposal">
+                    <option value="">---------</option>
+                    {% if request.GET.proposal %}
+                      <!-- if an admin user is checking out proposals for a proposal they don't belong to, allow filtering to work -->
+                      <option value="{{ request.GET.proposal }}" selected="selected">{{ request.GET.proposal }}</option>
+                    {% endif %}
+                    {% for proposal in user.profile.current_proposals %}
+                    <option value="{{ proposal }}" {% if proposal.id == filter.form.proposal.value %} selected="selected"%}{% endif %}>
+                      {{ proposal.title }} ({{ proposal.semester_set.first }})
+                    </option>
+                    {% endfor %}
+                    {% for proposal in user.proposal_set.all %}
+                    {% if proposal not in user.profile.current_proposals %}
+                    <option value="{{ proposal }}" {% if proposal.id == filter.form.proposal.value %} selected="selected"%}{% endif %}>
+                      {{ proposal.title }} ({{ proposal.semester_set.first }})
+                    </option>
+                    {% endif %}
+                    {% endfor %}
+                  </select>
                 </div>
 
-                {% bootstrap_label '<i class="fa fa-calendar"> <i class="fa fa-arrow-right"></i> </i> Submitted After' label_for="id_created_before" %}
-                {% bootstrap_field filter.form.created_after show_label=False size='small' addon_after='<span class="fa fa-times clearinput"></span>' %}
+                <div class="form-group">
+                  <label class="control-label" for="id_created_after"><i class="fa fa-calendar"> <i class="fa fa-arrow-right"></i> </i> Submitted After</label>
+                  <input name="created_after" class="form-control form-control-sm" placeholder="Submitted After" title="" id="id_created_after" type="date">
+                </div>
 
-                {% bootstrap_label '<i class="fa fa-arrow-left"></i> <i class="fa fa-calendar"></i> Submitted Before' label_for="id_created_before" %}
-                {% bootstrap_field filter.form.created_before show_label=False size='small' addon_after='<span class="fa fa-times clearinput"></span>' %}
-
+                <div class="form-group">
+                  <label class="control-label" for="id_created_before"><i class="fa fa-arrow-left"></i> <i class="fa fa-calendar"></i> Submitted Before</label>
+                  <input name="created_before" class="form-control form-control-sm" placeholder="Submitted Before" title="" id="id_created_before" type="date">
+                </div>
+                
                 {% bootstrap_label '<i class="fa fa-user"></i> Username Contains' label_for="id_user" %}
-                {% bootstrap_field filter.form.user show_label=False show_help=False size='small' addon_after='<span class="fa fa-times clearinput"></span>' %}
+                {% bootstrap_field filter.form.user show_label=False show_help=False size='small' %}
 
-                <br/>
-                <input type="submit" class="btn btn-info" value="Filter Results"/>
-                <a href="{% url 'requestgroups:list' %}" class="btn btn-default">Clear All Fields</a>
+                <div class="dropdown-divider"></div>
+                <input type="submit" class="btn btn-outline-info" value="Filter Results"/>
+                <a href="{% url 'requestgroups:list' %}" class="btn btn-outline-danger">Clear All Fields</a>
               </form>
             </div>
           </li>
@@ -90,10 +94,10 @@
     <div class="col-md-4">
       <small>User Info</small>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-4">
       <small>State Info</small>
     </div>
-    <div class="col-md-5">
+    <div class="col-md-4">
       <small class="pull-right"># Requests / Pending / Failed / Complete</small>
     </div>
   </div>
@@ -102,7 +106,7 @@
       <section class="requestgroup-list">
         {% for rg in object_list %}
         <div class="row requestgroup requestgroup-{{ rg.state|state_to_bs }}">
-          <div class="col-sm-8 col-xs-12">
+          <div class="col-sm-8 col-12">
             <div class="row">
               <div class="col-md-12">
                 <a class="requestgroup-title" href="{% url 'requestgroups:detail' rg %}">
@@ -111,11 +115,11 @@
               </div>
             </div>
             <div class="row">
-              <div class="col-xs-6 requestgroup-block border-right">
+              <div class="col-6 requestgroup-block border-right">
                 <p><i class="fa fa-fw fa-user"></i> {{ rg.submitter }}</p>
                 <p><i class="fa fa-fw fa-users"></i> <a href="{% url 'proposals:detail' pk=rg.proposal.id %}">{{ rg.proposal }}</a></p>
               </div>
-              <div class="col-xs-6 requestgroup-block border-right">
+              <div class="col-6 requestgroup-block border-right">
                 <p><span class="text-{{ rg.state|state_to_bs }}">
                   <i class="fa fa-fw fa-{{ rg.state|state_to_icon }}"></i>
                   {{ rg.state }}
@@ -128,28 +132,28 @@
           {% if rg_count %}
           <div class="col-sm-1 hidden-xs request-block">
             <div class="row">
-              <div class="col-xs-12 request-count">
+              <div class="col-12 request-count">
                 <p><center>{{ rg_count }}</center></p>
               </div>
             </div>
           </div>
           <div class="col-sm-1 hidden-xs request-block">
             <div class="row">
-              <div class="col-xs-12 request-count">
-                <p><center class="text-warning">{{ rg|request_state_count:'PENDING' }}</center></p>
+              <div class="col-12 request-count">
+                <p><center class="text-neutral">{{ rg|request_state_count:'PENDING' }}</center></p>
               </div>
             </div>
           </div>
           <div class="col-sm-1 hidden-xs request-block">
             <div class="row">
-              <div class="col-xs-12 request-count">
+              <div class="col-12 request-count">
                 <p><center class="text-danger">{{ rg|request_state_count:'WINDOW_EXPIRED' }}</center></p>
               </div>
             </div>
           </div>
            <div class="col-sm-1 hidden-xs request-block">
             <div class="row">
-              <div class="col-xs-12 request-count">
+              <div class="col-12 request-count">
                 <p><center class="text-success">{{ rg|request_state_count:'COMPLETED' }}</center></p>
               </div>
             </div>
@@ -187,12 +191,6 @@
 {% block extra_javascript %}
   {{ block.super }}
   <script type="text/javascript">
-    $('#id_created_after, #id_created_before').datetimepicker({
-      'format': 'YYYY-M-D HH:mm:ss'
-    }).on('dp.change', function(){
-      $('#id_created_after').data("DateTimePicker").hide();
-      $('#id_created_before').data("DateTimePicker").hide();
-    });
     $(function() {
       $(".tool-tip").tooltip();
       var url = new URL(window.location.href);

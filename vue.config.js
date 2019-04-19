@@ -42,7 +42,8 @@ module.exports = {
       resolve: {
         alias: {
           // This is needed for jquery-file-download/src/Scripts/jquery.fileDownload.js to work
-          'jquery': path.join(__dirname, 'node_modules/jquery/src/jquery')
+          'jquery': path.join(__dirname, 'node_modules/jquery/src/jquery'),
+          'bootstrap-components': path.resolve(__dirname, 'node_modules/bootstrap-vue/es/components')
         }
       }
     };
