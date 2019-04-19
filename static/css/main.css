@@ -158,8 +158,12 @@ a:hover {
     background: linear-gradient(to right,#3c763d 0,#3c763d 10px,#fff 10px,#fff 100%) no-repeat;
 }
 
-.requestgroup-warning {
+.requestgroup-neutral {
     background: linear-gradient(to right,#8a6d3b 0,#8a6d3b 10px,#fff 10px,#fff 100%) no-repeat;
+}
+
+.text-neutral {
+    color: #8a6d3b;
 }
 
 .requestgroup-danger {

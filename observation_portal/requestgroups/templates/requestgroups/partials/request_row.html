@@ -1,4 +1,6 @@
 {% load i18n request_extras humanize %}
+{% load static bootstrap4 %}
+{% bootstrap_javascript jquery='full' %}
 <div class="row requestgroup requestgroup-{{ request.state|state_to_bs }}" data-request='{{ request.id }}'>
     <div class="col-md-10">
       <div class="row">

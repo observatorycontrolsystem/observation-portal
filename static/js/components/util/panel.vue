@@ -4,15 +4,15 @@
       <div class="panel panel-default">
         <div class="panel-heading panel-heading-compact">
           <div class="row">
-            <div class="col-xs-4">
+            <div class="col-4">
               <i class="fa fa-2x fa-fw" :class="icon"></i>
               <i title="Errors in form" class="fa fa-warning fa-2x fa-fw text-danger" v-show="hasError"></i>
               <i title="Section is complete" class="fa fa-check fa-2x fa-fw text-success" v-show="!hasError"></i>
             </div>
-            <div class="panel-title col-xs-4">
+            <div class="panel-title col-4">
               {{ title }} <span v-if="index > 0">#{{ index + 1}}</span>
             </div>
-            <div class="panel-actions col-xs-4">
+            <div class="panel-actions col-4">
               <a class="btn btn-xs btn-danger" v-on:click="remove" v-show="canremove" title="remove">
                 <i class="fa fa-trash fa-fw"></i>
               </a>

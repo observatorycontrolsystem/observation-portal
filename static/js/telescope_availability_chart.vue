@@ -59,9 +59,9 @@
     },
     methods: {
       availabilityToColor: function(availability){
-        if(availability > 0.75) return 'success';
-        else if (availability > 0.25) return 'warning';
-        return 'danger';
+        if(availability > 0.75) return 'table-success';
+        else if (availability > 0.25) return 'table-warning';
+        return 'table-danger';
       }
     },
     watch: {

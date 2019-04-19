@@ -7,7 +7,7 @@ register = template.Library()
 @register.filter
 def state_to_bs(value):
     state_map = {
-        'PENDING': 'warning',
+        'PENDING': 'neutral',
         'SCHEDULED': 'info',
         'COMPLETED': 'success',
         'WINDOW_EXPIRED': 'danger',
