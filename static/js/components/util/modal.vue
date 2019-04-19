@@ -61,7 +61,7 @@
   };
 </script>
 <style>
-  .modal {
+  /* .modal {
     overflow: auto;
-  }
+  } */
 </style>
