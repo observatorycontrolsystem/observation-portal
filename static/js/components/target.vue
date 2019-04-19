@@ -1,6 +1,6 @@
 <template>
   <panel :show="show"
-    :id="'target' + $parent.$parent.index" 
+    :id="'target' + $parent.$parent.index + $parent.index" 
     :errors="errors" 
     :canremove="false" 
     :cancopy="false" 
@@ -8,11 +8,15 @@
     title="Target" 
     @show="show = $event"    
   >
-    <div class="alert alert-danger" v-show="errors.non_field_errors" role="alert">
-      <span v-for="error in errors.non_field_errors" :key="error">{{ error }}</span>
-    </div>
-
-    <b-container>
+    <alert 
+      v-for="error in errors.non_field_errors" 
+      :key="error" 
+      alertclass="danger" 
+      :dismissible="false"
+    >
+      {{ error }}
+    </alert>
+    <b-container class="p-0">
       <b-row>
         <b-col md="6" v-show="show">
 
@@ -237,6 +241,7 @@
   import { collapseMixin, sexagesimalRaToDecimal, sexagesimalDecToDecimal, julianToModifiedJulian } from '../utils.js';
   import archive from './archive.vue';
   import panel from './util/panel.vue';
+  import alert from './util/alert.vue';
   import customfield from './util/customfield.vue';
   import customselect from './util/customselect.vue';
 
@@ -253,6 +258,7 @@
       customfield, 
       customselect, 
       panel, 
+      alert,
       archive
     },
     mixins: [

@@ -8,12 +8,15 @@
     title="Constraints" 
     @show="show = $event"
   >
-    
-    <div class="alert alert-danger" v-show="errors.non_field_errors" role="alert">
-      <span v-for="error in errors.non_field_errors" :key="error">{{ error }}</span>
-    </div>
-
-    <b-container>
+    <alert 
+      v-for="error in errors.non_field_errors" 
+      :key="error" 
+      alertclass="danger" 
+      :dismissible="false"
+    >
+      {{ error }}
+    </alert>
+    <b-container class="p-0">
       <b-row>
         <b-col md="6" v-show="show">
           <ul>
@@ -52,6 +55,7 @@
 <script>
   import { collapseMixin } from '../utils.js';
   import panel from './util/panel.vue';
+  import alert from './util/alert.vue';
   import customfield from './util/customfield.vue';
 
   export default {
@@ -62,7 +66,8 @@
     ],
     components: {
       customfield, 
-      panel
+      panel,
+      alert
     },
     mixins: [
       collapseMixin

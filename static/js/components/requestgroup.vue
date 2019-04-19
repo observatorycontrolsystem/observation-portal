@@ -8,11 +8,16 @@
     :cancopy="false"
     @show="show = $event" 
   >  
-
-    <div v-for="error in errors.non_field_errors" :key="error" class="alert alert-danger" role="alert">{{ error }}</div>
-    
-    <b-container>
-      <b-row>
+    <alert 
+      v-for="error in errors.non_field_errors" 
+      :key="error" 
+      alertclass="danger" 
+      :dismissible="false"
+    >
+      {{ error }}
+    </alert>
+    <b-container class="p-0">
+      <b-form-row>
         <b-col md="6" v-show="show">
           <h3>
             Duration of Observing Request:
@@ -75,7 +80,7 @@
             <div class="collapse-inline" v-show="!show">Total Duration: <strong>{{ durationDisplay }}</strong></div>
           </b-form>
         </b-col>
-      </b-row>
+      </b-form-row>
     </b-container>
     <div v-for="(request, idx) in requestgroup.requests" :key="'request' + idx">
 
@@ -109,7 +114,7 @@
         @cadence="expandCadence"
       />
     </div>
-    <modal :show="showEdPopup" v-on:close="closeEdPopup" v-on:submit="closeEdPopup" :showCancel=false>
+    <modal :show="showEdPopup" v-on:close="closeEdPopup" v-on:submit="closeEdPopup" :showCancel="false">
       <h3>Welcome to the LCO observation request page!</h3>
       <p>Using this form you can instruct the LCO telescope network to perform an astronomical observation on your behalf.</p>
       <p>Fields should be filled out from top to bottom. If you need help understanding a field, hovering your
@@ -132,6 +137,7 @@
   import request from './request.vue';
   import cadence from './cadence.vue';
   import panel from './util/panel.vue';
+  import alert from './util/alert.vue';
   import customfield from './util/customfield.vue';
   import customselect from './util/customselect.vue';
   import { QueryString } from '../utils.js';
@@ -149,7 +155,8 @@
       modal, 
       customfield, 
       customselect, 
-      panel 
+      panel,
+      alert
     },
     data: function() {
       return {
@@ -226,7 +233,7 @@
           for (var windowIndex = 0; windowIndex < this.requestgroup.requests[index].windows.length; ++windowIndex) {
             if (value === 'RAPID_RESPONSE') {
               delete this.requestgroup.requests[index].windows[windowIndex].start;
-              this.requestgroup.requests[index].windows[windowIndex].end = moment.utc().add('hours', 6).format(datetimeFormat);
+              this.requestgroup.requests[index].windows[windowIndex].end = moment.utc().add(6, 'hours').format(datetimeFormat);
             } else {
               if (!('start' in this.requestgroup.requests[index].windows[windowIndex])) {
                 this.requestgroup.requests[index].windows[windowIndex].start = moment.utc().format(datetimeFormat);

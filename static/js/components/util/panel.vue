@@ -1,16 +1,18 @@
 <template>
-  <b-container>
-    <b-row :id="id">
+  <b-container class="p-0">
+    <b-form-row :id="id">
       <b-col>
         <b-card no-body>
-          <b-card-header>
-            <b-container>
-              <b-row>
+          <b-card-header class="p-2">
+
+            <b-container class="p-0">
+            
+              <b-form-row>
                 <b-col class="text-left">
-                  <i class="fas" :class="icon"></i>
+                  <i class="fas align-middle mx-2" :class="icon"></i>
                   <!-- TODO: The warning and success flicker on page load -->
-                  <i class="fas fa-exclamation-triangle text-danger" v-b-tooltip.hover title="Errors in form" v-show="hasError"></i>
-                  <i class="fas fa-check text-success" v-b-tooltip.hover title="Section is complete" v-show="!hasError"></i>
+                  <i class="fas fa-exclamation-triangle text-danger align-middle" v-b-tooltip.hover title="Errors in form" v-show="hasError"></i>
+                  <i class="fas fa-check text-success align-middle" v-b-tooltip.hover title="Section is complete" v-show="!hasError"></i>
                 </b-col>
                 <b-col class="text-center">
                   <div>
@@ -28,15 +30,17 @@
                     <i class="fa fa-trash fa-fw fa-2x"></i>
                   </b-button>
                 </b-col>
-              </b-row>
+              </b-form-row>
+
             </b-container>
+          
           </b-card-header>
-            <b-card>
+            <b-card class="border-0">
               <slot :show="show"></slot>
             </b-card>
         </b-card>
       </b-col>
-    </b-row>
+    </b-form-row>
   </b-container>
 </template>
 <script>

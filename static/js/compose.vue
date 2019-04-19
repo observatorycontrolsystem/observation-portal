@@ -1,23 +1,24 @@
 <template>
-  <b-container id="app">
-    <b-row>
+  <b-container id="app" class="p-0">
+    <b-form-row>
       <b-col>
         <!-- TODO: If the same alert is brought up more than once, it will only display the first time -->
         <alert v-for="alert in alerts"
           :key="alert.msg" 
           :alertclass="alert.class" 
+          :dismissible="true"
         >
           {{ alert.msg }}
         </alert>
       </b-col>
-    </b-row>
-    <b-tabs id="tabs">
+    </b-form-row>
+    <b-tabs id="tabs" nav-class="border-0">
       <b-tab active>
         <template slot="title">
           <i class="far fa-edit"></i> Form
         </template>
-        <b-container>
-          <b-row>
+        <b-container class="p-0">
+          <b-form-row>
 
             <!-- TODO: If there isn't enough space for the first column, the sidenav will go to the bottom of the page -->
             <b-col cols="10">
@@ -37,16 +38,16 @@
                 :errors="errors"
               /> 
             </b-col>
-          </b-row>
+          </b-form-row>
         </b-container>
       </b-tab>
       <b-tab>
         <template slot="title">
           <i class="fas fa-code"></i> API View
         </template>
-        <b-container>
-          <b-row>
-            <b-col>
+        <b-container class="p-0">
+          <b-form-row>
+            <b-col class="my-3">
 
               <!-- TODO -->
               <a :href="dataAsEncodedStr" download="apiview.json" class="btn btn-default" title="download">
@@ -55,31 +56,31 @@
               <pre>{{ JSON.stringify(requestgroup, null, 4) }}</pre>
               
             </b-col>
-          </b-row>
+          </b-form-row>
         </b-container>
       </b-tab>
       <b-tab>
         <template slot="title">
           <i class="far fa-file-alt"></i> Drafts 
         </template>
-        <b-container>
-          <b-row>
+        <b-container class="p-0">
+          <b-form-row>
             <b-col>
 
               <!-- TODO: The drafts component -->
               <drafts v-on:loaddraft="loadDraft" :tab="tab"/>
 
             </b-col>
-          </b-row>
+          </b-form-row>
         </b-container>  
       </b-tab>
       <b-tab>
         <template slot="title">
           <i class="fas fa-question"></i> How to use this page
         </template>
-        <b-container>
-          <b-row>
-            <b-col>
+        <b-container class="p-0">
+          <b-form-row>
+            <b-col class="my-3">
               <h2>Using the compose form</h2>
               <p>
                 Use the form to describe the observation you would like carried out on the network.
@@ -119,18 +120,31 @@
                 of your proposal as well as your own.
               </p>
             </b-col>
-          </b-row>
+          </b-form-row>
         </b-container>
       </b-tab>
       <template slot="tabs">
+
+        
+
+        <li class="nav-item align-self-center">
+
         <b-button-group>
           <div v-b-tooltip.hover title="Clear form">
-            <b-button variant="warning" v-on:click="clear()"><i class="fa fa-times"></i> Clear</b-button>
+            <b-button 
+              variant="warning" 
+              @click="clear()"
+            >
+              <i class="fa fa-times"></i> Clear
+            </b-button>
           </div>
-          <div v-b-tooltip.hover title="Save a draft of this observing request. The request will not be submitted.">
-            <b-dropdown v-if="!draftExists" 
+          <div>
+            <b-dropdown v-if="draftExists" 
+              v-b-tooltip.hover 
+              :title="saveDraftTooltipText"
               variant="primary" 
-              right 
+              class="mx-1"
+              right   
               split
               @click="saveDraft(draftId)" 
             >
@@ -142,7 +156,10 @@
               </b-dropdown-item>
             </b-dropdown>
             <b-button v-else 
+              v-b-tooltip.hover 
+              :title="saveDraftTooltipText"
               variant="primary" 
+              class="mx-1"
               @click="saveDraft(-1)"
             >
               <i class="fa fa-save"></i> {{ saveDraftText }}
@@ -158,8 +175,17 @@
             </b-button>
           </div>
         </b-button-group>
+      </li>
+
+
+
       </template>
     </b-tabs>
+
+
+
+
+
   </b-container>
 </template>
 <script>
@@ -247,7 +273,8 @@
         },
         errors: {},
         duration_data: {},
-        alerts: []
+        alerts: [],
+        saveDraftTooltipText: 'Save a draft of this observing request. The request will not be submitted.'
       };
     },
     computed: {

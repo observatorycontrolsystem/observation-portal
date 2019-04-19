@@ -2,8 +2,9 @@
   <span>
     <b-form-group
       v-show="$parent.show"
+      label-size="sm"
       label-align-sm="right"
-      label-cols-sm="5"
+      label-cols-sm="4"
       :description="desc"
       :label="label"
       :label-for="field"
@@ -17,8 +18,7 @@
       />
       <span class="text-danger" :key="error" v-for="error in errors">{{ error }}</span>
     </b-form-group>
-    <!-- TODO: This is what is supposed to be displayed for this field when the parent object is collapsed -->
-    <span class="collapse-inline" v-show="!$parent.show">
+    <span v-show="!$parent.show">
       {{ label }}: <strong>{{ value || '...' }}</strong>
     </span>
   </span>

@@ -11,14 +11,15 @@
     @copy="$emit('copy')" :show="show"
     @show="show = $event"
   >
-  
-    <!-- TODO -->
-    <div class="alert alert-danger" v-show="errors.non_field_errors" role="alert">
-      <span v-for="error in errors.non_field_errors" :key="error">{{ error }}</span>
-    </div>
-
-
-    <b-container>
+    <alert 
+      v-for="error in errors.non_field_errors" 
+      :key="error" 
+      alertclass="danger" 
+      :dismissible="false"
+    >
+      {{ error }}
+    </alert>
+    <b-container class="p-0">
       <b-row>
         <b-col md="6" v-show="show">
           <ul>
@@ -29,7 +30,7 @@
               </a>
             </li>
             <li v-show="observation_type === 'RAPID_RESPONSE'">
-              A start time cannot be selected for a Rapid Response observation--it will be scheduled as soon as possible.
+              A start time cannot be selected for a Rapid Response observation-it will be scheduled as soon as possible.
             </li>
           </ul>
           <h4 v-show="showAirmass" class="text-center">Visibility</h4>
@@ -37,18 +38,16 @@
         </b-col>
         <b-col :md="show ? 6 : 12">
           <b-form>
-            <customfield v-show="observation_type != 'RAPID_RESPONSE'"
+            <customdatetime v-show="observation_type != 'RAPID_RESPONSE'"
               v-model="window.start" 
-              type="datetime" 
               label="Start" 
               field="start" 
               desc="UT time when the observing window opens"
               :errors="errors.start" 
               @input="update"              
             />
-            <customfield 
+            <customdatetime 
               v-model="window.end" 
-              type="datetime" 
               label="End" 
               field="end" 
               desc="UT time when the observing window closes"
@@ -94,9 +93,12 @@
 <script>
   import $ from 'jquery';
   import _ from 'lodash';
+  import moment from 'moment';
 
-  import { collapseMixin } from '../utils.js';
+  import { collapseMixin, datetimeFormat } from '../utils.js';
   import panel from './util/panel.vue';
+  import alert from './util/alert.vue';
+  import customdatetime from './util/customdatetime.vue';
   import customfield from './util/customfield.vue';
   import customselect from './util/customselect.vue';
   import airmass from './airmass.vue';
@@ -111,9 +113,11 @@
       'observation_type'
     ],
     components: {
+      customdatetime,
       customfield, 
       customselect, 
       panel, 
+      alert,
       airmass
     },
     mixins: [

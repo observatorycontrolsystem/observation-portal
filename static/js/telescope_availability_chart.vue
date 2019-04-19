@@ -26,6 +26,9 @@
   import _ from 'lodash';
   import $ from 'jquery';
 
+  // import 'eonasdan-bootstrap-datetimepicker';
+  // import 'eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.css';
+
   export default {
     name: 'app',
     data: function(){

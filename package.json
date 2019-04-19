@@ -22,7 +22,8 @@
     "lodash": "^4.17.10",
     "moment": "^2.22.1",
     "vis": "4.19.1",
-    "vue": "^2.6.6"
+    "vue": "^2.6.6",
+    "vue-ctk-date-time-picker": "^2.0.9"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "^3.5.0",

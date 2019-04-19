@@ -3,7 +3,8 @@
   <panel :show="show"
     title="Request" 
     icon="fa-wpexplorer" 
-    :id="'request' + index" :index="index" 
+    :id="'request' + index" 
+    :index="index" 
     :errors="errors" 
     :canremove="this.index > 0" 
     :cancopy="true" 
@@ -11,12 +12,15 @@
     @show="show = $event"
     @copy="$emit('copy')" 
   >
-
-    <div class="alert alert-danger" v-show="errors.non_field_errors" role="alert">
-      <span v-for="error in errors.non_field_errors" :key="error">{{ error }}</span>
-    </div>
-    
-    <b-container>
+    <alert 
+      v-for="error in errors.non_field_errors" 
+      :key="error" 
+      alertclass="danger" 
+      :dismissible="false"
+    >
+      {{ error }}
+    </alert>
+    <b-container class="p-0">
       <b-row>
         <b-col md="6" v-show="show">
           <ul>
@@ -41,7 +45,6 @@
               field="instrument_type"
               :errors="errors.instrument_type" 
               :options="availableInstrumentOptions"
-              desc="Select the instrument with which this observation will be made."
               @input="update" 
             />
             <customfield v-if="!simple_interface"
@@ -97,6 +100,7 @@
   import configuration from './configuration.vue';
   import window from './window.vue';
   import panel from './util/panel.vue';
+  import alert from './util/alert.vue';
   import customfield from './util/customfield.vue';
   import customselect from './util/customselect.vue';
 
@@ -116,7 +120,8 @@
       window, 
       customfield, 
       customselect, 
-      panel
+      panel,
+      alert
     },
     mixins: [
       collapseMixin
