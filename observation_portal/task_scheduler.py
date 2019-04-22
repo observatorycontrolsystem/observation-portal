@@ -4,7 +4,7 @@ from apscheduler.triggers.cron import CronTrigger
 from observation_portal.requestgroups.tasks import expire_requests
 from observation_portal.accounts.tasks import expire_access_tokens
 
-if __name__ == "__main__":
+def run():
     scheduler = BlockingScheduler()
     scheduler.add_job(
         expire_requests.send,
