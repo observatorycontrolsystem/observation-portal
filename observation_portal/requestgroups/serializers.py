@@ -254,8 +254,8 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                 if plural_type not in available_optical_elements:
                     raise serializers.ValidationError(_("optical_element of type {} is not available on {} instruments"
                                                         .format(oe_type, data['instrument_type'])))
-                available_elements = [element['code'] for element in available_optical_elements[plural_type]]
-                if plural_type in available_optical_elements and value not in available_elements:
+                available_elements = [element['code'].lower() for element in available_optical_elements[plural_type]]
+                if plural_type in available_optical_elements and value.lower() not in available_elements:
                     raise serializers.ValidationError(_("optical element {} of type {} is not available".format(
                         value, oe_type
                     )))
