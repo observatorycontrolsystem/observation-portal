@@ -9,7 +9,7 @@ from observation_portal.proposals.models import Proposal
 from observation_portal.requestgroups.models import RequestGroup
 from observation_portal.userrequests.filters import UserRequestFilter
 from observation_portal.userrequests.conversion import (validate_userrequest, convert_userrequests_to_requestgroups,
-                                                        convert_requestgroups_to_userrequests,
+                                                        convert_requestgroups_to_userrequests, expand_cadence,
                                                         convert_userrequest_to_requestgroup,
                                                         convert_requestgroup_to_userrequest)
 from observation_portal.requestgroups.cadence import expand_cadence_request
@@ -110,32 +110,7 @@ class UserRequestViewSet(ListAsDictMixin, viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'])
     def cadence(self, request):
-        expanded_requests = []
-        body = validate_userrequest(request.data)
-        if body['errors']:
-            return Response(body, status=400)
-        rg_dict = convert_userrequest_to_requestgroup(request.data)
-        for req in rg_dict.get('requests', []):
-            if isinstance(req, dict) and req.get('cadence'):
-                cadence_request_serializer = CadenceRequestSerializer(data=req)
-                if cadence_request_serializer.is_valid():
-                    expanded_requests.extend(expand_cadence_request(cadence_request_serializer.validated_data))
-                else:
-                    return Response(cadence_request_serializer.errors, status=400)
-            else:
-                expanded_requests.append(req)
-
-        # if we couldn't find any valid cadence requests, return that as an error
-        if not expanded_requests:
-            return Response({'errors': 'No visible requests within cadence window parameters'}, status=400)
-
-        rg_dict['requests'] = expanded_requests
-        if len(rg_dict['requests']) > 1:
-            rg_dict['operator'] = 'MANY'
-
-        # Now convert back to a userrequest and check its validity again
-        ur_dict = convert_requestgroup_to_userrequest(rg_dict)
-        body = validate_userrequest(ur_dict)
-        if body['errors']:
-            return Response(body, status=400)
-        return Response(ur_dict)
+        expanded_ur = expand_cadence(request.data)
+        if 'errors' in expanded_ur and expanded_ur['errors']:
+            return Response(expanded_ur, status=400)
+        return Response(expanded_ur)

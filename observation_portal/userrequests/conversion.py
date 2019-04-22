@@ -100,12 +100,15 @@ def convert_userrequest_to_requestgroup(userrequest):
                 'mode': molecule.get('readout_mode', ''),
                 'exposure_time': molecule.get('exposure_time', 0.0),
                 'exposure_count': molecule['exposure_count'],
-                'bin_x': molecule['bin_x'],
-                'bin_y': molecule['bin_y'],
                 'rot_mode': target.get('rot_mode', ''),
                 'extra_params': inst_config_extra_params,
                 'optical_elements': optical_elements
             }
+
+            if 'bin_x' in molecule:
+                instrument_config['bin_x'] = molecule['bin_x']
+            if 'bin_y' in molecule:
+                instrument_config['bin_y'] = molecule['bin_y']
 
             if molecule.get('sub_x1', 0) or molecule.get('sub_x2', 0) or molecule.get('sub_y1', 0) or molecule.get('sub_y2', 0):
                 rois = [
@@ -132,9 +135,12 @@ def convert_userrequest_to_requestgroup(userrequest):
 
             guiding_config = {
                 'optical_elements': ag_optical_elements,
-                'exposure_time': molecule['ag_exp_time'],
-                'mode': ag_mode
+                'mode': ag_mode,
+                'extra_params': ag_extra_params
             }
+
+            if 'ag_exp_time' in molecule:
+                guiding_config['exposure_time'] = molecule['ag_exp_time']
 
             acquire_extra_params = {}
             if molecule.get('acquire_strategy', ''):
@@ -153,7 +159,6 @@ def convert_userrequest_to_requestgroup(userrequest):
             configuration = {
                 'type': molecule['type'],
                 'instrument_type': molecule['instrument_name'],
-                'priority': molecule['priority'],
                 'extra_params': conf_extra_params,
                 'target': target,
                 'constraints': constraints,
@@ -161,6 +166,9 @@ def convert_userrequest_to_requestgroup(userrequest):
                 'guiding_config': guiding_config,
                 'acquisition_config': acquisition_config
             }
+            if 'priority' in molecule:
+                configuration['priority'] = molecule['priority']
+
             configurations.append(configuration)
         request['configurations'] = configurations
         del request['molecules']
@@ -208,7 +216,6 @@ def convert_requestgroup_to_userrequest(requestgroup):
                 'ag_name': configuration['instrument_type'] if configuration['extra_params'].get('self_guiding', False) else '',
                 'ag_mode': ag_mode,
                 'ag_filter': configuration['guiding_config']['optical_elements'].get('filter', ''),
-                'ag_exp_time': configuration['guiding_config']['exposure_time'],
                 'ag_strategy': configuration['guiding_config']['mode'],
                 'filter': first_inst_config['optical_elements'].get('filter', ''),
                 'readout_mode': first_inst_config['mode'],
@@ -226,6 +233,9 @@ def convert_requestgroup_to_userrequest(requestgroup):
                 'bin_y': first_inst_config['bin_y'],
                 'defocus': first_inst_config['extra_params'].get('defocus', 0.0)
             }
+
+            if 'exposure_time' in configuration['guiding_config']:
+                molecule['ag_exp_time'] = configuration['guiding_config']['exposure_time']
             if 'rois' in first_inst_config and len(first_inst_config['rois']) > 0:
                 molecule['sub_x1'] = first_inst_config['rois'][0]['x1']
                 molecule['sub_y1'] = first_inst_config['rois'][0]['y1']
