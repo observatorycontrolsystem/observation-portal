@@ -49,8 +49,8 @@ observation = {
                     "extra_params": {}
                 },
                 "guiding_config": {
-                    "state": "OFF",
-                    "mode": "",
+                    "mode": "OFF",
+                    "optional": False,
                     "optical_elements": {},
                     "exposure_time": 10.0,
                     "extra_params": {}
@@ -221,7 +221,7 @@ class TestPostScheduleApi(SetTimeMixin, APITestCase):
         # ef01 is only on doma, this observation is on domb so it should fail to validate ef01
         bad_observation['request']['configurations'][0]['guide_camera_name'] = 'ak03'
         bad_observation['request']['configurations'][0]['instrument_type'] = '1M0-NRES-SCICAM'
-        bad_observation['request']['configurations'][0]['guiding_config']['state'] = 'ON'
+        bad_observation['request']['configurations'][0]['guiding_config']['mode'] = 'ON'
         bad_observation['request']['configurations'][0]['acquisition_config']['mode'] = 'WCS'
         bad_observation['request']['configurations'][0]['type'] = 'NRES_SPECTRUM'
         del bad_observation['request']['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
@@ -234,7 +234,7 @@ class TestPostScheduleApi(SetTimeMixin, APITestCase):
         observation = copy.deepcopy(self.observation)
         observation['request']['configurations'][0]['guide_camera_name'] = 'ak02'
         observation['request']['configurations'][0]['instrument_type'] = '1M0-NRES-SCICAM'
-        observation['request']['configurations'][0]['guiding_config']['state'] = 'ON'
+        observation['request']['configurations'][0]['guiding_config']['mode'] = 'ON'
         observation['request']['configurations'][0]['acquisition_config']['mode'] = 'WCS'
         observation['request']['configurations'][0]['type'] = 'NRES_SPECTRUM'
         del observation['request']['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
@@ -245,7 +245,7 @@ class TestPostScheduleApi(SetTimeMixin, APITestCase):
     def test_post_observation_no_guide_camera_sets_default(self):
         observation = copy.deepcopy(self.observation)
         observation['request']['configurations'][0]['instrument_type'] = '1M0-NRES-SCICAM'
-        observation['request']['configurations'][0]['guiding_config']['state'] = 'ON'
+        observation['request']['configurations'][0]['guiding_config']['mode'] = 'ON'
         observation['request']['configurations'][0]['acquisition_config']['mode'] = 'WCS'
         observation['request']['configurations'][0]['type'] = 'NRES_SPECTRUM'
         del observation['request']['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
@@ -257,7 +257,7 @@ class TestPostScheduleApi(SetTimeMixin, APITestCase):
 
     def test_self_guiding_with_no_guide_camera_set_sets_same_instrument_for_guide_camera(self):
         observation = copy.deepcopy(self.observation)
-        observation['request']['configurations'][0]['guiding_config']['state'] = 'ON'
+        observation['request']['configurations'][0]['guiding_config']['mode'] = 'ON'
         observation['request']['configurations'][0]['extra_params']['self_guide'] = True
         response = self.client.post(reverse('api:schedule-list'), data=observation)
         obs_json = response.json()
@@ -291,7 +291,7 @@ class TestPostScheduleMultiConfigApi(SetTimeMixin, APITestCase):
             self.observation['request']['configurations'][0]
         ))
         self.observation['request']['configurations'][2]['instrument_type'] = '1M0-NRES-SCICAM'
-        self.observation['request']['configurations'][2]['guiding_config']['state'] = 'ON'
+        self.observation['request']['configurations'][2]['guiding_config']['mode'] = 'ON'
         self.observation['request']['configurations'][2]['acquisition_config']['mode'] = 'WCS'
         self.observation['request']['configurations'][2]['type'] = 'NRES_SPECTRUM'
         del self.observation['request']['configurations'][2]['instrument_configs'][0]['optical_elements']['filter']

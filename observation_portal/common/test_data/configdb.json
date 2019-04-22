@@ -109,6 +109,22 @@
                               "params": {}
                             }
                           ]
+                        },
+                        {
+                          "type": "guiding",
+                          "default": "OFF",
+                          "modes": [
+                            {
+                              "code": "OFF",
+                              "overhead": 0.0,
+                              "params": {}
+                            },
+                            {
+                              "code": "ON",
+                              "overhead": 0.0,
+                              "params": {}
+                            }
+                          ]
                         }
                       ]
                     },
@@ -215,6 +231,17 @@
                                   "acquire_radius"
                                 ]
                               }
+                            }
+                          ]
+                        },
+                        {
+                          "type": "guiding",
+                          "default": "ON",
+                          "modes": [
+                            {
+                              "code": "ON",
+                              "overhead": 0.0,
+                              "params": {}
                             }
                           ]
                         },
@@ -379,6 +406,22 @@
                               "params": {}
                             }
                           ]
+                        },
+                        {
+                          "type": "guiding",
+                          "default": "OFF",
+                          "modes": [
+                            {
+                              "code": "OFF",
+                              "overhead": 0.0,
+                              "params": {}
+                            },
+                            {
+                              "code": "ON",
+                              "overhead": 0.0,
+                              "params": {}
+                            }
+                          ]
                         }
                       ]
                     },
@@ -473,6 +516,17 @@
                           "modes": [
                             {
                               "code": "WCS",
+                              "overhead": 0.0,
+                              "params": {}
+                            }
+                          ]
+                        },
+                        {
+                          "type": "guiding",
+                          "default": "ON",
+                          "modes": [
+                            {
+                              "code": "ON",
                               "overhead": 0.0,
                               "params": {}
                             }
@@ -573,6 +627,17 @@
                                   "acquire_radius"
                                 ]
                               }
+                            }
+                          ]
+                        },
+                        {
+                          "type": "guiding",
+                          "default": "ON",
+                          "modes": [
+                            {
+                              "code": "ON",
+                              "overhead": 0.0,
+                              "params": {}
                             }
                           ]
                         },
