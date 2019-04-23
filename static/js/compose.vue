@@ -13,7 +13,10 @@
       </b-col>
     </b-form-row>
     <b-tabs id="tabs" fill>
-      <b-tab active>
+      <b-tab 
+        :active="tab==1" 
+        @click="tab=1"
+      >
         <template slot="title">
           <i class="far fa-edit"></i> Form
         </template>
@@ -36,44 +39,57 @@
           </b-form-row>
         </b-container>
       </b-tab>
-      <b-tab>
+      <b-tab 
+        :active="tab==2"
+        @click="tab=2"
+      >
         <template slot="title">
           <i class="fas fa-code"></i> API View
         </template>
-        <b-container class="p-0">
+        <b-container class="p-0 mt-2">
           <b-form-row>
-            <b-col class="my-3">
-
-              <!-- TODO -->
-              <a :href="dataAsEncodedStr" download="apiview.json" class="btn btn-default" title="download">
-                <i class="fa fa-download"></i> Download as JSON
-              </a>
-              <pre>{{ JSON.stringify(requestgroup, null, 4) }}</pre>
-              
+            <b-col class="bg-light rounded">
+              <b-container class="p-4">
+                <b-button 
+                  :href="dataAsEncodedStr" 
+                  download="apiview.json"
+                  variant="primary"
+                  class="float-right"
+                >
+                  <i class="fa fa-download"></i> Download as JSON
+                </b-button>
+                <pre>{{ JSON.stringify(requestgroup, null, 4) }}</pre>
+              </b-container>
             </b-col>
           </b-form-row>
         </b-container>
       </b-tab>
-      <b-tab>
+      <b-tab 
+        :active="tab==3" 
+        @click="tab=3"
+      >
         <template slot="title">
           <i class="far fa-file-alt"></i> Drafts 
         </template>
-        <b-container class="p-0">
+        <b-container class="p-0 mt-2">
           <b-form-row>
             <b-col>
-
-              <!-- TODO: The drafts component -->
-              <drafts v-on:loaddraft="loadDraft" :tab="tab"/>
-
+              <drafts 
+                :tab="tab"
+                @loaddraft="loadDraft"
+              />
             </b-col>
           </b-form-row>
         </b-container>  
       </b-tab>
-      <b-tab>
+      <b-tab 
+        :active="tab==4"
+        @click="tab=4"
+      >
         <template slot="title">
           <i class="fas fa-question"></i> How to use this page
         </template>
-        <b-container class="p-0">
+        <b-container class="p-0 mt-2">
           <b-form-row>
             <b-col class="my-3">
               <h2>Using the compose form</h2>
@@ -378,11 +394,3 @@
     }
   };
 </script>
-<style>
-  /* #dldjson {
-    float: right;
-    position: relative;
-    top: 10px;
-    right: 175px;
-  } */
-</style>
