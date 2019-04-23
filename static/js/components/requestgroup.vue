@@ -2,7 +2,7 @@
   <panel :show="show"
     id="general" 
     title="General Information" 
-    icon="fa-address-card" 
+    icon="fas fa-address-card" 
     :errors="errors" 
     :canremove="false" 
     :cancopy="false"

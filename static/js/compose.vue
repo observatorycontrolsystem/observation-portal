@@ -12,30 +12,25 @@
         </alert>
       </b-col>
     </b-form-row>
-    <b-tabs id="tabs" nav-class="border-0">
+    <b-tabs id="tabs" fill>
       <b-tab active>
         <template slot="title">
           <i class="far fa-edit"></i> Form
         </template>
-        <b-container class="p-0">
+        <b-container class="p-0 mt-2">
           <b-form-row>
-
-            <!-- TODO: If there isn't enough space for the first column, the sidenav will go to the bottom of the page -->
-            <b-col cols="10">
-            
-              <requestgroup 
+            <b-col>            
+              <requestgroup
                 :errors="errors" 
                 :duration_data="duration_data" 
                 :requestgroup="requestgroup"
                 @requestgroupupdate="requestgroupUpdated"
               />
             </b-col>
-            <b-col>
-
-              <!-- TODO: The sidenav component -->
+            <b-col cols="auto">
               <sidenav 
                 :requestgroup="requestgroup" 
-                :errors="errors"
+                :errors="errors" 
               /> 
             </b-col>
           </b-form-row>
@@ -237,7 +232,7 @@
                 }
               }],
               acquisition_config: {
-                mode: '',
+                mode: 'OFF',
                 extra_params: {
                   acquire_radius: null
                 }

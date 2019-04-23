@@ -29,12 +29,6 @@ let vm = new Vue({
   }
 });
 
-// TODO: scrollspy
-// $('body').scrollspy({
-//   target: '.bs-docs-sidebar',
-//   offset: 180
-// });
-
 export { vm };
 
 

@@ -2,7 +2,7 @@
 <template>
   <panel :show="show"
     title="Request" 
-    icon="fa-wpexplorer" 
+    icon="fab fa-wpexplorer" 
     :id="'request' + index" 
     :index="index" 
     :errors="errors" 
@@ -215,7 +215,7 @@
         console.log('configurationfillwindow');
         if ('largest_interval' in this.duration_data) {
           let num_exposures = this.request.configurations[0].instrument_configs[0].exposure_count;
-          let configuration_duration = this.duration_data.configuration[configurationstatus_id].duration;
+          let configuration_duration = this.duration_data.configuration[configuration_id].duration;
           let available_time = this.duration_data.largest_interval - this.duration_data.duration + (configuration_duration * num_exposures);
           num_exposures = Math.floor(available_time / configuration_duration);
           this.request.configurations[configuration_id].exposure_count = Math.max(1, num_exposures);

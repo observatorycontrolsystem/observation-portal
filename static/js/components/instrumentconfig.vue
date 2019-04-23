@@ -1,8 +1,8 @@
 <template>
     <panel :show="show"
       title="Instrument Configuration"
-      icon="fa-cogs"
-      :id="'instrumentconfig' + $parent.$parent.index + index"
+      icon="fas fa-cogs"
+      :id="'instrumentconfig' + $parent.$parent.$parent.index + $parent.index + index"
       :index="index" 
       :errors="errors"
       :canremove="this.index > 0" 

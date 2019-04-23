@@ -9,7 +9,7 @@
             
               <b-form-row>
                 <b-col class="text-left">
-                  <i class="fas align-middle mx-2" :class="icon"></i>
+                  <i class="align-middle mx-2" :class="icon"></i>
                   <!-- TODO: The warning and success flicker on page load -->
                   <i class="fas fa-exclamation-triangle text-danger align-middle" v-b-tooltip.hover title="Errors in form" v-show="hasError"></i>
                   <i class="fas fa-check text-success align-middle" v-b-tooltip.hover title="Section is complete" v-show="!hasError"></i>
@@ -27,7 +27,7 @@
                     <i class="fa fa-copy fa-fw"></i>
                   </b-button>
                   <b-button variant="danger" v-on:click="remove" v-show="canremove" v-b-tooltip.hover title="Remove" size="sm">
-                    <i class="fa fa-trash fa-fw fa-2x"></i>
+                    <i class="fa fa-trash fa-fw"></i>
                   </b-button>
                 </b-col>
               </b-form-row>

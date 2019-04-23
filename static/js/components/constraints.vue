@@ -1,10 +1,10 @@
 <template>
   <panel :show="show"
-    :id="'constraints' + $parent.$parent.index" 
+    :id="'constraints' + $parent.$parent.$parent.index + $parent.index" 
     :errors="errors" 
     :canremove="false" 
     :cancopy="false" 
-    icon="fa-lock" 
+    icon="fas fa-lock" 
     title="Constraints" 
     @show="show = $event"
   >

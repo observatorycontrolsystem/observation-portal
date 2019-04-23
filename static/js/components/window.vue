@@ -1,6 +1,6 @@
 <template>
   <panel 
-    icon="fa-calendar" 
+    icon="fas fa-calendar" 
     title="Window" 
     :id="'window' + $parent.$parent.index + index" 
     :index="index" 
@@ -33,8 +33,11 @@
               A start time cannot be selected for a Rapid Response observation-it will be scheduled as soon as possible.
             </li>
           </ul>
+
+          <!-- TODO: The airmass plot! -->
           <h4 v-show="showAirmass" class="text-center">Visibility</h4>
           <airmass v-show="showAirmass" :data="airmassData" :showZoomControls="true"></airmass>
+        
         </b-col>
         <b-col :md="show ? 6 : 12">
           <b-form>
@@ -93,9 +96,8 @@
 <script>
   import $ from 'jquery';
   import _ from 'lodash';
-  import moment from 'moment';
 
-  import { collapseMixin, datetimeFormat } from '../utils.js';
+  import { collapseMixin } from '../utils.js';
   import panel from './util/panel.vue';
   import alert from './util/alert.vue';
   import customdatetime from './util/customdatetime.vue';

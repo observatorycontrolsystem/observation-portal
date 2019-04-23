@@ -1,10 +1,10 @@
 <template>
   <panel :show="show"
-    :id="'target' + $parent.$parent.index + $parent.index" 
+    :id="'target' + $parent.$parent.$parent.index + $parent.index" 
     :errors="errors" 
     :canremove="false" 
     :cancopy="false" 
-    icon="fa-crosshairs" 
+    icon="fas fa-crosshairs" 
     title="Target" 
     @show="show = $event"    
   >

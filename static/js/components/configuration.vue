@@ -5,7 +5,7 @@
     :errors="errors" 
     :canremove="this.index > 0" 
     :cancopy="true" 
-    icon="fa-cogs" 
+    icon="fas fa-cogs" 
     title="Configuration" 
     @remove="$emit('remove')"
     @copy="$emit('copy')" 
@@ -34,17 +34,16 @@
         <b-col :md="show ? 6 : 12">
           <b-form>
             <customselect v-if="!simple_interface && datatype !='SPECTRA'"
-              v-model="configuration.guiding_config.mode" 
+              v-model="configuration.guiding_config.optional" 
               label="Guiding" 
               field="mode" 
-              desc="Guiding keeps the field stable during long exposures. If OPTIONAL is selected, then guiding is 
-                    attempted, but the observations will be carried out even if guiding fails. If ON is selected, 
-                    then if guiding fails, the observations will be aborted."
-              :errors="{}" 
+              desc="Guiding keeps the field stable during long exposures. If set to optional, then guiding is 
+                    attempted but observations are carried out even if guiding fails. If set to on, 
+                    observations are aborted if guiding fails."
+              :errors="_.get(errors, ['guiding_config', 'optional'], {})" 
               :options="[
-                {value: 'OPTIONAL', text: 'Optional'},
-                {value: 'OFF', text: 'Off'},
-                {value: 'ON', text: 'On'}
+                {value: true, text: 'Optional'},
+                {value: false, text: 'On'},
               ]"
               @input="update" 
             />
@@ -239,7 +238,7 @@
     },
     watch: {
       selectedinstrument: function(value) {
-        if (this.configuration.instrument_type !== value){
+        if (this.configuration.instrument_type !== value) {
           if (value.includes('NRES') ){
             this.setupNRES();
           } else if (value.includes('FLOYDS') ){
