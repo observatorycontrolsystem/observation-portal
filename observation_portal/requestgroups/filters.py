@@ -14,7 +14,8 @@ class RequestGroupFilter(django_filters.FilterSet):
     #     choices=Location.TELESCOPE_CLASSES, field_name='requests__location__telescope_class', distinct=True,
     # )
     target = django_filters.CharFilter(
-            field_name='requests__target__name', lookup_expr='icontains', label='Target name contains', distinct=True
+        field_name='requests__configurations__target__name', lookup_expr='icontains', label='Target name contains',
+        distinct=True
     )
     modified_after = django_filters.DateTimeFilter(field_name='requests__modified', lookup_expr='gte', label='Modified After', distinct=True)
     modified_before = django_filters.DateTimeFilter(field_name='requests__modified', lookup_expr='lte', label='Modified Before', distinct=True)
