@@ -26,6 +26,7 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.conf.urls.static import static
 
 from observation_portal.requestgroups.viewsets import RequestGroupViewSet, RequestViewSet, DraftRequestGroupViewSet
+from observation_portal.userrequests.viewsets import UserRequestViewSet
 from observation_portal.requestgroups.views import TelescopeStatesView, TelescopeAvailabilityView, AirmassView
 from observation_portal.requestgroups.views import InstrumentsInformationView, ObservationPortalLastChangedView
 from observation_portal.requestgroups.views import ContentionView, PressureView
@@ -43,6 +44,7 @@ from observation_portal import settings
 router = DefaultRouter()
 router.register(r'requests', RequestViewSet, 'requests')
 router.register(r'requestgroups', RequestGroupViewSet, 'request_groups')
+router.register(r'userrequests', UserRequestViewSet, 'userrequests')
 router.register(r'drafts', DraftRequestGroupViewSet, 'drafts')
 router.register(r'proposals', ProposalViewSet, 'proposals')
 router.register(r'semesters', SemesterViewSet, 'semesters')
