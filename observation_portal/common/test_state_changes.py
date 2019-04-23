@@ -323,7 +323,7 @@ class TestStateFromConfigurationStatuses(SetTimeMixin, TestCase):
             cs = dmixer.blend(
                 ConfigurationStatus, observation=observation, configuration=configuration, state='PENDING'
             )
-            dmixer.blend(Summary, configuration_status=cs)
+            dmixer.blend(Summary, configuration_status=cs, time_completed=0)
         initial_state = 'INITIAL'
         request_state = get_request_state_from_configuration_statuses(
             initial_state, 100, observation.configuration_statuses.all()
