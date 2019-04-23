@@ -101,6 +101,7 @@ class ObserveRequestGroupSerializer(RequestGroupSerializer):
 
 
 class ScheduleSerializer(serializers.ModelSerializer):
+    """ Used to validate direct-submitted observations """
     configuration_statuses = ConfigurationStatusSerializer(many=True, read_only=True)
     request = ObserveRequestSerializer()
     proposal = serializers.CharField(write_only=True)

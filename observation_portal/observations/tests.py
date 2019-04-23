@@ -11,8 +11,9 @@ from dateutil.parser import parse as datetime_parser
 from datetime import timedelta
 
 from observation_portal.requestgroups.models import RequestGroup, Window, Location
+from observation_portal.observations.time_accounting import configuration_time_used
 from observation_portal.observations.models import Observation, ConfigurationStatus, Summary
-from observation_portal.proposals.models import Proposal, Membership, Semester
+from observation_portal.proposals.models import Proposal, Membership, Semester, TimeAllocation
 from observation_portal.accounts.models import Profile
 from observation_portal.common.test_helpers import create_simple_requestgroup, create_simple_configuration
 from observation_portal.observations import views
@@ -957,3 +958,127 @@ class TestLastScheduled(TestObservationApiBase):
         last_schedule = response.json()['last_schedule_time']
         self.assertAlmostEqual(datetime_parser(last_schedule), timezone.now() - timedelta(days=7),
                                delta=timedelta(minutes=1))
+
+
+class TestTimeAccounting(TestObservationApiBase):
+    def setUp(self):
+        super().setUp()
+        self.time_allocation = mixer.blend(TimeAllocation, instrument_type='1M0-SCICAM-SBIG', semester=self.semester,
+                                           proposal=self.proposal, std_allocation=100, rr_allocation=100,
+                                           tc_allocation=100, ipp_time_available=100)
+
+    def _create_observation_and_config_status(self, requestgroup, start, end, config_state='PENDING'):
+        observation = mixer.blend(Observation, request=requestgroup.requests.first(),
+                                  site='tst', enclosure='domb', telescope='1m0a',
+                                  start=start, end=end, state='PENDING')
+        config_status = mixer.blend(ConfigurationStatus, observation=observation,
+                                    configuration=requestgroup.requests.first().configurations.first(),
+                                    instrument_name='xx03', guide_camera_name='xx03', state=config_state)
+
+        return observation, config_status
+
+    def _helper_test_summary_save(self, observation_type=RequestGroup.NORMAL, config_status_state='PENDING',
+                                  config_start=datetime(2019, 9, 5, 22, 20, 24, tzinfo=timezone.utc),
+                                  config_end=datetime(2019, 9, 5, 22, 21, 24, tzinfo=timezone.utc)):
+        self.assertEqual(self.time_allocation.std_time_used, 0)
+        self.assertEqual(self.time_allocation.tc_time_used, 0)
+        self.assertEqual(self.time_allocation.rr_time_used, 0)
+        self.requestgroup.observation_type = observation_type
+        self.requestgroup.save()
+        _, config_status = self._create_observation_and_config_status(self.requestgroup,
+                                                                      start=datetime(2019, 9, 5, 22, 20,
+                                                                                     tzinfo=timezone.utc),
+                                                                      end=datetime(2019, 9, 5, 23, tzinfo=timezone.utc),
+                                                                      config_state=config_status_state)
+        summary = mixer.blend(Summary, configuration_status=config_status, start=config_start, end=config_end)
+        self.time_allocation.refresh_from_db()
+        time_used = configuration_time_used(summary, observation_type).total_seconds() / 3600.0
+        if observation_type == RequestGroup.NORMAL:
+            self.assertAlmostEqual(self.time_allocation.std_time_used, time_used, 5)
+            self.assertEqual(self.time_allocation.tc_time_used, 0)
+            self.assertEqual(self.time_allocation.rr_time_used, 0)
+        if observation_type == RequestGroup.RAPID_RESPONSE:
+            self.assertAlmostEqual(self.time_allocation.rr_time_used, time_used, 5)
+            self.assertEqual(self.time_allocation.std_time_used, 0)
+            self.assertEqual(self.time_allocation.tc_time_used, 0)
+        if observation_type == RequestGroup.TIME_CRITICAL:
+            self.assertAlmostEqual(self.time_allocation.tc_time_used, time_used, 5)
+            self.assertEqual(self.time_allocation.rr_time_used, 0)
+            self.assertEqual(self.time_allocation.std_time_used, 0)
+
+        return config_status, summary
+
+    def test_attempted_configuration_status_affects_normal_time_accounting(self):
+        self._helper_test_summary_save(config_status_state='ATTEMPTED')
+
+    def test_failed_configuration_status_affects_normal_time_accounting(self):
+        self._helper_test_summary_save(config_status_state='FAILED',
+                                       config_end=datetime(2019, 9, 5, 22, 40, 24, tzinfo=timezone.utc))
+
+    def test_completed_configuration_status_affects_tc_time_accounting(self):
+        self._helper_test_summary_save(observation_type=RequestGroup.TIME_CRITICAL,
+                                       config_status_state='COMPLETED',
+                                       config_end=datetime(2019, 9, 5, 22, 58, 24, tzinfo=timezone.utc))
+
+    def test_completed_configuration_status_affects_rr_time_accounting(self):
+        self._helper_test_summary_save(observation_type=RequestGroup.RAPID_RESPONSE,
+                                       config_status_state='COMPLETED',
+                                       config_end=datetime(2019, 9, 5, 22, 21, 24, tzinfo=timezone.utc))
+
+    def test_completed_configuration_status_affects_rr_time_accounting_block_bounded(self):
+        self._helper_test_summary_save(observation_type=RequestGroup.RAPID_RESPONSE,
+                                       config_status_state='COMPLETED',
+                                       config_end=datetime(2019, 9, 5, 22, 58, 24, tzinfo=timezone.utc))
+
+    def test_multiple_summary_saves_leads_to_consistent_time_accounting(self):
+        config_start = datetime(2019, 9, 5, 22, 20, 24, tzinfo=timezone.utc)
+        config_status, summary = self._helper_test_summary_save(
+            observation_type=RequestGroup.NORMAL,
+            config_status_state='ATTEMPTED',
+            config_start=config_start,
+            config_end=datetime(2019, 9, 5, 22, 58, 24, tzinfo=timezone.utc)
+        )
+
+        config_status.state = 'FAILED'
+        config_status.save()
+        new_end_time = datetime(2019, 9, 5, 22, 30, tzinfo=timezone.utc)
+        summary.end = new_end_time
+        summary.save()
+        self.time_allocation.refresh_from_db()
+
+        time_used = (new_end_time - config_start).total_seconds() / 3600.0
+        self.assertAlmostEqual(self.time_allocation.std_time_used, time_used, 5)
+
+    def test_multiple_requests_leads_to_consistent_time_accounting(self):
+        self._helper_test_summary_save(
+            observation_type=RequestGroup.NORMAL,
+            config_status_state='COMPLETED',
+            config_end=datetime(2019, 9, 5, 22, 58, 24, tzinfo=timezone.utc)
+        )
+        self.time_allocation.refresh_from_db()
+        time_used = self.time_allocation.std_time_used
+
+        window = mixer.blend(
+            Window, start=datetime(2016, 9, 3, tzinfo=timezone.utc), end=datetime(2016, 9, 6, tzinfo=timezone.utc)
+        )
+        location = mixer.blend(Location, telescope_class='1m0')
+        second_requestgroup = create_simple_requestgroup(self.user, self.proposal, window=window,
+                                                       location=location)
+        second_requestgroup.observation_type = RequestGroup.NORMAL
+        second_requestgroup.save()
+        configuration = second_requestgroup.requests.first().configurations.first()
+        configuration.instrument_type = '1M0-SCICAM-SBIG'
+        configuration.save()
+        _, second_config_status = self._create_observation_and_config_status(second_requestgroup,
+                                                                             start=datetime(2019, 9, 6, 23, 20,
+                                                                                            tzinfo=timezone.utc),
+                                                                             end=datetime(2019, 9, 6, 23, 50,
+                                                                                          tzinfo=timezone.utc),
+                                                                             config_state='COMPLETED')
+
+        config_start = datetime(2019, 9, 6, 23, 20, 24, tzinfo=timezone.utc)
+        config_end = datetime(2019, 9, 6, 23, 40, 24, tzinfo=timezone.utc)
+        mixer.blend(Summary, configuration_status=second_config_status, start=config_start, end=config_end)
+        self.time_allocation.refresh_from_db()
+        time_used += (config_end - config_start).total_seconds() / 3600.0
+        self.assertAlmostEqual(self.time_allocation.std_time_used, time_used, 5)

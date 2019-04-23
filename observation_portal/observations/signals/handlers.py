@@ -1,5 +1,5 @@
 from django.dispatch import receiver
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save
 
 from observation_portal.observations.models import ConfigurationStatus, Summary
 from observation_portal.observations.time_accounting import on_summary_update_time_accounting
@@ -13,12 +13,12 @@ def cb_configurationstatus_post_save(sender, instance, created, *args, **kwargs)
         on_configuration_status_state_change(instance)
 
 
-@receiver(post_save, sender=Summary)
-def cb_summary_post_save(sender, instance, created, *args, **kwargs):
+@receiver(pre_save, sender=Summary)
+def cb_summary_pre_save(sender, instance, *args, **kwargs):
     # Update the time accounting on a summary update or creation
-    if created:
-        current_summary = None
-    else:
+    if instance.id:
         current_summary = Summary.objects.get(pk=instance.pk)
+    else:
+        current_summary = None
     on_summary_update_time_accounting(current_summary, instance)
 
