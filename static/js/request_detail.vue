@@ -61,18 +61,20 @@
                       <b-row>
                         <b-col md="6">
                           <h4>Target</h4>
-                          <dl class="twocol dl-horizontal">
-                            <span v-for="(x, idx) in configuration.target" :key="'target-' + idx">
-                              <dt v-if="configuration.target[idx]">{{ idx | formatField }}</dt>
-                              <dd v-if="x">
-                                <span v-if="idx === 'name'">{{ x }}</span>
-                                <span v-else>{{ x | formatValue }}</span>
-                              </dd>
-                            </span>
-                          </dl>
+                          <ul class="list-unstyled card-count card-column-two">
+                            <li v-for="(x, idx) in configuration.target" :key="'target-' + idx">
+                              <b-row v-if="configuration.target[idx] && x">
+                                <b-col class="font-weight-bold text-nowrap" v-if="configuration.target[idx]">{{ idx | formatField }}</b-col>
+                                <b-col v-if="x">
+                                  <span v-if="idx === 'name'">{{ x }}</span>
+                                  <span v-else>{{ x | formatValue }}</span>
+                                </b-col>
+                              </b-row>
+                            </li>
+                          </ul>
                           <hr/>
                           <h4>Instrument Configs</h4>
-                          <table class="table">
+                          <table class="table table-borderless">
                             <thead>
                               <tr>
                                 <td><strong>Mode</strong></td>
@@ -96,43 +98,40 @@
                         </b-col>
                         <b-col md="6">
                           <h4>Acquisition</h4>
-                          <dl class="twocol dl-horizontal">
-                            <span 
-                              v-for="(x, idx) in configuration.acquisition_config" 
-                              :key="'acquisition-' + idx"
-                            >
-                              <dt v-if="configuration.acquisition_config[idx]">{{ idx | formatField }}</dt>
-                              <dd v-if="x">
-                                <span v-if="idx === 'name'">{{ x }}</span>
-                                <span v-else>{{ x | formatValue }}</span>
-                              </dd>
-                            </span>
-                          </dl>
+                          <ul class="list-unstyled card-count card-column-two">
+                            <li v-for="(x, idx) in configuration.acquisition_config" :key="'acquisition-' + idx">
+                              <b-row v-if="configuration.acquisition_config[idx] && x">
+                                <b-col class="font-weight-bold text-nowrap" v-if="configuration.acquisition_config[idx]">{{ idx | formatField }}</b-col>
+                                <b-col v-if="x">
+                                  <span v-if="idx === 'name'">{{ x }}</span>
+                                  <span v-else>{{ x | formatValue }}</span>
+                                </b-col>
+                              </b-row>
+                            </li>
+                          </ul>
                           <hr/>
                           <h4>Guiding</h4>
-                          <dl class="twocol dl-horizontal">
-                            <span 
-                              v-for="(x, idx) in configuration.guiding_config" 
-                              :key="'guiding-' + idx"
-                            >
-                              <dt v-if="configuration.guiding_config[idx]">{{ idx | formatField }}</dt>
-                              <dd v-if="x">
-                                <span v-if="idx === 'name'">{{ x }}</span>
-                                <span v-else>{{ x | formatValue }}</span>
-                              </dd>
-                            </span>
-                          </dl>
+                          <ul class="list-unstyled card-count card-column-two">
+                            <li v-for="(x, idx) in configuration.guiding_config" :key="'guiding-' + idx">
+                              <b-row v-if="configuration.guiding_config[idx] && x">
+                                <b-col class="font-weight-bold text-nowrap" v-if="configuration.guiding_config[idx]">{{ idx | formatField }}</b-col>
+                                <b-col v-if="x">
+                                  <span v-if="idx === 'name'">{{ x }}</span>
+                                  <span v-else>{{ x | formatValue }}</span>
+                                </b-col>
+                              </b-row>
+                            </li>
+                          </ul>
                           <hr/>
                           <h4>Constraints</h4>
-                          <dl class="twocol dl-horizontal">
-                            <span 
-                              v-for="(x, idx) in configuration.constraints" 
-                              :key="'constraints-' + idx"
-                            >
-                              <dt v-if="configuration.constraints[idx]">{{ idx | formatField }}</dt>
-                              <dd v-if="x">{{ x | formatValue }}</dd>
-                            </span>
-                          </dl>
+                          <ul class="list-unstyled card-count card-column-two">
+                            <li v-for="(x, idx) in configuration.constraints" :key="'constraints-' + idx">
+                              <b-row v-if="configuration.constraints[idx] && x">
+                                <b-col class="font-weight-bold text-nowrap" v-if="configuration.constraints[idx]">{{ idx | formatField }}</b-col>
+                                <b-col v-if="x">{{ x | formatValue }}</b-col>
+                              </b-row>
+                            </li>
+                          </ul>
                         </b-col>
                       </b-row>
                     </b-card-body>
