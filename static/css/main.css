@@ -294,3 +294,7 @@ a:hover {
 .navbar-light .navbar-nav .nav-link{
     color: #009ec3;
 }
+
+.card-column-two{
+    column-count: 2;
+}
