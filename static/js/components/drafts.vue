@@ -1,31 +1,44 @@
 <template>
-  <b-table 
-    striped 
-    hover 
-    :fields="fields" 
-    :items="items" 
-    :show-empty="tableIsEmpty"
-    empty-text="You have no draft observing requests" 
-  >
-    <template slot="load" slot-scope="data" class="text-center">
-      <b-button 
-        variant="info" 
-        size="sm" 
-        @click="loadDraft(data.value)"
-      >
-        <i class="fa fa-download"></i>
-      </b-button>
-    </template>
-    <template slot="delete" slot-scope="data">
-      <b-button 
-        variant="danger" 
-        size="sm" 
-        @click="deleteDraft(data.value)"
-      >
-        <i class="fa fa-trash"></i>
-      </b-button>
-    </template>
-  </b-table>
+  <div>
+    <b-table
+      id="my-table" 
+      striped 
+      hover 
+      :per-page="perPage"
+      :current-page="currentPage"
+      :fields="fields" 
+      :items="items" 
+      :show-empty="tableIsEmpty"
+      empty-text="You have no draft observing requests" 
+    >
+      <template slot="load" slot-scope="data" class="text-center">
+        <b-button 
+          variant="info" 
+          size="sm" 
+          @click="loadDraft(data.value)"
+        >
+          <i class="fa fa-download"></i>
+        </b-button>
+      </template>
+      <template slot="delete" slot-scope="data">
+        <b-button 
+          variant="danger" 
+          size="sm" 
+          @click="deleteDraft(data.value)"
+        >
+          <i class="fa fa-trash"></i>
+        </b-button>
+      </template>
+    </b-table>
+    <b-pagination
+      v-model="currentPage"
+      :total-rows="rows"
+      :per-page="perPage"
+      aria-controls="my-table"
+      align="center"
+      size="sm"
+    />
+  </div>
 </template>
 <script>
   import $ from 'jquery';
@@ -38,6 +51,8 @@
     ],
     data: function() {
       return {
+        'currentPage': 1,
+        'perPage': 20,
         'drafts': [],
         'fields': [
           {
@@ -52,8 +67,7 @@
           {
             key: 'delete',
             class: 'text-center'
-          },
-
+          }
         ]
       };
     },
@@ -75,12 +89,15 @@
       },
       tableIsEmpty: function() {
         return this.items.length < 1;
+      },
+      rows: function() {
+        return this.items.length;
       }
     },
     methods: {
       fetchDrafts: function() {
         let that = this;
-        $.getJSON('/api/drafts/', function(data) {
+        $.getJSON('/api/drafts/?limit=100', function(data) {
           that.drafts = data.results;
         });
       },
