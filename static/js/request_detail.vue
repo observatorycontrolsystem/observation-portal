@@ -62,12 +62,14 @@
                         <b-col md="6">
                           <h4>Target</h4>
                           <ul class="list-unstyled card-count card-column-two">
-                            <li v-for="(x, idx) in configuration.target" :key="'target-' + idx">
+                            <li class="nobreak" v-for="(x, idx) in configuration.target" :key="'target-' + idx">
                               <b-row v-if="configuration.target[idx] && x">
                                 <b-col class="font-weight-bold text-nowrap" v-if="configuration.target[idx]">{{ idx | formatField }}</b-col>
                                 <b-col v-if="x">
                                   <span v-if="idx === 'name'">{{ x }}</span>
                                   <span v-else>{{ x | formatValue }}</span>
+                                  <em v-if="idx === 'ra'" class="text-muted"> {{ x | raAsSexigesimal }}</em>
+                                  <em v-if="idx === 'dec'" class="text-muted"> {{ x | decAsSexigesimal }}</em>
                                 </b-col>
                               </b-row>
                             </li>
@@ -201,12 +203,15 @@
   import Vue from 'vue';
   import $ from 'jquery';
   import _ from 'lodash';
+
   import thumbnail from './components/thumbnail.vue';
   import archivetable from './components/archivetable.vue';
   import observationhistory from './components/observationhistory.vue';
   import airmass_telescope_states from './components/airmass_telescope_states.vue';
-  import {formatDate, formatField, formatValue} from './utils.js';
-  import {login, getLatestFrame} from './archive.js';
+  import {
+    formatDate, formatField, formatValue, decimalDecToSexigesimal, decimalRaToSexigesimal
+  } from './utils.js';
+  import { login, getLatestFrame } from './archive.js';
 
   Vue.filter('formatDate', function(value){
     return formatDate(value);
@@ -218,6 +223,13 @@
 
   Vue.filter('formatValue', function(value){
     return formatValue(value);
+  });
+
+  Vue.filter('raAsSexigesimal', function(ra){
+    return decimalRaToSexigesimal(ra).str
+  });
+  Vue.filter('decAsSexigesimal', function(dec){
+    return decimalDecToSexigesimal(dec).str
   });
 
   export default {
@@ -364,20 +376,20 @@
   };
 </script>
 <style>
+  .nobreak {
+    display: inline-block;
+  }
   dl.twocol {
     -moz-column-count: 2;
     -webkit-column-count: 2;
     column-count: 2;
   }
-
   dl.twocol dt {
     width: inherit;
   }
-
   dl.twocol dd {
     margin-left: 160px;
   }
-
   .request-details {
     margin-top: 5px;
   }

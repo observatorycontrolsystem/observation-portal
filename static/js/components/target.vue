@@ -27,6 +27,11 @@
         </b-col>
         <b-col :md="show ? 6 : 12">
           <b-form>
+            <b-row v-show="lookingUP || lookupFail">
+              <b-col class="extra-info-text text-right font-italic">
+                <i v-show="lookingUP" class="fa fa-spinner fa-spin fa-fw"></i> {{ lookupText }}
+              </b-col>
+            </b-row>
             <customfield 
               v-model="target.name" 
               label="Name" 
@@ -34,11 +39,6 @@
               :errors="errors.name"
               @input="update" 
             />
-            <b-row v-show="lookingUP || lookupFail">
-              <b-col class="text-right">
-                <i v-show="lookingUP" class="fa fa-spinner fa-spin fa-fw"></i> {{ lookupText }}
-              </b-col>
-            </b-row>
             <customselect v-if="!simple_interface"
               v-model="target.type" 
               label="Type" 
@@ -51,23 +51,25 @@
               @input="update" 
             />
             <span class="sidereal" v-show="target.type === 'SIDEREAL'">
-
-              <!-- TODO: There is no input type `sex`, implement the switch between decimal and sexagesimal-->
-
-
+            <div class="extra-info-text text-right font-italic">
+              {{ ra_help_text }}
+            </div>
               <customfield 
-                v-model="target.ra" 
+                v-model="ra_display" 
                 label="Right Ascension" 
-                type="sex" 
+                type="text" 
                 field="ra" 
                 desc="Decimal degrees or HH:MM:SS.S"
                 :errors="errors.ra"
                 @blur="updateRA" 
               />
+            <div class="extra-info-text text-right font-italic">
+              {{ dec_help_text }}
+            </div>
               <customfield 
-                v-model="target.dec" 
+                v-model="dec_display" 
                 label="Declination" 
-                type="sex" 
+                type="text" 
                 field="dec" 
                 desc="Decimal degrees or DD:MM:SS.S"
                 :errors="errors.dec"
@@ -238,7 +240,10 @@
   import _ from 'lodash';
   import $ from 'jquery';
 
-  import { collapseMixin, sexagesimalRaToDecimal, sexagesimalDecToDecimal, julianToModifiedJulian } from '../utils.js';
+  import { 
+    collapseMixin, sexagesimalRaToDecimal, sexagesimalDecToDecimal, 
+    julianToModifiedJulian, decimalRaToSexigesimal, decimalDecToSexigesimal 
+  } from '../utils.js';
   import archive from './archive.vue';
   import panel from './util/panel.vue';
   import customalert from './util/customalert.vue';
@@ -264,7 +269,7 @@
     mixins: [
       collapseMixin
     ],
-    data: function(){
+    data: function() {
       let ns_target_params = {
         scheme: 'MPC_MINOR_PLANET',
         orbinc: null,
@@ -289,7 +294,11 @@
         lookupReq: undefined,
         ns_target_params: ns_target_params,
         sid_target_params: sid_target_params,
-        rot_target_params: rot_target_params
+        rot_target_params: rot_target_params,
+        ra_display: this.target.ra,
+        dec_display: this.target.dec,
+        ra_help_text: this.raHelp(this.target.ra),
+        dec_help_text: this.decHelp(this.target.dec)
       };
     },
     methods: {
@@ -297,12 +306,28 @@
         this.$emit('targetupdate', {});
       },
       updateRA: function() {
-        this.target.ra = sexagesimalRaToDecimal(this.target.ra);
+        this.target.ra = sexagesimalRaToDecimal(this.ra_display);
+        this.ra_help_text = this.raHelp(this.ra_display);
         this.update();
       },
       updateDec: function() {
-        this.target.dec = sexagesimalDecToDecimal(this.target.dec);
+        this.target.dec = sexagesimalDecToDecimal(this.dec_display);
+        this.dec_help_text = this.decHelp(this.dec_display);
         this.update();
+      },
+      raHelp: function(ra) {
+        if (isNaN(Number(ra))) {
+          return 'Decimal: ' + Number(sexagesimalRaToDecimal(ra));
+        } else {
+          return 'Sexigesimal: ' + decimalRaToSexigesimal(ra).str;
+        }
+      },
+      decHelp: function(dec){
+        if (isNaN(Number(dec))) {
+          return 'Decimal: ' + Number(sexagesimalDecToDecimal(dec));
+        } else {
+          return 'Sexigesimal: ' + decimalDecToSexigesimal(dec).str;
+        }
       }
     },
     watch: {
@@ -319,6 +344,8 @@
           if (_.get(data, ['error'], null) === null) {
             that.target.ra = _.get(data, ['ra_d'], null);
             that.target.dec = _.get(data, ['dec_d'], null);
+            that.ra_display = _.get(data, ['ra_d'], null);
+            that.dec_display = _.get(data, ['dec_d'], null);
             that.target.proper_motion_ra = _.get(data, ['pmra'], null);
             that.target.proper_motion_dec = _.get(data, ['pmdec'], null);
             that.target.parallax = _.get(data, ['plx_value'], null);
@@ -332,6 +359,8 @@
             that.target.meandist = _.get(data, ['semimajor_axis'], null);
             that.target.meananom = _.get(data, ['mean_anomaly'], null);
             that.target.dailymot = _.get(data, ['mean_daily_motion'], null);
+            that.updateRA();
+            that.updateDec();
           } else {
             that.lookupText = 'Could not find any matching objects';
             that.lookupFail = true;
@@ -390,3 +419,8 @@
     }
   };
 </script>
+<style scoped>
+  .extra-info-text {
+    font-size: 90%;
+  }
+</style>

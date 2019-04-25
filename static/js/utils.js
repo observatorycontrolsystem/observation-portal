@@ -73,6 +73,44 @@ function sexagesimalDecToDecimal(dec){
   return dec;
 }
 
+function decimalRaToSexigesimal(deg){
+  var rs = 1;
+  if(deg < 0){
+    rs = -1;
+    var ra = Math.abs(deg);
+  } else {
+    var ra = deg
+  }
+  var raH = Math.floor(ra / 15)
+  var raM = Math.floor(((ra / 15) - raH) * 60)
+  var raS = ((((ra / 15 ) - raH ) * 60) - raM) * 60
+  return {
+    'h': raH * rs,
+    'm': raM,
+    's': raS,
+    'str': (rs > 0 ? '' : '-') + zPadFloat(raH) + ':' + zPadFloat(raM) + ':' + zPadFloat(raS)
+  }
+}
+
+function decimalDecToSexigesimal(deg){
+  var ds = 1;
+  if(deg < 0){
+    ds = -1;
+    var dec = Math.abs(deg);
+  } else {
+    var dec = deg;
+  }
+  var deg = Math.floor(dec)
+  var decM = Math.abs(Math.floor((dec - deg) * 60));
+  var decS = (Math.abs((dec - deg) * 60) - decM) * 60
+  return {
+    'deg': deg * ds,
+    'm': decM,
+    's': decS,
+    'str': (ds > 0 ? '' : '-') + zPadFloat(deg) + ':' + zPadFloat(decM) + ':' + zPadFloat(decS)
+  }
+}
+
 function QueryString() {
   let qString = {};
   let query = window.location.search.substring(1);
@@ -89,6 +127,10 @@ function QueryString() {
     }
   }
   return qString;
+}
+
+ function zPadFloat(num){
+  return num.toLocaleString(undefined, {'minimumIntegerDigits': 2, 'maximumFractionDigits': 4})
 }
 
 function formatDate(date){
@@ -220,5 +262,6 @@ let colorPalette = [  // useful assigning colors to datasets.
 export {
   semesterStart, semesterEnd, sexagesimalRaToDecimal, sexagesimalDecToDecimal, QueryString, formatJson, formatValue,
   formatDate, formatField, datetimeFormat, collapseMixin, siteToColor, siteCodeToName, slitWidthToExposureTime,
-  observatoryCodeToNumber, telescopeCodeToName, colorPalette, julianToModifiedJulian
+  observatoryCodeToNumber, telescopeCodeToName, colorPalette, julianToModifiedJulian,
+  decimalRaToSexigesimal, decimalDecToSexigesimal
 };
