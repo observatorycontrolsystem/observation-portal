@@ -28,7 +28,6 @@
 </template>
 <script>
   import _ from 'lodash';
-  import $ from 'jquery';
 
   export default {
     props: [

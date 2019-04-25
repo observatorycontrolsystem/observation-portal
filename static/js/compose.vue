@@ -41,6 +41,10 @@
               <sidenav 
                 :requestgroup="requestgroup" 
                 :errors="errors" 
+                :draftId="draftId"
+                @savedraft="saveDraft($event.draftId)" 
+                @submit="submit()"
+                @clear="clear()"
               /> 
             </b-col>
           </b-form-row>
@@ -141,56 +145,6 @@
           </b-form-row>
         </b-container>
       </b-tab>
-      <template slot="tabs">
-        <li class="nav-item align-self-center">
-          <b-button-group>
-            <div v-b-tooltip.hover title="Clear form">
-              <b-button 
-                variant="warning" 
-                @click="clear()"
-              >
-                <i class="fa fa-times"></i> Clear
-              </b-button>
-            </div>
-            <div>
-              <b-dropdown v-if="draftExists" 
-                v-b-tooltip.hover 
-                :title="saveDraftTooltipText"
-                variant="primary" 
-                class="mx-1"
-                right   
-                split
-                @click="saveDraft(draftId)" 
-              >
-                <template slot="button-content">
-                  <i class="fa fa-save"></i> {{ saveDraftText }}
-                </template>
-                <b-dropdown-item @click="saveDraft(-1)">
-                  Save as new draft
-                </b-dropdown-item>
-              </b-dropdown>
-              <b-button v-else 
-                v-b-tooltip.hover 
-                :title="saveDraftTooltipText"
-                variant="primary" 
-                class="mx-1"
-                @click="saveDraft(-1)"
-              >
-                <i class="fa fa-save"></i> {{ saveDraftText }}
-              </b-button>
-            </div>
-            <div v-b-tooltip.hover title="Submit observing request">
-              <b-button 
-                variant="success" 
-                :disabled="!_.isEmpty(errors)"
-                @click="submit()" 
-              >
-                <i class="fa fa-check"></i> Submit
-              </b-button>
-            </div>
-          </b-button-group>
-        </li>
-      </template>
     </b-tabs>
   </b-container>
 </template>
@@ -280,22 +234,11 @@
         errors: {},
         duration_data: {},
         alerts: [],
-        saveDraftTooltipText: 'Save a draft of this observing request. The request will not be submitted.'
       };
     },
     computed: {
       dataAsEncodedStr: function() {
         return 'data:application/json;charset=utf-8,' +  encodeURIComponent(JSON.stringify(this.requestgroup));
-      },
-      saveDraftText: function() {
-        if (this.draftExists) {
-          return "Save draft #" + this.draftId;
-        } else {
-          return "Save draft";
-        }
-      },
-      draftExists: function() {
-        return this.draftId > -1;
       }
     },
     methods: {
