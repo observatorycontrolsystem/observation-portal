@@ -11,14 +11,14 @@
     @copy="$emit('copy')" :show="show"
     @show="show = $event"
   >
-    <alert 
+    <customalert 
       v-for="error in errors.non_field_errors" 
       :key="error" 
       alertclass="danger" 
       :dismissible="false"
     >
       {{ error }}
-    </alert>
+    </customalert>
     <b-container class="p-0">
       <b-row>
         <b-col md="6" v-show="show">
@@ -33,11 +33,8 @@
               A start time cannot be selected for a Rapid Response observation-it will be scheduled as soon as possible.
             </li>
           </ul>
-
-          <!-- TODO: The airmass plot! -->
           <h4 v-show="showAirmass" class="text-center">Visibility</h4>
           <airmass v-show="showAirmass" :data="airmassData" :showZoomControls="true"></airmass>
-        
         </b-col>
         <b-col :md="show ? 6 : 12">
           <b-form>
@@ -83,10 +80,23 @@
               :errors="errors.jitter" 
               @input="update"
             />
-
-            <!-- TODO -->
-            <a class="btn btn-info col-sm-8 col-sm-offset-4" v-on:click="genCadence" v-show="cadence != 'none'">Generate Cadence</a>
-
+            <b-form-group
+              v-show="cadence != 'none'"
+              label-size="sm"
+              label-align-sm="right"
+              label-cols-sm="4"
+              label=""
+              label-for="cadence-button"
+            >
+              <b-button
+                block
+                id="cadence-button" 
+                variant="primary"
+                @click="genCadence"
+              >
+                Generate Cadence
+              </b-button>
+            </b-form-group>
           </b-form>
         </b-col>
       </b-row>
@@ -99,7 +109,7 @@
 
   import { collapseMixin } from '../utils.js';
   import panel from './util/panel.vue';
-  import alert from './util/alert.vue';
+  import customalert from './util/customalert.vue';
   import customdatetime from './util/customdatetime.vue';
   import customfield from './util/customfield.vue';
   import customselect from './util/customselect.vue';
@@ -119,7 +129,7 @@
       customfield, 
       customselect, 
       panel, 
-      alert,
+      customalert,
       airmass
     },
     mixins: [

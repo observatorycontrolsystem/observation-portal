@@ -4,9 +4,7 @@
       <b-col>
         <b-card no-body>
           <b-card-header class="p-2">
-
             <b-container class="p-0">
-            
               <b-form-row>
                 <b-col class="text-left">
                   <i class="align-middle mx-2" :class="icon"></i>
@@ -20,24 +18,47 @@
                   </div>
                 </b-col>
                 <b-col class="text-right">
-                  <b-button v-b-toggle.collapse-1 variant="primary" v-on:click="clickShow" v-b-tooltip.hover :title="show ? 'Minimize' : 'Maximize'" size="sm">
-                    <i class="fa fa-fw" :class="show ? 'fa-window-minimize' : 'fa-window-maximize'"></i>
+                  <b-button 
+                    size="sm"
+                    v-b-toggle.collapse-1 
+                    variant="primary"
+                    v-b-tooltip.hover 
+                    :title="show ? 'Minimize' : 'Maximize'" 
+                    @click="clickShow" 
+                  >
+                    <i 
+                      class="far" 
+                      :class="show ? 'fa-window-minimize' : 'fa-window-maximize'"
+                    ></i>
                   </b-button>
-                  <b-button variant="success" v-on:click="copy" v-show="cancopy" v-b-tooltip.hover title="Copy" size="sm">
+                  <b-button 
+                    size="sm"
+                    class="mx-1"
+                    variant="success" 
+                    v-show="cancopy" 
+                    v-b-tooltip.hover 
+                    title="Copy" 
+                    @click="copy" 
+                  >
                     <i class="fa fa-copy fa-fw"></i>
                   </b-button>
-                  <b-button variant="danger" v-on:click="remove" v-show="canremove" v-b-tooltip.hover title="Remove" size="sm">
+                  <b-button 
+                    variant="danger" 
+                    v-show="canremove" 
+                    v-b-tooltip.hover 
+                    title="Remove" 
+                    size="sm"
+                    @click="remove" 
+                  >
                     <i class="fa fa-trash fa-fw"></i>
                   </b-button>
                 </b-col>
               </b-form-row>
-
             </b-container>
-          
           </b-card-header>
-            <b-card class="border-0">
+            <b-card-body class="p-3">
               <slot :show="show"></slot>
-            </b-card>
+            </b-card-body>
         </b-card>
       </b-col>
     </b-form-row>
@@ -77,27 +98,3 @@
     }
   };
 </script>
-<style>
-  /* .panel-body-compact {
-    padding-bottom: 5px;
-  }
-
-  .panel-heading-compact {
-    padding: 5px 15px;
-  }
-
-  .panel-title {
-    font-size: 1.2em;
-    text-align: center;
-    height: 30px;
-    padding-top: 5px;
-  }
-
-  .panel-actions {
-    text-align: right;
-  }
-
-  .fa-2x {
-    vertical-align: middle;
-  } */
-</style>

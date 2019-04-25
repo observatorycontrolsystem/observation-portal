@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="observationHistoryPlot" id="plot">
-      <plot_controls v-show="showZoomControls" v-on:plotZoom="plotZoom"></plot_controls>
+      <plotcontrols v-show="showZoomControls" v-on:plotZoom="plotZoom"></plotcontrols>
     </div>
     <div class="observationHistoryPlotLegend text-center">
       <ul class="list-inline">
@@ -31,13 +31,13 @@
   import _ from 'lodash';
   import 'vue-style-loader!vis/dist/vis.css';
   import 'vue-style-loader!../../css/plot_style.css';
-  import plot_controls from './util/plot_controls.vue';
+  import plotcontrols from './util/plotcontrols.vue';
   import {plotZoomMixin} from './util/plot_mixins.js';
 
   export default {
     props: ['data', 'showZoomControls'],
     mixins: [plotZoomMixin],
-    components: {plot_controls},
+    components: {plotcontrols},
     data: function () {
       let options = {
         groupOrder: 'content',

@@ -11,14 +11,14 @@
       @copy="$emit('copy')"
       @show="show = $event"
     >
-    <alert 
+    <customalert 
       v-for="error in errors.non_field_errors" 
       :key="error" 
       alertclass="danger" 
       :dismissible="false"
     >
       {{ error }}
-    </alert>
+    </customalert>
     <b-container class="p-0">
       <b-row>
         <b-col md="6" v-show="show">
@@ -33,6 +33,10 @@
         </b-col>
         <b-col :md="show ? 6 : 12">
           <b-form>
+
+            <!-- TODO: General optical elements -->
+
+
             <!-- TODO: Validate that one is selected -->
             <customselect v-if="configuration.type === 'EXPOSE'" 
               v-model="configuration.instrument_configs[index].optical_elements.filter" 
@@ -100,7 +104,7 @@ import { collapseMixin, slitWidthToExposureTime } from '../utils.js';
 import customfield from './util/customfield.vue';
 import customselect from './util/customselect.vue';
 import panel from './util/panel.vue';
-import alert from './util/alert.vue';
+import customalert from './util/customalert.vue';
 
 export default {
   props: [
@@ -118,7 +122,7 @@ export default {
     customfield,
     customselect,
     panel,
-    alert
+    customalert
   },
   mixins: [
     collapseMixin

@@ -3,14 +3,15 @@
 </template>
 <script>
   import vis from 'vis';
-  import 'vue-style-loader!vis/dist/vis.css';
 
   export default {
-    props: ['data'],
-    data: function(){
+    props: [
+      'data'
+    ],
+    data: function() {
       return {
         options: {
-          moment: function(date){
+          moment: function(date) {
             return vis.moment(date).utc();
           }
         },
@@ -18,17 +19,23 @@
       };
     },
     computed:{
-      toVis: function(){
+      toVis: function() {
         let visData = [];
-        for(let r in this.data){
+        for (let r in this.data) {
           let request = this.data[r];
-          visData.push({'id': r, content: '' + (Number(r) + 1), start: request.windows[0].start, end: request.windows[0].end});
+          visData.push({
+              id: r, 
+              content: '' + (Number(r) + 1), 
+              start: request.windows[0].start, 
+              end: request.windows[0].end,
+              style: 'border-radius: 5px;'
+            });
         }
         return new vis.DataSet(visData);
       }
     },
     watch: {
-      data: function(){
+      data: function() {
         this.timeline.setItems(this.toVis);
         this.timeline.fit();
       }
@@ -38,3 +45,6 @@
     }
   };
 </script>
+<style scoped>
+  @import '~vis/dist/vis.css';
+</style>

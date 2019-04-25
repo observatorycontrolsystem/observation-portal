@@ -1,5 +1,6 @@
 <template>
-    <!-- TODO: make nav collapsible -->
+    <!-- TODO: make nav collapsible, make it available in the api view, add the detailed error messages as I actually think that its nice, and move
+    the buttons into here -->
   <b-navbar sticky v-b-scrollspy>
     <b-nav small vertical>
       <b-nav-item href="#general">
@@ -139,9 +140,11 @@
 </script>
 <style scoped>
   /* Control the nav width for predictability */
-  nav {
+  navbar, 
+  .nav {
     max-width: 200px;
     min-width: 200px;
+    width: 200px;
   }
   /* all links */
   .nav-link {

@@ -1,18 +1,19 @@
 <template>
   <div class="airmassPlot">
-    <plot_controls v-show="showZoomControls" v-on:plotZoom="plotZoom"></plot_controls>
+    <plotcontrols 
+      v-show="showZoomControls" 
+      @plotZoom="plotZoom"
+    />
   </div>
 </template>
 <script>
   import vis from 'vis';
   import $ from 'jquery';
   import _ from 'lodash';
-  import 'vue-style-loader!vis/dist/vis.css';
-  import 'vue-style-loader!../../css/plot_style.css';
-  import {siteToColor} from '../utils.js';
-  import {siteCodeToName} from '../utils.js';
-  import plot_controls from './util/plot_controls.vue';
-  import {plotZoomMixin} from './util/plot_mixins.js';
+
+  import plotcontrols from './util/plotcontrols.vue';
+  import { siteToColor, siteCodeToName } from '../utils.js';
+  import { plotZoomMixin } from './util/plot_mixins.js';
 
   export default {
     props: {
@@ -23,8 +24,12 @@
         default: false
       }
     },
-    mixins: [plotZoomMixin],
-    components: {plot_controls},
+    mixins: [
+      plotZoomMixin
+    ],
+    components: {
+      plotcontrols
+    },
     data: function () {
       let options = {
         dataAxis: {
@@ -73,7 +78,7 @@
                   enabled: true,
                   size: 9,
                   style: 'circle',
-                  styles: 'stroke:' + siteToColor[site] + '; fill: ' + siteToColor[site] + ';visibility: hidden;'
+                  styles: 'stroke:' + siteToColor[site] + '; fill: ' + siteToColor[site] + '; visibility: hidden;'
                 },
                 excludeFromLegend: false,
               },
@@ -94,7 +99,7 @@
                       enabled: true,
                       size: 7,
                       style: 'circle',
-                      styles: 'stroke:' + siteToColor[site] + '; fill: ' + siteToColor[site] + ';visibility: hidden;'
+                      styles: 'stroke:' + siteToColor[site] + '; fill: ' + siteToColor[site] + '; visibility: hidden;'
                     },
                     excludeFromLegend: true,
                   },
@@ -113,7 +118,7 @@
             }
             i++;
           }
-          //Now add a group for the airmass limit line
+          // Now add a group for the airmass limit line
           plotSites.add({
             id: i,
             content: 'limit',
@@ -138,7 +143,7 @@
     watch: {
       data: function () {
         let datasets = this.toVis;
-        //Need to first zero out the items and groups or vis.js throws an error
+        // Need to first zero out the items and groups or vis.js throws an error
         this.plot.setItems(new vis.DataSet());
         this.plot.setGroups(new vis.DataSet());
         this.plot.setGroups(datasets.groups);
@@ -163,8 +168,7 @@
             let label = $(this).next();
             $(this).appendTo($(this).parent());
             label.appendTo($(this).parent());
-          });
-          $(that.$el).find('.vis-point').tooltip({'container': 'body', 'placement': 'top'});
+          });          
           $(that.$el).find('.vis-legend svg path').each(function () {
             $(this).appendTo($(this).parent());
           });
@@ -177,3 +181,7 @@
     }
   };
 </script>
+<style scoped>
+  @import '~vis/dist/vis.css';
+  @import '../../css/plot_style.css';
+</style>

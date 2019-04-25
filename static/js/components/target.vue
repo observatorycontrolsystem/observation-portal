@@ -8,21 +8,22 @@
     title="Target" 
     @show="show = $event"    
   >
-    <alert 
+    <customalert 
       v-for="error in errors.non_field_errors" 
       :key="error" 
       alertclass="danger" 
       :dismissible="false"
     >
       {{ error }}
-    </alert>
+    </customalert>
     <b-container class="p-0">
       <b-row>
         <b-col md="6" v-show="show">
-
-          <!-- TODO: The archive component -->
-          <archive v-if="target.ra && target.dec" :ra="target.ra" :dec="target.dec"/>
-
+          <archive 
+            v-if="target.ra && target.dec" 
+            :ra="target.ra" 
+            :dec="target.dec"
+          />
         </b-col>
         <b-col :md="show ? 6 : 12">
           <b-form>
@@ -33,14 +34,11 @@
               :errors="errors.name"
               @input="update" 
             />
-
-            <!-- TODO -->
             <b-row v-show="lookingUP || lookupFail">
               <b-col class="text-right">
                 <i v-show="lookingUP" class="fa fa-spinner fa-spin fa-fw"></i> {{ lookupText }}
               </b-col>
             </b-row>
-          
             <customselect v-if="!simple_interface"
               v-model="target.type" 
               label="Type" 
@@ -52,9 +50,11 @@
               ]"
               @input="update" 
             />
-            <div class="sidereal" v-show="target.type === 'SIDEREAL'">
+            <span class="sidereal" v-show="target.type === 'SIDEREAL'">
 
-              <!-- TODO: There is no input type `sex` -->
+              <!-- TODO: There is no input type `sex`, implement the switch between decimal and sexagesimal-->
+
+
               <customfield 
                 v-model="target.ra" 
                 label="Right Ascension" 
@@ -75,7 +75,7 @@
               />
               <customfield v-if="!simple_interface"
                 v-model="target.proper_motion_ra" 
-                label="Proper Motion: RA" 
+                label="Proper Motion RA" 
                 field="proper_motion_ra"
                 desc="Units are milliarcseconds per year. Max 20000."
                 :errors="errors.proper_motion_ra" 
@@ -83,7 +83,7 @@
               />
               <customfield v-if="!simple_interface"
                 v-model="target.proper_motion_dec" 
-                label="Proper Motion: Dec" 
+                label="Proper Motion Dec" 
                 field="proper_motion_dec"
                 desc="Units are milliarcseconds per year. Max 20000."
                 :errors="errors.proper_motion_dec" 
@@ -105,8 +105,8 @@
                 :errors="errors.parallax" 
                 @input="update"
               />
-            </div>
-            <div class="non-sidereal" v-show="target.type === 'NON_SIDEREAL'">
+            </span>
+            <span class="non-sidereal" v-show="target.type === 'NON_SIDEREAL'">
               <customselect 
                 v-model="target.scheme" 
                 label="Scheme" 
@@ -159,8 +159,8 @@
                 :errors="errors.eccentricity" 
                 @input="update" 
               />
-            </div>
-            <div v-show="target.scheme === 'MPC_MINOR_PLANET' || target.scheme == 'JPL_MAJOR_PLANET'">
+            </span>
+            <span v-show="target.scheme === 'MPC_MINOR_PLANET' || target.scheme == 'JPL_MAJOR_PLANET'">
               <customfield 
                 v-model="target.meandist" 
                 label="Semimajor Axis" 
@@ -177,8 +177,8 @@
                 :errors="errors.meananom" 
                 @input="update" 
               />
-            </div>
-            <div v-show="target.scheme === 'JPL_MAJOR_PLANET'">
+            </span>
+            <span v-show="target.scheme === 'JPL_MAJOR_PLANET'">
               <customfield 
                 v-model="target.dailymot" 
                 label="Daily Motion" 
@@ -187,8 +187,8 @@
                 :errors="errors.dailymot" 
                 @input="update" 
               />
-            </div>
-            <div v-show="target.scheme === 'MPC_COMET'">
+            </span>
+            <span v-show="target.scheme === 'MPC_COMET'">
               <customfield 
                 v-model="target.perihdist" 
                 label="Perihelion Distance" 
@@ -205,8 +205,8 @@
                 :errors="errors.epochofperih" 
                 @input="update" 
               />
-            </div>
-            <div v-if="showSlitPosition">
+            </span>
+            <span v-if="showSlitPosition">
               <customselect 
                 v-model="target.rot_mode" 
                 label="Slit Position" 
@@ -227,7 +227,7 @@
                 :errors="errors.rot_angle" 
                 @input="update"
               />
-            </div>
+            </span>
           </b-form>
         </b-col>
       </b-row>
@@ -241,7 +241,7 @@
   import { collapseMixin, sexagesimalRaToDecimal, sexagesimalDecToDecimal, julianToModifiedJulian } from '../utils.js';
   import archive from './archive.vue';
   import panel from './util/panel.vue';
-  import alert from './util/alert.vue';
+  import customalert from './util/customalert.vue';
   import customfield from './util/customfield.vue';
   import customselect from './util/customselect.vue';
 
@@ -258,7 +258,7 @@
       customfield, 
       customselect, 
       panel, 
-      alert,
+      customalert,
       archive
     },
     mixins: [

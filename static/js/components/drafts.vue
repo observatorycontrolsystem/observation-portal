@@ -8,14 +8,22 @@
     empty-text="You have no draft observing requests" 
   >
     <template slot="load" slot-scope="data" class="text-center">
-      <v-button class="text-info" @click="loadDraft(data.value)">
+      <b-button 
+        variant="info" 
+        size="sm" 
+        @click="loadDraft(data.value)"
+      >
         <i class="fa fa-download"></i>
-      </v-button>
+      </b-button>
     </template>
     <template slot="delete" slot-scope="data">
-      <v-button class="text-danger" @click="deleteDraft(data.value)">
+      <b-button 
+        variant="danger" 
+        size="sm" 
+        @click="deleteDraft(data.value)"
+      >
         <i class="fa fa-trash"></i>
-      </v-button>
+      </b-button>
     </template>
   </b-table>
 </template>

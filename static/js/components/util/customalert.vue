@@ -1,5 +1,4 @@
 <template>
-
   <b-alert
     v-if="dismissible"
     dismissible
@@ -15,7 +14,6 @@
   >
     <slot></slot>
   </b-alert>
-
 </template>
 <script>
   export default {

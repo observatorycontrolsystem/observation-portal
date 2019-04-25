@@ -1,4 +1,3 @@
-// TODO: Move instrument type etc. to the configuration level.
 <template>
   <panel :show="show"
     title="Request" 
@@ -12,14 +11,14 @@
     @show="show = $event"
     @copy="$emit('copy')" 
   >
-    <alert 
+    <customalert 
       v-for="error in errors.non_field_errors" 
       :key="error" 
       alertclass="danger" 
       :dismissible="false"
     >
       {{ error }}
-    </alert>
+    </customalert>
     <b-container class="p-0">
       <b-row>
         <b-col md="6" v-show="show">
@@ -100,7 +99,7 @@
   import configuration from './configuration.vue';
   import window from './window.vue';
   import panel from './util/panel.vue';
-  import alert from './util/alert.vue';
+  import customalert from './util/customalert.vue';
   import customfield from './util/customfield.vue';
   import customselect from './util/customselect.vue';
 
@@ -121,7 +120,7 @@
       customfield, 
       customselect, 
       panel,
-      alert
+      customalert
     },
     mixins: [
       collapseMixin
@@ -263,11 +262,11 @@
         this.update();
       },
       removeConfiguration: function(idx) {
-        this.request.configurationstatuses.splice(idx, 1);
+        this.request.configurations.splice(idx, 1);
         this.update();
       },
       cadence: function(data) {
-        this.$emit('cadence', {'id': this.index, 'request':this.request, 'cadence': data});
+        this.$emit('cadence', {id: this.index, request: this.request, cadence: data});
       }
     }
   };

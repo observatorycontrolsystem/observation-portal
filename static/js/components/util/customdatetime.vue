@@ -23,7 +23,10 @@
       />
       <span class="text-danger" v-for="error in errors" :key="error">{{ error }}</span>
     </b-form-group>
-    <span v-show="!$parent.show">
+    <span 
+      class="mr-4" 
+      v-show="!$parent.show"
+    >
       {{ label }}: <strong>{{ value || '...' }}</strong>
     </span>
   </span>

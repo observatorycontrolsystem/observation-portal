@@ -20,8 +20,11 @@
     <slot name="inlineButton"></slot>
     <span class="text-danger" v-for="error in errors" :key="error">{{ error }}</span>
   </b-form-group>
-  <span v-show="!$parent.show">
-    {{ label }}: <strong>{{ value || '...' }}</strong>
+  <span 
+    class="mr-4" 
+    v-show="!$parent.show"
+  > 
+    {{ label }}: <strong>{{ displayValue(value) }}</strong>
   </span>
 </span>
 </template>
@@ -43,6 +46,15 @@
       }
     },
     methods: {
+      displayValue: function(value) {
+        if (value === 0) {
+          return '0';
+        } else if (value === '' || value === null) {
+          return '...'
+        } else {
+        return value;
+        }
+      },
       update: function(value) {
         this.$emit('input', value);
       },

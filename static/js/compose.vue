@@ -2,14 +2,21 @@
   <b-container id="app" class="p-0">
     <b-form-row>
       <b-col>
+
+
+        <!-- TODO Issue that Joey raised -->
+        <!-- TODO Joey updated the duration display -->
+
+
         <!-- TODO: If the same alert is brought up more than once, it will only display the first time -->
-        <alert v-for="alert in alerts"
+        <customalert 
+          v-for="alert in alerts"
           :key="alert.msg" 
           :alertclass="alert.class" 
           :dismissible="true"
         >
           {{ alert.msg }}
-        </alert>
+        </customalert>
       </b-col>
     </b-form-row>
     <b-tabs id="tabs" fill>
@@ -22,7 +29,7 @@
         </template>
         <b-container class="p-0 mt-2">
           <b-form-row>
-            <b-col>            
+            <b-col class="m-0 p-0">            
               <requestgroup
                 :errors="errors" 
                 :duration_data="duration_data" 
@@ -30,7 +37,7 @@
                 @requestgroupupdate="requestgroupUpdated"
               />
             </b-col>
-            <b-col cols="auto">
+            <b-col cols="auto" class="m-0 p-0">
               <sidenav 
                 :requestgroup="requestgroup" 
                 :errors="errors" 
@@ -135,68 +142,56 @@
         </b-container>
       </b-tab>
       <template slot="tabs">
-
-        
-
         <li class="nav-item align-self-center">
-
-        <b-button-group>
-          <div v-b-tooltip.hover title="Clear form">
-            <b-button 
-              variant="warning" 
-              @click="clear()"
-            >
-              <i class="fa fa-times"></i> Clear
-            </b-button>
-          </div>
-          <div>
-            <b-dropdown v-if="draftExists" 
-              v-b-tooltip.hover 
-              :title="saveDraftTooltipText"
-              variant="primary" 
-              class="mx-1"
-              right   
-              split
-              @click="saveDraft(draftId)" 
-            >
-              <template slot="button-content">
+          <b-button-group>
+            <div v-b-tooltip.hover title="Clear form">
+              <b-button 
+                variant="warning" 
+                @click="clear()"
+              >
+                <i class="fa fa-times"></i> Clear
+              </b-button>
+            </div>
+            <div>
+              <b-dropdown v-if="draftExists" 
+                v-b-tooltip.hover 
+                :title="saveDraftTooltipText"
+                variant="primary" 
+                class="mx-1"
+                right   
+                split
+                @click="saveDraft(draftId)" 
+              >
+                <template slot="button-content">
+                  <i class="fa fa-save"></i> {{ saveDraftText }}
+                </template>
+                <b-dropdown-item @click="saveDraft(-1)">
+                  Save as new draft
+                </b-dropdown-item>
+              </b-dropdown>
+              <b-button v-else 
+                v-b-tooltip.hover 
+                :title="saveDraftTooltipText"
+                variant="primary" 
+                class="mx-1"
+                @click="saveDraft(-1)"
+              >
                 <i class="fa fa-save"></i> {{ saveDraftText }}
-              </template>
-              <b-dropdown-item @click="saveDraft(-1)">
-                Save as new draft
-              </b-dropdown-item>
-            </b-dropdown>
-            <b-button v-else 
-              v-b-tooltip.hover 
-              :title="saveDraftTooltipText"
-              variant="primary" 
-              class="mx-1"
-              @click="saveDraft(-1)"
-            >
-              <i class="fa fa-save"></i> {{ saveDraftText }}
-            </b-button>
-          </div>
-          <div v-b-tooltip.hover title="Submit observing request">
-            <b-button 
-              variant="success" 
-              :disabled="!_.isEmpty(errors)"
-              @click="submit()" 
-            >
-              <i class="fa fa-check"></i> Submit
-            </b-button>
-          </div>
-        </b-button-group>
-      </li>
-
-
-
+              </b-button>
+            </div>
+            <div v-b-tooltip.hover title="Submit observing request">
+              <b-button 
+                variant="success" 
+                :disabled="!_.isEmpty(errors)"
+                @click="submit()" 
+              >
+                <i class="fa fa-check"></i> Submit
+              </b-button>
+            </div>
+          </b-button-group>
+        </li>
       </template>
     </b-tabs>
-
-
-
-
-
   </b-container>
 </template>
 <script>
@@ -208,7 +203,7 @@
   import requestgroup from './components/requestgroup.vue';
   import drafts from './components/drafts.vue';
   import sidenav from './components/sidenav.vue';
-  import alert from './components/util/alert.vue';
+  import customalert from './components/util/customalert.vue';
   import { datetimeFormat } from './utils.js';
 
   export default {
@@ -217,7 +212,7 @@
       requestgroup, 
       drafts, 
       sidenav, 
-      alert
+      customalert
     },
     data: function() {
       return {
@@ -387,7 +382,7 @@
         });
       },
       clear: function() {
-        if(confirm('Clear the form?')) {
+        if (confirm('Clear the form?')) {
           window.location.reload();
         }
       }

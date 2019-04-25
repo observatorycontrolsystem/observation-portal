@@ -8,14 +8,14 @@
     :cancopy="false"
     @show="show = $event" 
   >  
-    <alert 
+    <customalert 
       v-for="error in errors.non_field_errors" 
       :key="error" 
       alertclass="danger" 
       :dismissible="false"
     >
       {{ error }}
-    </alert>
+    </customalert>
     <b-container class="p-0">
       <b-form-row>
         <b-col md="6" v-show="show">
@@ -76,22 +76,26 @@
               :errors="errors.ipp_value" 
               @input="update"
             />
-            <!-- TODO: This shows on collapse -->
-            <div class="collapse-inline" v-show="!show">Total Duration: <strong>{{ durationDisplay }}</strong></div>
+            <span v-show="!show"> Total Duration: <strong>{{ durationDisplay }} </strong></span>
           </b-form>
         </b-col>
       </b-form-row>
     </b-container>
     <div v-for="(request, idx) in requestgroup.requests" :key="'request' + idx">
-
-      <!-- TODO: The modal component -->
-      <modal :show="showCadence" v-on:close="cancelCadence" v-on:submit="acceptCadence"
-             header="Generated Cadence" :showAccept="cadenceRequests.length > 0"
+      <modal 
+        :show="showCadence" 
+        @close="cancelCadence" 
+        @submit="acceptCadence"
+        header="Generated Cadence" 
+        :showAccept="cadenceRequests.length > 0"
       >
         <p>The blocks below represent the windows of the requests that will be generated if the current cadence is accepted.
-          These requests will replace the current request.</p>
+        These requests will replace the current request.</p>
         <p>Press cancel to discard the cadence. Once a cadence is accepted, the individual generated requests may be edited.</p>
-        <cadence :data="cadenceRequests"></cadence>
+        <cadence :data="cadenceRequests"/>
+
+        <!-- TODO: Differentiate between loading data and no cadence found -->
+
         <p v-if="cadenceRequests.length < 1">
           <strong>
             A valid cadence could not be generated. Please try adjusting jitter or period and make sure your target is visible
@@ -114,7 +118,12 @@
         @cadence="expandCadence"
       />
     </div>
-    <modal :show="showEdPopup" v-on:close="closeEdPopup" v-on:submit="closeEdPopup" :showCancel="false">
+    <modal 
+      :show="showEdPopup" 
+      :showCancel="false"
+      @close="closeEdPopup" 
+      @submit="closeEdPopup" 
+    >
       <h3>Welcome to the LCO observation request page!</h3>
       <p>Using this form you can instruct the LCO telescope network to perform an astronomical observation on your behalf.</p>
       <p>Fields should be filled out from top to bottom. If you need help understanding a field, hovering your
@@ -137,7 +146,7 @@
   import request from './request.vue';
   import cadence from './cadence.vue';
   import panel from './util/panel.vue';
-  import alert from './util/alert.vue';
+  import customalert from './util/customalert.vue';
   import customfield from './util/customfield.vue';
   import customselect from './util/customselect.vue';
   import { QueryString } from '../utils.js';
@@ -156,7 +165,7 @@
       customfield, 
       customselect, 
       panel,
-      alert
+      customalert
     },
     data: function() {
       return {
@@ -229,6 +238,8 @@
         this.requestgroup.operator = value > 1 ? 'MANY' : 'SINGLE';
       },
       'requestgroup.observation_type': function(value) {
+        // TODO: This is undefined after filling in with a draft, resulting with an error in the console, 
+        // but it does fix itself. This is happening in valhalla as well.
         for (var index = 0; index < this.requestgroup.requests.length; ++index) {
           for (var windowIndex = 0; windowIndex < this.requestgroup.requests[index].windows.length; ++windowIndex) {
             if (value === 'RAPID_RESPONSE') {
@@ -273,7 +284,7 @@
         let that = this;
         $.ajax({
           type: 'POST',
-          url: '/api/requestgroup/cadence/',
+          url: '/api/requestgroups/cadence/',
           data: JSON.stringify(payload),
           contentType: 'application/json',
           success: function(data) {
@@ -302,7 +313,7 @@
         }
         // finally we remove the original request
         this.removeRequest(that.cadenceRequestId);
-        if(this.requestgroup.requests.length > 1) this.requestgroup.operator = 'MANY';
+        if (this.requestgroup.requests.length > 1) this.requestgroup.operator = 'MANY';
         this.cadenceRequests = [];
         this.cadenceRequestId = -1;
         this.showCadence = false;
