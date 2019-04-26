@@ -19,6 +19,7 @@ module.exports = {
         requestgroup_detail: './static/js/requestgroup_detail',
         request_detail: './static/js/request_detail',
         telescope_availability: './static/js/telescope_availability_chart',
+        paginate_dropdown: './static/js/components/util/paginate_dropdown',
         tools: './static/js/tools'
       },
       output: {
