@@ -10,7 +10,7 @@
           {% else %}
             <span class="requestgroup-title"># {{ request.id }}</span>
           {% endif %}
-          <p><i class="fa fa-clock-o" ></i> <span class="tt" title="Total exposure time + observing overhead"> Duration: {{ request.duration }} seconds</span></p>
+          <p><i class="far fa-clock" ></i> <span class="tt" title="Total exposure time + observing overhead"> Duration: {{ request.duration }} seconds</span></p>
           <p><i class="fa fa-camera"></i> Instrument: {{ request.configurations.all.0.instrument_type|instrument_type_to_full_name }}</p>
         </div>
         <div class="col-md-4 requestgroup-block border-right">
@@ -20,7 +20,7 @@
               {{ request.state }}
             </span>
           </p>
-          <p>Acceptability Threshold: {{ request.acceptability_threshold }}%</p>
+          <p><i class="fa fa-clipboard-check"></i> Acceptability Threshold: {{ request.acceptability_threshold }}%</p>
           <p><i class="fa fa-calendar"></i> {{ request.modified}}</p>
         </div>
         <div class="col-md-4 requestgroup-block">
