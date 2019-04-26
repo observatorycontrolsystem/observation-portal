@@ -62,14 +62,14 @@
                         <b-col md="6">
                           <h4>Target</h4>
                           <ul class="list-unstyled card-count card-column-two">
-                            <li class="nobreak" v-for="(x, idx) in configuration.target" :key="'target-' + idx">
+                            <li v-for="(x, idx) in configuration.target" :key="'target-' + idx">
                               <b-row v-if="configuration.target[idx] && x">
                                 <b-col class="font-weight-bold text-nowrap" v-if="configuration.target[idx]">{{ idx | formatField }}</b-col>
                                 <b-col v-if="x">
                                   <span v-if="idx === 'name'">{{ x }}</span>
                                   <span v-else>{{ x | formatValue }}</span>
-                                  <em v-if="idx === 'ra'" class="text-muted"> {{ x | raAsSexigesimal }}</em>
-                                  <em v-if="idx === 'dec'" class="text-muted"> {{ x | decAsSexigesimal }}</em>
+                                  <em v-if="idx === 'ra'" class="text-muted"> ({{ x | raAsSexigesimal }})</em>
+                                  <em v-if="idx === 'dec'" class="text-muted"> ({{ x | decAsSexigesimal }})</em>
                                 </b-col>
                               </b-row>
                             </li>
