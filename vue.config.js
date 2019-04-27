@@ -7,6 +7,9 @@ module.exports = {
   outputDir: 'static/bundles',
   publicPath: 'static/bundles',
   lintOnSave: process.env.NODE_ENV !== 'production',
+  chainWebpack: config => {
+    config.optimization.delete('splitChunks')
+  },
   configureWebpack: config => {
 
     // Remove the default entry point
