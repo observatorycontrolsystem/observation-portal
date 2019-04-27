@@ -56,7 +56,7 @@ class ConfigurationStatusSerializer(serializers.ModelSerializer):
                               'end': summary.get('end'),
                               'state': summary.get('state'),
                               'time_completed': summary.get('time_completed'),
-                              'events': summary.get('events', {})
+                              'events': summary.get('events', [])
                               }
                 )
 
