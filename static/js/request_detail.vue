@@ -13,8 +13,8 @@
           <div class="row">
             <div class="col-md-6">
               <h4>Windows</h4>
-              <table class="table">
-                <thead>
+              <table class="table table-striped table-sm">
+                <thead class="no-top-border">
                   <tr><td><strong>Start</strong></td><td><strong>End</strong></td></tr>
                 </thead>
                 <tbody>
@@ -38,7 +38,7 @@
                   v-for="(configuration, index) in request.configurations" 
                   :key="configuration.id"
                 >
-                  <b-card-header header-tag="header" class="p-1" role="tab">
+                  <b-card-header header-tag="header" class="p-1 button-header" role="tab">
                     <b-button 
                       block href="#" 
                       v-b-toggle="'accordion-' + index" 
@@ -76,8 +76,8 @@
                           </ul>
                           <hr/>
                           <h4>Instrument Configs</h4>
-                          <table class="table table-borderless">
-                            <thead>
+                          <table class="table table-striped table-sm">
+                            <thead class="no-top-border">
                               <tr>
                                 <td><strong>Mode</strong></td>
                                 <td><strong>Exp Time</strong></td>
