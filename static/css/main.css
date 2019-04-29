@@ -298,3 +298,20 @@ a:hover {
 .card-column-two{
     column-count: 2;
 }
+
+.no-top-border > tr > td {
+    border-top:none;
+}
+
+.button-header {
+    border-bottom: none;
+    padding: 0 !important;
+}
+
+.btn-outline-secondary{
+    color: black;
+}
+
+.btn-outline-secondary:hover {
+    color:white;
+}

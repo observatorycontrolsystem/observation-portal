@@ -4,23 +4,39 @@
       <plotcontrols v-show="showZoomControls" v-on:plotZoom="plotZoom"></plotcontrols>
     </div>
     <div class="observationHistoryPlotLegend text-center">
-      <ul class="list-inline">
-        <li class="CANCELED legend-item"></li>
-        <li>Superseded by new schedule</li>
-        <li class="NOT_ATTEMPTED legend-item"></li>
-        <li>Not Attempted</li>
-        <li class="SCHEDULED legend-item"></li>
-        <li>Scheduled</li>
-        <li class="IN_PROGRESS legend-item"></li>
-        <li>In Progress</li>
-        <li class="FAILED legend-item"></li>
-        <li>Failed</li>
-        <li class="ABORTED legend-item"></li>
-        <li>Aborted</li>
-        <li class="PARTIALLY-COMPLETED legend-item"></li>
-        <li>Partially Completed</li>
-        <li class="COMPLETED legend-item"></li>
-        <li>Completed</li>
+      <ul class="list-inline mt-1">
+        <li class="list-inline-item">
+          <span class="legend-item CANCELED align-middle mb-1 mr-1"></span>
+          Superseded by new schedule
+        </li>
+        <li class="list-inline-item ml-3">
+          <span class="legend-item SCHEDULED align-middle mb-1 mr-1"></span>
+          Scheduled
+        </li>
+        <li class="list-inline-item ml-3">
+          <span class="legend-item NOT_ATTEMPTED align-middle mb-1 mr-1"></span>
+          Not Attempted
+        </li>
+        <li class="list-inline-item ml-3">
+          <span class="legend-item IN_PROGRESS align-middle mb-1 mr-1"></span>
+          In Progress
+        </li>
+        <li class="list-inline-item ml-3">
+          <span class="legend-item FAILED align-middle mb-1 mr-1"></span>
+          Failed
+        </li>
+        <li class="list-inline-item ml-3">
+          <span class="legend-item ABORTED align-middle mb-1 mr-1"></span>
+          Aborted
+        </li>
+        <li class="list-inline-item ml-3">
+          <span class="legend-item PARTIALLY-COMPLETED align-middle mb-1 mr-1"></span>
+          Partially Completed
+        </li>
+        <li class="list-inline-item ml-3">
+          <span class="legend-item COMPLETED align-middle mb-1 mr-1"></span>
+          Completed
+        </li>
       </ul>
     </div>
   </div>
