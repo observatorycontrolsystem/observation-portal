@@ -168,7 +168,7 @@
           this.update();
         }
       },
-      available_instruments: function(value) {
+      available_instruments: function() {
         if (!this.instrument_type) {
           this.instrument_type = this.firstAvailableInstrument;
         }
@@ -234,13 +234,12 @@
         }
       },
       configurationFillWindow: function(ids) {
-        // TODO: This function
         console.log('configurationfillwindow');
         if ('largest_interval' in this.duration_data) {
-          var num_exposures = this.request.configurations[ids.configId].instrument_configs[ids.instrumentconfigId].exposure_count;
-          var configuration_duration = this.duration_data.configurations[ids.configId].duration;
-          var available_time = this.duration_data.largest_interval - this.duration_data.duration + (configuration_duration * num_exposures);
-          num_exposures = Math.floor(available_time / configuration_duration);
+          let num_exposures = this.request.configurations[ids.configId].instrument_configs[ids.instrumentconfigId].exposure_count;
+          let instrumentconfig_duration = this.duration_data.configurations[ids.configId].instrument_configs[ids.instrumentconfigId].duration;
+          let available_time = this.duration_data.largest_interval - this.duration_data.duration + (instrumentconfig_duration * num_exposures);
+          num_exposures = Math.floor(available_time / instrumentconfig_duration);
           this.request.configurations[ids.configId].instrument_configs[ids.instrumentconfigId].exposure_count = Math.max(1, num_exposures);
           this.update();
         }

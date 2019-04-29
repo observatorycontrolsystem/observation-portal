@@ -293,6 +293,11 @@ class TestUserPostRequestApi(SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json()['requests'][0]['configurations'][0]['acquisition_config']['mode'], 'WCS')
+        # Check that default acquire mode is OFF for floyds non-spectrum
+        good_data['requests'][0]['configurations'][0]['type'] = 'LAMP_FLAT'
+        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()['requests'][0]['configurations'][0]['acquisition_config']['mode'], 'OFF')
 
     def test_post_requestgroup_acquire_mode_brightest_no_radius(self):
         bad_data = self.generic_payload.copy()
@@ -1177,7 +1182,7 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         good_data['requests'][0]['configurations'][0]['instrument_type'] = '2M0-FLOYDS-SCICAM'
         del good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
         good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['slit'] = 'slit_6.0as'
-        good_data['requests'][0]['configurations'][0]['type'] = 'LAMP_FLAT'
+        good_data['requests'][0]['configurations'][0]['type'] = 'SPECTRUM'
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
         self.assertEqual(response.status_code, 201)
         configuration = response.json()['requests'][0]['configurations'][0]

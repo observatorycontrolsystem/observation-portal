@@ -179,7 +179,6 @@ class AirmassView(APIView):
             return Response(serializer.errors)
 
 
-# TODO: Modify where this is used in the vue to use modes/optical_elements structures
 class InstrumentsInformationView(APIView):
     permission_classes = (AllowAny,)
 

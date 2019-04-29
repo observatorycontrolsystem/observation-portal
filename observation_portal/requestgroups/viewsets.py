@@ -140,7 +140,6 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
             return Response({'errors': [str(exc)]}, status=400)
         return Response(RequestGroupSerializer(request_group).data)
 
-    #@action(detail=False, methods=['post'])
     @list_route(methods=['post'])
     def validate(self, request):
         serializer = RequestGroupSerializer(data=request.data, context={'request': request})

@@ -363,7 +363,7 @@ class Configuration(models.Model):
 
     @cached_property
     def duration(self):
-        return get_configuration_duration(self.as_dict())
+        return get_configuration_duration(self.as_dict())['duration']
 
 
 class Target(models.Model):

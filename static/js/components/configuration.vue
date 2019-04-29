@@ -110,7 +110,7 @@
       :datatype="datatype"
       :configurationType="configuration.type"
       :show="show"
-      :duration_data="duration_data"
+      :duration_data="_.get(duration_data, ['instrument_configs', idx], {'duration': 0})"
       :available_instruments="available_instruments"
       :errors="_.get(errors, ['instrument_configs', idx], {})"
       :simple_interface="simple_interface" 
@@ -138,8 +138,6 @@
   </panel>
 </template>
 <script>
-  import _ from 'lodash';
-
   import { collapseMixin } from '../utils.js';
   import panel from './util/panel.vue';
   import customalert from './util/customalert.vue';
@@ -203,6 +201,7 @@
             ]
           }
         }
+        return [];
       },
       acquireModeOptions: function() {
         let options = [];
@@ -316,7 +315,12 @@
         this.update();
       },
       unsetAcquireFields: function() {
-        // Turn off acquisition
+        this.saveAcquireFields();
+        this.configuration.acquisition_config.mode = '';
+        this.configuration.acquisition_config.extra_params = {};
+        this.update();
+      },
+      turnOffAcquisition: function() {
         this.saveAcquireFields();
         this.configuration.acquisition_config.mode = 'OFF';
         this.configuration.acquisition_config.extra_params = {};
@@ -344,13 +348,10 @@
             this.setAcquireFields();
           } else if (configurationType == 'LAMP_FLAT' || configurationType == 'ARC') {
             this.setGuidingFields('OPTIONAL');
-            this.unsetAcquireFields();
-
-            // TODO: Difference in validation between valhalla and obs portal
-          
+            this.turnOffAcquisition();          
           } else if (configurationType == 'EXPOSE') {
             this.setGuidingFields(this.selectedImagerGuidingOption);
-            this.unsetAcquireFields();
+            this.turnOffAcquisition();
           }
         }
       },

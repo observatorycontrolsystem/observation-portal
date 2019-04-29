@@ -3,7 +3,7 @@ import $ from 'jquery';
 import 'bootstrap';
 
 import { archiveAjaxSetup } from './archive.js';
-import { csrfSafeMethod, getCookie } from './global.js';
+import { csrfSafeMethod, getCookie } from './utils.js';
 
 archiveAjaxSetup();
 

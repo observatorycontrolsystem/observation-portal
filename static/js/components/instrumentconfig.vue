@@ -139,7 +139,6 @@
 </template>
 <script>
 import _ from 'lodash';
-import Vue from 'vue';
 
 import { collapseMixin, slitWidthToExposureTime } from '../utils.js';
 import customfield from './util/customfield.vue';
@@ -246,7 +245,6 @@ export default {
       }
     },
     showSlitPosition: function() {
-      let shouldShow = false;
       if (this.selectedinstrument.includes('FLOYDS')) {
         return true;
       } else {
@@ -289,7 +287,7 @@ export default {
       }
       this.update;
     },
-    selectedinstrument: function(value) {
+    selectedinstrument: function() {
 
       // TODO: Save a history of the optical elements that were set last
       // per instrument, and restore those here

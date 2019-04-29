@@ -1,5 +1,6 @@
 import moment from 'moment';
 import _ from 'lodash';
+import $ from 'jquery';
 
 function slitWidthToExposureTime(slitWidth){
   // Lamp flats are affected by the slit width, so exposure time needs to scale with it

@@ -192,7 +192,7 @@
         if (data.profile.simple_interface) {
           that.simple_interface = data.profile.simple_interface;
           for (let req = 0; req < that.requestgroup.requests.length; req++) {
-            for (let conf = 0; conf < that.requestgroup.requests[i].configurations; conf++) {
+            for (let conf = 0; conf < that.requestgroup.requests[req].configurations; conf++) {
               that.requestgroup.requests[req].configurations[conf].constraints.max_airmass = 2.0;
             }
           }
