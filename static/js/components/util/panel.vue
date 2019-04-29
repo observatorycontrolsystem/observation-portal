@@ -7,10 +7,23 @@
             <b-container class="p-0">
               <b-form-row>
                 <b-col class="text-left">
-                  <i class="align-middle mx-2" :class="icon"></i>
+                  <i 
+                    class="align-middle mx-2" 
+                    :class="icon"
+                  />
                   <!-- TODO: The warning and success flicker on page load -->
-                  <i class="fas fa-exclamation-triangle text-danger align-middle" v-b-tooltip.hover title="Errors in form" v-show="hasError"></i>
-                  <i class="fas fa-check text-success align-middle" v-b-tooltip.hover title="Section is complete" v-show="!hasError"></i>
+                  <i 
+                    class="fas fa-exclamation-triangle text-danger align-middle" 
+                    v-b-tooltip=tooltipConfig 
+                    title="Errors in form" 
+                    v-show="hasError"
+                  />
+                  <i 
+                    class="fas fa-check text-success align-middle" 
+                    v-b-tooltip=tooltipConfig 
+                    title="Section is complete" 
+                    v-show="!hasError"
+                    />
                 </b-col>
                 <b-col class="text-center">
                   <div>
@@ -22,7 +35,7 @@
                     size="sm"
                     v-b-toggle.collapse-1 
                     variant="primary"
-                    v-b-tooltip.hover 
+                    v-b-tooltip=tooltipConfig 
                     :title="show ? 'Minimize' : 'Maximize'" 
                     @click="clickShow" 
                   >
@@ -36,7 +49,7 @@
                     class="mx-1"
                     variant="success" 
                     v-show="cancopy" 
-                    v-b-tooltip.hover 
+                    v-b-tooltip=tooltipConfig 
                     title="Copy" 
                     @click="copy" 
                   >
@@ -45,7 +58,7 @@
                   <b-button 
                     variant="danger" 
                     v-show="canremove" 
-                    v-b-tooltip.hover 
+                    v-b-tooltip=tooltipConfig 
                     title="Remove" 
                     size="sm"
                     @click="remove" 
@@ -66,6 +79,8 @@
 </template>
 <script>
   import _ from 'lodash';
+
+  import { tooltipConfig } from '../../utils.js';
   
   export default {
     props: [
@@ -78,6 +93,11 @@
       'title', 
       'index'
     ],
+    data: function() {
+      return {
+        tooltipConfig: tooltipConfig
+      }
+    },
     methods:{
       remove: function() {
         if (confirm('Are you sure you want to remove this item?')) {

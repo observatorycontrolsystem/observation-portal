@@ -1,6 +1,10 @@
 <template>
   <span>
+    <span class="text-right font-italic extra-help-text">
+      <slot name="extra-help-text"/>
+    </span>
     <b-form-group
+      :id="field + '-fieldgroup-' + $parent.id"
       v-show="$parent.show"
       label-size="sm"
       label-align-sm="right"
@@ -10,13 +14,20 @@
       :label-for="field"
     >
       <b-form-select 
-        :id="field" 
+        size="sm"
+        :id="field + '-select-' + $parent.id" 
         :value="value"
         :state="!hasErrors"
         :options="options"
         @input="update($event)"
       />
-      <span class="text-danger" :key="error" v-for="error in errors">{{ error }}</span>
+      <span 
+        class="errors text-danger" 
+        v-for="error in errors" 
+        :key="error"
+      >
+        {{ error }}
+      </span>    
     </b-form-group>
     <span 
       class="mr-4" 
@@ -50,3 +61,11 @@
     }
   };
 </script>
+<style scoped>
+  .errors {
+    font-size: 80%;
+  }
+  .extra-help-text {
+    font-size: 80%;
+  }
+</style>

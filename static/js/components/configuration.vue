@@ -24,82 +24,91 @@
         <b-col md="6" v-show="show">
           <ul>
             <li>
-              For more information on the Defocus and Guiding options, see the "Getting Started" guide in the
+              For more information on the different options, see the "Getting Started" guide in our
               <a href="https://lco.global/documentation/" target="_blank" >
                 Documentation section.
               </a>
             </li>
           </ul>
+
+          <!-- TODO: Do not show if calibrations have been created -->
+          
+          <b-row 
+            v-show="configuration.type === 'SPECTRUM'" 
+            class="p-2"
+          >
+            <b-col>
+              <h3>Calibration frames</h3>
+              <p>
+                We recommend that you schedule calibration frames with a spectrum type configuration.
+                Click <em>'Create calibration frames'</em> to add four calibration configurations to this request: 
+                one arc and one flat before and one arc and one flat after your spectrum.
+              </p>
+              <b-button @click="generateCalibs" variant="primary" block>
+                Create calibration frames
+              </b-button>
+            </b-col>
+          </b-row>
         </b-col>
         <b-col :md="show ? 6 : 12">
           <b-form>
-            <customselect v-if="!simple_interface && datatype !='SPECTRA'"
-              v-model="configuration.guiding_config.optional" 
+            <customselect 
+              v-if="!simple_interface && datatype !='SPECTRA'"
+              v-model="selectedImagerGuidingOption" 
               label="Guiding" 
               field="mode" 
               desc="Guiding keeps the field stable during long exposures. If set to optional, then guiding is 
                     attempted but observations are carried out even if guiding fails. If set to on, 
                     observations are aborted if guiding fails."
-              :errors="_.get(errors, ['guiding_config', 'optional'], {})" 
-              :options="[
-                {value: true, text: 'Optional'},
-                {value: false, text: 'On'},
-              ]"
+              :errors="{}" 
+              :options="imagerGuidingOptions"
               @input="update" 
             />
-            <div class="spectra" v-if="datatype === 'SPECTRA' && !simple_interface">
-              <customselect  v-if="selectedinstrument === '2M0-FLOYDS-SCICAM'" 
+            <div 
+              class="spectra" 
+              v-if="datatype === 'SPECTRA' && !simple_interface"
+            >
+              <customselect 
                 v-model="configuration.type" 
                 label="Type" 
-                desc="The type of exposure (allows for calibrations)"
+                desc="The type of exposure"
                 :errors="errors.type" 
-                :options="[
-                  {value: 'SPECTRUM', text: 'Spectrum'},
-                  {value: 'LAMP_FLAT', text: 'Lamp Flat'},
-                  {value: 'ARC', text:'Arc'}
-                ]"
+                :options="spectraConfigurationOptions"
                 @input="update"
               />
-              <customselect v-if="configuration.type === 'SPECTRUM'"
-                v-model="configuration.acquisition_config.mode" 
-                label="Acquire Mode" 
-                desc="The method for positioning the slit. If Brightest Object is selected, the slit is placed 
-                      on the brightest object near the target coordinates."
-                :errors="{}"
-                :options="[
-                  {value: 'WCS', text: 'On Target Coordinates'},
-                  {value: 'BRIGHTEST', text: 'On Brightest Object'}
-                ]"
-                @input="update" 
-              />
-              <customfield v-show="configuration.acquisition_config.mode === 'BRIGHTEST'" 
-                v-model="configuration.acquisition_config.extra_params.acquire_radius" 
-                field="acquire_radius_arcsec"
-                label="Acquire Radius" 
-                desc="The radius in arcseconds within which to search for the brightest object."
-                :errors="{}" 
-                @input="update" 
-              />
+              <div v-if="configuration.type === 'SPECTRUM' || configuration.type === 'NRES_SPECTRUM'">
+                <customselect 
+                  v-model="configuration.acquisition_config.mode" 
+                  label="Acquire Mode" 
+                  desc="The method for positioning the slit. If Brightest Object is selected, the slit is placed 
+                        on the brightest object near the target coordinates."
+                  :errors="{}"
+                  :options="acquireModeOptions"
+                  @input="update" 
+                />
+                <customfield
+                  v-for="field in requiredAcquireModeFields"
+                  :key="field"
+                  v-model="configuration.acquisition_config.extra_params[field]"
+                  :label="field"
+                  :errors="null"
+                  @input="updateAcquisitionConfigExtraParam($event, field)" 
+                />
+              </div>
             </div>
           </b-form>
         </b-col>
       </b-row>
     </b-container>
-    <target 
-      :target="configuration.target" 
-      :datatype="data_type" 
-      :parentshow="show"
-      :errors="_.get(errors, 'target', {})" 
-      :simple_interface="simple_interface"
-      :selectedinstrument="selectedinstrument"
-      @targetupdate="targetUpdated" 
-    />
-    <instrumentconfig v-for="(instrumentconfig, idx) in configuration.instrument_configs" :key="idx"
+    <instrumentconfig 
+      v-for="(instrumentconfig, idx) in configuration.instrument_configs" 
+      :key="idx"
       :index="idx" 
-      :configuration="configuration" 
+      :instrumentconfig="instrumentconfig" 
       :selectedinstrument="selectedinstrument" 
       :parentshow="show"
       :datatype="datatype"
+      :configurationType="configuration.type"
       :show="show"
       :duration_data="duration_data"
       :available_instruments="available_instruments"
@@ -107,10 +116,20 @@
       :simple_interface="simple_interface" 
       @remove="removeInstrumentConfiguration(idx)" 
       @copy="addInstrumentConfiguration(idx)" 
-      @generateCalibs="generateCalibs"
       @instrumentconfigupdate="instumentConfigurationUpdated" 
+      @instrumentconfigurationfillwindow="configurationFillWindow"
     />
-    <constraints v-if="!simple_interface"
+    <target 
+      :target="configuration.target" 
+      :datatype="datatype" 
+      :parentshow="show"
+      :errors="_.get(errors, 'target', {})" 
+      :simple_interface="simple_interface"
+      :selectedinstrument="selectedinstrument"
+      @targetupdate="targetUpdated" 
+    />
+    <constraints 
+      v-if="!simple_interface"
       :constraints="configuration.constraints" 
       :parentshow="show" 
       :errors="_.get(errors, 'constraints', {})" 
@@ -121,7 +140,7 @@
 <script>
   import _ from 'lodash';
 
-  import { collapseMixin, slitWidthToExposureTime } from '../utils.js';
+  import { collapseMixin } from '../utils.js';
   import panel from './util/panel.vue';
   import customalert from './util/customalert.vue';
   import customfield from './util/customfield.vue';
@@ -140,8 +159,7 @@
       'datatype', 
       'parentshow', 
       'duration_data', 
-      'simple_interface',
-      'data_type'
+      'simple_interface'
     ],
     components: {
       customfield, 
@@ -155,35 +173,88 @@
     mixins: [
       collapseMixin
     ],
-    data: function(){
+    data: function() {
       return {
         show: true,
-        acquire_params: {
-          mode: 'WCS',
-          radius: null
-        }
+        acquireHistory: {
+          mode: '',
+          extra_params: {}
+        },
+        selectedImagerGuidingOption: 'OPTIONAL',
+        imagerGuidingOptions: [
+          {value: 'OPTIONAL', text: 'Optional'},
+          {value: 'ON', text: 'On'},
+          {value: 'OFF', text: 'Off'}
+        ]
       };
     },
     computed: {
-      availableInstrumentOptions: function() {
-        let options = [];
-        for( let i in this.available_instruments) {
-          if (this.available_instruments[i].type === this.data_type) {
-            options.push({value: i, text: this.available_instruments[i].name});
+      spectraConfigurationOptions: function() {
+        if (this.selectedinstrument) {
+          if (this.selectedinstrument.includes('NRES')) {
+            return [
+              {value: 'NRES_SPECTRUM', 'text': 'Spectrum'}
+            ]
+          } else if (this.selectedinstrument.includes('FLOYDS')) {
+            return [
+              {value: 'SPECTRUM', text: 'Spectrum'},
+              {value: 'LAMP_FLAT', text: 'Lamp Flat'},
+              {value: 'ARC', text: 'Arc'}
+            ]
           }
         }
-        this.update();
-        return _.sortBy(options, 'text').reverse();
+      },
+      acquireModeOptions: function() {
+        let options = [];
+        let requiredModeFields = [];
+        let modes = this.available_instruments[this.selectedinstrument].modes.acquisition.modes;
+        for (let i in modes) {
+          requiredModeFields = [];
+
+          // TODO: Set a description and a label
+          
+          if ('required_fields' in modes[i].params) {
+            for (let j in modes[i].params.required_fields) {
+              requiredModeFields.push(
+                modes[i].params.required_fields[j]
+              )
+            }
+          }          
+          options.push({
+            value: modes[i].code, 
+            text: modes[i].name,
+            requiredFields: requiredModeFields
+          });
+        }
+        return options;
+      },
+      requiredAcquireModeFields: function() {
+        for (let i in this.acquireModeOptions) {
+          if (this.acquireModeOptions[i].value == this.configuration.acquisition_config.mode) {
+            return this.acquireModeOptions[i].requiredFields;
+          }
+        }
+        return [];
       }
+    },
+    created: function() {
+      this.setupAcquireAndGuideFieldsForType(this.configuration.type);
     },
     methods: {
       update: function() {
         this.$emit('configurationupdated');
       },
-      // fillWindow: function() {
-      //   console.log('fillWindow');
-      //   this.$emit('configurationfillwindow', this.index);
-      // },
+      updateAcquisitionConfigExtraParam: function(value, field) {
+        if (value === '') {
+          // Remove the field if an empty value is entered because the validation
+          // for required extra params only check if the field exists
+          this.configuration.acquisition_config.extra_params[field] = undefined;
+        }
+        this.update();
+      },
+      configurationFillWindow: function(instrumentconfigId) {
+        this.$emit('configurationfillwindow', {configId: this.index, instrumentconfigId: instrumentconfigId});
+      },
       generateCalibs: function() {
         this.$emit('generateCalibs', this.index);
       },
@@ -205,93 +276,136 @@
         this.update();
       },
       instumentConfigurationUpdated: function() {
-        console.log('instrumentconfig updated');
+        console.log('instrumentconfigUpdated');
         this.update();
+      },
+      acquisitionModeIsAvailable: function(acquisitionMode) {
+        for (let amo in this.acquireModeOptions) {
+          if (acquisitionMode === this.acquireModeOptions[amo].value) {
+            return true;
+          }
+        }
+        return false;
+      },
+      saveAcquireFields: function() {
+        if (this.configuration.acquisition_config.mode !== 'OFF') {
+          this.acquireHistory.mode = this.configuration.acquisition_config.mode;
+          this.acquireHistory.extra_params = this.configuration.acquisition_config.extra_params;
+        }
+      },
+      setAcquireFields: function() {
+        if (this.acquisitionModeIsAvailable(this.configuration.acquisition_config.mode)) {
+          return;
+        } 
+        let defaultMode = this.available_instruments[this.selectedinstrument].modes.acquisition.default;
+        if (this.acquisitionModeIsAvailable(this.acquireHistory.mode)) {
+          this.configuration.acquisition_config.mode = this.acquireHistory.mode;
+          this.configuration.acquisition_config.extra_params = this.acquireHistory.extra_params;
+        } else if (defaultMode) {
+          this.configuration.acquisition_config.mode = defaultMode;
+          if (defaultMode === this.acquireHistory.mode) {
+            this.configuration.acquisition_config.extra_params = this.acquireHistory.extra_params;
+          } else {
+            this.configuration.acquisition_config.extra_params = {};
+          }
+        } else if (this.acquireModeOptions.length > 0) {
+          this.saveAcquireFields();
+          this.configuration.acquisition_config.mode = this.acquireModeOptions[0].value;
+          this.configuration.acquisition_config.extra_params = {};
+        }
+        this.update();
+      },
+      unsetAcquireFields: function() {
+        // Turn off acquisition
+        this.saveAcquireFields();
+        this.configuration.acquisition_config.mode = 'OFF';
+        this.configuration.acquisition_config.extra_params = {};
+        this.update();
+      },
+      setGuidingFields: function(guidingOption) {
+        // Set the fields in the configuration's guiding_config based on the user's chosen 
+        // guiding option.
+        if (guidingOption === 'OFF') {
+          this.configuration.guiding_config.optional = false;
+          this.configuration.guiding_config.mode = 'OFF';
+        } else if (guidingOption === 'ON') {
+          this.configuration.guiding_config.optional = false;
+          this.configuration.guiding_config.mode = 'ON';
+        } else {
+          this.configuration.guiding_config.optional = true;
+          this.configuration.guiding_config.mode = 'ON';
+        }
+        this.update();
+      },
+      setupAcquireAndGuideFieldsForType: function(configurationType) {
+        if (configurationType) {
+          if (configurationType === 'SPECTRUM' || configurationType === 'NRES_SPECTRUM') {
+            this.setGuidingFields('ON');
+            this.setAcquireFields();
+          } else if (configurationType == 'LAMP_FLAT' || configurationType == 'ARC') {
+            this.setGuidingFields('OPTIONAL');
+            this.unsetAcquireFields();
+
+            // TODO: Difference in validation between valhalla and obs portal
+          
+          } else if (configurationType == 'EXPOSE') {
+            this.setGuidingFields(this.selectedImagerGuidingOption);
+            this.unsetAcquireFields();
+          }
+        }
       },
       setupImager: function() {
         this.configuration.type = 'EXPOSE';
-        // this.configuration.spectra_slit = undefined;
-        this.acquire_params.mode = this.configuration.acquisition_config.mode;
-        this.configuration.acquisition_config.mode = undefined;
-        this.configuration.acquisition_config.extra_params.acquire_radius = undefined;
+        this.update();
       },
-      setupSpectrograph: function(){
-        this.configuration.guiding_config.mode = 'ON';
-        for (let ic in this.configuration.instrument_configs) {
-          this.configuration.instrument_configs[ic].optical_elements.filter = undefined;
+      setupSpectrograph: function() {
+        if (this.selectedinstrument.includes('NRES')) {
+          this.configuration.type = 'NRES_SPECTRUM';
+        } else {
+          this.configuration.type = 'SPECTRUM';
         }
+        this.update();
       },
-      setupNRES: function(){
-        this.configuration.type = 'NRES_SPECTRUM';
-        this.setupSpectrograph();
-        this.configuration.acquisition_config.mode = 'BRIGHTEST';
-        this.configuration.acquisition_config.extra_params.acquire_radius = this.acquire_params.radius;
-      },
-      setupFLOYDS: function(){
-        this.configuration.type = 'SPECTRUM';
-        this.setupSpectrograph();
-        this.configuration.acquisition_config.mode = this.acquire_params.mode;
-        if (this.configuration.acquisition_config.mode === 'BRIGHTEST'){
-          this.configuration.extra_parmas.acquire_radius = this.acquire_params.radius;
-        }
-      }
     },
     watch: {
+      selectedImagerGuidingOption: function(value) {
+        this.setGuidingFields(value);
+      },
       selectedinstrument: function(value) {
         if (this.configuration.instrument_type !== value) {
-          if (value.includes('NRES') ){
-            this.setupNRES();
-          } else if (value.includes('FLOYDS') ){
-            this.setupFLOYDS();
+          if (this.datatype === 'SPECTRA') {
+            // Need to set up spectrograph here because the instrument might have changed
+            // from NRES to FLOYDS, which have different aquire modes and configuration types
+            this.setupSpectrograph();
           }
+          // The selected instrument is set in the request level in the UI, it is actually updated
+          // in the request json here
           this.configuration.instrument_type = value;
-          // wait for options to update, then set default
-          let that = this;
-          setTimeout(function() {
-            let default_binning = _.get(
-              that.available_instruments, [that.selectedinstrument, 'default_binning'], null
-            );
-            // TODO: bin is in instrument config
-            that.configuration.instrument_configs[0].bin_x = default_binning;
-            that.configuration.instrument_configs[0].bin_y = default_binning;
-            that.update();
-          }, 100);
+          this.update();
         }
       },
       datatype: function(value) {
         if (value === 'SPECTRA') {
-          if (this.selectedinstrument && this.selectedinstrument.includes('NRES')) {
-            this.setupNRES();
-          } else {
-            this.setupFLOYDS();
-          }
+          this.setupSpectrograph();
         } else {
           this.setupImager();
         }
       },
-      'configuration.acquisition_config.mode': function(value) {
-        if (value === 'BRIGHTEST') {
-          this.configuration.acquisition_config.extra_params.acquire_radius = this.acquire_params.radius;
-        } else {
-          if (typeof this.configuration.acquisition_config.extra_params.acquire_radius != undefined) {
-            this.acquire_params.radius = this.configuration.acquisition_config.extra_params.acquire_radius;
-            this.configuration.acquisition_config.extra_params.acquire_radius = undefined;
+      'configuration.acquisition_config.mode': function(newValue, oldValue) {
+        if (oldValue !== 'OFF' && newValue !== 'OFF') {
+          let oldExtraParams = this.configuration.acquisition_config.extra_params;
+          if (newValue === this.acquireHistory.mode) {
+            this.configuration.acquisition_config.extra_params = this.acquireHistory.extra_params;
+          } else {
+            this.configuration.acquisition_config.extra_params = {};
           }
-        }
-      },
-      // TODO: This below, move stuff into instrument configs
-      'configuration.spectra_slit': function(value) {
-        if (this.configuration.type === 'LAMP_FLAT') {
-          this.configuration.instrument_configs[0].exposure_time = slitWidthToExposureTime(value);
+          this.acquireHistory.mode = oldValue;
+          this.acquireHistory.extra_params = oldExtraParams;
+          this.update();
         }
       },
       'configuration.type': function(value) {
-        if (value === 'SPECTRUM' || value === 'NRES_SPECTRUM') {
-          this.configuration.guiding_config.optional = false;
-          this.configuration.guiding_config.mode = 'ON'
-        } else {
-          this.configuration.guiding_config.optional = true;
-        }
+        this.setupAcquireAndGuideFieldsForType(value);
       }
     }
   };

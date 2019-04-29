@@ -28,25 +28,24 @@
         </b-col>
         <b-col :md="show ? 6 : 12">
           <b-form>
-            <customselect v-if="!simple_interface"
+            <customselect 
+              v-if="!simple_interface"
               v-model="data_type" 
               label="Observation Type" 
-              :options="[
-                {value:'IMAGE', text: 'Image'}, 
-                {value:'SPECTRA', text:'Spectrum'}
-              ]"
-              :errors="errors.data_type"              
+              :options="dataTypeOptions"
+              :errors="{}"              
               @input="update" 
             />
             <customselect 
               v-model="instrument_type" 
               label="Instrument" 
               field="instrument_type"
-              :errors="errors.instrument_type" 
+              :errors="_.get(errors, ['configurations', 0, 'instrument_type'], {})" 
               :options="availableInstrumentOptions"
               @input="update" 
             />
-            <customfield v-if="!simple_interface"
+            <customfield 
+              v-if="!simple_interface"
               v-model="request.acceptability_threshold" 
               label="Acceptability Threshold" 
               field="acceptability_threshold" 
@@ -65,11 +64,10 @@
       :configuration="configuration" 
       :selectedinstrument="instrument_type" 
       :datatype="data_type" 
-      :data_type="data_type"
       :parentshow="show"
       :available_instruments="available_instruments"
       :errors="_.get(errors, ['configurations', idx], {})"
-      :duration_data="_.get(duration_data, ['configurations', idx], {'duration':0})"
+      :duration_data="_.get(duration_data, ['configurations', idx], {'duration': 0})"
       :simple_interface="simple_interface" 
       @remove="removeConfiguration(idx)" 
       @copy="addConfiguration(idx)" 
@@ -128,54 +126,61 @@
     data: function() {
       return {
         show: true,
-        data_type: this.instrumentToDataType(this.request.configurations[0].instrument_type),
+        data_type: '',
+        dataTypeOptions: [],
         instrument_type: this.request.configurations[0].instrument_type
       };
     },
     computed: {
-      availableInstrumentOptions: function(){
+      availableInstrumentOptions: function() {
         let options = [];
-        for( let i in this.available_instruments) {
-          if (this.available_instruments[i].type === this.data_type) {
-            options.push({value: i, text: this.available_instruments[i].name});
+        for (let ai in this.available_instruments) {
+          if (this.available_instruments[ai].type === this.data_type) {
+            options.push({value: ai, text: this.available_instruments[ai].name});
           }
         }
         this.update();
         return _.sortBy(options, 'text').reverse();
       },
       firstAvailableInstrument: function() {
-        if (this.availableInstrumentOptions.length){
+        if (this.availableInstrumentOptions.length) {
           return this.availableInstrumentOptions[0].value;
         } else {
           return '';
         }
       }
     },
+    created: function() {
+      // Need to call this here for when a request is copied
+      this.updateDataTypeOptions();
+    },
     watch: {
-      data_type: function() {
-        if (Object.keys(this.available_instruments).length && (!this.instrument_type || this.available_instruments[this.instrument_type].type != this.data_type)) {
+      data_type: function(value) {
+        if (Object.keys(this.available_instruments).length && (!this.instrument_type || this.available_instruments[this.instrument_type].type !== value)) {
           this.instrument_type = this.firstAvailableInstrument;
           this.update();
         }
       },
-      instrument_type: function(value) {
-        if (value) {
-          this.updateAcceptabilityThreshold(value);
-          this.request.location.telescope_class = this.available_instruments[value].class.toLowerCase();
+      instrument_type: function(newValue, oldValue) {
+        if (newValue) {
+          this.updateAcceptabilityThreshold(newValue, oldValue);
+          this.request.location.telescope_class = this.available_instruments[newValue].class.toLowerCase();
+          this.update();
         }
       },
-      available_instruments: function(){
+      available_instruments: function(value) {
         if (!this.instrument_type) {
           this.instrument_type = this.firstAvailableInstrument;
         }
+        this.updateDataTypeOptions();
       }
     },
     methods: {
       update: function() {
         this.$emit('requestupdate');
         let that = this;
-        _.delay(function(){
-          that.updateVisibility()
+        _.delay(function() {
+          that.updateVisibility();
         }, 500);
       },
       updateVisibility: _.debounce(function() {
@@ -185,57 +190,83 @@
           }
         }
       }, 300),
-      instrumentToDataType: function(value) {
-        if (value.includes('NRES') || value.includes('FLOYDS')) {
-          return 'SPECTRA';
-        } else {
-          return 'IMAGE';
+      updateDataTypeOptions: function() {
+        if (_.isEmpty(this.dataTypeOptions)) {
+          let hasImage = false;
+          let hasSpectra = false;
+          for (let itype in this.available_instruments) {
+            if (this.available_instruments[itype].type === 'IMAGE') hasImage = true; 
+            if (this.available_instruments[itype].type === 'SPECTRA') hasSpectra = true;
+          }
+          if (hasImage) this.dataTypeOptions.push({value:'IMAGE', text: 'Image'});
+          if (hasSpectra) this.dataTypeOptions.push({value:'SPECTRA', text:'Spectrum'});
+          this.setDataType();
         }
       },
-      updateAcceptabilityThreshold: function(instrument) {
-        const floydsDefaultAcceptability = 100;
-        const otherDefaultAcceptability = 90;
+      setDataType: function() {
+        if (this.instrument_type) {
+          for (let itype in this.available_instruments) {
+            if (itype === this.instrument_type) {
+              this.data_type = this.available_instruments[itype].type;
+              return;
+            }
+          }
+        } else if (this.dataTypeOptions.length > 0) {
+          this.data_type = this.dataTypeOptions[0].value;
+        }
+      },
+      updateAcceptabilityThreshold: function(new_instrument_type, old_instrument_type) {
+        let newDefaultAcceptability = 90;
+        let oldDefaultAcceptability = 90;
+        if (new_instrument_type in this.available_instruments) {
+          newDefaultAcceptability = this.available_instruments[new_instrument_type].default_acceptability_threshold;
+        }
+        if (old_instrument_type in this.available_instruments) {
+          oldDefaultAcceptability = this.available_instruments[old_instrument_type].default_acceptability_threshold;
+        }
         let currentAcceptability = this.request.acceptability_threshold;
-        if (instrument === '2M0-FLOYDS-SCICAM') {
-          if (currentAcceptability === '' || Number(currentAcceptability) === otherDefaultAcceptability) {
-            // Initialize default value, or update the value if it was the non-floyds default - this means that the user
-            // probably didn't modify the threshold (If they did modify it, it should probably stay at what they set).
-            this.request.acceptability_threshold = floydsDefaultAcceptability;
-          }
-        } else {
-          if (currentAcceptability === '' || Number(currentAcceptability) === floydsDefaultAcceptability) {
-            // Initialize default value, or update accordingly.
-            this.request.acceptability_threshold = otherDefaultAcceptability;
-          }
-        }
-      },
-      configurationFillWindow: function(configuration_id) {
-        // TODO: This function
-        console.log('configurationfillwindow');
-        if ('largest_interval' in this.duration_data) {
-          let num_exposures = this.request.configurations[0].instrument_configs[0].exposure_count;
-          let configuration_duration = this.duration_data.configuration[configuration_id].duration;
-          let available_time = this.duration_data.largest_interval - this.duration_data.duration + (configuration_duration * num_exposures);
-          num_exposures = Math.floor(available_time / configuration_duration);
-          this.request.configurations[configuration_id].exposure_count = Math.max(1, num_exposures);
+        if (currentAcceptability === '' || Number(currentAcceptability) === oldDefaultAcceptability) {
+          // Initialize default value, or update the value if it was not set to the default of the 
+          // previous instrument type - this means that the user probably didn't modify the threshold 
+          // (If they did modify it, it should probably stay at what they set).
+          this.request.acceptability_threshold = newDefaultAcceptability;
           this.update();
         }
       },
-      generateCalibs: function(configurations_id) {
+      configurationFillWindow: function(ids) {
         // TODO: This function
+        console.log('configurationfillwindow');
+        if ('largest_interval' in this.duration_data) {
+          var num_exposures = this.request.configurations[ids.configId].instrument_configs[ids.instrumentconfigId].exposure_count;
+          var configuration_duration = this.duration_data.configurations[ids.configId].duration;
+          var available_time = this.duration_data.largest_interval - this.duration_data.duration + (configuration_duration * num_exposures);
+          num_exposures = Math.floor(available_time / configuration_duration);
+          this.request.configurations[ids.configId].instrument_configs[ids.instrumentconfigId].exposure_count = Math.max(1, num_exposures);
+          this.update();
+        }
+      },
+      generateCalibs: function(configuration_id) {
         let request = this.request;
         let calibs = [{}, {}, {}, {}];
-        for(let x in calibs){
-          calibs[x] = _.cloneDeep(request.configurations[configurations_id]);
-          calibs[x].exposure_time = 60;
+        for (let c in calibs) {
+          calibs[c] = _.cloneDeep(request.configurations[configuration_id]);
+          for (let ic in calibs[c].instrument_configs) {
+            calibs[c].instrument_configs[ic].exposure_time = 60;
+          }
         }
         calibs[0].type = 'LAMP_FLAT'; calibs[1].type = 'ARC';
         calibs[0].guiding_config.optional = true; calibs[1].guiding_config.optional = true;
-        calibs[0].instrument_configs[0].exposure_time = slitWidthToExposureTime(calibs[0].spectra_slit);
-        request.configurationstatuses.unshift(calibs[0], calibs[1]);
+        calibs[0].guiding_config.mode = 'ON'; calibs[1].guiding_config.mode = 'ON';
+        for (let ic in calibs[0].instrument_configs) {
+          calibs[0].instrument_configs[ic].exposure_time = slitWidthToExposureTime(calibs[0].instrument_configs[ic].optical_elements.slit);
+        }
+        request.configurations.unshift(calibs[0], calibs[1]);
         calibs[2].type = 'ARC'; calibs[3].type = 'LAMP_FLAT';
-        calibs[2].ag_mode = 'OPTIONAL'; calibs[3].ag_mode = 'OPTIONAL';
-        calibs[3].exposure_time = slitWidthToExposureTime(calibs[3].spectra_slit);
+        calibs[2].guiding_config.optional = true; calibs[3].guiding_config.optional = true;
+        calibs[2].guiding_config.mode = 'ON'; calibs[3].guiding_config.mode = 'ON';
+        for (let ic in calibs[3].instrument_configs) {
+          calibs[3].instrument_configs[ic].exposure_time = slitWidthToExposureTime(calibs[3].instrument_configs[ic].optical_elements.slit);
+        }
         request.configurations.push(calibs[2], calibs[3]);
         this.update();
       },

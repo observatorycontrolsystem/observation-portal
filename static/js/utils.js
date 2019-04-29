@@ -185,7 +185,36 @@ function formatValue(value){
   return value;
 }
 
+function getCookie(name) {
+  var cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    var cookies = document.cookie.split(';');
+    for (var i = 0; i < cookies.length; i++) {
+      var cookie = $.trim(cookies[i]);
+      // Does this cookie string begin with the name we want?
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+function csrfSafeMethod(method) {
+  // these HTTP methods do not require CSRF protection
+  return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+}
+
 let datetimeFormat = 'YYYY-MM-DD HH:mm:ss';
+
+const tooltipConfig = {
+  delay: {
+    show: 500, 
+    hide: 100
+  }, 
+  trigger: 'hover'
+};
 
 let collapseMixin = {
   watch: {
@@ -263,5 +292,5 @@ export {
   semesterStart, semesterEnd, sexagesimalRaToDecimal, sexagesimalDecToDecimal, QueryString, formatJson, formatValue,
   formatDate, formatField, datetimeFormat, collapseMixin, siteToColor, siteCodeToName, slitWidthToExposureTime,
   observatoryCodeToNumber, telescopeCodeToName, colorPalette, julianToModifiedJulian,
-  decimalRaToSexigesimal, decimalDecToSexigesimal
+  decimalRaToSexigesimal, decimalDecToSexigesimal, tooltipConfig, getCookie, csrfSafeMethod
 };

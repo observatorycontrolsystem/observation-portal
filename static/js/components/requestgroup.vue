@@ -21,7 +21,13 @@
         <b-col md="6" v-show="show">
           <h3>
             Duration of Observing Request:
-            <sup class="text-primary" v-b-tooltip title="The time that will be deducted from your proposal when this request is completed. Includes exposure times, slew times, and instrument overheads.">?</sup>
+            <sup 
+              class="text-primary" 
+              v-b-tooltip=tooltipConfig 
+              title="The time that will be deducted from your proposal when this request is completed. Includes exposure times, slew times, and instrument overheads."
+              >
+                ?
+              </sup>
           </h3>
           <h2>{{ durationDisplay }}</h2>
           <br/>
@@ -95,7 +101,7 @@
         <cadence :data="cadenceRequests"/>
 
         <!-- TODO: Differentiate between loading data and no cadence found -->
-
+        
         <p v-if="cadenceRequests.length < 1">
           <strong>
             A valid cadence could not be generated. Please try adjusting jitter or period and make sure your target is visible
@@ -149,8 +155,7 @@
   import customalert from './util/customalert.vue';
   import customfield from './util/customfield.vue';
   import customselect from './util/customselect.vue';
-  import { QueryString } from '../utils.js';
-  import { datetimeFormat } from '../utils.js';
+  import { QueryString, datetimeFormat, tooltipConfig } from '../utils.js';
 
   export default {
     props: [
@@ -170,10 +175,11 @@
     data: function() {
       return {
         show: true,
+        tooltipConfig: tooltipConfig,
         showCadence: false,
         simple_interface: false,
         cadenceRequests: [],
-        available_instruments: {},
+        available_instruments: {},  // Has only the instruments that the user's proposals allow
         proposals: [],
         cadenceRequestId: -1
       };
@@ -185,8 +191,10 @@
         that.proposals = data.proposals;
         if (data.profile.simple_interface) {
           that.simple_interface = data.profile.simple_interface;
-          for (let i = 0; i < that.requestgroup.requests.length; i++) {
-            that.requestgroup.requests[i].constraints.max_airmass = 2.0
+          for (let req = 0; req < that.requestgroup.requests.length; req++) {
+            for (let conf = 0; conf < that.requestgroup.requests[i].configurations; conf++) {
+              that.requestgroup.requests[req].configurations[conf].constraints.max_airmass = 2.0;
+            }
           }
         }
         for (let ai in data.available_instrument_types) {
@@ -206,7 +214,7 @@
         });
       }).done(function() {
         if (QueryString().requestgroupid) {
-          that.fetchUserRequest(QueryString().requestgroupid);
+          that.fetchRequestGroup(QueryString().requestgroupid);
         }
       });
     },
@@ -216,7 +224,10 @@
         for (let p in this.proposals) {
           let proposal = this.proposals[p];
           if (proposal.current) {
-            options.push({'value': proposal.id, 'text': proposal.title + ' (' + proposal.id + ')'});
+            options.push({
+              value: proposal.id,
+              text: proposal.title + ' (' + proposal.id + ')'
+            });
           }
         }
         return _.sortBy(options, 'text');
@@ -238,16 +249,17 @@
         this.requestgroup.operator = value > 1 ? 'MANY' : 'SINGLE';
       },
       'requestgroup.observation_type': function(value) {
-        // TODO: This is undefined after filling in with a draft, resulting with an error in the console, 
-        // but it does fix itself. This is happening in valhalla as well.
-        for (var index = 0; index < this.requestgroup.requests.length; ++index) {
-          for (var windowIndex = 0; windowIndex < this.requestgroup.requests[index].windows.length; ++windowIndex) {
-            if (value === 'RAPID_RESPONSE') {
-              delete this.requestgroup.requests[index].windows[windowIndex].start;
-              this.requestgroup.requests[index].windows[windowIndex].end = moment.utc().add(6, 'hours').format(datetimeFormat);
-            } else {
-              if (!('start' in this.requestgroup.requests[index].windows[windowIndex])) {
-                this.requestgroup.requests[index].windows[windowIndex].start = moment.utc().format(datetimeFormat);
+        // The value might be undefined at this point
+        if (value) {
+          for (var index = 0; index < this.requestgroup.requests.length; ++index) {
+            for (var windowIndex = 0; windowIndex < this.requestgroup.requests[index].windows.length; ++windowIndex) {
+              if (value === 'RAPID_RESPONSE') {
+                delete this.requestgroup.requests[index].windows[windowIndex].start;
+                this.requestgroup.requests[index].windows[windowIndex].end = moment.utc().add(6, 'hours').format(datetimeFormat);
+              } else {
+                if (!('start' in this.requestgroup.requests[index].windows[windowIndex])) {
+                  this.requestgroup.requests[index].windows[windowIndex].start = moment.utc().format(datetimeFormat);
+                }
               }
             }
           }
@@ -319,7 +331,7 @@
         this.showCadence = false;
         this.update();
       },
-      fetchUserRequest: function(id) {
+      fetchRequestGroup: function(id) {
         let that = this;
         $.getJSON('/api/requestgroups/' + id + '/', function(data) {
           that.requestgroup.requests = [];

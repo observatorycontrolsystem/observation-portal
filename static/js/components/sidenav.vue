@@ -1,11 +1,10 @@
 <template>
     <!-- TODO: add the detailed error messages back in -->
   <b-navbar sticky v-b-scrollspy>
-
     <b-nav-form>
       <b-button-group vertical>
         <div 
-          v-b-tooltip.hover 
+          v-b-tooltip=tooltipConfig
           title="Clear form"
         >
           <b-button 
@@ -16,19 +15,15 @@
             <i class="fa fa-times"></i> 
           </b-button>
         </div>
-
-
           <b-dropdown 
             v-if="draftExists" 
-            v-b-tooltip.hover 
+            v-b-tooltip=tooltipConfig
             dropleft
             variant="primary" 
             class="compose-form-dropdown" 
             :title="saveDraftTooltipText"
             @click="saveDraft(draftId)" 
           >
-
-
             <template slot="button-content">
               <i class="fa fa-save"></i> 
             </template>
@@ -38,15 +33,10 @@
             <b-dropdown-item-button @click="saveDraft(true)">
               Save as new draft
             </b-dropdown-item-button>
-
           </b-dropdown>
-
-
-
-
           <b-button 
             v-else
-            v-b-tooltip.hover 
+            v-b-tooltip=tooltipConfig
             variant="primary" 
             class="compose-form-button" 
             :title="saveDraftTooltipText"
@@ -54,7 +44,10 @@
           >
             <i class="fa fa-save"></i> 
           </b-button>
-        <span v-b-tooltip.hover title="Submit observing request">
+        <span 
+          v-b-tooltip=tooltipConfig
+          title="Submit observing request"
+        >
           <b-button 
             variant="success" 
             class="compose-form-button" 
@@ -65,7 +58,7 @@
           </b-button>
         </span>
         <span 
-          v-b-tooltip.hover 
+          v-b-tooltip=tooltipConfig
           title="Toggle navigation"
         >
           <b-button 
@@ -132,20 +125,7 @@
                 ></i>
                 Configuration #{{ confIndex + 1 }}
               </b-nav-item>
-              <b-nav-item 
-                :href="'#target' + requestIndex + confIndex" 
-                class="nested-twice"
-              >
-                <i 
-                  v-if="hasError(['requests', requestIndex, 'configurations', confIndex, 'target'])" 
-                  class="fas fa-exclamation-triangle text-danger"
-                ></i>
-                <i 
-                  v-else 
-                  class="fas fa-check text-success"
-                ></i>
-                Target
-              </b-nav-item>
+
               <b-nav-item 
                 v-for="(instrumentconfig, icIndex) in configuration.instrument_configs" 
                 :key="'instrumentconfig' + icIndex" 
@@ -161,6 +141,20 @@
                   class="fas fa-check text-success"
                 ></i>
                 Instrument Configuration #{{ icIndex + 1 }}
+              </b-nav-item>
+              <b-nav-item 
+                :href="'#target' + requestIndex + confIndex" 
+                class="nested-twice"
+              >
+                <i 
+                  v-if="hasError(['requests', requestIndex, 'configurations', confIndex, 'target'])" 
+                  class="fas fa-exclamation-triangle text-danger"
+                ></i>
+                <i 
+                  v-else 
+                  class="fas fa-check text-success"
+                ></i>
+                Target
               </b-nav-item>
               <b-nav-item 
                 :href="'#constraints' + requestIndex + confIndex" 
@@ -202,6 +196,8 @@
 <script>
   import _ from 'lodash';
 
+  import { tooltipConfig } from '../utils.js';
+
   export default {
     props: [
       'requestgroup', 
@@ -210,6 +206,7 @@
     ],
     data: function() {
       return {
+        tooltipConfig: tooltipConfig,
         saveDraftTooltipText: 'Save a draft of this observing request. The request will not be submitted.'
       }
     },
@@ -245,10 +242,10 @@
   };
 </script>
 <style>
-/* The dropdown elements do not receive data-v[hash] attribute applied when using 
-   scoped styles, so their styles must be global */
+  /* The dropdown elements do not receive data-v[hash] attribute applied when using 
+    scoped styles, so their styles must be global */
 
-/* Style the buttons in this component.*/
+  /* Style the buttons in this component.*/
   .compose-form-button ,
   .compose-form-dropdown button.dropdown-toggle {
       padding: 0;
@@ -287,9 +284,11 @@
     min-width: 200px;
     width: 200px;
   }
-  /* Stack buttons vertically on top of nav colum button */
+  /* Stack buttons vertically on top of nav column button, 
+  and make sure nav stays under popups */
   nav {
     flex-direction: column;
+    z-index: 1;
   }
   /* all links */
   .nav-link {

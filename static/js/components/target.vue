@@ -27,18 +27,20 @@
         </b-col>
         <b-col :md="show ? 6 : 12">
           <b-form>
-            <b-row v-show="lookingUP || lookupFail">
-              <b-col class="extra-info-text text-right font-italic">
-                <i v-show="lookingUP" class="fa fa-spinner fa-spin fa-fw"></i> {{ lookupText }}
-              </b-col>
-            </b-row>
             <customfield 
               v-model="target.name" 
               label="Name" 
               field="name" 
               :errors="errors.name"
               @input="update" 
-            />
+            >
+              <div 
+                v-show="lookingUP || lookupFail" 
+                slot="extra-help-text"
+              >
+                <i v-show="lookingUP" class="fa fa-spinner fa-spin fa-fw"></i> {{ lookupText }}
+              </div>
+            </customfield>
             <customselect v-if="!simple_interface"
               v-model="target.type" 
               label="Type" 
@@ -51,30 +53,36 @@
               @input="update" 
             />
             <span class="sidereal" v-show="target.type === 'SIDEREAL'">
-            <div class="extra-info-text text-right font-italic">
-              {{ ra_help_text }}
-            </div>
               <customfield 
                 v-model="ra_display" 
                 label="Right Ascension" 
-                type="text" 
                 field="ra" 
                 desc="Decimal degrees or HH:MM:SS.S"
                 :errors="errors.ra"
                 @blur="updateRA" 
-              />
-            <div class="extra-info-text text-right font-italic">
-              {{ dec_help_text }}
-            </div>
+              >
+                <div
+                  slot="extra-help-text"
+                  v-if="target.ra" 
+                >
+                  {{ ra_help_text }}
+                </div>
+              </customfield>
               <customfield 
                 v-model="dec_display" 
                 label="Declination" 
-                type="text" 
                 field="dec" 
                 desc="Decimal degrees or DD:MM:SS.S"
                 :errors="errors.dec"
                 @blur="updateDec" 
-              />
+              >
+                <div 
+                  slot="extra-help-text"
+                  v-if="target.dec" 
+                >
+                  {{ dec_help_text }}
+                </div>              
+              </customfield>
               <customfield v-if="!simple_interface"
                 v-model="target.proper_motion_ra" 
                 label="Proper Motion RA" 
@@ -208,28 +216,6 @@
                 @input="update" 
               />
             </span>
-            <span v-if="showSlitPosition">
-              <customselect 
-                v-model="target.rot_mode" 
-                label="Slit Position" 
-                field="rot_mode" 
-                desc="With the slit at the parallactic angle, atmospheric dispersion is along the slit."
-                :errors="errors.rot_mode"
-                :options="[
-                  {value: 'VFLOAT', text: 'Parallactic'}, 
-                  {value: 'SKY', text: 'User Specified'}
-                ]"
-                @input="update" 
-              />
-              <customfield v-if="target.rot_mode === 'SKY'"
-                v-model="target.rot_angle" 
-                label="Angle" 
-                field="rot_angle" 
-                desc="Position Angle of the slit in degrees east of north."
-                :errors="errors.rot_angle" 
-                @input="update"
-              />
-            </span>
           </b-form>
         </b-col>
       </b-row>
@@ -254,8 +240,6 @@
     props: [
       'target', 
       'errors', 
-      'datatype', 
-      'selectedinstrument', 
       'parentshow', 
       'simple_interface'
     ],
@@ -281,20 +265,17 @@
         perihdist: null,
         epochofperih: null
       };
-      let rot_target_params = {rot_mode: 'VFLOAT', rot_angle: 0};
       let sid_target_params = _.cloneDeep(this.target);
       delete sid_target_params['name'];
       delete sid_target_params['type'];
       return {
         show: true,
-        showSlitPosition: false,
         lookingUP: false,
         lookupFail: false,
         lookupText: '',
         lookupReq: undefined,
         ns_target_params: ns_target_params,
         sid_target_params: sid_target_params,
-        rot_target_params: rot_target_params,
         ra_display: this.target.ra,
         dec_display: this.target.dec,
         ra_help_text: this.raHelp(this.target.ra),
@@ -377,25 +358,6 @@
           that.update();
         });
       }, 500),
-      'datatype': function(value) {
-        if (value === 'SPECTRA') {
-          for (let x in this.rot_target_params) {
-            this.target[x] = this.rot_target_params[x];
-          }
-        } else {
-          for (let y in this.rot_target_params) {
-            this.rot_target_params[y] = this.target[y];
-            this.target[y] = undefined;
-          }
-        }
-      },
-      selectedinstrument: function(value) {
-        if (value.includes('NRES')) {
-          this.showSlitPosition = false;
-        } else if (this.datatype === 'SPECTRA') {
-          this.showSlitPosition = true;
-        }
-      },
       'target.type': function(value) {
         let that = this;
         if (value === 'SIDEREAL') {
@@ -419,8 +381,3 @@
     }
   };
 </script>
-<style scoped>
-  .extra-info-text {
-    font-size: 90%;
-  }
-</style>

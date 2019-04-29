@@ -3,12 +3,10 @@
     <b-form-row>
       <b-col>
 
+        <!-- TODO Add in LCO terms -->
 
-        <!-- TODO Issue that Joey raised -->
-        <!-- TODO Joey updated the duration display -->
-
-
-        <!-- TODO: If the same alert is brought up more than once, it will only display the first time -->
+        <!-- TODO: If the same alert is brought up more than once, it will only display the 
+        first time. This applies to all alerts, not just this one -->
         <customalert 
           v-for="alert in alerts"
           :key="alert.msg" 
@@ -37,7 +35,10 @@
                 @requestgroupupdate="requestgroupUpdated"
               />
             </b-col>
-            <b-col cols="auto" class="m-0 p-0">
+            <b-col
+              cols="auto" 
+              class="m-0 p-0"
+            >
               <sidenav 
                 :requestgroup="requestgroup" 
                 :errors="errors" 
@@ -189,12 +190,12 @@
                 bin_y: '',
                 exposure_count: 1,
                 exposure_time: '',
+                mode: '',
+                rot_mode: '',
                 extra_params: {
                   defocus: 0
                 },
-                optical_elements: {
-                  filter: ''
-                }
+                optical_elements: {}
               }],
               acquisition_config: {
                 mode: 'OFF',
@@ -203,7 +204,7 @@
                 }
               },
               guiding_config: {
-                mode: '',
+                mode: 'ON',
                 optional: true,
                 extra_params: {}
               },
@@ -224,7 +225,7 @@
             }],
             windows: [{
               start: moment.utc().format(datetimeFormat),
-              end: moment.utc().add(1, "days").format(datetimeFormat)
+              end: moment.utc().add(1, 'days').format(datetimeFormat)
             }],
             location: {
               telescope_class: ''
@@ -258,6 +259,9 @@
       submit: function() {
         let duration = moment.duration(this.duration_data.duration, 'seconds');
         let duration_string = '';
+        if (duration.days() > 0) {
+            duration_string = duration.days() + ' days, ' + duration_string;
+        } 
         if (duration.hours() > 0) {
           duration_string += duration.hours() + ' hours, ';
         }
@@ -269,7 +273,7 @@
             url: '/api/requestgroups/',
             data: JSON.stringify(that.requestgroup),
             contentType: 'application/json',
-            success: function(data){
+            success: function(data) {
               window.location = '/requestgroups/' + data.id;
             }
           });

@@ -1,6 +1,10 @@
 <template>
 <span>
+  <span class="text-right font-italic extra-help-text">
+    <slot name="extra-help-text"/>
+  </span>
   <b-form-group
+    :id="field + '-fieldgroup-' + $parent.id"
     v-show="$parent.show"
     label-size="sm"
     label-align-sm="right"
@@ -9,16 +13,25 @@
     :label="label"
     :label-for="field"
   >
-    <b-form-input 
-      :id="field" 
-      :value="value"
-      :state="!hasErrors"
-      :type="type || `text`"
-      @input="update($event)"
-      @blur="blur($event)"
-    />
-    <slot name="inlineButton"></slot>
-    <span class="text-danger" v-for="error in errors" :key="error">{{ error }}</span>
+    <b-input-group size="sm">
+      <b-form-input 
+        size="sm"
+        :id="field + '-field-' + $parent.id" 
+        :value="value"
+        :state="validationState"
+        :type="type || `text`"
+        @input="update($event)"
+        @blur="blur($event)"
+      />
+      <slot name="inline-input"/>
+    </b-input-group>
+    <span 
+      class="errors text-danger" 
+      v-for="error in errors" 
+      :key="error"
+    >
+      {{ error }}
+    </span>    
   </b-form-group>
   <span 
     class="mr-4" 
@@ -43,6 +56,16 @@
     computed: {
       hasErrors: function() {
         return !_.isEmpty(this.errors);
+      },
+      validationState: function() {
+        if (this.errors === null) {
+          // No validation displayed
+          return null;
+        } else if (this.hasErrors) {
+          return 'invalid';
+        } else {
+          return 'valid';
+        }
       }
     },
     methods: {
@@ -64,3 +87,11 @@
     }
   };
 </script>
+<style scoped>
+  .errors {
+    font-size: 80%;
+  }
+  .extra-help-text {
+    font-size: 80%;
+  }
+</style>
