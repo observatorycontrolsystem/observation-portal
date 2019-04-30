@@ -83,7 +83,10 @@
   .errors {
     font-size: 80%;
   }
-  .extra-help-text {
-    font-size: 80%;
+  .extra-help-text,
+  .extra-help-text div {
+    font-size: 90%;
+    margin-left: auto !important;
+    max-width: 220px;
   }
 </style>
