@@ -81,7 +81,7 @@
               @input="update"
             />
             <b-form-group
-              v-show="cadence != 'none'"
+              v-show="cadence != 'none' && this.show"
               label-size="sm"
               label-align-sm="right"
               label-cols-sm="4"
@@ -91,7 +91,7 @@
               <b-button
                 block
                 id="cadence-button" 
-                variant="primary"
+                variant="outline-info"
                 @click="genCadence"
               >
                 Generate Cadence

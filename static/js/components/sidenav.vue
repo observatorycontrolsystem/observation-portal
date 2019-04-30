@@ -19,7 +19,7 @@
             v-if="draftExists" 
             v-b-tooltip=tooltipConfig
             dropleft
-            variant="primary" 
+            variant="info" 
             class="compose-form-dropdown" 
             :title="saveDraftTooltipText"
             @click="saveDraft(draftId)" 
@@ -37,7 +37,7 @@
           <b-button 
             v-else
             v-b-tooltip=tooltipConfig
-            variant="primary" 
+            variant="info" 
             class="compose-form-button" 
             :title="saveDraftTooltipText"
             @click="saveDraft(true)"

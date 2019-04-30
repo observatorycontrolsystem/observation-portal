@@ -65,7 +65,7 @@
                 <b-button 
                   :href="dataAsEncodedStr" 
                   download="apiview.json"
-                  variant="primary"
+                  variant="info"
                   class="float-right"
                 >
                   <i class="fa fa-download"></i> Download as JSON

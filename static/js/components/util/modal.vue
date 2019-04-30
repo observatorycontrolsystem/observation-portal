@@ -16,7 +16,7 @@
       </b-button>
       <b-button
         v-show="showAccept"
-        variant="primary"
+        variant="info"
         class="float-right m-1"
         @click="submit"
       >

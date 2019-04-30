@@ -41,7 +41,7 @@
                     <td>{{ call.semester }}</td>
                     <td>{{ call.eligibility_short }}</td>
                     <td>{% if call.proposal_type == 'DDT' %} N/A {% else %}{{ call.deadline }}{% endif %}</td>
-                    <td><a href="{% url 'sciapplications:create' call=call.id %}" class="btn btn-primary">Apply</a></td>
+                    <td><a href="{% url 'sciapplications:create' call=call.id %}" class="btn btn-info">Apply</a></td>
                 </tr>
                 {% endif %}
                 {% empty %}
@@ -69,7 +69,7 @@
                     <td>{{ time_requested.2m0 }}/{{ request.user.sciencecollaborationallocation.two_meter_alloc }}</td>
                     <td>{{ time_requested.0m4 }}/{{ request.user.sciencecollaborationallocation.four_meter_alloc }}</td>
                     <td>{{ call.deadline }}</td>
-                    <td><a href="{% url 'sciapplications:create' call=call.id %}" class="btn btn-primary">Add Proposal</a></td>
+                    <td><a href="{% url 'sciapplications:create' call=call.id %}" class="btn btn-info">Add Proposal</a></td>
                 </tr>
                 {% endif %}
                 {% empty %}

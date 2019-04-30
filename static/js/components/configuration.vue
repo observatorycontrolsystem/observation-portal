@@ -44,7 +44,7 @@
                 Click <em>'Create calibration frames'</em> to add four calibration configurations to this request: 
                 one arc and one flat before and one arc and one flat after your spectrum.
               </p>
-              <b-button @click="generateCalibs" variant="primary" block>
+              <b-button @click="generateCalibs" variant="outline-info" block>
                 Create calibration frames
               </b-button>
             </b-col>

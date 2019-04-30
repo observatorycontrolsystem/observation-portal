@@ -34,7 +34,7 @@
                   <b-button 
                     size="sm"
                     v-b-toggle.collapse-1 
-                    variant="primary"
+                    variant="info"
                     v-b-tooltip=tooltipConfig 
                     :title="show ? 'Minimize' : 'Maximize'" 
                     @click="clickShow" 

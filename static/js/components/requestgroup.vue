@@ -22,7 +22,7 @@
           <h3>
             Duration of Observing Request:
             <sup 
-              class="text-primary" 
+              class="text-info"
               v-b-tooltip=tooltipConfig 
               title="The time that will be deducted from your proposal when this request is completed. Includes exposure times, slew times, and instrument overheads."
               >
