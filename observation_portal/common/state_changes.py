@@ -67,7 +67,7 @@ def on_request_state_change(old_request, new_request):
         return
     cache.set('observation_portal_last_change_time', timezone.now(), None)
     valid_request_state_change(old_request.state, new_request.state, old_request)
-    # Must be a valid transition, so do time accounting here
+    # Must be a valid transition, so do ipp time accounting here
     if new_request.state == 'COMPLETED':
         ipp_value = new_request.request_group.ipp_value
         if ipp_value < 1.0:
