@@ -9,10 +9,21 @@
     label-size="sm"
     label-align-sm="right"
     label-cols-sm="4"
-    :description="desc"
-    :label="label"
     :label-for="field"
   >
+    <template 
+      slot="label"
+    >
+      {{ label }}
+      <sup 
+        v-if="desc"
+        class="text-primary" 
+        v-b-tooltip=tooltipConfig 
+        :title="desc"
+      >
+        ?
+      </sup>
+    </template>
     <b-input-group size="sm">
       <b-form-input 
         size="sm"
@@ -44,6 +55,8 @@
 <script>
   import _ from 'lodash';
   
+  import { tooltipConfig } from '../../utils.js';
+
   export default {
     props: [
       'value',
@@ -53,6 +66,11 @@
       'type', 
       'desc',
     ],
+    data: function() {
+      return {
+        tooltipConfig: tooltipConfig
+      }
+    },
     computed: {
       hasErrors: function() {
         return !_.isEmpty(this.errors);

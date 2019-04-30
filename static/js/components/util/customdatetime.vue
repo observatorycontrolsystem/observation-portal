@@ -6,10 +6,21 @@
       label-size="sm"
       label-align-sm="right"
       label-cols-sm="4"
-      :description="desc"
-      :label="label"
       :label-for="field"
     >
+      <template 
+        slot="label"
+      >
+        {{ label }}
+        <sup 
+          v-if="desc"
+          class="text-primary" 
+          v-b-tooltip=tooltipConfig 
+          :title="desc"
+        >
+          ?
+        </sup>
+      </template>
       <VueCtkDateTimePicker 
         v-model="theValue"
         label=""
@@ -42,7 +53,7 @@
   import _ from 'lodash';
   import VueCtkDateTimePicker from 'vue-ctk-date-time-picker';
 
-  import { datetimeFormat } from '../../utils';
+  import { datetimeFormat, tooltipConfig } from '../../utils';
   
   export default {
     props: [
@@ -58,6 +69,7 @@
     },
     data: function() {
       return {
+        tooltipConfig: tooltipConfig,
         datetimeFormat: datetimeFormat,
         theValue: this.value
       }
