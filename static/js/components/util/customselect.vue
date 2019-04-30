@@ -28,7 +28,7 @@
         size="sm"
         :id="field + '-select-' + $parent.id" 
         :value="value"
-        :state="!hasErrors"
+        :state="validationState"
         :options="options"
         @input="update($event)"
       />
@@ -70,6 +70,16 @@
     computed: {
       hasErrors: function() {
         return !_.isEmpty(this.errors);
+      },
+      validationState: function() {
+        if (this.errors === null) {
+          // No validation displayed
+          return null;
+        } else if (this.hasErrors) {
+          return 'invalid';
+        } else {
+          return null;
+        }
       }
     },
     methods: {

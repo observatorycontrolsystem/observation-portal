@@ -82,7 +82,7 @@
         } else if (this.hasErrors) {
           return 'invalid';
         } else {
-          return 'valid';
+          return null;
         }
       }
     },
