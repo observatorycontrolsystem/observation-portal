@@ -4,6 +4,7 @@ import $ from 'jquery';
 import BootstrapVue from 'bootstrap-vue';
 import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap-vue/dist/bootstrap-vue.css';
+import '../css/main.css'
 
 import { formatDate } from './utils.js';
 import { csrfSafeMethod, getCookie } from './utils.js';
