@@ -186,7 +186,6 @@ export default {
               binning: this.available_instruments[this.selectedinstrument].modes.readout.modes[rm].params.binning
           });
         }
-        this.instrumentconfig.mode = this.available_instruments[this.selectedinstrument].modes.readout.default;
         return readoutModes;
       } else {
         return [];
@@ -194,7 +193,6 @@ export default {
     },
     availableOpticalElementGroups: function() {
       if (this.simple_interface) {
-        this.instrumentconfig.optical_elements.filter = 'b';
         return {
           filters: {
             type: 'filter',
@@ -225,9 +223,6 @@ export default {
             }
           }
           oe_groups[oe_type]['options'] = _.sortBy(elements, 'text');
-          if (elements.length > 0) {
-            this.instrumentconfig.optical_elements[oe_type] = oe_groups[oe_type]['options'][0].value;
-          }
         }
         return oe_groups; 
       } else {
@@ -277,6 +272,24 @@ export default {
         }
       }
     },
+    readoutModeOptions: function() {
+      this.instrumentconfig.mode = this.available_instruments[this.selectedinstrument].modes.readout.default;
+      this.update();
+    },
+    availableOpticalElementGroups: function(value) {
+      // TODO: Implement optical element history
+      this.instrumentconfig.optical_elements = {};
+      if (this.simple_interface) {
+        this.instrumentconfig.optical_elements.filter = 'b';
+      } else {
+        for (let oe_type in value) {
+          if (value[oe_type]['options'].length > 0) {
+            this.instrumentconfig.optical_elements[oe_type] = value[oe_type]['options'][0].value;
+          }
+        }
+      }
+      this.updateOpticalElement();
+    },
     showSlitPosition: function(value) {
       if (value) {
         if (this.instrumentconfig.rot_mode === '') {
@@ -285,16 +298,6 @@ export default {
       } else {
         this.instrumentconfig.rot_mode = '';
       }
-      this.update;
-    },
-    selectedinstrument: function() {
-
-      // TODO: Save a history of the optical elements that were set last
-      // per instrument, and restore those here
-      // At the very least, check if the current optical element is available 
-      // in the new set of optical elements, and leave it at that if it is
-      
-      this.instrumentconfig.optical_elements = {};
       this.update();
     },
     'instrumentconfig.rot_mode': function(value) {
