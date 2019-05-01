@@ -1,16 +1,16 @@
 <template>
-    <panel :show="show"
-      title="Instrument Configuration"
-      icon="fas fa-camera-retro"
-      :id="'instrumentconfig' + $parent.$parent.$parent.index + $parent.index + index"
-      :index="index" 
-      :errors="errors"
-      :canremove="this.index > 0" 
-      :cancopy="true"
-      @remove="$emit('remove')"
-      @copy="$emit('copy')"
-      @show="show = $event"
-    >
+  <panel :show="show"
+    title="Instrument Configuration"
+    icon="fas fa-camera-retro"
+    :id="'instrumentconfig' + $parent.$parent.$parent.index + $parent.index + index"
+    :index="index" 
+    :errors="errors"
+    :canremove="this.index > 0" 
+    :cancopy="true"
+    @remove="$emit('remove')"
+    @copy="$emit('copy')"
+    @show="show = $event"
+  >
     <customalert 
       v-for="error in errors.non_field_errors" 
       :key="error" 
