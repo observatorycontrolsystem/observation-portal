@@ -1,15 +1,24 @@
 <template>
   <div>
     <div id="archive-table-toolbar">
-      <button v-on:click="downloadSelected" class="btn btn-default btn-sm">
+      <b-button
+        @click="downloadSelected"
+        variant="link"
+      >
         <i class="fa fa-check"></i> Download Selected
-      </button>
-      <button v-on:click="downloadAll" class="btn btn-default btn-sm">
+      </b-button>
+      <b-button
+        @click="downloadAll"
+        variant="link"
+      >
         <i class="fa fa-download"></i> Download All
-      </button>
-      <a class="btn btn-default btn-sm" target="_blank" :href="archiveLink">
+      </b-button>
+      <b-link
+        :href="archiveLink"
+        target="_blank"
+      >
         <i class="fa fa-arrow-right"></i> View on Archive
-      </a>
+      </b-link>
     </div>
     <table id="archive-table"></table>
   </div>
@@ -17,11 +26,13 @@
 <script>
   import 'bootstrap-table';
   import $ from 'jquery';
-  import {formatDate} from '../utils.js';
-  import {archiveRoot, archiveUIRoot, downloadAll, downloadZip} from '../archive.js';
+  import { formatDate } from '../utils.js';
+  import { archiveRoot, archiveUIRoot, downloadAll, downloadZip } from '../archive.js';
 
   export default{
-    props: ['requestid'],
+    props: [
+      'requestid'
+    ],
     watch: {
       requestid: function(){
         $('#archive-table').bootstrapTable('refresh',
@@ -30,9 +41,13 @@
       }
     },
     methods: {
-      downloadSelected: function(){
+      downloadSelected: function() {
         let frameIds = [];
         let selections = $('#archive-table').bootstrapTable('getSelections');
+        if (selections.length == 0) {
+          alert('Please select at least one frame to download');
+          return;
+        }
         for(let i = 0; i < selections.length; i++){
           frameIds.push(selections[i].id);
         }

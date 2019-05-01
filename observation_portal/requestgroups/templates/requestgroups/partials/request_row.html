@@ -21,25 +21,27 @@
             </span>
           </p>
           <p><i class="fa fa-clipboard-check"></i> Acceptability Threshold: {{ request.acceptability_threshold }}%</p>
-          <p><i class="fa fa-calendar"></i> {{ request.modified}}</p>
+          <p><i class="fa fa-calendar"></i> {{ request.modified }}</p>
         </div>
         <div class="col-md-4 requestgroup-block">
           <br/>
-          <div class="row margin-top-md border-right">
+          <div class="row margin-top-md border-right mx-auto">
             <div class="col-md-4">
-              <a href="{% url 'api:requests-detail' pk=request.id %}" class="btn btn-outline-secondary btn-sm"><i class="fa fa-fw fa-code"></i> View in API</a>
-              {% if request.state == 'COMPLETED' %}
-              <button data-requestid="{{ request.id }}" class="downloadall btn btn-default btn-sm"><i class="fa fa-fw fa-download"></i> Download</button>
-              {% endif %}
+              <div class="btn-group mr-2" role="group" aria-label="button group">
+                <a href="{% url 'api:requests-detail' pk=request.id %}" class="btn btn-outline-secondary btn-sm"><i class="fa fa-fw fa-code"></i> View in API</a>
+                {% if request.state == 'COMPLETED' %}
+                <button type="button" data-requestid="{{ request.id }}" class="downloadall btn btn-outline-secondary btn-sm"><i class="fa fa-fw fa-download"></i> Download</button>
+                {% endif %}
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-    <div class="col-md-2">
+    <div class="col-md-2 text-center">
       {% if request.state == 'COMPLETED' %}
       <div style="display: none; margin-top: 10px;"></div>
-      <img src="" class="thumbnail-small center-block img-responsive" data-request="{{ request.id }}" style="display: none">
+      <img src="" class="thumbnail-small center-block img-responsive" data-request="{{ request.id }}" style="display: none;">
       {% elif request.state == 'PENDING' %}
       <br/>
       <div class="pending-details" data-request="{{ request.id }}"><i class="fa fa-spinner fa-spin"></i>

@@ -1,6 +1,6 @@
 <template>
   <div class="telescopeStatesPlot">
-    <plotcontrols v-show="showZoomControls" v-on:plotZoom="plotZoom"></plotcontrols>
+    <plotcontrols v-show="showZoomControls" v-on:plotZoom="plotZoom"/>
   </div>
 </template>
 <script>
@@ -9,15 +9,23 @@
   import _ from 'lodash';
   import 'vue-style-loader!vis/dist/vis.css';
   import 'vue-style-loader!../../css/plot_style.css';
-  import {siteToColor} from '../utils.js';
-  import {siteCodeToName} from '../utils.js';
+
+  import { siteToColor, siteCodeToName } from '../utils.js';
   import plotcontrols from './util/plotcontrols.vue';
-  import {plotZoomMixin} from './util/plot_mixins.js';
+  import { plotZoomMixin } from './util/plot_mixins.js';
 
   export default {
-    props: ['data', 'activeObservation', 'showZoomControls'],
-    mixins: [plotZoomMixin],
-    components: {plotcontrols},
+    props: [
+      'data', 
+      'activeObservation', 
+      'showZoomControls'
+    ],
+    mixins: [
+      plotZoomMixin
+    ],
+    components: {
+      plotcontrols
+    },
     data: function () {
       let event_types = {
         'AVAILABLE': 'Available',

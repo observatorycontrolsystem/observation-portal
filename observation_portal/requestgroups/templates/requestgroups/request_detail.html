@@ -6,9 +6,9 @@
 {% include 'requestgroups/partials/requestgroup_header.html' with requestgroup=object.request_group %}
 <div class="row">
   <div class="col-md-12">
-    <ol class="breadcrumb">
+    <ol class="breadcrumb bg-light">
       <li><a href="{% url 'requestgroups:detail' object.request_group %}">Sub-requests</a></li>
-      <li class="active"># {{ object.id }}</li>
+      <li class="active">&nbsp;#{{ object.id }}</li>
     </ol>
   </div>
 </div>
