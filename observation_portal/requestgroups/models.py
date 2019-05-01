@@ -603,7 +603,7 @@ class InstrumentConfig(models.Model):
         verbose_name='x binning', default=1, blank=True,
         help_text='Binning in the y dimension, defaults to the instrument default'
     )
-    rot_mode = models.CharField(
+    rotator_mode = models.CharField(
         verbose_name='rotation mode', max_length=50, default='', blank=True,
         help_text='(Spectrograph only) How the slit is positioned on the sky. If set to VFLOAT, atmospheric '
                   'dispersion is along the slit.'

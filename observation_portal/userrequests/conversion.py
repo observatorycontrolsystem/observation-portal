@@ -100,7 +100,7 @@ def convert_userrequest_to_requestgroup(userrequest):
                 'mode': molecule.get('readout_mode', ''),
                 'exposure_time': molecule.get('exposure_time', 0.0),
                 'exposure_count': molecule['exposure_count'],
-                'rot_mode': target.get('rot_mode', ''),
+                'rotator_mode': target.get('rot_mode', ''),
                 'extra_params': inst_config_extra_params,
                 'optical_elements': optical_elements
             }
@@ -199,7 +199,7 @@ def convert_requestgroup_to_userrequest(requestgroup):
         molecules = []
         for configuration in request['configurations']:
             first_inst_config = configuration['instrument_configs'][0]
-            request['target']['rot_mode'] = first_inst_config.get('rot_mode', '')
+            request['target']['rot_mode'] = first_inst_config.get('rotator_mode', '')
             request['target']['rot_angle'] = first_inst_config['extra_params'].get('rotator_angle', 0.0)
 
             ag_mode = configuration['guiding_config']['mode']

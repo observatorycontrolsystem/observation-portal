@@ -239,12 +239,12 @@ class ConfigurationSerializer(serializers.ModelSerializer):
 
             # Validate the rotator modes if set in configdb
             if 'rotator' in modes:
-                if ('rot_mode' not in instrument_config or not instrument_config['rot_mode']
+                if ('rotator_mode' not in instrument_config or not instrument_config['rotator_mode']
                         and 'rotator' in default_modes):
-                    instrument_config['rot_mode'] = default_modes['rotator']['code']
+                    instrument_config['rotator_mode'] = default_modes['rotator']['code']
 
                 try:
-                    rotator_mode = configdb.get_mode_with_code(data['instrument_type'], instrument_config['rot_mode'],
+                    rotator_mode = configdb.get_mode_with_code(data['instrument_type'], instrument_config['rotator_mode'],
                                                                'rotator')
                     if 'required_fields' in rotator_mode['params']:
                         for field in rotator_mode['params']['required_fields']:
