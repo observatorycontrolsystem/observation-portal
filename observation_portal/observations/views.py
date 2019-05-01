@@ -24,6 +24,16 @@ class ObservationListView(StaffRequiredMixin, FilterView):
     ordering = '-modified'
     template_name = 'observations/observation_list.html'
 
+    def get_filterset_kwargs(self, filterset_class):
+        kwargs = super(ObservationListView, self).get_filterset_kwargs(filterset_class)
+        # If there are no query parameters, default to filtering out all canceled observations as generally 
+        # users coming to the page will want those observations filtered out
+        if kwargs['data'] is None:
+            kwargs['data'] = {
+                'state': ['COMPLETED', 'PENDING', 'IN_PROGRESS', 'ABORTED', 'FAILED']
+            }
+        return kwargs
+
 
 class LastScheduledView(APIView):
     """

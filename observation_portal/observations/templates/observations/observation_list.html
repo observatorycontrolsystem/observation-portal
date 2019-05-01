@@ -1,20 +1,22 @@
 {% extends 'base.html' %}
+{% load staticfiles %}
+{% block extra_css %}
+<link href="{% static 'css/fluid_page.css' %}" rel="stylesheet"> 
+{% endblock %}
 {% load bootstrap4 %}
 {% block content %}
 <div class="row">
-  <div class="col-md-10">
+  <div class="col-md-10 table-responsive">
     {% if paginator.num_pages > 1 %}
+    <span class="float-left">
       {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
+    </span>
     {% endif %}
-  </div>
-  <div class="col-md-2">
-    <p>{{ filter.qs.count }} observations</p>
-    <p>Last Update: <br/> <strong>{{ filter.qs.first.modified }}</strong></p>
-  </div>
-</div>
-<div class="row">
-  <div class="col-md-10">
-    <table class="table table-striped">
+    <span class="float-right text-right">
+        {{ filter.qs.count }} observations<br/>
+        Last Update: <strong>{{ filter.qs.first.modified }}</strong>
+    </span>
+    <table class="table">
       <thead>
         <tr>
           <th>ID</th>
@@ -30,9 +32,19 @@
           <th>Created</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody class="border-bottom">
         {% for obs in object_list %}
-        <tr>
+        {% if obs.state == 'COMPLETED' %}
+        <tr class="table-success">
+        {% elif obs.state == 'CANCELED' %}
+        <tr class="table-secondary">
+        {% elif obs.state == 'FAILED' or obs.state == 'ABORTED' %}
+        <tr class="table-danger">
+        {% elif obs.state == 'IN_PROGRESS'%}
+        <tr class="table-warning">
+        {% else %}
+        <tr class="table-default">
+        {% endif %}
           <td><a href="{% url 'observations:observation-detail' pk=obs.id %}" title="Observation detail">{{ obs.id }}</a></td>
           <td>{{ obs.site }}</td>
           <td>{{ obs.enclosure }}</td>
@@ -49,8 +61,14 @@
       </tbody>
     </table>
     {% if paginator.num_pages > 1 %}
+    <span class="float-left">
       {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
+    </span>
     {% endif %}
+    <span class="float-right text-right">
+      Last Update: <strong>{{ filter.qs.first.modified }}</strong><br/>
+      {{ filter.qs.count }} observations
+    </span>
   </div>
   <div class="col-md-2">
     <form class="form" method="GET" action="{% url 'observations:observation-list' %}">
