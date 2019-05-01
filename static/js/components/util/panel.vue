@@ -26,9 +26,9 @@
                     />
                 </b-col>
                 <b-col class="text-center">
-                  <div>
+                  <h6>
                     {{ title }} <span v-if="index > 0">#{{ index + 1}}</span>
-                  </div>
+                  </h6>
                 </b-col>
                 <b-col class="text-right">
                   <b-button 

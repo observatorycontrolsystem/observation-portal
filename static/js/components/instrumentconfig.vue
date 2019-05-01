@@ -1,7 +1,7 @@
 <template>
     <panel :show="show"
       title="Instrument Configuration"
-      icon="fas fa-cogs"
+      icon="fas fa-camera-retro"
       :id="'instrumentconfig' + $parent.$parent.$parent.index + $parent.index + index"
       :index="index" 
       :errors="errors"
