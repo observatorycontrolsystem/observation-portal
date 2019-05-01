@@ -141,40 +141,44 @@ a:hover {
     max-height: 10px;
 }
 
-.userrequest {
+.requestgroup {
     border: 1px solid #EFF0EC;
     min-height: 75px;
     margin: 0px;
 
 }
 
-.userrequest-title {
+.requestgroup-title {
     font-size: 1.2em;
     font-weight: 900;
     margin-left: 4px;
 }
 
-.userrequest-success {
+.requestgroup-success {
     background: linear-gradient(to right,#3c763d 0,#3c763d 10px,#fff 10px,#fff 100%) no-repeat;
 }
 
-.userrequest-warning {
+.requestgroup-neutral {
     background: linear-gradient(to right,#8a6d3b 0,#8a6d3b 10px,#fff 10px,#fff 100%) no-repeat;
 }
 
-.userrequest-danger {
+.text-neutral {
+    color: #8a6d3b;
+}
+
+.requestgroup-danger {
     background: linear-gradient(to right,#a94442 0,#a94442 10px,#fff 10px,#fff 100%) no-repeat;
 }
 
-.userrequest-info {
+.requestgroup-info {
     background: linear-gradient(to right,#31708f 0,#31708f 10px,#fff 10px,#fff 100%) no-repeat;
 }
 
-.userrequest-block > p {
+.requestgroup-block > p {
     margin: 3px;
 }
 
-.userrequest-block.border-right {
+.requestgroup-block.border-right {
     border-right: 1px solid #EFF0EC;
 }
 
@@ -285,4 +289,28 @@ a:hover {
 
 .pagination > .active > a:hover {
     background-color: #009cc3;
+}
+
+.navbar-light .navbar-nav .nav-link{
+    color: #009ec3;
+}
+
+.card-column-two{
+    column-count: 2;
+}
+
+.no-top-border > tr > td {
+    border-top:none;
+}
+
+.button-header {
+    padding: 0 !important;
+}
+
+.btn-outline-secondary{
+    color: black;
+}
+
+.btn-outline-secondary:hover {
+    color:white;
 }

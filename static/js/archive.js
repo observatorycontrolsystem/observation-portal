@@ -1,14 +1,14 @@
 import $ from 'jquery';
 import 'jquery-file-download';
-var archiveRoot = 'https://archive-api.lco.global/';
-var archiveUIRoot = 'https://archive.lco.global/';
+let archiveRoot = 'https://archive-api.lco.global/';
+let archiveUIRoot = 'https://archive.lco.global/';
 export {archiveAjaxSetup, login, downloadZip, downloadAll, getThumbnail, getLatestFrame, archiveRoot, archiveUIRoot};
 
 function archiveAjaxSetup(){
   login(function(){
     $.ajaxPrefilter(function(options, originalOptions, jqXHR){
       if((options.url.indexOf(archiveRoot)>= 0 || options.url.indexOf('thumbnails.lco.global/')>= 0) &&
-         sessionStorage.getItem('archiveAuthToken')){
+        sessionStorage.getItem('archiveAuthToken')){
         jqXHR.setRequestHeader('Authorization', 'Token ' + sessionStorage.getItem('archiveAuthToken'));
       }
     });
@@ -19,7 +19,7 @@ function login(callback){
   if(sessionStorage.getItem('archiveAuthToken')){
     callback();
   }else{
-    var bearer = '';
+    let bearer = '';
     $.getJSON('/api/profile/', function(data){
       bearer = data.tokens.archive;
     }).done(function(){
@@ -32,6 +32,9 @@ function login(callback){
         success: function(data){
           sessionStorage.setItem('archiveAuthToken', data.token);
           callback();
+        },
+        error: function(){
+          callback();
         }
       });
     }).fail(function(){
@@ -41,8 +44,8 @@ function login(callback){
 }
 
 function downloadZip(frameIds){
-  var postData = {};
-  for(var i = 0; i < frameIds.length; i++){
+  let postData = {};
+  for(let i = 0; i < frameIds.length; i++){
     postData['frame_ids[' + i + ']'] = frameIds[i];
   }
   postData['auth_token'] = sessionStorage.getItem('archiveAuthToken');
@@ -58,8 +61,8 @@ function downloadAll(requestId){
       alert('Over 1000 products found. Please use https://archive.lco.global to download your data');
       return false;
     }
-    var frameIds = [];
-    for (var i = 0; i < data.results.length; i++) {
+    let frameIds = [];
+    for (let i = 0; i < data.results.length; i++) {
       frameIds.push(data.results[i].id);
     }
     downloadZip(frameIds);

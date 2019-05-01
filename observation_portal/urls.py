@@ -83,6 +83,7 @@ urlpatterns = [
     url(r'^', include(requestgroup_urls)),
     url(r'^accounts/', include(accounts_urls)),
     url(r'^api/', include(api_urlpatterns)),
+    url(r'^tools/', TemplateView.as_view(template_name='tools.html'), name='tools'),
     url(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
     url(r'^proposals/', include(proposals_urls)),
     url(r'^observations/', include(observations_urls)),

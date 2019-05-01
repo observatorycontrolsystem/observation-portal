@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
+{% load staticfiles %}
 {% block extra_css %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.12.2/bootstrap-table.min.css" />
+<link href="{% static 'css/fluid_page.css' %}" rel="stylesheet"> 
 <style type="text/css">
   .table {
     font-family: monospace;
@@ -9,13 +11,6 @@
   .text-cell {
     min-width: 300px;
     max-width: 300px;
-  }
-  /*
-   * Unset the width of the enclosing container (from base.html) to make it fluid, which makes the table more
-   * readable. This layout modification is an exception for this one page.
-   */
-  .container {
-    width: unset;
   }
 </style>
 {% endblock %}

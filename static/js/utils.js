@@ -1,4 +1,6 @@
 import moment from 'moment';
+import _ from 'lodash';
+import $ from 'jquery';
 
 function slitWidthToExposureTime(slitWidth){
   // Lamp flats are affected by the slit width, so exposure time needs to scale with it
@@ -41,11 +43,11 @@ function sexagesimalRaToDecimal(ra) {
   // algorithm: ra_decimal = 15 * ( hh + mm/60 + ss/(60 * 60) )
   /*                 (    hh     ):(     mm            ):  (   ss  ) */
   if(typeof ra === 'string') {
-    var m = ra.match('^([0-9]?[0-9])[: ]([0-5]?[0-9][.0-9]*)[: ]?([.0-9]+)?$');
+    let m = ra.match('^([0-9]?[0-9])[: ]([0-5]?[0-9][.0-9]*)[: ]?([.0-9]+)?$');
     if (m) {
-      var hh = parseInt(m[1], 10);
-      var mm = parseFloat(m[2]);
-      var ss = m[3] ? parseFloat(m[3]) : 0.0;
+      let hh = parseInt(m[1], 10);
+      let mm = parseFloat(m[2]);
+      let ss = m[3] ? parseFloat(m[3]) : 0.0;
       if (hh >= 0 && hh <= 23 && mm >= 0 && mm < 60 && ss >= 0 && ss < 60) {
         ra = (15.0 * (hh + mm / 60.0 + ss / (3600.0))).toFixed(10);
       }
@@ -58,12 +60,12 @@ function sexagesimalDecToDecimal(dec){
   // algorithm: dec_decimal = sign * ( dd + mm/60 + ss/(60 * 60) )
   /*                  ( +/-   ) (    dd     ):(     mm            ): (   ss   ) */
   if(typeof dec === 'string') {
-    var m = dec.match('^([+-])?([0-9]?[0-9])[: ]([0-5]?[0-9][.0-9]*)[: ]?([.0-9]+)?$');
+    let m = dec.match('^([+-])?([0-9]?[0-9])[: ]([0-5]?[0-9][.0-9]*)[: ]?([.0-9]+)?$');
     if (m) {
-      var sign = m[1] === '-' ? -1 : 1;
-      var dd = parseInt(m[2], 10);
-      var mm = parseFloat(m[3]);
-      var ss = m[4] ? parseFloat(m[4]) : 0.0;
+      let sign = m[1] === '-' ? -1 : 1;
+      let dd = parseInt(m[2], 10);
+      let mm = parseFloat(m[3]);
+      let ss = m[4] ? parseFloat(m[4]) : 0.0;
       if (dd >= 0 && dd <= 90 && mm >= 0 && mm <= 59 && ss >= 0 && ss < 60) {
         dec = (sign * (dd + mm / 60.0 + ss / 3600.0)).toFixed(10);
       }
@@ -72,22 +74,64 @@ function sexagesimalDecToDecimal(dec){
   return dec;
 }
 
+function decimalRaToSexigesimal(deg){
+  var rs = 1;
+  if(deg < 0){
+    rs = -1;
+    var ra = Math.abs(deg);
+  } else {
+    var ra = deg
+  }
+  var raH = Math.floor(ra / 15)
+  var raM = Math.floor(((ra / 15) - raH) * 60)
+  var raS = ((((ra / 15 ) - raH ) * 60) - raM) * 60
+  return {
+    'h': raH * rs,
+    'm': raM,
+    's': raS,
+    'str': (rs > 0 ? '' : '-') + zPadFloat(raH) + ':' + zPadFloat(raM) + ':' + zPadFloat(raS)
+  }
+}
+
+function decimalDecToSexigesimal(deg){
+  var ds = 1;
+  if(deg < 0){
+    ds = -1;
+    var dec = Math.abs(deg);
+  } else {
+    var dec = deg;
+  }
+  var deg = Math.floor(dec)
+  var decM = Math.abs(Math.floor((dec - deg) * 60));
+  var decS = (Math.abs((dec - deg) * 60) - decM) * 60
+  return {
+    'deg': deg * ds,
+    'm': decM,
+    's': decS,
+    'str': (ds > 0 ? '' : '-') + zPadFloat(deg) + ':' + zPadFloat(decM) + ':' + zPadFloat(decS)
+  }
+}
+
 function QueryString() {
-  var qString = {};
-  var query = window.location.search.substring(1);
-  var vars = query.split('&');
-  for (var i = 0; i < vars.length; i++) {
-    var pair = vars[i].split('=');
+  let qString = {};
+  let query = window.location.search.substring(1);
+  let vars = query.split('&');
+  for (let i = 0; i < vars.length; i++) {
+    let pair = vars[i].split('=');
     if (typeof qString[pair[0]] === 'undefined') {
       qString[pair[0]] = decodeURIComponent(pair[1]);
     } else if (typeof qString[pair[0]] === 'string') {
-      var arr = [qString[pair[0]], decodeURIComponent(pair[1])];
+      let arr = [qString[pair[0]], decodeURIComponent(pair[1])];
       qString[pair[0]] = arr;
     } else {
       qString[pair[0]].push(decodeURIComponent(pair[1]));
     }
   }
   return qString;
+}
+
+ function zPadFloat(num){
+  return num.toLocaleString(undefined, {'minimumIntegerDigits': 2, 'maximumFractionDigits': 4})
 }
 
 function formatDate(date){
@@ -98,12 +142,12 @@ function formatDate(date){
 
 function julianToModifiedJulian(jd){
   if(jd && jd >= 2400000.5){
-    var precision = (jd + "").split(".")[1].length;
+    let precision = (jd + "").split(".")[1].length;
     return Number((parseFloat(jd) - 2400000.5).toFixed(precision));
   }
 }
 
-var apiFieldToReadable = {
+let apiFieldToReadable = {
   'group_id': 'Title'
 };
 
@@ -111,7 +155,7 @@ function formatField(value){
   if(value in apiFieldToReadable){
     return apiFieldToReadable[value];
   }else{
-    var words = value.split('_');
+    let words = value.split('_');
     words = words.map(function(word){
       return word.charAt(0).toUpperCase() + word.substr(1);
     });
@@ -119,9 +163,61 @@ function formatField(value){
   }
 }
 
-var datetimeFormat = 'YYYY-MM-DD HH:mm:ss';
+function formatJson(dict){
+  let stringVal = '';
+  for(let key in dict){
+    if (!_.isEmpty(dict[key])) {
+      if (!_.isEmpty(stringVal)) {
+        stringVal += ', ';
+      }
+      stringVal += key + ': ' + dict[key];
+    }
+  }
+  return stringVal;
+}
 
-var collapseMixin = {
+function formatValue(value){
+  if (_.isObject(value) && !_.isArray(value)){
+    return formatJson(value);
+  }
+  else if (_.isNumber(value) && !_.isInteger(value) && !isNaN(value)){
+    return Number(value).toFixed(4);
+  }
+  return value;
+}
+
+function getCookie(name) {
+  var cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    var cookies = document.cookie.split(';');
+    for (var i = 0; i < cookies.length; i++) {
+      var cookie = $.trim(cookies[i]);
+      // Does this cookie string begin with the name we want?
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+function csrfSafeMethod(method) {
+  // these HTTP methods do not require CSRF protection
+  return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+}
+
+let datetimeFormat = 'YYYY-MM-DD HH:mm:ss';
+
+const tooltipConfig = {
+  delay: {
+    show: 500, 
+    hide: 100
+  }, 
+  trigger: 'hover'
+};
+
+let collapseMixin = {
   watch: {
     parentshow: function(value){
       this.show = value;
@@ -129,18 +225,20 @@ var collapseMixin = {
   }
 };
 
-var siteToColor = {
-  'tfn': '#263c6f',
-  'elp': '#700000',
-  'lsc': '#f04e23',
-  'cpt': '#004f00',
-  'coj': '#fac900',
-  'ogg': '#3366dd',
-  'sqa': '#009d00',
-  'tlv': '#8150d7'
+let siteToColor = {
+  'tfn': '#263c6f',  // dark blue
+  'elp': '#700000',  // dark red
+  'lsc': '#f04e23',  // red-orange
+  'cpt': '#004f00',  // dark green
+  'coj': '#fac900',  // golden-yellow
+  'ogg': '#3366dd',  // sky blue
+  'sqa': '#009d00',  // green
+  'tlv': '#8150d7',  // purple
+  'sor': '#7EF5C9',  // sea green
+  'ngq': '#FA5DEB',  // magenta
 };
 
-var siteCodeToName = {
+let siteCodeToName = {
   'tfn': 'Teide',
   'elp': 'McDonald',
   'lsc': 'Cerro Tololo',
@@ -149,10 +247,11 @@ var siteCodeToName = {
   'ogg': 'Haleakala',
   'sqa': 'Sedgwick',
   'ngq': 'Ali',
+  'sor': 'Cerro Pachón',
   'tlv': 'Wise'
 };
 
-var observatoryCodeToNumber = {
+let observatoryCodeToNumber = {
   'doma': '1',
   'domb': '2',
   'domc': '3',
@@ -161,16 +260,17 @@ var observatoryCodeToNumber = {
   'aqwb': '2'
 };
 
-var telescopeCodeToName = {
+let telescopeCodeToName = {
   '1m0a': '1m',
   '0m4a': '0.4m A',
   '0m4b': '0.4m B',
   '0m4c': '0.4m C',
   '2m0a': '2m',
+  '4m0a': '4m',
   '0m8a': '0.8m'
 };
 
-var colorPalette = [  // useful assigning colors to datasets.
+let colorPalette = [  // useful assigning colors to datasets.
   '#3366CC', '#DC3912', '#FF9900', '#109618', '#990099', '#3B3EAC', '#0099C6', '#DD4477',
   '#66AA00', '#B82E2E', '#316395', '#994499', '#22AA99', '#AAAA11', '#6633CC', '#E67300',
   '#8B0707', '#329262', '#5574A6', '#3B3EAC', '#FFFF00', '#1CE6FF', '#FF34FF', '#FF4A46',
@@ -190,7 +290,8 @@ var colorPalette = [  // useful assigning colors to datasets.
 ];
 
 export {
-  semesterStart, semesterEnd, sexagesimalRaToDecimal, sexagesimalDecToDecimal, QueryString,
+  semesterStart, semesterEnd, sexagesimalRaToDecimal, sexagesimalDecToDecimal, QueryString, formatJson, formatValue,
   formatDate, formatField, datetimeFormat, collapseMixin, siteToColor, siteCodeToName, slitWidthToExposureTime,
-  observatoryCodeToNumber, telescopeCodeToName, colorPalette, julianToModifiedJulian
+  observatoryCodeToNumber, telescopeCodeToName, colorPalette, julianToModifiedJulian,
+  decimalRaToSexigesimal, decimalDecToSexigesimal, tooltipConfig, getCookie, csrfSafeMethod
 };

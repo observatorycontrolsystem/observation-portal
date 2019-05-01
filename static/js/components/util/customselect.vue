@@ -1,42 +1,102 @@
 <template>
   <span>
-    <div class="form-group" :class="{ 'has-error': errors }" v-show="$parent.show">
-      <label :for="field" class="col-sm-5 control-label">
-        <span class="desc-tooltip" :title="desc">{{ label }}</span>
-      </label>
-      <div class="col-sm-7">
-        <select :id="field" v-bind:value="value" v-on:change="update($event.target.value)"
-                :name="field" class="form-control">
-          <option v-for="option in options" :value="option.value"
-                  :selected="isSelected(option.value)" v-html="option.text">
-          </option>
-        </select>
-        <span class="help-block text-danger" v-for="error in errors">{{ error }}</span>
-      </div>
-    </div>
-    <div class="collapse-inline" v-show="!$parent.show">
+    <span class="text-right font-italic extra-help-text">
+      <slot name="extra-help-text"/>
+    </span>
+    <b-form-group
+      :id="field + '-fieldgroup-' + $parent.id"
+      v-show="$parent.show"
+      label-size="sm"
+      label-align-sm="right"
+      label-cols-sm="4"
+      :label-for="field"
+    >
+      <template 
+        slot="label"
+      >
+        {{ label }}
+        <sup 
+          v-if="desc"
+          class="text-primary" 
+          v-b-tooltip=tooltipConfig 
+          :title="desc"
+        >
+          ?
+        </sup>
+      </template>
+      <b-form-select 
+        size="sm"
+        :id="field + '-select-' + $parent.id" 
+        :value="value"
+        :state="validationState"
+        :options="options"
+        @input="update($event)"
+      />
+      <span 
+        class="errors text-danger" 
+        v-for="error in errors" 
+        :key="error"
+      >
+        {{ error }}
+      </span>    
+    </b-form-group>
+    <span 
+      class="mr-4" 
+      v-show="!$parent.show"
+    > 
       {{ label }}: <strong>{{ value || '...' }}</strong>
-    </div>
+    </span>
   </span>
 </template>
 <script>
+  import _ from 'lodash';
+
+  import { tooltipConfig } from '../../utils.js';
+
   export default {
-    props: ['value', 'label', 'field', 'options', 'errors', 'desc'],
-    methods: {
-      update: function(value){
-        this.$emit('input', value);
-      },
-      isSelected: function(option){
-        return option === this.value;
+    props: [
+      'value',
+      'label', 
+      'field', 
+      'options', 
+      'errors', 
+      'desc'
+    ],
+    data: function() {
+      return {
+        tooltipConfig: tooltipConfig
       }
     },
-    mounted: function(){
-      $(this.$el).find('label > span').tooltip({
-        html: true,
-        trigger: 'hover click ',
-        placement: 'top',
-        delay: { "show": 500, "hide": 100 }
-      });
+    computed: {
+      hasErrors: function() {
+        return !_.isEmpty(this.errors);
+      },
+      validationState: function() {
+        if (this.errors === null) {
+          // No validation displayed
+          return null;
+        } else if (this.hasErrors) {
+          return 'invalid';
+        } else {
+          return null;
+        }
+      }
+    },
+    methods: {
+      update: function(value) {
+        this.$emit('input', value);
+      }
     }
   };
 </script>
+<style scoped>
+  .errors {
+    font-size: 80%;
+  }
+  .extra-help-text,
+  .extra-help-text div {
+    font-size: 90%;
+    margin-left: auto !important;
+    max-width: 220px;
+  }
+</style>

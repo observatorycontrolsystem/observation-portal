@@ -179,28 +179,35 @@ class ConfigurationSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(_("Guiding mode {} is not available for instrument type {}"
                                                 .format(guiding_config['mode'], data['instrument_type'])))
 
-        if configdb.is_spectrograph(data['instrument_type']) and data['type'] != 'ARC':
+        if configdb.is_spectrograph(data['instrument_type']) and data['type'] not in ['LAMP_FLAT', 'ARC']:
             if 'optional' in guiding_config and guiding_config['optional']:
-                raise serializers.ValidationError(_("Guiding must not be optional on spectrograph instruments and non-ARC observations."))
+                raise serializers.ValidationError(_(
+                    "Guiding cannot be optional on spectrograph instruments for types that are not ARC or LAMP_FLAT."
+                ))
             guiding_config['optional'] = False
 
-        acquisition_config = data['acquisition_config']
-        if 'mode' not in acquisition_config:
-            if 'acquisition' in default_modes:
-                acquisition_config['mode'] = default_modes['acquisition']['code']
-        elif 'acquisition' in modes and acquisition_config['mode'] not in [am['code'] for am in modes['acquisition']['modes']]:
-            raise serializers.ValidationError(_("Acquisition mode {} is not available for instrument type {}"
-                                                .format(acquisition_config['mode'], data['instrument_type'])))
+        if data['type'] in ['LAMP_FLAT', 'ARC']:
+            # These types of observations should only ever be set to guiding mode OFF, but the acquisition modes for 
+            # spectrographs won't necessarily have that mode. Force OFF here.
+            data['acquisition_config']['mode'] = 'OFF'
+        else:
+            acquisition_config = data['acquisition_config']
+            if 'mode' not in acquisition_config:
+                if 'acquisition' in default_modes:
+                    acquisition_config['mode'] = default_modes['acquisition']['code']
+            elif 'acquisition' in modes and acquisition_config['mode'] not in [am['code'] for am in modes['acquisition']['modes']]:
+                raise serializers.ValidationError(_("Acquisition mode {} is not available for instrument type {}"
+                                                    .format(acquisition_config['mode'], data['instrument_type'])))
 
-        # check for any required fields for acquisition
-        acquisition_mode = configdb.get_mode_with_code(data['instrument_type'], acquisition_config['mode'],
-                                                       'acquisition')
+            # check for any required fields for acquisition
+            acquisition_mode = configdb.get_mode_with_code(data['instrument_type'], acquisition_config['mode'],
+                                                        'acquisition')
 
-        if 'required_fields' in acquisition_mode['params']:
-            for field in acquisition_mode['params']['required_fields']:
-                if field not in acquisition_config['extra_params']:
-                    raise serializers.ValidationError(_("Acquisition Mode {} required extra param of {} to be set"
-                                                        .format(acquisition_mode['code'], field)))
+            if 'required_fields' in acquisition_mode['params']:
+                for field in acquisition_mode['params']['required_fields']:
+                    if field not in acquisition_config['extra_params']:
+                        raise serializers.ValidationError(_("Acquisition Mode {} required extra param of {} to be set"
+                                                            .format(acquisition_mode['code'], field)))
 
         # Validate the optical elements, rotator and readout modes specified in the instrument configs
         available_optical_elements = configdb.get_optical_elements(data['instrument_type'])
@@ -232,12 +239,12 @@ class ConfigurationSerializer(serializers.ModelSerializer):
 
             # Validate the rotator modes if set in configdb
             if 'rotator' in modes:
-                if ('rot_mode' not in instrument_config or not instrument_config['rot_mode']
+                if ('rotator_mode' not in instrument_config or not instrument_config['rotator_mode']
                         and 'rotator' in default_modes):
-                    instrument_config['rot_mode'] = default_modes['rotator']['code']
+                    instrument_config['rotator_mode'] = default_modes['rotator']['code']
 
                 try:
-                    rotator_mode = configdb.get_mode_with_code(data['instrument_type'], instrument_config['rot_mode'],
+                    rotator_mode = configdb.get_mode_with_code(data['instrument_type'], instrument_config['rotator_mode'],
                                                                'rotator')
                     if 'required_fields' in rotator_mode['params']:
                         for field in rotator_mode['params']['required_fields']:

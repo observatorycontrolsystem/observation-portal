@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static i18n %}
+{% load render_bundle from webpack_loader %}
 {% block title %}Home{% endblock %}
 {% block content %}
 <div class="row">
@@ -9,18 +10,18 @@
         <h1>Observing Portal</h1>
         <p>This is your access point to Las Cumbres Observatory's global network of telescopes. Registered users can:</p>
         <ul class="list-unstyled">
-            <li><i class="fa fa-group fa-3x fa-pull-left" aria-hidden="true"></i>
+            <li><i class="fa fa-users fa-3x fa-pull-left" aria-hidden="true"></i>
                 <span>Submit proposals and manage the membership of their research teams.</span>
             </li>
-            <li><i class="fa fa-wpexplorer fa-3x fa-pull-left" aria-hidden="true"></i>
+            <li><i class="fab fa-wpexplorer fa-3x fa-pull-left" aria-hidden="true"></i>
                 <span>Compose, save, and submit observing requests.</span>
             </li>
-            <li><i class="fa fa-cloud-download fa-3x fa-pull-left" aria-hidden="true"></i>
+            <li><i class="fa fa-cloud-download-alt fa-3x fa-pull-left" aria-hidden="true"></i>
                 <span>Check the status of submitted requests, and download data from completed observations.</span>
             </li>
         </ul>
         <a href="{% url 'registration_register' %}" class="btn btn-lg btn-success col-md-5">Register an Account</a>
-        <a href="{% url 'auth_login' %}" class="btn btn-lg btn-default col-md-5 col-md-offset-2">Login</a>
+        <a href="{% url 'auth_login' %}" class="btn btn-lg btn-info float-right col-md-5 col-md-offset-2">Login</a>
         <br/>
     </div>
     {% endif %}
@@ -32,8 +33,8 @@
             <div class="col-md-12">
                 <h3>Quick Navigation</h3>
                 <ul class="list-unstyled sidebar-nav">
-                <li><a href="{% url 'requestgroups:create' %}"><i class="fa fa-wpexplorer fa-2x fa-fw"></i> Submit Observation</a></li>
-                <li><a href="{% url 'proposals:list' %}?active=True"><i class="fa fa-group fa-2x fa-fw"></i> Manage Proposals</a></li>
+                <li><a href="{% url 'requestgroups:create' %}"><i class="fab fa-wpexplorer fa-2x fa-fw"></i> Submit Observation</a></li>
+                <li><a href="{% url 'proposals:list' %}?active=True"><i class="fa fa-users fa-2x fa-fw"></i> Manage Proposals</a></li>
                 </ul>
             </div>
         </div>
@@ -68,7 +69,7 @@
         {% endif %}
     </div>
 </div>
-{% endblock %}
 {% block extra_javascript %}
-<script type="text/javascript" src="{% static 'bundles/telescope_availability.js' %}"></script>
+{% render_bundle 'telescope_availability' %}
+{% endblock %}
 {% endblock %}

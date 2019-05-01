@@ -1,12 +1,19 @@
 import Vue from 'vue';
+import BootstrapVue from 'bootstrap-vue';
 import $ from 'jquery';
 import './request_row';
 import App from './request_detail.vue';
 
-import {cancelUserRequest} from './userrequest_header';
+import { cancelRequestGroup } from './requestgroup_header';
 
-$('#cancelur').click(function(){
-  cancelUserRequest($(this).data('id'));
+import 'bootstrap/dist/css/bootstrap.css';
+import 'bootstrap-vue/dist/bootstrap-vue.css';
+import '../css/main.css';
+
+Vue.use(BootstrapVue)
+
+$('#cancelrg').click(function(){
+  cancelRequestGroup($(this).data('id'));
 });
 
 new Vue({
@@ -15,4 +22,3 @@ new Vue({
     return h(App);
   }
 });
-

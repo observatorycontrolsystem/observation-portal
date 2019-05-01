@@ -1,11 +1,12 @@
+import logging
+
 from rest_framework import viewsets, filters
-from rest_framework.decorators import action
+from rest_framework.decorators import action, list_route
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAdminUser
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from dateutil.parser import parse
-import logging
 
 from observation_portal.proposals.models import Proposal, Semester, TimeAllocation
 from observation_portal.requestgroups.models import RequestGroup, Request, DraftRequestGroup
@@ -139,7 +140,7 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
             return Response({'errors': [str(exc)]}, status=400)
         return Response(RequestGroupSerializer(request_group).data)
 
-    @action(detail=False, methods=['post'])
+    @list_route(methods=['post'])
     def validate(self, request):
         serializer = RequestGroupSerializer(data=request.data, context={'request': request})
         req_durations = {}

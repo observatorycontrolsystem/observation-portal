@@ -1,73 +1,109 @@
 <template>
-  <div id="app">
-    <div class="row">
-      <div class="col-md-11">
-        <alert v-for="alert in alerts" :key="alert.msg" :alertclass="alert.class || 'alert-danger'">{{ alert.msg }}</alert>
-      </div>
-    </div>
-    <div id="tabs">
-      <ul class="nav nav-tabs col-md-7">
-        <li :class="{ active: tab === 1 }" v-on:click="tab = 1">
-          <a title="Observing request form."><i class="fa fa-fw fa-pencil-square-o fa-2x"></i> Form</a>
-        </li>
-        <li :class="{ active: tab === 2 }" v-on:click="tab = 2">
-          <a title="Your observing request displayed in the request API language."><i class="fa fa-fw fa-code fa-2x"></i> API View</a>
-        </li>
-        <li :class="{ active: tab === 3 }" v-on:click="tab = 3">
-          <a title="Your saved observing requests."><i class="fa fa-fw fa-file-text-o fa-2x"></i> Drafts</a>
-        </li>
-        <li :class="{ active: tab === 4 }" v-on:click="tab = 4">
-          <a title="Help"><i class="fa fa-question fa-fw fa-2x"></i> How to use this page</a>
-        </li>
-      </ul>
-      <div class="col-md-4 panel-actions">
-        <a class="btn btn-warning" v-on:click="clear()" title="Clear form"><i class="fa fa-times"></i> Clear</a>
-        <span :class="draftId > -1 ? 'btn-group' : ''">
-          <button class="btn btn-info" title="Save a draft of this observing request. The request will not be submitted"
-                  v-on:click="saveDraft(draftId)">
-            <i class="fa fa-save"></i> Save Draft <span v-show="draftId > -1">#{{ draftId }}</span>
-          </button>
-           <button v-show="draftId > -1" type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown">
-            <span class="caret"></span>
-          </button>
-          <ul class="dropdown-menu">
-            <li><a v-on:click="saveDraft(-1)">Save as new draft</a></li>
-          </ul>
-        </span>
-        <a class="btn btn-success" title="Submit" v-on:click="submit" :disabled="!_.isEmpty(errors)" ><i class="fa fa-check"></i> Submit</a>
-      </div>
-      <div class="tab-content">
-        <div class="tab-pane" :class="{ active: tab === 1 }">
-          <div class="row">
-            <div class="col-md-11 col-sm-12 col-sm-12">
-              <userrequest :errors="errors" :duration_data="duration_data" :userrequest="userrequest"
-                           v-on:userrequestupdate="userrequestUpdated"></userrequest>
-            </div>
-            <div class="col-md-1 hidden-sm hidden-xs">
-              <sidenav :userrequest="userrequest" :errors="errors"></sidenav>
-            </div>
-          </div>
-        </div>
-        <div class="tab-pane" :class="{ active: tab === 2 }">
-          <div class="row">
-            <div class="col-md-12">
-              <a id="dldjson" :href="dataAsEncodedStr" download="apiview.json" class="btn btn-default" title="download">
-                <i class="fa fa-download"></i> Download as JSON
-              </a>
-              <pre>{{ JSON.stringify(userrequest, null, 4) }}</pre>
-            </div>
-          </div>
-        </div>
-        <div class="tab-pane" :class="{ active: tab === 3 }">
-          <div class="row">
-            <div class="col-md-12">
-              <drafts v-on:loaddraft="loadDraft" :tab="tab"></drafts>
-            </div>
-          </div>
-        </div>
-        <div class="tab-pane" :class="{ active: tab === 4 }">
-          <div class="row">
-            <div class="col-md-12">
+  <b-container id="app" class="p-0">
+    <b-form-row>
+      <b-col>
+
+        <!-- TODO Add in LCO terms -->
+
+        <!-- TODO: If the same alert is brought up more than once, it will only display the 
+        first time. This applies to all alerts, not just this one -->
+        <customalert 
+          v-for="alert in alerts"
+          :key="alert.msg" 
+          :alertclass="alert.class" 
+          :dismissible="true"
+        >
+          {{ alert.msg }}
+        </customalert>
+      </b-col>
+    </b-form-row>
+    <b-tabs id="tabs" fill>
+      <b-tab 
+        :active="tab==1" 
+        @click="tab=1"
+      >
+        <template slot="title">
+          <i class="far fa-edit"></i> Form
+        </template>
+        <b-container class="p-0 mt-2">
+          <b-form-row>
+            <b-col class="m-0 p-0">            
+              <requestgroup
+                :errors="errors" 
+                :duration_data="duration_data" 
+                :requestgroup="requestgroup"
+                @requestgroupupdate="requestgroupUpdated"
+              />
+            </b-col>
+            <b-col
+              cols="auto" 
+              class="m-0 p-0"
+            >
+              <sidenav 
+                :requestgroup="requestgroup" 
+                :errors="errors" 
+                :draftId="draftId"
+                @savedraft="saveDraft($event.draftId)" 
+                @submit="submit()"
+                @clear="clear()"
+              /> 
+            </b-col>
+          </b-form-row>
+        </b-container>
+      </b-tab>
+      <b-tab 
+        :active="tab==2"
+        @click="tab=2"
+      >
+        <template slot="title">
+          <i class="fas fa-code"></i> API View
+        </template>
+        <b-container class="p-0 mt-2">
+          <b-form-row>
+            <b-col class="bg-light rounded">
+              <b-container class="p-4">
+                <b-button 
+                  :href="dataAsEncodedStr" 
+                  download="apiview.json"
+                  variant="info"
+                  class="float-right"
+                >
+                  <i class="fa fa-download"></i> Download as JSON
+                </b-button>
+                <pre>{{ JSON.stringify(requestgroup, null, 4) }}</pre>
+              </b-container>
+            </b-col>
+          </b-form-row>
+        </b-container>
+      </b-tab>
+      <b-tab 
+        :active="tab==3" 
+        @click="tab=3"
+      >
+        <template slot="title">
+          <i class="far fa-file-alt"></i> Drafts 
+        </template>
+        <b-container class="p-0 mt-2">
+          <b-form-row>
+            <b-col>
+              <drafts 
+                :tab="tab"
+                @loaddraft="loadDraft"
+              />
+            </b-col>
+          </b-form-row>
+        </b-container>  
+      </b-tab>
+      <b-tab 
+        :active="tab==4"
+        @click="tab=4"
+      >
+        <template slot="title">
+          <i class="fas fa-question"></i> How to use this page
+        </template>
+        <b-container class="p-0 mt-2">
+          <b-form-row>
+            <b-col class="my-3">
               <h2>Using the compose form</h2>
               <p>
                 Use the form to describe the observation you would like carried out on the network.
@@ -106,179 +142,197 @@
                 button. Drafts can be loaded and managed from the Drafts pane. You will see drafts saved by other members
                 of your proposal as well as your own.
               </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+            </b-col>
+          </b-form-row>
+        </b-container>
+      </b-tab>
+    </b-tabs>
+  </b-container>
 </template>
-
 <script>
   import moment from 'moment';
   import _ from 'lodash';
   import $ from 'jquery';
   import Vue from 'vue';
 
-  import userrequest from './components/userrequest.vue';
+  import requestgroup from './components/requestgroup.vue';
   import drafts from './components/drafts.vue';
   import sidenav from './components/sidenav.vue';
-  import alert from './components/util/alert.vue';
-  import {datetimeFormat} from './utils.js';
+  import customalert from './components/util/customalert.vue';
+  import { datetimeFormat } from './utils.js';
+
   export default {
     name: 'app',
-    components: {userrequest, drafts, sidenav, alert},
-    data: function(){
+    components: {
+      requestgroup, 
+      drafts, 
+      sidenav, 
+      customalert
+    },
+    data: function() {
       return {
         tab: 1,
         draftId: -1,
-        userrequest: {
-          group_id: '',
+        requestgroup: {
+          name: '',
           proposal: '',
           ipp_value: 1.05,
           operator: 'SINGLE',
           observation_type: 'NORMAL',
           requests: [{
             acceptability_threshold: '',
-            target: {
-              name: '',
-              type: 'SIDEREAL',
-              ra: null,
-              dec: null,
-              proper_motion_ra: 0.0,
-              proper_motion_dec: 0.0,
-              epoch: 2000,
-              parallax: 0,
-            },
-            molecules:[{
+            configurations: [{
               type: 'EXPOSE',
-              instrument_name: '',
-              filter: '',
-              exposure_count: 1,
-              bin_x: null,
-              bin_y: null,
+              instrument_type: '',
               fill_window: false,
-              defocus: 0,
-              ag_mode: 'OPTIONAL'
+              instrument_configs: [{
+                bin_x: '',
+                bin_y: '',
+                exposure_count: 1,
+                exposure_time: '',
+                mode: '',
+                rotator_mode: '',
+                extra_params: {
+                  defocus: 0
+                },
+                optical_elements: {}
+              }],
+              acquisition_config: {
+                mode: 'OFF',
+                extra_params: {
+                  acquire_radius: null
+                }
+              },
+              guiding_config: {
+                mode: 'ON',
+                optional: true,
+                extra_params: {}
+              },
+              target: {
+                name: '',
+                type: 'SIDEREAL',
+                ra: '',
+                dec: '',
+                proper_motion_ra: 0.0,
+                proper_motion_dec: 0.0,
+                epoch: 2000,
+                parallax: 0,
+              },
+              constraints: {
+                max_airmass: 1.6,
+                min_lunar_distance: 30.0
+              }
             }],
-            windows:[{
+            windows: [{
               start: moment.utc().format(datetimeFormat),
-              end: moment.utc().add("days", 1).format(datetimeFormat)
+              end: moment.utc().add(1, 'days').format(datetimeFormat)
             }],
-            location:{
+            location: {
               telescope_class: ''
-            },
-            constraints: {
-              max_airmass: 1.6,
-              min_lunar_distance: 30.0
             }
           }]
         },
         errors: {},
         duration_data: {},
-        alerts: []
+        alerts: [],
       };
     },
     computed: {
-      dataAsEncodedStr: function(){
-        return 'data:application/json;charset=utf-8,' +  encodeURIComponent(JSON.stringify(this.userrequest));
+      dataAsEncodedStr: function() {
+        return 'data:application/json;charset=utf-8,' +  encodeURIComponent(JSON.stringify(this.requestgroup));
       }
     },
     methods: {
-      validate: _.debounce(function(){
-        var that = this;
+      validate: _.debounce(function() {
+        let that = this;
         $.ajax({
           type: 'POST',
-          url: '/api/userrequests/validate/',
-          data: JSON.stringify(that.userrequest),
+          url: '/api/requestgroups/validate/',
+          data: JSON.stringify(that.requestgroup),
           contentType: 'application/json',
-          success: function(data){
+          success: function(data) {
             that.errors = data.errors;
             that.duration_data = data.request_durations;
           }
         });
       }, 200),
-      submit: function(){
-        var duration = moment.duration(this.duration_data.duration, 'seconds');
-        var duration_string = '';
-        if(duration.hours() > 0){
+      submit: function() {
+        let duration = moment.duration(this.duration_data.duration, 'seconds');
+        let duration_string = '';
+        if (duration.days() > 0) {
+            duration_string = duration.days() + ' days, ' + duration_string;
+        } 
+        if (duration.hours() > 0) {
           duration_string += duration.hours() + ' hours, ';
         }
         duration_string += duration.minutes() + ' minutes, ' + duration.seconds() + ' seconds';
-        if(confirm('The request will take approximately ' + duration_string + ' of telescope time. Are you sure you want to submit the request?')){
-          var that = this;
+        if (confirm('The request will take approximately ' + duration_string + ' of telescope time. Are you sure you want to submit the request?')) {
+          let that = this;
           $.ajax({
             type: 'POST',
-            url: '/api/userrequests/',
-            data: JSON.stringify(that.userrequest),
+            url: '/api/requestgroups/',
+            data: JSON.stringify(that.requestgroup),
             contentType: 'application/json',
-            success: function(data){
-              window.location = '/userrequests/' + data.id;
+            success: function(data) {
+              window.location = '/requestgroups/' + data.id;
             }
           });
         }
       },
-      userrequestUpdated: function(){
-        console.log('userrequest updated');
+      requestgroupUpdated: function() {
+        console.log('requestgroup updated');
         this.validate();
       },
-      saveDraft: function(id){
-        if(!this.userrequest.group_id || !this.userrequest.proposal){
-          alert('Please give your draft a title and proposal');
+      saveDraft: function(id) {
+        // Clear out alerts first so that only current alerts are displayed
+        _.remove(this.alerts);
+        if (!this.requestgroup.name || !this.requestgroup.proposal) {
+          this.alerts.push({class: 'danger', msg: 'Please give your draft a title and proposal'});
           return;
         }
-        var url = '/api/drafts/';
-        var method = 'POST';
-
-        if(id > -1){
+        let url = '/api/drafts/';
+        let method = 'POST';
+        if (id > -1) {
           url += id + '/';
           method = 'PUT';
         }
-        var that = this;
+        let that = this;
         $.ajax({
           type: method,
           url: url,
           data: JSON.stringify({
-            proposal: that.userrequest.proposal,
-            title: that.userrequest.group_id,
-            content: JSON.stringify(that.userrequest)
+            proposal: that.requestgroup.proposal,
+            title: that.requestgroup.name,
+            content: JSON.stringify(that.requestgroup)
           }),
           contentType: 'application/json',
-        }).done(function(data){
+        }).done(function(data) {
           that.draftId = data.id;
-          that.alerts.push({class: 'alert-success', msg: 'Draft id: ' + data.id + ' saved successfully.' });
+          that.alerts.push({class: 'success', msg: 'Draft id: ' + data.id + ' saved successfully'});
           console.log('Draft saved ' + that.draftId);
-        }).fail(function(data){
-          for(var error in data.responseJSON.non_field_errors){
-            that.alerts.push({class: 'alert-danger', msg: data.responseJSON.non_field_errors[error]});
+        }).fail(function(data) {
+          for (let error in data.responseJSON.non_field_errors) {
+            that.alerts.push({class: 'danger', msg: data.responseJSON.non_field_errors[error]});
           }
         });
       },
-      loadDraft: function(id){
+      loadDraft: function(id) {
         this.draftId = id;
         this.tab = 1;
-        var that = this;
-        $.getJSON('/api/drafts/' + id + '/', function(data){
-          that.userrequest = {};
+        let that = this;
+        $.getJSON('/api/drafts/' + id + '/', function(data) {
+          that.requestgroup = {};
           Vue.nextTick(function() {
-            that.userrequest = JSON.parse(data.content);
+            that.requestgroup = JSON.parse(data.content);
           });
           that.validate();
         });
       },
-      clear: function(){
-        if(confirm('Clear the form?')){
+      clear: function() {
+        if (confirm('Clear the form?')) {
           window.location.reload();
         }
       }
     }
   };
-  </script>
-<style>
-  #dldjson {
-    float: right;
-    position: relative;
-    top: 10px;
-    right: 175px;
-  }
-</style>
+</script>

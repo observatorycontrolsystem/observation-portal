@@ -1,45 +1,45 @@
 {
   "name": "observation-portal",
-  "version": "0.0.1",
-  "description": "The observation portal",
-  "main": ".eslintrc.js",
+  "version": "0.1.0",
+  "private": true,
   "scripts": {
-    "watch": "webpack --config webpack.config.js --watch",
-    "build": "webpack --config webpack.config.js"
+    "watch": "vue-cli-service build --watch",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint",
+    "test:e2e": "vue-cli-service test:e2e",
+    "test:unit": "vue-cli-service test:unit"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/LCOGT/observation-portal.git"
-  },
-  "author": "Austin Riba",
-  "license": "GPL-2.0",
-  "bugs": {
-    "url": "https://github.com/LCOGT/observation-portal/issues"
-  },
-  "homepage": "https://github.com/LCOGT/observation-portal#readme",
   "dependencies": {
     "babel-polyfill": "^6.26.0",
-    "bootstrap": "^3.4.0",
+    "bootstrap": "^4.3.1",
     "bootstrap-table": "^1.12.1",
+    "bootstrap-vue": "^2.0.0-rc.19",
     "chart.js": "^2.7.2",
     "chartjs-plugin-annotation": "^0.5.7",
-    "eonasdan-bootstrap-datetimepicker": "^4.17.47",
+    "core-js": "^2.6.5",
     "jquery": "^3.3.1",
     "jquery-file-download": "^1.4.6",
     "lodash": "^4.17.10",
     "moment": "^2.22.1",
     "vis": "4.19.1",
-    "vue": "^2.5.16"
+    "vue": "^2.6.6",
+    "vue-ctk-date-time-picker": "^2.0.9"
   },
   "devDependencies": {
-    "babel-cli": "^6.26.0",
-    "babel-core": "^6.26.3",
-    "babel-loader": "^7.1.4",
-    "css-loader": "^0.28.11",
-    "file-loader": "^1.1.11",
-    "style-loader": "^0.21",
-    "vue-loader": "^15.0.6",
-    "vue-template-compiler": "^2.5.16",
-    "webpack": "^3.11.0"
+    "@vue/cli-plugin-babel": "^3.5.0",
+    "@vue/cli-plugin-e2e-cypress": "^3.5.0",
+    "@vue/cli-plugin-eslint": "^3.5.0",
+    "@vue/cli-plugin-unit-mocha": "^3.5.0",
+    "@vue/cli-service": "^3.5.0",
+    "@vue/test-utils": "1.0.0-beta.29",
+    "babel-eslint": "^10.0.1",
+    "chai": "^4.1.2",
+    "eslint": "^5.8.0",
+    "eslint-plugin-vue": "^5.0.0",
+    "fibers": "^3.1.1",
+    "sass": "^1.17.2",
+    "sass-loader": "^7.1.0",
+    "vue-template-compiler": "^2.5.21",
+    "webpack-bundle-tracker": "^0.4.2-beta"
   }
 }

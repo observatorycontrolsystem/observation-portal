@@ -1,0 +1,10 @@
+/*
+* Include this css to unset the width of the enclosing container (from base.html) 
+* to make it fluid. This layout modification is an exception for single pages, and is
+* mainly meant for admin and staff pages that benefit from using as much screen as
+* possible.
+*/
+.container {
+  width: unset;
+  max-width: unset;
+}

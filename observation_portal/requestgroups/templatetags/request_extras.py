@@ -7,7 +7,7 @@ register = template.Library()
 @register.filter
 def state_to_bs(value):
     state_map = {
-        'PENDING': 'warning',
+        'PENDING': 'neutral',
         'SCHEDULED': 'info',
         'COMPLETED': 'success',
         'WINDOW_EXPIRED': 'danger',
@@ -19,8 +19,8 @@ def state_to_bs(value):
 @register.filter
 def state_to_icon(value):
     state_map = {
-        'PENDING': 'refresh',
-        'SCHEDULED': 'refresh',
+        'PENDING': 'sync',
+        'SCHEDULED': 'sync',
         'COMPLETED': 'check',
         'WINDOW_EXPIRED': 'times',
         'CANCELED': 'times',

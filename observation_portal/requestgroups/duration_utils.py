@@ -50,19 +50,23 @@ def get_instrument_configuration_duration(instrument_config_dict, instrument_nam
 
 
 def get_configuration_duration(configuration_dict):
-    duration = 0
-    for inst_config in configuration_dict['instrument_configs']:
-        duration += get_instrument_configuration_duration(inst_config, configuration_dict['instrument_type'])
-
-    return duration + PER_CONFIGURATION_GAP + PER_CONFIGURATION_STARTUP_TIME
+    conf_duration = {}
+    instrumentconf_durations = [{
+        'duration': get_instrument_configuration_duration(
+            ic, configuration_dict['instrument_type']
+        )} for ic in configuration_dict['instrument_configs']
+    ]
+    conf_duration['instrument_configs'] = instrumentconf_durations
+    conf_duration['duration'] = sum([icd['duration'] for icd in instrumentconf_durations])
+    conf_duration['duration'] += (PER_CONFIGURATION_GAP + PER_CONFIGURATION_STARTUP_TIME)
+    return conf_duration
 
 
 def get_request_duration_dict(request_dict):
     req_durations = {'requests': []}
     for req in request_dict:
         req_info = {'duration': get_request_duration(req)}
-        # TODO: Have configuration duration as well as instrument configuration duration
-        conf_durations = [{'duration': get_configuration_duration(conf)} for conf in req['configurations']]
+        conf_durations = [get_configuration_duration(conf) for conf in req['configurations']]
         req_info['configurations'] = conf_durations
         req_info['largest_interval'] = get_largest_interval(get_filtered_rise_set_intervals_by_site(req)).total_seconds()
         req_info['largest_interval'] -= (PER_CONFIGURATION_STARTUP_TIME + PER_CONFIGURATION_GAP)
@@ -144,7 +148,7 @@ def get_request_duration(request_dict):
                   if 'windows' in request_dict and request_dict['windows'] else timezone.now())
     configurations = sorted(request_dict['configurations'], key=lambda x: x['priority'])
     for configuration in configurations:
-        duration += get_configuration_duration(configuration)
+        duration += get_configuration_duration(configuration)['duration']
         request_overheads = configdb.get_request_overheads(configuration['instrument_type'])
         # Add the instrument change time if the instrument has changed
         if previous_instrument != configuration['instrument_type']:
@@ -206,7 +210,7 @@ def get_time_allocation(instrument_type, proposal_id, min_window_time, max_windo
             semester__end__gte=max_window_time,
             instrument_type=instrument_type)
     except Exception:
-        logger.warn(_("proposal {0} has overlapping time allocations for {1}").format(proposal_id, instrument_name))
+        logger.warn(_("proposal {0} has overlapping time allocations for {1}").format(proposal_id, instrument_type))
     return timeall
 
 

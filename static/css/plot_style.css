@@ -100,8 +100,9 @@ div.vis-tooltip{
 
 
 .legend-item {
-    width: 20px;
+    width: 18px;
     height: 12px;
+    display: inline-block;
 }
 
 .panel-default>.panel-heading:hover{
@@ -120,11 +121,11 @@ div.vis-tooltip{
 }
 
 .plot_controls {
-	 position: absolute;
-     right: 0;
-     margin-right: 22px;
-	 margin-top: 4px;
-     z-index: 9999;
+    position: absolute;
+    right: 0;
+    margin-right: 22px;
+    margin-top: 4px;
+    z-index: 9999;
 }
 
 .clickable-thumbnail {

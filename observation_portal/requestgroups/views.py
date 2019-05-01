@@ -179,7 +179,6 @@ class AirmassView(APIView):
             return Response(serializer.errors)
 
 
-# TODO: Modify where this is used in the vue to use modes/optical_elements structures
 class InstrumentsInformationView(APIView):
     permission_classes = (AllowAny,)
 
@@ -191,8 +190,8 @@ class InstrumentsInformationView(APIView):
                 'class': instrument_type[0:3],
                 'name': configdb.get_instrument_type_full_name(instrument_type),
                 'optical_elements': configdb.get_optical_elements(instrument_type),
-                'binnings': configdb.get_binnings(instrument_type),
-                'default_binning': configdb.get_default_binning(instrument_type),
+                'modes': configdb.get_modes_by_type(instrument_type),
+                'default_acceptability_threshold': configdb.get_default_acceptability_threshold(instrument_type)
             }
         return Response(info)
 

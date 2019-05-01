@@ -41,7 +41,7 @@ observation = {
                         "exposure_count": 1,
                         "bin_x": 1,
                         "bin_y": 1,
-                        "rot_mode": "",
+                        "rotator_mode": "",
                         "extra_params": {}
                     }
                 ],

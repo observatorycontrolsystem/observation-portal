@@ -1,58 +1,118 @@
 <template>
- <span>
-    <div class="form-group" :class="{ 'has-error': errors }" v-show="$parent.show">
-      <label :for="field" class="col-sm-5 control-label">
-        <span class="desc-tooltip" :title="desc">{{ label }}</span>
-      </label>
-      <div class="col-sm-7">
-        <div :class="{ 'input-group': this.$slots['inlineButton'] }">
-          <input :id="field" class="form-control" v-bind:value="value" v-on:blur="blur($event.target.value)"
-                 v-on:input="update($event.target.value)" :name="field" :type="type || 'text'"/>
-          <slot name="inlineButton"></slot>
-        </div>
-        <span class="help-block text-danger" v-for="error in errors">{{ error }}</span>
-      </div>
-    </div>
-    <span class="collapse-inline" v-show="!$parent.show">
-      {{ label }}: <strong>{{ value || '...' }}</strong>
-    </span>
+<span>
+  <span class="text-right font-italic extra-help-text">
+    <slot name="extra-help-text"/>
   </span>
+  <b-form-group
+    :id="field + '-fieldgroup-' + $parent.id"
+    v-show="$parent.show"
+    label-size="sm"
+    label-align-sm="right"
+    label-cols-sm="4"
+    :label-for="field"
+  >
+    <template 
+      slot="label"
+    >
+      {{ label }}
+      <sup 
+        v-if="desc"
+        class="text-primary" 
+        v-b-tooltip=tooltipConfig 
+        :title="desc"
+      >
+        ?
+      </sup>
+    </template>
+    <b-input-group size="sm">
+      <b-form-input 
+        size="sm"
+        :id="field + '-field-' + $parent.id" 
+        :value="value"
+        :state="validationState"
+        :type="type || `text`"
+        @input="update($event)"
+        @blur="blur($event)"
+      />
+      <slot name="inline-input"/>
+    </b-input-group>
+    <span 
+      class="errors text-danger" 
+      v-for="error in errors" 
+      :key="error"
+    >
+      {{ error }}
+    </span>    
+  </b-form-group>
+  <span 
+    class="mr-4" 
+    v-show="!$parent.show"
+  > 
+    {{ label }}: <strong>{{ displayValue(value) }}</strong>
+  </span>
+</span>
 </template>
 <script>
-import moment from 'moment';
-import $ from 'jquery';
-import {datetimeFormat} from '../../utils';
-import 'eonasdan-bootstrap-datetimepicker';
-import 'vue-style-loader!eonasdan-bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.css';
-import tooltip from 'bootstrap';
+  import _ from 'lodash';
+  
+  import { tooltipConfig } from '../../utils.js';
 
-export default {
-  props: ['value', 'label', 'field', 'errors', 'type', 'desc'],
-  mounted: function(){
-    var that = this;
-    if(this.type === 'datetime'){
-      $(this.$el).find('input').datetimepicker({
-        format: datetimeFormat,
-        minDate: moment().subtract(1, 'days'),
-        keyBinds: {left: null, right: null, up: null, down: null}
-      }).on('dp.change', function(e){
-        that.update(moment(e.date).format(datetimeFormat));
-      });
-    }
-    $(this.$el).find('label > span').tooltip({
-      html: true,
-      trigger: 'hover click',
-      placement: 'top',
-      delay: { "show": 200, "hide": 100 }
-    });
-  },
-  methods: {
-    update: function(value){
-      this.$emit('input', value);
+  export default {
+    props: [
+      'value',
+      'label', 
+      'field', 
+      'errors', 
+      'type', 
+      'desc',
+    ],
+    data: function() {
+      return {
+        tooltipConfig: tooltipConfig
+      }
     },
-    blur: function(value){
-      this.$emit('blur', value);
+    computed: {
+      hasErrors: function() {
+        return !_.isEmpty(this.errors);
+      },
+      validationState: function() {
+        if (this.errors === null) {
+          // No validation displayed
+          return null;
+        } else if (this.hasErrors) {
+          return 'invalid';
+        } else {
+          return null;
+        }
+      }
+    },
+    methods: {
+      displayValue: function(value) {
+        if (value === 0) {
+          return '0';
+        } else if (value === '' || value === null) {
+          return '...'
+        } else {
+        return value;
+        }
+      },
+      update: function(value) {
+        this.$emit('input', value);
+      },
+      blur: function(value) {
+        this.$emit('blur', value);
+      }
     }
-  },
-};
+  };
 </script>
+<style scoped>
+  .errors {
+    font-size: 80%;
+  }
+  .extra-help-text,
+  .extra-help-text div {
+    font-size: 90%;
+    margin-left: auto !important;
+    max-width: 220px;
+  }
+</style>
