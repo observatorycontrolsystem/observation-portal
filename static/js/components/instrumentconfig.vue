@@ -93,10 +93,10 @@
             </div>
             <div v-if="showSlitPosition">
               <customselect 
-                v-model="instrumentconfig.rot_mode" 
+                v-model="instrumentconfig.rotator_mode" 
                 label="Slit Position" 
-                field="rot_mode" 
-                :errors="errors.rot_mode"
+                field="rotator_mode" 
+                :errors="errors.rotator_mode"
                 :options="[
                   {value: 'VFLOAT', text: 'Parallactic'}, 
                   {value: 'SKY', text: 'User Specified'}
@@ -108,10 +108,10 @@
               <!-- TODO: Validate angle -->
               
               <customfield 
-                v-if="instrumentconfig.rot_mode === 'SKY'"
-                v-model="rot_angle" 
+                v-if="instrumentconfig.rotator_mode === 'SKY'"
+                v-model="rotator_angle" 
                 label="Angle" 
-                field="rot_angle" 
+                field="rotator_angle" 
                 :errors="null" 
                 desc="Position Angle of the slit in degrees east of north."
                 @input="update"
@@ -171,7 +171,7 @@ export default {
   data: function() {
     return {
       defocus: 0,
-      rot_angle: 0,
+      rotator_angle: 0,
       opticalElementUpdates: 0
     }
   },
@@ -292,24 +292,24 @@ export default {
     },
     showSlitPosition: function(value) {
       if (value) {
-        if (this.instrumentconfig.rot_mode === '') {
-          this.instrumentconfig.rot_mode = 'VFLOAT';
+        if (this.instrumentconfig.rotator_mode === '') {
+          this.instrumentconfig.rotator_mode = 'VFLOAT';
         }
       } else {
-        this.instrumentconfig.rot_mode = '';
+        this.instrumentconfig.rotator_mode = '';
       }
       this.update();
     },
-    'instrumentconfig.rot_mode': function(value) {
+    'instrumentconfig.rotator_mode': function(value) {
       if (value === 'SKY') {
-        this.instrumentconfig.extra_params.rot_angle = this.rot_angle;        
+        this.instrumentconfig.extra_params.rotator_angle = this.rotator_angle;        
       } else {
-        this.instrumentconfig.extra_params.rot_angle = undefined;
+        this.instrumentconfig.extra_params.rotator_angle = undefined;
       }
       this.update();
     },
-    rot_angle: function(value) {
-      this.instrumentconfig.extra_params.rot_angle = value || undefined;
+    rotator_angle: function(value) {
+      this.instrumentconfig.extra_params.rotator_angle = value || undefined;
       this.update();
     },
     defocus: function(value) {

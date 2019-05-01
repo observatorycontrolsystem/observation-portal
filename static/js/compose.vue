@@ -191,7 +191,7 @@
                 exposure_count: 1,
                 exposure_time: '',
                 mode: '',
-                rot_mode: '',
+                rotator_mode: '',
                 extra_params: {
                   defocus: 0
                 },
