@@ -92,9 +92,9 @@ def create_simple_many_requestgroup(user, proposal, n_requests, state='PENDING')
     return rg
 
 
-def create_simple_configuration(request, instrument_type='1M0-SCICAM-SBIG'):
+def create_simple_configuration(request, instrument_type='1M0-SCICAM-SBIG', instrument_config=None):
     configuration = mixer.blend(Configuration, request=request, instrument_type=instrument_type)
-    fill_in_configuration_structures(configuration)
+    fill_in_configuration_structures(configuration, instrument_config=instrument_config)
     return configuration
 
 
@@ -107,7 +107,7 @@ def fill_in_configuration_structures(configuration, instrument_config=None, cons
         constraints.save()
 
     if not instrument_config:
-        mixer.blend(InstrumentConfig, configuration=configuration)
+        mixer.blend(InstrumentConfig, configuration=configuration, exposure_count=5, exposure_time=10)
     else:
         instrument_config.configuration = configuration
         instrument_config.save()

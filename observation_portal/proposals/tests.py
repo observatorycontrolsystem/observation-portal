@@ -14,7 +14,6 @@ from django_dramatiq.test import DramatiqTestCase
 from observation_portal.proposals.models import ProposalInvite, Proposal, Membership, ProposalNotification, TimeAllocation, Semester
 from observation_portal.requestgroups.models import RequestGroup, Configuration, InstrumentConfig, AcquisitionConfig, GuidingConfig, Target
 from observation_portal.accounts.models import Profile
-from observation_portal.proposals.accounting import split_time, get_time_totals_from_pond, query_pond
 from observation_portal.common.test_helpers import create_simple_requestgroup
 from observation_portal.requestgroups.signals import handlers  # DO NOT DELETE, needed to active signals
 
@@ -178,31 +177,6 @@ class TestProposalUserLimits(TestCase):
         create_simple_requestgroup(self.user, self.proposal, configuration=configuration,
                                    instrument_config=instrument_config)
         self.assertGreater(self.user.profile.time_used_in_proposal(self.proposal), 0)
-
-
-class TestAccounting(TestCase):
-    def test_split_time(self):
-        start = datetime.datetime(2017, 1, 1)
-        end = datetime.datetime(2017, 1, 5)
-        chunks = split_time(start, end, chunks=4)
-        self.assertEqual(len(chunks), 4)
-        self.assertEqual(chunks[0][0], start)
-        self.assertEqual(chunks[3][1], end)
-
-    @patch('observation_portal.proposals.accounting.query_pond', return_value=1)
-    def test_time_totals_from_pond(self, qp_mock):
-        ta = mixer.blend(TimeAllocation)
-        result = get_time_totals_from_pond(ta, ta.semester.start, ta.semester.end, False)
-        self.assertEqual(result, 1)
-        self.assertEqual(qp_mock.call_count, 1)
-
-    @patch('observation_portal.proposals.accounting.query_pond', side_effect=HTTPError)
-    def test_time_totals_from_pond_timeout(self, qa_mock):
-        ta = mixer.blend(TimeAllocation)
-        with self.assertRaises(RecursionError):
-            get_time_totals_from_pond(ta, ta.semester.start, ta.semester.end, False)
-
-        self.assertEqual(qa_mock.call_count, 4)
 
 
 class TestDefaultIPP(TestCase):

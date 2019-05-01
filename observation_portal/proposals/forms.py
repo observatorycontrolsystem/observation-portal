@@ -14,7 +14,5 @@ class TimeAllocationForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        active_instruments = configdb.get_active_instrument_types(location={})
-        self.fields['instrument_type'] = forms.ChoiceField(
-            choices=[(instrument, instrument) for instrument in active_instruments])
+        self.fields['instrument_type'] = forms.ChoiceField(choices=configdb.get_instrument_type_tuples())
 
