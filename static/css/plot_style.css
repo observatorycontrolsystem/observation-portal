@@ -121,10 +121,10 @@ div.vis-tooltip{
 }
 
 .plot_controls {
-	position: absolute;
+    position: absolute;
     right: 0;
     margin-right: 22px;
-	margin-top: 4px;
+    margin-top: 4px;
     z-index: 9999;
 }
 
