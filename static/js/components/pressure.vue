@@ -10,6 +10,7 @@
           label-align-sm="right"
           label-cols-sm="5"
           label-for="instrument"
+          label-class="font-weight-bolder"
         >
           <b-form-select
             id="pressure-instrument-select" 
@@ -29,6 +30,7 @@
           label-align-sm="right"
           label-cols-sm="2"
           label-for="site"
+          label-class="font-weight-bolder"
         >
           <b-form-select
             id="pressure-site-select" 

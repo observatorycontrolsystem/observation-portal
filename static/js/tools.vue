@@ -2,7 +2,7 @@
   <b-container class="my-4 mx-1">
     <b-row>
       <b-col>
-        <h2>Network Contention</h2>
+        <h1>Network Contention</h1>
         <p>
           This plot shows the amount of telescope time requested by RA and instrument.
           Observations requested where contention is high are more likely to
@@ -10,7 +10,7 @@
         </p>
         <p>This plot excludes moving targets.</p>
         <Contention/>
-        <h2>Network Pressure</h2>
+        <h1>Network Pressure</h1>
         <p>
           The pressure of a block is defined as its length divided by the total length of time during which it is visible.
           For each time bin, this value is further divided by the number of telescopes from which the block is visible during that time bin.

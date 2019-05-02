@@ -10,6 +10,7 @@
           label-align-sm="right"
           label-cols-sm="5"
           label-for="instrument"
+          label-class="font-weight-bolder"
         >
           <b-form-select
             id="contention-instrument-select" 
