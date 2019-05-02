@@ -2114,7 +2114,7 @@ class TestPressure(APITestCase):
         self.assertIn('pressure_data', response.json())
         self.assertIn('site_nights', response.json())
         self.assertIn('site', response.json())
-        self.assertIn('instrument_name', response.json())
+        self.assertIn('instrument_type', response.json())
 
     def test_pressure_auth(self):
         user = mixer.blend(User, is_staff=True)
