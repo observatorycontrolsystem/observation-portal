@@ -44,7 +44,13 @@ class ScheduleViewSet(ListAsDictMixin, CreateListModelMixin, viewsets.ModelViewS
 class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelViewSet):
     permission_classes = (IsAdminUser,)
     http_method_names = ['get', 'post', 'head', 'options']
+    filter_class = ObservationFilter
     serializer_class = ObservationSerializer
+    filter_backends = (
+        filters.OrderingFilter,
+        DjangoFilterBackend
+    )
+    ordering = ('-id',)
 
     def get_queryset(self):
         qs = Observation.objects.all()
