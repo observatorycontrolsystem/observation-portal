@@ -3,11 +3,11 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from django_filters.rest_framework import DjangoFilterBackend
+from django.http import HttpResponseNotAllowed
 import logging
 
 from observation_portal.observations.models import Observation
 from observation_portal.requestgroups.models import RequestGroup
-from observation_portal.blocks.serializers import CancelSerializer
 from observation_portal.blocks.filters import PondBlockFilter
 from observation_portal.blocks.conversion import (convert_pond_blocks_to_observations,
                                                 convert_observations_to_pond_blocks)
@@ -42,7 +42,7 @@ class PondBlockViewSet(ListAsDictMixin, viewsets.ModelViewSet):
         ).distinct()
 
     def perform_create(self, serializer):
-        serializer.save(submitter=self.request.user)
+        serializer.save(submitter=self.request.user, submitter_id=self.request.user.id)
 
     def create(self, request, *args, **kwargs):
         observations = convert_pond_blocks_to_observations(request.data)
@@ -62,34 +62,7 @@ class PondBlockViewSet(ListAsDictMixin, viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'])
     def cancel(self, request):
-        cancel_serializer = CancelSerializer(data=request.data)
-        if cancel_serializer.is_valid():
-            observations = self.get_queryset()
-            if 'blocks' in cancel_serializer.data:
-                observations = observations.filter(pk__in=cancel_serializer.data['blocks'])
-            if 'start' in cancel_serializer.data:
-                observations = observations.filter(end__gt=cancel_serializer.data['start'])
-            if 'end' in cancel_serializer.data:
-                observations = observations.filter(start__lt=cancel_serializer.data['end'])
-            if 'site' in cancel_serializer.data:
-                observations = observations.filter(site=cancel_serializer.data['site'])
-            if 'observatory' in cancel_serializer.data:
-                observations = observations.filter(enclosure=cancel_serializer.data['observatory'])
-            if 'telescope' in cancel_serializer.data:
-                observations = observations.filter(telescope=cancel_serializer.data['telescope'])
-            if 'is_too' in cancel_serializer.data:
-                if cancel_serializer.data['is_too']:
-                    observations = observations.filter(request__request_group__observation_type=RequestGroup.RAPID_RESPONSE)
-                else:
-                    observations = observations.exclude(request__request_group__observation_type=RequestGroup.RAPID_RESPONSE)
-            if not cancel_serializer.data['include_nonscheduled']:
-                observations = observations.exclude(request__request_group__observation_type=RequestGroup.DIRECT)
-            observations = observations.filter(state__in=['PENDING', 'IN_PROGRESS'])
-
-            num_canceled = Observation.cancel(observations)
-            return Response({'canceled': num_canceled})
-        else:
-            return Response(cancel_serializer.errors)
+        return HttpResponseNotAllowed("Cancel is not allowed on the pond shim. Call it on the /observations endpoint instead")
 
     @action(detail=True, methods=['get'])
     def convert(self, request, *args, **kwargs):

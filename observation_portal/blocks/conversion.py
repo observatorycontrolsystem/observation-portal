@@ -16,7 +16,7 @@ TARGET_TYPE_TO_POND_POINTING_TYPE = {
 }
 
 BLOCK_REQUIRED_FIELDS = ['instrument_class', 'site', 'observatory', 'telescope', 'start', 'end']
-MOLECULE_REQUIRED_FIELDS = ['type', 'ag_mode', 'inst_name']
+MOLECULE_REQUIRED_FIELDS = ['type', 'inst_name']
 
 
 class PondBlockError(Exception):
@@ -132,7 +132,7 @@ def convert_pond_block_to_observation(block):
         if molecule.get('ag_strategy'):
             ag_extra_params['strategy'] = molecule['ag_strategy']
 
-        (guide_mode, guide_optional) = pond_ag_mode_to_guiding_mode(molecule['ag_mode'])
+        (guide_mode, guide_optional) = pond_ag_mode_to_guiding_mode(molecule.get('ag_mode', 'OPT'))
 
         guiding_config = {
             'mode': guide_mode,
@@ -203,30 +203,35 @@ def pond_ag_mode_to_guiding_mode(mode):
 
 
 def pointing_to_target(pointing):
-    if pointing.get('coord_type', 'RD') != 'RD':
-        raise PondBlockError("Only Coordinate Type RD is supported in the shim")
-
     ttype = POND_POINTING_TYPE_TO_TARGET_TYPE[pointing.get('type', 'SP')]
     target = {
         'coordinate_system': pointing.get('coord_sys', ''),
-        'name': pointing.get('name', ''),
+        'name': pointing.get('name', 'my target'),
         'type': ttype
     }
     if ttype == 'SIDEREAL':
-        if 'epoch' in pointing:
-            target['epoch'] = float(pointing['epoch'])
-        if 'equinox' in pointing:
-            target['equinox'] = pointing['equinox']
-        if 'parallax' in pointing and float(pointing['parallax']):
-            target['parallax'] = float(pointing['parallax'])
-        if 'pro_mot_ra' in pointing and float(pointing['pro_mot_ra']):
-            target['proper_motion_ra'] = float(pointing['pro_mot_ra'])
-        if 'pro_mot_dec' in pointing and float(pointing['pro_mot_dec']):
-            target['proper_motion_dec'] = float(pointing['pro_mot_dec'])
-        if 'ra' in pointing and float(pointing['ra']):
-            target['ra'] = float(pointing['ra'])
-        if 'dec' in pointing and float(pointing['dec']):
-            target['dec'] = float(pointing['dec'])
+        if pointing.get('coord_type', 'RD') == 'RD':
+            if 'epoch' in pointing:
+                target['epoch'] = float(pointing['epoch'])
+            if 'equinox' in pointing:
+                target['equinox'] = pointing['equinox']
+            if 'parallax' in pointing and float(pointing['parallax']):
+                target['parallax'] = float(pointing['parallax'])
+            if 'pro_mot_ra' in pointing and float(pointing['pro_mot_ra']):
+                target['proper_motion_ra'] = float(pointing['pro_mot_ra'])
+            if 'pro_mot_dec' in pointing and float(pointing['pro_mot_dec']):
+                target['proper_motion_dec'] = float(pointing['pro_mot_dec'])
+            if 'ra' in pointing:
+                target['ra'] = float(pointing['ra'])
+            if 'dec' in pointing:
+                target['dec'] = float(pointing['dec'])
+        elif pointing.get('coord_type') == 'HD':
+            if 'ha' in pointing:
+                target['hour_angle'] = float(pointing['ha'])
+            if 'dec' in pointing:
+                target['dec'] = float(pointing['dec'])
+        else:
+            raise PondBlockError("Only Coordinate Types RD and HD are supported in the shim")
     elif ttype == 'NON_SIDEREAL':
         if 'scheme' in pointing:
             target['scheme'] = pointing['scheme']
@@ -254,20 +259,28 @@ def pointing_to_target(pointing):
             target['dailymot'] = float(pointing['dailymot'])
     else:
         # Static or Satellite type
-        if 'ra' in pointing and float(pointing['ra']):
-            target['ra'] = float(pointing['ra'])
-        if 'dec' in pointing and float(pointing['dec']):
-            target['dec'] = float(pointing['dec'])
-        if 'diff_epoch_rate' in pointing and float(pointing['diff_epoch_rate']):
-            target['diff_epoch_rate'] = float(pointing['diff_epoch_rate'])
-        if 'diff_ra_rate' in pointing and float(pointing['diff_ra_rate']):
-            target['diff_roll_rate'] = float(pointing['diff_ra_rate'])
-        if 'diff_dec_rate' in pointing and float(pointing['diff_dec_rate']):
-            target['diff_pitch_rate'] = float(pointing['diff_dec_rate'])
-        if 'diff_ra_accel' in pointing and float(pointing['diff_ra_accel']):
-            target['diff_roll_acceleration'] = float(pointing['diff_ra_accel'])
-        if 'diff_dec_accel' in pointing and float(pointing['diff_dec_accel']):
-            target['diff_pitch_acceleration'] = float(pointing['diff_dec_accel'])
+        if pointing.get('coord_type', 'RD') == 'RD':
+            if 'ra' in pointing:
+                target['ra'] = float(pointing['ra'])
+            if 'dec' in pointing:
+                target['dec'] = float(pointing['dec'])
+            if 'diff_epoch_rate' in pointing and float(pointing['diff_epoch_rate']):
+                target['diff_epoch_rate'] = float(pointing['diff_epoch_rate'])
+            if 'diff_ra_rate' in pointing and float(pointing['diff_ra_rate']):
+                target['diff_roll_rate'] = float(pointing['diff_ra_rate'])
+            if 'diff_dec_rate' in pointing and float(pointing['diff_dec_rate']):
+                target['diff_pitch_rate'] = float(pointing['diff_dec_rate'])
+            if 'diff_ra_accel' in pointing and float(pointing['diff_ra_accel']):
+                target['diff_roll_acceleration'] = float(pointing['diff_ra_accel'])
+            if 'diff_dec_accel' in pointing and float(pointing['diff_dec_accel']):
+                target['diff_pitch_acceleration'] = float(pointing['diff_dec_accel'])
+        elif pointing.get('coord_type') == 'HD':
+            if 'ha' in pointing:
+                target['hour_angle'] = float(pointing['ha'])
+            if 'dec' in pointing:
+                target['dec'] = float(pointing['dec'])
+        else:
+            raise PondBlockError("Only Coordinate Types RD and HD are supported in the shim")
 
     extra_params = {}
     if 'vmag' in pointing and float(pointing['vmag']):
@@ -302,8 +315,12 @@ def convert_observation_to_pond_block(observation):
         'is_too': observation['observation_type'] == RequestGroup.RAPID_RESPONSE,
         'canceled': observation['state'] == 'CANCELED',
         'cancel_reason': '',
+        'cancel_date': '',
         'aborted': observation['state'] == 'ABORTED'
     }
+
+    if (block['canceled'] or block['aborted']) and 'modified' in observation:
+        block['cancel_date'] = min(observation['modified'], block['end'])
 
     if first_configuration['extra_params'].get('script_name'):
         block['script_name'] = first_configuration['extra_params']['script_name']
@@ -320,7 +337,14 @@ def convert_observation_to_pond_block(observation):
         events = []
         if configuration.get('summary'):
             events.append(copy.deepcopy(configuration['summary']))
+            completed_exposures = events[0].get('time_completed', 0) // first_instrument_config.get('exposure_time', 1)
+            events[0]['completed_exposures'] = completed_exposures
+            del events[0]['time_completed']
             del events[0]['events']
+            if 'configuration_status' in events[0]:
+                del events[0]['configuration_status']
+            if 'id' in events[0]:
+                del events[0]['id']
 
         molecule = {
             'pointing': pointing,

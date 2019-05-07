@@ -1,6 +1,7 @@
 import django_filters
 from django import forms
 from dateutil import parser
+from distutils.util import strtobool
 
 from observation_portal.observations.models import Observation
 from observation_portal.common.configdb import configdb
@@ -23,6 +24,8 @@ class PondBlockFilter(django_filters.FilterSet):
     proposal = django_filters.CharFilter(field_name='request__request_group__proposal__id', distinct=True, lookup_expr='exact')
     instrument_class = django_filters.ChoiceFilter(choices=configdb.get_instrument_type_tuples(),
                                                    field_name='configuration_statuses__configuration__instrument_type')
+    canceled = django_filters.TypedChoiceFilter(choices=(('false', 'False'), ('true', 'True')),
+                                                method='filter_canceled', coerce=strtobool)
     order = django_filters.OrderingFilter(fields=('start', 'modified'))
     time_span = django_filters.DateRangeFilter(field_name='start')
 
@@ -49,3 +52,9 @@ class PondBlockFilter(django_filters.FilterSet):
     def filter_modified_after(self, queryset, name, value):
         modified_after = parser.parse(value, ignoretz=True)
         return queryset.filter(modified__gte=modified_after)
+
+    def filter_canceled(self, queryset, name, value):
+        if not value:
+            return queryset.exclude(state='CANCELED')
+        else:
+            return queryset

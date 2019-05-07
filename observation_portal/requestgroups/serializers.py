@@ -125,7 +125,7 @@ class TargetSerializer(serializers.ModelSerializer):
         # Only return data for the specific target type
         data = super().to_representation(instance)
         target_helper = TARGET_TYPE_HELPER_MAP[data['type']](data)
-        return {k: data.get(k) for k in target_helper.fields}
+        return {k: data.get(k) for k in target_helper.fields if data.get(k) is not None}
 
     def validate(self, data):
         target_helper = TARGET_TYPE_HELPER_MAP[data['type']](data)

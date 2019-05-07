@@ -310,7 +310,9 @@ class Configuration(models.Model):
         ('NRES_SPECTRUM', 'NRES_SPECTRUM'),
         ('NRES_EXPOSE', 'NRES_EXPOSE'),
         ('ENGINEERING', 'ENGINEERING'),
-        ('SCRIPT', 'SCRIPT')
+        ('SCRIPT', 'SCRIPT'),
+        ('BIAS', 'BIAS'),
+        ('DARK', 'DARK')
     )
 
     SERIALIZER_EXCLUDE = ('request',)
