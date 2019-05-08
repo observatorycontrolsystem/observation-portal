@@ -309,6 +309,8 @@ class Configuration(models.Model):
         ('NRES_TEST', 'NRES_TEST'),
         ('NRES_SPECTRUM', 'NRES_SPECTRUM'),
         ('NRES_EXPOSE', 'NRES_EXPOSE'),
+        ('NRES_DARK', 'NRES_DARK'),
+        ('NRES_BIAS', 'NRES_BIAS'),
         ('ENGINEERING', 'ENGINEERING'),
         ('SCRIPT', 'SCRIPT'),
         ('BIAS', 'BIAS'),
