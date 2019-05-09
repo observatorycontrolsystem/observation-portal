@@ -255,7 +255,7 @@
             for (var windowIndex = 0; windowIndex < this.requestgroup.requests[index].windows.length; ++windowIndex) {
               if (value === 'RAPID_RESPONSE') {
                 delete this.requestgroup.requests[index].windows[windowIndex].start;
-                this.requestgroup.requests[index].windows[windowIndex].end = moment.utc().add(6, 'hours').format(datetimeFormat);
+                this.requestgroup.requests[index].windows[windowIndex].end = moment.utc().add(24, 'hours').format(datetimeFormat);
               } else {
                 if (!('start' in this.requestgroup.requests[index].windows[windowIndex])) {
                   this.requestgroup.requests[index].windows[windowIndex].start = moment.utc().format(datetimeFormat);
