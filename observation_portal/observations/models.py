@@ -176,7 +176,7 @@ class Summary(models.Model):
         help_text='The seconds of exposure time completed for this configuration'
     )
     events = JSONField(
-        default=dict, blank=True,
+        default=list, blank=True,
         help_text='Raw set of telescope events during this observation, in json format'
     )
 
