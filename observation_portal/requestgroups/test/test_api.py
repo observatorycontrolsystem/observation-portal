@@ -233,22 +233,22 @@ class TestUserPostRequestApi(SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('cannot be in the future.', str(response.content))
 
-    def test_post_requestgroup_rr_within_six_hours(self):
+    def test_post_requestgroup_rr_within_24_hours(self):
         data = self.generic_payload.copy()
         data['observation_type'] = RequestGroup.RAPID_RESPONSE
         data['requests'][0]['windows'][0]['start'] = timezone.now() + timedelta(0)
-        data['requests'][0]['windows'][0]['end'] = timezone.now() + timedelta(0, 18000)
+        data['requests'][0]['windows'][0]['end'] = timezone.now() + timedelta(0, 82800)  # 23 hours
         response = self.client.post(reverse('api:request_groups-list'), data=data)
         self.assertEqual(response.status_code, 201)
 
-    def test_post_requestgroup_rr_not_within_six_hours(self):
+    def test_post_requestgroup_rr_not_within_24_hours(self):
         bad_data = self.generic_payload.copy()
         bad_data['observation_type'] = RequestGroup.RAPID_RESPONSE
         bad_data['requests'][0]['windows'][0]['start'] = timezone.now() + timedelta(0)
-        bad_data['requests'][0]['windows'][0]['end'] = timezone.now() + timedelta(0, 25200)
+        bad_data['requests'][0]['windows'][0]['end'] = timezone.now() + timedelta(0, 90000)  # 25 hours
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('must be within the next six hours.', str(response.content))
+        self.assertIn('must start within the next 24 hours', str(response.content))
 
     def test_post_requestgroup_not_have_any_time_left(self):
         bad_data = self.generic_payload.copy()
@@ -2114,7 +2114,7 @@ class TestPressure(APITestCase):
         self.assertIn('pressure_data', response.json())
         self.assertIn('site_nights', response.json())
         self.assertIn('site', response.json())
-        self.assertIn('instrument_name', response.json())
+        self.assertIn('instrument_type', response.json())
 
     def test_pressure_auth(self):
         user = mixer.blend(User, is_staff=True)

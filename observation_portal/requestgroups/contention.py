@@ -1,30 +1,33 @@
-from django.utils import timezone
 from datetime import timedelta
 import math
 
+from django.utils import timezone
+
 from observation_portal.requestgroups.models import Request
-from observation_portal.common.rise_set_utils import get_filtered_rise_set_intervals_by_site, get_site_rise_set_intervals
+from observation_portal.common.rise_set_utils import (
+    get_filtered_rise_set_intervals_by_site, get_site_rise_set_intervals
+)
 from observation_portal.common.configdb import configdb
 
 
 class Contention(object):
-    def __init__(self, instrument_name, anonymous=True):
+    def __init__(self, instrument_type, anonymous=True):
         self.anonymous = anonymous
         self.now = timezone.now()
-        self.instrument_name = instrument_name
-        self.requests = self._requests(instrument_name)
+        self.instrument_type = instrument_type
+        self.requests = self._requests(instrument_type)
 
-    def _requests(self, instrument_name):
+    def _requests(self, instrument_type):
         return Request.objects.filter(
             windows__start__lt=self.now + timedelta(days=1),
             windows__end__gt=self.now,
             state='PENDING',
-            configurations__instrument_type=instrument_name,
+            configurations__instrument_type=instrument_type,
             configurations__target__type='SIDEREAL'
         ).prefetch_related(
             'configurations', 'windows', 'configurations__target', 'location', 'request_group',
             'request_group__proposal', 'configurations__instrument_configs', 'configurations__acquisition_config',
-            'configurations__guiding_config'
+            'configurations__guiding_config', 'configurations__constraints'
         ).distinct()
 
     def _binned_durations_by_proposal_and_ra(self):
@@ -47,7 +50,7 @@ class Contention(object):
     def data(self):
         c_data = {
             'ra_hours': list(range(0, 24)),
-            'instrument_name': self.instrument_name,
+            'instrument_type': self.instrument_type,
             'time_calculated': self.now
         }
         if self.anonymous:
@@ -58,24 +61,24 @@ class Contention(object):
 
 
 class Pressure(object):
-    def __init__(self, instrument_name=None, site=None, anonymous=True):
+    def __init__(self, instrument_type=None, site=None, anonymous=True):
         self.anonymous = anonymous
         self.now = timezone.now()
-        self.requests = self._requests(instrument_name, site)
+        self.requests = self._requests(instrument_type, site)
         self.site = site
-        self.instrument_name = instrument_name
+        self.instrument_type = instrument_type
         self.sites = self._sites()
         self.telescopes = {}
 
-    def _requests(self, instrument_name, site):
+    def _requests(self, instrument_type, site):
         requests = Request.objects.filter(
             windows__start__lte=self.now + timedelta(days=1),
             windows__end__gte=self.now,
             state='PENDING',
             configurations__target__type='SIDEREAL'
         )
-        if instrument_name:
-            requests = requests.filter(configurations__instrument_type=instrument_name)
+        if instrument_type:
+            requests = requests.filter(configurations__instrument_type=instrument_type)
 
         return requests.prefetch_related(
             'configurations', 'windows', 'configurations__target', 'location', 'request_group', 'request_group__proposal',
@@ -83,11 +86,11 @@ class Pressure(object):
             'configurations__guiding_config'
         ).distinct()
 
-    def _telescopes(self, instrument_name):
-        if instrument_name not in self.telescopes:
-            telescopes = configdb.get_telescopes_per_instrument_type(instrument_name, only_schedulable=True)
-            self.telescopes[instrument_name] = telescopes
-        return self.telescopes[instrument_name]
+    def _telescopes(self, instrument_type):
+        if instrument_type not in self.telescopes:
+            telescopes = configdb.get_telescopes_per_instrument_type(instrument_type, only_schedulable=True)
+            self.telescopes[instrument_type] = telescopes
+        return self.telescopes[instrument_type]
 
     def _sites(self):
         if self.site:
@@ -107,19 +110,19 @@ class Pressure(object):
                 if s > self.now and r < self.now + timedelta(hours=24):
                     hours_until_rise = (max(self.now, r) - self.now).seconds / 3600
                     hours_until_set = min((s - self.now).days * 24 + (s - self.now).seconds / 3600, 24)
-                    flattened.append(
-                        dict(name=site,
-                             start=hours_until_rise,
-                             stop=hours_until_set)
-                    )
+                    flattened.append(dict(
+                        name=site,
+                        start=hours_until_rise,
+                        stop=hours_until_set
+                    ))
         return flattened
 
-    def _n_possible_telescopes(self, time, site_intervals, instrument_name):
+    def _n_possible_telescopes(self, time, site_intervals, instrument_type):
         n_telescopes = 0
         for site in site_intervals:
             for interval in site_intervals[site]:
                 if interval[0] <= time < interval[1]:
-                    n_telescopes += sum([1 for t in self._telescopes(instrument_name) if t.site == site])
+                    n_telescopes += sum([1 for t in self._telescopes(instrument_type) if t.site == site])
         return n_telescopes
 
     def _visible_intervals(self, request):
@@ -151,14 +154,14 @@ class Pressure(object):
         for request in self.requests:
             site_intervals = self._visible_intervals(request)
             total_time_visible = self._time_visible(site_intervals)
-            instrument_name = request.configurations.all()[0].instrument_type
+            instrument_type = request.configurations.all()[0].instrument_type
 
             if total_time_visible < 1:
                 continue
 
             base_pressure = request.duration / total_time_visible
             for i, bin_start in enumerate(bin_start_times):
-                n_telescopes = self._n_possible_telescopes(bin_start, site_intervals, instrument_name)
+                n_telescopes = self._n_possible_telescopes(bin_start, site_intervals, instrument_type)
 
                 if n_telescopes < 1:
                     continue
@@ -180,7 +183,7 @@ class Pressure(object):
         p_data = {
             'site_nights': self._site_nights(),
             'time_bins': self._time_bins(),
-            'instrument_name': self.instrument_name if self.instrument_name else 'all',
+            'instrument_type': self.instrument_type if self.instrument_type else 'all',
             'site': self.site if self.site else 'all',
             'time_calculated': self.now
         }

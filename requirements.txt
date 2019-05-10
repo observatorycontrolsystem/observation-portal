@@ -6,6 +6,7 @@ apscheduler
 requests
 django-filter
 django-extensions
+django-cors-headers
 django-registration-redux
 django-webpack-loader
 django-oauth-toolkit

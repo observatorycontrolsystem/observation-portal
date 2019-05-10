@@ -640,7 +640,7 @@ class RequestGroupSerializer(serializers.ModelSerializer):
                 elif data['observation_type'] == RequestGroup.RAPID_RESPONSE:
                     time_available = time_allocation.rr_allocation - time_allocation.rr_time_used
                     # For Rapid Response observations, check if the end time of the window is within
-                    # six hours + the duration of the observation
+                    # 24 hours + the duration of the observation
                     for request in data['requests']:
                         windows = request.get('windows')
                         for window in windows:
@@ -648,9 +648,12 @@ class RequestGroupSerializer(serializers.ModelSerializer):
                                 raise serializers.ValidationError(
                                     _("The Rapid Response observation window start time cannot be in the future.")
                                 )
-                            if window.get('end') - timezone.now() > timedelta(seconds=(duration + 21600)):
+                            if window.get('end') - timezone.now() > timedelta(seconds=(duration + 86400)):
                                 raise serializers.ValidationError(
-                                    _("The Rapid Response observation window must be within the next six hours.")
+                                    _(
+                                        "A Rapid Response observation must start within the next 24 hours, so the "
+                                        "window end time must be within the next (24 hours + the observation duration)"
+                                    )
                                 )
                 elif data['observation_type'] == RequestGroup.TIME_CRITICAL:
                     # Time critical time

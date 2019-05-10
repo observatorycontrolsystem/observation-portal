@@ -22,7 +22,7 @@
         </sup>
       </template>
       <VueCtkDateTimePicker 
-        v-model="theValue"
+        v-model="value"
         label=""
         :format="datetimeFormat"
         :formatted="datetimeFormat"
@@ -70,8 +70,7 @@
     data: function() {
       return {
         tooltipConfig: tooltipConfig,
-        datetimeFormat: datetimeFormat,
-        theValue: this.value
+        datetimeFormat: datetimeFormat
       }
     },
     computed: {

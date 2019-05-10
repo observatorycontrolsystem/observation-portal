@@ -68,13 +68,13 @@ def get_rise_set_intervals_by_site(request: dict) -> dict:
 
 
 def get_filtered_rise_set_intervals_by_site(request_dict, site=''):
-    intervals = []
+    intervals = {}
     site = site if site else request_dict['location'].get('site', '')
     telescope_details = configdb.get_telescopes_with_instrument_type_and_location(
-            request_dict['configurations'][0]['instrument_type'],
-            site,
-            request_dict['location'].get('enclosure', ''),
-            request_dict['location'].get('telescope', '')
+        request_dict['configurations'][0]['instrument_type'],
+        site,
+        request_dict['location'].get('enclosure', ''),
+        request_dict['location'].get('telescope', '')
     )
     if not telescope_details:
         return intervals
@@ -83,7 +83,6 @@ def get_filtered_rise_set_intervals_by_site(request_dict, site=''):
     intervalsets_by_telescope = intervals_by_site_to_intervalsets_by_telescope(intervals_by_site, telescope_details.keys())
     filtered_intervalsets_by_telescope = filter_out_downtime_from_intervalsets(intervalsets_by_telescope)
     filtered_intervals_by_site = intervalsets_by_telescope_to_intervals_by_site(filtered_intervalsets_by_telescope)
-
     return filtered_intervals_by_site
 
 
