@@ -62,7 +62,7 @@ def convert_pond_block_to_observation(block):
         observation['state'] = 'FAILED'
     elif any([mol.get('attempted') for mol in block['molecules']]):
         observation['state'] = 'IN_PROGRESS'
-    elif 'cancel' in block and 'aborted' in block:
+    elif 'canceled' in block and 'aborted' in block:
         observation['state'] = 'PENDING'
 
     if first_molecule.get('tracking_num'):
@@ -84,7 +84,7 @@ def convert_pond_block_to_observation(block):
         target = pointing_to_target(pointing)
 
         config_extra_params = {}
-        if 'margs' in molecule and molecule['margs']:
+        if molecule.get('args'):
             config_extra_params['script_name'] = molecule['margs']
         if molecule.get('ag_name') and molecule.get('ag_name', '').upper() == molecule.get('inst_name', '').upper():
             config_extra_params['self_guiding'] = True
@@ -113,7 +113,7 @@ def convert_pond_block_to_observation(block):
             'exposure_time': float(molecule.get('exposure_time', 0.01)),
             'exposure_count': molecule.get('exposure_count', 1),
             'bin_x': molecule.get('bin_x', 1),
-            'biny_y': molecule.get('bin_y', 1),
+            'bin_y': molecule.get('bin_y', 1),
             'optical_elements': instrument_optical_elements,
             'extra_params': instrument_extra_params
         }]
@@ -146,11 +146,10 @@ def convert_pond_block_to_observation(block):
         acquire_extra_params = {}
         if not molecule.get('acquire_mode', 'OFF') == 'OFF':
             acquire_mode = molecule['acquire_mode']
-            acquire_extra_params['mode'] = molecule['acquire_mode']
             if molecule.get('acquire_strategy'):
                 acquire_extra_params['strategy'] = molecule['acquire_strategy']
             if molecule['acquire_mode'] == 'BRIGHTEST' and molecule.get('acquire_radius_arcsec'):
-                acquire_extra_params['radius'] = float(molecule['acquire_radius_arcsec'])
+                acquire_extra_params['acquire_radius'] = float(molecule['acquire_radius_arcsec'])
 
         acquisition_config = {
             'mode': acquire_mode,
@@ -377,8 +376,8 @@ def convert_observation_to_pond_block(observation):
             molecule['acquire_mode'] = configuration['acquisition_config']['mode']
         if configuration['acquisition_config']['extra_params'].get('strategy'):
             molecule['acquire_strategy'] = configuration['acquisition_config']['extra_params']['strategy']
-        if configuration['acquisition_config']['extra_params'].get('radius'):
-            molecule['acquire_radius_arcsec'] = str(configuration['acquisition_config']['extra_params']['radius'])
+        if configuration['acquisition_config']['extra_params'].get('acquire_radius'):
+            molecule['acquire_radius_arcsec'] = str(configuration['acquisition_config']['extra_params']['acquire_radius'])
         if first_instrument_config['extra_params'].get('expmeter_mode'):
             molecule['expmeter_mode'] = first_instrument_config['extra_params']['expmeter_mode']
         if first_instrument_config['extra_params'].get('expmeter_snr'):

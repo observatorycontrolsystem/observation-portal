@@ -200,14 +200,15 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                                                     .format(acquisition_config['mode'], data['instrument_type'])))
 
             # check for any required fields for acquisition
-            acquisition_mode = configdb.get_mode_with_code(data['instrument_type'], acquisition_config['mode'],
-                                                        'acquisition')
+            if acquisition_config['mode'] != 'OFF':
+                acquisition_mode = configdb.get_mode_with_code(data['instrument_type'], acquisition_config['mode'],
+                                                            'acquisition')
 
-            if 'required_fields' in acquisition_mode['params']:
-                for field in acquisition_mode['params']['required_fields']:
-                    if field not in acquisition_config['extra_params']:
-                        raise serializers.ValidationError(_("Acquisition Mode {} required extra param of {} to be set"
-                                                            .format(acquisition_mode['code'], field)))
+                if 'required_fields' in acquisition_mode['params']:
+                    for field in acquisition_mode['params']['required_fields']:
+                        if field not in acquisition_config['extra_params']:
+                            raise serializers.ValidationError(_("Acquisition Mode {} required extra param of {} to be set"
+                                                                .format(acquisition_mode['code'], field)))
 
         # Validate the optical elements, rotator and readout modes specified in the instrument configs
         available_optical_elements = configdb.get_optical_elements(data['instrument_type'])
