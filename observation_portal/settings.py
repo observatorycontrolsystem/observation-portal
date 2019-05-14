@@ -179,9 +179,9 @@ AWS_S3_CUSTOM_DOMAIN = 's3-us-west-2.amazonaws.com/{}'.format(AWS_STORAGE_BUCKET
 AWS_IS_GZIPPED = True
 AWS_DEFAULT_ACL = None
 
-STATICFILES_DIR = 'static'
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, '_static')
+STATIC_ROOT = '/static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 STATICFILES_STORAGE = os.getenv('STATIC_STORAGE', 'django.contrib.staticfiles.storage.StaticFilesStorage')
 MEDIAFILES_DIR = os.getenv('MEDIAFILES_DIR', 'media')
