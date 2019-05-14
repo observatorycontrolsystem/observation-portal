@@ -10,6 +10,9 @@ module.exports = {
   chainWebpack: config => {
     config.optimization.delete('splitChunks')
   },
+  css: {
+    extract: false
+  },
   configureWebpack: config => {
 
     // Remove the default entry point
