@@ -24,7 +24,7 @@
             <sup 
               class="text-info"
               v-b-tooltip=tooltipConfig 
-              title="The time that will be deducted from your proposal when this request is completed. Includes exposure times, slew times, and instrument overheads."
+              title="The time that will be deducted from your proposal when this request completes. Includes exposure times, slew times, and instrument overheads."
               >
                 ?
               </sup>
@@ -95,17 +95,18 @@
         header="Generated Cadence" 
         :showAccept="cadenceRequests.length > 0"
       >
-        <p>The blocks below represent the windows of the requests that will be generated if the current cadence is accepted.
+        <p>The blocks below represent the windows of the requests that will be generated if the cadence is accepted.
         These requests will replace the current request.</p>
-        <p>Press cancel to discard the cadence. Once a cadence is accepted, the individual generated requests may be edited.</p>
+        <p>Press Cancel to discard the cadence.</p>
+        <p>Press Ok to accept the cadence. Once a cadence is accepted, the individual generated requests may be edited.</p>
         <cadence :data="cadenceRequests"/>
 
         <!-- TODO: Differentiate between loading data and no cadence found -->
         
         <p v-if="cadenceRequests.length < 1">
           <strong>
-            A valid cadence could not be generated. Please try adjusting jitter or period and make sure your target is visible
-            during the selected window.
+            A valid cadence could not be generated. Please try adjusting the jitter or period and make sure your target is visible
+            within the selected window.
           </strong>
         </p>
       </modal>
@@ -132,12 +133,12 @@
     >
       <h3>Welcome to the LCO observation request page!</h3>
       <p>Using this form you can instruct the LCO telescope network to perform an astronomical observation on your behalf.</p>
-      <p>Fields should be filled out from top to bottom. If you need help understanding a field, hovering your
-        cursor over the field name will reveal additional information.</p>
-      <p>A field highlighted in red means that there is a problem with the given value. Additionally, errors will appear on the right
-        hand side in the request index. An observation request cannot be submitted until there are no errors.</p>
-      <p>Some elements may be copied using the <i class="fa fa-copy text-success"></i> copy button. For example: to create a RGB image you
-        can copy the configuration twice so that there are three, and set the filters appropriately.</p>
+      <p>Fields should be filled out from top to bottom. Some fields labels have blue question marks next to them. Hover over one of these
+        question marks to view more information about that field.</p>
+      <p>A field highlighted in red with means that there is a problem with the given value. An error message will be displayed below any underneath 
+        a field such as this. An observation request cannot be submitted until the form is free of errors.</p>
+      <p>Some elements may be copied using the <i class="fa fa-copy text-success"></i> copy button. For example: to create an RGB image you
+        can copy the instrument configuration twice so that there are three, and set the filters in each accordingly.</p>
       <p>Thanks for using Las Cumbres Observatory!</p>
     </modal>
   </panel>

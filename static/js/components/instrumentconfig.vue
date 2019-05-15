@@ -39,8 +39,9 @@
               field="exposure_count" 
               type="number"
               :errors="errors.exposure_count" 
-              desc="If the 'Fill' option is selected the count is set to the number of exposures (including overheads) that will 
-                    fit in the largest observing window."
+              desc="Clicking the 'Fill' button will set the exposure count to the number of 
+                    exposures (including overheads) that will fit in the largest observing window. 
+                    This button is disabled until the entire observing request has passed validation."
               @input="update"
             >
               <b-input-group-append slot="inline-input">

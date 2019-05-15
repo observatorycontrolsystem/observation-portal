@@ -121,7 +121,7 @@
                 v-model="target.scheme" 
                 label="Scheme" 
                 field="scheme" 
-                desc="The orbital elements scheme to use with this target."
+                desc="The orbital elements scheme to use with this target"
                 :errors="errors.scheme"
                 :options="[
                   {value: 'MPC_MINOR_PLANET', text: 'MPC Minor Planet'},
@@ -134,7 +134,7 @@
                 v-model="target.epochofel" 
                 label="Epoch of Elements" 
                 field="epochofel"
-                desc="The epoch of the orbital elements in MJD."
+                desc="The epoch of the orbital elements in MJD"
                 :errors="errors.epochofel" 
                 @input="update" 
               />
@@ -203,7 +203,7 @@
                 v-model="target.perihdist" 
                 label="Perihelion Distance" 
                 field="perihdist"
-                desc="in AU"
+                desc="Astronomical Units (AU)"
                 :errors="errors.perihdist" 
                 @input="update" 
               />

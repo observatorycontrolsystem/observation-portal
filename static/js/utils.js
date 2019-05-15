@@ -148,13 +148,24 @@ function julianToModifiedJulian(jd){
 }
 
 let apiFieldToReadable = {
-  'group_id': 'Title'
+  group_id: {
+    humanReadable: 'Title',
+    description: ''
+  },
+  rotator_angle: {
+    humanReadable: 'Angle',
+    description: 'Position angle of slit in degrees east of north.'
+  },
+  acquire_radius: {
+    humanReadable: 'Acquire Radius',
+    description: 'The radius (in arcseconds) within which to search for the brightest object.'
+  }
 };
 
 function formatField(value){
-  if(value in apiFieldToReadable){
-    return apiFieldToReadable[value];
-  }else{
+  if (value in apiFieldToReadable) {
+    return apiFieldToReadable[value]['humanReadable'];
+  } else {
     let words = value.split('_');
     words = words.map(function(word){
       return word.charAt(0).toUpperCase() + word.substr(1);

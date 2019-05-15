@@ -107,12 +107,13 @@
               <h2>Using the compose form</h2>
               <p>
                 Use the form to describe the observation you would like carried out on the network.
-                Sections marked with an exclamation mark <i class="fa fa-warning text-danger"></i> are incomplete or
+                Sections marked with an exclamation mark <i class="fas fa-exclamation-triangle text-danger"></i> are incomplete or
                 invalid. A complete section will be marked with a <i class="fa fa-check text-success"></i>. Only
                 when all sections are marked complete can the observation be submitted.
               </p>
               <p>
-                More information about each field may be found by hovering over the field label.
+                Some fields have blue question marks next to the field labels. Hovering over these question marks 
+                will display more information about that field.
               </p>
               <p>
                 Each section may be collapsed for a more compact view. Use the <i class="fa fa-window-minimize"></i>
@@ -120,27 +121,27 @@
               </p>
               <p>
                 Some sections may be copied using the <i class="fa fa-copy"></i> button. This will duplicate
-                the section and add it to your observing request. Sections can also be removed using the
-                <i class="fa fa-trash"></i> button.
+                the section and add it to your observing request. Certain sections can also be removed using the
+                <i class="fa fa-trash"></i> button. This button is only display if that section is eligible for removal.
               </p>
               <h2>Using the API view</h2>
               <p>
                 This is what your request looks like in JSON format.
               </p>
               <p>
-                This code can be used to submit this observation through the Request service API.
+                This code can be used to submit this observation through the API.
                 Using the API allows you to generate and submit observations for scheduling using
                 programming languages like python.
               </p>
               <p>
                 For more information see the
-                <a target="_blank" href="https://developers.lco.global/#observations">API Documentation</a>
+                <a target="_blank" href="https://developers.lco.global/#observations">API Documentation</a>.
               </p>
               <h2>Loading and saving drafts</h2>
               <p>
-                At any time you may save an observation request as a draft. Use the <i class="fa fa-save"></i> Save Draft
-                button. Drafts can be loaded and managed from the Drafts pane. You will see drafts saved by other members
-                of your proposal as well as your own.
+                Use the <span class="text-info"><i class="fa fa-save"></i> Save Draft</span> button at any time to save an observation 
+                request as a draft. Saved drafts can be loaded and managed from the Drafts tab. You will see 
+                drafts saved by other members of your proposal as well as your own.
               </p>
             </b-col>
           </b-form-row>

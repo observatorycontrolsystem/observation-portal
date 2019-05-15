@@ -57,8 +57,8 @@
               v-model="selectedImagerGuidingOption" 
               label="Guiding" 
               field="mode" 
-              desc="Guiding keeps the field stable during long exposures. If set to optional, then guiding is 
-                    attempted but observations are carried out even if guiding fails. If set to on, 
+              desc="Guiding keeps the field stable during long exposures. If set to Optional, then guiding is 
+                    attempted but observations are carried out even if guiding fails. If set to On, 
                     observations are aborted if guiding fails."
               :errors="{}" 
               :options="imagerGuidingOptions"
