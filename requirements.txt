@@ -12,6 +12,7 @@ django-webpack-loader
 django-oauth-toolkit
 django-bootstrap4
 django-dramatiq
+django-storages
 time_intervals
 rise_set
 elasticsearch<6.0

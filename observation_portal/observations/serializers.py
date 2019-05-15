@@ -5,8 +5,8 @@ from django.utils.translation import ugettext as _
 from observation_portal.common.configdb import configdb
 from observation_portal.observations.models import Observation, ConfigurationStatus, Summary
 from observation_portal.requestgroups.serializers import (RequestSerializer, RequestGroupSerializer,
-                                                          ConfigurationSerializer)
-from observation_portal.requestgroups.models import RequestGroup, AcquisitionConfig, GuidingConfig
+                                                          ConfigurationSerializer, TargetSerializer)
+from observation_portal.requestgroups.models import RequestGroup, AcquisitionConfig, GuidingConfig, Target
 from observation_portal.proposals.models import Proposal
 
 
@@ -63,15 +63,34 @@ class ConfigurationStatusSerializer(serializers.ModelSerializer):
         return instance
 
 
+class ObservationTargetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Target
+        exclude = Target.SERIALIZER_EXCLUDE
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        return {k: v for k, v in data.items() if v is not None}
+
+
 class ObservationConfigurationSerializer(ConfigurationSerializer):
     instrument_name = serializers.CharField(required=False, write_only=True)
     guide_camera_name = serializers.CharField(required=False, write_only=True)
+    target = ObservationTargetSerializer()
 
     def validate_instrument_type(self, value):
         # Check with ALL instrument type instead of just schedulable ones
         if not configdb.is_valid_instrument_type(value):
             raise serializers.ValidationError(_("Invalid Instrument Type {}".format(value)))
         return value
+
+    def validate(self, data):
+        validated_data = super().validate(data)
+        if validated_data['type'] not in ['BIAS', 'DARK', 'SKY_FLAT']:
+            target_serializer = TargetSerializer(data=validated_data['target'])
+            if not target_serializer.is_valid():
+                raise serializers.ValidationError(target_serializer.errors)
+        return validated_data
 
 
 class ObserveRequestSerializer(RequestSerializer):
@@ -114,7 +133,8 @@ class ScheduleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Observation
         fields = ('site', 'enclosure', 'telescope', 'start', 'end', 'state', 'configuration_statuses', 'request',
-                  'proposal', 'name', 'id')
+                  'proposal', 'name', 'id', 'modified')
+        read_only_fields = ('modified', 'id', 'configuration_statuses')
 
     def validate_start(self, value):
         if value < timezone.now():

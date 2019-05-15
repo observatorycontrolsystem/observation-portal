@@ -77,6 +77,7 @@ class Observation(models.Model):
         ret_dict['ipp_value'] = self.request.request_group.ipp_value
         ret_dict['observation_type'] = self.request.request_group.observation_type
         ret_dict['request_group_id'] = self.request.request_group.id
+        ret_dict['modified'] = self.modified
         configuration_status_by_config = {config_status.configuration.id: config_status
                                           for config_status in self.configuration_statuses.all()}
         for configuration in ret_dict['request']['configurations']:
@@ -175,7 +176,7 @@ class Summary(models.Model):
         help_text='The seconds of exposure time completed for this configuration'
     )
     events = JSONField(
-        default=dict, blank=True,
+        default=list, blank=True,
         help_text='Raw set of telescope events during this observation, in json format'
     )
 

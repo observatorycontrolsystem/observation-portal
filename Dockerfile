@@ -8,7 +8,7 @@ RUN apt-get update \
   && apt-get update \
   && apt-get install -y nodejs
 
-COPY package.json package-lock.json webpack.config.js /
+COPY package.json package-lock.json vue.config.js /
 COPY static /static
 RUN npm install \
   && npm install --only=dev \

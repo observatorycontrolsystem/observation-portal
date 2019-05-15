@@ -125,7 +125,7 @@ class TargetSerializer(serializers.ModelSerializer):
         # Only return data for the specific target type
         data = super().to_representation(instance)
         target_helper = TARGET_TYPE_HELPER_MAP[data['type']](data)
-        return {k: data.get(k) for k in target_helper.fields}
+        return {k: data.get(k) for k in target_helper.fields if data.get(k) is not None}
 
     def validate(self, data):
         target_helper = TARGET_TYPE_HELPER_MAP[data['type']](data)
@@ -186,7 +186,7 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                 ))
             guiding_config['optional'] = False
 
-        if data['type'] in ['LAMP_FLAT', 'ARC']:
+        if data['type'] in ['LAMP_FLAT', 'ARC', 'AUTO_FOCUS', 'NRES_BIAS', 'NRES_DARK', 'BIAS', 'DARK', 'SCRIPT']:
             # These types of observations should only ever be set to guiding mode OFF, but the acquisition modes for 
             # spectrographs won't necessarily have that mode. Force OFF here.
             data['acquisition_config']['mode'] = 'OFF'
@@ -200,14 +200,15 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                                                     .format(acquisition_config['mode'], data['instrument_type'])))
 
             # check for any required fields for acquisition
-            acquisition_mode = configdb.get_mode_with_code(data['instrument_type'], acquisition_config['mode'],
-                                                        'acquisition')
+            if acquisition_config['mode'] != 'OFF':
+                acquisition_mode = configdb.get_mode_with_code(data['instrument_type'], acquisition_config['mode'],
+                                                            'acquisition')
 
-            if 'required_fields' in acquisition_mode['params']:
-                for field in acquisition_mode['params']['required_fields']:
-                    if field not in acquisition_config['extra_params']:
-                        raise serializers.ValidationError(_("Acquisition Mode {} required extra param of {} to be set"
-                                                            .format(acquisition_mode['code'], field)))
+                if 'required_fields' in acquisition_mode['params']:
+                    for field in acquisition_mode['params']['required_fields']:
+                        if field not in acquisition_config['extra_params']:
+                            raise serializers.ValidationError(_("Acquisition Mode {} required extra param of {} to be set"
+                                                                .format(acquisition_mode['code'], field)))
 
         # Validate the optical elements, rotator and readout modes specified in the instrument configs
         available_optical_elements = configdb.get_optical_elements(data['instrument_type'])

@@ -43,10 +43,13 @@ class SiderealTargetHelper(BaseTargetHelper):
     def __init__(self, target):
         self.fields = (
             'type', 'name', 'ra', 'dec', 'proper_motion_ra', 'proper_motion_dec', 'parallax',
-            'coordinate_system', 'equinox', 'epoch'
+            'coordinate_system', 'equinox', 'epoch', 'hour_angle'
         )
 
-        self.required_fields = ('ra', 'dec')
+        if target.get('hour_angle'):
+            self.required_fields = ('hour_angle', 'dec')
+        else:
+            self.required_fields = ('ra', 'dec')
 
         self.defaults = {
             'coordinate_system': 'ICRS',

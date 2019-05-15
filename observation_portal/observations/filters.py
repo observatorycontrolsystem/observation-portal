@@ -22,13 +22,9 @@ class ObservationFilter(django_filters.FilterSet):
     modified_after = django_filters.CharFilter(field_name='modified', method='filter_modified_after',
                                                label='Modified After',
                                                widget=forms.TextInput(attrs={'class': 'input', 'type': 'date'}))
-    request_id = django_filters.CharFilter(field_name='request__id', method='filter_request_id',
-                                            widget=forms.TextInput(attrs={'class': 'input'}))
-    request_group_id = django_filters.CharFilter(field_name='request__request_group__id',
-                                                 method='filter_request_group_id',
-                                                 widget=forms.TextInput(attrs={'class': 'input'}),
-                                                 label='Request Group ID')
-    state = django_filters.MultipleChoiceFilter(choices=Observation.STATE_CHOICES)
+    request_id = django_filters.CharFilter(field_name='request__id')
+    request_group_id = django_filters.CharFilter(field_name='request__request_group__id', label='Request Group ID')
+    state = django_filters.MultipleChoiceFilter(choices=Observation.STATE_CHOICES, field_name='state')
     observation_type = django_filters.MultipleChoiceFilter(choices=RequestGroup.OBSERVATION_TYPES,
                                                            field_name='request__request_group__observation_type',
                                                            label='Observation Type')
@@ -67,12 +63,6 @@ class ObservationFilter(django_filters.FilterSet):
     def filter_modified_after(self, queryset, name, value):
         modified_after = parser.parse(value, ignoretz=True)
         return queryset.filter(modified__gte=modified_after)
-
-    def filter_request_id(self, queryset, name, value):
-        return queryset.filter(request__id=value.zfill(10)).distinct()
-
-    def filter_request_group_id(self, queryset, name, value):
-        return queryset.filter(request__request_group__id=value.zfill(10)).distinct()
 
 
 class ConfigurationStatusFilter(django_filters.FilterSet):
