@@ -174,8 +174,11 @@ export default {
     instrumentHasRotatorModes: function() {
       return this.available_instruments[this.selectedinstrument] && 'rotator' in this.available_instruments[this.selectedinstrument].modes;
     },
+    instrumentHasReadoutModes: function() {
+      return this.available_instruments[this.selectedinstrument] && 'readout' in this.available_instruments[this.selectedinstrument].modes;
+    },
     readoutModeOptions: function() {
-      if (this.selectedinstrument in this.available_instruments) {
+      if (this.selectedinstrument in this.available_instruments && this.instrumentHasReadoutModes) {
         let readoutModes = [];
         for (let rm in this.available_instruments[this.selectedinstrument].modes.readout.modes) {
           readoutModes.push({

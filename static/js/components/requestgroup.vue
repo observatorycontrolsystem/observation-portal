@@ -16,6 +16,18 @@
     >
       {{ error }}
     </customalert>
+    <customalert
+      v-show="!isMemberOfActiveProposals"
+      alertclass="danger"
+      :dismissible="false"
+    >
+      <p>
+        You must be a member of a currently active proposal in order to create and submit observation requests. You can review the 
+        <a href="https://lco.global/files/User_Documentation/gettingstartedonthelconetwork.latest.pdf">getting started guide</a> or 
+        the <a href="https://lco.global/observatory/proposal/process/">proposal process documentation</a> to see how to become a member 
+        of a proposal.
+      </p>
+    </customalert>
     <b-container class="p-0">
       <b-form-row>
         <b-col md="6" v-show="show">
@@ -182,6 +194,8 @@
         cadenceRequests: [],
         available_instruments: {},  // Has only the instruments that the user's proposals allow
         proposals: [],
+        hasRetrievedProposals: false,
+        isMemberOfActiveProposals: true,
         cadenceRequestId: -1
       };
     },
@@ -190,6 +204,7 @@
       let allowed_instruments = {};
       $.getJSON('/api/profile/', function(data) {
         that.proposals = data.proposals;
+        that.hasRetrievedProposals = true;
         if (data.profile.simple_interface) {
           that.simple_interface = data.profile.simple_interface;
           for (let req = 0; req < that.requestgroup.requests.length; req++) {
@@ -246,6 +261,13 @@
       }
     },
     watch: {
+      proposalOptions: function() {
+        if (this.hasRetrievedProposals && this.proposalOptions.length < 2) {
+          this.isMemberOfActiveProposals = false;
+        } else {
+          this.isMemberOfActiveProposals = true;
+        }
+      },
       'requestgroup.requests.length': function(value) {
         this.requestgroup.operator = value > 1 ? 'MANY' : 'SINGLE';
       },
