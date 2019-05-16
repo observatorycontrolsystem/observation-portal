@@ -582,7 +582,7 @@ class RequestGroupSerializer(serializers.ModelSerializer):
                     for roi_data in rois_data:
                         RegionOfInterest.objects.create(instrument_config=instrument_config, **roi_data)
 
-        if validated_data['observation_type'] != RequestGroup.DIRECT:
+        if validated_data['observation_type'] == RequestGroup.NORMAL:
             debit_ipp_time(request_group)
 
         logger.info('RequestGroup created', extra={'tags': {
@@ -671,7 +671,8 @@ class RequestGroupSerializer(serializers.ModelSerializer):
                             data['proposal'], tak.semester)
                     )
             # validate the ipp debitting that will take place later
-            validate_ipp(data, total_duration_dict)
+            if data['observation_type'] == RequestGroup.NORMAL:
+                validate_ipp(data, total_duration_dict)
         except ObjectDoesNotExist:
             raise serializers.ValidationError(
                 _("You do not have sufficient time allocated on the instrument you're requesting for this proposal.")

@@ -416,13 +416,13 @@ class TestRequestGroupIPP(SetTimeMixin, APITestCase):
         self.time_allocation_1m0_sbig = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=semester, instrument_type='1M0-SCICAM-SBIG',
             std_allocation=100.0, std_time_used=0.0, rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
-            ipp_time_available=5.0
+            ipp_time_available=5.0, tc_allocation=10, tc_time_used=0
         )
 
         self.time_allocation_2m0_floyds = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=semester, instrument_type='2M0-FLOYDS-SCICAM',
             std_allocation=100.0, std_time_used=0.0, rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
-            ipp_time_available=5.0
+            ipp_time_available=5.0, tc_allocation=10, tc_time_used=0
         )
 
         self.generic_payload = copy.deepcopy(generic_payload)
@@ -456,6 +456,18 @@ class TestRequestGroupIPP(SetTimeMixin, APITestCase):
         time_allocation = TimeAllocation.objects.get(pk=self.time_allocation_1m0_sbig.id)
         self.assertLess(time_allocation.ipp_time_available, 5.0)
 
+    def test_tc_request_group_no_debit_ipp_on_creation(self):
+        self.assertEqual(self.time_allocation_1m0_sbig.ipp_time_available, 5.0)
+
+        rg = self.generic_payload.copy()
+        rg['observation_type'] = RequestGroup.TIME_CRITICAL
+        response = self.client.post(reverse('api:request_groups-list'), data=rg)
+        self.assertEqual(response.status_code, 201)
+
+        # verify that now that the object is saved, ipp has not been debited
+        time_allocation = TimeAllocation.objects.get(pk=self.time_allocation_1m0_sbig.id)
+        self.assertEqual(time_allocation.ipp_time_available, 5.0)
+
     def test_request_group_credit_ipp_on_cancelation(self):
         request_group = self._build_request_group(self.generic_payload.copy())
         # verify that now that the TimeAllocation has been debited
@@ -466,6 +478,25 @@ class TestRequestGroupIPP(SetTimeMixin, APITestCase):
         # verify that now that the TimeAllocation has its original ipp value
         time_allocation = TimeAllocation.objects.get(pk=self.time_allocation_1m0_sbig.id)
         self.assertEqual(time_allocation.ipp_time_available, 5.0)
+        # also verify that the child request state has changed to window_expired as well
+        self.assertEqual(request_group.requests.first().state, 'CANCELED')
+
+    def test_tc_request_group_no_credit_ipp_on_cancelation(self):
+        rg = self.generic_payload.copy()
+        rg['observation_type'] = RequestGroup.TIME_CRITICAL
+        response = self.client.post(reverse('api:request_groups-list'), data=rg)
+        request_group = RequestGroup.objects.get(id=response.json()['id'])
+        # verify that now that the TimeAllocation has been debited
+        time_allocation = TimeAllocation.objects.get(pk=self.time_allocation_1m0_sbig.id)
+        self.assertEqual(time_allocation.ipp_time_available, 5.0)
+        self.assertEqual(time_allocation.rr_time_used, 0.0)
+
+        request_group.state = 'CANCELED'
+        request_group.save()
+        # verify that now that the TimeAllocation has its original ipp value
+        time_allocation = TimeAllocation.objects.get(pk=self.time_allocation_1m0_sbig.id)
+        self.assertEqual(time_allocation.ipp_time_available, 5.0)
+        self.assertEqual(time_allocation.rr_time_used, 0.0)
         # also verify that the child request state has changed to window_expired as well
         self.assertEqual(request_group.requests.first().state, 'CANCELED')
 

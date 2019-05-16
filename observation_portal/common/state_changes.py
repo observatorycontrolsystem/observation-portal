@@ -67,24 +67,25 @@ def on_request_state_change(old_request, new_request):
         return
     cache.set('observation_portal_last_change_time', timezone.now(), None)
     valid_request_state_change(old_request.state, new_request.state, old_request)
-    # Must be a valid transition, so do ipp time accounting here
-    if new_request.state == 'COMPLETED':
-        ipp_value = new_request.request_group.ipp_value
-        if ipp_value < 1.0:
-            modify_ipp_time_from_requests(ipp_value, [new_request], 'credit')
-        else:
-            if old_request.state == 'WINDOW_EXPIRED':
-                try:
-                    modify_ipp_time_from_requests(ipp_value, [new_request], 'debit')
-                except TimeAllocationError as tae:
-                    logger.warning(_(
-                        f'Request {new_request} switched from WINDOW_EXPIRED to COMPLETED but did not have enough '
-                        f'ipp_time to debit: {repr(tae)}'
-                    ))
-    if new_request.state == 'CANCELED' or new_request.state == 'WINDOW_EXPIRED':
-        ipp_value = new_request.request_group.ipp_value
-        if ipp_value >= 1.0:
-            modify_ipp_time_from_requests(ipp_value, [new_request], 'credit')
+    # Must be a valid transition, so do ipp time accounting here if it is a normal type observation
+    if old_request.request_group.observation_type == RequestGroup.NORMAL:
+        if new_request.state == 'COMPLETED':
+            ipp_value = new_request.request_group.ipp_value
+            if ipp_value < 1.0:
+                modify_ipp_time_from_requests(ipp_value, [new_request], 'credit')
+            else:
+                if old_request.state == 'WINDOW_EXPIRED':
+                    try:
+                        modify_ipp_time_from_requests(ipp_value, [new_request], 'debit')
+                    except TimeAllocationError as tae:
+                        logger.warning(_(
+                            f'Request {new_request} switched from WINDOW_EXPIRED to COMPLETED but did not have enough '
+                            f'ipp_time to debit: {repr(tae)}'
+                        ))
+        if new_request.state == 'CANCELED' or new_request.state == 'WINDOW_EXPIRED':
+            ipp_value = new_request.request_group.ipp_value
+            if ipp_value >= 1.0:
+                modify_ipp_time_from_requests(ipp_value, [new_request], 'credit')
 
 
 @transaction.atomic
