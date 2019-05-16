@@ -26,9 +26,10 @@ class ObservationListView(StaffRequiredMixin, FilterView):
 
     def get_filterset_kwargs(self, filterset_class):
         kwargs = super(ObservationListView, self).get_filterset_kwargs(filterset_class)
-        # If there are no query parameters, default to filtering out all canceled observations as generally 
-        # users coming to the page will want those observations filtered out
-        if kwargs['data'] is None:
+        # If there are no query parameters or the only query parameter is for pagination, default to
+        # filtering out all canceled observations as generally users coming to the page will want
+        # those observations filtered out
+        if (kwargs['data'] is None or (len(kwargs['data']) == 1 and 'page' in kwargs['data'])):
             kwargs['data'] = {
                 'state': ['COMPLETED', 'PENDING', 'IN_PROGRESS', 'ABORTED', 'FAILED']
             }
