@@ -686,8 +686,8 @@ class GuidingConfig(models.Model):
         blank=True,
         help_text='Optical Element specification for this GuidingConfig'
     )
-    exposure_time = models.FloatField(default=10.0,
-        validators=[MinValueValidator(0.0)],
+    exposure_time = models.FloatField(blank=True, null=True,
+        validators=[MinValueValidator(0.0), MaxValueValidator(120.0)],
         help_text='Guiding exposure time'
     )
     extra_params = JSONField(
