@@ -185,7 +185,6 @@
             configurations: [{
               type: 'EXPOSE',
               instrument_type: '',
-              fill_window: false,
               instrument_configs: [{
                 bin_x: '',
                 bin_y: '',

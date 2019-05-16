@@ -65,6 +65,13 @@
     components: {
       dataloadhelp
     },
+    props: {
+      instruments: {
+        type: Array,
+        required: true,
+        description: 'Array of objects with value and text fields, used for instrument select field'
+      }
+    },
     data: function() {
       return {
         instrument: '',
@@ -75,14 +82,6 @@
         rawData: [],
         rawSiteData: [],
         siteNights: [],
-        instrumentTypeOptions: [
-          {value: '', text: 'All'},
-          {value: '0M4-SCICAM-SBIG', text: '0.4m SBIG'},
-          {value: '1M0-SCICAM-SINISTRO', text: '1m Sinistro'},
-          {value: '1M0-NRES-SCICAM', text: '1m NRES'},
-          {value: '2M0-SCICAM-SPECTRAL', text: '2m Spectral'},
-          {value: '2M0-FLOYDS-SCICAM', text: '2m FLOYDS'}
-        ],
         siteOptions: [
           {value: '', text: 'All'},
           {value: 'coj', text: 'Siding Spring, Australia (coj)'},
@@ -90,6 +89,7 @@
           {value: 'elp', text: 'McDonald, Texas (elp)'},
           {value: 'lsc', text: 'Cerro Tololo, Chile (lsc)'},
           {value: 'ogg', text: 'Maui, Hawaii (ogg)'},
+          {value: 'sor', text: 'Cerro Pachón, Chile (sor)'},
           {value: 'tfn', text: 'Tenerife, Canary Islands (tfn)'}
         ],
         data: {
@@ -99,6 +99,13 @@
       };
     },
     computed: {
+      instrumentTypeOptions: function() {
+        let options = [{value: '', text: 'All'}]
+        for (let idx in this.instruments) {
+          options.push(this.instruments[idx]);
+        }
+        return options;
+      },
       toChartData: function() {
         let datasets = {};
         for (let time = 0; time < this.rawData.length; time++) {
