@@ -1254,12 +1254,11 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
         self.assertEqual(response.status_code, 201)
 
-    def test_zero_length_exposure_not_allowed(self):
-        bad_data = self.generic_payload.copy()
-        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['exposure_time'] = 0
-        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertIn('exposure_time', str(response.content))
-        self.assertEqual(response.status_code, 400)
+    def test_zero_length_exposure_allowed(self):
+        good_data = self.generic_payload.copy()
+        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['exposure_time'] = 0
+        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
+        self.assertEqual(response.status_code, 201)
 
     def test_slit_not_necessary_for_nres(self):
         good_data = self.generic_payload.copy()
