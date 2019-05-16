@@ -587,7 +587,7 @@ class InstrumentConfig(models.Model):
         help_text='The mode of this InstrumentConfig'
     )
     exposure_time = models.FloatField(
-        validators=[MinValueValidator(0.01)],
+        validators=[MinValueValidator(0.0)],
         help_text='Exposure time in seconds. A tool to aid in deciding on an exposure time is located '
                   '<a href="https://lco.global/files/etc/exposure_time_calculator.html">here</a>.'
     )
@@ -686,8 +686,8 @@ class GuidingConfig(models.Model):
         blank=True,
         help_text='Optical Element specification for this GuidingConfig'
     )
-    exposure_time = models.FloatField(default=0.01,
-        validators=[MinValueValidator(0.01)],
+    exposure_time = models.FloatField(default=10.0,
+        validators=[MinValueValidator(0.0)],
         help_text='Guiding exposure time'
     )
     extra_params = JSONField(
