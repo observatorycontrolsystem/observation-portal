@@ -153,8 +153,8 @@ let apiFieldToReadable = {
     description: ''
   },
   rotator_angle: {
-    humanReadable: 'Angle',
-    description: 'Position angle of slit in degrees east of north.'
+    humanReadable: 'Rotator Angle',
+    description: 'Position angle of the slit in degrees east of north.'
   },
   acquire_radius: {
     humanReadable: 'Acquire Radius',
@@ -171,6 +171,14 @@ function formatField(value){
       return word.charAt(0).toUpperCase() + word.substr(1);
     });
     return words.join(' ');
+  }
+}
+
+function getFieldDescription(value) {
+  if (value in apiFieldToReadable) {
+    return apiFieldToReadable[value]['description'];
+  } else {
+    return '';
   }
 }
 
@@ -303,6 +311,6 @@ let colorPalette = [  // useful assigning colors to datasets.
 export {
   semesterStart, semesterEnd, sexagesimalRaToDecimal, sexagesimalDecToDecimal, QueryString, formatJson, formatValue,
   formatDate, formatField, datetimeFormat, collapseMixin, siteToColor, siteCodeToName, slitWidthToExposureTime,
-  observatoryCodeToNumber, telescopeCodeToName, colorPalette, julianToModifiedJulian,
+  observatoryCodeToNumber, telescopeCodeToName, colorPalette, julianToModifiedJulian, getFieldDescription,
   decimalRaToSexigesimal, decimalDecToSexigesimal, tooltipConfig, getCookie, csrfSafeMethod
 };

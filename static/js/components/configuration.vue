@@ -90,8 +90,9 @@
                   v-for="field in requiredAcquireModeFields"
                   :key="field"
                   v-model="configuration.acquisition_config.extra_params[field]"
-                  :label="field"
+                  :label="field | formatField"
                   :errors="null"
+                  :desc="field | getFieldDescription"
                   @input="updateAcquisitionConfigExtraParam($event, field)" 
                 />
               </div>
@@ -208,10 +209,7 @@
         let requiredModeFields = [];
         let modes = this.available_instruments[this.selectedinstrument].modes.acquisition.modes;
         for (let i in modes) {
-          requiredModeFields = [];
-
-          // TODO: Set a description and a label
-          
+          requiredModeFields = [];          
           if ('required_fields' in modes[i].params) {
             for (let j in modes[i].params.required_fields) {
               requiredModeFields.push(
