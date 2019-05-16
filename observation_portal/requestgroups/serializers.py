@@ -149,6 +149,9 @@ class ConfigurationSerializer(serializers.ModelSerializer):
         read_only_fields = ('priority',)
 
     def validate_instrument_configs(self, value):
+        if len(value) != 1:
+            raise serializers.ValidationError(_('Currently only a single instrument_config is supported. This restriction will be lifted in the future.'))
+
         if [instrument_config.get('fill_window', False) for instrument_config in value].count(True) > 1:
             raise serializers.ValidationError(_('Only one instrument_config can have `fill_window` set'))
         return value
