@@ -58,11 +58,9 @@ observation = {
                 },
                 "target": {
                     "parallax": 0.0,
-                    "equinox": "J2000",
-                    "coordinate_system": "ICRS",
                     "proper_motion_ra": 0.0,
                     "ra": 83.3833402357991,
-                    "type": "SIDEREAL",
+                    "type": "ICRS",
                     "epoch": 2000.0,
                     "name": "auto_focus",
                     "dec": -33.0,

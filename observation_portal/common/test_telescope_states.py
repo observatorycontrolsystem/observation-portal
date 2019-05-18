@@ -445,7 +445,7 @@ class TestRiseSetUtils(TestCase):
                                     }
                                 ],
                                 'target': {
-                                    'type': 'SIDEREAL',
+                                    'type': 'ICRS',
                                     'ra': 35.0,
                                     'dec': -53.0,
                                     'proper_motion_ra': 0.0,

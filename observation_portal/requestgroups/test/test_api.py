@@ -43,7 +43,7 @@ generic_payload = {
             'instrument_type': '1M0-SCICAM-SBIG',
             'target': {
                 'name': 'fake target',
-                'type': 'SIDEREAL',
+                'type': 'ICRS',
                 'dec': 20,
                 'ra': 34.4,
             },
@@ -840,7 +840,7 @@ class TestCadenceApi(SetTimeMixin, APITestCase):
         self.assertIn('No visible requests within cadence window parameters', str(response.content))
 
 
-class TestSiderealTarget(SetTimeMixin, APITestCase):
+class TestICRSTarget(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
         self.proposal = mixer.blend(Proposal)
@@ -890,8 +890,6 @@ class TestSiderealTarget(SetTimeMixin, APITestCase):
         self.assertEqual(target['proper_motion_ra'], 0.0)
         self.assertEqual(target['proper_motion_dec'], 0.0)
         self.assertEqual(target['parallax'], 0.0)
-        self.assertEqual(target['coordinate_system'], 'ICRS')
-        self.assertEqual(target['equinox'], 'J2000')
         self.assertEqual(target['epoch'], 2000.0)
 
     def test_post_requestgroup_test_proper_motion_no_epoch(self):
@@ -928,7 +926,7 @@ class TestSiderealTarget(SetTimeMixin, APITestCase):
         self.assertIn('50 characters', str(response.content))
 
 
-class TestNonSiderealTarget(SetTimeMixin, APITestCase):
+class TestOrbitalElementsTarget(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
         self.proposal = mixer.blend(Proposal)
@@ -948,7 +946,7 @@ class TestNonSiderealTarget(SetTimeMixin, APITestCase):
         self.generic_payload['proposal'] = self.proposal.id
         self.generic_payload['requests'][0]['configurations'][0]['target'] = {
             'name': 'fake target',
-            'type': 'NON_SIDEREAL',
+            'type': 'ORBITAL_ELEMENTS',
             'scheme': 'MPC_MINOR_PLANET',
             # Non sidereal param
             'epochofel': 57660.0,
@@ -968,13 +966,13 @@ class TestNonSiderealTarget(SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertEqual(response.status_code, 400)
 
-    def test_post_requestgroup_non_sidereal_target(self):
+    def test_post_requestgroup_orbital_elements_target(self):
         good_data = self.generic_payload.copy()
 
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
         self.assertEqual(response.status_code, 201)
 
-    def test_post_requestgroup_non_comet_eccentricity(self):
+    def test_post_requestgroup_bad_comet_eccentricity(self):
         bad_data = self.generic_payload.copy()
         bad_data['requests'][0]['configurations'][0]['target']['eccentricity'] = 0.99
 
@@ -982,14 +980,14 @@ class TestNonSiderealTarget(SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('requires eccentricity to be lower', str(response.content))
 
-    def test_post_requestgroup_non_sidereal_mpc_comet(self):
+    def test_post_requestgroup_orbital_elements_mpc_comet(self):
         good_data = self.generic_payload.copy()
         good_data['requests'][0]['configurations'][0]['target']['eccentricity'] = 0.99
         good_data['requests'][0]['configurations'][0]['target']['scheme'] = 'MPC_COMET'
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
         self.assertEqual(response.status_code, 201)
 
-    def test_post_requestgroup_non_sidereal_not_visible(self):
+    def test_post_requestgroup_orbital_elements_target_not_visible(self):
         bad_data = self.generic_payload.copy()
         bad_data['requests'][0]['configurations'][0]['target']['eccentricity'] = 0.99
         bad_data['requests'][0]['configurations'][0]['target']['scheme'] = 'MPC_COMET'
@@ -999,7 +997,7 @@ class TestNonSiderealTarget(SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('the target is never visible within the time window', str(response.content))
 
-    def test_post_requestgroup_non_sidereal_missing_fields(self):
+    def test_post_requestgroup_orbital_elements_target_missing_fields(self):
         bad_data = self.generic_payload.copy()
         del bad_data['requests'][0]['configurations'][0]['target']['eccentricity']
         del bad_data['requests'][0]['configurations'][0]['target']['meandist']
@@ -1013,7 +1011,7 @@ class TestNonSiderealTarget(SetTimeMixin, APITestCase):
         good_data = self.generic_payload.copy()
         good_data['requests'][0]['configurations'][0]['target'] = {
             "name": "Saturn",
-            "type": "NON_SIDEREAL",
+            "type": "ORBITAL_ELEMENTS",
             "scheme": "JPL_MAJOR_PLANET",
             "orbinc": "2.490066187978994",
             "longascnode": "113.5557964913403",
@@ -1796,7 +1794,7 @@ class TestAirmassApi(SetTimeMixin, APITestCase):
                 },
                 'target': {
                     'name': 'fake target',
-                    'type': 'SIDEREAL',
+                    'type': 'ICRS',
                     'dec': 20,
                     'ra': 34.4,
                 }
@@ -2005,7 +2003,7 @@ class TestSchedulableRequestsApi(SetTimeMixin, APITestCase):
                             optical_elements={'filter': 'air'}, bin_x=1, bin_y=1)
                 mixer.blend(AcquisitionConfig, configuration=conf, )
                 mixer.blend(GuidingConfig, configuration=conf, )
-                mixer.blend(Target, configuration=conf, type='SIDEREAL', dec=20, ra=34.4)
+                mixer.blend(Target, configuration=conf, type='ICRS', dec=20, ra=34.4)
                 mixer.blend(Location, request=req, telescope_class='1m0')
                 mixer.blend(Constraints, configuration=conf, max_airmass=2.0, min_lunar_distance=30.0)
 
@@ -2085,7 +2083,7 @@ class TestContention(APITestCase):
         )
         mixer.blend(Location, request=request)
         conf = mixer.blend(Configuration, instrument_type='1M0-SCICAM-SBIG', request=request)
-        mixer.blend(Target, ra=15.0, type='SIDEREAL', configuration=conf)
+        mixer.blend(Target, ra=15.0, type='ICRS', configuration=conf)
         mixer.blend(InstrumentConfig, configuration=conf)
         mixer.blend(AcquisitionConfig, configuration=conf)
         mixer.blend(GuidingConfig, configuration=conf)
@@ -2130,7 +2128,7 @@ class TestPressure(APITestCase):
             conf = mixer.blend(Configuration, instrument_type='1M0-SCICAM-SBIG', request=request)
             mixer.blend(
                 Target, ra=random.randint(0, 360), dec=random.randint(-180, 180),
-                proper_motion_ra=0.0, proper_motion_dec=0.0, type='SIDEREAL', configuration=conf
+                proper_motion_ra=0.0, proper_motion_dec=0.0, type='ICRS', configuration=conf
             )
             mixer.blend(Location, request=request)
             mixer.blend(Constraints, configuration=conf)

@@ -382,9 +382,9 @@ class Target(models.Model):
     )
 
     POINTING_TYPES = (
-        ('SIDEREAL', 'SIDEREAL'),
-        ('NON_SIDEREAL', 'NON_SIDEREAL'),
-        ('STATIC', 'STATIC'),
+        ('ICRS', 'ICRS'),
+        ('ORBITAL_ELEMENTS', 'ORBITAL_ELEMENTS'),
+        ('HOUR_ANGLE', 'HOUR_ANGLE'),
         ('SATELLITE', 'SATELLITE'),
     )
 
@@ -404,14 +404,6 @@ class Target(models.Model):
     )
 
     # Coordinate modes
-    roll = models.FloatField(
-        null=True, blank=True,
-        help_text='Roll of this Target'
-    )
-    pitch = models.FloatField(
-        null=True, blank=True,
-        help_text='Pitch of this Target'
-    )
     hour_angle = models.FloatField(
         null=True, blank=True,
         help_text='Hour angle of this Target'
@@ -436,14 +428,6 @@ class Target(models.Model):
     )
 
     # Pointing details
-    coordinate_system = models.CharField(
-        max_length=255, default='', blank=True,
-        help_text='Coordinate system to use for the Target. Defaults to ICRS.'
-    )
-    equinox = models.CharField(
-        max_length=20, default='', blank=True,
-        help_text='Equinox to use for the Target. Defaults to J2000.'
-    )
     proper_motion_ra = models.FloatField(
         verbose_name='right ascension proper motion', null=True, blank=True, validators=[MaxValueValidator(20000)],
         help_text='Right ascension proper motion of the Target +/-33 mas/year. Defaults to 0.'

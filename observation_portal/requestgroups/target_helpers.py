@@ -5,8 +5,8 @@ from numbers import Number
 class BaseTargetHelper(object):
     """
     These helper classes take a dictionary representation of a target
-    and performs validation specific to the target type Sidereal,
-    NonSidereal, Satellite. The dictionary it returns will also only contain
+    and performs validation specific to the target type ICRS, HourAngle,
+    OribtalElements, Satellite. The dictionary it returns will also only contain
     fields relevant to the specific type. These models should only be used in
     TargetSerializer
     """
@@ -39,11 +39,11 @@ class BaseTargetHelper(object):
         return {k: v for k, v in self._data.items() if v is not None}
 
 
-class SiderealTargetHelper(BaseTargetHelper):
+class ICRSTargetHelper(BaseTargetHelper):
     def __init__(self, target):
         self.fields = (
             'type', 'name', 'ra', 'dec', 'proper_motion_ra', 'proper_motion_dec', 'parallax',
-            'coordinate_system', 'equinox', 'epoch', 'hour_angle'
+            'epoch', 'hour_angle'
         )
 
         if target.get('hour_angle'):
@@ -52,8 +52,6 @@ class SiderealTargetHelper(BaseTargetHelper):
             self.required_fields = ('ra', 'dec')
 
         self.defaults = {
-            'coordinate_system': 'ICRS',
-            'equinox': 'J2000',
             'parallax': 0.0,
             'proper_motion_ra': 0.0,
             'proper_motion_dec': 0.0,
@@ -62,7 +60,7 @@ class SiderealTargetHelper(BaseTargetHelper):
         super().__init__(target)
 
 
-class NonSiderealTargetHelper(BaseTargetHelper):
+class OrbitalElementsTargetHelper(BaseTargetHelper):
     def __init__(self, target):
         self.defaults = {}
         self.fields = ()
@@ -90,7 +88,7 @@ class NonSiderealTargetHelper(BaseTargetHelper):
     def validate(self):
         ECCENTRICITY_LIMIT = 0.9
         if self.is_valid() and 'COMET' not in self._data['scheme'] and self._data['eccentricity'] > ECCENTRICITY_LIMIT:
-            msg = _("Non sidereal pointing of scheme {} requires eccentricity to be lower than {}. ").format(
+            msg = _("ORBITAL_ELEMENTS pointing of scheme {} requires eccentricity to be lower than {}. ").format(
                 self._data['scheme'], ECCENTRICITY_LIMIT
             )
             msg += _("Submit with scheme MPC_COMET to use your eccentricity of {}.").format(
@@ -112,8 +110,8 @@ class SatelliteTargetHelper(BaseTargetHelper):
 
 
 TARGET_TYPE_HELPER_MAP = {
-    'SIDEREAL': SiderealTargetHelper,
-    'NON_SIDEREAL': NonSiderealTargetHelper,
+    'ICRS': ICRSTargetHelper,
+    'ORBITAL_ELEMENTS': OrbitalElementsTargetHelper,
     'SATELLITE': SatelliteTargetHelper,
-    'STATIC': SiderealTargetHelper,
+    'HOUR_ANGLE': ICRSTargetHelper,
 }

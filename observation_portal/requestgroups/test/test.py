@@ -116,7 +116,7 @@ class TestRequestDuration(SetTimeMixin, TestCase):
         mixer.cycle(len(configurations)).blend(AcquisitionConfig, configuration=(c for c in configurations))
         mixer.cycle(len(configurations)).blend(GuidingConfig, configuration=(c for c in configurations))
         mixer.cycle(len(configurations)).blend(Constraints, configuration=(c for c in configurations))
-        mixer.cycle(len(configurations)).blend(Target, configuration=(c for c in configurations), type='SIDEREAL',
+        mixer.cycle(len(configurations)).blend(Target, configuration=(c for c in configurations), type='ICRS',
                                                ra=10.0, dec=10.0, proper_motion_ra=0, proper_motion_dec=0)
 
         self.instrument_config_expose = mixer.blend(

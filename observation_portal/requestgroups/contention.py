@@ -23,7 +23,7 @@ class Contention(object):
             windows__end__gt=self.now,
             state='PENDING',
             configurations__instrument_type=instrument_type,
-            configurations__target__type='SIDEREAL'
+            configurations__target__type='ICRS'
         ).prefetch_related(
             'configurations', 'windows', 'configurations__target', 'location', 'request_group',
             'request_group__proposal', 'configurations__instrument_configs', 'configurations__acquisition_config',
@@ -75,7 +75,7 @@ class Pressure(object):
             windows__start__lte=self.now + timedelta(days=1),
             windows__end__gte=self.now,
             state='PENDING',
-            configurations__target__type='SIDEREAL'
+            configurations__target__type='ICRS'
         )
         if instrument_type:
             requests = requests.filter(configurations__instrument_type=instrument_type)
