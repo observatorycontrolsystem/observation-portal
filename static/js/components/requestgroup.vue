@@ -262,6 +262,7 @@
     },
     watch: {
       proposalOptions: function() {
+        // There is always at least 1 empty option in the proposals options list 
         if (this.hasRetrievedProposals && this.proposalOptions.length < 2) {
           this.isMemberOfActiveProposals = false;
         } else {
