@@ -148,18 +148,37 @@ function julianToModifiedJulian(jd){
 }
 
 let apiFieldToReadable = {
-  'group_id': 'Title'
+  group_id: {
+    humanReadable: 'Title',
+    description: ''
+  },
+  rotator_angle: {
+    humanReadable: 'Rotator Angle',
+    description: 'Position angle of the slit in degrees east of north.'
+  },
+  acquire_radius: {
+    humanReadable: 'Acquire Radius',
+    description: 'The radius (in arcseconds) within which to search for the brightest object.'
+  }
 };
 
 function formatField(value){
-  if(value in apiFieldToReadable){
-    return apiFieldToReadable[value];
-  }else{
+  if (value in apiFieldToReadable) {
+    return apiFieldToReadable[value]['humanReadable'];
+  } else {
     let words = value.split('_');
     words = words.map(function(word){
       return word.charAt(0).toUpperCase() + word.substr(1);
     });
     return words.join(' ');
+  }
+}
+
+function getFieldDescription(value) {
+  if (value in apiFieldToReadable) {
+    return apiFieldToReadable[value]['description'];
+  } else {
+    return '';
   }
 }
 
@@ -292,6 +311,6 @@ let colorPalette = [  // useful assigning colors to datasets.
 export {
   semesterStart, semesterEnd, sexagesimalRaToDecimal, sexagesimalDecToDecimal, QueryString, formatJson, formatValue,
   formatDate, formatField, datetimeFormat, collapseMixin, siteToColor, siteCodeToName, slitWidthToExposureTime,
-  observatoryCodeToNumber, telescopeCodeToName, colorPalette, julianToModifiedJulian,
+  observatoryCodeToNumber, telescopeCodeToName, colorPalette, julianToModifiedJulian, getFieldDescription,
   decimalRaToSexigesimal, decimalDecToSexigesimal, tooltipConfig, getCookie, csrfSafeMethod
 };

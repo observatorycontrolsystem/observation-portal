@@ -3,19 +3,20 @@
     <div id="archive-table-toolbar">
       <b-button
         @click="downloadSelected"
-        variant="link"
+        variant="outline-secondary"
       >
         <i class="fa fa-check"></i> Download Selected
       </b-button>
       <b-button
         @click="downloadAll"
-        variant="link"
+        variant="outline-secondary"
       >
         <i class="fa fa-download"></i> Download All
       </b-button>
       <b-link
         :href="archiveLink"
         target="_blank"
+        class="btn btn-outline-secondary"
       >
         <i class="fa fa-arrow-right"></i> View on Archive
       </b-link>

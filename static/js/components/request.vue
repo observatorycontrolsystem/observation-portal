@@ -49,9 +49,9 @@
               v-model="request.acceptability_threshold" 
               label="Acceptability Threshold" 
               field="acceptability_threshold" 
-              desc="The percentage of the observation that must be completed to mark the request as complete 
-                    and avert rescheduling. The percentage should be set to the lowest value for which the 
-                    amount of data is acceptable to meet the science goal of the request."
+              desc="The percentage of the observation that must be completed to mark the request as complete
+                    and avert rescheduling. The percentage should be set to the lowest value for which the amount
+                    of data is acceptable to meet the science goal of the request."
               :errors="errors.acceptability_threshold" 
               @input="update"
             />

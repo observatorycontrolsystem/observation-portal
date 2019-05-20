@@ -30,7 +30,7 @@
               </a>
             </li>
             <li v-show="observation_type === 'RAPID_RESPONSE'">
-              A start time cannot be selected for a Rapid Response observation-it will be scheduled as soon as possible.
+              A start time cannot be selected for a Rapid Response observation. It will be scheduled as soon as possible.
             </li>
           </ul>
           <h4 v-show="showAirmass" class="text-center">Visibility</h4>
