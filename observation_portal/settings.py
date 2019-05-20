@@ -108,6 +108,9 @@ DATABASES = {
    }
 }
 
+if os.getenv('DB_SCHEMA'):
+    DATABASES['default']['OPTIONS'] = { 'options': '-c search_path={}'.format(os.getenv('DB_SCHEMA'))}
+
 CACHES = {
      'default': {
          'BACKEND': os.getenv('CACHE_BACKEND', 'django.core.cache.backends.locmem.LocMemCache'),
