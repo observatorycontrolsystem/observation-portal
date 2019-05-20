@@ -116,13 +116,13 @@
                 will display more information about that field.
               </p>
               <p>
-                Each section may be collapsed for a more compact view. Use the <i class="fa fa-window-minimize"></i>
-                and <i class="fa fa-window-maximize"></i> buttons to control the state of the window.
+                Each section may be collapsed for a more compact view. Use the <i class="fa fa-window-minimize text-info"></i>
+                and <i class="fa fa-window-maximize text-info"></i> buttons to control the state of the window.
               </p>
               <p>
-                Some sections may be copied using the <i class="fa fa-copy"></i> button. This will duplicate
+                Some sections may be copied using the <i class="fa fa-copy text-success"></i> button. This will duplicate
                 the section and add it to your observing request. Certain sections can also be removed using the
-                <i class="fa fa-trash"></i> button. This button is only display if that section is eligible for removal.
+                <i class="fa fa-trash text-danger"></i> button. This button is only displayed if that section is eligible for removal.
               </p>
               <h2>Using the API view</h2>
               <p>
@@ -139,7 +139,7 @@
               </p>
               <h2>Loading and saving drafts</h2>
               <p>
-                Use the <span class="text-info"><i class="fa fa-save"></i> Save Draft</span> button at any time to save an observation 
+                Use the <i class="fa fa-save text-info"></i> button at any time to save an observation 
                 request as a draft. Saved drafts can be loaded and managed from the Drafts tab. You will see 
                 drafts saved by other members of your proposal as well as your own.
               </p>
