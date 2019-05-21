@@ -1,7 +1,11 @@
 import Vue from 'vue';
+import BootstrapVue from 'bootstrap-vue';
+import $ from 'jquery';
 
 import {siteCodeToName, observatoryCodeToNumber, telescopeCodeToName} from './utils.js';
 import App from './telescope_availability_chart.vue';
+
+Vue.use(BootstrapVue)
 
 Vue.filter('readableSiteName', function(value){
   let split_string = value.split('.');
