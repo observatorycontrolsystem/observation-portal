@@ -9,7 +9,7 @@
           incur scheduling conflicts.
         </p>
         <p>This plot excludes moving targets.</p>
-        <Contention/>
+        <Contention :instruments="instruments"/>
         <h1>Network Pressure</h1>
         <p>
           The pressure of a block is defined as its length divided by the total length of time during which it is visible.
@@ -18,12 +18,14 @@
           under-subscription).
         </p>
         <p>This plot excludes moving targets.</p>
-        <Pressure/>
+        <Pressure :instruments="instruments"/>
       </b-col>
     </b-row>
   </b-container>
 </template>
 <script>
+  import $ from 'jquery';
+
   import Contention from './components/contention.vue';
   import Pressure from './components/pressure.vue';
 
@@ -33,5 +35,18 @@
       Contention, 
       Pressure
     },
+    data: function() {
+      return {
+        instruments: []
+      }
+    },
+    created: function() {
+      let that = this;
+      $.getJSON('/api/instruments/', function(data) {
+        for (let instrument_type in data) {
+          that.instruments.push({value: instrument_type, text: data[instrument_type].name})
+        }
+      });
+    }
   };
 </script>

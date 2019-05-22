@@ -91,7 +91,7 @@ def convert_pond_block_to_observation(block):
 
         config_extra_params = {}
         if molecule.get('args'):
-            config_extra_params['script_name'] = molecule['margs']
+            config_extra_params['script_name'] = molecule['args']
         if molecule.get('ag_name') and molecule.get('ag_name', '').upper() == molecule.get('inst_name', '').upper():
             config_extra_params['self_guiding'] = True
 
@@ -106,9 +106,9 @@ def convert_pond_block_to_observation(block):
                 instrument_extra_params['expmeter_snr'] = float(molecule['expmeter_snr'])
 
         instrument_optical_elements = {}
-        if molecule.get('filter'):
+        if molecule.get('filter') and 'NRES' not in block.get('instrument_class').upper():
             instrument_optical_elements['filter'] = molecule['filter']
-        if molecule.get('spectra_slit'):
+        if molecule.get('spectra_slit') and 'NRES' not in block.get('instrument_class').upper():
             instrument_optical_elements['slit'] = molecule['spectra_slit']
         if molecule.get('spectra_lamp'):
             instrument_optical_elements['lamp'] = molecule['spectra_lamp']
@@ -139,6 +139,9 @@ def convert_pond_block_to_observation(block):
             ag_extra_params['strategy'] = molecule['ag_strategy']
 
         (guide_mode, guide_optional) = pond_ag_mode_to_guiding_mode(molecule.get('ag_mode', 'OPT'))
+        if block.get('instrument_class').upper() in ['1M0-NRES-SCICAM', '1M0-NRES-COMMISIONING', '2M0-FLOYDS-SCICAM']:
+            if molecule.get('type').upper() not in ['ARC', 'LAMP_FLAT']:
+                guide_optional = False
 
         guiding_config = {
             'mode': guide_mode,

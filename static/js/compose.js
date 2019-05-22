@@ -6,9 +6,14 @@ import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap-vue/dist/bootstrap-vue.css';
 import '../css/main.css'
 
-import { formatDate } from './utils.js';
-import { csrfSafeMethod, getCookie } from './utils.js';
 import App from './compose.vue';
+import { 
+  csrfSafeMethod, 
+  getCookie, 
+  formatDate, 
+  formatField, 
+  getFieldDescription 
+} from './utils.js';
 
 Vue.use(BootstrapVue);
 
@@ -22,6 +27,14 @@ Vue.mixin({
 
 Vue.filter('formatDate', function(value) {
   return formatDate(value);
+});
+
+Vue.filter('formatField', function(value) {
+  return formatField(value);
+});
+
+Vue.filter('getFieldDescription', function(value) {
+  return getFieldDescription(value);
 });
 
 let vm = new Vue({

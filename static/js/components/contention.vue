@@ -17,7 +17,7 @@
             size="sm"
             v-model="instrument"
             field="instrument"
-            :options="instrumentTypeOptions"
+            :options="instruments"
           />
         </b-form-group>
       </b-col>
@@ -41,6 +41,13 @@
 
   export default {
     name: 'contention',
+    props: {
+      instruments: {
+        type: Array,
+        required: true,
+        description: 'Array of objects with value and text fields, used for instrument select field'
+      }
+    },
     components: {
       dataloadhelp
     },
@@ -50,13 +57,6 @@
         isLoading: false,
         instrument: '',
         rawData: [],
-        instrumentTypeOptions: [
-          {value: '0M4-SCICAM-SBIG', text: '0.4m SBIG'},
-          {value: '1M0-SCICAM-SINISTRO', text: '1m Sinistro'},
-          {value: '1M0-NRES-SCICAM', text: '1m NRES'},
-          {value: '2M0-SCICAM-SPECTRAL', text: '2m Spectral'},
-          {value: '2M0-FLOYDS-SCICAM', text: '2m FLOYDS'}
-        ],
         data: {
           labels: Array.apply(null, {length: 24}).map(Number.call, Number),
           datasets: []

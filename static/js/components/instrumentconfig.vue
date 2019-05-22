@@ -6,7 +6,7 @@
     :index="index" 
     :errors="errors"
     :canremove="this.index > 0" 
-    :cancopy="true"
+    :cancopy="false"
     @remove="$emit('remove')"
     @copy="$emit('copy')"
     @show="show = $event"
@@ -39,8 +39,9 @@
               field="exposure_count" 
               type="number"
               :errors="errors.exposure_count" 
-              desc="If the 'Fill' option is selected the count is set to the number of exposures (including overheads) that will 
-                    fit in the largest observing window."
+              desc="Clicking the 'Fill' button will set the exposure count to the number of 
+                    exposures (including overheads) that will fit in the largest observing window. 
+                    This button is disabled until the entire observing request has passed validation."
               @input="update"
             >
               <b-input-group-append slot="inline-input">
@@ -91,35 +92,30 @@
                 @input="updateOpticalElement"
               />
             </div>
-            <div v-if="showSlitPosition">
+            <div v-if="rotatorModeOptions.length > 0">                  
               <customselect 
                 v-model="instrumentconfig.rotator_mode" 
-                label="Slit Position" 
-                field="rotator_mode" 
+                label="Rotator Mode" 
+                desc="The slit position. At the parallactic slit angle, atmospheric dispersion is along the slit."
                 :errors="errors.rotator_mode"
-                :options="[
-                  {value: 'VFLOAT', text: 'Parallactic'}, 
-                  {value: 'SKY', text: 'User Specified'}
-                ]"
-                desc="With the slit at the parallactic angle, atmospheric dispersion is along the slit."
+                :options="rotatorModeOptions"
                 @input="update" 
               />
 
-              <!-- TODO: Validate angle -->
-              
-              <customfield 
-                v-if="instrumentconfig.rotator_mode === 'SKY'"
-                v-model="rotator_angle" 
-                label="Angle" 
-                field="rotator_angle" 
-                :errors="null" 
-                desc="Position Angle of the slit in degrees east of north."
-                @input="update"
+              <!-- TODO: Validate required field values -->
+              <customfield
+                v-for="field in requiredRotatorModeFields"
+                :key="field"
+                v-model="instrumentconfig.extra_params[field]"
+                :label="field | formatField"
+                :errors="null"
+                :desc="field | getFieldDescription"
+                @input="updateInstrumentConfigExtraParam($event, field)" 
               />
             </div>
-            
+
             <!-- TODO: Validate to make sure this is a floating point number -->
-            
+
             <customfield 
               v-if="datatype == 'IMAGE' && !simple_interface" 
               v-model="defocus" 
@@ -171,13 +167,18 @@ export default {
   data: function() {
     return {
       defocus: 0,
-      rotator_angle: 0,
       opticalElementUpdates: 0
     }
   },
   computed: {
+    instrumentHasRotatorModes: function() {
+      return this.available_instruments[this.selectedinstrument] && 'rotator' in this.available_instruments[this.selectedinstrument].modes;
+    },
+    instrumentHasReadoutModes: function() {
+      return this.available_instruments[this.selectedinstrument] && 'readout' in this.available_instruments[this.selectedinstrument].modes;
+    },
     readoutModeOptions: function() {
-      if (this.selectedinstrument in this.available_instruments) {
+      if (this.selectedinstrument in this.available_instruments && this.instrumentHasReadoutModes) {
         let readoutModes = [];
         for (let rm in this.available_instruments[this.selectedinstrument].modes.readout.modes) {
           readoutModes.push({
@@ -229,6 +230,37 @@ export default {
         return [];
       }
     },
+    rotatorModeOptions: function() {
+      let options = [];
+      let requiredModeFields = [];
+      if (this.instrumentHasRotatorModes) {
+        let modes = this.available_instruments[this.selectedinstrument].modes.rotator.modes;
+        for (let i in modes) {
+          requiredModeFields = [];          
+          if ('required_fields' in modes[i].params) {
+            for (let j in modes[i].params.required_fields) {
+              requiredModeFields.push(
+                modes[i].params.required_fields[j]
+              )
+            }
+          }          
+          options.push({
+            value: modes[i].code, 
+            text: modes[i].name,
+            requiredFields: requiredModeFields
+          });
+        }
+      }
+      return options;
+    },
+    requiredRotatorModeFields: function() {
+      for (let i in this.rotatorModeOptions) {
+        if (this.rotatorModeOptions[i].value == this.instrumentconfig.rotator_mode) {
+          return this.rotatorModeOptions[i].requiredFields;
+        }
+      }
+      return [];
+    },
     suggestedLampFlatSlitExposureTime: function() {
       // Update on optical element updates
       this.opticalElementUpdates;
@@ -238,18 +270,19 @@ export default {
       } else {
         return undefined;
       }
-    },
-    showSlitPosition: function() {
-      if (this.selectedinstrument.includes('FLOYDS')) {
-        return true;
-      } else {
-        return false;
-      }
     }
   },
   methods: {
     update: function() {
       this.$emit('instrumentconfigupdate');
+    },
+    updateInstrumentConfigExtraParam: function(value, field) {
+      if (value === '') {
+        // Remove the field if an empty value is entered because the validation
+        // for required extra params only check if the field exists
+        this.instrumentconfig.extra_params[field] = undefined;
+      }
+      this.update();
     },
     updateOpticalElement: function() {
       // The optical element fields are not reactive as they change/ are deleted/ don't exist on start.
@@ -272,7 +305,27 @@ export default {
         }
       }
     },
+    rotatorModeOptions: function(newValue, oldValue) {
+      if (this.instrumentHasRotatorModes) {
+        this.instrumentconfig.rotator_mode = this.available_instruments[this.selectedinstrument].modes.rotator.default;
+      } else {
+        this.instrumentconfig.rotator_mode = '';
+      }
+      this.update();
+    },
+    requiredRotatorModeFields: function(newValue, oldValue) {
+      // TODO: Implement rotator mode and required rotator mode fields history
+      const defaultRequiredFieldValue = 0;
+      for (let idx in oldValue) {
+        this.instrumentconfig.extra_params[oldValue[idx]] = undefined;
+      }
+      for (let idx in newValue) {
+        this.instrumentconfig.extra_params[newValue[idx]] = defaultRequiredFieldValue;
+      }
+      this.update();
+    },
     readoutModeOptions: function() {
+      // TODO: Implement history
       this.instrumentconfig.mode = this.available_instruments[this.selectedinstrument].modes.readout.default;
       this.update();
     },
@@ -289,28 +342,6 @@ export default {
         }
       }
       this.updateOpticalElement();
-    },
-    showSlitPosition: function(value) {
-      if (value) {
-        if (this.instrumentconfig.rotator_mode === '') {
-          this.instrumentconfig.rotator_mode = 'VFLOAT';
-        }
-      } else {
-        this.instrumentconfig.rotator_mode = '';
-      }
-      this.update();
-    },
-    'instrumentconfig.rotator_mode': function(value) {
-      if (value === 'SKY') {
-        this.instrumentconfig.extra_params.rotator_angle = this.rotator_angle;        
-      } else {
-        this.instrumentconfig.extra_params.rotator_angle = undefined;
-      }
-      this.update();
-    },
-    rotator_angle: function(value) {
-      this.instrumentconfig.extra_params.rotator_angle = value || undefined;
-      this.update();
     },
     defocus: function(value) {
       this.instrumentconfig.extra_params.defocus = value || undefined;

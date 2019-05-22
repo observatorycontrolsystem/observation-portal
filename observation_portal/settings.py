@@ -108,6 +108,13 @@ DATABASES = {
    }
 }
 
+OAUTH2_PROVIDER_ACCESS_TOKEN_MODEL = 'oauth2_provider.AccessToken'
+OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
+OAUTH2_PROVIDER_REFRESH_TOKEN_MODEL = 'oauth2_provider.RefreshToken'
+MIGRATION_MODULES = {
+    'oauth2_provider': 'observation_portal.accounts.oauth2_migrations'
+}
+
 CACHES = {
      'default': {
          'BACKEND': os.getenv('CACHE_BACKEND', 'django.core.cache.backends.locmem.LocMemCache'),
