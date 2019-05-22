@@ -210,7 +210,7 @@
               },
               target: {
                 name: '',
-                type: 'SIDEREAL',
+                type: 'ICRS',
                 ra: '',
                 dec: '',
                 proper_motion_ra: 0.0,

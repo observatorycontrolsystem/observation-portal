@@ -2,17 +2,11 @@ import copy
 from observation_portal.requestgroups.models import RequestGroup
 
 
-POND_POINTING_TYPE_TO_TARGET_TYPE = {
-    'SP': 'SIDEREAL',
-    'NS': 'NON_SIDEREAL',
-    'ST': 'SATELLITE',
-}
-
 TARGET_TYPE_TO_POND_POINTING_TYPE = {
-    'SIDEREAL': 'SP',
-    'NON_SIDEREAL': 'NS',
+    'ICRS': 'SP',
+    'ORBITAL_ELEMENTS': 'NS',
     'SATELLITE': 'ST',
-    'STATIC': 'ST',
+    'HOUR_ANGLE': 'SP',
 }
 
 BLOCK_REQUIRED_FIELDS = ['instrument_class', 'site', 'observatory', 'telescope', 'start', 'end']
@@ -21,6 +15,18 @@ MOLECULE_REQUIRED_FIELDS = ['type', 'inst_name']
 
 class PondBlockError(Exception):
     pass
+
+
+def pointing_to_target_type(pointing_type, coordinate_type):
+    if pointing_type == 'SP':
+        if coordinate_type == 'HD':
+            return 'HOUR_ANGLE'
+        else:
+            return 'ICRS'
+    elif pointing_type == 'ST':
+        return 'SATELLITE'
+    elif pointing_type == 'NS':
+        return 'ORBITAL_ELEMENTS'
 
 
 def convert_pond_blocks_to_observations(blocks):
@@ -205,36 +211,30 @@ def pond_ag_mode_to_guiding_mode(mode):
 
 
 def pointing_to_target(pointing):
-    ttype = POND_POINTING_TYPE_TO_TARGET_TYPE[pointing.get('type', 'SP')]
+    ttype = pointing_to_target_type(pointing.get('type', 'SP'), pointing.get('coord_type', 'RD'))
     target = {
-        'coordinate_system': pointing.get('coord_sys', ''),
         'name': pointing.get('name', 'my target'),
         'type': ttype
     }
-    if ttype == 'SIDEREAL':
-        if pointing.get('coord_type', 'RD') == 'RD':
-            if 'epoch' in pointing:
-                target['epoch'] = float(pointing['epoch'])
-            if 'equinox' in pointing:
-                target['equinox'] = pointing['equinox']
-            if 'parallax' in pointing and float(pointing['parallax']):
-                target['parallax'] = float(pointing['parallax'])
-            if 'pro_mot_ra' in pointing and float(pointing['pro_mot_ra']):
-                target['proper_motion_ra'] = float(pointing['pro_mot_ra'])
-            if 'pro_mot_dec' in pointing and float(pointing['pro_mot_dec']):
-                target['proper_motion_dec'] = float(pointing['pro_mot_dec'])
-            if 'ra' in pointing:
-                target['ra'] = float(pointing['ra'])
-            if 'dec' in pointing:
-                target['dec'] = float(pointing['dec'])
-        elif pointing.get('coord_type') == 'HD':
-            if 'ha' in pointing:
-                target['hour_angle'] = float(pointing['ha'])
-            if 'dec' in pointing:
-                target['dec'] = float(pointing['dec'])
-        else:
-            raise PondBlockError("Only Coordinate Types RD and HD are supported in the shim")
-    elif ttype == 'NON_SIDEREAL':
+    if ttype == 'ICRS':
+        if 'epoch' in pointing:
+            target['epoch'] = float(pointing['epoch'])
+        if 'parallax' in pointing and float(pointing['parallax']):
+            target['parallax'] = float(pointing['parallax'])
+        if 'pro_mot_ra' in pointing and float(pointing['pro_mot_ra']):
+            target['proper_motion_ra'] = float(pointing['pro_mot_ra'])
+        if 'pro_mot_dec' in pointing and float(pointing['pro_mot_dec']):
+            target['proper_motion_dec'] = float(pointing['pro_mot_dec'])
+        if 'ra' in pointing:
+            target['ra'] = float(pointing['ra'])
+        if 'dec' in pointing:
+            target['dec'] = float(pointing['dec'])
+    elif ttype == 'HOUR_ANGLE':
+        if 'ha' in pointing:
+            target['hour_angle'] = float(pointing['ha'])
+        if 'dec' in pointing:
+            target['dec'] = float(pointing['dec'])
+    elif ttype == 'ORBITAL_ELEMENTS':
         if 'scheme' in pointing:
             target['scheme'] = pointing['scheme']
         if 'epochofel' in pointing and float(pointing['epochofel']):
@@ -276,13 +276,23 @@ def pointing_to_target(pointing):
                 target['diff_roll_acceleration'] = float(pointing['diff_ra_accel'])
             if 'diff_dec_accel' in pointing and float(pointing['diff_dec_accel']):
                 target['diff_pitch_acceleration'] = float(pointing['diff_dec_accel'])
-        elif pointing.get('coord_type') == 'HD':
-            if 'ha' in pointing:
-                target['hour_angle'] = float(pointing['ha'])
-            if 'dec' in pointing:
-                target['dec'] = float(pointing['dec'])
+        elif pointing.get('coord_type', 'RD') == 'AA':
+            if 'az' in pointing:
+                target['azimuth'] = float(pointing['az'])
+            if 'alt' in pointing:
+                target['altitude'] = float(pointing['alt'])
+            if 'diff_epoch_rate' in pointing and float(pointing['diff_epoch_rate']):
+                target['diff_epoch_rate'] = float(pointing['diff_epoch_rate'])
+            if 'diff_az_rate' in pointing and float(pointing['diff_az_rate']):
+                target['diff_roll_rate'] = float(pointing['diff_az_rate'])
+            if 'diff_alt_rate' in pointing and float(pointing['diff_alt_rate']):
+                target['diff_pitch_rate'] = float(pointing['diff_alt_rate'])
+            if 'diff_az_accel' in pointing and float(pointing['diff_az_accel']):
+                target['diff_roll_acceleration'] = float(pointing['diff_az_accel'])
+            if 'diff_alt_accel' in pointing and float(pointing['diff_alt_accel']):
+                target['diff_pitch_acceleration'] = float(pointing['diff_alt_accel'])
         else:
-            raise PondBlockError("Only Coordinate Types RD and HD are supported in the shim")
+            raise PondBlockError("Only Coordinate Types RD and AA are supported for Static pointing in the shim")
 
     extra_params = {}
     if 'vmag' in pointing and float(pointing['vmag']):
@@ -450,8 +460,6 @@ def configuration_to_pointing(configuration):
         pointing['coord_type'] = 'HD'
         pointing['ha'] = pointing['hour_angle']
         del pointing['hour_angle']
-    elif 'pitch' in pointing and 'roll' in pointing:
-        pointing['coord_type'] = 'PR'
 
     if 'diff_pitch_rate' in pointing and pitch_converter != 'pitch':
         pointing['diff_{}_rate'.format(pitch_converter)] = pointing['diff_pitch_rate']

@@ -43,7 +43,7 @@ class BaseSetupRequest(SetTimeMixin, TestCase):
             end=datetime(2016, 10, 8, tzinfo=timezone.utc)
         )
         mixer.blend(
-            Target, configuration=self.configuration, type='SIDEREAL', ra=22, dec=-33, proper_motion_ra=0.0,
+            Target, configuration=self.configuration, type='ICRS', ra=22, dec=-33, proper_motion_ra=0.0,
             proper_motion_dec=0.0
         )
         self.location = mixer.blend(Location, request=self.request, telescope_class='1m0')
@@ -342,7 +342,7 @@ class TestRequestTelescopeStates(TelescopeStatesFakeInput):
         mixer.blend(Window, request=self.request, start=datetime(2016, 10, 1, tzinfo=timezone.utc),
                     end=datetime(2016, 10, 2, tzinfo=timezone.utc))
 
-        mixer.blend(Target, configuration=self.configuration, type='SIDEREAL', ra=22, dec=-33,
+        mixer.blend(Target, configuration=self.configuration, type='ICRS', ra=22, dec=-33,
                     proper_motion_ra=0.0, proper_motion_dec=0.0)
 
         self.location = mixer.blend(Location, request=self.request, telescope_class='1m0')

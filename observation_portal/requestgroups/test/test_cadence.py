@@ -24,7 +24,7 @@ class TestCadence(SetTimeMixin, TestCase):
         self.acquisition_config = mixer.blend(AcquisitionConfig, configuration=self.configuration)
         self.guiding_config = mixer.blend(GuidingConfig, configuration=self.configuration)
         mixer.blend(
-            Target, configuration=self.configuration, type='SIDEREAL', ra=34.4, dec=20, proper_motion_ra=0.0,
+            Target, configuration=self.configuration, type='ICRS', ra=34.4, dec=20, proper_motion_ra=0.0,
             proper_motion_dec=0.0
         )
         mixer.blend(Constraints, configuration=self.configuration, max_airmass=2.0)

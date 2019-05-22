@@ -143,7 +143,7 @@ def filter_out_downtime_from_intervalsets(intervalsets_by_telescope: dict) -> di
 
 
 def get_rise_set_target(target_dict):
-    if target_dict['type'] == 'SIDEREAL':
+    if target_dict['type'] == 'ICRS':
         pmra = (target_dict['proper_motion_ra'] / 1000.0 / cos(radians(target_dict['dec']))) / 3600.0
         pmdec = (target_dict['proper_motion_dec'] / 1000.0) / 3600.0
         return make_ra_dec_target(ra=Angle(degrees=target_dict['ra']),
@@ -160,7 +160,7 @@ def get_rise_set_target(target_dict):
                                      diff_az_accel=target_dict['diff_roll_acceleration'],
                                      diff_epoch_rate=target_dict['diff_epoch_rate'])
 
-    elif target_dict['type'] == 'NON_SIDEREAL':
+    elif target_dict['type'] == 'ORBITAL_ELEMENTS':
         if target_dict['scheme'] == 'MPC_MINOR_PLANET':
             return make_minor_planet_target(target_type=target_dict['scheme'],
                                             epoch=target_dict['epochofel'],
@@ -199,11 +199,11 @@ def get_rise_set_target(target_dict):
 
 
 def get_distance_between(rs_target_1: dict, rs_target_2: dict, start_time: datetime) -> Angle:
-    """Get the angular distance between two sidereal rise_set targets as a rise_set Angle.
+    """Get the angular distance between two ICRS rise_set targets as a rise_set Angle.
 
     Parameters:
-        rs_target_1: First sidereal rise_set target
-        rs_target_2: Second sidereal rise_set target
+        rs_target_1: First ICRS rise_set target
+        rs_target_2: Second ICRS rise_set target
         start_time: Time of computation
     Returns:
          rise_set Angle
