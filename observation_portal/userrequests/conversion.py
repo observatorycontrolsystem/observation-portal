@@ -10,6 +10,22 @@ VALHALLA_HEADERS = {'Authorization': 'Token ' + str(VALHALLA_API_TOKEN)}
 VALIDATION_PROPOSAL = os.getenv('VALHALLA_VALIDATE_PROPOSAL', 'LCOSchedulerTest')
 
 
+def ur_target_type_to_rg(target_type):
+    if target_type.upper() == 'SIDEREAL':
+        return 'ICRS'
+    elif target_type.upper() == 'NON_SIDEREAL':
+        return 'ORBITAL_ELEMENTS'
+    return target_type.upper()
+
+
+def rg_target_type_to_ur(target_type):
+    if target_type.upper() == 'ICRS':
+        return 'SIDEREAL'
+    elif target_type.upper() == 'ORBITAL_ELEMENTS':
+        return 'NON_SIDEREAL'
+    return target_type.upper()
+
+
 def validate_userrequest(userrequests):
     """
         Call a valhalla instance validate endpoint with the userrequest dict. Raise an error with the error response
@@ -63,6 +79,7 @@ def convert_userrequest_to_requestgroup(userrequest):
     del requestgroup['group_id']
     for request in requestgroup['requests']:
         target = request['target']
+        target['type'] = ur_target_type_to_rg(target['type'])
         constraints = request['constraints']
         configurations = []
         if 'observatory' in request['location']:
@@ -194,6 +211,7 @@ def convert_requestgroup_to_userrequest(requestgroup):
     for request in userrequest['requests']:
         request['completed'] = None  # if request['state'] != 'COMPLETED' else request['modified']
         request['target'] = request['configurations'][0]['target']
+        request['target']['type'] = rg_target_type_to_ur(request['target']['type'])
         request['target']['radvel'] = request['target'].get('extra_params', {}).get('radial_velocity', 0.0)
         request['target']['vmag'] = request['target'].get('extra_params', {}).get('v_magnitude', None)
         request['constraints'] = request['configurations'][0]['constraints']
