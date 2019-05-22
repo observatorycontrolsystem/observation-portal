@@ -126,16 +126,20 @@ def convert_userrequest_to_requestgroup(userrequest):
                 ag_optical_elements['filter'] = molecule['ag_filter']
 
             ag_extra_params = {}
+            ag_optional = False
             ag_mode = molecule.get('ag_mode', 'OFF')
             if ag_mode == 'OPTIONAL':
-                ag_extra_params['optional'] = True
+                ag_optional = True
             elif ag_mode == 'ON':
+                ag_optional = False
                 if molecule.get('ag_strategy', ''):
                     ag_mode = molecule['ag_strategy']
+                    ag_extra_params['guide_strategy'] = molecule['ag_strategy']
 
             guiding_config = {
                 'optical_elements': ag_optical_elements,
                 'mode': ag_mode,
+                'optional': ag_optional,
                 'extra_params': ag_extra_params
             }
 
@@ -144,7 +148,7 @@ def convert_userrequest_to_requestgroup(userrequest):
 
             acquire_extra_params = {}
             if molecule.get('acquire_strategy', ''):
-                acquire_extra_params['strategy'] = molecule['acquire_strategy']
+                acquire_extra_params['acquire_strategy'] = molecule['acquire_strategy']
             if molecule.get('acquire_mode', '') == 'BRIGHTEST':
                 acquire_extra_params['acquire_radius'] = molecule['acquire_radius_arcsec']
 
@@ -205,7 +209,7 @@ def convert_requestgroup_to_userrequest(requestgroup):
             ag_mode = configuration['guiding_config']['mode']
             if ag_mode not in ['OFF', 'ON']:
                 ag_mode = 'ON'
-            if configuration['guiding_config']['extra_params'].get('optional', False):
+            if configuration['guiding_config'].get('optional', False):
                 ag_mode = 'OPTIONAL'
 
             molecule = {
@@ -222,8 +226,8 @@ def convert_requestgroup_to_userrequest(requestgroup):
                 'spectra_lamp': first_inst_config['optical_elements'].get('lamp', ''),
                 'spectra_slit': first_inst_config['optical_elements'].get('slit', ''),
                 'acquire_mode': configuration['acquisition_config']['mode'],
-                'acquire_radius_arcsec': configuration['acquisition_config']['extra_params'].get('radius', 0.0),
-                'acquire_strategy': configuration['acquisition_config']['extra_params'].get('strategy', ''),
+                'acquire_radius_arcsec': configuration['acquisition_config']['extra_params'].get('acquire_radius', 0.0),
+                'acquire_strategy': configuration['acquisition_config']['extra_params'].get('acquire_strategy', ''),
                 'acquire_exp_time': configuration['acquisition_config'].get('exposure_time', None),
                 'expmeter_mode': first_inst_config['extra_params'].get('expmeter_mode', 'OFF'),
                 'expmeter_snr': first_inst_config['extra_params'].get('expmeter_snr', None),
