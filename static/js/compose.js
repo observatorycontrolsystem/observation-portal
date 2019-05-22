@@ -2,7 +2,6 @@ import Vue from 'vue';
 import _ from 'lodash';
 import $ from 'jquery';
 import BootstrapVue from 'bootstrap-vue';
-import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap-vue/dist/bootstrap-vue.css';
 import '../css/main.css'
 

@@ -47,12 +47,12 @@
               field="type" 
               :errors="errors.type" 
               :options="[
-                {value: 'SIDEREAL',text: 'Sidereal'}, 
-                {value: 'NON_SIDEREAL',text:'Non-Sidereal'}
+                {value: 'ICRS',text: 'Sidereal'},
+                {value: 'ORBITAL_ELEMENTS',text:'Non-Sidereal'}
               ]"
               @input="update" 
             />
-            <span class="sidereal" v-show="target.type === 'SIDEREAL'">
+            <span class="sidereal" v-show="target.type === 'ICRS'">
               <customfield 
                 v-model="ra_display" 
                 label="Right Ascension" 
@@ -116,7 +116,7 @@
                 @input="update"
               />
             </span>
-            <span class="non-sidereal" v-show="target.type === 'NON_SIDEREAL'">
+            <span class="non-sidereal" v-show="target.type === 'ORBITAL_ELEMENTS'">
               <customselect 
                 v-model="target.scheme" 
                 label="Scheme" 
@@ -360,7 +360,7 @@
       }, 500),
       'target.type': function(value) {
         let that = this;
-        if (value === 'SIDEREAL') {
+        if (value === 'ICRS') {
           for (let x in that.ns_target_params) {
             that.ns_target_params[x] = that.target[x];
             that.target[x] = undefined;
@@ -368,7 +368,7 @@
           for (let y in that.sid_target_params) {
             that.target[y] = that.sid_target_params[y];
           }
-        } else if (value === 'NON_SIDEREAL') {
+        } else if (value === 'ORBITAL_ELEMENTS') {
           for (let z in this.sid_target_params) {
             that.sid_target_params[z] = that.target[z];
             that.target[z] = undefined;
