@@ -1617,6 +1617,43 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('Must submit at least one bound for a region of interest', str(response.content))
 
+    def test_multiple_instrument_configs_currently_rejected(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'].append(
+            bad_data['requests'][0]['configurations'][0]['instrument_configs'][0].copy()
+        )
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Currently only a single instrument_config', str(response.content))
+
+    def test_multiple_same_targets_and_constraints_accepted(self):
+        good_data = self.generic_payload.copy()
+        good_data['requests'][0]['configurations'].append(
+            copy.deepcopy(good_data['requests'][0]['configurations'][0])
+        )
+        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
+        self.assertEqual(response.status_code, 201)
+
+    def test_multiple_targets_currently_rejected(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'].append(
+            copy.deepcopy(bad_data['requests'][0]['configurations'][0])
+        )
+        bad_data['requests'][0]['configurations'][1]['target']['ra'] = 35.1
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Currently only a single target', str(response.content))
+
+    def test_multiple_constraints_currently_rejected(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'].append(
+            copy.deepcopy(bad_data['requests'][0]['configurations'][0])
+        )
+        bad_data['requests'][0]['configurations'][1]['constraints']['max_airmass'] = 1.99
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Currently only a single constraints', str(response.content))
+
 
 class TestGetRequestApi(APITestCase):
     def setUp(self):

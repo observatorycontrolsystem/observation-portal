@@ -149,6 +149,7 @@ class ConfigurationSerializer(serializers.ModelSerializer):
         read_only_fields = ('priority',)
 
     def validate_instrument_configs(self, value):
+        # TODO: remove this check once we support multiple instrument configs
         if len(value) != 1:
             raise serializers.ValidationError(_('Currently only a single instrument_config is supported. This restriction will be lifted in the future.'))
 
@@ -426,9 +427,16 @@ class RequestSerializer(serializers.ModelSerializer):
         if not value:
             raise serializers.ValidationError(_('You must specify at least 1 configuration'))
 
+        target = value[0]['target']
+        constraints = value[0]['constraints']
         # Set the relative priority of molecules in order
         for i, configuration in enumerate(value):
             configuration['priority'] = i + 1
+            # TODO: Remove this once we support multiple targets/constraints
+            if configuration['target'] != target:
+                raise serializers.ValidationError(_('Currently only a single target per Request is supported. This restriction will be lifted in the future.'))
+            if configuration['constraints'] != constraints:
+                raise serializers.ValidationError(_('Currently only a single constraints per Request is supported. This restriction will be lifted in the future.'))
 
         return value
 
