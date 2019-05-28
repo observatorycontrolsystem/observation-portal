@@ -15,7 +15,7 @@ logger = logging.getLogger()
 
 
 class Command(BaseCommand):
-    help = 'Performs time accounting on a specific proposal and instrument type and semester'
+    help = 'Creates user, proposal, and all structures needed for user to submit observations'
 
     def add_arguments(self, parser):
         parser.add_argument('-p', '--proposal', type=str, default='TestProposal',
