@@ -260,10 +260,10 @@ class ConfigDB(object):
         """
         instrument_names = set()
         for instrument in self.get_instruments():
-            if (instrument['telescope_key'].site == site_code
-                    and instrument['telescope_key'].enclosure == enclosure_code
-                    and instrument['telescope_key'].telescope == telescope_code
-                    and instrument['science_camera']['camera_type']['code'] == instrument_type):
+            if (instrument['telescope_key'].site.lower() == site_code.lower()
+                    and instrument['telescope_key'].enclosure.lower() == enclosure_code.lower()
+                    and instrument['telescope_key'].telescope.lower() == telescope_code.lower()
+                    and instrument['science_camera']['camera_type']['code'].lower() == instrument_type.lower()):
                 instrument_names.add(instrument['science_camera']['code'].lower())
         return instrument_names
 
