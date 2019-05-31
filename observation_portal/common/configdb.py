@@ -316,7 +316,7 @@ class ConfigDB(object):
              Available optical elements
         """
         optical_elements = {}
-        for instrument in self.get_instruments(only_schedulable=True):
+        for instrument in self.get_instruments():
             if instrument_type.upper() == instrument['science_camera']['camera_type']['code'].upper():
                 for optical_element_group in instrument['science_camera']['optical_element_groups']:
                     optical_elements[optical_element_group['type']] = []
