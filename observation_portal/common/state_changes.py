@@ -52,7 +52,11 @@ def on_configuration_status_state_change(instance):
     if instance.observation.state not in TERMINAL_OBSERVATION_STATES:
         update_observation_state(instance.observation)
 
-    request_group_is_expired = instance.observation.request.request_group.max_window_time < timezone.now()
+    if instance.observation.request.request_group.observation_type == RequestGroup.DIRECT:
+        request_group_is_expired = False
+    else:
+        request_group_is_expired = instance.observation.request.request_group.max_window_time < timezone.now()
+
     update_request_state(
         instance.observation.request,
         instance.observation.configuration_statuses.all(),
