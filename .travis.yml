@@ -1,0 +1,26 @@
+language: python
+python:
+- '3.6'
+- '3.7'
+env:
+- NODE_VERSION='10'
+before_install:
+- nvm install $NODE_VERSION
+addons:
+  postgresql: "10.2"
+  apt:
+    packages:
+    - gfortran
+    - postgresql-10.2
+    - postgresql-client-10.2
+services:
+  - postgresql
+before_script:
+  - psql -c 'create database observation_portal;' -U postgres
+install:
+- pip install -U coverage coveralls
+- pip install -r requirements.txt
+- npm install
+- npm run build
+script: coverage run manage.py test --settings=test_settings
+after_success: coveralls
