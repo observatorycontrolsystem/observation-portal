@@ -19,9 +19,9 @@
   <div class="col-md-12">
     <div id="toolbar">
       <div class="form form-inline">
-      <div class="form-group mr-md-3">
+      <div class="form-group">
         <label for="semester" class="control-label">Semester</label>
-        <select class="form-control" onchange="location = this.value">
+        <select class="form-control ml-md-1" onchange="location = this.value">
           {% for semester in semesters %}
           <option value="{% url 'proposals:semester-admin' semester %}"
                   {% if object == semester %} selected {% endif %}>
@@ -29,13 +29,13 @@
           </option>
           {% endfor %}
         </select>
-        <div class="checkbox">
+        <div class="checkbox ml-md-2">
           <label>
             <input id="completed" type="checkbox" onclick="selectCompleted()"> Completed
           </label>
         </div>
       </div>
-    </div>
+      </div>
     </div>
     <table id="semester-table" class="table table-striped">
       </select>
