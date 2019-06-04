@@ -7,12 +7,10 @@ env:
 before_install:
 - nvm install $NODE_VERSION
 addons:
-  postgresql: "10.2"
+  postgresql: "9.6"
   apt:
     packages:
     - gfortran
-    - postgresql-10.2
-    - postgresql-client-10.2
 services:
   - postgresql
 before_script:
