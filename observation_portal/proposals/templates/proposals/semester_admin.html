@@ -19,7 +19,7 @@
   <div class="col-md-12">
     <div id="toolbar">
       <div class="form form-inline">
-      <div class="form-group">
+      <div class="form-group mr-md-3">
         <label for="semester" class="control-label">Semester</label>
         <select class="form-control" onchange="location = this.value">
           {% for semester in semesters %}
@@ -43,7 +43,7 @@
       <thead>
         <tr>
           <th>Proposal</th>
-          <th>Class</th>
+          <th>Instrument</th>
           <th>PI</th>
           <th>Priority</th>
           <th>Std Alloc</th>
@@ -63,7 +63,7 @@
         <td><a href="{% url 'proposals:detail' ta.proposal.id %}">{{ ta.proposal.id }}</a></td>
         <td>{{ ta.proposal.pi.first_name }} {{ ta.proposal.pi.last_name }}</td>
         <td>{{ ta.proposal.tac_priority }}</td>
-        <td>{{ ta.instrument_name }}</td>
+        <td>{{ ta.instrument_type }}</td>
         <td>{{ ta.std_allocation|floatformat }}</td>
         <td {% if ta.std_allocation > 0 and ta.std_time_used >= ta.std_allocation %} class="bg-danger" {% endif %}>
           {{ ta.std_time_used|floatformat }}
@@ -93,10 +93,10 @@
 </div>
 {% endblock %}
 {% block extra_javascript %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.12.2/bootstrap-table.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.14.2/bootstrap-table.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/1.3.3/FileSaver.min.js"></script>
 <script src="https://cdn.lco.global/script/tableExport.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.12.2/extensions/export/bootstrap-table-export.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.14.2/extensions/export/bootstrap-table-export.min.js"></script>
 <script type="text/javascript">
 $('#semester-table').bootstrapTable({
   sortName: 'proposal',

@@ -31,9 +31,9 @@
 <div class="row">
     <div class="col-md-12">
         <form method="get" action="" class="form-inline pull-right">
-            {% bootstrap_field filter.form.active %}
-            {% bootstrap_field filter.form.semester %}
-            {% bootstrap_button button_type="submit" content="Filter" %}
+            {% bootstrap_field filter.form.active form_group_class="form-group mr-md-3" %}
+            {% bootstrap_field filter.form.semester form_group_class="form-group mr-md-3" %}
+            {% bootstrap_button button_type="submit" content="Filter" button_class="btn-outline-secondary" %}
         </form>
         <table class="table table-striped">
             <thead>
