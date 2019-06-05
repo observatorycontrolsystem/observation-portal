@@ -1,14 +1,10 @@
 [run]
 source = observation_portal
-omit =
-    */home/*
+
 [report]
 omit =
-    */home/*
     */migrations/*
     *settings.py
     *wsgi.py
     *apps.py
-    *config.py
-    *task_scheduler.py
-    *test_runner.py
+
