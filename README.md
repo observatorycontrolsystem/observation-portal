@@ -1,4 +1,5 @@
 # Observation Portal
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/0dd474930a1b4e168a1cdc35fb052128)](https://app.codacy.com/app/LCOGT/observation-portal?utm_source=github.com&utm_medium=referral&utm_content=LCOGT/observation-portal&utm_campaign=Badge_Grade_Dashboard)
 [![Build Status](https://travis-ci.com/LCOGT/observation-portal.svg?branch=master)](https://travis-ci.com/LCOGT/observation-portal)
 [![Coverage Status](https://coveralls.io/repos/github/LCOGT/observation-portal/badge.svg?branch=master)](https://coveralls.io/github/LCOGT/observation-portal?branch=master)
 [![Code Health](https://landscape.io/github/LCOGT/observation-portal/master/landscape.svg?style=flat)](https://landscape.io/github/LCOGT/observation-portal/master)
