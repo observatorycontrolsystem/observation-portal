@@ -1,4 +1,7 @@
 # Observation Portal
+[![Build Status](https://travis-ci.com/LCOGT/observation-portal.svg?branch=master)](https://travis-ci.com/LCOGT/observation-portal)
+[![Coverage Status](https://coveralls.io/repos/github/LCOGT/observation-portal/badge.svg?branch=master)](https://coveralls.io/github/LCOGT/observation-portal?branch=master)
+[![Code Health](https://landscape.io/github/LCOGT/observation-portal/master/landscape.svg?style=flat)](https://landscape.io/github/LCOGT/observation-portal/master)
 
 _An Astronomical Observation Web Portal and Backend_
 
