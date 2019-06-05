@@ -1,6 +1,7 @@
 [run]
 source = observation-portal
-
+omit =
+    */home/*
 [report]
 omit =
     */home/*
