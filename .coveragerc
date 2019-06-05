@@ -3,6 +3,7 @@ source = observation-portal
 
 [report]
 omit =
+    */home/*
     */migrations/*
     *settings.py
     *wsgi.py
