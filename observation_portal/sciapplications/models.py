@@ -210,7 +210,11 @@ class ScienceApplication(models.Model):
                 'semester_already_started': self.call.semester.start < timezone.now(),
             }
         )
-        send_mail.send(subject, message, 'portal@lco.global', [self.proposal.pi.email])
+        # Find the email to send the notification to. The proposal will have been created at this point, but the pi on
+        # the proposal might not be set yet if the pi has not a registered an account. In that case, use the email
+        # as set on the science application.
+        pi_email = self.proposal.pi.email if self.proposal.pi else self.pi
+        send_mail.send(subject, message, 'portal@lco.global', [pi_email])
 
 
 class TimeRequest(models.Model):
