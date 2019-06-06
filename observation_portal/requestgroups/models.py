@@ -1,3 +1,4 @@
+from django.apps import apps
 from django.db import models
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField
@@ -193,8 +194,15 @@ class Request(models.Model):
         ret_dict['duration'] = self.duration
         ret_dict['configurations'] = [c.as_dict() for c in self.configurations.all()]
         if not for_observation:
-            ret_dict['location'] = self.location.as_dict()
-            ret_dict['windows'] = [w.as_dict() for w in self.windows.all()]
+            if self.request_group.observation_type == RequestGroup.DIRECT:
+                Observation = apps.get_model('observations', 'Observation')
+                observation = Observation.objects.get(request=self)
+                ret_dict['location'] = {'site': observation.site, 'enclosure': observation.enclosure,
+                                        'telescope': observation.telescope}
+                ret_dict['windows'] = [{'start': observation.start, 'end': observation.end}]
+            else:
+                ret_dict['location'] = self.location.as_dict() if hasattr(self, 'location') else {}
+                ret_dict['windows'] = [w.as_dict() for w in self.windows.all()]
         return ret_dict
 
     @cached_property

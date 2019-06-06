@@ -27,8 +27,10 @@ class TestRequestGroupTotalDuration(SetTimeMixin, TestCase):
             instrument_type='1M0-SCICAM-SBIG', rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
             ipp_time_available=5.0
         )
-        self.rg_single = mixer.blend(RequestGroup, proposal=self.proposal, operator='SINGLE')
-        self.rg_many = mixer.blend(RequestGroup, proposal=self.proposal)
+        self.rg_single = mixer.blend(RequestGroup, proposal=self.proposal, operator='SINGLE',
+                                     observation_type=RequestGroup.NORMAL)
+        self.rg_many = mixer.blend(RequestGroup, proposal=self.proposal,
+                                   observation_type=RequestGroup.NORMAL)
 
         self.request = mixer.blend(Request, request_group=self.rg_single)
         self.requests = mixer.cycle(3).blend(Request, request_group=self.rg_many)
