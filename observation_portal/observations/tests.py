@@ -24,7 +24,6 @@ import observation_portal.observations.signals.handlers  # noqa
 
 from unittest.mock import patch
 import copy
-import logging
 
 observation = {
     "request": {
@@ -1097,10 +1096,10 @@ class TestTimeAccountingCommand(TestObservationApiBase):
         start=datetime(2016,9,5,22,35,39), end=datetime(2016,9,5,23,35,40))
         config_status = ConfigurationStatus.objects.create(observation=observation, configuration=self.requestgroup.requests.first().configurations.first(),
         state=state, instrument_name='xx03', guide_camera_name='xx03')
-        summary = Summary.objects.create(configuration_status=config_status, start=datetime(2016,9,5,22,35,39),
+        Summary.objects.create(configuration_status=config_status, start=datetime(2016,9,5,22,35,39),
         end=datetime(2016,9,5,23,35,40), time_completed=time_completed, state=state)
         return observation
-                   
+
     def test_with_no_obs_command_reports_no_time_used(self):
         command_output = StringIO()
         command_err = StringIO()
