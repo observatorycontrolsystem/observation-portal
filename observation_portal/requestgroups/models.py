@@ -1,4 +1,3 @@
-from django.apps import apps
 from django.db import models
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField
@@ -195,8 +194,7 @@ class Request(models.Model):
         ret_dict['configurations'] = [c.as_dict() for c in self.configurations.all()]
         if not for_observation:
             if self.request_group.observation_type == RequestGroup.DIRECT:
-                Observation = apps.get_model('observations', 'Observation')
-                observation = Observation.objects.get(request=self)
+                observation = self.observation_set.first()
                 ret_dict['location'] = {'site': observation.site, 'enclosure': observation.enclosure,
                                         'telescope': observation.telescope}
                 ret_dict['windows'] = [{'start': observation.start, 'end': observation.end}]
