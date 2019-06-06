@@ -1113,11 +1113,30 @@ class TestTimeAccountingCommand(TestObservationApiBase):
         self.assertEqual(self.time_allocation.rr_time_used, 0)
         self.assertEqual(self.time_allocation.tc_time_used, 0)
 
-    def test_with_one_obs_command_reports_time_used(self):
+    def test_with_one_obs_command_reports_time_used_and_modifies_time(self):
         command_output = StringIO()
         command_err = StringIO()
         observation = self._add_observation(state='COMPLETED', time_completed=1000)
+        # reset time used to 0 since creating the observation already modified it
+        self.time_allocation.std_time_used = 0
+        self.time_allocation.save()
+        call_command('time_accounting', f'-p{self.proposal.id}', '-i1M0-SCICAM-SBIG', f'-s{self.semester.id}', stdout=command_output, stderr=command_err)
+        time_used = (observation.configuration_statuses.first().summary.end - observation.configuration_statuses.first().summary.start).total_seconds() / 3600.0
+        self.assertIn(f'Used {time_used} NORMAL hours, 0 RAPID_RESPONSE hours, and 0 TIME_CRITICAL hours', command_output.getvalue())
+        self.assertIn('is different from existing', command_err.getvalue())
+        self.time_allocation.refresh_from_db()
+        self.assertAlmostEqual(self.time_allocation.std_time_used, time_used)
+
+    def test_with_one_obs_command_reports_dry_run_doesnt_modify_time(self):
+        command_output = StringIO()
+        command_err = StringIO()
+        observation = self._add_observation(state='COMPLETED', time_completed=1000)
+        # reset time used to 0 since creating the observation already modified it
+        self.time_allocation.std_time_used = 0
+        self.time_allocation.save()
         call_command('time_accounting', f'-p{self.proposal.id}', '-i1M0-SCICAM-SBIG', f'-s{self.semester.id}', '-d', stdout=command_output, stderr=command_err)
         time_used = (observation.configuration_statuses.first().summary.end - observation.configuration_statuses.first().summary.start).total_seconds() / 3600.0
         self.assertIn(f'Used {time_used} NORMAL hours, 0 RAPID_RESPONSE hours, and 0 TIME_CRITICAL hours', command_output.getvalue())
-        self.assertNotIn('is different from existing', command_err.getvalue())
+        self.assertIn('is different from existing', command_err.getvalue())
+        self.time_allocation.refresh_from_db()
+        self.assertEqual(self.time_allocation.std_time_used, 0)
