@@ -2129,7 +2129,7 @@ class TestContention(APITestCase):
 
     def test_contention_no_auth(self):
         response = self.client.get(
-            reverse('api:contention', kwargs={'instrument_name': '1M0-SCICAM-SBIG'})
+            reverse('api:contention', kwargs={'instrument_type': '1M0-SCICAM-SBIG'})
         )
         self.assertNotEqual(response.json()['contention_data'][1]['All Proposals'], 0)
         self.assertEqual(response.json()['contention_data'][2]['All Proposals'], 0)
@@ -2138,7 +2138,7 @@ class TestContention(APITestCase):
         user = mixer.blend(User, is_staff=True)
         self.client.force_login(user)
         response = self.client.get(
-           reverse('api:contention', kwargs={'instrument_name': '1M0-SCICAM-SBIG'})
+           reverse('api:contention', kwargs={'instrument_type': '1M0-SCICAM-SBIG'})
         )
         self.assertNotEqual(response.json()['contention_data'][1][self.request.request_group.proposal.id], 0)
         self.assertNotIn(self.request.request_group.proposal.id, response.json()['contention_data'][2])
