@@ -50,6 +50,3 @@ class Command(BaseCommand):
         token, created = Token.objects.get_or_create(user=user)
         token.delete()
         Token.objects.create(user=user, key=options['token'])
-        sys.exit(0)
-
-
