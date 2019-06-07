@@ -26,6 +26,13 @@ def rg_target_type_to_ur(target_type):
     return target_type.upper()
 
 
+def acquire_mode_from_strategies(ag_strategy):
+    if ag_strategy.upper() == 'WCS':
+        return 'WCS'
+    else:
+        return 'BRIGHTEST'
+
+
 def validate_userrequest(userrequests):
     """
         Call a valhalla instance validate endpoint with the userrequest dict. Raise an error with the error response
@@ -143,15 +150,15 @@ def convert_userrequest_to_requestgroup(userrequest):
                 ag_optical_elements['filter'] = molecule['ag_filter']
 
             ag_extra_params = {}
+            if molecule.get('ag_strategy', ''):
+                ag_extra_params['ag_strategy'] = molecule['ag_strategy']
             ag_optional = False
             ag_mode = molecule.get('ag_mode', 'OFF')
             if ag_mode == 'OPTIONAL':
+                ag_mode = 'ON'
                 ag_optional = True
             elif ag_mode == 'ON':
                 ag_optional = False
-                if molecule.get('ag_strategy', ''):
-                    ag_mode = molecule['ag_strategy']
-                    ag_extra_params['guide_strategy'] = molecule['ag_strategy']
 
             guiding_config = {
                 'optical_elements': ag_optical_elements,
@@ -164,13 +171,16 @@ def convert_userrequest_to_requestgroup(userrequest):
                 guiding_config['exposure_time'] = molecule['ag_exp_time']
 
             acquire_extra_params = {}
+            acquire_mode = molecule.get('acquire_mode', 'OFF')
             if molecule.get('acquire_strategy', ''):
                 acquire_extra_params['acquire_strategy'] = molecule['acquire_strategy']
             if molecule.get('acquire_mode', '') == 'BRIGHTEST':
                 acquire_extra_params['acquire_radius'] = molecule['acquire_radius_arcsec']
-
+            if molecule.get('acquire_strategy', '') and 'NRES' in molecule.get('instrument_name', ''):
+                acquire_mode = acquire_mode_from_strategies(molecule.get('ag_strategy', ''))
+            
             acquisition_config = {
-                'mode': molecule.get('acquire_mode', 'OFF'),
+                'mode': acquire_mode,
                 'extra_params': acquire_extra_params
             }
 
@@ -238,14 +248,14 @@ def convert_requestgroup_to_userrequest(requestgroup):
                 'ag_name': configuration['instrument_type'] if configuration['extra_params'].get('self_guiding', False) else '',
                 'ag_mode': ag_mode,
                 'ag_filter': configuration['guiding_config']['optical_elements'].get('filter', ''),
-                'ag_strategy': configuration['guiding_config']['mode'],
+                'ag_strategy': configuration['guiding_config'].get('extra_params', {}).get('ag_strategy', ''),
                 'filter': first_inst_config['optical_elements'].get('filter', ''),
                 'readout_mode': first_inst_config['mode'],
                 'spectra_lamp': first_inst_config['optical_elements'].get('lamp', ''),
                 'spectra_slit': first_inst_config['optical_elements'].get('slit', ''),
                 'acquire_mode': configuration['acquisition_config']['mode'],
-                'acquire_radius_arcsec': configuration['acquisition_config']['extra_params'].get('acquire_radius', 0.0),
-                'acquire_strategy': configuration['acquisition_config']['extra_params'].get('acquire_strategy', ''),
+                'acquire_radius_arcsec': configuration['acquisition_config'].get('extra_params', {}).get('acquire_radius', 0.0),
+                'acquire_strategy': configuration['acquisition_config'].get('extra_params', {}).get('acquire_strategy', ''),
                 'acquire_exp_time': configuration['acquisition_config'].get('exposure_time', None),
                 'expmeter_mode': first_inst_config['extra_params'].get('expmeter_mode', 'OFF'),
                 'expmeter_snr': first_inst_config['extra_params'].get('expmeter_snr', None),
