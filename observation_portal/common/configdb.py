@@ -152,9 +152,9 @@ class ConfigDB(object):
         for site in self.get_site_data():
             if site['code'].lower() == site_code.lower():
                 for enclosure in site['enclosure_set']:
-                    if enclosure['code'].lower() == enclosure_code:
+                    if enclosure['code'].lower() == enclosure_code.lower():
                         for telescope in enclosure['telescope_set']:
-                            if telescope['code'].lower() == telescope_code:
+                            if telescope['code'].lower() == telescope_code.lower():
                                 for instrument in telescope['instrument_set']:
                                     if (
                                             only_schedulable and self.is_schedulable(instrument)
