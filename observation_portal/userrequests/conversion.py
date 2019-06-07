@@ -178,7 +178,7 @@ def convert_userrequest_to_requestgroup(userrequest):
                 acquire_extra_params['acquire_radius'] = molecule['acquire_radius_arcsec']
             if molecule.get('acquire_strategy', '') and 'NRES' in molecule.get('instrument_name', ''):
                 acquire_mode = acquire_mode_from_strategies(molecule.get('ag_strategy', ''))
-            
+
             acquisition_config = {
                 'mode': acquire_mode,
                 'extra_params': acquire_extra_params
