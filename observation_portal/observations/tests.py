@@ -9,6 +9,8 @@ from django.urls import reverse
 from django.core import cache
 from dateutil.parser import parse as datetime_parser
 from datetime import timedelta
+from io import StringIO
+from django.core.management import call_command
 
 from observation_portal.requestgroups.models import RequestGroup, Window, Location
 from observation_portal.observations.time_accounting import configuration_time_used
@@ -1080,3 +1082,60 @@ class TestTimeAccounting(TestObservationApiBase):
         self.time_allocation.refresh_from_db()
         time_used += (config_end - config_start).total_seconds() / 3600.0
         self.assertAlmostEqual(self.time_allocation.std_time_used, time_used, 5)
+
+
+class TestTimeAccountingCommand(TestObservationApiBase):
+    def setUp(self):
+        super().setUp()
+        self.time_allocation = mixer.blend(TimeAllocation, instrument_type='1M0-SCICAM-SBIG', semester=self.semester,
+                                           proposal=self.proposal, std_allocation=100, rr_allocation=100,
+                                           tc_allocation=100, ipp_time_available=100)
+
+    def _add_observation(self, state, time_completed):
+        observation = Observation.objects.create(request=self.requestgroup.requests.first(), state=state, site='tst', enclosure='domb', telescope='1m0a',
+        start=datetime(2016,9,5,22,35,39), end=datetime(2016,9,5,23,35,40))
+        config_status = ConfigurationStatus.objects.create(observation=observation, configuration=self.requestgroup.requests.first().configurations.first(),
+        state=state, instrument_name='xx03', guide_camera_name='xx03')
+        Summary.objects.create(configuration_status=config_status, start=datetime(2016,9,5,22,35,39),
+        end=datetime(2016,9,5,23,35,40), time_completed=time_completed, state=state)
+        return observation
+
+    def test_with_no_obs_command_reports_no_time_used(self):
+        command_output = StringIO()
+        command_err = StringIO()
+        call_command('time_accounting', f'-p{self.proposal.id}', '-i1M0-SCICAM-SBIG', f'-s{self.semester.id}', stdout=command_output, stderr=command_err)
+        command_out = command_output.getvalue()
+        self.assertIn('Used 0 NORMAL hours, 0 RAPID_RESPONSE hours, and 0 TIME_CRITICAL hours', command_out)
+        self.assertNotIn('is different from existing', command_err)
+        self.time_allocation.refresh_from_db()
+        self.assertEqual(self.time_allocation.std_time_used, 0)
+        self.assertEqual(self.time_allocation.rr_time_used, 0)
+        self.assertEqual(self.time_allocation.tc_time_used, 0)
+
+    def test_with_one_obs_command_reports_time_used_and_modifies_time(self):
+        command_output = StringIO()
+        command_err = StringIO()
+        observation = self._add_observation(state='COMPLETED', time_completed=1000)
+        # reset time used to 0 since creating the observation already modified it
+        self.time_allocation.std_time_used = 0
+        self.time_allocation.save()
+        call_command('time_accounting', f'-p{self.proposal.id}', '-i1M0-SCICAM-SBIG', f'-s{self.semester.id}', stdout=command_output, stderr=command_err)
+        time_used = (observation.configuration_statuses.first().summary.end - observation.configuration_statuses.first().summary.start).total_seconds() / 3600.0
+        self.assertIn(f'Used {time_used} NORMAL hours, 0 RAPID_RESPONSE hours, and 0 TIME_CRITICAL hours', command_output.getvalue())
+        self.assertIn('is different from existing', command_err.getvalue())
+        self.time_allocation.refresh_from_db()
+        self.assertAlmostEqual(self.time_allocation.std_time_used, time_used)
+
+    def test_with_one_obs_command_reports_dry_run_doesnt_modify_time(self):
+        command_output = StringIO()
+        command_err = StringIO()
+        observation = self._add_observation(state='COMPLETED', time_completed=1000)
+        # reset time used to 0 since creating the observation already modified it
+        self.time_allocation.std_time_used = 0
+        self.time_allocation.save()
+        call_command('time_accounting', f'-p{self.proposal.id}', '-i1M0-SCICAM-SBIG', f'-s{self.semester.id}', '-d', stdout=command_output, stderr=command_err)
+        time_used = (observation.configuration_statuses.first().summary.end - observation.configuration_statuses.first().summary.start).total_seconds() / 3600.0
+        self.assertIn(f'Used {time_used} NORMAL hours, 0 RAPID_RESPONSE hours, and 0 TIME_CRITICAL hours', command_output.getvalue())
+        self.assertIn('is different from existing', command_err.getvalue())
+        self.time_allocation.refresh_from_db()
+        self.assertEqual(self.time_allocation.std_time_used, 0)
