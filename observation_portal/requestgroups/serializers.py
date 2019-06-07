@@ -1,3 +1,7 @@
+import json
+import logging
+from json import JSONDecodeError
+
 from rest_framework import serializers
 from django.utils.translation import ugettext as _
 from django.core.exceptions import ObjectDoesNotExist
@@ -5,9 +9,6 @@ from django.core.cache import cache
 from django.db import transaction
 from django.utils import timezone
 from django.core.validators import MinValueValidator, MaxValueValidator
-from json import JSONDecodeError
-import logging
-import json
 
 from observation_portal.proposals.models import TimeAllocation, Membership
 from observation_portal.requestgroups.models import (
@@ -25,8 +26,81 @@ from observation_portal.requestgroups.duration_utils import (
 from datetime import timedelta
 from observation_portal.common.rise_set_utils import get_filtered_rise_set_intervals_by_site, get_largest_interval
 
-
 logger = logging.getLogger(__name__)
+
+
+class ModeValidator:
+    """Class used to validate modes of different types"""
+    def __init__(self, mode_type, instrument_type, default_modes, modes):
+        self._mode_type = mode_type.lower()
+        self._instrument_type = instrument_type
+        self._default_modes = default_modes
+        self._modes = modes
+        self._mode_key = 'rotator_mode' if self._mode_type == 'rotator' else 'mode'
+        self._modes_by_code = {}
+
+    def _possible_modes(self) -> list:
+        possible_modes = []
+        if self._mode_type in self._default_modes:
+            possible_modes.append(self._default_modes[self._mode_type])
+        elif self._mode_type in self._modes:
+            # There are modes to choose from. This would normally not happen since defaults should be set.
+            possible_modes.extend(self._modes[self._mode_type]['modes'])
+        return possible_modes
+
+    def _unavailable_msg(self, config: dict) -> str:
+        if self._mode_type in self._modes:
+            if not config[self._mode_key].lower() in [m['code'].lower() for m in self._modes[self._mode_type]['modes']]:
+                return (
+                    f'{self._mode_type.capitalize()} mode {config[self._mode_key]} is not available for '
+                    f'instrument type {self._instrument_type}'
+                )
+        return ''
+
+    def _missing_fields_msg(self, config) -> str:
+        missing_fields = []
+        mode = configdb.get_mode_with_code(self._instrument_type, config[self._mode_key], self._mode_type)
+        if 'required_fields' in mode.get('params', {}):
+            for field in mode['params']['required_fields']:
+                if 'extra_params' not in config or field not in config['extra_params']:
+                    missing_fields.append(field)
+        if missing_fields:
+            return (
+                f'{self._mode_type.capitalize()} Mode {mode["code"]} requires [{", ".join(missing_fields)}] '
+                f'set in extra params'
+            )
+        return ''
+
+    def mode_is_not_set(self, config: dict) -> bool:
+        return self._mode_key not in config or not config[self._mode_key]
+
+    def get_mode_to_set(self) -> dict:
+        """Choose a mode to set"""
+        mode = {'error': '', 'mode': {}}
+        possible_modes = self._possible_modes()
+        if len(possible_modes) == 1:
+            # There is only one mode to choose from, so set that.
+            mode['mode'] = possible_modes[0]
+        elif len(possible_modes) > 1:
+            # There are many possible modes, make the user choose.
+            mode['error'] = (
+                f'Must set a {self._mode_type} mode, choose '
+                f'from {", ".join([mode["code"] for mode in self._modes["guiding"]["modes"]])}'
+            )
+        return mode
+
+    def get_mode_error_msg(self, config: dict) -> str:
+        """Return an error message if there is a problem with the mode"""
+        if self._mode_type in self._modes:
+            # Check if the mode exists
+            unavailable_msg = self._unavailable_msg(config)
+            if unavailable_msg:
+                return unavailable_msg
+            # Check if there are any required params that are not set
+            missing_fields_msg = self._missing_fields_msg(config)
+            if missing_fields_msg:
+                return missing_fields_msg
+        return ''
 
 
 class CadenceSerializer(serializers.Serializer):
@@ -84,8 +158,9 @@ class InstrumentConfigSerializer(serializers.ModelSerializer):
             data['bin_x'] = data['bin_y']
 
         if 'bin_x' in data and 'bin_y' in data and data['bin_x'] != data['bin_y']:
-            raise serializers.ValidationError(_("Currently only square binnings are supported. Please submit with bin_x == bin_y"))
-
+            raise serializers.ValidationError(_(
+                'Currently only square binnings are supported. Please submit with bin_x == bin_y'
+            ))
         return data
 
     def to_representation(self, instance):
@@ -151,8 +226,9 @@ class ConfigurationSerializer(serializers.ModelSerializer):
     def validate_instrument_configs(self, value):
         # TODO: remove this check once we support multiple instrument configs
         if len(value) != 1:
-            raise serializers.ValidationError(_('Currently only a single instrument_config is supported. This restriction will be lifted in the future.'))
-
+            raise serializers.ValidationError(_(
+                'Currently only a single instrument_config is supported. This restriction will be lifted in the future.'
+            ))
         if [instrument_config.get('fill_window', False) for instrument_config in value].count(True) > 1:
             raise serializers.ValidationError(_('Only one instrument_config can have `fill_window` set'))
         return value
@@ -167,23 +243,28 @@ class ConfigurationSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, data):
-        modes = configdb.get_modes_by_type(data['instrument_type'])
-        default_modes = configdb.get_default_modes_by_type(data['instrument_type'])
-        guiding_config = data['guiding_config']
-        # Set defaults for guiding and acquisition modes if they are not set
         # TODO: Validate the guiding optical elements on the guiding instrument types
-        if 'mode' not in guiding_config:
-            if 'guiding' in default_modes:
-                guiding_config['mode'] = default_modes['guiding']['code']
-            else:
-                # This should never happen if we have configdb filled out correctly
-                guiding_config['mode'] = GuidingConfig.OFF
-        elif ('guiding' in modes
-                    and guiding_config['mode'].lower() not in [gm['code'].lower() for gm in modes['guiding']['modes']]):
-            raise serializers.ValidationError(_("Guiding mode {} is not available for instrument type {}"
-                                                .format(guiding_config['mode'], data['instrument_type'])))
+        instrument_type = data['instrument_type']
+        modes = configdb.get_modes_by_type(instrument_type)
+        default_modes = configdb.get_default_modes_by_type(instrument_type)
+        guiding_config = data['guiding_config']
 
-        if configdb.is_spectrograph(data['instrument_type']) and data['type'] not in ['LAMP_FLAT', 'ARC']:
+        # Validate the guide mode
+        guide_validator = ModeValidator('guiding', instrument_type, default_modes, modes)
+        if guide_validator.mode_is_not_set(guiding_config):
+            guide_mode_to_set = guide_validator.get_mode_to_set()
+            if guide_mode_to_set['error']:
+                raise serializers.ValidationError(_(guide_mode_to_set['error']))
+            if guide_mode_to_set['mode']:
+                guiding_config['mode'] = guide_mode_to_set['mode']['code']
+            else:
+                guiding_config['mode'] = GuidingConfig.OFF
+
+        guide_mode_error_msg = guide_validator.get_mode_error_msg(guiding_config)
+        if guide_mode_error_msg:
+            raise serializers.ValidationError(_(guide_mode_error_msg))
+
+        if configdb.is_spectrograph(instrument_type) and data['type'] not in ['LAMP_FLAT', 'ARC']:
             if 'optional' in guiding_config and guiding_config['optional']:
                 raise serializers.ValidationError(_(
                     "Guiding cannot be optional on spectrograph instruments for types that are not ARC or LAMP_FLAT."
@@ -193,75 +274,84 @@ class ConfigurationSerializer(serializers.ModelSerializer):
         if data['type'] in ['LAMP_FLAT', 'ARC', 'AUTO_FOCUS', 'NRES_BIAS', 'NRES_DARK', 'BIAS', 'DARK', 'SCRIPT']:
             # These types of observations should only ever be set to guiding mode OFF, but the acquisition modes for 
             # spectrographs won't necessarily have that mode. Force OFF here.
-            data['acquisition_config']['mode'] = 'OFF'
+            data['acquisition_config']['mode'] = AcquisitionConfig.OFF
         else:
+            # Validate acquire modes
             acquisition_config = data['acquisition_config']
-            if 'mode' not in acquisition_config:
-                if 'acquisition' in default_modes:
-                    acquisition_config['mode'] = default_modes['acquisition']['code']
-            elif 'acquisition' in modes and acquisition_config['mode'] not in [am['code'] for am in modes['acquisition']['modes']]:
-                raise serializers.ValidationError(_("Acquisition mode {} is not available for instrument type {}"
-                                                    .format(acquisition_config['mode'], data['instrument_type'])))
+            acquire_validator = ModeValidator('acquisition', instrument_type, default_modes, modes)
+            if acquire_validator.mode_is_not_set(acquisition_config):
+                acquire_mode_to_set = acquire_validator.get_mode_to_set()
+                if acquire_mode_to_set['error']:
+                    raise serializers.ValidationError(_(acquire_mode_to_set['error']))
+                if acquire_mode_to_set['mode']:
+                    acquisition_config['mode'] = acquire_mode_to_set['mode']['code']
+                else:
+                    acquisition_config['mode'] = AcquisitionConfig.OFF
 
-            # check for any required fields for acquisition
-            if acquisition_config['mode'] != 'OFF':
-                acquisition_mode = configdb.get_mode_with_code(data['instrument_type'], acquisition_config['mode'],
-                                                            'acquisition')
+            acquire_mode_error_msg = acquire_validator.get_mode_error_msg(acquisition_config)
+            if acquire_mode_error_msg:
+                raise serializers.ValidationError(_(acquire_mode_error_msg))
 
-                if 'required_fields' in acquisition_mode['params']:
-                    for field in acquisition_mode['params']['required_fields']:
-                        if field not in acquisition_config['extra_params']:
-                            raise serializers.ValidationError(_("Acquisition Mode {} required extra param of {} to be set"
-                                                                .format(acquisition_mode['code'], field)))
-
-        # Validate the optical elements, rotator and readout modes specified in the instrument configs
-        available_optical_elements = configdb.get_optical_elements(data['instrument_type'])
+        available_optical_elements = configdb.get_optical_elements(instrument_type)
         for instrument_config in data['instrument_configs']:
-            if ('mode' not in instrument_config or not instrument_config['mode']) and 'readout' in default_modes:
+            # Validate the readout mode and the binning. Readout modes and binning are tied
+            # together- If one is set, we can determine the other.
+            # TODO: Remove the binning checks when binnings are removed entirely
+            readout_validator = ModeValidator('readout', instrument_type, default_modes, modes)
+            if readout_validator.mode_is_not_set(instrument_config):
                 if 'bin_x' not in instrument_config and 'bin_y' not in instrument_config:
-                    instrument_config['mode'] = default_modes['readout']['code']
-                    instrument_config['bin_x'] = default_modes['readout']['params']['binning']
-                    instrument_config['bin_y'] = instrument_config['bin_x']
+                    # Set the readout mode as well as the binning
+                    readout_mode_to_set = readout_validator.get_mode_to_set()
+                    if readout_mode_to_set['error']:
+                        raise serializers.ValidationError(_(readout_mode_to_set['error']))
+                    if readout_mode_to_set['mode']:
+                        instrument_config['mode'] = readout_mode_to_set['mode']['code']
+                        instrument_config['bin_x'] = readout_mode_to_set['mode']['params']['binning']
+                        instrument_config['bin_y'] = readout_mode_to_set['mode']['params']['binning']
+
                 elif 'bin_x' in instrument_config:
+                    # A binning is set already - figure out what the readout mode should be from that
                     try:
-                        instrument_config['mode'] = configdb.get_readout_mode_with_binning(data['instrument_type'],
-                                                                                           instrument_config['bin_x'])['code']
+                        instrument_config['mode'] = configdb.get_readout_mode_with_binning(
+                            instrument_type, instrument_config['bin_x']
+                        )['code']
                     except ConfigDBException as cdbe:
                         raise serializers.ValidationError(_(str(cdbe)))
-
             else:
-                try:
-                    readout_mode = configdb.get_mode_with_code(data['instrument_type'],
-                                                               instrument_config['mode'], 'readout')
-                except ConfigDBException as cdbe:
-                    raise serializers.ValidationError(_(str(cdbe)))
+                # A readout mode is set - validate the mode
+                readout_error_msg = readout_validator.get_mode_error_msg(instrument_config)
+                if readout_error_msg:
+                    raise serializers.ValidationError(_(readout_error_msg))
+
+                # At this point the readout mode that is set is valid. Now either set the binnings, or make
+                # sure that those that are set are ok
+                readout_mode = configdb.get_mode_with_code(instrument_type, instrument_config['mode'], 'readout')
                 if 'bin_x' not in instrument_config:
                     instrument_config['bin_x'] = readout_mode['params']['binning']
                     instrument_config['bin_y'] = readout_mode['params']['binning']
+
                 elif instrument_config['bin_x'] != readout_mode['params']['binning']:
-                    raise serializers.ValidationError(_("binning {} is not a valid binning on readout mode {} for instrument type {}"
-                                                        .format(instrument_config['bin_x'], instrument_config['mode'], data['instrument_type'])))
+                    raise serializers.ValidationError(_(
+                        f'Binning {instrument_config["bin_x"]} is not a valid binning for readout mode '
+                        f'{instrument_config["mode"]} for instrument type {instrument_type}'
+                    ))
 
-            # Validate the rotator modes if set in configdb
+            # Validate the rotator modes
             if 'rotator' in modes:
-                if ('rotator_mode' not in instrument_config or not instrument_config['rotator_mode']
-                        and 'rotator' in default_modes):
-                    instrument_config['rotator_mode'] = default_modes['rotator']['code']
+                rotator_mode_validator = ModeValidator('rotator', instrument_type, default_modes, modes)
+                if rotator_mode_validator.mode_is_not_set(instrument_config):
+                    rotator_mode_to_set = rotator_mode_validator.get_mode_to_set()
+                    if rotator_mode_to_set['error']:
+                        raise serializers.ValidationError(_(rotator_mode_to_set['error']))
+                    if rotator_mode_to_set['mode']:
+                        instrument_config['rotator_mode'] = rotator_mode_to_set['mode']['code']
 
-                try:
-                    rotator_mode = configdb.get_mode_with_code(data['instrument_type'], instrument_config['rotator_mode'],
-                                                               'rotator')
-                    if 'required_fields' in rotator_mode['params']:
-                        for field in rotator_mode['params']['required_fields']:
-                            if 'extra_params' not in instrument_config or field not in instrument_config['extra_params']:
-                                raise serializers.ValidationError(
-                                    _("Rotator Mode {} required extra param of {} to be set"
-                                      .format(rotator_mode['code'], field)))
-                except ConfigDBException as cdbe:
-                    raise serializers.ValidationError(_(str(cdbe)))
+                rotator_error_msg = rotator_mode_validator.get_mode_error_msg(instrument_config)
+                if rotator_error_msg:
+                    raise serializers.ValidationError(_(rotator_error_msg))
 
             # Check that the optical elements specified are valid in configdb
-            for oe_type, value in instrument_config['optical_elements'].items():
+            for oe_type, value in instrument_config.get('optical_elements', {}).items():
                 plural_type = '{}s'.format(oe_type)
                 if plural_type not in available_optical_elements:
                     raise serializers.ValidationError(_("optical_element of type {} is not available on {} instruments"
@@ -278,21 +368,17 @@ class ConfigurationSerializer(serializers.ModelSerializer):
             if data['type'].upper() not in observation_types_without_oe:
                 for oe_type in available_optical_elements.keys():
                     singular_type = oe_type[:-1] if oe_type.endswith('s') else oe_type
-                    if singular_type not in instrument_config['optical_elements']:
-                        raise serializers.ValidationError(
-                            _("must specify optical element of type {} for instrument type {}".format(
-                                singular_type, data['instrument_type']
-                            ))
-                        )
+                    if singular_type not in instrument_config.get('optical_elements', {}):
+                        raise serializers.ValidationError(_(
+                            f'Must set optical element of type {singular_type} for instrument type {instrument_type}'
+                        ))
             # Validate any regions of interest
             if 'rois' in instrument_config:
-                max_rois = configdb.get_max_rois(data['instrument_type'])
-                ccd_size = configdb.get_ccd_size(data['instrument_type'])
+                max_rois = configdb.get_max_rois(instrument_type)
+                ccd_size = configdb.get_ccd_size(instrument_type)
                 if len(instrument_config['rois']) > max_rois:
                     raise serializers.ValidationError(_(
-                        'Instrument type {} supports up to {} regions of interest'.format(
-                            data['instrument_type'], max_rois
-                        )
+                        f'Instrument type {instrument_type} supports up to {max_rois} regions of interest'
                     ))
                 for roi in instrument_config['rois']:
                     if 'x1' not in roi and 'x2' not in roi and 'y1' not in roi and 'y2' not in roi:
@@ -315,23 +401,25 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                     if roi['x2'] > ccd_size['x'] or roi['y2'] > ccd_size['y']:
                         raise serializers.ValidationError(_(
                             'Regions of interest for instrument type {} must be in range 0<=x<={} and 0<=y<={}'.format(
-                                data['instrument_type'], ccd_size['x'], ccd_size['y']
+                                instrument_type, ccd_size['x'], ccd_size['y']
                             ))
                         )
 
         if data['type'] == 'SCRIPT':
-            if ('extra_params' not in data or 'script_name' not in data['extra_params']
-                    or not data['extra_params']['script_name']):
-                raise serializers.ValidationError(
-                    _("Must specify a script_name in extra_params for SCRIPT configuration type")
-                )
+            if (
+                    'extra_params' not in data
+                    or 'script_name' not in data['extra_params']
+                    or not data['extra_params']['script_name']
+            ):
+                raise serializers.ValidationError(_(
+                    'Must specify a script_name in extra_params for SCRIPT configuration type'
+                ))
 
         # Validate the configuration type is available for the instrument requested
-        if data['type'] not in configdb.get_configuration_types(data['instrument_type']):
-            raise serializers.ValidationError(_("configuration type {} is not valid for instrument type {}").format(
-                data['type'], data['instrument_type']
+        if data['type'] not in configdb.get_configuration_types(instrument_type):
+            raise serializers.ValidationError(_(
+                f'configuration type {data["type"]} is not valid for instrument type {instrument_type}'
             ))
-
         return data
 
 
@@ -360,12 +448,9 @@ class LocationSerializer(serializers.ModelSerializer):
             enc_dict = {enc['code']: enc for enc in enc_set}
             if 'enclosure' in data:
                 if data['enclosure'] not in enc_dict:
-                    msg = _('Enclosure {} not valid. Valid choices: {}').format(
-                        data['enclosure'],
-                        ', '.join(enc_dict.keys())
-                    )
-                    raise serializers.ValidationError(msg)
-
+                    raise serializers.ValidationError(_(
+                        f'Enclosure {data["enclosure"]} not valid. Valid choices: {", ".join(enc_dict.keys())}'
+                    ))
                 tel_set = enc_dict[data['enclosure']]['telescope_set']
                 tel_list = [tel['code'] for tel in tel_set]
                 if 'telescope' in data and data['telescope'] not in tel_list:
@@ -375,12 +460,10 @@ class LocationSerializer(serializers.ModelSerializer):
         return data
 
     def to_representation(self, instance):
-        '''
+        """
         This method is overridden to remove blank fields from serialized output. We could put this into a subclassed
         ModelSerializer if we want it to apply to all our Serializers.
-        :param instance:
-        :return:
-        '''
+        """
         rep = super().to_representation(instance)
         return {key: val for key, val in rep.items() if val}
 
@@ -396,7 +479,7 @@ class WindowSerializer(serializers.ModelSerializer):
         if 'start' not in data:
             data['start'] = timezone.now()
         if data['end'] <= data['start']:
-            msg = _("Window end '{}' cannot be earlier than window start '{}'.").format(data['end'], data['start'])
+            msg = _(f"Window end '{data['end']}' cannot be earlier than window start '{data['start']}'")
             raise serializers.ValidationError(msg)
 
         if not get_semester_in(data['start'], data['end']):
@@ -434,10 +517,15 @@ class RequestSerializer(serializers.ModelSerializer):
             configuration['priority'] = i + 1
             # TODO: Remove this once we support multiple targets/constraints
             if configuration['target'] != target:
-                raise serializers.ValidationError(_('Currently only a single target per Request is supported. This restriction will be lifted in the future.'))
+                raise serializers.ValidationError(_(
+                    'Currently only a single target per Request is supported. This restriction will be lifted in '
+                    'the future.'
+                ))
             if configuration['constraints'] != constraints:
-                raise serializers.ValidationError(_('Currently only a single constraints per Request is supported. This restriction will be lifted in the future.'))
-
+                raise serializers.ValidationError(_(
+                    'Currently only a single constraints per Request is supported. This restriction will be '
+                    'lifted in the future.'
+                ))
         return value
 
     def validate_windows(self, value):
@@ -513,8 +601,8 @@ class RequestSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     (
                         'According to the constraints of the request, the target is visible for a maximum of {0:.2f} '
-                        'hours within the time window. This is less than the duration of your request {1:.2f} hours. Consider '
-                        'expanding the time window or loosening the airmass or lunar separation constraints.'
+                        'hours within the time window. This is less than the duration of your request {1:.2f} hours. '
+                        'Consider expanding the time window or loosening the airmass or lunar separation constraints.'
                     ).format(
                         largest_interval.total_seconds() / 3600.0,
                         duration / 3600.0

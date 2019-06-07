@@ -306,7 +306,7 @@ class TestUserPostRequestApi(SetTimeMixin, APITestCase):
         bad_data['requests'][0]['configurations'][0]['acquisition_config']['mode'] = 'BRIGHTEST'
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('required extra param of acquire_radius to be set', str(response.content))
+        self.assertIn('requires [acquire_radius] set in extra param', str(response.content))
 
     def test_post_requestgroup_acquire_mode_brightest(self):
         good_data = self.generic_payload.copy()
@@ -1254,6 +1254,46 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
         self.assertEqual(response.status_code, 201)
 
+    def test_guiding_mode_not_available(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['guiding_config']['mode'] = 'I_DONT_EXIST'
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertIn('Guiding mode I_DONT_EXIST is not available', str(response.content))
+
+    def test_readout_mode_many_options(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['instrument_type'] = '1M0-NRES-SCICAM'
+        bad_data['requests'][0]['configurations'][0]['type'] = 'NRES_SPECTRUM'
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements'] = {}
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['mode'] = ''
+        del bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_x']
+        del bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_y']
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertIn('Must set a readout mode, choose from', str(response.content))
+
+    def test_readout_mode_not_set_and_no_default_but_single_option_set(self):
+        good_data = self.generic_payload.copy()
+        good_data['requests'][0]['configurations'][0]['type'] = 'SPECTRUM'
+        good_data['requests'][0]['configurations'][0]['instrument_type'] = '2M0-FLOYDS-SCICAM'
+        good_data['requests'][0]['location']['telescope_class'] = '2m0'
+        del good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['mode']
+        del good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
+        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['slit'] = 'slit_1.6as'
+        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
+        self.assertEqual(response.status_code, 201)
+        # The only readout mode for floyds is 2m0_floyds_1
+        self.assertEqual(response.json()['requests'][0]['configurations'][0]['instrument_configs'][0]['mode'], '2m0_floyds_1')
+
+    def test_many_missing_required_fields(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['instrument_type'] = '1M0-NRES-SCICAM'
+        bad_data['requests'][0]['configurations'][0]['type'] = 'NRES_SPECTRUM'
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements'] = {}
+        bad_data['requests'][0]['configurations'][0]['acquisition_config']['mode'] = 'MYMODE'
+        bad_data['requests'][0]['configurations'][0]['acquisition_config']['extra_params']['field1'] = 'some-arg'
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertIn('Acquisition Mode MYMODE requires [field2, field3] set', str(response.content))
+
     def test_invalid_filter_for_instrument(self):
         bad_data = self.generic_payload.copy()
         bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter'] = 'magic'
@@ -1272,7 +1312,7 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
         self.assertEqual(response.status_code, 201)
 
-    def test_args_required_for_script_type(self):
+    def test_script_name_required_for_script_type(self):
         bad_data = self.generic_payload.copy()
         bad_data['requests'][0]['configurations'][0]['type'] = 'SCRIPT'
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
@@ -1331,7 +1371,7 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         del bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('must specify optical element of type filter', str(response.content))
+        self.assertIn('Must set optical element of type filter', str(response.content))
 
     def test_invalid_spectra_slit_for_instrument(self):
         bad_data = self.generic_payload.copy()
@@ -1358,7 +1398,7 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_x'] = 5
         bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_y'] = 5
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertIn('binning 5 is not a valid binning on readout mode 1m0_sbig_2', str(response.content))
+        self.assertIn('Binning 5 is not a valid binning for readout mode 1m0_sbig_2', str(response.content))
         self.assertEqual(response.status_code, 400)
 
     def test_readout_mode_sets_default_binning(self):
@@ -1545,7 +1585,7 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         self.assertIn('configuration type EXPOSE is not valid for instrument type 2M0-FLOYDS-SCICAM', str(response.content))
         self.assertEqual(response.status_code, 400)
 
-    def test_acquirition_config_exposure_time_limits(self):
+    def test_acquisition_config_exposure_time_limits(self):
         bad_data = self.generic_payload.copy()
         bad_data['requests'][0]['configurations'][0]['acquisition_config']['exposure_time'] = -1
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
