@@ -1,0 +1,25 @@
+language: python
+dist: xenial   # required for Python >= 3.7
+python:
+- '3.6'
+- '3.7'
+env:
+- NODE_VERSION='10'
+before_install:
+- nvm install $NODE_VERSION
+addons:
+  postgresql: "9.6"
+  apt:
+    packages:
+    - gfortran
+services:
+  - postgresql
+before_script:
+  - psql -c 'create database observation_portal;' -U postgres
+install:
+- pip install -U coverage coveralls
+- pip install -r requirements.txt
+- npm install
+- npm run build
+script: coverage run manage.py test --settings=test_settings
+after_success: coveralls

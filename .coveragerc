@@ -1,0 +1,14 @@
+[run]
+source = observation_portal
+
+[report]
+omit =
+    */migrations/*
+    *settings.py
+    *wsgi.py
+    *apps.py
+    *task_scheduler.py
+    *config.py
+    */userrequests/*
+    */blocks/*
+

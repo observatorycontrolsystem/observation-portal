@@ -199,11 +199,11 @@ class InstrumentsInformationView(APIView):
 class ContentionView(APIView):
     permission_classes = (AllowAny,)
 
-    def get(self, request, instrument_name):
+    def get(self, request, instrument_type):
         if request.user.is_staff:
-            contention = Contention(instrument_name, anonymous=False)
+            contention = Contention(instrument_type, anonymous=False)
         else:
-            contention = Contention(instrument_name)
+            contention = Contention(instrument_type)
         return Response(contention.data())
 
 
@@ -211,12 +211,12 @@ class PressureView(APIView):
     permission_classes = (AllowAny,)
 
     def get(self, request):
-        instrument_name = request.GET.get('instrument')
+        instrument_type = request.GET.get('instrument')
         site = request.GET.get('site')
         if request.user.is_staff:
-            pressure = Pressure(instrument_name, site, anonymous=False)
+            pressure = Pressure(instrument_type, site, anonymous=False)
         else:
-            pressure = Pressure(instrument_name, site)
+            pressure = Pressure(instrument_type, site)
         return Response(pressure.data())
 
 
