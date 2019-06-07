@@ -5,9 +5,6 @@ from observation_portal.observations.models import Observation, Summary
 from observation_portal.proposals.models import Proposal, Semester, TimeAllocation
 
 import math
-import logging
-
-logger = logging.getLogger()
 
 
 class Command(BaseCommand):
@@ -32,8 +29,10 @@ class Command(BaseCommand):
         instrument_type_str = options['instrument_type'] or 'All'
         semester_str = options['semester']
         dry_run_str = 'Dry Run Mode: ' if options['dry_run'] else ''
-        logger.info(
-            f"{dry_run_str}Running time accounting for Proposal(s): {proposal_str} and Instrument Type(s): {instrument_type_str} in Semester: {semester_str}")
+        print(
+            f"{dry_run_str}Running time accounting for Proposal(s): {proposal_str} and Instrument Type(s): {instrument_type_str} in Semester: {semester_str}",
+            file=self.stdout
+        )
 
         if options['proposal']:
             proposals = [Proposal.objects.get(id=options['proposal'])]
@@ -63,9 +62,6 @@ class Command(BaseCommand):
                     'configuration_statuses__summary'
                 ).order_by('start').distinct()
 
-                if len(observations) == 0:
-                    continue
-
                 for observation in observations:
                     observation_type = observation.request.request_group.observation_type
                     configuration_time = timedelta(seconds=0)
@@ -79,20 +75,20 @@ class Command(BaseCommand):
                             pass
 
                     attempted_time[observation_type] += (configuration_time.total_seconds() / 3600.0)
-                logger.info(
+                print(
                     "Proposal: {}, Instrument Type: {}, Used {} NORMAL hours, {} RAPID_RESPONSE hours, and {} TIME_CRITICAL hours".format(
                         proposal.id, instrument_type, attempted_time['NORMAL'], attempted_time['RAPID_RESPONSE'],
-                        attempted_time['TIME_CRITICAL']
-                    ))
+                        attempted_time['TIME_CRITICAL']), file=self.stdout
+                )
 
                 time_allocation = TimeAllocation.objects.get(proposal=proposal, instrument_type=instrument_type,
                                                              semester=semester)
                 if not math.isclose(time_allocation.std_time_used, attempted_time['NORMAL'], abs_tol=0.0001):
-                    logger.warning("{} is different from existing NORMAL time {}".format(attempted_time['NORMAL'], time_allocation.std_time_used))
+                    print("{} is different from existing NORMAL time {}".format(attempted_time['NORMAL'], time_allocation.std_time_used), file=self.stderr)
                 if not math.isclose(time_allocation.rr_time_used, attempted_time['RAPID_RESPONSE'], abs_tol=0.0001):
-                    logger.warning("{} is different from existing RAPID_RESPONSE time {}".format(attempted_time['RAPID_RESPONSE'], time_allocation.rr_time_used))
+                    print("{} is different from existing RAPID_RESPONSE time {}".format(attempted_time['RAPID_RESPONSE'], time_allocation.rr_time_used), file=self.stderr)
                 if not math.isclose(time_allocation.tc_time_used, attempted_time['TIME_CRITICAL'], abs_tol=0.0001):
-                    logger.warning("{} is different from existing TIME_CRITICAL time {}".format(attempted_time['TIME_CRITICAL'], time_allocation.tc_time_used))
+                    print("{} is different from existing TIME_CRITICAL time {}".format(attempted_time['TIME_CRITICAL'], time_allocation.tc_time_used), file=self.stderr)
 
                 if not options['dry_run']:
                     # Update the time allocation for this proposal accordingly
