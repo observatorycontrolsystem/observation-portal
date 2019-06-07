@@ -1090,7 +1090,7 @@ class TestTimeAccountingCommand(TestObservationApiBase):
         self.time_allocation = mixer.blend(TimeAllocation, instrument_type='1M0-SCICAM-SBIG', semester=self.semester,
                                            proposal=self.proposal, std_allocation=100, rr_allocation=100,
                                            tc_allocation=100, ipp_time_available=100)
-    
+
     def _add_observation(self, state, time_completed):
         observation = Observation.objects.create(request=self.requestgroup.requests.first(), state=state, site='tst', enclosure='domb', telescope='1m0a',
         start=datetime(2016,9,5,22,35,39), end=datetime(2016,9,5,23,35,40))
