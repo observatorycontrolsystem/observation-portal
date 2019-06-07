@@ -14,7 +14,7 @@
           Principal Investigator: {{ object.pi.first_name }} {{ object.pi.last_name }}
           <a href="mailto:{{ object.pi.email }}">{{ object.pi.email }}</a>
         </h4>
-        <h4>Co Investigators <small><i id="toggleci" class="fa fa-eye"></i></h4>
+        <h4>Co Investigators <small><i id="toggleci" class="fa fa-eye"></i></small></h4>
         {% if not user.profile.simple_interface or user == object.pi %}
         <table class="table" id="cilist">
           <thead>
@@ -37,15 +37,15 @@
               <td>
                 {% if mem.time_limit < 0 %}No Limit{% else %}{{ mem.time_limit_hours | floatformat:3 }}{% endif %}
                 {% if user == object.pi %}
-                &nbsp;<i class="fa fa-pencil memlimit" data-membership="{{ mem.id }}"></i>
+                <a href="#" class="memlimit"><i class="fas fa-edit" data-membership="{{ mem.id }}"></i></a>
                 <form method="POST" action="{% url 'proposals:membership-limit' pk=mem.id %}" class="form-inline limitform" style="display: none">
                     {% csrf_token %}
-                    <div class="form-group">
-                        <input name="time_limit" type="number" class="form-control" style="width: 100px" step="0.001"
+                    <div class="form-group mr-md-2 mb-md-1">
+                        <input name="time_limit" type="number" min="-1" class="form-control" style="width: 90px" step="0.01"
                          {% if mem.time_limit > 0 %} value="{{ mem.time_limit_hours | floatformat:3 }}" {% endif %} />
                     </div>
-                    <button type="submit" class="btn btn-default remove-limit">Remove Limit</button>
-                    <button type="submit" class="btn btn-default">Set Limit</button>
+                    <button type="submit" class="btn btn-outline-secondary remove-limit mr-md-2">Remove Limit</button>
+                    <button type="submit" class="btn btn-outline-secondary">Set Limit</button>
                 </form>
                 {% endif %}
               </td>
@@ -82,7 +82,7 @@
                     {% for ta in ta.list %}
                         <tr class="bg-grey">
                             <td></td>
-                            <td>{{ ta.instrument_name }}</td>
+                            <td>{{ ta.instrument_type }}</td>
                             <td colspan="2"></td>
                         </tr>
                         <tr>
@@ -127,7 +127,7 @@
         <form method="POST" action="" class="form">
             {% csrf_token %}
             {% bootstrap_form form=notification_form %}
-            <button type="submit" class="btn btn-default">Save</button>
+            <button type="submit" class="btn btn-outline-secondary">Save</button>
         </form>
         <br/>
         <dl>
@@ -143,11 +143,11 @@
         </div>
         <form method="POST" action="{% url 'proposals:membership-global' pk=object.id %}" class="form-inline">
           {% csrf_token %}
-          <div class="form-group">
-            <input name="time_limit" type="number" class="form-control" style="width: 100px" step="0.001" placeholder="Hours"/>
+          <div class="form-group mr-md-2">
+            <input name="time_limit" type="number" class="form-control" style="width: 90px" min="-1" step="0.01" placeholder="Hours"/>
           </div>
-          <button type="submit" class="btn btn-default remove-limit">Remove Limit</button>
-          <button type="submit" class="btn btn-default">Set Global Limit</button>
+          <button type="submit" class="btn btn-outline-secondary remove-limit mr-md-2">Remove Limit</button>
+          <button type="submit" class="btn btn-outline-secondary">Set Global Limit</button>
         </form>
         <br/>
         <strong>Invite Co-Investigators</strong>
@@ -161,11 +161,11 @@
         </div>
         <form method="POST" action="{% url 'proposals:invite' pk=object.id %}" class="form-inline">
             {% csrf_token %}
-            <div class="form-group">
+            <div class="form-group mr-md-2">
                 <label class="sr-only" for="email">Invite a Co-Investigator</label>
                 <input name="email" class="form-control" placeholder="Email Address(s)"/>
             </div>
-            <button type="submit" class="btn btn-default">Add</button>
+            <button type="submit" class="btn btn-outline-secondary">Add</button>
         </form>
         <br/>
         <dl>
@@ -196,7 +196,8 @@
       $(this).parent().find('input[name="time_limit"]').val('-1');
     });
 
-    $('.memlimit').click(function(){
+    $('.memlimit').click(function(event){
+      event.preventDefault();
       $('.limitform').hide();
       $(this).next().first().show();
     })
