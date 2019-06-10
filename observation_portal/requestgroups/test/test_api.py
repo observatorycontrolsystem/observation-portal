@@ -1271,6 +1271,12 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertIn('Must set a readout mode, choose from', str(response.content))
 
+    def test_instrument_type_does_not_have_readout_mode_then_mode_stays_blank(self):
+        good_data = self.generic_payload.copy()
+        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()['requests'][0]['configurations'][0]['instrument_configs'][0]['rotator_mode'], '')
+
     def test_readout_mode_not_set_and_no_default_but_single_option_set(self):
         good_data = self.generic_payload.copy()
         good_data['requests'][0]['configurations'][0]['type'] = 'SPECTRUM'

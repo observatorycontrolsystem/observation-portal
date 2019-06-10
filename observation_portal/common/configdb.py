@@ -267,10 +267,12 @@ class ConfigDB(object):
         """
         instrument_names = set()
         for instrument in self.get_instruments():
-            if (instrument['telescope_key'].site.lower() == site_code.lower()
+            if (
+                    instrument['telescope_key'].site.lower() == site_code.lower()
                     and instrument['telescope_key'].enclosure.lower() == enclosure_code.lower()
                     and instrument['telescope_key'].telescope.lower() == telescope_code.lower()
-                    and instrument['science_camera']['camera_type']['code'].lower() == instrument_type.lower()):
+                    and instrument['science_camera']['camera_type']['code'].lower() == instrument_type.lower()
+            ):
                 instrument_names.add(instrument['science_camera']['code'].lower())
         return instrument_names
 
@@ -386,10 +388,10 @@ class ConfigDB(object):
         """
         modes = self.get_modes_by_type(instrument_type, mode_type)
         default_modes = {}
-        for type, mode_set in modes.items():
-            for mode in mode_set['modes']:
-                if 'default' in mode_set and mode['code'] == mode_set['default']:
-                    default_modes[type] = mode
+        for m_type, m_set in modes.items():
+            for mode in m_set['modes']:
+                if 'default' in m_set and mode['code'] == m_set['default']:
+                    default_modes[m_type] = mode
                     break
         return default_modes
 
