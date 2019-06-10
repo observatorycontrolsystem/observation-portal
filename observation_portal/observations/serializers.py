@@ -191,7 +191,7 @@ class ScheduleSerializer(serializers.ModelSerializer):
                     configuration['acquisition_config']['mode'] != AcquisitionConfig.OFF):
                 if not configuration.get('guide_camera_name', ''):
                     if (
-                        'extra_params' in configuration 
+                        'extra_params' in configuration
                         and 'self_guide' in configuration['extra_params']
                         and configuration['extra_params']['self_guide']
                     ):
