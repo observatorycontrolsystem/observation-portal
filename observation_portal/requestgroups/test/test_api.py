@@ -19,15 +19,12 @@ from django.urls import reverse
 from django.contrib.auth.models import User
 from django.core import cache
 from dateutil.parser import parse as datetime_parser
-from datetime import timedelta
 from rest_framework.test import APITestCase
 from mixer.backend.django import mixer
-from mixer.main import mixer as basic_mixer
 from django.utils import timezone
 from datetime import datetime, timedelta
 import copy
 import random
-from urllib import parse
 from unittest import skip
 from unittest.mock import patch
 
@@ -2513,7 +2510,7 @@ class TestLastChanged(SetTimeMixin, APITestCase):
         self.assertAlmostEqual(datetime_parser(last_change), timezone.now(), delta=timedelta(minutes=1))
 
     def test_last_change_date_is_not_updated_when_request_is_mixed(self):
-        requestgroup = create_simple_requestgroup(
+        create_simple_requestgroup(
             user=self.user, proposal=self.proposal, instrument_type='1M0-SCICAM-SBIG', window=self.window
         )
         last_change_cached = self.locmem_cache.get('observation_portal_last_change_time')

@@ -313,7 +313,6 @@
               "horizon": 15.0,
               "ha_limit_pos": 4.6,
               "ha_limit_neg": -4.6,
-              "ha_limit_neg": -4.6,
               "slew_rate": 0.0,
               "minimum_slew_overhead": 2.0,
               "maximum_slew_overhead": 2.0,

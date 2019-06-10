@@ -398,5 +398,5 @@ class TestRequestDuration(SetTimeMixin, TestCase):
         self.instrument_config_expose.save()
 
         with self.assertRaises(ConfigDBException) as context:
-            duration = self.configuration_expose.duration
+            _ = self.configuration_expose.duration
             self.assertTrue('not found in configdb' in context.exception)

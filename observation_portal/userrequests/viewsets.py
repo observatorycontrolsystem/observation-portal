@@ -10,11 +10,8 @@ from observation_portal.requestgroups.models import RequestGroup
 from observation_portal.userrequests.filters import UserRequestFilter
 from observation_portal.userrequests.conversion import (validate_userrequest, convert_userrequests_to_requestgroups,
                                                         convert_requestgroups_to_userrequests, expand_cadence,
-                                                        convert_userrequest_to_requestgroup,
-                                                        convert_requestgroup_to_userrequest)
-from observation_portal.requestgroups.cadence import expand_cadence_request
+                                                        convert_userrequest_to_requestgroup)
 from observation_portal.requestgroups.serializers import RequestGroupSerializer
-from observation_portal.requestgroups.serializers import CadenceRequestSerializer
 from observation_portal.requestgroups.duration_utils import (
     get_max_ipp_for_requestgroup
 )

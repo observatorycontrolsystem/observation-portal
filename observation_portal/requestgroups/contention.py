@@ -42,7 +42,8 @@ class Contention(object):
                     ra_bins[ra][proposal_id] += conf.duration
         return ra_bins
 
-    def _anonymize(self, data):
+    @staticmethod
+    def _anonymize(data):
         for index, ra in enumerate(data):
             data[index] = {'All Proposals': sum(ra.values())}
         return data

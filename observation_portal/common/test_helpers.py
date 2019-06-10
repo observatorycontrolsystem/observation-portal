@@ -84,7 +84,7 @@ def create_simple_requestgroup(user, proposal, state='PENDING', request=None, wi
 def create_simple_many_requestgroup(user, proposal, n_requests, state='PENDING'):
     operator = 'SINGLE' if n_requests == 1 else 'MANY'
     rg = mixer.blend(RequestGroup, state=state, submitter=user, proposal=proposal, operator=operator)
-    for i in range(n_requests):
+    for _ in range(n_requests):
         request = mixer.blend(Request, request_group=rg, state=state)
         mixer.blend(Window, request=request)
         mixer.blend(Location, request=request)

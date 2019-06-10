@@ -7,7 +7,6 @@ from datetime import datetime
 from dateutil.parser import parse
 from django.urls import reverse
 from django.core import cache
-from dateutil.parser import parse as datetime_parser
 from datetime import timedelta
 from io import StringIO
 from django.core.management import call_command
@@ -351,7 +350,8 @@ class TestObservationApiBase(SetTimeMixin, APITestCase):
         configuration.instrument_type = '1M0-SCICAM-SBIG'
         configuration.save()
 
-    def _generate_observation_data(self, request_id, configuration_id_list, guide_camera_name='xx03'):
+    @classmethod
+    def _generate_observation_data(cls, request_id, configuration_id_list, guide_camera_name='xx03'):
         observation = {
             "request": request_id,
             "site": "tst",
@@ -916,7 +916,7 @@ class TestLastScheduled(TestObservationApiBase):
 
         response = self.client.get(reverse('api:last_scheduled'))
         last_schedule = response.json()['last_schedule_time']
-        self.assertAlmostEqual(datetime_parser(last_schedule), timezone.now() - timedelta(days=7),
+        self.assertAlmostEqual(parse(last_schedule), timezone.now() - timedelta(days=7),
                                delta=timedelta(minutes=1))
 
     def test_last_schedule_date_is_updated_when_single_observation_is_submitted(self):
@@ -929,12 +929,12 @@ class TestLastScheduled(TestObservationApiBase):
 
         response = self.client.get(reverse('api:last_scheduled') + "?site=tst")
         last_schedule = response.json()['last_schedule_time']
-        self.assertAlmostEqual(datetime_parser(last_schedule), timezone.now(), delta=timedelta(minutes=1))
+        self.assertAlmostEqual(parse(last_schedule), timezone.now(), delta=timedelta(minutes=1))
 
         # Verify that the last scheduled time for a different site isn't updated
         response = self.client.get(reverse('api:last_scheduled') + "?site=non")
         last_schedule = response.json()['last_schedule_time']
-        self.assertAlmostEqual(datetime_parser(last_schedule), timezone.now() - timedelta(days=7),
+        self.assertAlmostEqual(parse(last_schedule), timezone.now() - timedelta(days=7),
                                delta=timedelta(minutes=1))
 
     def test_last_schedule_date_is_updated_when_multiple_observations_are_submitted(self):
@@ -948,7 +948,7 @@ class TestLastScheduled(TestObservationApiBase):
 
         response = self.client.get(reverse('api:last_scheduled'))
         last_schedule = response.json()['last_schedule_time']
-        self.assertAlmostEqual(datetime_parser(last_schedule), timezone.now(), delta=timedelta(minutes=1))
+        self.assertAlmostEqual(parse(last_schedule), timezone.now(), delta=timedelta(minutes=1))
 
     def test_last_schedule_date_is_not_updated_when_observation_is_mixed(self):
         mixer.blend(Observation, request=self.requestgroup.requests.first())
@@ -956,7 +956,7 @@ class TestLastScheduled(TestObservationApiBase):
         self.assertIsNone(last_schedule_cached)
         response = self.client.get(reverse('api:last_scheduled'))
         last_schedule = response.json()['last_schedule_time']
-        self.assertAlmostEqual(datetime_parser(last_schedule), timezone.now() - timedelta(days=7),
+        self.assertAlmostEqual(parse(last_schedule), timezone.now() - timedelta(days=7),
                                delta=timedelta(minutes=1))
 
 
@@ -967,7 +967,8 @@ class TestTimeAccounting(TestObservationApiBase):
                                            proposal=self.proposal, std_allocation=100, rr_allocation=100,
                                            tc_allocation=100, ipp_time_available=100)
 
-    def _create_observation_and_config_status(self, requestgroup, start, end, config_state='PENDING'):
+    @classmethod
+    def _create_observation_and_config_status(cls, requestgroup, start, end, config_state='PENDING'):
         observation = mixer.blend(Observation, request=requestgroup.requests.first(),
                                   site='tst', enclosure='domb', telescope='1m0a',
                                   start=start, end=end, state='PENDING')
