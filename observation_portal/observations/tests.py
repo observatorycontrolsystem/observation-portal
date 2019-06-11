@@ -350,8 +350,8 @@ class TestObservationApiBase(SetTimeMixin, APITestCase):
         configuration.instrument_type = '1M0-SCICAM-SBIG'
         configuration.save()
 
-    @classmethod
-    def _generate_observation_data(cls, request_id, configuration_id_list, guide_camera_name='xx03'):
+    @staticmethod
+    def _generate_observation_data(request_id, configuration_id_list, guide_camera_name='xx03'):
         observation = {
             "request": request_id,
             "site": "tst",
@@ -967,8 +967,8 @@ class TestTimeAccounting(TestObservationApiBase):
                                            proposal=self.proposal, std_allocation=100, rr_allocation=100,
                                            tc_allocation=100, ipp_time_available=100)
 
-    @classmethod
-    def _create_observation_and_config_status(cls, requestgroup, start, end, config_state='PENDING'):
+    @staticmethod
+    def _create_observation_and_config_status(requestgroup, start, end, config_state='PENDING'):
         observation = mixer.blend(Observation, request=requestgroup.requests.first(),
                                   site='tst', enclosure='domb', telescope='1m0a',
                                   start=start, end=end, state='PENDING')
