@@ -45,7 +45,8 @@ class disconnect_signal(object):
 def create_simple_requestgroup(user, proposal, state='PENDING', request=None, window=None, configuration=None,
                                constraints=None, target=None, location=None, instrument_config=None,
                                acquisition_config=None, guiding_config=None, instrument_type=None):
-    rg = mixer.blend(RequestGroup, state=state, submitter=user, proposal=proposal)
+    rg = mixer.blend(RequestGroup, state=state, submitter=user, proposal=proposal,
+                     observation_type=RequestGroup.NORMAL)
 
     if not request:
         request = mixer.blend(Request, request_group=rg)
@@ -83,7 +84,8 @@ def create_simple_requestgroup(user, proposal, state='PENDING', request=None, wi
 
 def create_simple_many_requestgroup(user, proposal, n_requests, state='PENDING'):
     operator = 'SINGLE' if n_requests == 1 else 'MANY'
-    rg = mixer.blend(RequestGroup, state=state, submitter=user, proposal=proposal, operator=operator)
+    rg = mixer.blend(RequestGroup, state=state, submitter=user, proposal=proposal, operator=operator,
+                     observation_type=RequestGroup.NORMAL)
     for _ in range(n_requests):
         request = mixer.blend(Request, request_group=rg, state=state)
         mixer.blend(Window, request=request)

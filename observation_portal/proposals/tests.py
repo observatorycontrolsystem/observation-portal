@@ -84,7 +84,8 @@ class TestProposalNotifications(DramatiqTestCase):
         self.proposal = mixer.blend(Proposal)
         self.user = mixer.blend(User)
         mixer.blend(Membership, user=self.user, proposal=self.proposal)
-        self.requestgroup = mixer.blend(RequestGroup, proposal=self.proposal, submitter=self.user, state='PENDING')
+        self.requestgroup = mixer.blend(RequestGroup, proposal=self.proposal, submitter=self.user, state='PENDING',
+                                        observation_type=RequestGroup.NORMAL)
 
     def test_all_proposal_notification(self):
         mixer.blend(Profile, user=self.user, notifications_enabled=True)

@@ -226,7 +226,7 @@ class RequestViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
 
     @action(detail=True)
     def telescope_states(self, request, pk=None):
-        telescope_states = get_telescope_states_for_request(self.get_object())
+        telescope_states = get_telescope_states_for_request(self.get_object().as_dict())
         str_telescope_states = {str(k): v for k, v in telescope_states.items()}
         return Response(str_telescope_states)
 

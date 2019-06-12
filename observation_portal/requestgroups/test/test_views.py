@@ -66,7 +66,7 @@ class TestRequestGroupList(TestCase):
 
     def test_no_other_requests(self):
         proposal = mixer.blend(Proposal)
-        other_rg = mixer.blend(RequestGroup, proposal=proposal, name=mixer.RANDOM)
+        other_rg = mixer.blend(RequestGroup, proposal=proposal, name=mixer.RANDOM, observation_type=RequestGroup.NORMAL)
         response = self.client.get(reverse('requestgroups:list'))
         self.assertNotContains(response, other_rg.name)
 
@@ -86,7 +86,8 @@ class TestUserrequestDetail(TestCase):
         mixer.blend(Profile, user=self.user)
         self.proposal = mixer.blend(Proposal)
         mixer.blend(Membership, proposal=self.proposal, user=self.user)
-        self.request_group = mixer.blend(RequestGroup, proposal=self.proposal, name=mixer.RANDOM)
+        self.request_group = mixer.blend(RequestGroup, proposal=self.proposal, name=mixer.RANDOM,
+                                         observation_type=RequestGroup.NORMAL)
         self.requests = mixer.cycle(10).blend(Request, request_group=self.request_group)
         for request in self.requests:
             mixer.blend(Configuration, request=request, instrument_type='1M0-SCICAM-SBIG')
@@ -120,7 +121,8 @@ class TestUserrequestDetail(TestCase):
     def test_requestgroup_detail_only_authored(self):
         self.user.profile.view_authored_requests_only = True
         self.user.profile.save()
-        request_group = mixer.blend(RequestGroup, proposal=self.proposal, name=mixer.RANDOM, submitter=self.user)
+        request_group = mixer.blend(RequestGroup, proposal=self.proposal, name=mixer.RANDOM, submitter=self.user,
+                                    observation_type=RequestGroup.NORMAL)
         response = self.client.get(reverse('requestgroups:detail', kwargs={'pk': self.request_group.id}))
         self.assertEqual(response.status_code, 404)
         response = self.client.get(reverse('requestgroups:detail', kwargs={'pk': request_group.id}))
@@ -137,7 +139,8 @@ class TestUserrequestDetail(TestCase):
             self.assertContains(response, request.id)
 
     def test_single_request_redirect(self):
-        request_group = mixer.blend(RequestGroup, proposal=self.proposal, name=mixer.RANDOM)
+        request_group = mixer.blend(RequestGroup, proposal=self.proposal, name=mixer.RANDOM,
+                                    observation_type=RequestGroup.NORMAL)
         request = mixer.blend(Request, request_group=request_group)
         mixer.blend(Configuration, request=request, instrument_type='1M0-SCICAM-SBIG')
         response = self.client.get(reverse('requestgroups:detail', kwargs={'pk': request_group.id}))
@@ -150,7 +153,8 @@ class TestRequestDetail(TestCase):
         mixer.blend(Profile, user=self.user)
         self.proposal = mixer.blend(Proposal)
         mixer.blend(Membership, proposal=self.proposal, user=self.user)
-        self.request_group = mixer.blend(RequestGroup, proposal=self.proposal, name=mixer.RANDOM)
+        self.request_group = mixer.blend(RequestGroup, proposal=self.proposal, name=mixer.RANDOM,
+                                         observation_type=RequestGroup.NORMAL)
         self.request = mixer.blend(Request, request_group=self.request_group)
         mixer.blend(Configuration, request=self.request, instrument_type='1M0-SCICAM-SBIG')
         self.client.force_login(self.user)
@@ -182,7 +186,8 @@ class TestRequestDetail(TestCase):
     def test_request_detail_only_authored(self):
         self.user.profile.view_authored_requests_only = True
         self.user.profile.save()
-        request_group = mixer.blend(RequestGroup, proposal=self.proposal, name=mixer.RANDOM, submitter=self.user)
+        request_group = mixer.blend(RequestGroup, proposal=self.proposal, name=mixer.RANDOM, submitter=self.user,
+                                    observation_type=RequestGroup.NORMAL)
         request = mixer.blend(Request, request_group=request_group)
         mixer.blend(Configuration, request=request, instrument_type='1M0-SCICAM-SBIG')
         response = self.client.get(reverse('requestgroups:request-detail', kwargs={'pk': self.request.id}))
