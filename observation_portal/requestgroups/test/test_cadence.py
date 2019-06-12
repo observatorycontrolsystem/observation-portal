@@ -6,14 +6,16 @@ import datetime
 from observation_portal.common.test_helpers import SetTimeMixin
 from observation_portal.requestgroups.cadence import expand_cadence_request
 from observation_portal.requestgroups.models import (
-    Request, Configuration, Target, Constraints, Location, InstrumentConfig, AcquisitionConfig, GuidingConfig
+    RequestGroup, Request, Configuration, Target, Constraints, Location, InstrumentConfig, AcquisitionConfig,
+    GuidingConfig
 )
 
 
 class TestCadence(SetTimeMixin, TestCase):
     def setUp(self):
         super().setUp()
-        self.req = mixer.blend(Request)
+        self.req_group = mixer.blend(RequestGroup, observation_type=RequestGroup.NORMAL)
+        self.req = mixer.blend(Request, request_group=self.req_group)
         self.configuration = mixer.blend(
             Configuration, request=self.req, instrument_type='1M0-SCICAM-SBIG', type='EXPOSE'
         )
