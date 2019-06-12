@@ -150,7 +150,7 @@ class ConfigurationStatus(models.Model):
             ret_dict['summary'] = self.summary.as_dict()
         else:
             ret_dict['summary'] = {}
-        return ret_dict 
+        return ret_dict
 
     class Meta:
         unique_together = ('configuration', 'observation')
