@@ -268,7 +268,7 @@ def pointing_to_target(pointing):
         if 'dailymot' in pointing and float(pointing['dailymot']):
             target['dailymot'] = float(pointing['dailymot'])
     else:
-        # Static or Satellite type
+        # Satellite (Static) type
         if pointing.get('coord_type', 'RD') == 'AA':
             if 'az' in pointing:
                 target['azimuth'] = float(pointing['az'])
@@ -285,7 +285,7 @@ def pointing_to_target(pointing):
             if 'diff_alt_accel' in pointing and float(pointing['diff_alt_accel']):
                 target['diff_altitude_acceleration'] = float(pointing['diff_alt_accel'])
         else:
-            raise PondBlockError("Only Coordinate Types RD and AA are supported for Static pointing in the shim")
+            raise PondBlockError("Only Coordinate Types AA are supported for Static/Satellite pointing in the shim")
 
     extra_params = {}
     if 'vmag' in pointing and float(pointing['vmag']):
