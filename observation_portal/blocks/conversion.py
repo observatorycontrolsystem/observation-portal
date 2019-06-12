@@ -261,36 +261,21 @@ def pointing_to_target(pointing):
             target['dailymot'] = float(pointing['dailymot'])
     else:
         # Static or Satellite type
-        if pointing.get('coord_type', 'RD') == 'RD':
-            if 'ra' in pointing:
-                target['ra'] = float(pointing['ra'])
-            if 'dec' in pointing:
-                target['dec'] = float(pointing['dec'])
-            if 'diff_epoch_rate' in pointing and float(pointing['diff_epoch_rate']):
-                target['diff_epoch_rate'] = float(pointing['diff_epoch_rate'])
-            if 'diff_ra_rate' in pointing and float(pointing['diff_ra_rate']):
-                target['diff_roll_rate'] = float(pointing['diff_ra_rate'])
-            if 'diff_dec_rate' in pointing and float(pointing['diff_dec_rate']):
-                target['diff_pitch_rate'] = float(pointing['diff_dec_rate'])
-            if 'diff_ra_accel' in pointing and float(pointing['diff_ra_accel']):
-                target['diff_roll_acceleration'] = float(pointing['diff_ra_accel'])
-            if 'diff_dec_accel' in pointing and float(pointing['diff_dec_accel']):
-                target['diff_pitch_acceleration'] = float(pointing['diff_dec_accel'])
-        elif pointing.get('coord_type', 'RD') == 'AA':
+        if pointing.get('coord_type', 'RD') == 'AA':
             if 'az' in pointing:
                 target['azimuth'] = float(pointing['az'])
             if 'alt' in pointing:
                 target['altitude'] = float(pointing['alt'])
             if 'diff_epoch_rate' in pointing and float(pointing['diff_epoch_rate']):
-                target['diff_epoch_rate'] = float(pointing['diff_epoch_rate'])
+                target['diff_epoch'] = float(pointing['diff_epoch_rate'])
             if 'diff_az_rate' in pointing and float(pointing['diff_az_rate']):
-                target['diff_roll_rate'] = float(pointing['diff_az_rate'])
+                target['diff_azimuth_rate'] = float(pointing['diff_az_rate'])
             if 'diff_alt_rate' in pointing and float(pointing['diff_alt_rate']):
-                target['diff_pitch_rate'] = float(pointing['diff_alt_rate'])
+                target['diff_altitude_rate'] = float(pointing['diff_alt_rate'])
             if 'diff_az_accel' in pointing and float(pointing['diff_az_accel']):
-                target['diff_roll_acceleration'] = float(pointing['diff_az_accel'])
+                target['diff_azimuth_acceleration'] = float(pointing['diff_az_accel'])
             if 'diff_alt_accel' in pointing and float(pointing['diff_alt_accel']):
-                target['diff_pitch_acceleration'] = float(pointing['diff_alt_accel'])
+                target['diff_altitude_acceleration'] = float(pointing['diff_alt_accel'])
         else:
             raise PondBlockError("Only Coordinate Types RD and AA are supported for Static pointing in the shim")
 
@@ -461,18 +446,21 @@ def configuration_to_pointing(configuration):
         pointing['ha'] = pointing['hour_angle']
         del pointing['hour_angle']
 
-    if 'diff_pitch_rate' in pointing and pitch_converter != 'pitch':
-        pointing['diff_{}_rate'.format(pitch_converter)] = pointing['diff_pitch_rate']
-        del pointing['diff_pitch_rate']
-    if 'diff_pitch_acceleration' in pointing:
-        pointing['diff_{}_accel'.format(pitch_converter)] = pointing['diff_pitch_acceleration']
-        del pointing['diff_pitch_acceleration']
-    if 'diff_roll_rate' in pointing and roll_converter != 'roll':
-        pointing['diff_{}_rate'.format(roll_converter)] = pointing['diff_roll_rate']
-        del pointing['diff_roll_rate']
-    if 'diff_roll_acceleration' in pointing:
-        pointing['diff_{}_accel'.format(roll_converter)] = pointing['diff_roll_acceleration']
-        del pointing['diff_roll_acceleration']
+    if 'diff_altitude_rate' in pointing and pitch_converter != 'pitch':
+        pointing['diff_{}_rate'.format(pitch_converter)] = pointing['diff_altitude_rate']
+        del pointing['diff_altitude_rate']
+    if 'diff_altitude_acceleration' in pointing:
+        pointing['diff_{}_accel'.format(pitch_converter)] = pointing['diff_altitude_acceleration']
+        del pointing['diff_altitude_acceleration']
+    if 'diff_azimuth_rate' in pointing and roll_converter != 'roll':
+        pointing['diff_{}_rate'.format(roll_converter)] = pointing['diff_azimuth_rate']
+        del pointing['diff_azimuth_rate']
+    if 'diff_azimuth_acceleration' in pointing:
+        pointing['diff_{}_accel'.format(roll_converter)] = pointing['diff_azimuth_acceleration']
+        del pointing['diff_azimuth_acceleration']
+    if 'diff_epoch' in pointing:
+        pointing['diff_epoch_rate'] = pointint['diff_epoch']
+        del pointing['diff_epoch']
 
     if 'extra_params' in pointing:
         if target.get('extra_params', {}).get('v_magnitude'):

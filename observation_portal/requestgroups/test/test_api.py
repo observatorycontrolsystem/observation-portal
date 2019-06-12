@@ -1057,11 +1057,11 @@ class TestSatelliteTarget(SetTimeMixin, APITestCase):
             # satellite
             'altitude': 33.0,
             'azimuth': 2.0,
-            'diff_pitch_rate': 3.0,
-            'diff_roll_rate': 4.0,
-            'diff_pitch_acceleration': 5.0,
-            'diff_roll_acceleration': 0.99,
-            'diff_epoch_rate': 22.0,
+            'diff_altitude_rate': 3.0,
+            'diff_azimuth_rate': 4.0,
+            'diff_altitude_acceleration': 5.0,
+            'diff_azimuth_acceleration': 0.99,
+            'diff_epoch': 22.0,
             'epoch': 2000.0,
         }
 
@@ -1072,13 +1072,13 @@ class TestSatelliteTarget(SetTimeMixin, APITestCase):
 
     def test_post_requestgroup_satellite_missing_fields(self):
         bad_data = self.generic_payload.copy()
-        del bad_data['requests'][0]['configurations'][0]['target']['diff_epoch_rate']
-        del bad_data['requests'][0]['configurations'][0]['target']['diff_pitch_acceleration']
+        del bad_data['requests'][0]['configurations'][0]['target']['diff_epoch']
+        del bad_data['requests'][0]['configurations'][0]['target']['diff_altitude_acceleration']
 
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('diff_epoch_rate', str(response.content))
-        self.assertIn('diff_pitch_acceleration', str(response.content))
+        self.assertIn('diff_epoch', str(response.content))
+        self.assertIn('diff_altitude_acceleration', str(response.content))
 
 
 class TestLocationApi(SetTimeMixin, APITestCase):
