@@ -648,7 +648,6 @@ class RegionOfInterest(models.Model):
 
 
 class GuidingConfig(models.Model):
-    ON = 'ON'
     OFF = 'OFF'
 
     SERIALIZER_EXCLUDE = ('id', 'configuration')

@@ -82,8 +82,15 @@ class ScienceApplicationAdmin(admin.ModelAdmin):
                         request, 'Application {} has no approved Time Allocations'.format(app.title), level='ERROR'
                     )
                     return
-                app.send_approved_notification()
                 self.message_user(request, 'Proposal {} successfully created.'.format(app.proposal))
 
+                notification_sent = app.send_approved_notification()
+                if not notification_sent:
+                    self.message_user(
+                        request,
+                        'Email notifying PI of approval of proposal {} failed to send'.format(app.proposal),
+                        level='ERROR'
+                    )
+                    return
 
 admin.site.register(ScienceApplication, ScienceApplicationAdmin)
