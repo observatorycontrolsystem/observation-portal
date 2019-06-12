@@ -100,8 +100,8 @@ class OrbitalElementsTargetHelper(BaseTargetHelper):
 class SatelliteTargetHelper(BaseTargetHelper):
     def __init__(self, target):
         self.fields = (
-            'name', 'type', 'altitude', 'azimuth', 'diff_pitch_rate', 'diff_roll_rate',
-            'diff_epoch_rate', 'diff_pitch_acceleration', 'diff_roll_acceleration'
+            'name', 'type', 'altitude', 'azimuth', 'diff_altitude_rate', 'diff_azimuth_rate',
+            'diff_epoch', 'diff_altitude_acceleration', 'diff_azimuth_acceleration'
         )
         self.required_fields = self.fields
         self.fields += ()
