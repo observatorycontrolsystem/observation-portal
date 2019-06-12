@@ -176,7 +176,7 @@ def convert_userrequest_to_requestgroup(userrequest):
                 acquire_extra_params['acquire_strategy'] = molecule['acquire_strategy']
             if molecule.get('acquire_mode', '') == 'BRIGHTEST':
                 acquire_extra_params['acquire_radius'] = molecule['acquire_radius_arcsec']
-            if molecule.get('acquire_strategy', '') and 'NRES' in molecule.get('instrument_name', ''):
+            if molecule.get('acquire_strategy', '') and 'NRES' in molecule.get('instrument_name', '').upper():
                 acquire_mode = acquire_mode_from_strategies(molecule.get('ag_strategy', ''))
 
             acquisition_config = {
