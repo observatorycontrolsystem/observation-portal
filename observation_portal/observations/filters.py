@@ -36,6 +36,11 @@ class ObservationFilter(django_filters.FilterSet):
         label='Instrument Type',
         field_name='configuration_statuses__configuration__instrument_type'
     )
+    configuration_type = django_filters.MultipleChoiceFilter(
+        choices=configdb.get_configuration_type_tuples(),
+        label='Configuration Type',
+        field_name='configuration_statuses__configuration__type'
+    )
     ordering = django_filters.OrderingFilter(
         fields=['start', 'end', 'modified', 'created', 'state']
     )

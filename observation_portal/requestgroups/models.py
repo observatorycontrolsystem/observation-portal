@@ -452,27 +452,27 @@ class Target(models.Model):
     )
 
     # Nonsidereal rate
-    diff_pitch_rate = models.FloatField(
-        verbose_name='differential pitch rate', null=True, blank=True,
-        help_text='Differential pitch rate (arcsec/s)'
+    diff_altitude_rate = models.FloatField(
+        verbose_name='differential altitude rate', null=True, blank=True,
+        help_text='Differential altitude rate (arcsec/s)'
     )
-    diff_roll_rate = models.FloatField(
-        verbose_name='differential roll rate', null=True, blank=True,
-        help_text='Differential roll rate (arcsec/s)'
+    diff_azimuth_rate = models.FloatField(
+        verbose_name='differential azimuth rate', null=True, blank=True,
+        help_text='Differential azimuth rate (arcsec/s)'
     )
-    diff_epoch_rate = models.FloatField(
-        verbose_name='differential epoch rate', null=True, blank=True,
+    diff_epoch = models.FloatField(
+        verbose_name='differential epoch', null=True, blank=True,
         help_text='Reference time for non-sidereal motion (MJD)'
     )
 
     # Satellite Fields
-    diff_pitch_acceleration = models.FloatField(
-        verbose_name='differential pitch acceleration', null=True, blank=True,
-        help_text='Differential pitch acceleration (arcsec/s^2)'
+    diff_altitude_acceleration = models.FloatField(
+        verbose_name='differential altitude acceleration', null=True, blank=True,
+        help_text='Differential altitude acceleration (arcsec/s^2)'
     )
-    diff_roll_acceleration = models.FloatField(
-        verbose_name='differential roll acceleration', null=True, blank=True,
-        help_text='Differential role acceleration (arcsec/s^2)'
+    diff_azimuth_acceleration = models.FloatField(
+        verbose_name='differential azimuth acceleration', null=True, blank=True,
+        help_text='Differential azimuth acceleration (arcsec/s^2)'
     )
 
     # Orbital elements
