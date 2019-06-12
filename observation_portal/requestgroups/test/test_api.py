@@ -2393,7 +2393,8 @@ class TestPressure(APITestCase):
 
     @patch('observation_portal.requestgroups.contention.get_filtered_rise_set_intervals_by_site')
     def test_binned_pressure_by_hours_from_now_should_be_gtzero_pressure(self, mock_intervals):
-        request = mixer.blend(Request, state='PENDING', duration=120*60)  # 2 hour duration.
+        requestgroup = mixer.blend(RequestGroup, observation_type=RequestGroup.NORMAL)
+        request = mixer.blend(Request, request_group=requestgroup, state='PENDING', duration=120*60)  # 2 hour duration.
         mixer.blend(Window, request=request)
         mixer.blend(Location, request=request, site='tst')
         conf = mixer.blend(Configuration, request=request, instrument_type='1M0-SCICAM-SBIG')
