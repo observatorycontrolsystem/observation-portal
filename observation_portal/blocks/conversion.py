@@ -29,6 +29,13 @@ def pointing_to_target_type(pointing_type, coordinate_type):
         return 'ORBITAL_ELEMENTS'
 
 
+def acquire_mode_from_strategy(ag_strategy):
+    if 'WCS' in ag_strategy.upper():
+        return 'WCS'
+    else:
+        return 'BRIGHTEST'
+
+
 def convert_pond_blocks_to_observations(blocks):
     if isinstance(blocks, list):
         return [convert_pond_block_to_observation(block) for block in blocks]
@@ -136,7 +143,7 @@ def convert_pond_block_to_observation(block):
 
         ag_extra_params = {}
         if molecule.get('ag_strategy'):
-            ag_extra_params['guide_strategy'] = molecule['ag_strategy']
+            ag_extra_params['ag_strategy'] = molecule['ag_strategy']
 
         (guide_mode, guide_optional) = pond_ag_mode_to_guiding_mode(molecule.get('ag_mode', 'OPT'))
         if block.get('instrument_class').upper() in ['1M0-NRES-SCICAM', '1M0-NRES-COMMISIONING', '2M0-FLOYDS-SCICAM']:
@@ -151,14 +158,15 @@ def convert_pond_block_to_observation(block):
             'extra_params': ag_extra_params
         }
 
-        acquire_mode = 'OFF'
+        acquire_mode = molecule.get('acquire_mode', 'OFF')
         acquire_extra_params = {}
-        if not molecule.get('acquire_mode', 'OFF') == 'OFF':
+        if not acquire_mode == 'OFF':
             acquire_mode = molecule['acquire_mode']
-            if molecule.get('acquire_strategy'):
-                acquire_extra_params['acquire_strategy'] = molecule['acquire_strategy']
             if molecule['acquire_mode'] == 'BRIGHTEST' and molecule.get('acquire_radius_arcsec'):
                 acquire_extra_params['acquire_radius'] = float(molecule['acquire_radius_arcsec'])
+            if molecule.get('acquire_strategy') and 'NRES' in block.get('instrument_class').upper():
+                acquire_extra_params['acquire_strategy'] = molecule['acquire_strategy']
+                acquire_mode = acquire_mode_from_strategy(molecule.get('ag_strategy'))
 
         acquisition_config = {
             'mode': acquire_mode,
@@ -390,8 +398,8 @@ def convert_observation_to_pond_block(observation):
             molecule['args'] = configuration['extra_params']['script_name']
         if first_instrument_config['extra_params'].get('defocus'):
             molecule['defocus'] = str(first_instrument_config['extra_params']['defocus'])
-        if configuration['guiding_config']['extra_params'].get('guide_strategy'):
-            molecule['ag_strategy'] = configuration['guiding_config']['extra_params']['guide_strategy']
+        if configuration['guiding_config']['extra_params'].get('ag_strategy'):
+            molecule['ag_strategy'] = configuration['guiding_config']['extra_params']['ag_strategy']
         if 'filter' in optical_elements:
             molecule['filter'] = optical_elements['filter']
         if 'slit' in optical_elements:
