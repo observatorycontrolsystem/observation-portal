@@ -187,7 +187,7 @@
           that.rawData = data.pressure_data;
           that.rawSiteData = data.site_nights;
           that.maxY = that.maxPressureInGraph;
-          that.siteNights = that.toSiteNightData;
+          that.siteNights = that.toSiteNightData();
           that.data.datasets = that.toChartData;
         }).done(function() {
           that.loadingDataFailed = false;
