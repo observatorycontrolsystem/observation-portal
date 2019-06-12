@@ -29,7 +29,7 @@ from observation_portal.common.rise_set_utils import get_filtered_rise_set_inter
 logger = logging.getLogger(__name__)
 
 
-class ModeValidator:
+class ModeValidationHelper:
     """Class used to validate modes of different types"""
     def __init__(self, mode_type, instrument_type, default_modes, modes):
         self._mode_type = mode_type.lower()
@@ -250,9 +250,9 @@ class ConfigurationSerializer(serializers.ModelSerializer):
         guiding_config = data['guiding_config']
 
         # Validate the guide mode
-        guide_validator = ModeValidator('guiding', instrument_type, default_modes, modes)
-        if guide_validator.mode_is_not_set(guiding_config):
-            guide_mode_to_set = guide_validator.get_mode_to_set()
+        guide_validation_helper = ModeValidationHelper('guiding', instrument_type, default_modes, modes)
+        if guide_validation_helper.mode_is_not_set(guiding_config):
+            guide_mode_to_set = guide_validation_helper.get_mode_to_set()
             if guide_mode_to_set['error']:
                 raise serializers.ValidationError(_(guide_mode_to_set['error']))
             if guide_mode_to_set['mode']:
@@ -260,7 +260,7 @@ class ConfigurationSerializer(serializers.ModelSerializer):
             else:
                 guiding_config['mode'] = GuidingConfig.OFF
 
-        guide_mode_error_msg = guide_validator.get_mode_error_msg(guiding_config)
+        guide_mode_error_msg = guide_validation_helper.get_mode_error_msg(guiding_config)
         if guide_mode_error_msg:
             raise serializers.ValidationError(_(guide_mode_error_msg))
 
@@ -278,9 +278,9 @@ class ConfigurationSerializer(serializers.ModelSerializer):
         else:
             # Validate acquire modes
             acquisition_config = data['acquisition_config']
-            acquire_validator = ModeValidator('acquisition', instrument_type, default_modes, modes)
-            if acquire_validator.mode_is_not_set(acquisition_config):
-                acquire_mode_to_set = acquire_validator.get_mode_to_set()
+            acquire_validation_helper = ModeValidationHelper('acquisition', instrument_type, default_modes, modes)
+            if acquire_validation_helper.mode_is_not_set(acquisition_config):
+                acquire_mode_to_set = acquire_validation_helper.get_mode_to_set()
                 if acquire_mode_to_set['error']:
                     raise serializers.ValidationError(_(acquire_mode_to_set['error']))
                 if acquire_mode_to_set['mode']:
@@ -288,7 +288,7 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                 else:
                     acquisition_config['mode'] = AcquisitionConfig.OFF
 
-            acquire_mode_error_msg = acquire_validator.get_mode_error_msg(acquisition_config)
+            acquire_mode_error_msg = acquire_validation_helper.get_mode_error_msg(acquisition_config)
             if acquire_mode_error_msg:
                 raise serializers.ValidationError(_(acquire_mode_error_msg))
 
@@ -297,11 +297,11 @@ class ConfigurationSerializer(serializers.ModelSerializer):
             # Validate the readout mode and the binning. Readout modes and binning are tied
             # together- If one is set, we can determine the other.
             # TODO: Remove the binning checks when binnings are removed entirely
-            readout_validator = ModeValidator('readout', instrument_type, default_modes, modes)
-            if readout_validator.mode_is_not_set(instrument_config):
+            readout_validation_helper = ModeValidationHelper('readout', instrument_type, default_modes, modes)
+            if readout_validation_helper.mode_is_not_set(instrument_config):
                 if 'bin_x' not in instrument_config and 'bin_y' not in instrument_config:
                     # Set the readout mode as well as the binning
-                    readout_mode_to_set = readout_validator.get_mode_to_set()
+                    readout_mode_to_set = readout_validation_helper.get_mode_to_set()
                     if readout_mode_to_set['error']:
                         raise serializers.ValidationError(_(readout_mode_to_set['error']))
                     if readout_mode_to_set['mode']:
@@ -319,7 +319,7 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                         raise serializers.ValidationError(_(str(cdbe)))
             else:
                 # A readout mode is set - validate the mode
-                readout_error_msg = readout_validator.get_mode_error_msg(instrument_config)
+                readout_error_msg = readout_validation_helper.get_mode_error_msg(instrument_config)
                 if readout_error_msg:
                     raise serializers.ValidationError(_(readout_error_msg))
 
@@ -338,15 +338,15 @@ class ConfigurationSerializer(serializers.ModelSerializer):
 
             # Validate the rotator modes
             if 'rotator' in modes:
-                rotator_mode_validator = ModeValidator('rotator', instrument_type, default_modes, modes)
-                if rotator_mode_validator.mode_is_not_set(instrument_config):
-                    rotator_mode_to_set = rotator_mode_validator.get_mode_to_set()
+                rotator_mode_validation_helper = ModeValidationHelper('rotator', instrument_type, default_modes, modes)
+                if rotator_mode_validation_helper.mode_is_not_set(instrument_config):
+                    rotator_mode_to_set = rotator_mode_validation_helper.get_mode_to_set()
                     if rotator_mode_to_set['error']:
                         raise serializers.ValidationError(_(rotator_mode_to_set['error']))
                     if rotator_mode_to_set['mode']:
                         instrument_config['rotator_mode'] = rotator_mode_to_set['mode']['code']
 
-                rotator_error_msg = rotator_mode_validator.get_mode_error_msg(instrument_config)
+                rotator_error_msg = rotator_mode_validation_helper.get_mode_error_msg(instrument_config)
                 if rotator_error_msg:
                     raise serializers.ValidationError(_(rotator_error_msg))
 
