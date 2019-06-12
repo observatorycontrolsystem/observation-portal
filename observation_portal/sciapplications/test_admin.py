@@ -66,7 +66,7 @@ class TestSciAppAdmin(DramatiqTestCase):
         for app in self.apps:
             self.assertEqual(ScienceApplication.objects.get(pk=app.id).status, ScienceApplication.PORTED)
 
-    def test_email_pi_on_successful_port(self):
+    def test_email_pi_on_successful_port_pi_is_submitter(self):
         app_id_to_port = self.apps[0].id
         ScienceApplication.objects.filter(pk=app_id_to_port).update(status=ScienceApplication.ACCEPTED)
         self.client.post(
@@ -75,9 +75,54 @@ class TestSciAppAdmin(DramatiqTestCase):
             follow=True
         )
         self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(ScienceApplication.objects.get(pk=app_id_to_port).proposal.pi.email, self.user.email)
         self.assertEqual([ScienceApplication.objects.get(pk=app_id_to_port).proposal.pi.email], mail.outbox[0].to)
         self.assertIn(ScienceApplication.objects.get(pk=app_id_to_port).proposal.id, str(mail.outbox[0].message()))
         self.assertIn(ScienceApplication.objects.get(pk=app_id_to_port).call.semester.id, str(mail.outbox[0].message()))
+
+    def test_email_pi_on_successful_port_when_registered_pi_is_not_submitter(self):
+        other_user = mixer.blend(User)
+        app_id_to_port = self.apps[0].id
+        ScienceApplication.objects.filter(pk=app_id_to_port).update(status=ScienceApplication.ACCEPTED)
+        ScienceApplication.objects.filter(pk=app_id_to_port).update(pi=other_user.email)
+        self.client.post(
+            reverse('admin:sciapplications_scienceapplication_changelist'),
+            data={'action': 'port', '_selected_action': [str(app.pk) for app in self.apps]},
+            follow=True
+        )
+        # If the PI is registered but is not the submitter, they will receive two emails- one telling them
+        # their proposal has been approved, and another telling them them that they have been added to that proposal
+        # and can begin submitting requests. The approval email is second.
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertEqual(ScienceApplication.objects.get(pk=app_id_to_port).proposal.pi.email, other_user.email)
+        # Added to proposal email
+        self.assertEqual([other_user.email], mail.outbox[0].to)
+        self.assertIn('You have been added to', str(mail.outbox[0].message()))
+        # Proposal approved email
+        self.assertEqual([other_user.email], mail.outbox[1].to)
+        self.assertIn(ScienceApplication.objects.get(pk=app_id_to_port).proposal.id, str(mail.outbox[1].message()))
+        self.assertIn(ScienceApplication.objects.get(pk=app_id_to_port).call.semester.id, str(mail.outbox[1].message()))
+
+    def test_email_pi_on_successful_port_when_pi_is_not_registered(self):
+        non_registered_email = 'somenonexistantuser@email.com'
+        app_id_to_port = self.apps[0].id
+        ScienceApplication.objects.filter(pk=app_id_to_port).update(status=ScienceApplication.ACCEPTED)
+        ScienceApplication.objects.filter(pk=app_id_to_port).update(pi=non_registered_email)
+        self.client.post(
+            reverse('admin:sciapplications_scienceapplication_changelist'),
+            data={'action': 'port', '_selected_action': [str(app.pk) for app in self.apps]},
+            follow=True
+        )
+        # If the PI is not registered, then 2 emails will be sent out- one inviting them to register an account, and
+        # one letting them know their proposal has been approved. The accepted email is sent second.
+        self.assertEqual(len(mail.outbox), 2)
+        # Proposal invitation email
+        self.assertEqual([non_registered_email], mail.outbox[0].to)
+        self.assertIn('Please use the following link to register your account', str(mail.outbox[0].message()))
+        # Proposal approved email
+        self.assertEqual([non_registered_email], mail.outbox[1].to)
+        self.assertIn(ScienceApplication.objects.get(pk=app_id_to_port).proposal.id, str(mail.outbox[1].message()))
+        self.assertIn(ScienceApplication.objects.get(pk=app_id_to_port).call.semester.id, str(mail.outbox[1].message()))
 
     def test_port_not_accepted(self):
         self.client.post(
