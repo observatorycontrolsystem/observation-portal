@@ -150,7 +150,7 @@ class ConfigDB(object):
         configuration_types = set()
         for instrument in self.get_instruments():
             for config_type in instrument['science_camera']['camera_type']['configuration_types']:
-                configuration_types.add(config_type)
+                configuration_types.add(config_type.upper())
         return [(config_type, config_type) for config_type in configuration_types]
 
     def get_instruments_at_location(self, site_code, enclosure_code, telescope_code, only_schedulable=False):
