@@ -121,6 +121,23 @@ class TestMembershipLimit(TestCase):
         self.assertEqual(membership.time_limit, 0)
         self.assertContains(response, 'Please enter a valid time limit')
 
+    def test_set_bad_global_limit(self):
+        self.client.force_login(self.pi_user)
+        ci_users = mixer.cycle(5).blend(User)
+        mixer.cycle(5).blend(Profile, user=(ci_user for ci_user in ci_users))
+        memberships = mixer.cycle(5).blend(
+            Membership, user=(c for c in ci_users), proposal=self.proposal, role=Membership.CI, time_limit=0
+        )
+        response = self.client.post(
+            reverse('proposals:membership-global', kwargs={'pk': self.proposal.id}),
+            data={'time_limit': ''},
+            follow=True
+        )
+        self.assertContains(response, 'Please enter a valid time limit')
+        for membership in memberships:
+            membership.refresh_from_db()
+            self.assertEqual(membership.time_limit, 0)
+
 
 class TestProposalInvite(TestCase):
     def setUp(self):
