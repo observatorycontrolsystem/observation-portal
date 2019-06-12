@@ -144,6 +144,252 @@
                     ]
                   },
                   "__str__": "tst.doma.1m0a.xx01-xx01"
+                },
+                {
+                  "state": "DISABLED",
+                  "code": "xx06",
+                  "allow_self_guiding": true,
+                  "autoguider_camera": {
+                    "code": "xx07",
+                    "camera_type": {
+                      "code": "1M0-SCICAM-SBIG"
+                    }
+                  },
+                  "science_camera": {
+                    "code": "xx06",
+                    "camera_type": {
+                      "code": "1M0-SCICAM-SBIG",
+                      "name": "1M0-SCICAM-SBIG",
+                      "default_mode": {
+                        "binning": 2,
+                        "readout": 14.5
+                      },
+                      "configuration_types": [
+                        "EXPOSE",
+                        "BIAS",
+                        "DARK",
+                        "SCRIPT"
+                      ],
+                      "default_acceptability_threshold": 90,
+                      "pixels_x": 1000,
+                      "pixels_y": 1000,
+                      "max_rois": 1,
+                      "config_change_time": 0,
+                      "acquire_processing_time": 0,
+                      "acquire_exposure_time": 0,
+                      "front_padding": 90,
+                      "filter_change_time": 2,
+                      "fixed_overhead_per_exposure": 1,
+                      "mode_set": [
+                        {
+                          "binning": 1,
+                          "readout": 35.0
+                        },
+                        {
+                          "binning": 2,
+                          "readout": 14.5
+                        },
+                        {
+                          "binning": 3,
+                          "readout": 11.5
+                        }
+                      ],
+                      "mode_types": [
+                        {
+                          "type": "readout",
+                          "default": "1m0_sbig_2",
+                          "modes": [
+                            {
+                              "code": "1m0_sbig_1",
+                              "overhead": 35.0,
+                              "params": {
+                                "binning": 1
+                              }
+                            },
+                            {
+                              "code": "1m0_sbig_2",
+                              "overhead": 14.5,
+                              "params": {
+                                "binning": 2
+                              }
+                            },
+                            {
+                              "code": "1m0_sbig_3",
+                              "overhead": 11.5,
+                              "params": {
+                                "binning": 3
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "type": "acquisition",
+                          "default": "OFF",
+                          "modes": [
+                            {
+                              "code": "OFF",
+                              "overhead": 0.0,
+                              "params": {}
+                            }
+                          ]
+                        },
+                        {
+                          "type": "guiding",
+                          "default": "OFF",
+                          "modes": [
+                            {
+                              "code": "OFF",
+                              "overhead": 0.0,
+                              "params": {}
+                            },
+                            {
+                              "code": "ON",
+                              "overhead": 0.0,
+                              "params": {}
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "filters": "air",
+                    "optical_element_groups": [
+                      {
+                        "type": "filters",
+                        "element_change_overhead": 2,
+                        "optical_elements": [
+                          {
+                            "name": "Air",
+                            "code": "air",
+                            "schedulable": false
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "__str__": "tst.doma.1m0a.xx06-xx07"
+                },
+                {
+                  "state": "ENABLED",
+                  "code": "xx08",
+                  "allow_self_guiding": true,
+                  "autoguider_camera": {
+                    "code": "xx09",
+                    "camera_type": {
+                      "code": "1M0-SCICAM-SBIG"
+                    }
+                  },
+                  "science_camera": {
+                    "code": "xx08",
+                    "camera_type": {
+                      "code": "1M0-SCICAM-SBIG",
+                      "name": "1M0-SCICAM-SBIG",
+                      "default_mode": {
+                        "binning": 2,
+                        "readout": 14.5
+                      },
+                      "configuration_types": [
+                        "EXPOSE",
+                        "BIAS",
+                        "DARK",
+                        "SCRIPT"
+                      ],
+                      "default_acceptability_threshold": 90,
+                      "pixels_x": 1000,
+                      "pixels_y": 1000,
+                      "max_rois": 1,
+                      "config_change_time": 0,
+                      "acquire_processing_time": 0,
+                      "acquire_exposure_time": 0,
+                      "front_padding": 90,
+                      "filter_change_time": 2,
+                      "fixed_overhead_per_exposure": 1,
+                      "mode_set": [
+                        {
+                          "binning": 1,
+                          "readout": 35.0
+                        },
+                        {
+                          "binning": 2,
+                          "readout": 14.5
+                        },
+                        {
+                          "binning": 3,
+                          "readout": 11.5
+                        }
+                      ],
+                      "mode_types": [
+                        {
+                          "type": "readout",
+                          "default": "1m0_sbig_2",
+                          "modes": [
+                            {
+                              "code": "1m0_sbig_1",
+                              "overhead": 35.0,
+                              "params": {
+                                "binning": 1
+                              }
+                            },
+                            {
+                              "code": "1m0_sbig_2",
+                              "overhead": 14.5,
+                              "params": {
+                                "binning": 2
+                              }
+                            },
+                            {
+                              "code": "1m0_sbig_3",
+                              "overhead": 11.5,
+                              "params": {
+                                "binning": 3
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "type": "acquisition",
+                          "default": "OFF",
+                          "modes": [
+                            {
+                              "code": "OFF",
+                              "overhead": 0.0,
+                              "params": {}
+                            }
+                          ]
+                        },
+                        {
+                          "type": "guiding",
+                          "default": "OFF",
+                          "modes": [
+                            {
+                              "code": "OFF",
+                              "overhead": 0.0,
+                              "params": {}
+                            },
+                            {
+                              "code": "ON",
+                              "overhead": 0.0,
+                              "params": {}
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "filters": "air",
+                    "optical_element_groups": [
+                      {
+                        "type": "filters",
+                        "element_change_overhead": 2,
+                        "optical_elements": [
+                          {
+                            "name": "Air",
+                            "code": "air",
+                            "schedulable": false
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "__str__": "tst.doma.1m0a.xx08-xx09"
                 }
               ]
             },
@@ -492,7 +738,6 @@
                       "mode_types": [
                         {
                           "type": "readout",
-                          "default": "1m0_nres_2",
                           "modes": [
                             {
                               "code": "1m0_nres_1",
@@ -516,8 +761,19 @@
                           "modes": [
                             {
                               "code": "WCS",
-                              "overhead": 0.0,
+                              "overhead": 400.0,
                               "params": {}
+                            },
+                            {
+                              "code": "MYMODE",
+                              "overhead": 400.0,
+                              "params": {
+                                "required_fields": [
+                                  "field1",
+                                  "field2",
+                                  "field3"
+                                ]
+                              }
                             }
                           ]
                         },
@@ -599,7 +855,6 @@
                       "mode_types": [
                         {
                           "type": "readout",
-                          "default": "2m0_floyds_1",
                           "modes": [
                             {
                               "code": "2m0_floyds_1",

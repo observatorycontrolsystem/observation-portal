@@ -157,12 +157,13 @@ def get_request_duration(request_dict):
 
         # Now add in optical element change time if the set of optical elements has changed
         for inst_config in configuration['instrument_configs']:
+            optical_elements = inst_config.get('optical_elements', {})
             change_overhead = 0
-            for oe_type, oe_value in inst_config['optical_elements'].items():
+            for oe_type, oe_value in optical_elements.items():
                 if oe_type not in previous_optical_elements or oe_value != previous_optical_elements[oe_type]:
                     if '{}s'.format(oe_type) in request_overheads['optical_element_change_overheads']:
                         change_overhead = max(request_overheads['optical_element_change_overheads']['{}s'.format(oe_type)], change_overhead)
-            previous_optical_elements = inst_config['optical_elements']
+            previous_optical_elements = optical_elements
             duration += change_overhead
 
         # Now add in the slew time between targets (configurations). Only Sidereal can be calculated based on position.
@@ -187,7 +188,7 @@ def get_request_duration(request_dict):
         guide_optional = configuration['guiding_config']['optional'] if 'optional' in configuration['guiding_config'] \
             else True
         if configuration['guiding_config']['mode'] != 'OFF' and not guide_optional:
-            if (configuration['guiding_config']['mode'] in request_overheads['guiding_overheads']):
+            if configuration['guiding_config']['mode'] in request_overheads['guiding_overheads']:
                 duration += request_overheads['guiding_overheads'][configuration['guiding_config']['mode']]
 
         # TODO: find out if we need to have a configuration type change time for spectrographs?
