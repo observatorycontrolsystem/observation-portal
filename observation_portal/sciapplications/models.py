@@ -1,3 +1,6 @@
+import io
+import smtplib
+
 from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import User
@@ -7,7 +10,6 @@ from django.template.loader import render_to_string
 from django.contrib.staticfiles import finders
 from weasyprint import HTML, CSS
 from PyPDF2 import PdfFileMerger
-import io
 
 from observation_portal.accounts.tasks import send_mail
 from observation_portal.proposals.models import (
@@ -214,7 +216,12 @@ class ScienceApplication(models.Model):
         # the proposal might not be set yet if the pi has not a registered an account. In that case, use the email
         # as set on the science application.
         pi_email = self.proposal.pi.email if self.proposal.pi else self.pi
-        send_mail.send(subject, message, 'portal@lco.global', [pi_email])
+        email_sent = True
+        try:
+            send_mail.send(subject, message, 'portal@lco.global', [pi_email])
+        except smtplib.SMTPException:
+            email_sent = False
+        return email_sent
 
 
 class TimeRequest(models.Model):
