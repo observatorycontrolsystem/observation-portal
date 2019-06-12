@@ -53,7 +53,7 @@ class Observation(models.Model):
     )
 
     class Meta:
-        ordering = ('-start',)
+        ordering = ('-modified',)
 
     @classmethod
     def cancel(self, observations):
