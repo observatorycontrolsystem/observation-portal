@@ -2213,7 +2213,8 @@ class TestPressure(APITestCase):
         self.mock_site_intervals = self.site_intervals_patch.start()
 
         for i in range(24):
-            request = mixer.blend(Request, state='PENDING')
+            requestgroup = mixer.blend(RequestGroup, observation_type=RequestGroup.NORMAL)
+            request = mixer.blend(Request, request_group=requestgroup, state='PENDING')
             mixer.blend(
                 Window, start=timezone.now(), end=timezone.now() + timedelta(hours=i), request=request
             )
@@ -2328,7 +2329,8 @@ class TestPressure(APITestCase):
 
     @patch('observation_portal.requestgroups.contention.get_filtered_rise_set_intervals_by_site')
     def test_visible_intervals(self, mock_intervals):
-        request = mixer.blend(Request, state='PENDING', duration=70*60)  # Request duration is 70 minutes.
+        requestgroup = mixer.blend(RequestGroup, observation_type=RequestGroup.NORMAL)
+        request = mixer.blend(Request, request_group=requestgroup, state='PENDING', duration=70*60)  # Request duration is 70 minutes.
         mixer.blend(Window, request=request)
         mixer.blend(Location, request=request, site='tst')
         conf = mixer.blend(Configuration, request=request)
