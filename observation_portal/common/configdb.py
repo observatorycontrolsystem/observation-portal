@@ -63,7 +63,7 @@ class ConfigDB(object):
         return self._get_configdb_data('sites')
 
     def get_sites_with_instrument_type_and_location(
-        self, instrument_type: str='', site_code: str='', enclosure_code: str='', telescope_code: str=''
+        self, instrument_type: str = '', site_code: str = '', enclosure_code: str = '', telescope_code: str = ''
     ) -> dict:
         """Get the location details for each site for which a resource exists.
 
@@ -152,13 +152,18 @@ class ConfigDB(object):
         for site in self.get_site_data():
             if site['code'].lower() == site_code.lower():
                 for enclosure in site['enclosure_set']:
-                    if enclosure['code'].lower() == enclosure_code:
+                    if enclosure['code'].lower() == enclosure_code.lower():
                         for telescope in enclosure['telescope_set']:
-                            if telescope['code'].lower() == telescope_code:
+                            if telescope['code'].lower() == telescope_code.lower():
                                 for instrument in telescope['instrument_set']:
-                                    if only_schedulable and instrument['state'] == 'SCHEDULABLE' or not only_schedulable:
+                                    if (
+                                            only_schedulable and self.is_schedulable(instrument)
+                                            or (not only_schedulable and self.is_active(instrument))
+                                    ):
                                         instrument_names.add(instrument['code'].lower())
-                                        instrument_types.add(instrument['science_camera']['camera_type']['code'].lower())
+                                        instrument_types.add(
+                                            instrument['science_camera']['camera_type']['code'].lower()
+                                        )
         return {'names': instrument_names, 'types': instrument_types}
 
     def get_telescopes_with_instrument_type_and_location(
@@ -174,7 +179,7 @@ class ConfigDB(object):
                             if not telescope_code or telescope_code == telescope['code']:
                                 code = '.'.join([telescope['code'], enclosure['code'], site['code']])
                                 for instrument in telescope['instrument_set']:
-                                    if instrument['state'] == 'SCHEDULABLE':
+                                    if self.is_schedulable(instrument):
                                         camera_type = instrument['science_camera']['camera_type']['code']
                                         if not instrument_type or instrument_type.upper() == camera_type.upper():
                                             if code not in telescope_details:
@@ -186,7 +191,6 @@ class ConfigDB(object):
                                                     'ha_limit_pos': telescope['ha_limit_pos'],
                                                     'ha_limit_neg': telescope['ha_limit_neg']
                                                 }
-
         return telescope_details
 
     def is_valid_instrument_type(self, instrument_type):
@@ -194,7 +198,10 @@ class ConfigDB(object):
             for enclosure in site['enclosure_set']:
                 for telescope in enclosure['telescope_set']:
                     for instrument in telescope['instrument_set']:
-                        if instrument_type.upper() == instrument['science_camera']['camera_type']['code'].upper():
+                        if (
+                                instrument_type.upper() == instrument['science_camera']['camera_type']['code'].upper()
+                                and self.is_active(instrument)
+                        ):
                             return True
         return False
 
@@ -203,8 +210,7 @@ class ConfigDB(object):
             for enclosure in site['enclosure_set']:
                 for telescope in enclosure['telescope_set']:
                     for instrument in telescope['instrument_set']:
-                        if instrument_name.upper() == instrument['code'].upper():
-
+                        if instrument_name.upper() == instrument['code'].upper() and self.is_active(instrument):
                             return True
         return False
 
@@ -215,9 +221,10 @@ class ConfigDB(object):
             for enclosure in site['enclosure_set']:
                 for telescope in enclosure['telescope_set']:
                     for instrument in telescope['instrument_set']:
-                        if only_schedulable and instrument['state'] != 'SCHEDULABLE':
-                            pass
-                        else:
+                        if (
+                                (only_schedulable and self.is_schedulable(instrument))
+                                or (not only_schedulable and self.is_active(instrument))
+                        ):
                             telescope_key = TelescopeKey(
                                 site=site['code'],
                                 enclosure=enclosure['code'],
@@ -228,7 +235,7 @@ class ConfigDB(object):
 
         return instruments
 
-    def get_instrument_types_per_telescope(self, only_schedulable: bool=False) -> dict:
+    def get_instrument_types_per_telescope(self, only_schedulable: bool = False) -> dict:
         """Get a set of available instrument types per telescope.
 
         Parameters:
@@ -260,14 +267,16 @@ class ConfigDB(object):
         """
         instrument_names = set()
         for instrument in self.get_instruments():
-            if (instrument['telescope_key'].site.lower() == site_code.lower()
+            if (
+                    instrument['telescope_key'].site.lower() == site_code.lower()
                     and instrument['telescope_key'].enclosure.lower() == enclosure_code.lower()
                     and instrument['telescope_key'].telescope.lower() == telescope_code.lower()
-                    and instrument['science_camera']['camera_type']['code'].lower() == instrument_type.lower()):
+                    and instrument['science_camera']['camera_type']['code'].lower() == instrument_type.lower()
+            ):
                 instrument_names.add(instrument['science_camera']['code'].lower())
         return instrument_names
 
-    def get_instrument_types_per_telescope_class(self, only_schedulable: bool=False) -> dict:
+    def get_instrument_types_per_telescope_class(self, only_schedulable: bool = False) -> dict:
         """Get a set of instrument types.
 
         Instrument types are returned by telescope class (0m4, 1m0, etc...)
@@ -285,7 +294,7 @@ class ConfigDB(object):
             telescope_instrument_types[tel_code].add(instrument['science_camera']['camera_type']['code'].upper())
         return telescope_instrument_types
 
-    def get_telescopes_per_instrument_type(self, instrument_type: str, only_schedulable: bool=False) -> set:
+    def get_telescopes_per_instrument_type(self, instrument_type: str, only_schedulable: bool = False) -> set:
         """Get a set of telescope keys.
 
         Parameters:
@@ -324,7 +333,7 @@ class ConfigDB(object):
                         optical_elements[optical_element_group['type']].append(element)
         return optical_elements
 
-    def get_modes_by_type(self, instrument_type: str, mode_type: str='') -> dict:
+    def get_modes_by_type(self, instrument_type: str, mode_type: str = '') -> dict:
         """Get the set of available modes.
 
         Parameters:
@@ -336,7 +345,10 @@ class ConfigDB(object):
         for instrument in self.get_instruments():
             if instrument_type.upper() == instrument['science_camera']['camera_type']['code'].upper():
                 if not mode_type:
-                    return {mode_group['type']: mode_group for mode_group in instrument['science_camera']['camera_type']['mode_types']}
+                    return {
+                        mode_group['type']: mode_group
+                        for mode_group in instrument['science_camera']['camera_type']['mode_types']
+                    }
                 else:
                     for mode_group in instrument['science_camera']['camera_type']['mode_types']:
                         if mode_group['type'] == mode_type:
@@ -350,20 +362,22 @@ class ConfigDB(object):
                 if mode['code'].lower() == code.lower():
                     return mode
 
-        raise ConfigDBException("No mode named {} found for instrument type {}".format(code, instrument_type))
+        raise ConfigDBException(f'No mode named {code} found for instrument type {instrument_type}')
 
     def get_readout_mode_with_binning(self, instrument_type, binning):
         readout_modes = self.get_modes_by_type(instrument_type, 'readout')
         if readout_modes:
-            modes = sorted(readout_modes['readout']['modes'], key=lambda x: x['code'] == readout_modes['readout']['default'], reverse=True)  # Start with the default
+            modes = sorted(
+                readout_modes['readout']['modes'], key=lambda x: x['code'] == readout_modes['readout'].get('default'),
+                reverse=True
+            )  # Start with the default
             for mode in modes:
                 if mode['params'].get('binning', -1) == binning:
                     return mode
 
-        raise ConfigDBException("No readout mode found with binning {} for instrument type {}".format(binning,
-                                                                                                      instrument_type))
+        raise ConfigDBException(f'No readout mode found with binning {binning} for instrument type {instrument_type}')
 
-    def get_default_modes_by_type(self, instrument_type: str, mode_type: str='') -> dict:
+    def get_default_modes_by_type(self, instrument_type: str, mode_type: str = '') -> dict:
         """Get the default mode of each available mode_type.
 
         Parameters:
@@ -373,12 +387,13 @@ class ConfigDB(object):
              Default modes
         """
         modes = self.get_modes_by_type(instrument_type, mode_type)
-        for type, mode_set in modes.items():
-            for mode in mode_set['modes']:
-                if mode['code'] == mode_set['default']:
-                    modes[type] = mode
+        default_modes = {}
+        for m_type, m_set in modes.items():
+            for mode in m_set['modes']:
+                if 'default' in m_set and mode['code'] == m_set['default']:
+                    default_modes[m_type] = mode
                     break
-        return modes
+        return default_modes
 
     def get_binnings(self, instrument_type: str) -> set:
         """Create a set of available binning modes.
@@ -459,7 +474,7 @@ class ConfigDB(object):
         for instrument in instruments:
             if instrument['code'].lower() == instrument_name.lower():
                 return instrument['autoguider_camera']['code'].lower()
-        raise ConfigDBException(_("Instrument not found: {}".format(instrument_name)))
+        raise ConfigDBException(_(f'Instrument not found: {instrument_name}'))
 
     def is_valid_guider_for_instrument_name(self, instrument_name, guide_camera_name):
         instruments = self.get_instruments(only_schedulable=False)
@@ -481,7 +496,7 @@ class ConfigDB(object):
         if 'readout' in modes_by_type:
             default_mode = {}
             for mode in modes_by_type['readout']['modes']:
-                if mode['code'] == modes_by_type['readout']['default']:
+                if mode['code'] == modes_by_type['readout'].get('default'):
                     default_mode = mode
                 if readout_mode and readout_mode.lower() != mode['code'].lower():
                     continue
@@ -490,7 +505,7 @@ class ConfigDB(object):
             # if the binning is not found, return the default binning (Added to support legacy 2x2 Sinistro obs)
             return default_mode['overhead'] + camera_type['fixed_overhead_per_exposure']
 
-        raise ConfigDBException("Instrument type {} not found in configdb.".format(instrument_type))
+        raise ConfigDBException(f'Instrument type {instrument_type} not found in configdb.')
 
     def get_request_overheads(self, instrument_type: str) -> dict:
         """Get the set of overheads needed to compute the duration of a request.
@@ -513,19 +528,28 @@ class ConfigDB(object):
                     for instrument in telescope['instrument_set']:
                         camera_type = instrument['science_camera']['camera_type']
                         if camera_type['code'].upper() == instrument_type.upper():
-                            return {'instrument_change_overhead': telescope['instrument_change_overhead'],
-                                    'slew_rate': telescope['slew_rate'],
-                                    'minimum_slew_overhead': telescope['minimum_slew_overhead'],
-                                    'maximum_slew_overhead': telescope.get('maximum_slew_overhead', 0.0),
-                                    'config_change_overhead': camera_type['config_change_time'],
-                                    'default_acquisition_exposure_time': camera_type['acquire_exposure_time'],
-                                    'acquisition_overheads': {am['code']: am['overhead'] for am in modes_by_type['acquisition']['modes']} if 'acquisition' in modes_by_type else {},
-                                    'guiding_overheads': {gm['code']: gm['overhead'] for gm in modes_by_type['guiding']['modes']} if 'guiding' in modes_by_type else {},
-                                    'front_padding': camera_type['front_padding'],
-                                    'optical_element_change_overheads':
-                                        {oeg['type']: oeg['element_change_overhead'] for oeg in instrument['science_camera']['optical_element_groups']}
-                                    }
-        raise ConfigDBException("Instrument type {} not found in configdb.".format(instrument_type))
+                            return {
+                                'instrument_change_overhead': telescope['instrument_change_overhead'],
+                                'slew_rate': telescope['slew_rate'],
+                                'minimum_slew_overhead': telescope['minimum_slew_overhead'],
+                                'maximum_slew_overhead': telescope.get('maximum_slew_overhead', 0.0),
+                                'config_change_overhead': camera_type['config_change_time'],
+                                'default_acquisition_exposure_time': camera_type['acquire_exposure_time'],
+                                'acquisition_overheads': {
+                                    am['code']: am['overhead']
+                                    for am in modes_by_type['acquisition']['modes']
+                                } if 'acquisition' in modes_by_type else {},
+                                'guiding_overheads': {
+                                    gm['code']: gm['overhead']
+                                    for gm in modes_by_type['guiding']['modes']
+                                } if 'guiding' in modes_by_type else {},
+                                'front_padding': camera_type['front_padding'],
+                                'optical_element_change_overheads': {
+                                    oeg['type']: oeg['element_change_overhead']
+                                    for oeg in instrument['science_camera']['optical_element_groups']
+                                }
+                            }
+        raise ConfigDBException(f'Instrument type {instrument_type} not found in configdb.')
 
     @staticmethod
     def is_spectrograph(instrument_type):
@@ -539,6 +563,14 @@ class ConfigDB(object):
     @staticmethod
     def is_floyds(instrument_type):
         return 'FLOYDS' in instrument_type.upper()
+
+    @staticmethod
+    def is_active(instrument: dict) -> bool:
+        return instrument['state'].upper() != 'DISABLED'
+
+    @staticmethod
+    def is_schedulable(instrument: dict) -> bool:
+        return instrument['state'] == 'SCHEDULABLE'
 
 
 configdb = ConfigDB()

@@ -84,9 +84,13 @@ class GlobalMembershipLimitView(LoginRequiredMixin, View):
             proposal = request.user.membership_set.get(proposal=kwargs.get('pk'), role=Membership.PI).proposal
         except Membership.DoesNotExist:
             raise Http404
-        time_limit = float(request.POST['time_limit']) * 3600
-        proposal.membership_set.filter(role=Membership.CI).update(time_limit=time_limit)
-        messages.success(request, 'All CI time limits set to {0} hours'.format(time_limit / 3600))
+        try:
+            time_limit = float(request.POST['time_limit']) * 3600
+        except ValueError:
+            messages.error(request, 'Please enter a valid time limit')
+        else:
+            proposal.membership_set.filter(role=Membership.CI).update(time_limit=time_limit)
+            messages.success(request, 'All CI time limits set to {0} hours'.format(time_limit / 3600))
         return HttpResponseRedirect(reverse('proposals:detail', kwargs={'pk': proposal.id}))
 
 
