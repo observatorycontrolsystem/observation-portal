@@ -52,11 +52,8 @@ class Observation(models.Model):
         help_text='Current State of this Observation'
     )
 
-    class Meta:
-        ordering = ('-modified',)
-
-    @classmethod
-    def cancel(self, observations):
+    @staticmethod
+    def cancel(observations):
         now = timezone.now()
 
         _, deleted_observations = observations.filter(start__gte=now + timedelta(hours=72)).delete()

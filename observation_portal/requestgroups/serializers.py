@@ -272,7 +272,7 @@ class ConfigurationSerializer(serializers.ModelSerializer):
             guiding_config['optional'] = False
 
         if data['type'] in ['LAMP_FLAT', 'ARC', 'AUTO_FOCUS', 'NRES_BIAS', 'NRES_DARK', 'BIAS', 'DARK', 'SCRIPT']:
-            # These types of observations should only ever be set to guiding mode OFF, but the acquisition modes for 
+            # These types of observations should only ever be set to guiding mode OFF, but the acquisition modes for
             # spectrographs won't necessarily have that mode. Force OFF here.
             data['acquisition_config']['mode'] = AcquisitionConfig.OFF
         else:

@@ -305,7 +305,7 @@ export default {
         }
       }
     },
-    rotatorModeOptions: function(newValue, oldValue) {
+    rotatorModeOptions: function(newValue) {
       if (this.instrumentHasRotatorModes) {
         this.instrumentconfig.rotator_mode = this.available_instruments[this.selectedinstrument].modes.rotator.default;
       } else {

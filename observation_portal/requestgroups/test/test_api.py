@@ -19,15 +19,12 @@ from django.urls import reverse
 from django.contrib.auth.models import User
 from django.core import cache
 from dateutil.parser import parse as datetime_parser
-from datetime import timedelta
 from rest_framework.test import APITestCase
 from mixer.backend.django import mixer
-from mixer.main import mixer as basic_mixer
 from django.utils import timezone
 from datetime import datetime, timedelta
 import copy
 import random
-from urllib import parse
 from unittest import skip
 from unittest.mock import patch
 
@@ -2216,7 +2213,8 @@ class TestPressure(APITestCase):
         self.mock_site_intervals = self.site_intervals_patch.start()
 
         for i in range(24):
-            request = mixer.blend(Request, state='PENDING')
+            requestgroup = mixer.blend(RequestGroup, observation_type=RequestGroup.NORMAL)
+            request = mixer.blend(Request, request_group=requestgroup, state='PENDING')
             mixer.blend(
                 Window, start=timezone.now(), end=timezone.now() + timedelta(hours=i), request=request
             )
@@ -2331,7 +2329,8 @@ class TestPressure(APITestCase):
 
     @patch('observation_portal.requestgroups.contention.get_filtered_rise_set_intervals_by_site')
     def test_visible_intervals(self, mock_intervals):
-        request = mixer.blend(Request, state='PENDING', duration=70*60)  # Request duration is 70 minutes.
+        requestgroup = mixer.blend(RequestGroup, observation_type=RequestGroup.NORMAL)
+        request = mixer.blend(Request, request_group=requestgroup, state='PENDING', duration=70*60)  # Request duration is 70 minutes.
         mixer.blend(Window, request=request)
         mixer.blend(Location, request=request, site='tst')
         conf = mixer.blend(Configuration, request=request)
@@ -2572,7 +2571,7 @@ class TestLastChanged(SetTimeMixin, APITestCase):
         self.assertAlmostEqual(datetime_parser(last_change), timezone.now(), delta=timedelta(minutes=1))
 
     def test_last_change_date_is_not_updated_when_request_is_mixed(self):
-        requestgroup = create_simple_requestgroup(
+        create_simple_requestgroup(
             user=self.user, proposal=self.proposal, instrument_type='1M0-SCICAM-SBIG', window=self.window
         )
         last_change_cached = self.locmem_cache.get('observation_portal_last_change_time')

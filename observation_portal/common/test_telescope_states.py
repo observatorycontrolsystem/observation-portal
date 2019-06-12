@@ -364,14 +364,14 @@ class TestTelescopeStatesFromFile(TelescopeStatesFromFile):
     def test_states_end_time_after_start(self):
         telescope_states = TelescopeStates(self.start, self.end).get()
 
-        for tk, events in telescope_states.items():
+        for _, events in telescope_states.items():
             for event in events:
                 self.assertTrue(event['start'] <= event['end'])
 
     def test_states_no_duplicate_consecutive_states(self):
         telescope_states = TelescopeStates(self.start, self.end).get()
 
-        for tk, events in telescope_states.items():
+        for _, events in telescope_states.items():
             previous_event = None
             for event in events:
                 if previous_event:

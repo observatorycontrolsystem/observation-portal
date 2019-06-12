@@ -9,7 +9,6 @@ from observation_portal.accounts.models import Profile
 from observation_portal.proposals.models import Proposal, Semester, Membership, ScienceCollaborationAllocation
 
 import logging
-import sys
 
 logger = logging.getLogger()
 
@@ -33,7 +32,7 @@ class Command(BaseCommand):
                                        end=datetime(2100, 1, 1, tzinfo=timezone.utc))
         try:
             user = User.objects.create_superuser(user_str, 'fake_email@lco.global', 'password')
-        except IntegrityError as ie:
+        except IntegrityError:
             user = User.objects.get(username=user_str)
             logging.warning(f"user {user_str} already exists")
         Profile.objects.get_or_create(user=user)
@@ -43,7 +42,7 @@ class Command(BaseCommand):
                                                public=False, non_science=True, direct_submission=True,
                                                sca=sca)
             Membership.objects.create(proposal=proposal, user=user, role=Membership.PI)
-        except IntegrityError as ie:
+        except IntegrityError:
             logging.warning(f'proposal {proposal_str} already exists')
 
         # Need to set the api token to some expected value

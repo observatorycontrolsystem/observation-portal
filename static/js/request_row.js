@@ -1,7 +1,6 @@
 import $ from 'jquery';
 import moment from 'moment';
 import {datetimeFormat} from './utils.js';
-import tooltip from 'bootstrap';
 
 import { getThumbnail, getLatestFrame, downloadAll } from './archive.js';
 

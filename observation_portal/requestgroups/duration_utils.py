@@ -1,4 +1,3 @@
-import itertools
 from django.utils.translation import ugettext as _
 from math import ceil, floor
 from django.utils import timezone

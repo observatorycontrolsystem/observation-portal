@@ -137,6 +137,21 @@
         }
         return maxPressure;
       },
+      dataAvailable: function() {
+        for (let bin in this.rawData) {
+          for (let proposal in this.rawData[bin]) {
+            if (this.rawData[bin][proposal] > 0) {
+              return true;
+            }
+          }
+        }
+        return false;
+      }
+    },
+    created: function() {
+      this.fetchData();
+    },
+    methods: {
       toSiteNightData: function() {
         let nights = [];
         let siteSpacing = 0.6;
@@ -160,21 +175,6 @@
         this.maxY = Math.ceil(height);
         return nights;
       },
-      dataAvailable: function() {
-        for (let bin in this.rawData) {
-          for (let proposal in this.rawData[bin]) {
-            if (this.rawData[bin][proposal] > 0) {
-              return true;
-            }
-          }
-        }
-        return false;
-      }
-    },
-    created: function() {
-      this.fetchData();
-    },
-    methods: {
       fetchData: function() {
         this.isLoading = true;
         this.rawData = [];
@@ -187,7 +187,7 @@
           that.rawData = data.pressure_data;
           that.rawSiteData = data.site_nights;
           that.maxY = that.maxPressureInGraph;
-          that.siteNights = that.toSiteNightData;
+          that.siteNights = that.toSiteNightData();
           that.data.datasets = that.toChartData;
         }).done(function() {
           that.loadingDataFailed = false;
