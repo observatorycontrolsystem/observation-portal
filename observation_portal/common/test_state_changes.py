@@ -668,42 +668,42 @@ class TestRequestState(SetTimeMixin, TestCase):
 class TestAggregateRequestStates(TestCase):
     def test_many_all_complete(self):
         request_states = ['COMPLETED', 'COMPLETED', 'COMPLETED']
-        rg = dmixer.blend(RequestGroup, operator='MANY')
+        rg = dmixer.blend(RequestGroup, operator='MANY', observation_type=RequestGroup.NORMAL)
         dmixer.cycle(3).blend(Request, state=(state for state in request_states), request_group=rg)
         aggregate_state = aggregate_request_states(rg)
         self.assertEqual(aggregate_state, 'COMPLETED')
 
     def test_many_any_pending(self):
         request_states = ['COMPLETED', 'CANCELED', 'PENDING']
-        rg = dmixer.blend(RequestGroup, operator='MANY')
+        rg = dmixer.blend(RequestGroup, operator='MANY', observation_type=RequestGroup.NORMAL)
         dmixer.cycle(3).blend(Request, state=(state for state in request_states), request_group=rg)
         aggregate_state = aggregate_request_states(rg)
         self.assertEqual(aggregate_state, 'PENDING')
 
     def test_many_expired_and_complete(self):
         request_states = ['WINDOW_EXPIRED', 'COMPLETED', 'WINDOW_EXPIRED']
-        rg = dmixer.blend(RequestGroup, operator='MANY')
+        rg = dmixer.blend(RequestGroup, operator='MANY', observation_type=RequestGroup.NORMAL)
         dmixer.cycle(3).blend(Request, state=(state for state in request_states), request_group=rg)
         aggregate_state = aggregate_request_states(rg)
         self.assertEqual(aggregate_state, 'COMPLETED')
 
     def test_many_canceled_and_complete(self):
         request_states = ['CANCELED', 'COMPLETED', 'CANCELED']
-        rg = dmixer.blend(RequestGroup, operator='MANY')
+        rg = dmixer.blend(RequestGroup, operator='MANY', observation_type=RequestGroup.NORMAL)
         dmixer.cycle(3).blend(Request, state=(state for state in request_states), request_group=rg)
         aggregate_state = aggregate_request_states(rg)
         self.assertEqual(aggregate_state, 'COMPLETED')
 
     def test_many_all_canceled(self):
         request_states = ['CANCELED', 'CANCELED', 'CANCELED']
-        rg = dmixer.blend(RequestGroup, operator='MANY')
+        rg = dmixer.blend(RequestGroup, operator='MANY', observation_type=RequestGroup.NORMAL)
         dmixer.cycle(3).blend(Request, state=(state for state in request_states), request_group=rg)
         aggregate_state = aggregate_request_states(rg)
         self.assertEqual(aggregate_state, 'CANCELED')
 
     def test_many_all_expired(self):
         request_states = ['WINDOW_EXPIRED', 'WINDOW_EXPIRED', 'WINDOW_EXPIRED']
-        rg = dmixer.blend(RequestGroup, operator='MANY')
+        rg = dmixer.blend(RequestGroup, operator='MANY', observation_type=RequestGroup.NORMAL)
         dmixer.cycle(3).blend(Request, state=(state for state in request_states), request_group=rg)
         aggregate_state = aggregate_request_states(rg)
         self.assertEqual(aggregate_state, 'WINDOW_EXPIRED')
@@ -712,7 +712,7 @@ class TestAggregateRequestStates(TestCase):
 @patch('observation_portal.common.state_changes.modify_ipp_time_from_requests')
 class TestExpireRequests(TestCase):
     def setUp(self):
-        self.request_group = dmixer.blend(RequestGroup, state='PENDING')
+        self.request_group = dmixer.blend(RequestGroup, state='PENDING', observation_type=RequestGroup.NORMAL)
 
     def test_request_is_set_to_expired(self, ipp_mock):
         request = dmixer.blend(Request, state='PENDING', request_group=self.request_group)
