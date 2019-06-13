@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from observation_portal.common.configdb import configdb
 from observation_portal.observations.models import Observation, Summary
 from observation_portal.proposals.models import Proposal, Semester, TimeAllocation
+from observation_portal.requestgroups.models import RequestGroup
 
 import math
 
@@ -48,14 +49,16 @@ class Command(BaseCommand):
         for proposal in proposals:
             for instrument_type in instrument_types:
                 attempted_time = {
-                    'NORMAL': 0,
-                    'RAPID_RESPONSE': 0,
-                    'TIME_CRITICAL': 0
+                    RequestGroup.NORMAL: 0,
+                    RequestGroup.RAPID_RESPONSE: 0,
+                    RequestGroup.TIME_CRITICAL: 0
                 }
                 observations = Observation.objects.filter(end__gt=semester.start, start__lt=semester.end,
                                                           request__request_group__proposal=proposal.id,
                                                           request__configurations__instrument_type=instrument_type,
-                                                          ).exclude(state='PENDING').prefetch_related(
+                                                          ).exclude(state='PENDING'
+                                                          ).exclude(request__request_group__observation_type=RequestGroup.DIRECT
+                                                          ).prefetch_related(
                     'request',
                     'request__request_group',
                     'configuration_statuses',
@@ -67,7 +70,7 @@ class Command(BaseCommand):
                     configuration_time = timedelta(seconds=0)
                     for configuration_status in observation.configuration_statuses.all():
                         try:
-                            if configuration_status.summary.end > observation.end and observation_type == 'RAPID_RESPONSE':
+                            if configuration_status.summary.end > observation.end and observation_type == RequestGroup.RAPID_RESPONSE:
                                 configuration_time += observation.end - configuration_status.summary.start
                             else:
                                 configuration_time += configuration_status.summary.end - configuration_status.summary.start
@@ -77,22 +80,23 @@ class Command(BaseCommand):
                     attempted_time[observation_type] += (configuration_time.total_seconds() / 3600.0)
                 print(
                     "Proposal: {}, Instrument Type: {}, Used {} NORMAL hours, {} RAPID_RESPONSE hours, and {} TIME_CRITICAL hours".format(
-                        proposal.id, instrument_type, attempted_time['NORMAL'], attempted_time['RAPID_RESPONSE'],
-                        attempted_time['TIME_CRITICAL']), file=self.stdout
+                        proposal.id, instrument_type, attempted_time[RequestGroup.NORMAL], 
+                        attempted_time[RequestGroup.RAPID_RESPONSE],
+                        attempted_time[RequestGroup.TIME_CRITICAL]), file=self.stdout
                 )
 
                 time_allocation = TimeAllocation.objects.get(proposal=proposal, instrument_type=instrument_type,
                                                              semester=semester)
-                if not math.isclose(time_allocation.std_time_used, attempted_time['NORMAL'], abs_tol=0.0001):
-                    print("{} is different from existing NORMAL time {}".format(attempted_time['NORMAL'], time_allocation.std_time_used), file=self.stderr)
-                if not math.isclose(time_allocation.rr_time_used, attempted_time['RAPID_RESPONSE'], abs_tol=0.0001):
-                    print("{} is different from existing RAPID_RESPONSE time {}".format(attempted_time['RAPID_RESPONSE'], time_allocation.rr_time_used), file=self.stderr)
-                if not math.isclose(time_allocation.tc_time_used, attempted_time['TIME_CRITICAL'], abs_tol=0.0001):
-                    print("{} is different from existing TIME_CRITICAL time {}".format(attempted_time['TIME_CRITICAL'], time_allocation.tc_time_used), file=self.stderr)
+                if not math.isclose(time_allocation.std_time_used, attempted_time[RequestGroup.NORMAL], abs_tol=0.0001):
+                    print("{} is different from existing NORMAL time {}".format(attempted_time[RequestGroup.NORMAL], time_allocation.std_time_used), file=self.stderr)
+                if not math.isclose(time_allocation.rr_time_used, attempted_time[RequestGroup.RAPID_RESPONSE], abs_tol=0.0001):
+                    print("{} is different from existing RAPID_RESPONSE time {}".format(attempted_time[RequestGroup.RAPID_RESPONSE], time_allocation.rr_time_used), file=self.stderr)
+                if not math.isclose(time_allocation.tc_time_used, attempted_time[RequestGroup.TIME_CRITICAL], abs_tol=0.0001):
+                    print("{} is different from existing TIME_CRITICAL time {}".format(attempted_time[RequestGroup.TIME_CRITICAL], time_allocation.tc_time_used), file=self.stderr)
 
                 if not options['dry_run']:
                     # Update the time allocation for this proposal accordingly
-                    time_allocation.std_time_used = attempted_time['NORMAL']
-                    time_allocation.rr_time_used = attempted_time['RAPID_RESPONSE']
-                    time_allocation.tc_time_used = attempted_time['TIME_CRITICAL']
+                    time_allocation.std_time_used = attempted_time[RequestGroup.NORMAL]
+                    time_allocation.rr_time_used = attempted_time[RequestGroup.RAPID_RESPONSE]
+                    time_allocation.tc_time_used = attempted_time[RequestGroup.TIME_CRITICAL]
                     time_allocation.save()
