@@ -71,11 +71,11 @@
         <b-button 
           block
           v-b-toggle.my-collapse
-          @click="toggleNav($event)" 
+          @click="toggleNav()" 
         >
           <span class="when-opened">
-            <span class="float-right"><i class="fas fa-angle-double-right mx-2"></i></span
-            ><span class="float-right">Toggle Navigation</span>
+            <span class="float-right"><i class="fas fa-angle-double-right mx-2"></i></span>
+            <span class="float-right">Toggle Navigation</span>
           </span> 
           <span class="when-closed">
             <i class="fas fa-angle-double-left mx-2"></i>
@@ -236,14 +236,8 @@
         }
         this.$emit('savedraft', {draftId: saveId});
       },
-      toggleNav: function(event) {
-        // event.target is the element that was clicked. The class list in the target
-        // contains the classes on the element, when the click happened.
-        if (_.includes(event.target.classList, 'collapsed')) {
-          this.navigationIsExpanded = true;
-        } else {
-          this.navigationIsExpanded = false;
-        }
+      toggleNav: function() {
+        this.navigationIsExpanded = !this.navigationIsExpanded;
       },
       submit: function() {
         this.$emit('submit');
