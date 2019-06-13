@@ -29,7 +29,7 @@ module.exports = {
         tools: './static/js/tools'
       },
       output: {
-        filename: '[name].[hash].js'
+        filename: '[name].[contenthash].js'
       },
       plugins: [
         new BundleTracker({filename: './static/webpack-stats.json'}),
