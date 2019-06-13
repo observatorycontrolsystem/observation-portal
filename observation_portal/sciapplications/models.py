@@ -133,7 +133,7 @@ class ScienceApplication(models.Model):
 
     @property
     def time_requested_by_class(self):
-        telescope_instrument_types = configdb.get_instrument_types_per_telescope_class()
+        telescope_instrument_types = configdb.get_instrument_types_per_telescope_class(exclude_states=['DISABLED'])
         time_requests = {}
         for tel_code, instrument_types in telescope_instrument_types.items():
             time_requests[tel_code] = sum(

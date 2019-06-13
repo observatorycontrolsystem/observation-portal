@@ -221,17 +221,16 @@ class ConfigDB(object):
                             return True
         return False
 
-    def get_instruments(self, only_schedulable=False):
+    def get_instruments(self, exclude_states=None):
+        if not exclude_states:
+            exclude_states = []
         site_data = self.get_site_data()
         instruments = []
         for site in site_data:
             for enclosure in site['enclosure_set']:
                 for telescope in enclosure['telescope_set']:
                     for instrument in telescope['instrument_set']:
-                        if (
-                                (only_schedulable and self.is_schedulable(instrument))
-                                or (not only_schedulable and self.is_active(instrument))
-                        ):
+                        if instrument['state'].upper() not in exclude_states:
                             telescope_key = TelescopeKey(
                                 site=site['code'],
                                 enclosure=enclosure['code'],
@@ -250,8 +249,10 @@ class ConfigDB(object):
         Returns:
             Available instrument types
         """
+        if only_schedulable:
+            exclude_states = ['DISABLED', 'ENABLED', 'COMMISSIONING']
         telescope_instrument_types = {}
-        for instrument in self.get_instruments(only_schedulable=only_schedulable):
+        for instrument in self.get_instruments(exclude_states=exclude_states):
             if instrument['telescope_key'] not in telescope_instrument_types:
                 telescope_instrument_types[instrument['telescope_key']] = []
             instrument_type = instrument['science_camera']['camera_type']['code'].upper()
@@ -273,7 +274,7 @@ class ConfigDB(object):
             Available instrument names
         """
         instrument_names = set()
-        for instrument in self.get_instruments():
+        for instrument in self.get_instruments(exclude_states=['DISABLED', ]):
             if (
                     instrument['telescope_key'].site.lower() == site_code.lower()
                     and instrument['telescope_key'].enclosure.lower() == enclosure_code.lower()
@@ -283,7 +284,7 @@ class ConfigDB(object):
                 instrument_names.add(instrument['science_camera']['code'].lower())
         return instrument_names
 
-    def get_instrument_types_per_telescope_class(self, only_schedulable: bool = False) -> dict:
+    def get_instrument_types_per_telescope_class(self, exclude_states=None) -> dict:
         """Get a set of instrument types.
 
         Instrument types are returned by telescope class (0m4, 1m0, etc...)
@@ -294,7 +295,7 @@ class ConfigDB(object):
             Instrument types separated by class
         """
         telescope_instrument_types = {}
-        for instrument in self.get_instruments(only_schedulable=only_schedulable):
+        for instrument in self.get_instruments(exclude_states=exclude_states):
             tel_code = instrument['telescope_key'].telescope[:3]
             if tel_code not in telescope_instrument_types:
                 telescope_instrument_types[tel_code] = set()
@@ -310,8 +311,10 @@ class ConfigDB(object):
         Returns:
              Telescope keys
         """
+        if only_schedulable:
+            exclude_states = ['DISABLED', 'ENABLED', 'COMMISSIONING']
         instrument_telescopes = set()
-        for instrument in self.get_instruments(only_schedulable=only_schedulable):
+        for instrument in self.get_instruments(exclude_states=exclude_states):
             if instrument['science_camera']['camera_type']['code'].upper() == instrument_type:
                 instrument_telescopes.add(instrument['telescope_key'])
         return instrument_telescopes
@@ -332,7 +335,7 @@ class ConfigDB(object):
              Available optical elements
         """
         optical_elements = {}
-        for instrument in self.get_instruments():
+        for instrument in self.get_instruments(exclude_states=['DISABLED', ]):
             if instrument_type.upper() == instrument['science_camera']['camera_type']['code'].upper():
                 for optical_element_group in instrument['science_camera']['optical_element_groups']:
                     optical_elements[optical_element_group['type']] = []
@@ -467,7 +470,7 @@ class ConfigDB(object):
             Available instrument_types (i.e. 1M0-SCICAM-SBIG, etc.)
         """
         instrument_types = set()
-        for instrument in self.get_instruments(only_schedulable=True):
+        for instrument in self.get_instruments(exclude_states=['DISABLED', 'ENABLED', 'COMMISSIONING']):
             split_string = instrument['__str__'].lower().split('.')
             if (location.get('site', '').lower() in split_string[0]
                     and location.get('enclosure', '').lower() in split_string[1]
@@ -477,14 +480,14 @@ class ConfigDB(object):
         return instrument_types
 
     def get_guider_for_instrument_name(self, instrument_name):
-        instruments = self.get_instruments(only_schedulable=False)
+        instruments = self.get_instruments()
         for instrument in instruments:
             if instrument['code'].lower() == instrument_name.lower():
                 return instrument['autoguider_camera']['code'].lower()
         raise ConfigDBException(_(f'Instrument not found: {instrument_name}'))
 
     def is_valid_guider_for_instrument_name(self, instrument_name, guide_camera_name):
-        instruments = self.get_instruments(only_schedulable=False)
+        instruments = self.get_instruments()
         for instrument in instruments:
             if instrument['code'].upper() == instrument_name.upper():
                 if instrument['autoguider_camera']['code'].lower() == guide_camera_name.lower():
