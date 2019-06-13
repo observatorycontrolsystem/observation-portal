@@ -25,7 +25,6 @@
         </sup>
       </template>
       <b-form-select 
-        size="sm"
         :id="field + '-select-' + $parent.id" 
         :value="value"
         :state="validationState"
@@ -91,7 +90,7 @@
 </script>
 <style scoped>
   .errors {
-    font-size: 80%;
+    font-size: 90%;
   }
   .extra-help-text,
   .extra-help-text div {
