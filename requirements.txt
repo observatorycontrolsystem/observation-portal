@@ -14,7 +14,7 @@ django-bootstrap4
 django-dramatiq
 django-storages
 time_intervals
-rise_set
+rise-set==0.4.11
 elasticsearch<6.0
 WeasyPrint
 PyPDF2
