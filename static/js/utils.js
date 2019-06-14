@@ -75,16 +75,15 @@ function sexagesimalDecToDecimal(dec){
 }
 
 function decimalRaToSexigesimal(deg){
-  var rs = 1;
+  let rs = 1;
+  let ra = deg;
   if(deg < 0){
     rs = -1;
-    var ra = Math.abs(deg);
-  } else {
-    var ra = deg
+    ra = Math.abs(deg);
   }
-  var raH = Math.floor(ra / 15)
-  var raM = Math.floor(((ra / 15) - raH) * 60)
-  var raS = ((((ra / 15 ) - raH ) * 60) - raM) * 60
+  let raH = Math.floor(ra / 15)
+  let raM = Math.floor(((ra / 15) - raH) * 60)
+  let raS = ((((ra / 15 ) - raH ) * 60) - raM) * 60
   return {
     'h': raH * rs,
     'm': raM,
@@ -94,21 +93,20 @@ function decimalRaToSexigesimal(deg){
 }
 
 function decimalDecToSexigesimal(deg){
-  var ds = 1;
+  let ds = 1;
+  let dec = deg;
   if(deg < 0){
     ds = -1;
-    var dec = Math.abs(deg);
-  } else {
-    var dec = deg;
+    dec = Math.abs(deg);
   }
-  var deg = Math.floor(dec)
-  var decM = Math.abs(Math.floor((dec - deg) * 60));
-  var decS = (Math.abs((dec - deg) * 60) - decM) * 60
+  let decf = Math.floor(dec)
+  let decM = Math.abs(Math.floor((dec - decf) * 60));
+  let decS = (Math.abs((dec - decf) * 60) - decM) * 60
   return {
-    'deg': deg * ds,
+    'deg': decf * ds,
     'm': decM,
     's': decS,
-    'str': (ds > 0 ? '' : '-') + zPadFloat(deg) + ':' + zPadFloat(decM) + ':' + zPadFloat(decS)
+    'str': (ds > 0 ? '' : '-') + zPadFloat(decf) + ':' + zPadFloat(decM) + ':' + zPadFloat(decS)
   }
 }
 

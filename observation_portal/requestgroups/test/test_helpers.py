@@ -13,11 +13,11 @@ class TestTargetHelper(TestCase):
             'azimuth': 180.0,
             'dailymot': 0,
             'dec': 45,
-            'diff_epoch_rate': 0,
-            'diff_pitch_acceleration': 0,
-            'diff_pitch_rate': 0,
-            'diff_roll_acceleration': 0,
-            'diff_roll_rate': 0,
+            'diff_epoch': 0,
+            'diff_altitude_acceleration': 0,
+            'diff_altitude_rate': 0,
+            'diff_azimuth_acceleration': 0,
+            'diff_azimuth_rate': 0,
             'eccentricity': 0.5,
             'epoch': 2000.0,
             'epochofel': 10000,
@@ -42,20 +42,20 @@ class TestTargetHelper(TestCase):
     def test_icrs_helper_fields(self):
         sth = ICRSTargetHelper(self.target)
         self.assertFalse('scheme' in sth.data)
-        self.assertFalse('diff_roll_rate' in sth.data)
+        self.assertFalse('diff_azimuth_rate' in sth.data)
         self.assertTrue('ra' in sth.data)
 
     def test_orbital_elements_helper_fields(self):
         nsh = OrbitalElementsTargetHelper(self.target)
         self.assertFalse('ra' in nsh.data)
-        self.assertFalse('diff_pitch_rate' in nsh.data)
+        self.assertFalse('diff_altitude_rate' in nsh.data)
         self.assertTrue('scheme' in nsh.data)
 
     def test_satellite_helper_fields(self):
         sh = SatelliteTargetHelper(self.target)
         self.assertFalse('ra' in sh.data)
         self.assertFalse('scheme' in sh.data)
-        self.assertTrue('diff_roll_rate' in sh.data)
+        self.assertTrue('diff_azimuth_rate' in sh.data)
 
     def test_icrs_target_required(self):
         bad_data = self.target.copy()
@@ -71,7 +71,7 @@ class TestTargetHelper(TestCase):
 
     def test_satellite_target_required(self):
         bad_data = self.target.copy()
-        del bad_data['diff_pitch_rate']
+        del bad_data['diff_altitude_rate']
         sh = SatelliteTargetHelper(bad_data)
         self.assertFalse(sh.is_valid())
 

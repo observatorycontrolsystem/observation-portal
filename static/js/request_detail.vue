@@ -13,7 +13,7 @@
           <template slot="title">
             <span title="Details about the observed request.">Details</span>
           </template>
-          <div class="row">
+          <div class="row" v-if="request.windows && request.windows.length != 0">
             <div class="col-md-12">
               <h4>Windows</h4>
               <table class="table table-sm">
@@ -26,6 +26,23 @@
                     :key="'window-' + index"
                   >
                     <td>{{ window.start | formatDate }}</td><td>{{ window.end | formatDate }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="row" v-if="scheduled && scheduled.start">
+            <div class="col-md-12">
+              <h4>Scheduled</h4>
+              <table class="table table-sm">
+                <thead class="no-top-border">
+                  <tr><td><strong>Start</strong></td><td><strong>End</strong></td><td><strong>Location</strong></td></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>{{ scheduled.start | formatDate }}</td>
+                    <td>{{ scheduled.end | formatDate }}</td>
+                    <td>{{ scheduled.location }}</td>
                   </tr>
                 </tbody>
               </table>
@@ -286,6 +303,7 @@
     data: function() {
       return {
         request: {},
+        scheduled: {},
         frames: [],
         curFrame: null,
         observationData: [],
@@ -305,6 +323,12 @@
           if (data.state === 'COMPLETED') {
             getLatestFrame(data.id, function(frame){
               that.curFrame = frame;
+            });
+          }
+          if (data.windows.length === 0){
+            $.getJSON('/api/requests/' + data.id + '/observations/', function(observations) {
+                let location = observations[0].site + "." + observations[0].enclosure + "." + observations[0].telescope;
+                that.scheduled = {start: observations[0].start, end: observations[0].end, location: location};
             });
           }
         });

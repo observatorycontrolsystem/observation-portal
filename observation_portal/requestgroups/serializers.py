@@ -264,7 +264,7 @@ class ConfigurationSerializer(serializers.ModelSerializer):
         if guide_mode_error_msg:
             raise serializers.ValidationError(_(guide_mode_error_msg))
 
-        if configdb.is_spectrograph(instrument_type) and data['type'] not in ['LAMP_FLAT', 'ARC']:
+        if configdb.is_spectrograph(instrument_type) and data['type'] not in ['LAMP_FLAT', 'ARC', 'NRES_BIAS', 'NRES_DARK']:
             if 'optional' in guiding_config and guiding_config['optional']:
                 raise serializers.ValidationError(_(
                     "Guiding cannot be optional on spectrograph instruments for types that are not ARC or LAMP_FLAT."
@@ -272,7 +272,7 @@ class ConfigurationSerializer(serializers.ModelSerializer):
             guiding_config['optional'] = False
 
         if data['type'] in ['LAMP_FLAT', 'ARC', 'AUTO_FOCUS', 'NRES_BIAS', 'NRES_DARK', 'BIAS', 'DARK', 'SCRIPT']:
-            # These types of observations should only ever be set to guiding mode OFF, but the acquisition modes for 
+            # These types of observations should only ever be set to guiding mode OFF, but the acquisition modes for
             # spectrographs won't necessarily have that mode. Force OFF here.
             data['acquisition_config']['mode'] = AcquisitionConfig.OFF
         else:

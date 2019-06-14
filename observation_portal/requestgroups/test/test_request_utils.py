@@ -27,7 +27,8 @@ class BaseSetupRequest(SetTimeMixin, TestCase):
             rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0, ipp_time_available=5.0, tc_time_available=10.0,
             tc_time_used=0.0
         )
-        self.rg_single = mixer.blend(RequestGroup, proposal=self.proposal, operator='SINGLE')
+        self.rg_single = mixer.blend(RequestGroup, proposal=self.proposal, operator='SINGLE',
+                                     observation_type=RequestGroup.NORMAL)
         self.request = mixer.blend(Request, request_group=self.rg_single)
         self.configuration = mixer.blend(
             Configuration, request=self.request, instrument_type='1M0-SCICAM-SBIG', type='EXPOSE'
@@ -325,7 +326,8 @@ class TestRequestTelescopeStates(TelescopeStatesFakeInput):
                                                rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
                                                ipp_time_available=5.0, tc_time_available=10.0, tc_time_used=0.0)
 
-        self.rg_single = mixer.blend(RequestGroup, proposal=self.proposal, operator='SINGLE')
+        self.rg_single = mixer.blend(RequestGroup, proposal=self.proposal, operator='SINGLE',
+                                     observation_type=RequestGroup.NORMAL)
 
         self.request = mixer.blend(Request, request_group=self.rg_single)
 
@@ -355,7 +357,7 @@ class TestRequestTelescopeStates(TelescopeStatesFakeInput):
         # super(BaseSetupRequest, self).tearDown()
 
     def test_telescope_states_calculation(self):
-        telescope_states = get_telescope_states_for_request(self.request)
+        telescope_states = get_telescope_states_for_request(self.request.as_dict())
         # Assert that telescope states were received for this request
         self.assertIn(self.tk1, telescope_states)
         self.assertIn(self.tk2, telescope_states)
@@ -393,6 +395,6 @@ class TestRequestTelescopeStates(TelescopeStatesFakeInput):
     def test_telescope_states_empty(self):
         self.location.site = 'cpt'
         self.location.save()
-        telescope_states = get_telescope_states_for_request(self.request)
+        telescope_states = get_telescope_states_for_request(self.request.as_dict())
 
         self.assertEqual({}, telescope_states)

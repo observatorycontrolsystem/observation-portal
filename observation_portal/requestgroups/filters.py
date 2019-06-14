@@ -1,5 +1,5 @@
 import django_filters
-from observation_portal.requestgroups.models import RequestGroup, Request, Location
+from observation_portal.requestgroups.models import RequestGroup, Request
 
 
 class RequestGroupFilter(django_filters.FilterSet):

@@ -52,8 +52,8 @@ class Observation(models.Model):
         help_text='Current State of this Observation'
     )
 
-    @classmethod
-    def cancel(self, observations):
+    @staticmethod
+    def cancel(observations):
         now = timezone.now()
 
         _, deleted_observations = observations.filter(start__gte=now + timedelta(hours=72)).delete()
@@ -68,28 +68,31 @@ class Observation(models.Model):
 
         return deleted_observations.get('observations.Observation', 0) + canceled + aborted
 
-    def as_dict(self):
+    def as_dict(self, no_request=False):
         ret_dict = model_to_dict(self)
-        ret_dict['request'] = self.request.as_dict(for_observation=True)
-        ret_dict['proposal'] = self.request.request_group.proposal.id
-        ret_dict['submitter'] = self.request.request_group.submitter.username
-        ret_dict['name'] = self.request.request_group.name
-        ret_dict['ipp_value'] = self.request.request_group.ipp_value
-        ret_dict['observation_type'] = self.request.request_group.observation_type
-        ret_dict['request_group_id'] = self.request.request_group.id
-        ret_dict['modified'] = self.modified
-        configuration_status_by_config = {config_status.configuration.id: config_status
-                                          for config_status in self.configuration_statuses.all()}
-        for configuration in ret_dict['request']['configurations']:
-            config_status = configuration_status_by_config[configuration['id']]
-            configuration['configuration_status'] = config_status.id
-            configuration['state'] = config_status.state
-            configuration['instrument_name'] = config_status.instrument_name
-            configuration['guide_camera_name'] = config_status.guide_camera_name
-            try:
-                configuration['summary'] = config_status.summary.as_dict()
-            except Exception:
-                configuration['summary'] = {}
+        if no_request:
+            ret_dict['configuration_statuses'] = [config_status.as_dict() for config_status in self.configuration_statuses.all()]
+        else:
+            ret_dict['request'] = self.request.as_dict(for_observation=True)
+            ret_dict['proposal'] = self.request.request_group.proposal.id
+            ret_dict['submitter'] = self.request.request_group.submitter.username
+            ret_dict['name'] = self.request.request_group.name
+            ret_dict['ipp_value'] = self.request.request_group.ipp_value
+            ret_dict['observation_type'] = self.request.request_group.observation_type
+            ret_dict['request_group_id'] = self.request.request_group.id
+            ret_dict['modified'] = self.modified
+            configuration_status_by_config = {config_status.configuration.id: config_status
+                                            for config_status in self.configuration_statuses.all()}
+            for configuration in ret_dict['request']['configurations']:
+                config_status = configuration_status_by_config[configuration['id']]
+                configuration['configuration_status'] = config_status.id
+                configuration['state'] = config_status.state
+                configuration['instrument_name'] = config_status.instrument_name
+                configuration['guide_camera_name'] = config_status.guide_camera_name
+                if hasattr(config_status, 'summary'):
+                    configuration['summary'] = config_status.summary.as_dict()
+                else:
+                    configuration['summary'] = {}
         return ret_dict
 
     @property
@@ -102,6 +105,8 @@ class Observation(models.Model):
 
 
 class ConfigurationStatus(models.Model):
+    SERIALIZER_EXCLUDE = ('modified', 'created', 'observation')
+
     STATE_CHOICES = (
         ('PENDING', 'PENDING'),
         ('ATTEMPTED', 'ATTEMPTED'),
@@ -136,6 +141,14 @@ class ConfigurationStatus(models.Model):
         help_text='Time when this Configuration Status was created'
     )
 
+    def as_dict(self):
+        ret_dict = model_to_dict(self, exclude=self.SERIALIZER_EXCLUDE)
+        if hasattr(self, 'summary'):
+            ret_dict['summary'] = self.summary.as_dict()
+        else:
+            ret_dict['summary'] = {}
+        return ret_dict
+
     class Meta:
         unique_together = ('configuration', 'observation')
         verbose_name_plural = 'Configuration statuses'
@@ -143,7 +156,7 @@ class ConfigurationStatus(models.Model):
 
 
 class Summary(models.Model):
-    SERIALIZER_EXCLUDE = ('modified', 'created')
+    SERIALIZER_EXCLUDE = ('modified', 'created', 'configuration_status')
 
     configuration_status = models.OneToOneField(
         ConfigurationStatus, null=True, blank=True, related_name='summary', on_delete=models.CASCADE

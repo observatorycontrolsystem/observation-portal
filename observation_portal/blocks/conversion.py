@@ -29,6 +29,13 @@ def pointing_to_target_type(pointing_type, coordinate_type):
         return 'ORBITAL_ELEMENTS'
 
 
+def acquire_mode_from_strategy(ag_strategy):
+    if 'WCS' in ag_strategy.upper():
+        return 'WCS'
+    else:
+        return 'BRIGHTEST'
+
+
 def convert_pond_blocks_to_observations(blocks):
     if isinstance(blocks, list):
         return [convert_pond_block_to_observation(block) for block in blocks]
@@ -136,7 +143,7 @@ def convert_pond_block_to_observation(block):
 
         ag_extra_params = {}
         if molecule.get('ag_strategy'):
-            ag_extra_params['guide_strategy'] = molecule['ag_strategy']
+            ag_extra_params['ag_strategy'] = molecule['ag_strategy']
 
         (guide_mode, guide_optional) = pond_ag_mode_to_guiding_mode(molecule.get('ag_mode', 'OPT'))
         if block.get('instrument_class').upper() in ['1M0-NRES-SCICAM', '1M0-NRES-COMMISIONING', '2M0-FLOYDS-SCICAM']:
@@ -151,14 +158,15 @@ def convert_pond_block_to_observation(block):
             'extra_params': ag_extra_params
         }
 
-        acquire_mode = 'OFF'
+        acquire_mode = molecule.get('acquire_mode', 'OFF')
         acquire_extra_params = {}
-        if not molecule.get('acquire_mode', 'OFF') == 'OFF':
+        if not acquire_mode == 'OFF':
             acquire_mode = molecule['acquire_mode']
-            if molecule.get('acquire_strategy'):
-                acquire_extra_params['acquire_strategy'] = molecule['acquire_strategy']
             if molecule['acquire_mode'] == 'BRIGHTEST' and molecule.get('acquire_radius_arcsec'):
                 acquire_extra_params['acquire_radius'] = float(molecule['acquire_radius_arcsec'])
+            if molecule.get('acquire_strategy') and 'NRES' in block.get('instrument_class').upper():
+                acquire_extra_params['acquire_strategy'] = molecule['acquire_strategy']
+                acquire_mode = acquire_mode_from_strategy(molecule.get('ag_strategy'))
 
         acquisition_config = {
             'mode': acquire_mode,
@@ -260,39 +268,24 @@ def pointing_to_target(pointing):
         if 'dailymot' in pointing and float(pointing['dailymot']):
             target['dailymot'] = float(pointing['dailymot'])
     else:
-        # Static or Satellite type
-        if pointing.get('coord_type', 'RD') == 'RD':
-            if 'ra' in pointing:
-                target['ra'] = float(pointing['ra'])
-            if 'dec' in pointing:
-                target['dec'] = float(pointing['dec'])
-            if 'diff_epoch_rate' in pointing and float(pointing['diff_epoch_rate']):
-                target['diff_epoch_rate'] = float(pointing['diff_epoch_rate'])
-            if 'diff_ra_rate' in pointing and float(pointing['diff_ra_rate']):
-                target['diff_roll_rate'] = float(pointing['diff_ra_rate'])
-            if 'diff_dec_rate' in pointing and float(pointing['diff_dec_rate']):
-                target['diff_pitch_rate'] = float(pointing['diff_dec_rate'])
-            if 'diff_ra_accel' in pointing and float(pointing['diff_ra_accel']):
-                target['diff_roll_acceleration'] = float(pointing['diff_ra_accel'])
-            if 'diff_dec_accel' in pointing and float(pointing['diff_dec_accel']):
-                target['diff_pitch_acceleration'] = float(pointing['diff_dec_accel'])
-        elif pointing.get('coord_type', 'RD') == 'AA':
+        # Satellite (Static) type
+        if pointing.get('coord_type', 'RD') == 'AA':
             if 'az' in pointing:
                 target['azimuth'] = float(pointing['az'])
             if 'alt' in pointing:
                 target['altitude'] = float(pointing['alt'])
             if 'diff_epoch_rate' in pointing and float(pointing['diff_epoch_rate']):
-                target['diff_epoch_rate'] = float(pointing['diff_epoch_rate'])
+                target['diff_epoch'] = float(pointing['diff_epoch_rate'])
             if 'diff_az_rate' in pointing and float(pointing['diff_az_rate']):
-                target['diff_roll_rate'] = float(pointing['diff_az_rate'])
+                target['diff_azimuth_rate'] = float(pointing['diff_az_rate'])
             if 'diff_alt_rate' in pointing and float(pointing['diff_alt_rate']):
-                target['diff_pitch_rate'] = float(pointing['diff_alt_rate'])
+                target['diff_altitude_rate'] = float(pointing['diff_alt_rate'])
             if 'diff_az_accel' in pointing and float(pointing['diff_az_accel']):
-                target['diff_roll_acceleration'] = float(pointing['diff_az_accel'])
+                target['diff_azimuth_acceleration'] = float(pointing['diff_az_accel'])
             if 'diff_alt_accel' in pointing and float(pointing['diff_alt_accel']):
-                target['diff_pitch_acceleration'] = float(pointing['diff_alt_accel'])
+                target['diff_altitude_acceleration'] = float(pointing['diff_alt_accel'])
         else:
-            raise PondBlockError("Only Coordinate Types RD and AA are supported for Static pointing in the shim")
+            raise PondBlockError("Only Coordinate Types AA are supported for Static/Satellite pointing in the shim")
 
     extra_params = {}
     if 'vmag' in pointing and float(pointing['vmag']):
@@ -405,8 +398,8 @@ def convert_observation_to_pond_block(observation):
             molecule['args'] = configuration['extra_params']['script_name']
         if first_instrument_config['extra_params'].get('defocus'):
             molecule['defocus'] = str(first_instrument_config['extra_params']['defocus'])
-        if configuration['guiding_config']['extra_params'].get('guide_strategy'):
-            molecule['ag_strategy'] = configuration['guiding_config']['extra_params']['guide_strategy']
+        if configuration['guiding_config']['extra_params'].get('ag_strategy'):
+            molecule['ag_strategy'] = configuration['guiding_config']['extra_params']['ag_strategy']
         if 'filter' in optical_elements:
             molecule['filter'] = optical_elements['filter']
         if 'slit' in optical_elements:
@@ -461,18 +454,21 @@ def configuration_to_pointing(configuration):
         pointing['ha'] = pointing['hour_angle']
         del pointing['hour_angle']
 
-    if 'diff_pitch_rate' in pointing and pitch_converter != 'pitch':
-        pointing['diff_{}_rate'.format(pitch_converter)] = pointing['diff_pitch_rate']
-        del pointing['diff_pitch_rate']
-    if 'diff_pitch_acceleration' in pointing:
-        pointing['diff_{}_accel'.format(pitch_converter)] = pointing['diff_pitch_acceleration']
-        del pointing['diff_pitch_acceleration']
-    if 'diff_roll_rate' in pointing and roll_converter != 'roll':
-        pointing['diff_{}_rate'.format(roll_converter)] = pointing['diff_roll_rate']
-        del pointing['diff_roll_rate']
-    if 'diff_roll_acceleration' in pointing:
-        pointing['diff_{}_accel'.format(roll_converter)] = pointing['diff_roll_acceleration']
-        del pointing['diff_roll_acceleration']
+    if 'diff_altitude_rate' in pointing and pitch_converter != 'pitch':
+        pointing['diff_{}_rate'.format(pitch_converter)] = pointing['diff_altitude_rate']
+        del pointing['diff_altitude_rate']
+    if 'diff_altitude_acceleration' in pointing:
+        pointing['diff_{}_accel'.format(pitch_converter)] = pointing['diff_altitude_acceleration']
+        del pointing['diff_altitude_acceleration']
+    if 'diff_azimuth_rate' in pointing and roll_converter != 'roll':
+        pointing['diff_{}_rate'.format(roll_converter)] = pointing['diff_azimuth_rate']
+        del pointing['diff_azimuth_rate']
+    if 'diff_azimuth_acceleration' in pointing:
+        pointing['diff_{}_accel'.format(roll_converter)] = pointing['diff_azimuth_acceleration']
+        del pointing['diff_azimuth_acceleration']
+    if 'diff_epoch' in pointing:
+        pointing['diff_epoch_rate'] = pointint['diff_epoch']
+        del pointing['diff_epoch']
 
     if 'extra_params' in pointing:
         if target.get('extra_params', {}).get('v_magnitude'):

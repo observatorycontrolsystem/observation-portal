@@ -21,7 +21,7 @@ class ObservationListView(StaffRequiredMixin, FilterView):
     model = Observation
     filterset_class = ObservationFilter
     paginate_by = 50
-    ordering = '-modified'
+    ordering = '-start'
     template_name = 'observations/observation_list.html'
 
     def get_filterset_kwargs(self, filterset_class):

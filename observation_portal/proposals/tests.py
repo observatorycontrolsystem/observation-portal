@@ -3,16 +3,14 @@ from django.core import mail
 from django.contrib.auth.models import User
 from django.db.utils import IntegrityError
 from django.urls import reverse
-from django.conf import settings
 from django.utils import timezone
 from mixer.backend.django import mixer
-from unittest.mock import patch
 from requests import HTTPError
 import datetime
 from django_dramatiq.test import DramatiqTestCase
 
 from observation_portal.proposals.models import ProposalInvite, Proposal, Membership, ProposalNotification, TimeAllocation, Semester
-from observation_portal.requestgroups.models import RequestGroup, Configuration, InstrumentConfig, AcquisitionConfig, GuidingConfig, Target
+from observation_portal.requestgroups.models import RequestGroup, Configuration, InstrumentConfig
 from observation_portal.accounts.models import Profile
 from observation_portal.common.test_helpers import create_simple_requestgroup
 from observation_portal.requestgroups.signals import handlers  # DO NOT DELETE, needed to active signals
@@ -86,7 +84,8 @@ class TestProposalNotifications(DramatiqTestCase):
         self.proposal = mixer.blend(Proposal)
         self.user = mixer.blend(User)
         mixer.blend(Membership, user=self.user, proposal=self.proposal)
-        self.requestgroup = mixer.blend(RequestGroup, proposal=self.proposal, submitter=self.user, state='PENDING')
+        self.requestgroup = mixer.blend(RequestGroup, proposal=self.proposal, submitter=self.user, state='PENDING',
+                                        observation_type=RequestGroup.NORMAL)
 
     def test_all_proposal_notification(self):
         mixer.blend(Profile, user=self.user, notifications_enabled=True)

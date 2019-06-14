@@ -19,15 +19,12 @@ from django.urls import reverse
 from django.contrib.auth.models import User
 from django.core import cache
 from dateutil.parser import parse as datetime_parser
-from datetime import timedelta
 from rest_framework.test import APITestCase
 from mixer.backend.django import mixer
-from mixer.main import mixer as basic_mixer
 from django.utils import timezone
 from datetime import datetime, timedelta
 import copy
 import random
-from urllib import parse
 from unittest import skip
 from unittest.mock import patch
 
@@ -90,38 +87,44 @@ class TestUserGetRequestApi(SetTimeMixin, APITestCase):
 
     def test_get_request_group_detail_unauthenticated(self):
         self.client.force_login(self.other_user)
-        request_group = mixer.blend(RequestGroup, submitter=self.user, proposal=self.proposal, name="testgroup")
+        request_group = mixer.blend(RequestGroup, submitter=self.user, proposal=self.proposal, name="testgroup",
+                                    observation_type=RequestGroup.NORMAL)
         result = self.client.get(reverse('api:request_groups-detail', args=(request_group.id,)))
         self.assertEqual(result.status_code, 404)
 
     def test_get_request_group_detail_authenticated(self):
-        request_group = mixer.blend(RequestGroup, submitter=self.user, proposal=self.proposal, name="testgroup")
+        request_group = mixer.blend(RequestGroup, submitter=self.user, proposal=self.proposal, name="testgroup",
+                                    observation_type=RequestGroup.NORMAL)
         self.client.force_login(self.user)
         result = self.client.get(reverse('api:request_groups-detail', args=(request_group.id,)))
         self.assertContains(result, request_group.name)
 
     def test_get_request_group_list_unauthenticated(self):
         self.client.force_login(self.other_user)
-        mixer.blend(RequestGroup, submitter=self.user, proposal=self.proposal, name="testgroup")
+        mixer.blend(RequestGroup, submitter=self.user, proposal=self.proposal, name="testgroup",
+                    observation_type=RequestGroup.NORMAL)
         result = self.client.get(reverse('api:request_groups-list'))
         self.assertEqual(result.status_code, 200)
         self.assertEqual(result.json()['results'], [])
 
     def test_get_request_group_list_authenticated(self):
-        request_group = mixer.blend(RequestGroup, submitter=self.user, proposal=self.proposal, name="testgroup")
+        request_group = mixer.blend(RequestGroup, submitter=self.user, proposal=self.proposal, name="testgroup",
+                                    observation_type=RequestGroup.NORMAL)
         self.client.force_login(self.user)
         result = self.client.get(reverse('api:request_groups-list'))
         self.assertContains(result, request_group.name)
 
     def test_get_request_group_list_staff(self):
-        request_group = mixer.blend(RequestGroup, submitter=self.user, proposal=self.proposal, name="testgroup2")
+        request_group = mixer.blend(RequestGroup, submitter=self.user, proposal=self.proposal, name="testgroup2",
+                                    observation_type=RequestGroup.NORMAL)
         self.client.force_login(self.staff_user)
         result = self.client.get(reverse('api:request_groups-list'))
         self.assertContains(result, request_group.name)
 
     def test_get_request_group_detail_public(self):
         proposal = mixer.blend(Proposal, public=True)
-        request_group = mixer.blend(RequestGroup, submitter=self.user, proposal=proposal, name="publicgroup")
+        request_group = mixer.blend(RequestGroup, submitter=self.user, proposal=proposal, name="publicgroup",
+                                    observation_type=RequestGroup.NORMAL)
         result = self.client.get(reverse('api:request_groups-detail', args=(request_group.id,)))
         self.assertContains(result, request_group.name)
 
@@ -386,7 +389,7 @@ class TestDisallowedMethods(APITestCase):
         self.user = mixer.blend(User)
         self.proposal = mixer.blend(Proposal)
         mixer.blend(Membership, proposal=self.proposal, user=self.user)
-        self.rg = mixer.blend(RequestGroup, proposal=self.proposal)
+        self.rg = mixer.blend(RequestGroup, proposal=self.proposal, observation_type=RequestGroup.NORMAL)
         self.client.force_login(self.user)
 
     def test_cannot_delete_rg(self):
@@ -1057,11 +1060,11 @@ class TestSatelliteTarget(SetTimeMixin, APITestCase):
             # satellite
             'altitude': 33.0,
             'azimuth': 2.0,
-            'diff_pitch_rate': 3.0,
-            'diff_roll_rate': 4.0,
-            'diff_pitch_acceleration': 5.0,
-            'diff_roll_acceleration': 0.99,
-            'diff_epoch_rate': 22.0,
+            'diff_altitude_rate': 3.0,
+            'diff_azimuth_rate': 4.0,
+            'diff_altitude_acceleration': 5.0,
+            'diff_azimuth_acceleration': 0.99,
+            'diff_epoch': 22.0,
             'epoch': 2000.0,
         }
 
@@ -1072,13 +1075,13 @@ class TestSatelliteTarget(SetTimeMixin, APITestCase):
 
     def test_post_requestgroup_satellite_missing_fields(self):
         bad_data = self.generic_payload.copy()
-        del bad_data['requests'][0]['configurations'][0]['target']['diff_epoch_rate']
-        del bad_data['requests'][0]['configurations'][0]['target']['diff_pitch_acceleration']
+        del bad_data['requests'][0]['configurations'][0]['target']['diff_epoch']
+        del bad_data['requests'][0]['configurations'][0]['target']['diff_altitude_acceleration']
 
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('diff_epoch_rate', str(response.content))
-        self.assertIn('diff_pitch_acceleration', str(response.content))
+        self.assertIn('diff_epoch', str(response.content))
+        self.assertIn('diff_altitude_acceleration', str(response.content))
 
 
 class TestLocationApi(SetTimeMixin, APITestCase):
@@ -1706,7 +1709,8 @@ class TestGetRequestApi(APITestCase):
         self.user = mixer.blend(User, is_staff=False, is_superuser=False)
         self.staff_user = mixer.blend(User, is_staff=True)
         mixer.blend(Membership, user=self.user, proposal=self.proposal)
-        self.request_group = mixer.blend(RequestGroup, submitter=self.user, proposal=self.proposal)
+        self.request_group = mixer.blend(RequestGroup, submitter=self.user, proposal=self.proposal,
+                                         observation_type=RequestGroup.NORMAL)
 
     def test_get_request_list_authenticated(self):
         request = mixer.blend(Request, request_group=self.request_group, observation_note='testobsnote')
@@ -1910,7 +1914,8 @@ class TestCancelRequestGroupApi(SetTimeMixin, APITestCase):
         self.client.force_login(self.user)
 
     def test_cancel_pending_rg(self, modify_mock):
-        requestgroup = mixer.blend(RequestGroup, state='PENDING', proposal=self.proposal)
+        requestgroup = mixer.blend(RequestGroup, state='PENDING', proposal=self.proposal,
+                                   observation_type=RequestGroup.NORMAL)
         requests = mixer.cycle(3).blend(Request, state='PENDING', request_group=requestgroup)
         for request in requests:
             mixer.blend(Configuration, request=request, instrument_type='1M0-SCICAM-SBIG')
@@ -1922,7 +1927,8 @@ class TestCancelRequestGroupApi(SetTimeMixin, APITestCase):
             self.assertEqual(Request.objects.get(pk=request.id).state, 'CANCELED')
 
     def test_cancel_pending_rg_some_requests_not_pending(self, modify_mock):
-        requestgroup = mixer.blend(RequestGroup, state='PENDING', proposal=self.proposal)
+        requestgroup = mixer.blend(RequestGroup, state='PENDING', proposal=self.proposal,
+                                   observation_type=RequestGroup.NORMAL)
         pending_r = mixer.blend(Request, state='PENDING', request_group=requestgroup)
         mixer.blend(Configuration, request=pending_r, instrument_type='1M0-SCICAM-SBIG')
         completed_r = mixer.blend(Request, state='COMPLETED', request_group=requestgroup)
@@ -1938,7 +1944,8 @@ class TestCancelRequestGroupApi(SetTimeMixin, APITestCase):
         self.assertEqual(Request.objects.get(pk=we_r.id).state, 'WINDOW_EXPIRED')
 
     def test_cannot_cancel_expired_rg(self, modify_mock):
-        requestgroup = mixer.blend(RequestGroup, state='WINDOW_EXPIRED', proposal=self.proposal)
+        requestgroup = mixer.blend(RequestGroup, state='WINDOW_EXPIRED', proposal=self.proposal,
+                                   observation_type=RequestGroup.NORMAL)
         expired_r = mixer.blend(Request, state='WINDOW_EXPIRED', request_group=requestgroup)
         response = self.client.post(reverse('api:request_groups-cancel', kwargs={'pk': requestgroup.id}))
 
@@ -1947,7 +1954,8 @@ class TestCancelRequestGroupApi(SetTimeMixin, APITestCase):
         self.assertEqual(Request.objects.get(pk=expired_r.id).state, 'WINDOW_EXPIRED')
 
     def test_cannot_cancel_completed_rg(self, modify_mock):
-        requestgroup = mixer.blend(RequestGroup, state='COMPLETED', proposal=self.proposal)
+        requestgroup = mixer.blend(RequestGroup, state='COMPLETED', proposal=self.proposal,
+                                   observation_type=RequestGroup.NORMAL)
         completed_r = mixer.blend(Request, state='COMPLETED', request_group=requestgroup)
         expired_r = mixer.blend(Request, state='WINDOW_EXPIRED', request_group=requestgroup)
         response = self.client.post(reverse('api:request_groups-cancel', kwargs={'pk': requestgroup.id}))
@@ -1965,7 +1973,8 @@ class TestUpdateRequestStatesAPI(APITestCase):
         self.proposal = mixer.blend(Proposal)
         mixer.blend(Membership, user=self.user, proposal=self.proposal)
         self.client.force_login(self.user)
-        self.rg = mixer.blend(RequestGroup, operator='MANY', state='PENDING', proposal=self.proposal, modified=timezone.now() - timedelta(weeks=2))
+        self.rg = mixer.blend(RequestGroup, operator='MANY', state='PENDING', proposal=self.proposal,
+                              modified=timezone.now() - timedelta(weeks=2), observation_type=RequestGroup.NORMAL)
         self.requests = mixer.cycle(3).blend(Request, request_group=self.rg, state='PENDING', modified=timezone.now() - timedelta(weeks=2))
 
     ## TODO update to remove mocked lake stuff
@@ -2204,7 +2213,8 @@ class TestPressure(APITestCase):
         self.mock_site_intervals = self.site_intervals_patch.start()
 
         for i in range(24):
-            request = mixer.blend(Request, state='PENDING')
+            requestgroup = mixer.blend(RequestGroup, observation_type=RequestGroup.NORMAL)
+            request = mixer.blend(Request, request_group=requestgroup, state='PENDING')
             mixer.blend(
                 Window, start=timezone.now(), end=timezone.now() + timedelta(hours=i), request=request
             )
@@ -2319,7 +2329,8 @@ class TestPressure(APITestCase):
 
     @patch('observation_portal.requestgroups.contention.get_filtered_rise_set_intervals_by_site')
     def test_visible_intervals(self, mock_intervals):
-        request = mixer.blend(Request, state='PENDING', duration=70*60)  # Request duration is 70 minutes.
+        requestgroup = mixer.blend(RequestGroup, observation_type=RequestGroup.NORMAL)
+        request = mixer.blend(Request, request_group=requestgroup, state='PENDING', duration=70*60)  # Request duration is 70 minutes.
         mixer.blend(Window, request=request)
         mixer.blend(Location, request=request, site='tst')
         conf = mixer.blend(Configuration, request=request)
@@ -2381,7 +2392,8 @@ class TestPressure(APITestCase):
 
     @patch('observation_portal.requestgroups.contention.get_filtered_rise_set_intervals_by_site')
     def test_binned_pressure_by_hours_from_now_should_be_gtzero_pressure(self, mock_intervals):
-        request = mixer.blend(Request, state='PENDING', duration=120*60)  # 2 hour duration.
+        requestgroup = mixer.blend(RequestGroup, observation_type=RequestGroup.NORMAL)
+        request = mixer.blend(Request, request_group=requestgroup, state='PENDING', duration=120*60)  # 2 hour duration.
         mixer.blend(Window, request=request)
         mixer.blend(Location, request=request, site='tst')
         conf = mixer.blend(Configuration, request=request, instrument_type='1M0-SCICAM-SBIG')
@@ -2490,7 +2502,7 @@ class TestMaxIppRequestgroupApi(SetTimeMixin, APITestCase):
 class TestFiltering(APITestCase):
     def test_filtering_works(self):
         proposal = mixer.blend(Proposal, public=True)
-        mixer.blend(RequestGroup, name='filter on me', proposal=proposal)
+        mixer.blend(RequestGroup, name='filter on me', proposal=proposal, observation_type=RequestGroup.NORMAL)
         response = self.client.get(reverse('api:request_groups-list') + '?name=filter')
         self.assertEqual(response.json()['count'], 1)
         response = self.client.get(reverse('api:request_groups-list') + '?name=philbobaggins')
@@ -2559,7 +2571,7 @@ class TestLastChanged(SetTimeMixin, APITestCase):
         self.assertAlmostEqual(datetime_parser(last_change), timezone.now(), delta=timedelta(minutes=1))
 
     def test_last_change_date_is_not_updated_when_request_is_mixed(self):
-        requestgroup = create_simple_requestgroup(
+        create_simple_requestgroup(
             user=self.user, proposal=self.proposal, instrument_type='1M0-SCICAM-SBIG', window=self.window
         )
         last_change_cached = self.locmem_cache.get('observation_portal_last_change_time')

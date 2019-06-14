@@ -154,11 +154,11 @@ def get_rise_set_target(target_dict):
 
     elif target_dict['type'] == 'SATELLITE':
         return make_satellite_target(alt=target_dict['altitude'], az=target_dict['azimuth'],
-                                     diff_alt_rate=target_dict['diff_pitch_rate'],
-                                     diff_az_rate=target_dict['diff_roll_rate'],
-                                     diff_alt_accel=target_dict['diff_pitch_acceleration'],
-                                     diff_az_accel=target_dict['diff_roll_acceleration'],
-                                     diff_epoch_rate=target_dict['diff_epoch_rate'])
+                                     diff_alt_rate=target_dict['diff_altitude_rate'],
+                                     diff_az_rate=target_dict['diff_azimuth_rate'],
+                                     diff_alt_accel=target_dict['diff_altitude_acceleration'],
+                                     diff_az_accel=target_dict['diff_azimuth_acceleration'],
+                                     diff_epoch_rate=target_dict['diff_epoch'])
 
     elif target_dict['type'] == 'ORBITAL_ELEMENTS':
         if target_dict['scheme'] == 'MPC_MINOR_PLANET':

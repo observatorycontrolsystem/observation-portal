@@ -226,7 +226,7 @@ class RequestViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
 
     @action(detail=True)
     def telescope_states(self, request, pk=None):
-        telescope_states = get_telescope_states_for_request(self.get_object())
+        telescope_states = get_telescope_states_for_request(self.get_object().as_dict())
         str_telescope_states = {str(k): v for k, v in telescope_states.items()}
         return Response(str_telescope_states)
 
@@ -234,8 +234,8 @@ class RequestViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
     def observations(self, request, pk=None):
         observations = self.get_object().observation_set.all()
         if request.GET.get('exclude_canceled'):
-            return Response([o.as_dict() for o in observations if o.state != 'CANCELED'])
-        return Response([o.as_dict() for o in observations])
+            return Response([o.as_dict(no_request=True) for o in observations if o.state != 'CANCELED'])
+        return Response([o.as_dict(no_request=True) for o in observations])
 
 
 class DraftRequestGroupViewSet(viewsets.ModelViewSet):

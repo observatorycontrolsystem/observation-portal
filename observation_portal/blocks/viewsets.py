@@ -7,7 +7,6 @@ from django.http import HttpResponseNotAllowed
 import logging
 
 from observation_portal.observations.models import Observation
-from observation_portal.requestgroups.models import RequestGroup
 from observation_portal.blocks.filters import PondBlockFilter
 from observation_portal.blocks.conversion import (convert_pond_blocks_to_observations,
                                                 convert_observations_to_pond_blocks)

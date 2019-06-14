@@ -26,28 +26,30 @@ MOLECULE_TYPE_DISPLAY = {
 }
 
 
-def get_telescope_states_for_request(request):
+def get_telescope_states_for_request(request_dict):
     # TODO: update to support multiple instruments in a list
-    instrument_type = request.configurations.first().instrument_type
+    instrument_type = request_dict['configurations'][0]['instrument_type']
     site_intervals = {}
     # Build up the list of telescopes and their rise set intervals for the target on this request
     site_data = configdb.get_sites_with_instrument_type_and_location(
       instrument_type=instrument_type,
-      site_code=request.location.site,
-      enclosure_code=request.location.enclosure,
-      telescope_code=request.location.telescope
+      site_code=request_dict['location']['site'] if 'site' in request_dict['location'] else '',
+      enclosure_code=request_dict['location']['enclosure'] if 'enclosure' in request_dict['location'] else '',
+      telescope_code=request_dict['location']['telescope'] if 'telescope' in request_dict['location'] else ''
     )
     for site, details in site_data.items():
         if site not in site_intervals:
-            site_intervals[site] = get_filtered_rise_set_intervals_by_site(request.as_dict(), site).get(site, [])
+            site_intervals[site] = get_filtered_rise_set_intervals_by_site(request_dict, site).get(site, [])
     # If you have no sites, return the empty dict here
     if not site_intervals:
         return {}
 
     # Retrieve the telescope states for that set of sites
+    min_window_time = min([window['start'] for window in request_dict['windows']])
+    max_window_time = max([window['end'] for window in request_dict['windows']])
     telescope_states = TelescopeStates(
-      start=request.min_window_time,
-      end=request.max_window_time,
+      start=min_window_time,
+      end=max_window_time,
       sites=list(site_intervals.keys()),
       instrument_types=[instrument_type]
     ).get()
@@ -56,7 +58,7 @@ def get_telescope_states_for_request(request):
 
     # Filter the telescope states list with the site intervals
     filtered_telescope_states = filter_telescope_states_by_intervals(
-      telescope_states, site_intervals, request.min_window_time, request.max_window_time
+      telescope_states, site_intervals, min_window_time, max_window_time
     )
 
     return filtered_telescope_states
