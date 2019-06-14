@@ -1047,8 +1047,8 @@ class TestSatelliteTarget(SetTimeMixin, APITestCase):
             end=datetime(2016, 12, 31, tzinfo=timezone.utc)
         )
         self.time_allocation_1m0 = mixer.blend(
-            TimeAllocation, proposal=self.proposal, semester=semester, telescope_class='1m0', std_allocation=100.0,
-            std_time_used=0.0, instrument_type='1M0-SCICAM-SBIG', rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
+            TimeAllocation, proposal=self.proposal, semester=semester, std_allocation=100.0, std_time_used=0.0,
+            instrument_type='1M0-SCICAM-SBIG', rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
             ipp_time_available=5.0
         )
         mixer.blend(Membership, user=self.user, proposal=self.proposal)
@@ -1082,6 +1082,49 @@ class TestSatelliteTarget(SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('diff_epoch', str(response.content))
         self.assertIn('diff_altitude_acceleration', str(response.content))
+
+
+class TestHourAngleTarget(SetTimeMixin, APITestCase):
+    def setUp(self):
+        super().setUp()
+        self.proposal = mixer.blend(Proposal)
+        self.user = mixer.blend(User)
+        self.client.force_login(self.user)
+
+        semester = mixer.blend(
+            Semester, id='2016B', start=datetime(2016, 9, 1, tzinfo=timezone.utc),
+            end=datetime(2016, 12, 31, tzinfo=timezone.utc)
+        )
+        self.time_allocation_1m0 = mixer.blend(
+            TimeAllocation, proposal=self.proposal, semester=semester, std_allocation=100.0, std_time_used=0.0,
+            instrument_type='1M0-SCICAM-SBIG', rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
+            ipp_time_available=5.0
+        )
+        mixer.blend(Membership, user=self.user, proposal=self.proposal)
+        self.generic_payload = copy.deepcopy(generic_payload)
+        self.generic_payload['proposal'] = self.proposal.id
+        self.generic_payload['requests'][0]['configurations'][0]['target'] = {
+            'name': 'fake target',
+            'type': 'HOUR_ANGLE',
+            'hour_angle': 20.0,
+            'dec': 30.0,
+            'parallax': 0.1,
+            'proper_motion_ra': 0.01,
+            'proper_motion_dec': 0.02,
+            'epoch': 2000
+        }
+
+    def test_post_requestgroup_hour_angle_target(self):
+        good_data = self.generic_payload.copy()
+        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
+        self.assertEqual(response.status_code, 201)
+
+    def test_post_requestgroup_hour_angle_missing_required_fields(self):
+        bad_data = self.generic_payload.copy()
+        del bad_data['requests'][0]['configurations'][0]['target']['dec']
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('dec', str(response.content))
 
 
 class TestLocationApi(SetTimeMixin, APITestCase):
