@@ -480,14 +480,14 @@ class ConfigDB(object):
         return instrument_types
 
     def get_guider_for_instrument_name(self, instrument_name):
-        instruments = self.get_instruments()
+        instruments = self.get_instruments(exclude_states=['DISABLED'])
         for instrument in instruments:
             if instrument['code'].lower() == instrument_name.lower():
                 return instrument['autoguider_camera']['code'].lower()
         raise ConfigDBException(_(f'Instrument not found: {instrument_name}'))
 
     def is_valid_guider_for_instrument_name(self, instrument_name, guide_camera_name):
-        instruments = self.get_instruments()
+        instruments = self.get_instruments(exclude_states=['DISABLED'])
         for instrument in instruments:
             if instrument['code'].upper() == instrument_name.upper():
                 if instrument['autoguider_camera']['code'].lower() == guide_camera_name.lower():
