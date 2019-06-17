@@ -3,8 +3,10 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 
 from time_intervals.intervals import Intervals
-from rise_set.astrometry import make_ra_dec_target, make_satellite_target, make_minor_planet_target, mean_to_apparent
-from rise_set.astrometry import make_comet_target, make_major_planet_target, angular_distance_between, date_to_tdb
+from rise_set.astrometry import (
+    make_ra_dec_target, make_satellite_target, make_hour_angle_target, make_minor_planet_target, mean_to_apparent,
+    make_comet_target, make_major_planet_target, angular_distance_between, date_to_tdb
+)
 from rise_set.angle import Angle
 from rise_set.rates import ProperMotion
 from rise_set.visibility import Visibility
@@ -57,7 +59,9 @@ def get_rise_set_intervals_by_site(request: dict) -> dict:
                         visibility.get_observable_intervals(
                             rise_set_target,
                             airmass=request['configurations'][0]['constraints']['max_airmass'],
-                            moon_distance=Angle(degrees=request['configurations'][0]['constraints']['min_lunar_distance'])
+                            moon_distance=Angle(
+                                degrees=request['configurations'][0]['constraints']['min_lunar_distance']
+                            )
                         )
                     )
                 except MovingViolation:
@@ -80,7 +84,9 @@ def get_filtered_rise_set_intervals_by_site(request_dict, site=''):
         return intervals
 
     intervals_by_site = get_rise_set_intervals_by_site(request_dict)
-    intervalsets_by_telescope = intervals_by_site_to_intervalsets_by_telescope(intervals_by_site, telescope_details.keys())
+    intervalsets_by_telescope = intervals_by_site_to_intervalsets_by_telescope(
+        intervals_by_site, telescope_details.keys()
+    )
     filtered_intervalsets_by_telescope = filter_out_downtime_from_intervalsets(intervalsets_by_telescope)
     filtered_intervals_by_site = intervalsets_by_telescope_to_intervals_by_site(filtered_intervalsets_by_telescope)
     return filtered_intervals_by_site
@@ -138,60 +144,80 @@ def filter_out_downtime_from_intervalsets(intervalsets_by_telescope: dict) -> di
         if telescope not in downtime_intervals:
             filtered_intervalsets_by_telescope[telescope] = intervalsets_by_telescope[telescope]
         else:
-            filtered_intervalsets_by_telescope[telescope] = intervalsets_by_telescope[telescope].subtract(downtime_intervals[telescope])
+            filtered_intervalsets_by_telescope[telescope] = intervalsets_by_telescope[telescope].subtract(
+                downtime_intervals[telescope]
+            )
     return filtered_intervalsets_by_telescope
 
 
 def get_rise_set_target(target_dict):
-    if target_dict['type'] == 'ICRS':
+    if target_dict['type'] in ['ICRS', 'HOUR_ANGLE']:
         pmra = (target_dict['proper_motion_ra'] / 1000.0 / cos(radians(target_dict['dec']))) / 3600.0
         pmdec = (target_dict['proper_motion_dec'] / 1000.0) / 3600.0
-        return make_ra_dec_target(ra=Angle(degrees=target_dict['ra']),
-                                  dec=Angle(degrees=target_dict['dec']),
-                                  ra_proper_motion=ProperMotion(Angle(degrees=pmra, units='arc'), time='year'),
-                                  dec_proper_motion=ProperMotion(Angle(degrees=pmdec, units='arc'), time='year'),
-                                  parallax=target_dict['parallax'], rad_vel=0.0, epoch=target_dict['epoch'])
-
+        if target_dict['type'] == 'ICRS':
+            return make_ra_dec_target(
+                ra=Angle(degrees=target_dict['ra']),
+                dec=Angle(degrees=target_dict['dec']),
+                ra_proper_motion=ProperMotion(Angle(degrees=pmra, units='arc'), time='year'),
+                dec_proper_motion=ProperMotion(Angle(degrees=pmdec, units='arc'), time='year'),
+                parallax=target_dict['parallax'],
+                rad_vel=0.0,
+                epoch=target_dict['epoch']
+            )
+        elif target_dict['type'] == 'HOUR_ANGLE':
+            return make_hour_angle_target(
+                hour_angle=Angle(degrees=target_dict['hour_angle']),
+                dec=Angle(degrees=target_dict['dec']),
+                ra_proper_motion=ProperMotion(Angle(degrees=pmra, units='arc'), time='year'),
+                dec_proper_motion=ProperMotion(Angle(degrees=pmdec, units='arc'), time='year'),
+                parallax=target_dict['parallax'],
+                epoch=target_dict['epoch']
+            )
     elif target_dict['type'] == 'SATELLITE':
-        return make_satellite_target(alt=target_dict['altitude'], az=target_dict['azimuth'],
-                                     diff_alt_rate=target_dict['diff_altitude_rate'],
-                                     diff_az_rate=target_dict['diff_azimuth_rate'],
-                                     diff_alt_accel=target_dict['diff_altitude_acceleration'],
-                                     diff_az_accel=target_dict['diff_azimuth_acceleration'],
-                                     diff_epoch_rate=target_dict['diff_epoch'])
-
+        return make_satellite_target(
+            alt=target_dict['altitude'],
+            az=target_dict['azimuth'],
+            diff_alt_rate=target_dict['diff_altitude_rate'],
+            diff_az_rate=target_dict['diff_azimuth_rate'],
+            diff_alt_accel=target_dict['diff_altitude_acceleration'],
+            diff_az_accel=target_dict['diff_azimuth_acceleration'],
+            diff_epoch_rate=target_dict['diff_epoch']
+        )
     elif target_dict['type'] == 'ORBITAL_ELEMENTS':
         if target_dict['scheme'] == 'MPC_MINOR_PLANET':
-            return make_minor_planet_target(target_type=target_dict['scheme'],
-                                            epoch=target_dict['epochofel'],
-                                            inclination=target_dict['orbinc'],
-                                            long_node=target_dict['longascnode'],
-                                            arg_perihelion=target_dict['argofperih'],
-                                            semi_axis=target_dict['meandist'],
-                                            eccentricity=target_dict['eccentricity'],
-                                            mean_anomaly=target_dict['meananom']
-                                            )
+            return make_minor_planet_target(
+                target_type=target_dict['scheme'],
+                epoch=target_dict['epochofel'],
+                inclination=target_dict['orbinc'],
+                long_node=target_dict['longascnode'],
+                arg_perihelion=target_dict['argofperih'],
+                semi_axis=target_dict['meandist'],
+                eccentricity=target_dict['eccentricity'],
+                mean_anomaly=target_dict['meananom']
+            )
         elif target_dict['scheme'] == 'MPC_COMET':
-            return make_comet_target(target_type=target_dict['scheme'],
-                                     epoch=target_dict['epochofel'],
-                                     epochofperih=target_dict['epochofperih'],
-                                     inclination=target_dict['orbinc'],
-                                     long_node=target_dict['longascnode'],
-                                     arg_perihelion=target_dict['argofperih'],
-                                     perihdist=target_dict['perihdist'],
-                                     eccentricity=target_dict['eccentricity'],
-                                     )
+            return make_comet_target(
+                target_type=target_dict['scheme'],
+                epoch=target_dict['epochofel'],
+                epochofperih=target_dict['epochofperih'],
+                inclination=target_dict['orbinc'],
+                long_node=target_dict['longascnode'],
+                arg_perihelion=target_dict['argofperih'],
+                perihdist=target_dict['perihdist'],
+                eccentricity=target_dict['eccentricity'],
+            )
         elif target_dict['scheme'] == 'JPL_MAJOR_PLANET':
-            return make_major_planet_target(target_type=target_dict['scheme'],
-                                            epochofel=target_dict['epochofel'],
-                                            inclination=target_dict['orbinc'],
-                                            long_node=target_dict['longascnode'],
-                                            arg_perihelion=target_dict['argofperih'],
-                                            semi_axis=target_dict['meandist'],
-                                            eccentricity=target_dict['eccentricity'],
-                                            mean_anomaly=target_dict['meananom'],
-                                            dailymot=target_dict['dailymot']
-                                            )
+            return make_major_planet_target(
+                target_type=target_dict['scheme'],
+                epochofel=target_dict['epochofel'],
+                inclination=target_dict['orbinc'],
+                long_node=target_dict['longascnode'],
+                arg_perihelion=target_dict['argofperih'],
+                semi_axis=target_dict['meandist'],
+                eccentricity=target_dict['eccentricity'],
+                mean_anomaly=target_dict['meananom'],
+                dailymot=target_dict['dailymot']
+            )
         else:
             raise TypeError('Invalid scheme ' + target_dict['scheme'])
     else:

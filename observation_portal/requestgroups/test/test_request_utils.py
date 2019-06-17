@@ -310,6 +310,26 @@ class TestRequestAirmass(BaseSetupRequest):
 
         self.assertFalse(airmasses['airmass_data'])
 
+    def test_satellite_target_types_airmass_calc_is_empty(self):
+        self.configuration.target.type = 'SATELLITE'
+        self.configuration.target.altitude = 90
+        self.configuration.target.azimuth = 0
+        self.configuration.target.diff_altitude_rate = 0.01
+        self.configuration.target.diff_azimuth_rate = 0.01
+        self.configuration.target.diff_epoch = 15000
+        self.configuration.target.diff_altitude_acceleration = 0.001
+        self.configuration.target.diff_azimuth_acceleration = 0.001
+        self.configuration.target.save()
+        airmasses = get_airmasses_for_request_at_sites(self.request.as_dict())
+        self.assertFalse(airmasses['airmass_data'])
+
+    def test_hour_angle_target_types_airmass_calc_is_empty(self):
+        self.configuration.target.type = 'HOUR_ANGLE'
+        self.configuration.target.hour_angle = 0
+        self.configuration.target.save()
+        airmasses = get_airmasses_for_request_at_sites(self.request.as_dict())
+        self.assertFalse(airmasses['airmass_data'])
+
 
 class TestRequestTelescopeStates(TelescopeStatesFakeInput):
     def setUp(self):
@@ -362,7 +382,7 @@ class TestRequestTelescopeStates(TelescopeStatesFakeInput):
         self.assertIn(self.tk1, telescope_states)
         self.assertIn(self.tk2, telescope_states)
 
-        expected_start_of_night = datetime(2016, 10, 1, 18, 45, 2, 760910, tzinfo=timezone.utc)
+        expected_start_of_night = datetime(2016, 10, 1, 18, 45, 49, 461652, tzinfo=timezone.utc)
 
         # These are the same states tested for similar times in the telescope_states test class
         doma_expected_available_state = {'telescope': 'tst.doma.1m0a',
