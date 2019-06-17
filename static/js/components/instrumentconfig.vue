@@ -290,14 +290,9 @@ export default {
       this.opticalElementUpdates += 1;
       this.update();
     },
-    instrumentConfigurationfillWindow: function() {
-      this.$emit('instrumentconfigurationfillwindow', this.index);
-    }
-  },
-  watch: {
-    'instrumentconfig.mode': function(value) {
+    updateBinning: function() {
       for (let mode in this.readoutModeOptions) {
-        if (value === this.readoutModeOptions[mode].value) {
+        if (this.instrumentconfig.mode === this.readoutModeOptions[mode].value) {
           this.instrumentconfig.bin_x = this.readoutModeOptions[mode].binning;
           this.instrumentconfig.bin_y = this.readoutModeOptions[mode].binning;
           this.update();
@@ -305,7 +300,15 @@ export default {
         }
       }
     },
-    rotatorModeOptions: function(newValue) {
+    instrumentConfigurationfillWindow: function() {
+      this.$emit('instrumentconfigurationfillwindow', this.index);
+    }
+  },
+  watch: {
+    'instrumentconfig.mode': function() {
+      this.updateBinning();
+    },
+    rotatorModeOptions: function() {
       if (this.instrumentHasRotatorModes) {
         this.instrumentconfig.rotator_mode = this.available_instruments[this.selectedinstrument].modes.rotator.default;
       } else {
@@ -327,6 +330,7 @@ export default {
     readoutModeOptions: function() {
       // TODO: Implement history
       this.instrumentconfig.mode = this.available_instruments[this.selectedinstrument].modes.readout.default;
+      this.updateBinning();
       this.update();
     },
     availableOpticalElementGroups: function(value) {
