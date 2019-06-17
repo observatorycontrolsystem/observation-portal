@@ -224,6 +224,14 @@ function csrfSafeMethod(method) {
   return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
 }
 
+function addCsrfProtection(settings, xhr) {
+  // Give ajax POSTs CSRF protection
+  if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+    var csrftoken = getCookie('csrftoken');
+    xhr.setRequestHeader('X-CSRFToken', csrftoken);
+  }
+}
+
 let datetimeFormat = 'YYYY-MM-DD HH:mm:ss';
 
 const tooltipConfig = {
@@ -310,5 +318,5 @@ export {
   semesterStart, semesterEnd, sexagesimalRaToDecimal, sexagesimalDecToDecimal, QueryString, formatJson, formatValue,
   formatDate, formatField, datetimeFormat, collapseMixin, siteToColor, siteCodeToName, slitWidthToExposureTime,
   observatoryCodeToNumber, telescopeCodeToName, colorPalette, julianToModifiedJulian, getFieldDescription,
-  decimalRaToSexigesimal, decimalDecToSexigesimal, tooltipConfig, getCookie, csrfSafeMethod
+  decimalRaToSexigesimal, decimalDecToSexigesimal, tooltipConfig, addCsrfProtection
 };
