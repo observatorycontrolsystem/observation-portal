@@ -1,6 +1,5 @@
 import $ from 'jquery';
 import moment from 'moment';
-import tooltip from 'bootstrap';
 
 import { datetimeFormat } from './utils.js';
 import { getThumbnail, getLatestFrame, downloadAll, archiveAjaxSetup } from './archive.js';
@@ -10,8 +9,6 @@ archiveAjaxSetup();
 $('.downloadall').click(function(){
   downloadAll($(this).data('requestid'));
 });
-
-$('.tt').tooltip();
 
 $(document).ready(function() {
   $('.thumbnail-small').each(function(idx, elem) {

@@ -1,7 +1,6 @@
 {% extends 'index.html' %}
 {% load render_bundle from webpack_loader %}
 {% load i18n bootstrap4 request_extras humanize static %}
-{% bootstrap_javascript jquery='full' %}
 {% block title %}Submitted Requests{% endblock %}
 {% block extra_css %}
   <link rel="stylesheet" href="{% static 'css/requestgroup_list.css' %}">

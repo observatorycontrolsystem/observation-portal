@@ -19,7 +19,7 @@
 {% if requests.paginator.num_pages > 1 %}
   {% bootstrap_pagination requests extra=request.GET.urlencode %}
 {% endif %}
+{% endblock %}
 {% block extra_javascript %}
 {% render_bundle 'requestgroup_detail' %}
-{% endblock %}
 {% endblock %}
