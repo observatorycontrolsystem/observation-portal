@@ -9,7 +9,7 @@
       :fields="fields" 
       :items="items" 
       :show-empty="tableIsEmpty"
-      empty-text="You have no draft observing requests" 
+      empty-text="You have no draft observation requests"
     >
       <template slot="load" slot-scope="data" class="text-center">
         <b-button 

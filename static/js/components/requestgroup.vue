@@ -32,7 +32,7 @@
       <b-form-row>
         <b-col md="6" v-show="show">
           <h3>
-            Duration of Observing Request:
+            Duration of Observation Request:
             <sup 
               class="text-info"
               v-b-tooltip=tooltipConfig 

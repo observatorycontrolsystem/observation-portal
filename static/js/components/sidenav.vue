@@ -46,7 +46,7 @@
           </b-button>
         <span 
           v-b-tooltip=tooltipConfig
-          title="Submit observing request"
+          title="Submit observation request"
         >
           <b-button 
             variant="success" 
@@ -207,7 +207,7 @@
     data: function() {
       return {
         tooltipConfig: tooltipConfig,
-        saveDraftTooltipText: 'Save a draft of this observing request. The request will not be submitted.'
+        saveDraftTooltipText: 'Save a draft of this observation request. The request will not be submitted.'
       }
     },
     computed: {
