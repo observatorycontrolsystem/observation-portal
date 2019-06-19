@@ -121,7 +121,7 @@
               </p>
               <p>
                 Some sections may be copied using the <i class="fa fa-copy text-success"></i> button. This will duplicate
-                the section and add it to your observing request. Certain sections can also be removed using the
+                the section and add it to your observation request. Certain sections can also be removed using the
                 <i class="fa fa-trash text-danger"></i> button. This button is only displayed if that section is eligible for removal.
               </p>
               <h2>Using the API view</h2>
