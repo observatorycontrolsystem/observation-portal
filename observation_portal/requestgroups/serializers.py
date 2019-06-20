@@ -725,6 +725,12 @@ class RequestGroupSerializer(serializers.ModelSerializer):
         if data['observation_type'] == RequestGroup.DIRECT:
             # Don't do any time accounting stuff if it is a directly scheduled observation
             return data
+        else:
+            # for non-DIRECT observations, don't allow HOUR_ANGLE targets
+            for request in data['requests']:
+                for config in request['configurations']:
+                    if config['target']['type'] == 'HOUR_ANGLE':
+                        raise serializers.ValidationError(_('HOUR_ANGLE Target type not supported in scheduled observations'))
 
         try:
             total_duration_dict = get_total_duration_dict(data)

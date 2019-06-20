@@ -85,7 +85,10 @@ class ObservationConfigurationSerializer(ConfigurationSerializer):
         return value
 
     def validate(self, data):
-        validated_data = super().validate(data)
+        # Currently don't validate configuration params for direct submissions until we add unschedulable flag to 
+        # generic modes in configdb
+        # validated_data = super().validate(data)
+        validated_data = data
         if validated_data['type'] not in ['BIAS', 'DARK', 'SKY_FLAT']:
             target_serializer = TargetSerializer(data=validated_data['target'])
             if not target_serializer.is_valid():

@@ -267,6 +267,17 @@ class TestPostScheduleApi(SetTimeMixin, APITestCase):
             obs_json['request']['configurations'][0]['guide_camera_name']
         )
 
+    def test_post_observation_hour_angle_missing_required_fields(self):
+        bad_observation = copy.deepcopy(self.observation)
+        bad_observation['request']['configurations'][0]['target']['type'] = 'HOUR_ANGLE'
+        bad_observation['request']['configurations'][0]['target']['ha'] = 9.45
+        del bad_observation['request']['configurations'][0]['target']['ra']
+        del bad_observation['request']['configurations'][0]['target']['dec']
+
+        response = self.client.post(reverse('api:schedule-list'), data=bad_observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('dec', str(response.content))
+
 
 class TestPostScheduleMultiConfigApi(SetTimeMixin, APITestCase):
     def setUp(self):

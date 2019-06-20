@@ -1114,17 +1114,11 @@ class TestHourAngleTarget(SetTimeMixin, APITestCase):
             'epoch': 2000
         }
 
-    def test_post_requestgroup_hour_angle_target(self):
-        good_data = self.generic_payload.copy()
-        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
-        self.assertEqual(response.status_code, 201)
-
-    def test_post_requestgroup_hour_angle_missing_required_fields(self):
+    def test_post_requestgroup_hour_angle_target_fails(self):
         bad_data = self.generic_payload.copy()
-        del bad_data['requests'][0]['configurations'][0]['target']['dec']
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('dec', str(response.content))
+        self.assertIn('HOUR_ANGLE Target type not supported', str(response.content))
 
 
 class TestLocationApi(SetTimeMixin, APITestCase):
