@@ -76,7 +76,7 @@
               v-model="jitter" 
               label="Jitter" 
               field="jitter" 
-              desc="Acceptable deviation in decimal hours (before or after) from strict period."
+              desc="Acceptable deviation from strict period (before or after) in decimal hours."
               :errors="errors.jitter" 
               @input="update"
             />
