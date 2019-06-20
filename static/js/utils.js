@@ -157,6 +157,10 @@ let apiFieldToReadable = {
   acquire_radius: {
     humanReadable: 'Acquire Radius',
     description: 'The radius (in arcseconds) within which to search for the brightest object.'
+  },
+  ra: {
+    humanReadable: 'RA',
+    description: ''
   }
 };
 

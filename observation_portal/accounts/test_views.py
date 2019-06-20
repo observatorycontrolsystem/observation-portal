@@ -8,16 +8,18 @@ from django.core import mail
 from django_dramatiq.test import DramatiqTestCase
 
 from observation_portal.accounts.models import Profile
+from observation_portal.accounts.test_utils import blend_user
 from observation_portal.proposals.models import ProposalInvite, Membership, Proposal, TimeAllocation
 
 
 class TestIndex(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(
+        self.user = blend_user(user_params=dict(
             username='doge',
-            password='sopassword',
             email='doge@dog.com'
-        )
+        ))
+        self.user.set_password('sopassword')
+        self.user.save()
 
     def test_index_page(self):
         response = self.client.get(reverse('requestgroups:list'))
@@ -143,7 +145,7 @@ class TestRegistration(TestCase):
 class TestProfile(TestCase):
     def setUp(self):
         super().setUp()
-        self.profile = mixer.blend(Profile, notifications_enabled=True)
+        self.profile = blend_user(profile_params={'notifications_enabled': True}).profile
         self.data = {
             'first_name': self.profile.user.first_name,
             'last_name': self.profile.user.last_name,
@@ -213,8 +215,7 @@ class TestProfile(TestCase):
 
 class TestToken(TestCase):
     def setUp(self):
-        self.user = mixer.blend(User)
-        mixer.blend(Profile, user=self.user)
+        self.user = blend_user()
         self.client.force_login(self.user)
 
     def test_user_gets_api_token(self):
@@ -231,8 +232,7 @@ class TestToken(TestCase):
 
 class TestAccountRemovalRequest(DramatiqTestCase):
     def setUp(self):
-        self.user = mixer.blend(User)
-        mixer.blend(Profile, user=self.user)
+        self.user = blend_user()
         self.client.force_login(self.user)
 
     def test_request_sends_email(self):
@@ -241,3 +241,55 @@ class TestAccountRemovalRequest(DramatiqTestCase):
         self.assertContains(response, 'Account removal request successfully submitted')
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn(form_data['reason'], str(mail.outbox[0].message()))
+
+
+
+class TestAcceptTerms(TestCase):
+    def test_user_has_not_accepted_terms(self):
+        user = blend_user()
+        user.profile.terms_accepted = None
+        user.profile.save()
+        self.client.force_login(user)
+
+        response = self.client.get(reverse('requestgroups:list'))
+        self.assertRedirects(response, reverse('accept-terms'))
+
+    def test_user_has_accepted_terms(self):
+        user = blend_user()
+        self.client.force_login(user)
+
+        response = self.client.get(reverse('requestgroups:list'))
+        self.assertContains(response, 'Submitted Requests')
+
+    def test_terms_accepted(self):
+        user = blend_user()
+        user.profile.terms_accepted = None
+        user.profile.save()
+        self.client.force_login(user)
+
+        form_data = {'accept': True}
+        response = self.client.post(reverse('accept-terms'), data=form_data, follow=True)
+        self.assertRedirects(response, reverse('requestgroups:list'))
+        user.profile.refresh_from_db()
+        self.assertTrue(user.profile.terms_accepted)
+
+    def test_terms_not_accepted(self):
+        user = blend_user()
+        user.profile.terms_accepted = None
+        user.profile.save()
+        self.client.force_login(user)
+
+        form_data = {'accept': False}
+        response = self.client.post(reverse('accept-terms'), data=form_data, follow=True)
+        self.assertContains(response, 'Accept Terms')
+        user.profile.refresh_from_db()
+        self.assertFalse(user.profile.terms_accepted)
+
+    def test_staff_dont_need_to_accept(self):
+        user = blend_user(user_params={'is_staff': True, 'is_superuser': True})
+        user.profile.terms_accepted = None
+        user.profile.save()
+        self.client.force_login(user)
+
+        response = self.client.get(reverse('requestgroups:list'))
+        self.assertContains(response, 'Submitted Requests')

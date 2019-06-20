@@ -71,6 +71,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'observation_portal.common.middleware.RequestLogMiddleware',
+    'observation_portal.common.middleware.AcceptTermsMiddlware',
 ]
 
 ROOT_URLCONF = 'observation_portal.urls'

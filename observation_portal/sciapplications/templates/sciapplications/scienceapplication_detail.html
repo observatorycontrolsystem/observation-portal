@@ -75,18 +75,18 @@
 
     <h2>{% trans 'Principal Investigator' %}</h2>
     {% if object.pi %}
-      <p>{{ object.pi_first_name|slice:':1' }}. {{ object.pi_last_name }} &lt;{{ object.pi }}&gt; ({{ object.pi_institution }})</p>
+       <p>{{ object.pi_first_name|slice:':1' }}. {{ object.pi_last_name }} ({{ object.pi_institution }})</p>
     {% else %}
-      <p>{{ object.submitter.first_name|slice:':1' }}. {{ object.submitter.last_name }} &lt;{{ object.submitter.email }}&gt; ({{ object.submitter.profile.institution }})</p>
+      <p>{{ object.submitter.first_name|slice:':1' }}. {{ object.submitter.last_name }} ({{ object.submitter.profile.institution }})</p>
     {% endif %}
 
     {% if object.coinvestigator_set.exists %}
       <h2>{% trans 'Co Investigators' %}</h2>
       <table class="coi">
-        <thead><tr><th>{% trans 'Name' %}</th><th>{% trans 'Email' %}</th><th>{% trans 'Institution' %}</th></tr></thead>
+        <thead><tr><th>{% trans 'Name' %}</th><th>{% trans 'Institution' %}</th></tr></thead>
         <tbody>
         {% for coi in object.coinvestigator_set.all %}
-          <tr><td>{{ coi.first_name|slice:':1' }}. {{ coi.last_name }}</td><td>{{ coi.email }}</td><td>{{ coi.institution }}</td></tr>
+          <tr><td>{{ coi.first_name|slice:':1' }}. {{ coi.last_name }}</td><td>{{ coi.institution }}</td></tr>
         {% endfor %}
         </tbody>
       </table>

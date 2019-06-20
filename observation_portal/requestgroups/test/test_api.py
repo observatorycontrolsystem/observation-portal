@@ -14,6 +14,7 @@ from observation_portal.common import state_changes
 
 from observation_portal.requestgroups.contention import Pressure
 from observation_portal.accounts.models import Profile
+from observation_portal.accounts.test_utils import blend_user
 
 from django.urls import reverse
 from django.contrib.auth.models import User
@@ -80,10 +81,10 @@ class TestUserGetRequestApi(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
         self.proposal = mixer.blend(Proposal)
-        self.user = mixer.blend(User, is_staff=False, is_superuser=False)
-        self.other_user = mixer.blend(User, is_staff=False, is_superuser=False)
+        self.user = blend_user(user_params={'is_staff': False, 'is_superuser': False})
+        self.other_user = blend_user(user_params={'is_staff': False, 'is_superuser': False})
         mixer.blend(Membership, user=self.user, proposal=self.proposal)
-        self.staff_user = mixer.blend(User, is_staff=True)
+        self.staff_user = blend_user(user_params={'is_staff': True})
 
     def test_get_request_group_detail_unauthenticated(self):
         self.client.force_login(self.other_user)
@@ -133,8 +134,7 @@ class TestUserPostRequestApi(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
         self.proposal = mixer.blend(Proposal)
-        self.user = mixer.blend(User)
-        mixer.blend(Profile, user=self.user)
+        self.user = blend_user()
         self.client.force_login(self.user)
         self.semester = mixer.blend(
             Semester, id='2016B', start=datetime(2016, 9, 1, tzinfo=timezone.utc),
@@ -155,7 +155,7 @@ class TestUserPostRequestApi(SetTimeMixin, APITestCase):
         self.generic_payload['proposal'] = self.proposal.id
 
     def test_post_requestgroup_unauthenticated(self):
-        self.other_user = mixer.blend(User)
+        self.other_user = blend_user()
         self.client.force_login(self.other_user)
         response = self.client.post(reverse('api:request_groups-list'), data=self.generic_payload)
         self.assertEqual(response.status_code, 400)
@@ -386,7 +386,7 @@ class TestUserPostRequestApi(SetTimeMixin, APITestCase):
 
 class TestDisallowedMethods(APITestCase):
     def setUp(self):
-        self.user = mixer.blend(User)
+        self.user = blend_user()
         self.proposal = mixer.blend(Proposal)
         mixer.blend(Membership, proposal=self.proposal, user=self.user)
         self.rg = mixer.blend(RequestGroup, proposal=self.proposal, observation_type=RequestGroup.NORMAL)
@@ -405,7 +405,7 @@ class TestRequestGroupIPP(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
         self.proposal = mixer.blend(Proposal)
-        self.user = mixer.blend(User)
+        self.user = blend_user()
         self.client.force_login(self.user)
 
         mixer.blend(Membership, user=self.user, proposal=self.proposal)
@@ -526,8 +526,7 @@ class TestRequestGroupIPP(SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:request_groups-list'), data=rg)
         self.assertEqual(response.status_code, 400)
         self.assertIn('TimeAllocationError', str(response.content))
-        self.assertIn('ipp_value of 2.0 requires more ipp_time than is available.', str(response.content))
-
+        self.assertIn('An IPP Value of 2.0 requires more IPP time than you have available', str(response.content))
         # verify that objects were not created by the send
         self.assertFalse(RequestGroup.objects.filter(name='ipp_request').exists())
 
@@ -557,7 +556,7 @@ class TestRequestIPP(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
         self.proposal = mixer.blend(Proposal)
-        self.user = mixer.blend(User)
+        self.user = blend_user()
         self.client.force_login(self.user)
 
         mixer.blend(Membership, user=self.user, proposal=self.proposal)
@@ -664,7 +663,7 @@ class TestWindowApi(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
         self.proposal = mixer.blend(Proposal)
-        self.user = mixer.blend(User)
+        self.user = blend_user()
         self.client.force_login(self.user)
 
         mixer.blend(Membership, user=self.user, proposal=self.proposal)
@@ -736,7 +735,7 @@ class TestCadenceApi(SetTimeMixin, APITestCase):
         super().setUp()
 
         self.proposal = mixer.blend(Proposal)
-        self.user = mixer.blend(User)
+        self.user = blend_user()
         mixer.blend(Membership, user=self.user, proposal=self.proposal)
         semester = mixer.blend(
             Semester, id='2016B', start=datetime(2016, 9, 1, tzinfo=timezone.utc),
@@ -847,7 +846,7 @@ class TestICRSTarget(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
         self.proposal = mixer.blend(Proposal)
-        self.user = mixer.blend(User)
+        self.user = blend_user()
         self.client.force_login(self.user)
 
         semester = mixer.blend(Semester, id='2016B', start=datetime(2016, 9, 1, tzinfo=timezone.utc),
@@ -933,7 +932,7 @@ class TestOrbitalElementsTarget(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
         self.proposal = mixer.blend(Proposal)
-        self.user = mixer.blend(User)
+        self.user = blend_user()
         self.client.force_login(self.user)
         semester = mixer.blend(
             Semester, id='2016B', start=datetime(2016, 9, 1, tzinfo=timezone.utc),
@@ -1039,7 +1038,7 @@ class TestSatelliteTarget(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
         self.proposal = mixer.blend(Proposal)
-        self.user = mixer.blend(User)
+        self.user = blend_user()
         self.client.force_login(self.user)
 
         semester = mixer.blend(
@@ -1088,7 +1087,7 @@ class TestHourAngleTarget(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
         self.proposal = mixer.blend(Proposal)
-        self.user = mixer.blend(User)
+        self.user = blend_user()
         self.client.force_login(self.user)
 
         semester = mixer.blend(
@@ -1131,7 +1130,7 @@ class TestLocationApi(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
         self.proposal = mixer.blend(Proposal)
-        self.user = mixer.blend(User)
+        self.user = blend_user()
         self.client.force_login(self.user)
 
         semester = mixer.blend(
@@ -1217,7 +1216,7 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
         self.proposal = mixer.blend(Proposal)
-        self.user = mixer.blend(User)
+        self.user = blend_user()
         self.client.force_login(self.user)
 
         semester = mixer.blend(
@@ -1749,8 +1748,8 @@ class TestGetRequestApi(APITestCase):
     def setUp(self):
         super().setUp()
         self.proposal = mixer.blend(Proposal)
-        self.user = mixer.blend(User, is_staff=False, is_superuser=False)
-        self.staff_user = mixer.blend(User, is_staff=True)
+        self.user = blend_user(user_params={'is_staff': False, 'is_superuser': False})
+        self.staff_user = blend_user(user_params={'is_staff': True})
         mixer.blend(Membership, user=self.user, proposal=self.proposal)
         self.request_group = mixer.blend(RequestGroup, submitter=self.user, proposal=self.proposal,
                                          observation_type=RequestGroup.NORMAL)
@@ -1806,7 +1805,7 @@ class TestGetRequestApi(APITestCase):
 
 class TestDraftRequestGroupApi(APITestCase):
     def setUp(self):
-        self.user = mixer.blend(User)
+        self.user = blend_user()
         self.proposal = mixer.blend(Proposal)
         mixer.blend(Membership, user=self.user, proposal=self.proposal)
         self.client.force_login(self.user)
@@ -1823,7 +1822,7 @@ class TestDraftRequestGroupApi(APITestCase):
         self.assertEqual(response.json()['count'], 5)
 
     def test_user_can_list_proposal_drafts(self):
-        other_user = mixer.blend(User)
+        other_user = blend_user()
         mixer.blend(Membership, user=other_user, proposal=self.proposal)
         mixer.cycle(5).blend(DraftRequestGroup, author=other_user, proposal=self.proposal)
         response = self.client.get(reverse('api:drafts-list'))
@@ -1888,7 +1887,7 @@ class TestDraftRequestGroupApi(APITestCase):
         self.assertEqual(response.status_code, 204)
 
     def test_user_cannot_delete_other_draft(self):
-        other_user = mixer.blend(User)
+        other_user = blend_user()
         other_proposal = mixer.blend(Proposal)
         draft = mixer.blend(DraftRequestGroup, author=other_user, proposal=other_proposal)
         response = self.client.delete(reverse('api:drafts-detail', args=(draft.id,)))
@@ -1951,7 +1950,7 @@ class TestCancelRequestGroupApi(SetTimeMixin, APITestCase):
         as it is called on state change, but tested elsewhere '''
     def setUp(self):
         super().setUp()
-        self.user = mixer.blend(User)
+        self.user = blend_user()
         self.proposal = mixer.blend(Proposal)
         mixer.blend(Membership, user=self.user, proposal=self.proposal)
         self.client.force_login(self.user)
@@ -2012,7 +2011,7 @@ class TestCancelRequestGroupApi(SetTimeMixin, APITestCase):
 @patch('observation_portal.common.state_changes.modify_ipp_time_from_requests')
 class TestUpdateRequestStatesAPI(APITestCase):
     def setUp(self):
-        self.user = mixer.blend(User, is_staff=True)
+        self.user = blend_user(user_params={'is_staff': True})
         self.proposal = mixer.blend(Proposal)
         mixer.blend(Membership, user=self.user, proposal=self.proposal)
         self.client.force_login(self.user)
@@ -2109,7 +2108,7 @@ class TestSchedulableRequestsApi(SetTimeMixin, APITestCase):
         super().setUp()
 
         self.proposal = mixer.blend(Proposal)
-        self.user = mixer.blend(User, is_staff=True)
+        self.user = blend_user(user_params={'is_staff': True})
         mixer.blend(Membership, user=self.user, proposal=self.proposal, ipp_value=1.0)
         semester = mixer.blend(
             Semester, id='2016B', start=datetime(2016, 9, 1, tzinfo=timezone.utc),
@@ -2203,7 +2202,7 @@ class TestSchedulableRequestsApi(SetTimeMixin, APITestCase):
             self.assertEqual(len(rg['requests']), 5)
 
     def test_not_admin(self, modify_mock):
-        user = mixer.blend(User)
+        user = blend_user()
         self.client.force_login(user)
         response = self.client.get(reverse('api:request_groups-schedulable-requests'))
         self.assertEqual(response.status_code, 403)
@@ -2233,7 +2232,7 @@ class TestContention(APITestCase):
         self.assertEqual(response.json()['contention_data'][2]['All Proposals'], 0)
 
     def test_contention_staff(self):
-        user = mixer.blend(User, is_staff=True)
+        user = blend_user(user_params={'is_staff': True})
         self.client.force_login(user)
         response = self.client.get(
            reverse('api:contention', kwargs={'instrument_type': '1M0-SCICAM-SBIG'})
@@ -2286,7 +2285,7 @@ class TestPressure(APITestCase):
         self.assertIn('instrument_type', response.json())
 
     def test_pressure_auth(self):
-        user = mixer.blend(User, is_staff=True)
+        user = blend_user(user_params={'is_staff': True})
         self.client.force_login(user)
         response = self.client.get(reverse('api:pressure'))
         self.assertNotIn('All Proposals', response.json()['pressure_data'][0])
@@ -2480,7 +2479,7 @@ class TestMaxIppRequestgroupApi(SetTimeMixin, APITestCase):
             instrument_type='0M4-SCICAM-SBIG', std_allocation=100.0, std_time_used=0.0,
             rr_allocation=10.0, rr_time_used=0.0, ipp_limit=10.0, ipp_time_available=1.0
         )
-        self.user = mixer.blend(User)
+        self.user = blend_user()
         mixer.blend(Membership, user=self.user, proposal=self.proposal)
         self.client.force_login(self.user)
         self.generic_payload = copy.deepcopy(generic_payload)
@@ -2566,8 +2565,7 @@ class TestLastChanged(SetTimeMixin, APITestCase):
         self.patch3.start()
 
         self.proposal = mixer.blend(Proposal)
-        self.user = mixer.blend(User, is_staff=True)
-        mixer.blend(Profile, user=self.user)
+        self.user = blend_user(user_params={'is_staff': True})
         self.client.force_login(self.user)
         self.semester = mixer.blend(
             Semester, id='2016B', start=datetime(2016, 9, 1, tzinfo=timezone.utc),
