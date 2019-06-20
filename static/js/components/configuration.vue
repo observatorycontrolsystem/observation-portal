@@ -81,7 +81,7 @@
               <customselect 
                 v-model="configuration.acquisition_config.mode" 
                 label="Acquire Mode" 
-                desc="The method for positioning the slit. If Brightest Object is selected, the slit is placed 
+                desc="The method for positioning the slit or pinhole. If Brightest Object is selected, the slit/pinhole is placed 
                       on the brightest object near the target coordinates."
                 :errors="{}"
                 :options="acquireModeOptions"

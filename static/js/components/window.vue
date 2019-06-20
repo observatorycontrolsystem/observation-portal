@@ -68,7 +68,7 @@
               v-model="period" 
               label="Period" 
               field="period" 
-              desc="Fractional hours"
+              desc="Decimal hours"
               :errors="errors.period"               
               @input="update"
             />
@@ -76,7 +76,7 @@
               v-model="jitter" 
               label="Jitter" 
               field="jitter" 
-              desc="Acceptable deviation (before or after) from strict period."
+              desc="Acceptable deviation in decimal hours (before or after) from strict period."
               :errors="errors.jitter" 
               @input="update"
             />
