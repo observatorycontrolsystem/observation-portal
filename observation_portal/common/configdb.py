@@ -1,6 +1,6 @@
 import logging
 from typing import Union
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 
 import requests
 from django.core.cache import caches
@@ -334,13 +334,15 @@ class ConfigDB(object):
         Returns:
              Available optical elements
         """
-        optical_elements = {}
+        optical_elements = defaultdict(list)
+        optical_elements_tracker = defaultdict(set)
         for instrument in self.get_instruments(exclude_states=['DISABLED', ]):
             if instrument_type.upper() == instrument['science_camera']['camera_type']['code'].upper():
                 for optical_element_group in instrument['science_camera']['optical_element_groups']:
-                    optical_elements[optical_element_group['type']] = []
                     for element in optical_element_group['optical_elements']:
-                        optical_elements[optical_element_group['type']].append(element)
+                        if element['code'] not in optical_elements_tracker[optical_element_group['type']]:
+                            optical_elements_tracker[optical_element_group['type']].add(element['code'])
+                            optical_elements[optical_element_group['type']].append(element)
         return optical_elements
 
     def get_modes_by_type(self, instrument_type: str, mode_type: str = '') -> dict:

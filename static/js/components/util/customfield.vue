@@ -24,9 +24,8 @@
         ?
       </sup>
     </template>
-    <b-input-group size="sm">
+    <b-input-group>
       <b-form-input 
-        size="sm"
         :id="field + '-field-' + $parent.id" 
         :value="value"
         :state="validationState"
@@ -107,7 +106,7 @@
 </script>
 <style scoped>
   .errors {
-    font-size: 80%;
+    font-size: 90%;
   }
   .extra-help-text,
   .extra-help-text div {

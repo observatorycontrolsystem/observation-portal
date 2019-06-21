@@ -1,6 +1,5 @@
 import Vue from 'vue';
 import BootstrapVue from 'bootstrap-vue';
-import $ from 'jquery';
 
 import {siteCodeToName, observatoryCodeToNumber, telescopeCodeToName} from './utils.js';
 import App from './telescope_availability_chart.vue';

@@ -7,12 +7,13 @@ import '../css/main.css'
 
 import App from './compose.vue';
 import { 
-  csrfSafeMethod, 
-  getCookie, 
+  addCsrfProtection,
   formatDate, 
   formatField, 
   getFieldDescription 
 } from './utils.js';
+
+$(document).ajaxSend(addCsrfProtection);
 
 Vue.use(BootstrapVue);
 
@@ -44,11 +45,3 @@ let vm = new Vue({
 });
 
 export { vm };
-
-$( document ).ajaxSend(
-    function(event, request, settings) {
-      if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
-          var csrftoken = getCookie('csrftoken');
-          request.setRequestHeader('X-CSRFToken', csrftoken);
-      }
-    });

@@ -2,83 +2,90 @@
     <!-- TODO: add the detailed error messages back in -->
   <b-navbar sticky v-b-scrollspy>
     <b-nav-form>
-      <b-button-group vertical>
-        <div 
-          v-b-tooltip=tooltipConfig
-          title="Clear form"
+      <b-button-group 
+        vertical 
+        size="sm"
+      >
+        <b-button 
+          block
+          variant="warning" 
+          @click="clear"
         >
-          <b-button 
-            variant="warning" 
-            class="compose-form-button" 
-            @click="clear"
-          >
-            <i class="fa fa-times"></i> 
-          </b-button>
-        </div>
-          <b-dropdown 
-            v-if="draftExists" 
-            v-b-tooltip=tooltipConfig
-            dropleft
-            variant="info" 
-            class="compose-form-dropdown" 
-            :title="saveDraftTooltipText"
-            @click="saveDraft(draftId)" 
-          >
-            <template slot="button-content">
-              <i class="fa fa-save"></i> 
-            </template>
-            <b-dropdown-item-button @click="saveDraft(false)">
-              Save draft #{{ draftId }}
-            </b-dropdown-item-button>
-            <b-dropdown-item-button @click="saveDraft(true)">
-              Save as new draft
-            </b-dropdown-item-button>
-          </b-dropdown>
-          <b-button 
-            v-else
-            v-b-tooltip=tooltipConfig
-            variant="info" 
-            class="compose-form-button" 
-            :title="saveDraftTooltipText"
-            @click="saveDraft(true)"
-          >
-            <i class="fa fa-save"></i> 
-          </b-button>
-        <span 
-          v-b-tooltip=tooltipConfig
-          title="Submit observation request"
-        >
-          <b-button 
-            variant="success" 
-            class="compose-form-button" 
-            :disabled="!_.isEmpty(errors)"
-            @click="submit" 
-          >
-            <i class="fa fa-check"></i> 
-          </b-button>
-        </span>
-        <span 
-          v-b-tooltip=tooltipConfig
-          title="Toggle navigation"
-        >
-          <b-button 
-            v-b-toggle.my-collapse
-            class="compose-form-button" 
-          >
-            <span class="when-opened">
-              <i class="fas fa-angle-double-right"></i>
-            </span> 
-            <span class="when-closed">
-              <i class="fas fa-angle-double-left"></i>
-            </span>
+          <span v-if="navigationIsExpanded">
+            <span class="float-right"><i class="fa fa-times mx-2"></i></span>
+            <span class="float-right">Clear Form</span>
+          </span>
+          <span v-else>
+            <i class="fa fa-times mx-2"></i>
+          </span>
         </b-button>
-        </span>
+        <b-dropdown 
+          v-if="draftExists" 
+          dropleft
+          variant="info" 
+          size="sm"
+          class="compose-form-dropdown" 
+          @click="saveDraft(draftId)" 
+        >
+          <template v-if="navigationIsExpanded" slot="button-content">
+            <span class="float-right">Save Draft # {{ draftId }} <i class="fa fa-save mx-2"></i></span>
+          </template>
+          <template v-else slot="button-content">
+            <i class="fa fa-save mx-2"></i>
+          </template>
+          <b-dropdown-item-button @click="saveDraft(false)">
+            Save draft #{{ draftId }}
+          </b-dropdown-item-button>
+          <b-dropdown-item-button @click="saveDraft(true)">
+            Save as new draft
+          </b-dropdown-item-button>
+        </b-dropdown>
+        <b-button 
+          v-else
+          block
+          variant="info" 
+          @click="saveDraft(true)"
+        >
+          <span v-if="navigationIsExpanded">
+            <span class="float-right"><i class="fa fa-save mx-2"></i></span>
+            <span class="float-right">Save Draft</span>
+          </span>
+          <span v-else>
+            <i class="fa fa-save mx-2"></i>
+          </span>
+        </b-button>
+        <b-button
+          block 
+          variant="success" 
+          :disabled="!_.isEmpty(errors)"
+          @click="submit" 
+        >
+          <span v-if="navigationIsExpanded">
+            <span class="float-right"><i class="fa fa-check mx-2"></i></span>
+            <span class="float-right">Submit Request</span>
+          </span>
+          <span v-else>
+            <i class="fa fa-check mx-2"></i>
+          </span>
+        </b-button>
+        <b-button 
+          block
+          v-b-toggle.my-collapse
+          @click="toggleNav()" 
+        >
+          <span class="when-opened">
+            <span class="float-right"><i class="fas fa-angle-double-right mx-2"></i></span>
+            <span class="float-right">Toggle Navigation</span>
+          </span> 
+          <span class="when-closed">
+            <i class="fas fa-angle-double-left mx-2"></i>
+          </span>
+        </b-button>
       </b-button-group>
     </b-nav-form>
     <b-collapse id="my-collapse" visible>
-      <hr class="bg-light" style="width:100%; height:1px; border:none;">
-      <h6 class="text-secondary text-center">Navigation</h6>
-      <b-nav small vertical>
+      <hr>
+      <b-nav vertical>
         <b-nav-item href="#general">
           <i 
             v-if="hasRootError" 
@@ -196,8 +203,6 @@
 <script>
   import _ from 'lodash';
 
-  import { tooltipConfig } from '../utils.js';
-
   export default {
     props: [
       'requestgroup', 
@@ -206,8 +211,7 @@
     ],
     data: function() {
       return {
-        tooltipConfig: tooltipConfig,
-        saveDraftTooltipText: 'Save a draft of this observation request. The request will not be submitted.'
+        navigationIsExpanded: true
       }
     },
     computed: {
@@ -232,6 +236,9 @@
         }
         this.$emit('savedraft', {draftId: saveId});
       },
+      toggleNav: function() {
+        this.navigationIsExpanded = !this.navigationIsExpanded;
+      },
       submit: function() {
         this.$emit('submit');
       },
@@ -245,31 +252,27 @@
   /* The dropdown elements do not receive data-v[hash] attribute applied when using 
     scoped styles, so their styles must be global */
 
-  /* Style the buttons in this component.*/
-  .compose-form-button ,
-  .compose-form-dropdown button.dropdown-toggle {
-      padding: 0;
-      font-size: 0.875rem;
-      line-height: 1.5;
-      border-radius: 0.2rem;
-    }
-    .compose-form-dropdown ul.dropdown-menu {
-      background-color: #000000;
-    }
-    .compose-form-dropdown ul.dropdown-menu li button.dropdown-item {
-      color: #ffffff;
-    }
-    .compose-form-dropdown ul.dropdown-menu li button.dropdown-item:hover {
-      color: #404040;
-    }
+  /* Style the dropdowns in this component.*/
+  .compose-form-dropdown .dropdown-toggle::before {
+    float: left !important;
+    margin-top: 0.4rem;
+  }
+  .compose-form-dropdown ul.dropdown-menu {
+    background-color: #000000;
+  }
+  .compose-form-dropdown ul.dropdown-menu li button.dropdown-item {
+    color: #ffffff;
+  }
+  .compose-form-dropdown ul.dropdown-menu li button.dropdown-item:hover {
+    color: #404040;
+  }
 </style>
 <style scoped>
   .form-inline {
     width: 100%;
   }
   .btn-group-vertical {
-    width: 100%; 
-    display: block;
+    width: 100%;
   }
   /* Display different things on the buttons when the 
   nav is collapsed vs when it is open */
@@ -319,5 +322,11 @@
   /* hide active nested list */
   .request li ~ ul.nav {
     display: none;
+  }
+  hr {
+    width: 100%; 
+    height: 1px; 
+    border: none;
+    background-color: #e4e4e4;
   }
 </style>
