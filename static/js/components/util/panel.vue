@@ -8,18 +8,18 @@
               <b-form-row>
                 <b-col class="text-left">
                   <i 
-                    class="align-middle mx-2" 
+                    class="align-middle fa-lg mx-2" 
                     :class="icon"
                   />
                   <!-- TODO: The warning and success flicker on page load -->
                   <i 
-                    class="fas fa-exclamation-triangle text-danger align-middle" 
+                    class="fas fa-exclamation-triangle fa-lg text-danger align-middle" 
                     v-b-tooltip=tooltipConfig 
                     title="Errors in form" 
                     v-show="hasError"
                   />
                   <i 
-                    class="fas fa-check text-success align-middle" 
+                    class="fas fa-check fa-lg text-success align-middle" 
                     v-b-tooltip=tooltipConfig 
                     title="Section is complete" 
                     v-show="!hasError"
@@ -32,7 +32,7 @@
                 </b-col>
                 <b-col class="text-right">
                   <b-button 
-                    size="sm"
+                    size="xs"
                     v-b-toggle.collapse-1 
                     variant="info"
                     v-b-tooltip=tooltipConfig 
@@ -45,7 +45,7 @@
                     ></i>
                   </b-button>
                   <b-button 
-                    size="sm"
+                    size="xs"
                     class="mx-1"
                     variant="success" 
                     v-show="cancopy" 
@@ -60,7 +60,7 @@
                     v-show="canremove" 
                     v-b-tooltip=tooltipConfig 
                     title="Remove" 
-                    size="sm"
+                    size="xs"
                     @click="remove" 
                   >
                     <i class="fa fa-trash fa-fw"></i>

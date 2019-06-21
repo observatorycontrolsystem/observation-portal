@@ -98,10 +98,10 @@
     font-size: 0.875rem !important;
     padding-top: 0rem !important;
     font-family: inherit !important;
-    height: 32px !important;
-    min-height: 32px !important;
+    height: 38px !important;
+    min-height: 38px !important;
   }
   .date-time-picker span.errors {
-    font-size: 80%;
+    font-size: 90%;
   }
 </style>

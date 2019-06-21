@@ -1,6 +1,4 @@
 {% load i18n request_extras humanize %}
-{% load static bootstrap4 %}
-{% bootstrap_javascript jquery='full' %}
 <div class="row requestgroup requestgroup-{{ request.state|state_to_bs }}" data-request='{{ request.id }}'>
     <div class="col-md-10">
       <div class="row">
@@ -10,7 +8,7 @@
           {% else %}
             <span class="requestgroup-title"># {{ request.id }}</span>
           {% endif %}
-          <p><i class="far fa-clock" ></i> <span class="tt" title="Total exposure time + observing overhead"> Duration: {{ request.duration }} seconds</span></p>
+          <p><i class="far fa-clock" ></i> <span title="Total exposure time + observing overhead"> Duration: {{ request.duration }} seconds</span></p>
           <p><i class="fa fa-camera"></i> Instrument: {{ request.configurations.all.0.instrument_type|instrument_type_to_full_name }}</p>
         </div>
         <div class="col-md-4 requestgroup-block border-right">
