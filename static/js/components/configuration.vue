@@ -76,26 +76,26 @@
                 :options="spectraConfigurationOptions"
                 @input="update"
               />
-              <div v-if="configuration.type === 'SPECTRUM' || configuration.type === 'NRES_SPECTRUM'">
-                <customselect 
-                  v-model="configuration.acquisition_config.mode" 
-                  label="Acquire Mode" 
-                  desc="The method for positioning the slit. If Brightest Object is selected, the slit is placed 
-                        on the brightest object near the target coordinates."
-                  :errors="{}"
-                  :options="acquireModeOptions"
-                  @input="update" 
-                />
-                <customfield
-                  v-for="field in requiredAcquireModeFields"
-                  :key="field"
-                  v-model="configuration.acquisition_config.extra_params[field]"
-                  :label="field | formatField"
-                  :errors="null"
-                  :desc="field | getFieldDescription"
-                  @input="updateAcquisitionConfigExtraParam($event, field)" 
-                />
-              </div>
+            </div>
+            <div v-if="acquireModeOptions.length > 1 && !simple_interface && configuration.type !== 'LAMP_FLAT' && configuration.type !== 'ARC'">
+              <customselect 
+                v-model="configuration.acquisition_config.mode" 
+                label="Acquire Mode" 
+                desc="The method for positioning the slit or pinhole. If Brightest Object is selected, the slit/pinhole is placed 
+                      on the brightest object near the target coordinates."
+                :errors="{}"
+                :options="acquireModeOptions"
+                @input="update" 
+              />
+              <customfield
+                v-for="field in requiredAcquireModeFields"
+                :key="field"
+                v-model="configuration.acquisition_config.extra_params[field]"
+                :label="field | formatField"
+                :errors="null"
+                :desc="field | getFieldDescription"
+                @input="updateAcquisitionConfigExtraParam($event, field)" 
+              />
             </div>
           </b-form>
         </b-col>
@@ -206,22 +206,24 @@
       },
       acquireModeOptions: function() {
         let options = [];
-        let requiredModeFields = [];
-        let modes = this.available_instruments[this.selectedinstrument].modes.acquisition.modes;
-        for (let i in modes) {
-          requiredModeFields = [];          
-          if ('required_fields' in modes[i].params) {
-            for (let j in modes[i].params.required_fields) {
-              requiredModeFields.push(
-                modes[i].params.required_fields[j]
-              )
-            }
-          }          
-          options.push({
-            value: modes[i].code, 
-            text: modes[i].name,
-            requiredFields: requiredModeFields
-          });
+        if (this.available_instruments[this.selectedinstrument]) {
+          let requiredModeFields = [];
+          let modes = this.available_instruments[this.selectedinstrument].modes.acquisition.modes;
+          for (let i in modes) {
+            requiredModeFields = [];          
+            if ('required_fields' in modes[i].params) {
+              for (let j in modes[i].params.required_fields) {
+                requiredModeFields.push(
+                  modes[i].params.required_fields[j]
+                )
+              }
+            }          
+            options.push({
+              value: modes[i].code, 
+              text: modes[i].name,
+              requiredFields: requiredModeFields
+            });
+          }
         }
         return options;
       },
@@ -276,10 +278,20 @@
         console.log('instrumentconfigUpdated');
         this.update();
       },
-      acquisitionModeIsAvailable: function(acquisitionMode) {
+      acquisitionModeIsAvailable: function(acquisitionMode, acquisitionExtraParams) {
+        // In order for a mode to be available, its code as well as any extra params must match
+        let modeMatches;
         for (let amo in this.acquireModeOptions) {
           if (acquisitionMode === this.acquireModeOptions[amo].value) {
-            return true;
+            modeMatches = true;
+            for (let aep in acquisitionExtraParams) {
+              if (this.acquireModeOptions[amo].requiredFields.indexOf(aep) < 0) {
+                modeMatches = false;
+              }
+            }
+            if (modeMatches) {
+              return true;
+            }
           }
         }
         return false;
@@ -291,11 +303,19 @@
         }
       },
       setAcquireFields: function() {
-        if (this.acquisitionModeIsAvailable(this.configuration.acquisition_config.mode)) {
+        if (this.acquisitionModeIsAvailable(this.configuration.acquisition_config.mode, this.configuration.acquisition_config.extra_params)) {
+          // The mode that is already set works!
           return;
-        } 
+        }
+        if (this.acquireModeOptions.length < 1 || this.simple_interface) {
+          // This case would happen for i.e. imagers that do not have any acquisition modes. Also
+          // turn off acquisition for the simple interface since that interface only displays imager,
+          // and should not be complicated.
+          this.turnOffAcquisition();
+          return;
+        }
         let defaultMode = this.available_instruments[this.selectedinstrument].modes.acquisition.default;
-        if (this.acquisitionModeIsAvailable(this.acquireHistory.mode)) {
+        if (this.acquisitionModeIsAvailable(this.acquireHistory.mode, this.acquireHistory.extra_params)) {
           this.configuration.acquisition_config.mode = this.acquireHistory.mode;
           this.configuration.acquisition_config.extra_params = this.acquireHistory.extra_params;
         } else if (defaultMode) {
@@ -310,12 +330,6 @@
           this.configuration.acquisition_config.mode = this.acquireModeOptions[0].value;
           this.configuration.acquisition_config.extra_params = {};
         }
-        this.update();
-      },
-      unsetAcquireFields: function() {
-        this.saveAcquireFields();
-        this.configuration.acquisition_config.mode = '';
-        this.configuration.acquisition_config.extra_params = {};
         this.update();
       },
       turnOffAcquisition: function() {
@@ -346,10 +360,10 @@
             this.setAcquireFields();
           } else if (configurationType == 'LAMP_FLAT' || configurationType == 'ARC') {
             this.setGuidingFields('OPTIONAL');
-            this.turnOffAcquisition();          
+            this.turnOffAcquisition();
           } else if (configurationType == 'EXPOSE') {
             this.setGuidingFields(this.selectedImagerGuidingOption);
-            this.turnOffAcquisition();
+            this.setAcquireFields();
           }
         }
       },
@@ -380,6 +394,7 @@
           // The selected instrument is set in the request level in the UI, it is actually updated
           // in the request json here
           this.configuration.instrument_type = value;
+          this.setupAcquireAndGuideFieldsForType(this.configuration.type);
           this.update();
         }
       },

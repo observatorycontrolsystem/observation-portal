@@ -12,7 +12,7 @@
   "dependencies": {
     "babel-polyfill": "^6.26.0",
     "bootstrap": "^4.3.1",
-    "bootstrap-table": "^1.12.1",
+    "bootstrap-table": "^1.14.2",
     "bootstrap-vue": "^2.0.0-rc.19",
     "chart.js": "^2.8.0",
     "chartjs-plugin-annotation": "^0.5.7",

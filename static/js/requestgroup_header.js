@@ -1,6 +1,9 @@
 import $ from 'jquery';
+import { addCsrfProtection } from './utils.js';
 
-export {cancelRequestGroup};
+export { cancelRequestGroup };
+
+$(document).ajaxSend(addCsrfProtection);
 
 function cancelRequestGroup(id) {
   if(confirm('Cancel this request? This action cannot be undone')){

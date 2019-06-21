@@ -320,8 +320,12 @@
         if (this.lookupReq) {
           this.lookupReq.abort();
         }
+        let target_type = 'SIDEREAL';
+        if (this.target.type === 'ORBITAL_ELEMENTS') {
+          target_type = 'NON_SIDEREAL';
+        }
         this.lookupReq = $.getJSON('https://simbad2k.lco.global/' + encodeURIComponent(name) + '?target_type='
-          + encodeURIComponent(this.target.type) + '&scheme=' + encodeURIComponent(this.target.scheme)).done(function(data) {
+          + encodeURIComponent(target_type) + '&scheme=' + encodeURIComponent(this.target.scheme)).done(function(data) {
           if (_.get(data, ['error'], null) === null) {
             that.target.ra = _.get(data, ['ra_d'], null);
             that.target.dec = _.get(data, ['dec_d'], null);

@@ -90,7 +90,8 @@
           {value: 'lsc', text: 'Cerro Tololo, Chile (lsc)'},
           {value: 'ogg', text: 'Maui, Hawaii (ogg)'},
           {value: 'sor', text: 'Cerro Pachón, Chile (sor)'},
-          {value: 'tfn', text: 'Tenerife, Canary Islands (tfn)'}
+          {value: 'tfn', text: 'Tenerife, Canary Islands (tfn)'},
+          {value: 'tlv', text: 'Wise, Israel (tlv)'}
         ],
         data: {
           datasets: [],
