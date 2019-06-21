@@ -85,7 +85,7 @@ class ObservationConfigurationSerializer(ConfigurationSerializer):
         return value
 
     def validate(self, data):
-        # Currently don't validate configuration params for direct submissions until we add unschedulable flag to 
+        # Currently don't validate configuration params for direct submissions until we add unschedulable flag to
         # generic modes in configdb
         # validated_data = super().validate(data)
         validated_data = data
