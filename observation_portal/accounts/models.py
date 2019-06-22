@@ -70,7 +70,7 @@ class Profile(models.Model):
         hours as well as the maximum allowed by DRF's throttling framework'''
         hits = cache.get('throttle_user_{0}'.format(self.user.id))
         used = len(hits) if hits else 0
-        allowed = settings.REST_FRAMEWORK['DEFAULT_THROTTLE_RATES']['user']
+        allowed = 'unlimited'  # placeholder in case we ever reimplement a stricter throttle policy
         return {'used': used, 'allowed': allowed}
 
     def __str__(self):

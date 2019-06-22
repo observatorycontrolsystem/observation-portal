@@ -224,14 +224,12 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'PAGE_SIZE': 10,
     'DEFAULT_THROTTLE_CLASSES': (
-        'observation_portal.accounts.throttling.AllowStaffUserRateThrottle',
         'rest_framework.throttling.ScopedRateThrottle',
     ),
     'DEFAULT_THROTTLE_RATES': {
-        'user': '5000/day',
-        'requestgroups.cancel': '1000/day',
-        'requestgroups.create': '2500/day',
-        'requestgroups.validate': '10000/day'
+        'requestgroups.cancel': '2000/day',
+        'requestgroups.create': '5000/day',
+        'requestgroups.validate': '20000/day'
     }
 }
 
