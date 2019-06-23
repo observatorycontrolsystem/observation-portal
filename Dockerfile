@@ -26,7 +26,7 @@ CMD gunicorn observation_portal.wsgi -c observation_portal/config.py
 COPY requirements.txt .
 RUN apt-get update \
   && apt-get install -y gfortran libcairo2 libpango-1.0-0 libpangocairo-1.0-0 \
-  && pip install 'numpy<1.16' \
+  && pip install 'numpy>=1.16,<1.17' \
   && pip install -r requirements.txt
 
 COPY observation_portal observation_portal/
