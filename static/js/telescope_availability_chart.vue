@@ -1,7 +1,7 @@
 <template>
   <div class="telescopeAvailability">
     {{ error }}
-    <table class="availability_chart table table-bordered table-condensed" v-show="sortedTelescopes.length">
+    <table class="availability_chart table table-bordered table-sm" v-show="sortedTelescopes.length">
       <thead class="thead-default">
       <th>Telescope</th>
       <th v-for="(dateLabel, dataLabelIdx) in dateLabels" :key="dataLabelIdx">{{ dateLabel }}</th>

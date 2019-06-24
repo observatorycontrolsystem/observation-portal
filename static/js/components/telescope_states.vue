@@ -150,15 +150,6 @@
         this.$el.setAttribute('class', _.uniqueId(this.$el.className));
         let plot = new vis.Timeline(this.$el, new vis.DataSet([]), this.options);
         let that = this;
-        plot.on('changed', function () {
-          $(that.$el).find('.vis-label').each(function () {
-            $(this).tooltip({'container': 'body', 'placement': 'top'});
-          });
-          //HAX
-          $(that.$el).find('.vis-group').mouseover(function () {
-            $(that.$el).find('.vis-item').tooltip({container: 'body'});
-          });
-        });
         plot.on('rangechanged', function () {
           that.$emit('rangechanged', that.plot.getWindow());
         });
