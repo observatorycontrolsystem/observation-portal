@@ -71,6 +71,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'observation_portal.common.middleware.RequestLogMiddleware',
+    'observation_portal.common.middleware.AcceptTermsMiddlware',
 ]
 
 ROOT_URLCONF = 'observation_portal.urls'
@@ -151,8 +153,8 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 OAUTH2_PROVIDER = {
-    'ACCESS_TOKEN_EXPIRE_SECONDS': 86400 * 30,  # 30 days
-    'REFRESH_TOKEN_EXPIRE_SECONDS': 86400 * 30  # 30 days
+    'ACCESS_TOKEN_EXPIRE_SECONDS': 86400 * 30 * 24,  # 2 years
+    'REFRESH_TOKEN_EXPIRE_SECONDS': 86400 * 30 * 24  # 2 years
 }
 
 CORS_ORIGIN_ALLOW_ALL = True
@@ -222,14 +224,12 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
     'PAGE_SIZE': 10,
     'DEFAULT_THROTTLE_CLASSES': (
-        'observation_portal.accounts.throttling.AllowStaffUserRateThrottle',
         'rest_framework.throttling.ScopedRateThrottle',
     ),
     'DEFAULT_THROTTLE_RATES': {
-        'user': '5000/day',
-        'requestgroups.cancel': '1000/day',
-        'requestgroups.create': '2500/day',
-        'requestgroups.validate': '10000/day'
+        'requestgroups.cancel': '2000/day',
+        'requestgroups.create': '5000/day',
+        'requestgroups.validate': '20000/day'
     }
 }
 

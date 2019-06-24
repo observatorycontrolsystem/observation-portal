@@ -4,11 +4,12 @@ from rest_framework.generics import RetrieveAPIView
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils.translation import ugettext as _
+from django.utils import timezone
 from django.shortcuts import redirect
 from django.contrib import messages
 from django.views.generic.edit import FormView
 
-from observation_portal.accounts.forms import UserForm, ProfileForm, AccountRemovalForm
+from observation_portal.accounts.forms import UserForm, ProfileForm, AccountRemovalForm, AcceptTermsForm
 from observation_portal.accounts.serializers import UserSerializer
 
 
@@ -61,4 +62,15 @@ class AccountRemovalRequestView(LoginRequiredMixin, FormView):
     def form_valid(self, form):
         form.send_email(self.request.user)
         messages.success(self.request, 'Account removal request successfully submitted')
+        return super().form_valid(form)
+
+
+class AcceptTermsView(LoginRequiredMixin, FormView):
+    template_name = 'auth/accept_terms.html'
+    form_class = AcceptTermsForm
+    success_url = reverse_lazy('requestgroups:list')
+
+    def form_valid(self, form):
+        self.request.user.profile.terms_accepted = timezone.now()
+        self.request.user.profile.save()
         return super().form_valid(form)

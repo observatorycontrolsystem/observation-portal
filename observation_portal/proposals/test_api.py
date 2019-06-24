@@ -7,13 +7,13 @@ from django.utils import timezone
 
 from observation_portal.proposals.models import Proposal, Membership, Semester
 from observation_portal.accounts.models import Profile
+from observation_portal.accounts.test_utils import blend_user
 
 
 class TestProposalApiList(APITestCase):
     def setUp(self):
-        self.user = mixer.blend(User)
+        self.user = blend_user()
         self.proposals = mixer.cycle(3).blend(Proposal)
-        mixer.blend(Profile, user=self.user)
         mixer.cycle(3).blend(Membership, user=self.user, proposal=(p for p in self.proposals))
 
     def test_no_auth(self):
@@ -27,13 +27,13 @@ class TestProposalApiList(APITestCase):
             self.assertContains(response, p.id)
 
     def test_user_cannot_view_other_proposals(self):
-        other_user = mixer.blend(User)
+        other_user = blend_user()
         self.client.force_login(other_user)
         response = self.client.get(reverse('api:proposals-list'))
         self.assertEqual(response.json()['count'], 0)
 
     def test_staff_can_view_all_proposals(self):
-        admin_user = mixer.blend(User, is_staff=True)
+        admin_user = blend_user(user_params={'is_staff': True})
         self.client.force_login(admin_user)
         response = self.client.get(reverse('api:proposals-list'))
         for p in self.proposals:
@@ -42,8 +42,7 @@ class TestProposalApiList(APITestCase):
 
 class TestProposalApiDetail(APITestCase):
     def setUp(self):
-        self.user = mixer.blend(User)
-        mixer.blend(Profile, user=self.user)
+        self.user = blend_user()
         self.proposal = mixer.blend(Proposal)
         mixer.blend(Membership, user=self.user, proposal=self.proposal)
 
@@ -57,13 +56,13 @@ class TestProposalApiDetail(APITestCase):
         self.assertContains(response, self.proposal.id)
 
     def test_user_cannot_view_other_proposal(self):
-        other_user = mixer.blend(User)
+        other_user = blend_user()
         self.client.force_login(other_user)
         response = self.client.get(reverse('api:proposals-detail', kwargs={'pk': self.proposal.id}))
         self.assertEqual(response.status_code, 404)
 
     def test_staff_can_view_proposal(self):
-        admin_user = mixer.blend(User, is_staff=True)
+        admin_user = blend_user(user_params={'is_staff': True})
         self.client.force_login(admin_user)
         response = self.client.get(reverse('api:proposals-detail', kwargs={'pk': self.proposal.id}))
         self.assertContains(response, self.proposal.id)

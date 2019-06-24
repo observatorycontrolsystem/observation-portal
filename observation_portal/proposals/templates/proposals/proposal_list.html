@@ -50,7 +50,7 @@
                     <td><a href="{% url 'proposals:detail' pk=proposal.id %}">{{ proposal.id }}</a></td>
                     <td>{{ proposal.title }}</td>
                     <td>{{ proposal.pi }}</td>
-                    <td>{{ proposal.cis|slice:"3"|join:", " }}{% if proposal.cis|length > 3 %}...{% endif %}</td>
+                    <td>{{ proposal.cis.count }}</td>
                 </tr>
                 {% empty %}
                     {% if user.proposal_set.count < 1 %}
