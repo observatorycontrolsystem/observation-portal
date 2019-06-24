@@ -181,15 +181,7 @@
       buildPlot: function () {
         // Set a unique name for the plot element, since vis.js needs this to separate plots
         this.$el.setAttribute('class', _.uniqueId(this.$el.className));
-        let plot = new vis.Timeline(document.getElementById('plot'), new vis.DataSet([]), this.options);
-        let that = this;
-        plot.on('changed', function () {
-          //HAX
-          $(that.$el).find('.vis-group').mouseover(function () {
-            $(that.$el).find('.vis-item').tooltip({container: 'body', 'placement': 'top'});
-          });
-        });
-        return plot;
+        return new vis.Timeline(document.getElementById('plot'), new vis.DataSet([]), this.options);
       }
     }
   };
