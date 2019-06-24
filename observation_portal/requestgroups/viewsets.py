@@ -5,11 +5,13 @@ from rest_framework.decorators import action, list_route
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAdminUser
 from django.utils import timezone
+from django.db.models import Prefetch
 from django_filters.rest_framework import DjangoFilterBackend
 from dateutil.parser import parse
+from django.contrib.auth.models import User
 
 from observation_portal.proposals.models import Proposal, Semester, TimeAllocation
-from observation_portal.requestgroups.models import RequestGroup, Request, DraftRequestGroup
+from observation_portal.requestgroups.models import RequestGroup, Request, DraftRequestGroup, InstrumentConfig, Configuration
 from observation_portal.requestgroups.filters import RequestGroupFilter, RequestFilter
 from observation_portal.requestgroups.cadence import expand_cadence_request
 from observation_portal.requestgroups.serializers import RequestSerializer, RequestGroupSerializer
@@ -75,6 +77,9 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
         end = parse(request.query_params.get('end', str(current_semester.end))).replace(tzinfo=timezone.utc)
         # Schedulable requests are not in a terminal state, are part of an active proposal,
         # and have a window within this semester
+        instrument_config_query = InstrumentConfig.objects.prefetch_related('rois')
+        configuration_query = Configuration.objects.select_related('constraints', 'target', 'acquisition_config', 'guiding_config').prefetch_related(Prefetch('instrument_configs', queryset=instrument_config_query))
+        request_query = Request.objects.select_related('location').prefetch_related('windows', Prefetch('configurations', queryset=configuration_query))
         queryset = RequestGroup.objects.exclude(
             state__in=TERMINAL_REQUEST_STATES
         ).exclude(
@@ -83,12 +88,8 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
             requests__windows__start__lte=end,
             requests__windows__start__gte=start,
             proposal__active=True
-        ).prefetch_related(
-            'requests', 'requests__windows', 'proposal', 'requests__configurations',
-            'submitter', 'requests__location', 'requests__configurations__target',
-            'requests__configurations__instrument_configs', 'requests__configurations__guiding_config',
-            'requests__configurations__constraints', 'requests__configurations__acquisition_config',
-            'requests__configurations__instrument_configs__rois'
+        ).prefetch_related(Prefetch('requests', queryset=request_query), Prefetch('proposal', queryset=Proposal.objects.only('id').all()),
+            Prefetch('submitter', queryset=User.objects.only('username').all())
         ).distinct()
 
         # queryset now contains all the schedulable URs and their associated requests and data
