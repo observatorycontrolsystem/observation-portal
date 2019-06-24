@@ -404,26 +404,27 @@
             // Add in some top level fields that make plotting easier
             let time_completed = 0.0;
             let total_time = 0.0;
-            for(let configurationIdx in that.observationData[observationIdx].request.configurations){
-              let configuration = that.observationData[observationIdx].request.configurations[configurationIdx];
-              if (!_.isEmpty(configuration.summary)) {
-                time_completed += configuration.summary.time_completed;
+            let fail_reason = '';
+            for (let csIndex in that.observationData[observationIdx].configuration_statuses) {
+              let configurationStatus = that.observationData[observationIdx].configuration_statuses[csIndex];
+              if (!_.isEmpty(configurationStatus.summary)) {
+                time_completed += configurationStatus.summary.time_completed;
+                if (fail_reason === '' && configurationStatus.summary.reason !== 'N/A') {
+                  fail_reason = configurationStatus.summary.reason;
+                }
               }
-              for (let inst_configIdx in configuration.instrument_configs) {
-                let inst_config = configuration.instrument_configs[inst_configIdx];
-                total_time += inst_config.exposure_time * inst_config.exposure_count;
-              }
-            }
-            that.observationData[observationIdx].percent_completed = (time_completed / total_time) * 100.0;
-            that.observationData[observationIdx].fail_reason = '';
-            if (that.observationData[observationIdx].state === 'FAILED'){
-              for (let configurationIdx in that.observationData[observationIdx].request.configurations) {
-                let configuration = that.observationData[observationIdx].request.configurations[configurationIdx];
-                if (configuration.state ==='FAILED' && !_.isEmpty(configuration.summary)) {
-                  that.observationData[observationIdx].fail_reason = configuration.summary.reason;
+              for (let cIndex in that.request.configurations) {
+                if (that.request.configurations[cIndex].id === configurationStatus.configuration) {
+                  for (let icIndex in that.request.configurations[cIndex].instrument_configs) {
+                    let instConfig = that.request.configurations[cIndex].instrument_configs[icIndex];
+                    total_time += instConfig.exposure_time * instConfig.exposure_count;
+                  }
+                  break;
                 }
               }
             }
+            that.observationData[observationIdx].percent_completed = (time_completed / total_time) * 100.0;
+            that.observationData[observationIdx].fail_reason = fail_reason;
           }
         });
       },
