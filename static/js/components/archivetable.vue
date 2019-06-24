@@ -87,6 +87,7 @@
         pagination: true,
         pageSize: 10,
         buttonsClass: 'outline-secondary',
+        classes: 'table table-hover',
         sortName: 'filename',
         sortOrder: 'asc',
         maintainSelected: true,
