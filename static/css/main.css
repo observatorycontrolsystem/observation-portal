@@ -307,10 +307,8 @@ a:hover {
     padding: 0 !important;
 }
 
-.btn-outline-secondary{
-    color: black;
-}
 
-.btn-outline-secondary:hover {
-    color:white;
+ .btn-outline-secondary {
+    border-color: #bababa;
+    color: #000000;
 }

@@ -4,24 +4,26 @@
       <b-button
         @click="downloadSelected"
         variant="outline-secondary"
+        size="sm"
       >
         <i class="fa fa-check"></i> Download Selected
       </b-button>
       <b-button
         @click="downloadAll"
         variant="outline-secondary"
+        size="sm"
       >
         <i class="fa fa-download"></i> Download All
       </b-button>
       <b-link
         :href="archiveLink"
         target="_blank"
-        class="btn btn-outline-secondary"
+        class="btn btn-sm btn-outline-secondary"
       >
         <i class="fa fa-arrow-right"></i> View on Archive
       </b-link>
     </div>
-    <table id="archive-table"></table>
+    <table id="archive-table" class="table-sm"></table>
   </div>
 </template>
 <script>
@@ -84,6 +86,7 @@
         idField: 'id',
         pagination: true,
         pageSize: 10,
+        buttonsClass: 'outline-secondary',
         sortName: 'filename',
         sortOrder: 'asc',
         maintainSelected: true,
