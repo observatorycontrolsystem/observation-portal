@@ -78,8 +78,13 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
         # Schedulable requests are not in a terminal state, are part of an active proposal,
         # and have a window within this semester
         instrument_config_query = InstrumentConfig.objects.prefetch_related('rois')
-        configuration_query = Configuration.objects.select_related('constraints', 'target', 'acquisition_config', 'guiding_config').prefetch_related(Prefetch('instrument_configs', queryset=instrument_config_query))
-        request_query = Request.objects.select_related('location').prefetch_related('windows', Prefetch('configurations', queryset=configuration_query))
+        configuration_query = Configuration.objects.select_related(
+            'constraints', 'target', 'acquisition_config', 'guiding_config').prefetch_related(
+            Prefetch('instrument_configs', queryset=instrument_config_query)
+        )
+        request_query = Request.objects.select_related('location').prefetch_related(
+            'windows', Prefetch('configurations', queryset=configuration_query)
+        )
         queryset = RequestGroup.objects.exclude(
             state__in=TERMINAL_REQUEST_STATES
         ).exclude(
@@ -88,7 +93,9 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
             requests__windows__start__lte=end,
             requests__windows__start__gte=start,
             proposal__active=True
-        ).prefetch_related(Prefetch('requests', queryset=request_query), Prefetch('proposal', queryset=Proposal.objects.only('id').all()),
+        ).prefetch_related(
+            Prefetch('requests', queryset=request_query),
+            Prefetch('proposal', queryset=Proposal.objects.only('id').all()),
             Prefetch('submitter', queryset=User.objects.only('username').all())
         ).distinct()
 
