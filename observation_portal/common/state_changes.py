@@ -141,9 +141,10 @@ def validate_ipp(request_group_dict, total_duration_dict):
             max_ipp_allowable = (time_allocations_dict[tak] / duration_hours) + 1
             truncated_max_ipp_allowable = floor(max_ipp_allowable * 1000) / 1000
             msg = _((
-                f'{tak.instrument_type}\'{request_group_dict["observation_type"]}\' ipp_value of {(ipp_value + 1)} '
-                f'requires more ipp_time than is available. Please lower your ipp_value to <= '
-                f'{truncated_max_ipp_allowable} and submit again.'))
+                f"An IPP Value of {(ipp_value + 1)} requires more IPP time than you have available "
+                f"for '{request_group_dict['observation_type']}' Observation with the {tak.instrument_type} . "
+                f"Please lower your IPP Value to <= {truncated_max_ipp_allowable} and submit again."
+            ))
             raise TimeAllocationError(msg)
         time_allocations_dict[tak] -= (duration_hours * ipp_value)
 

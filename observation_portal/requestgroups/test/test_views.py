@@ -6,6 +6,7 @@ from mixer.backend.django import mixer
 from unittest.mock import patch
 
 from observation_portal.accounts.models import Profile
+from observation_portal.accounts.test_utils import blend_user
 from observation_portal.proposals.models import Proposal, Membership
 from observation_portal.requestgroups.models import RequestGroup, Request, Configuration
 from observation_portal.common.telescope_states import ElasticSearchException
@@ -14,8 +15,7 @@ from observation_portal.common.test_telescope_states import TelescopeStatesFromF
 
 class TestRequestGroupList(TestCase):
     def setUp(self):
-        self.user = mixer.blend(User)
-        mixer.blend(Profile, user=self.user)
+        self.user = blend_user()
         self.proposals = mixer.cycle(3).blend(Proposal)
         for proposal in self.proposals:
             mixer.blend(Membership, proposal=proposal, user=self.user)
@@ -40,16 +40,14 @@ class TestRequestGroupList(TestCase):
         self.assertContains(response, 'Register an Account')
 
     def test_requestgroup_admin(self):
-        user = mixer.blend(User, is_staff=True)
-        mixer.blend(Profile, user=user)
+        user = blend_user(user_params={'is_staff': True})
         self.client.force_login(user)
         response = self.client.get(reverse('requestgroups:list'))
         for rg in self.request_groups:
             self.assertNotContains(response, rg.name)
 
     def test_requestgroup_admin_staff_view_enabled(self):
-        user = mixer.blend(User, is_staff=True)
-        mixer.blend(Profile, user=user, staff_view=True)
+        user = blend_user(user_params={'is_staff': True}, profile_params={'staff_view': True})
         self.client.force_login(user)
         response = self.client.get(reverse('requestgroups:list'))
         for rg in self.request_groups:
@@ -79,11 +77,10 @@ class TestRequestGroupList(TestCase):
         self.assertNotContains(response, self.request_groups[2].name)
 
 
-class TestUserrequestDetail(TestCase):
+class TestRequestGroupDetail(TestCase):
     def setUp(self):
         super().setUp()
-        self.user = mixer.blend(User)
-        mixer.blend(Profile, user=self.user)
+        self.user = blend_user()
         self.proposal = mixer.blend(Proposal)
         mixer.blend(Membership, proposal=self.proposal, user=self.user)
         self.request_group = mixer.blend(RequestGroup, proposal=self.proposal, name=mixer.RANDOM,
@@ -104,15 +101,13 @@ class TestUserrequestDetail(TestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_requestgroup_detail_admin(self):
-        user = mixer.blend(User, is_staff=True)
-        mixer.blend(Profile, user=user)
+        user = blend_user(user_params={'is_staff': True})
         self.client.force_login(user)
         response = self.client.get(reverse('requestgroups:detail', kwargs={'pk': self.request_group.id}))
         self.assertEqual(response.status_code, 404)
 
     def test_requestgroup_detail_admin_staff_view_enabled(self):
-        user = mixer.blend(User, is_staff=True)
-        mixer.blend(Profile, user=user, staff_view=True)
+        user = blend_user(user_params={'is_staff': True}, profile_params={'staff_view': True})
         self.client.force_login(user)
         response = self.client.get(reverse('requestgroups:detail', kwargs={'pk': self.request_group.id}))
         for request in self.requests:
@@ -149,8 +144,7 @@ class TestUserrequestDetail(TestCase):
 
 class TestRequestDetail(TestCase):
     def setUp(self):
-        self.user = mixer.blend(User)
-        mixer.blend(Profile, user=self.user)
+        self.user = blend_user()
         self.proposal = mixer.blend(Proposal)
         mixer.blend(Membership, proposal=self.proposal, user=self.user)
         self.request_group = mixer.blend(RequestGroup, proposal=self.proposal, name=mixer.RANDOM,
@@ -170,15 +164,13 @@ class TestRequestDetail(TestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_request_detail_admin(self):
-        user = mixer.blend(User, is_staff=True)
-        mixer.blend(Profile, user=user)
+        user = blend_user(user_params={'is_staff': True})
         self.client.force_login(user)
         response = self.client.get(reverse('requestgroups:request-detail', kwargs={'pk': self.request.id}))
         self.assertEqual(response.status_code, 404)
 
     def test_request_detail_admin_staff_view_enabled(self):
-        user = mixer.blend(User, is_staff=True)
-        mixer.blend(Profile, user=user, staff_view=True)
+        user = blend_user(user_params={'is_staff': True}, profile_params={'staff_view': True})
         self.client.force_login(user)
         response = self.client.get(reverse('requestgroups:request-detail', kwargs={'pk': self.request.id}))
         self.assertContains(response, self.request.id)
@@ -208,7 +200,7 @@ class TestRequestDetail(TestCase):
 class TestTelescopeStates(TelescopeStatesFromFile):
     def setUp(self):
         super().setUp()
-        self.user = mixer.blend(User)
+        self.user = blend_user()
         self.client.force_login(self.user)
 
     def test_date_format_1(self):

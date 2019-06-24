@@ -14,8 +14,8 @@
           Principal Investigator: {{ object.pi.first_name }} {{ object.pi.last_name }}
           <a href="mailto:{{ object.pi.email }}">{{ object.pi.email }}</a>
         </h4>
+        {% if user == object.pi %}
         <h4>Co Investigators <small><i id="toggleci" class="fa fa-eye"></i></small></h4>
-        {% if not user.profile.simple_interface or user == object.pi %}
         <table class="table" id="cilist">
           <thead>
             <tr><th>Name</th><th>UserId</th><th>Email</th><th>Hour Limit</th><th>Hours Requested</th>

@@ -300,14 +300,14 @@
         if (isNaN(Number(ra))) {
           return 'Decimal: ' + Number(sexagesimalRaToDecimal(ra));
         } else {
-          return 'Sexigesimal: ' + decimalRaToSexigesimal(ra).str;
+          return 'Sexagesimal: ' + decimalRaToSexigesimal(ra).str;
         }
       },
       decHelp: function(dec){
         if (isNaN(Number(dec))) {
           return 'Decimal: ' + Number(sexagesimalDecToDecimal(dec));
         } else {
-          return 'Sexigesimal: ' + decimalDecToSexigesimal(dec).str;
+          return 'Sexagesimal: ' + decimalDecToSexigesimal(dec).str;
         }
       }
     },
