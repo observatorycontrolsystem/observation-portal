@@ -89,7 +89,7 @@ class ObservationConfigurationSerializer(ConfigurationSerializer):
         # generic modes in configdb
         # validated_data = super().validate(data)
         validated_data = data
-        if validated_data['type'] not in ['BIAS', 'DARK', 'SKY_FLAT']:
+        if validated_data['type'] not in ['BIAS', 'DARK', 'SKY_FLAT', 'NRES_BIAS', 'NRES_DARK']:
             target_serializer = TargetSerializer(data=validated_data['target'])
             if not target_serializer.is_valid():
                 raise serializers.ValidationError(target_serializer.errors)
