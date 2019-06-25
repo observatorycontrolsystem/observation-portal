@@ -240,7 +240,7 @@ class RequestViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
 
     @action(detail=True)
     def observations(self, request, pk=None):
-        observations = self.get_object().observation_set.all()
+        observations = self.get_object().observation_set.order_by('id').all()
         if request.GET.get('exclude_canceled'):
             return Response([o.as_dict(no_request=True) for o in observations if o.state != 'CANCELED'])
         return Response([o.as_dict(no_request=True) for o in observations])
