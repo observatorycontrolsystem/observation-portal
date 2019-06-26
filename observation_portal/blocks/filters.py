@@ -9,7 +9,7 @@ from observation_portal.common.configdb import configdb
 
 class PondBlockFilter(django_filters.FilterSet):
     site = django_filters.MultipleChoiceFilter(choices=configdb.get_site_tuples())
-    observatory = django_filters.MultipleChoiceFilter(choices=configdb.get_enclosure_tuples())
+    observatory = django_filters.MultipleChoiceFilter(choices=configdb.get_enclosure_tuples(), field_name='enclosure')
     telescope = django_filters.MultipleChoiceFilter(choices=configdb.get_telescope_tuples())
     start_after = django_filters.CharFilter(field_name='start', method='filter_start_after', label='Start after',
                                             widget=forms.TextInput(attrs={'class': 'input', 'type': 'date'}))
@@ -24,8 +24,7 @@ class PondBlockFilter(django_filters.FilterSet):
     proposal = django_filters.CharFilter(field_name='request__request_group__proposal__id', distinct=True, lookup_expr='exact')
     instrument_class = django_filters.ChoiceFilter(choices=configdb.get_instrument_type_tuples(),
                                                    field_name='configuration_statuses__configuration__instrument_type')
-    canceled = django_filters.TypedChoiceFilter(choices=(('false', 'False'), ('true', 'True')),
-                                                method='filter_canceled', coerce=strtobool)
+    canceled = django_filters.BooleanFilter(method='filter_canceled')
     order = django_filters.OrderingFilter(fields=('start', 'modified'))
     time_span = django_filters.DateRangeFilter(field_name='start')
 

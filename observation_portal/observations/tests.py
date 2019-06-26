@@ -618,7 +618,7 @@ class TestPostObservationApi(TestObservationApiBase):
         observation['end'] = "2016-09-03T00:30:00Z"
         response = self.client.post(reverse('api:observations-list'), data=observation)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('The start and end times do not fall within any window of the request', str(response.content))
+        self.assertIn('times do not fall within any window of the request', str(response.content))
 
     def test_observation_not_in_a_request_window_but_overlaps_with_window_end_rejected(self):
         observation = self._generate_observation_data(
@@ -628,7 +628,7 @@ class TestPostObservationApi(TestObservationApiBase):
         observation['end'] = "2016-09-06T00:30:00Z"
         response = self.client.post(reverse('api:observations-list'), data=observation)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('The start and end times do not fall within any window of the request', str(response.content))
+        self.assertIn('times do not fall within any window of the request', str(response.content))
 
     def test_observation_starting_after_request_window_end_rejected(self):
         observation = self._generate_observation_data(
@@ -638,7 +638,7 @@ class TestPostObservationApi(TestObservationApiBase):
         observation['end'] = "2016-09-07T00:30:00Z"
         response = self.client.post(reverse('api:observations-list'), data=observation)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('The start and end times do not fall within any window of the request', str(response.content))
+        self.assertIn('times do not fall within any window of the request', str(response.content))
 
     def test_observation_ending_before_request_window_start_rejected(self):
         observation = self._generate_observation_data(
@@ -648,7 +648,7 @@ class TestPostObservationApi(TestObservationApiBase):
         observation['end'] = "2016-09-02T00:30:00Z"
         response = self.client.post(reverse('api:observations-list'), data=observation)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('The start and end times do not fall within any window of the request', str(response.content))
+        self.assertIn('times do not fall within any window of the request', str(response.content))
 
     def test_observation_does_not_match_request_location_site_rejected(self):
         observation = self._generate_observation_data(

@@ -151,6 +151,11 @@ def filter_out_downtime_from_intervalsets(intervalsets_by_telescope: dict) -> di
 
 
 def get_rise_set_target(target_dict):
+    if 'type' not in target_dict:
+        return make_hour_angle_target(
+                hour_angle=Angle(degrees=0),
+                dec=Angle(degrees=0),
+            )
     if target_dict['type'] in ['ICRS', 'HOUR_ANGLE']:
         pmra = (target_dict['proper_motion_ra'] / 1000.0 / cos(radians(target_dict['dec']))) / 3600.0
         pmdec = (target_dict['proper_motion_dec'] / 1000.0) / 3600.0

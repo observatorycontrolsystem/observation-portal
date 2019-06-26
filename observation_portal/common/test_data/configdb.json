@@ -25,11 +25,11 @@
                 {
                   "state": "SCHEDULABLE",
                   "code": "xx01",
-                  "allow_self_guiding": true,
                   "autoguider_camera": {
                     "code": "ef01",
                     "camera_type": {
-                      "code": "1M0-SCICAM-SBIG"
+                      "code": "1M0-SCICAM-SBIG",
+                      "allow_self_guiding": true
                     }
                   },
                   "science_camera": {
@@ -37,6 +37,7 @@
                     "camera_type": {
                       "code": "1M0-SCICAM-SBIG",
                       "name": "1M0-SCICAM-SBIG",
+                      "allow_self_guiding": true,
                       "default_mode": {
                         "binning": 2,
                         "readout": 14.5
@@ -148,11 +149,11 @@
                 {
                   "state": "DISABLED",
                   "code": "xx06",
-                  "allow_self_guiding": true,
                   "autoguider_camera": {
                     "code": "xx07",
                     "camera_type": {
-                      "code": "1M0-SCICAM-SBIG"
+                      "code": "1M0-SCICAM-SBIG",
+                      "allow_self_guiding": true
                     }
                   },
                   "science_camera": {
@@ -160,6 +161,7 @@
                     "camera_type": {
                       "code": "1M0-SCICAM-SBIG",
                       "name": "1M0-SCICAM-SBIG",
+                      "allow_self_guiding": true,
                       "default_mode": {
                         "binning": 2,
                         "readout": 14.5
@@ -271,11 +273,11 @@
                 {
                   "state": "ENABLED",
                   "code": "xx08",
-                  "allow_self_guiding": true,
                   "autoguider_camera": {
                     "code": "xx09",
                     "camera_type": {
-                      "code": "1M0-SCICAM-SBIG"
+                      "code": "1M0-SCICAM-SBIG",
+                      "allow_self_guiding": true
                     }
                   },
                   "science_camera": {
@@ -283,6 +285,7 @@
                     "camera_type": {
                       "code": "1M0-SCICAM-SBIG",
                       "name": "1M0-SCICAM-SBIG",
+                      "allow_self_guiding": true,
                       "default_mode": {
                         "binning": 2,
                         "readout": 14.5
@@ -408,11 +411,11 @@
                 {
                   "state": "SCHEDULABLE",
                   "code": "xx02",
-                  "allow_self_guiding": false,
                   "autoguider_camera": {
                     "code": "ef02",
                     "camera_type": {
-                      "code": "2M0-FLOYDS-AG"
+                      "code": "2M0-FLOYDS-AG",
+                      "allow_self_guiding": false
                     }
                   },
                   "science_camera": {
@@ -420,6 +423,7 @@
                     "camera_type": {
                       "code": "2M0-FLOYDS-SCICAM",
                       "name": "2M0-FLOYDS-SCICAM",
+                      "allow_self_guiding": false,
                       "config_change_time": 30,
                       "acquire_processing_time": 60,
                       "acquire_exposure_time": 30,
@@ -567,11 +571,11 @@
                 {
                   "state": "SCHEDULABLE",
                   "code": "xx03",
-                  "allow_self_guiding": true,
                   "autoguider_camera": {
                     "code": "ef03",
                     "camera_type": {
-                      "code": "1M0-SCICAM-AG"
+                      "code": "1M0-SCICAM-AG",
+                      "allow_self_guiding": true
                     }
                   },
                   "science_camera": {
@@ -579,6 +583,7 @@
                     "camera_type": {
                       "code": "1M0-SCICAM-SBIG",
                       "name": "1M0-SCICAM-SBIG",
+                      "allow_self_guiding": true,
                       "default_mode": {
                         "binning": 2,
                         "readout": 14.5
@@ -690,11 +695,11 @@
                 {
                   "state": "SCHEDULABLE",
                   "code": "nres02",
-                  "allow_self_guiding": false,
                   "autoguider_camera": {
                     "code": "ak02",
                     "camera_type": {
-                      "code": "1M0-NRES-AG"
+                      "code": "1M0-NRES-AG",
+                      "allow_self_guiding": false
                     }
                   },
                   "science_camera": {
@@ -702,6 +707,7 @@
                     "camera_type": {
                       "code": "1M0-NRES-SCICAM",
                       "name": "1M0-NRES-SCICAM",
+                      "allow_self_guiding": false,
                       "default_mode": {
                         "binning": 2,
                         "readout": 90.5
@@ -812,11 +818,11 @@
                 {
                   "state": "SCHEDULABLE",
                   "code": "xx04",
-                  "allow_self_guiding": false,
                   "autoguider_camera": {
                     "code": "ef04",
                     "camera_type": {
-                      "code": "2M0-FLOYDS-AG"
+                      "code": "2M0-FLOYDS-AG",
+                      "allow_self_guiding": false
                     }
                   },
                   "science_camera": {
@@ -824,6 +830,7 @@
                     "camera_type": {
                       "code": "2M0-FLOYDS-SCICAM",
                       "name": "2M0-FLOYDS-SCICAM",
+                      "allow_self_guiding": false,
                       "config_change_time": 30,
                       "acquire_processing_time": 60,
                       "acquire_exposure_time": 30,

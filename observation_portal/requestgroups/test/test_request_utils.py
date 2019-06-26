@@ -412,6 +412,47 @@ class TestRequestTelescopeStates(TelescopeStatesFakeInput):
 
         self.assertIn(domb_expected_available_state2, telescope_states[self.tk2])
 
+    def test_telescope_states_calculation_with_no_target(self):
+        request_dict = self.request.as_dict()
+        request_dict['configurations'][0]['target'] = {}
+
+        telescope_states = get_telescope_states_for_request(request_dict)
+        # Assert that telescope states were received for this request
+        self.assertIn(self.tk1, telescope_states)
+        self.assertIn(self.tk2, telescope_states)
+
+        expected_start_of_night_doma = datetime(2016, 10, 1, 18, 24, 58, tzinfo=timezone.utc)
+        expected_start_of_night_domb = datetime(2016, 10, 1, 18, 30, 0, tzinfo=timezone.utc)
+
+
+        # These are the same states tested for similar times in the telescope_states test class
+        doma_expected_available_state = {'telescope': 'tst.doma.1m0a',
+                                         'event_type': 'AVAILABLE',
+                                         'event_reason': 'Available for scheduling',
+                                         'start': expected_start_of_night_doma,
+                                         'end': datetime(2016, 10, 1, 20, 44, 58, tzinfo=timezone.utc)
+                                         }
+
+        self.assertIn(doma_expected_available_state, telescope_states[self.tk1])
+
+        domb_expected_available_state1 = {'telescope': 'tst.domb.1m0a',
+                                          'event_type': 'AVAILABLE',
+                                          'event_reason': 'Available for scheduling',
+                                          'start': expected_start_of_night_domb,
+                                          'end': datetime(2016, 10, 1, 19, 24, 59, tzinfo=timezone.utc)
+                                          }
+
+        self.assertIn(domb_expected_available_state1, telescope_states[self.tk2])
+
+        domb_expected_available_state2 = {'telescope': 'tst.domb.1m0a',
+                                          'event_type': 'AVAILABLE',
+                                          'event_reason': 'Available for scheduling',
+                                          'start': datetime(2016, 10, 1, 20, 24, 59, tzinfo=timezone.utc),
+                                          'end': datetime(2016, 10, 1, 20, 44, 58, tzinfo=timezone.utc)
+                                          }
+
+        self.assertIn(domb_expected_available_state2, telescope_states[self.tk2])
+
     def test_telescope_states_empty(self):
         self.location.site = 'cpt'
         self.location.save()

@@ -494,7 +494,7 @@ class ConfigDB(object):
             if instrument['code'].upper() == instrument_name.upper():
                 if instrument['autoguider_camera']['code'].lower() == guide_camera_name.lower():
                     return True
-                elif instrument['allow_self_guiding'] and guide_camera_name.lower() == instrument_name.lower():
+                elif instrument['science_camera']['camera_type']['allow_self_guiding'] and guide_camera_name.lower() == instrument_name.lower():
                     return True
         return False
 

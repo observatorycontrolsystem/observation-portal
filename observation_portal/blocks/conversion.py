@@ -342,7 +342,13 @@ def convert_observation_to_pond_block(observation):
         events = []
         if configuration.get('summary'):
             events.append(copy.deepcopy(configuration['summary']))
-            completed_exposures = events[0].get('time_completed', 0) // first_instrument_config.get('exposure_time', 1)
+            if configuration['state'] == 'COMPLETED':
+                completed_exposures = first_instrument_config['exposure_count']
+            elif first_instrument_config.get('exposure_time', 1) > 0:
+                completed_exposures = events[0].get('time_completed', 0) // first_instrument_config.get('exposure_time',
+                                                                                                        1)
+            else:
+                completed_exposures = 0
             events[0]['completed_exposures'] = completed_exposures
             del events[0]['time_completed']
             del events[0]['events']
