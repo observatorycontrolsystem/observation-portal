@@ -145,7 +145,10 @@ def get_request_duration(request_dict):
     previous_optical_elements = {}
     start_time = (min([window['start'] for window in request_dict['windows']])
                   if 'windows' in request_dict and request_dict['windows'] else timezone.now())
-    configurations = sorted(request_dict['configurations'], key=lambda x: x['priority'])
+    try:
+        configurations = sorted(request_dict['configurations'], key=lambda x: x['priority'])
+    except KeyError:
+        configurations = request_dict['configurations']
     for configuration in configurations:
         duration += get_configuration_duration(configuration)['duration']
         request_overheads = configdb.get_request_overheads(configuration['instrument_type'])

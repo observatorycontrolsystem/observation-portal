@@ -3,6 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from django_filters.rest_framework import DjangoFilterBackend
+from django.utils import timezone
 import logging
 
 from observation_portal.proposals.models import Proposal
@@ -17,6 +18,8 @@ from observation_portal.requestgroups.duration_utils import (
 )
 from observation_portal.common.state_changes import InvalidStateChange
 from observation_portal.common.mixins import ListAsDictMixin
+
+from dateutil.parser import parse
 
 logger = logging.getLogger(__name__)
 
@@ -100,6 +103,11 @@ class UserRequestViewSet(ListAsDictMixin, viewsets.ModelViewSet):
         body = validate_userrequest(request.data)
         if not body['errors']:
             rg_dict = convert_userrequest_to_requestgroup(request.data)
+            for req in rg_dict['requests']:
+                for window in req['windows']:
+                    window['start'] = parse(window['start']).replace(tzinfo=timezone.utc)
+                    window['end'] = parse(window['end']).replace(tzinfo=timezone.utc)
+
             ipp_dict = get_max_ipp_for_requestgroup(rg_dict)
             return Response(ipp_dict)
         else:

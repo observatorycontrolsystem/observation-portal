@@ -2,12 +2,12 @@ import os
 import copy
 import requests
 
-VALHALLA_API_TOKEN = os.getenv('VALHALLA_API_TOKEN', '')
-VALHALLA_URL = os.getenv('VALHALLA_URL', 'http://valhalladev.lco.gtn/api/userrequests/')
+VALHALLA_API_TOKEN = os.getenv('VALHALLA_API_TOKEN', 'd7844baee20312a243ebc2551ecf99f02484d446')
+VALHALLA_URL = os.getenv('VALHALLA_URL', 'http://valhalla-request-shim.lco.gtn/api/userrequests/')
 if not VALHALLA_URL.endswith('/'):
     VALHALLA_URL += '/'
 VALHALLA_HEADERS = {'Authorization': 'Token ' + str(VALHALLA_API_TOKEN)}
-VALIDATION_PROPOSAL = os.getenv('VALHALLA_VALIDATE_PROPOSAL', 'LCOSchedulerTest')
+VALIDATION_PROPOSAL = os.getenv('VALHALLA_VALIDATE_PROPOSAL', 'ValidationProposal')
 
 
 def ur_target_type_to_rg(target_type):
@@ -64,10 +64,12 @@ def expand_cadence(userrequest):
     """
     try:
         ur_copy = copy.deepcopy(userrequest)
+        original_proposal = userrequest['proposal']
         ur_copy['proposal'] = VALIDATION_PROPOSAL
         response = requests.post(VALHALLA_URL + 'cadence/', json=ur_copy, headers=VALHALLA_HEADERS)
         response.raise_for_status()
         body = response.json()
+        body['proposal'] = original_proposal
     except Exception as e:
         body = {'errors': 'Problem validating with old observation portal: {}'.format(repr(e))}
     return body
@@ -131,8 +133,12 @@ def convert_userrequest_to_requestgroup(userrequest):
 
             if 'bin_x' in molecule:
                 instrument_config['bin_x'] = molecule['bin_x']
+            else:
+                instrument_config['bin_x'] = 1
             if 'bin_y' in molecule:
                 instrument_config['bin_y'] = molecule['bin_y']
+            else:
+                instrument_config['bin_y'] = 1
 
             if molecule.get('sub_x1', 0) or molecule.get('sub_x2', 0) or molecule.get('sub_y1', 0) or molecule.get('sub_y2', 0):
                 rois = [
