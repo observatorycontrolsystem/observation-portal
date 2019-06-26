@@ -181,7 +181,7 @@ def get_request_duration(request_dict):
         if configuration['acquisition_config']['mode'] != 'OFF':
             if configuration['acquisition_config']['mode'] in request_overheads['acquisition_overheads']:
                 duration += request_overheads['acquisition_overheads'][configuration['acquisition_config']['mode']]
-                if 'exposure_time' in configuration['acquisition_config']:
+                if 'exposure_time' in configuration['acquisition_config'] and configuration['acquisition_config']['exposure_time']:
                     duration += configuration['acquisition_config']['exposure_time']
                 else:
                     duration += request_overheads['default_acquisition_exposure_time']
