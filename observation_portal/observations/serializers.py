@@ -284,7 +284,7 @@ class ObservationSerializer(serializers.ModelSerializer):
         # Validate that the start and end times are in one of the requests windows
         in_a_window = False
         for window in data['request'].windows.all():
-            if data['start'] >= window.start and data['end'] <= window.end:
+            if data['start'] >= window.start.replace(microsecond=0) and data['end'] <= window.end:
                 in_a_window = True
                 break
 
