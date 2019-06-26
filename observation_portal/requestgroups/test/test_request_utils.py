@@ -3,7 +3,6 @@ from django.test import TestCase
 from mixer.backend.django import mixer
 from datetime import datetime
 from unittest.mock import patch
-import copy
 
 from observation_portal.requestgroups.request_utils import (get_airmasses_for_request_at_sites, get_telescope_states_for_request,
                                                             get_filtered_rise_set_intervals_by_site)

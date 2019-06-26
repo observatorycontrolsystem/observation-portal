@@ -1652,7 +1652,6 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         good_data = self.generic_payload.copy()
         good_data['requests'][0]['configurations'][0]['acquisition_config']['exposure_time'] = None
         response = self.client.post(reverse('api:request_groups-validate'), data=good_data)
-        ur = response.json()
         self.assertEqual(response.status_code, 200)
 
     def test_more_than_max_rois_rejected(self):
