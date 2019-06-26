@@ -289,7 +289,7 @@ class ObservationSerializer(serializers.ModelSerializer):
                 break
 
         if not in_a_window:
-            raise serializers.ValidationError(_('The start and end times do not fall within any window of the request'))
+            raise serializers.ValidationError(_('The start {} and end {} times do not fall within any window of the request'.format(data['start'].isoformat(), data['end'].isoformat())))
 
         # Validate that the site, enclosure, and telescope match the location of the request
         if (
