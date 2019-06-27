@@ -259,16 +259,28 @@ def update_request_states_for_window_expiration():
     states_changed = False
     for request_group in RequestGroup.objects.exclude(state__in=TERMINAL_REQUEST_STATES):
         request_states_changed = False
-        for request in request_group.requests.filter(state='PENDING').prefetch_related('windows'):
-            if request.max_window_time < now:
-                logger.info(f'Expiring request {request.id}', extra={'tags': {'request_num': request.id}})
-                with transaction.atomic():
-                    req = Request.objects.select_for_update().get(pk=request.id)
-                    if req.state == 'PENDING':
-                        req.state = 'WINDOW_EXPIRED'
-                        states_changed = True
-                        request_states_changed = True
-                        req.save()
+        if request_group.observation_type != RequestGroup.DIRECT:
+            for request in request_group.requests.filter(state='PENDING').prefetch_related('windows'):
+                if request.max_window_time < now:
+                    logger.info(f'Expiring request {request.id}', extra={'tags': {'request_num': request.id}})
+                    with transaction.atomic():
+                        req = Request.objects.select_for_update().get(pk=request.id)
+                        if req.state == 'PENDING':
+                            req.state = 'WINDOW_EXPIRED'
+                            states_changed = True
+                            request_states_changed = True
+                            req.save()
+        else:
+            for request in request_group.requests.all().prefetch_related('observation_set'):
+                if request.observation_set.first().end < now:
+                    logger.info(f'Expiring DIRECT request {request.id}', extra={'tags': {'request_num': request.id}})
+                    with transaction.atomic():
+                        req = Request.objects.select_for_update().get(pk=request.id)
+                        if req.state == 'PENDING':
+                            req.state = 'WINDOW_EXPIRED'
+                            states_changed = True
+                            request_states_changed = True
+                            req.save()
         if request_states_changed:
             update_request_group_state(request_group)
     return states_changed
