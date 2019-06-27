@@ -124,8 +124,8 @@ def convert_userrequest_to_requestgroup(userrequest):
 
             instrument_config = {
                 'mode': molecule.get('readout_mode', ''),
-                'exposure_time': molecule.get('exposure_time', 0.0),
-                'exposure_count': molecule['exposure_count'],
+                'exposure_time': float(molecule.get('exposure_time', 0.0)),
+                'exposure_count': int(molecule['exposure_count']),
                 'rotator_mode': target.get('rot_mode', ''),
                 'extra_params': inst_config_extra_params,
                 'optical_elements': optical_elements
@@ -190,8 +190,13 @@ def convert_userrequest_to_requestgroup(userrequest):
                 'extra_params': acquire_extra_params
             }
 
-            if molecule.get('acquire_exp_time', None):
-                acquisition_config['exposure_time'] = molecule['acquire_exp_time']
+            if 'acquire_exp_time' in molecule:
+                try:
+                    acquire_exp_time = float(molecule['acquire_exp_time'])
+                except:
+                    pass
+                else:
+                    acquisition_config['exposure_time'] = acquire_exp_time
 
             configuration = {
                 'type': molecule['type'],

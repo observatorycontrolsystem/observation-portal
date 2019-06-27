@@ -81,9 +81,19 @@ def convert_pond_block_to_observation(block):
     if first_molecule.get('tracking_num'):
         observation['request_group_id'] = int(first_molecule['tracking_num'])
 
+    try:
+        max_airmass = float(block.get('max_airmass'))
+    except:
+        max_airmass = 20
+
+    try:
+        min_lunar_dist = float(block.get('min_lunar_dist'))
+    except:
+        min_lunar_dist = 0
+
     constraints = {
-        'max_airmass': float(block.get('max_airmass', 1.6)),
-        'min_lunar_distance': float(block.get('min_lunar_dist', 30.0)),
+        'max_airmass': max_airmass,
+        'min_lunar_distance': min_lunar_dist,
         'extra_params': {}
     }
 
