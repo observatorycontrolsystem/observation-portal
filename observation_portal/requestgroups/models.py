@@ -111,6 +111,7 @@ class RequestGroup(models.Model):
 
     def as_dict(self):
         ret_dict = model_to_dict(self)
+        ret_dict['created'] = self.created
         ret_dict['submitter'] = self.submitter.username
         ret_dict['proposal'] = self.proposal.id
         ret_dict['requests'] = [r.as_dict() for r in self.requests.all()]
@@ -190,6 +191,7 @@ class Request(models.Model):
 
     def as_dict(self, for_observation=False):
         ret_dict = model_to_dict(self, exclude=self.SERIALIZER_EXCLUDE)
+        ret_dict['modified'] = self.modified
         ret_dict['duration'] = self.duration
         ret_dict['configurations'] = [c.as_dict() for c in self.configurations.all()]
         if not for_observation:

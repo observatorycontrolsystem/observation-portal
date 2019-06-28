@@ -15,6 +15,7 @@ from django.core.cache import cache
 
 from observation_portal.common.configdb import configdb
 from observation_portal.common.downtimedb import DowntimeDB
+from observation_portal.requestgroups.target_helpers import TARGET_TYPE_HELPER_MAP
 
 HOURS_PER_DEGREES = 15.0
 
@@ -151,11 +152,17 @@ def filter_out_downtime_from_intervalsets(intervalsets_by_telescope: dict) -> di
 
 
 def get_rise_set_target(target_dict):
-    if 'type' not in target_dict:
+    # This is a hack to protect against poorly formatted or empty targets that are submitted directly.
+    # TODO: Remove this check when target models are updated to handle when there is no target
+    if (
+            'type' not in target_dict
+            or target_dict['type'].upper() not in TARGET_TYPE_HELPER_MAP
+            or not TARGET_TYPE_HELPER_MAP[target_dict['type'].upper()](target_dict).is_valid()
+    ):
         return make_hour_angle_target(
-                hour_angle=Angle(degrees=0),
-                dec=Angle(degrees=0),
-            )
+            hour_angle=Angle(degrees=0),
+            dec=Angle(degrees=0),
+        )
     if target_dict['type'] in ['ICRS', 'HOUR_ANGLE']:
         pmra = (target_dict['proper_motion_ra'] / 1000.0 / cos(radians(target_dict['dec']))) / 3600.0
         pmdec = (target_dict['proper_motion_dec'] / 1000.0) / 3600.0
