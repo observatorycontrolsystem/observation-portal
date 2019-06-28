@@ -232,7 +232,7 @@ def convert_requestgroup_to_userrequest(requestgroup):
     for request in userrequest['requests']:
         request['completed'] = None  # if request['state'] != 'COMPLETED' else request['modified']
         request['target'] = request['configurations'][0]['target']
-        request['target']['type'] = rg_target_type_to_ur(request['target']['type'])
+        request['target']['type'] = rg_target_type_to_ur(request['target'].get('type', ''))
         request['target']['radvel'] = request['target'].get('extra_params', {}).get('radial_velocity', 0.0)
         request['target']['vmag'] = request['target'].get('extra_params', {}).get('v_magnitude', None)
         request['constraints'] = request['configurations'][0]['constraints']
