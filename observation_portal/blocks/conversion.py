@@ -113,7 +113,7 @@ def convert_pond_block_to_observation(block):
             config_extra_params['self_guiding'] = True
 
         instrument_extra_params = {}
-        if 'rot_angle' in pointing and float(pointing['rot_angle']):
+        if 'rot_angle' in pointing and pointing['rot_angle'] is not None and float(pointing['rot_angle']):
             instrument_extra_params['rotator_angle'] = float(pointing['rot_angle'])
         if 'defocus' in molecule and float(molecule['defocus']):
             instrument_extra_params['defocus'] = float(molecule['defocus'])
