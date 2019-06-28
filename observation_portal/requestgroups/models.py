@@ -190,6 +190,7 @@ class Request(models.Model):
 
     def as_dict(self, for_observation=False):
         ret_dict = model_to_dict(self, exclude=self.SERIALIZER_EXCLUDE)
+        ret_dict['modified'] = self.modified
         ret_dict['duration'] = self.duration
         ret_dict['configurations'] = [c.as_dict() for c in self.configurations.all()]
         if not for_observation:
