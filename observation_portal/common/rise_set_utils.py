@@ -151,6 +151,28 @@ def filter_out_downtime_from_intervalsets(intervalsets_by_telescope: dict) -> di
     return filtered_intervalsets_by_telescope
 
 
+def get_proper_motion(target_dict):
+    # The proper motion fields are sometimes not present in HOUR_ANGLE targets
+    pm = {'pmra': None, 'pmdec': None}
+    if 'proper_motion_ra' in target_dict and target_dict['proper_motion_ra'] is not None:
+        pm['pmra'] = ProperMotion(
+            Angle(
+                degrees=(target_dict['proper_motion_ra'] / 1000.0 / cos(radians(target_dict['dec']))) / 3600.0,
+                units='arc'
+            ),
+            time='year'
+        )
+    if 'proper_motion_dec' in target_dict and target_dict['proper_motion_dec'] is not None:
+        pm['pmdec'] = ProperMotion(
+            Angle(
+                degrees=(target_dict['proper_motion_dec'] / 1000.0) / 3600.0,
+                units='arc'
+            ),
+            time='year'
+        )
+    return pm
+
+
 def get_rise_set_target(target_dict):
     # This is a hack to protect against poorly formatted or empty targets that are submitted directly.
     # TODO: Remove this check when target models are updated to handle when there is no target
@@ -164,14 +186,13 @@ def get_rise_set_target(target_dict):
             dec=Angle(degrees=0),
         )
     if target_dict['type'] in ['ICRS', 'HOUR_ANGLE']:
-        pmra = (target_dict['proper_motion_ra'] / 1000.0 / cos(radians(target_dict['dec']))) / 3600.0
-        pmdec = (target_dict['proper_motion_dec'] / 1000.0) / 3600.0
+        pm = get_proper_motion(target_dict)
         if target_dict['type'] == 'ICRS':
             return make_ra_dec_target(
                 ra=Angle(degrees=target_dict['ra']),
                 dec=Angle(degrees=target_dict['dec']),
-                ra_proper_motion=ProperMotion(Angle(degrees=pmra, units='arc'), time='year'),
-                dec_proper_motion=ProperMotion(Angle(degrees=pmdec, units='arc'), time='year'),
+                ra_proper_motion=pm['pmra'],
+                dec_proper_motion=pm['pmdec'],
                 parallax=target_dict['parallax'],
                 rad_vel=0.0,
                 epoch=target_dict['epoch']
@@ -180,8 +201,8 @@ def get_rise_set_target(target_dict):
             return make_hour_angle_target(
                 hour_angle=Angle(degrees=target_dict['hour_angle']),
                 dec=Angle(degrees=target_dict['dec']),
-                ra_proper_motion=ProperMotion(Angle(degrees=pmra, units='arc'), time='year'),
-                dec_proper_motion=ProperMotion(Angle(degrees=pmdec, units='arc'), time='year'),
+                ra_proper_motion=pm['pmra'],
+                dec_proper_motion=pm['pmdec'],
                 parallax=target_dict['parallax'],
                 epoch=target_dict['epoch']
             )
