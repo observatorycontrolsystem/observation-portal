@@ -36,7 +36,7 @@ $(document).ready(function() {
   $('.pending-details').each(function() {
     let that = $(this);
     let requestId = $(this).data('request');
-    $.getJSON('/api/requests/' + requestId + '/?exclude_canceled=true', function(data) {
+    $.getJSON('/api/requests/' + requestId + '/observations/?exclude_canceled=true', function(data) {
       let content = '';
       if (data.length > 0) {
         data = data.reverse(); // get the latest non canceled block
