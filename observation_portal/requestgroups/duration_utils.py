@@ -169,7 +169,11 @@ def get_request_duration(request_dict):
             duration += change_overhead
 
         # Now add in the slew time between targets (configurations). Only Sidereal can be calculated based on position.
-        if not previous_target or 'ra' not in previous_target or 'ra' not in configuration['target']:
+        if (
+                not previous_target
+                or previous_target['type'].upper() != 'ICRS'
+                or configuration['target']['type'].upper() != 'ICRS'
+        ):
             duration += request_overheads['maximum_slew_overhead']
         elif previous_target != configuration['target']:
             duration += min(max(get_slew_distance(previous_target, configuration['target'], start_time)

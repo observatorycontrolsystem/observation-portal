@@ -510,17 +510,10 @@ class RequestSerializer(serializers.ModelSerializer):
         if not value:
             raise serializers.ValidationError(_('You must specify at least 1 configuration'))
 
-        target = value[0]['target']
         constraints = value[0]['constraints']
         # Set the relative priority of molecules in order
         for i, configuration in enumerate(value):
             configuration['priority'] = i + 1
-            # TODO: Remove this once we support multiple targets/constraints
-            if configuration['target'] != target:
-                raise serializers.ValidationError(_(
-                    'Currently only a single target per Request is supported. This restriction will be lifted in '
-                    'the future.'
-                ))
             if configuration['constraints'] != constraints:
                 raise serializers.ValidationError(_(
                     'Currently only a single constraints per Request is supported. This restriction will be '
@@ -726,12 +719,20 @@ class RequestGroupSerializer(serializers.ModelSerializer):
             # Don't do any time accounting stuff if it is a directly scheduled observation
             return data
         else:
-            # for non-DIRECT observations, don't allow HOUR_ANGLE targets
             for request in data['requests']:
+                target = request['configurations'][0]['target']
                 for config in request['configurations']:
+                    # for non-DIRECT observations, don't allow HOUR_ANGLE targets
                     if config['target']['type'] == 'HOUR_ANGLE':
                         raise serializers.ValidationError(_('HOUR_ANGLE Target type not supported in scheduled observations'))
 
+                    # For non-DIRECT observations, only allow a single target
+                    # TODO: Remove this check once we support multiple targets/constraints
+                    if config['target'] != target:
+                        raise serializers.ValidationError(_(
+                            'Currently only a single target per Request is supported. This restriction will be lifted '
+                            'in the future.'
+                        ))
         try:
             total_duration_dict = get_total_duration_dict(data)
             for tak, duration in total_duration_dict.items():
