@@ -113,19 +113,19 @@ def convert_pond_block_to_observation(block):
             config_extra_params['self_guiding'] = True
 
         instrument_extra_params = {}
-        if 'rot_angle' in pointing and pointing['rot_angle'] is not None and float(pointing['rot_angle']):
+        if pointing.get('rot_angle') not in [None, ''] and float(pointing['rot_angle']):
             instrument_extra_params['rotator_angle'] = float(pointing['rot_angle'])
-        if 'defocus' in molecule and float(molecule['defocus']):
+        if molecule.get('defocus') not in [None, ''] and float(molecule['defocus']):
             instrument_extra_params['defocus'] = float(molecule['defocus'])
         if 'expmeter_mode' in molecule and not molecule['expmeter_mode'] in ['OFF', 'EXPMETER_OFF']:
             instrument_extra_params['expmeter_mode'] = molecule['expmeter_mode']
-            if 'expmeter_snr' in molecule and float(molecule['expmeter_snr']):
+            if molecule.get('expmeter_snr') not in [None, ''] and float(molecule['expmeter_snr']):
                 instrument_extra_params['expmeter_snr'] = float(molecule['expmeter_snr'])
 
         instrument_optical_elements = {}
-        if molecule.get('filter') and 'NRES' not in block.get('instrument_class').upper():
+        if molecule.get('filter') and 'NRES' not in str(block.get('instrument_class')).upper():
             instrument_optical_elements['filter'] = molecule['filter']
-        if molecule.get('spectra_slit') and 'NRES' not in block.get('instrument_class').upper():
+        if molecule.get('spectra_slit') and 'NRES' not in str(block.get('instrument_class')).upper():
             instrument_optical_elements['slit'] = molecule['spectra_slit']
         if molecule.get('spectra_lamp'):
             instrument_optical_elements['lamp'] = molecule['spectra_lamp']
@@ -133,13 +133,18 @@ def convert_pond_block_to_observation(block):
         instrument_configs = [{
             'mode': molecule.get('readout_mode', ''),
             'rotator_mode': pointing.get('rot_mode', ''),
-            'exposure_time': float(molecule.get('exposure_time', 0.01)),
             'exposure_count': molecule.get('exposure_count', 1),
             'bin_x': molecule.get('bin_x', 1),
             'bin_y': molecule.get('bin_y', 1),
             'optical_elements': instrument_optical_elements,
             'extra_params': instrument_extra_params
         }]
+
+        if molecule.get('exposure_time') not in [None, '']:
+            exposure_time = float(molecule['exposure_time'])
+        else:
+            exposure_time = 0.01
+        instrument_configs[0]['exposure_time'] = exposure_time
 
         if molecule.get('sub_x1') and molecule.get('sub_x2') and molecule.get('sub_y1') and molecule.get('sub_y2'):
             instrument_configs[0]['rois'] = [{'x1': float(molecule['sub_x1']),
@@ -156,17 +161,26 @@ def convert_pond_block_to_observation(block):
             ag_extra_params['ag_strategy'] = molecule['ag_strategy']
 
         (guide_mode, guide_optional) = pond_ag_mode_to_guiding_mode(molecule.get('ag_mode', 'OPT'))
-        if block.get('instrument_class').upper() in ['1M0-NRES-SCICAM', '1M0-NRES-COMMISIONING', '2M0-FLOYDS-SCICAM']:
-            if molecule.get('type').upper() not in ['ARC', 'LAMP_FLAT']:
+        if str(block.get('instrument_class')).upper() in [
+            '1M0-NRES-SCICAM',
+            '1M0-NRES-COMMISIONING',
+            '2M0-FLOYDS-SCICAM'
+        ]:
+            if str(molecule.get('type')).upper() not in ['ARC', 'LAMP_FLAT']:
                 guide_optional = False
 
         guiding_config = {
             'mode': guide_mode,
             'optional': guide_optional,
-            'exposure_time': float(molecule.get('ag_exp_time', 10)),
             'optical_elements': ag_optical_elements,
             'extra_params': ag_extra_params
         }
+
+        if molecule.get('ag_exp_time') not in [None, '']:
+            ag_exp_time = float(molecule['ag_exp_time'])
+        else:
+            ag_exp_time = 10
+        guiding_config['exposure_time'] = ag_exp_time
 
         acquire_mode = molecule.get('acquire_mode', 'OFF')
         acquire_extra_params = {}
@@ -183,7 +197,7 @@ def convert_pond_block_to_observation(block):
             'extra_params': acquire_extra_params
         }
 
-        if float(molecule.get('acquire_exp_time', 0)):
+        if molecule.get('acquire_exp_time') not in [None, ''] and float(molecule['acquire_exp_time']):
             acquisition_config['exposure_time'] = float(molecule['acquire_exp_time'])
 
         configuration = {
