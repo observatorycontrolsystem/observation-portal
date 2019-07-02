@@ -139,9 +139,9 @@ class ScheduleSerializer(serializers.ModelSerializer):
                   'proposal', 'name', 'id', 'modified')
         read_only_fields = ('modified', 'id', 'configuration_statuses')
 
-    def validate_start(self, value):
+    def validate_end(self, value):
         if value < timezone.now():
-            raise serializers.ValidationError(_("Start time must be in the future"))
+            raise serializers.ValidationError(_("End time must be in the future"))
         return value
 
     def validate_proposal(self, value):
