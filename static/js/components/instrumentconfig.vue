@@ -88,6 +88,7 @@
                 :label="opticalElementGroup.label"
                 :field="opticalElementGroup.type"
                 :options="opticalElementGroup.options"
+                :lowerOptions="true"
                 :errors="{}"
                 @input="updateOpticalElement"
               />
