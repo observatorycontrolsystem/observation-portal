@@ -62,6 +62,9 @@ def convert_pond_block_to_observation(block):
         'proposal': first_molecule.get('prop_id', '')
     }
 
+    if block.get('priority'):
+        observation['priority'] = block.get('priority')
+
     if first_molecule.get('user_id'):
         observation['submitter'] = first_molecule['user_id']
 
@@ -343,6 +346,7 @@ def convert_observation_to_pond_block(observation):
         'site': observation['site'],
         'observatory': observation['enclosure'],
         'telescope': observation['telescope'],
+        'priority': observation['priority'],
         'instrument_class': first_configuration['instrument_type'],
         'max_airmass': str(first_configuration['constraints']['max_airmass']),
         'min_lunar_dist': str(first_configuration['constraints']['min_lunar_distance']),

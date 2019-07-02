@@ -39,6 +39,10 @@ class Observation(models.Model):
     end = models.DateTimeField(
         help_text='End time of observation'
     )
+    priority = models.PositiveIntegerField(
+        default=10,
+        help_text='Priority (lower is better) for overlapping observations'
+    )
     modified = models.DateTimeField(
         auto_now=True, db_index=True,
         help_text='Time when this Observation was last changed'
