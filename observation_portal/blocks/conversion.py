@@ -132,7 +132,7 @@ def convert_pond_block_to_observation(block):
 
         instrument_configs = [{
             'mode': molecule.get('readout_mode', ''),
-            'rotator_mode': pointing.get('rot_mode', ''),
+            'rotator_mode': pointing.get('rot_mode') if pointing.get('rot_mode') else '',
             'exposure_count': molecule.get('exposure_count', 1),
             'bin_x': molecule.get('bin_x', 1),
             'bin_y': molecule.get('bin_y', 1),
@@ -200,9 +200,14 @@ def convert_pond_block_to_observation(block):
         if molecule.get('acquire_exp_time') not in [None, ''] and float(molecule['acquire_exp_time']):
             acquisition_config['exposure_time'] = float(molecule['acquire_exp_time'])
 
+        instrument_type = block.get('instrument_class')
+        if not instrument_type:
+            if 'ff' in molecule.get('inst_name', '').lower() or observation['proposal'].upper() == 'ASAS':
+                instrument_type = '0M4-SCICAM-FLI'
+
         configuration = {
             'priority': molecule.get('priority', index),
-            'instrument_type': block['instrument_class'],
+            'instrument_type': instrument_type,
             'instrument_name': molecule['inst_name'],
             'type': molecule['type'],
             'instrument_configs': instrument_configs,
