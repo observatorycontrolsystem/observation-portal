@@ -16,7 +16,7 @@ class ConfigurationStatusInline(admin.TabularInline):
 
 
 class ObservationAdmin(admin.ModelAdmin):
-    list_display = ('id', 'state', 'site', 'enclosure', 'telescope', 'start', 'end')
+    list_display = ('id', 'state', 'site', 'enclosure', 'telescope', 'start', 'end', 'priority')
     list_filter = ('site', 'state')
     raw_id_fields = ('request', )
     form = ObservationForm

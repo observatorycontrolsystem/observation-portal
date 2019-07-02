@@ -168,10 +168,11 @@ class TestPostScheduleApi(SetTimeMixin, APITestCase):
 
     def test_post_observation_time_in_past_rejected(self):
         bad_observation = copy.deepcopy(self.observation)
-        bad_observation['start'] = "2014-09-05T22:35:39Z"
+        bad_observation['start'] = "2014-09-05T22:15:39Z"
+        bad_observation['end'] = "2014-09-05T22:35:39Z"
         response = self.client.post(reverse('api:schedule-list'), data=bad_observation)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('start', response.json())
+        self.assertIn('end', response.json())
         self.assertIn('must be in the future', str(response.content))
 
     def test_post_observation_end_before_start_rejected(self):
@@ -193,6 +194,19 @@ class TestPostScheduleApi(SetTimeMixin, APITestCase):
         observation['request']['configurations'][0]['instrument_name'] = 'xx03'
         response = self.client.post(reverse('api:schedule-list'), data=observation)
         self.assertEqual(response.status_code, 201)
+
+    def test_post_observation_works_with_priority(self):
+        response = self.client.post(reverse('api:schedule-list'), data=self.observation)
+        self.assertEqual(response.status_code, 201)
+        obs_json = response.json()
+        self.assertEqual(obs_json['priority'], 10)
+
+        observation = copy.deepcopy(self.observation)
+        observation['priority'] = 39
+        response = self.client.post(reverse('api:schedule-list'), data=observation)
+        self.assertEqual(response.status_code, 201)
+        obs_json = response.json()
+        self.assertEqual(obs_json['priority'], 39)
 
     def test_post_observation_invalid_instrument_name_for_instrument_type(self):
         bad_observation = copy.deepcopy(self.observation)

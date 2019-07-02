@@ -136,12 +136,12 @@ class ScheduleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Observation
         fields = ('site', 'enclosure', 'telescope', 'start', 'end', 'state', 'configuration_statuses', 'request',
-                  'proposal', 'name', 'id', 'modified')
+                  'proposal', 'priority', 'name', 'id', 'modified')
         read_only_fields = ('modified', 'id', 'configuration_statuses')
 
-    def validate_start(self, value):
+    def validate_end(self, value):
         if value < timezone.now():
-            raise serializers.ValidationError(_("Start time must be in the future"))
+            raise serializers.ValidationError(_("End time must be in the future"))
         return value
 
     def validate_proposal(self, value):
@@ -220,11 +220,12 @@ class ScheduleSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         # separate out the observation and request_group fields
-        OBS_FIELDS = ['site', 'enclosure', 'telescope', 'start', 'end']
+        OBS_FIELDS = ['site', 'enclosure', 'telescope', 'start', 'end', 'priority']
         obs_fields = {}
         for field in OBS_FIELDS:
-            obs_fields[field] = validated_data[field]
-            del validated_data[field]
+            if field in validated_data:
+                obs_fields[field] = validated_data[field]
+                del validated_data[field]
 
         # pull out the instrument_names to store later
         config_instrument_names = []
@@ -275,7 +276,7 @@ class ObservationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Observation
-        fields = ('site', 'enclosure', 'telescope', 'start', 'end', 'configuration_statuses', 'request')
+        fields = ('site', 'enclosure', 'telescope', 'start', 'end', 'priority', 'configuration_statuses', 'request')
 
     def validate(self, data):
         if data['end'] <= data['start']:
