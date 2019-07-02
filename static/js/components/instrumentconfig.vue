@@ -171,6 +171,13 @@ export default {
       opticalElementUpdates: 0
     }
   },
+  mounted: function() {
+    // If a draft is loaded in that has a defocus set in the extra_params, update the defocus
+    // here since extra_params is not reactive and cannot be watched 
+    if (this.instrumentconfig.extra_params.defocus) {
+      this.defocus = this.instrumentconfig.extra_params.defocus;
+    }
+  },
   computed: {
     instrumentHasRotatorModes: function() {
       return this.available_instruments[this.selectedinstrument] && 'rotator' in this.available_instruments[this.selectedinstrument].modes;
