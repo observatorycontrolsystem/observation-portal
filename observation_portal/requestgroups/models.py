@@ -516,7 +516,7 @@ class Target(models.Model):
         help_text='Perihelion distance (AU)'
     )
     eccentricity = models.FloatField(
-        null=True, blank=True, validators=[MinValueValidator(0.0), MaxValueValidator(0.99)],
+        null=True, blank=True, validators=[MinValueValidator(0.0)],
         help_text='Eccentricity of the orbit'
     )
     meanlong = models.FloatField(
