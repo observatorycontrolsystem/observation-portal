@@ -227,11 +227,11 @@
           }
           that.available_instruments = allowed_instruments;
           that.update();
+        }).done(function() {
+          if (QueryString().requestgroupid) {
+            that.fetchRequestGroup(QueryString().requestgroupid);
+          }
         });
-      }).done(function() {
-        if (QueryString().requestgroupid) {
-          that.fetchRequestGroup(QueryString().requestgroupid);
-        }
       });
     },
     computed: {
