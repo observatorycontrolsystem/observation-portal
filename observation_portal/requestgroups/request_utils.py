@@ -6,6 +6,7 @@ import requests
 from observation_portal.common.configdb import configdb
 from observation_portal.common.telescope_states import TelescopeStates, filter_telescope_states_by_intervals
 from observation_portal.common.rise_set_utils import get_rise_set_target, get_filtered_rise_set_intervals_by_site
+from observation_portal.requestgroups.target_helpers import TARGET_TYPE_HELPER_MAP
 
 # TODO: Use configuration types from configdb
 
@@ -73,20 +74,20 @@ def date_range_from_interval(start_time, end_time, dt=timedelta(minutes=15)):
 
 def get_airmasses_for_request_at_sites(request_dict):
     # TODO: Change to work with multiple instrument types and multiple constraints and multiple targets
+    data = {'airmass_data': {}}
     instrument_type = request_dict['configurations'][0]['instrument_type']
     constraints = request_dict['configurations'][0]['constraints']
+    target = request_dict['configurations'][0]['target']
+    target_type = str(target.get('type', '')).upper()
 
-    site_data = configdb.get_sites_with_instrument_type_and_location(
-      instrument_type=instrument_type,
-      site_code=request_dict['location'].get('site'),
-      enclosure_code=request_dict['location'].get('enclosure'),
-      telescope_code=request_dict['location'].get('telescope')
-    )
-
-    rs_target = get_rise_set_target(request_dict['configurations'][0]['target'])
-
-    data = {'airmass_data': {}}
-    if str(request_dict['configurations'][0]['target'].get('type', '')).upper() in ['ICRS', 'ORBITAL_ELEMENTS']:
+    if target_type in ['ICRS', 'ORBITAL_ELEMENTS'] and TARGET_TYPE_HELPER_MAP[target_type](target).is_valid():
+        site_data = configdb.get_sites_with_instrument_type_and_location(
+            instrument_type=instrument_type,
+            site_code=request_dict['location'].get('site'),
+            enclosure_code=request_dict['location'].get('enclosure'),
+            telescope_code=request_dict['location'].get('telescope')
+        )
+        rs_target = get_rise_set_target(target)
         for site_id, site_details in site_data.items():
             night_times = []
             site_lat = Angle(degrees=site_details['latitude'])
