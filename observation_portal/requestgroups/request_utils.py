@@ -86,7 +86,7 @@ def get_airmasses_for_request_at_sites(request_dict):
     rs_target = get_rise_set_target(request_dict['configurations'][0]['target'])
 
     data = {'airmass_data': {}}
-    if request_dict['configurations'][0]['target']['type'].upper() not in ['SATELLITE', 'HOUR_ANGLE']:
+    if str(request_dict['configurations'][0]['target'].get('type', '')).upper() in ['ICRS', 'ORBITAL_ELEMENTS']:
         for site_id, site_details in site_data.items():
             night_times = []
             site_lat = Angle(degrees=site_details['latitude'])
