@@ -4,39 +4,40 @@ from django import forms
 from observation_portal.observations.models import Observation, ConfigurationStatus
 from observation_portal.requestgroups.models import RequestGroup, Request
 from observation_portal.common.configdb import configdb
+from observation_portal.common import mixins
 
 
-class ObservationFilter(django_filters.FilterSet):
+class ObservationFilter(mixins.CustomIsoDateTimeFilterMixin, django_filters.FilterSet):
     site = django_filters.MultipleChoiceFilter(choices=configdb.get_site_tuples())
     enclosure = django_filters.MultipleChoiceFilter(choices=configdb.get_enclosure_tuples())
     telescope = django_filters.MultipleChoiceFilter(choices=configdb.get_telescope_tuples())
-    start_after = django_filters.DateTimeFilter(
+    start_after = django_filters.IsoDateTimeFilter(
         field_name='start',
         lookup_expr='gte',
         label='Start after',
         widget=forms.TextInput(attrs={'class': 'input', 'type': 'date'})
     )
-    start_before = django_filters.DateTimeFilter(
+    start_before = django_filters.IsoDateTimeFilter(
         field_name='start',
         lookup_expr='lt',
         label='Start before',
         widget=forms.TextInput(attrs={'class': 'input', 'type': 'date'})
     )
-    end_after = django_filters.DateTimeFilter(
+    end_after = django_filters.IsoDateTimeFilter(
         field_name='end',
         lookup_expr='gte',
         label='End after',
         widget=forms.TextInput(attrs={'class': 'input', 'type': 'date'})
     )
-    end_before = django_filters.DateTimeFilter(
+    end_before = django_filters.IsoDateTimeFilter(
         field_name='end',
         lookup_expr='lt',
         label='End before',
         widget=forms.TextInput(attrs={'class': 'input', 'type': 'date'})
     )
-    modified_after = django_filters.CharFilter(
+    modified_after = django_filters.IsoDateTimeFilter(
         field_name='modified',
-        method='gte',
+        lookup_expr='gte',
         label='Modified After',
         widget=forms.TextInput(attrs={'class': 'input', 'type': 'date'})
     )
