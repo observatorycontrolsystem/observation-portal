@@ -42,6 +42,9 @@
                 {% bootstrap_label '<i class="fas fa-sync"></i> State' label_for="id_state" %}
                 {% bootstrap_field filter.form.state show_label=False size='small' %}
 
+                {% bootstrap_label '<i class="fa fa-paragraph"></i> Name Contains' label_for="id_name" %}
+                {% bootstrap_field filter.form.name show_label=False size='small' %}
+
                 {% bootstrap_label '<i class="fa fa-crosshairs"></i> Target Name Contains' label_for="id_target" %}
                 {% bootstrap_field filter.form.target show_label=False size='small' %}
 

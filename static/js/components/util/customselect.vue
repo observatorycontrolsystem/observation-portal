@@ -26,9 +26,9 @@
       </template>
       <b-form-select 
         :id="field + '-select-' + $parent.id" 
-        :value="value"
+        :value="value | toLowerCase(lowerOptions)"
         :state="validationState"
-        :options="options"
+        :options="selectOptions"
         @input="update($event)"
       />
       <span 
@@ -59,7 +59,8 @@
       'field', 
       'options', 
       'errors', 
-      'desc'
+      'desc',
+      'lowerOptions'
     ],
     data: function() {
       return {
@@ -79,6 +80,27 @@
         } else {
           return null;
         }
+      },
+      selectOptions: function() {
+        if (this.lowerOptions) {
+          return _.mapValues(this.options, function(opt) {
+            if (_.isString(opt.value)) {
+              return {value: _.toLower(opt.value), text: opt.text};
+            } else {
+              return {value: opt.value, text: opt.text};
+            }
+          });
+        } else {
+          return this.options;
+        }
+      }
+    },
+    filters: {
+      toLowerCase: function(value, lowerOptions) {
+        if (lowerOptions && _.isString(value)) {
+          return _.toLower(value);
+        }
+        return value;
       }
     },
     methods: {
