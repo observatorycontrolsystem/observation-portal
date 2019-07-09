@@ -631,7 +631,7 @@ class RequestGroupSerializer(serializers.ModelSerializer):
         )
         extra_kwargs = {
             'proposal': {'error_messages': {'null': 'Please provide a proposal.'}},
-            'name': {'error_messages': {'blank': 'Please provide a title.'}}
+            'name': {'error_messages': {'blank': 'Please provide a name.'}}
         }
 
     @transaction.atomic

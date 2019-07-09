@@ -60,8 +60,8 @@
           <b-form>
             <customfield 
               v-model="requestgroup.name"
-              label="Title" 
-              field="title" 
+              label="Name" 
+              field="name" 
               :errors="errors.name"
               @input="update"
             />
