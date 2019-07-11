@@ -26,10 +26,11 @@
               <div class="col-1 mb-0 mt-auto">{% bootstrap_button button_type="submit" content="Filter" button_class="btn-outline-secondary" %}</div>
             </div>
           </form>
+          <br/>
           {% endif %}
         <table class="table table-responsive">
           <thead>
-            <tr><th>Name</th><th>UserId</th><th>Email</th><th>Hour Limit</th><th>Hours Requested</th>
+            <tr><th>First Name</th><th>Last Name</th><th>UserId</th><th>Email</th><th>Hour Limit</th><th>Hours Requested</th>
               {% if object.public %}
               <th>Simple Interface</th>
               {% endif %}
@@ -42,7 +43,8 @@
           {% for mem in members_page %}
           {% if mem.role != 'PI' %}
             <tr>
-              <td>{{ mem.user.first_name }} {{ mem.user.last_name }}</td>
+              <td>{{ mem.user.first_name }}</td>
+              <td>{{ mem.user.last_name }}</td>
               <td>{{ mem.user.username }}</td>
               <td><a href="mailto:{{ mem.user.email }}">{{ mem.user.email }}</a></td>
               <td>
