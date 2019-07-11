@@ -45,7 +45,7 @@ class ProposalDetailView(LoginRequiredMixin, DetailView):
         # Paginate and allow fitering on CoI's as some proposals have a large number of them
         members_queryset = self.get_object().membership_set.filter(role=Membership.CI).order_by('id')
         members_filter = MembershipFilter(self.request.GET, queryset=members_queryset)
-        paginate_by = 10
+        paginate_by = 25
         members_paginator = Paginator(members_filter.qs, paginate_by)
         context['members_page'] = members_paginator.get_page(self.request.GET.get('ci_page'))
         context['members_filter'] = members_filter
