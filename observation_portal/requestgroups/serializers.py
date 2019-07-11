@@ -224,11 +224,6 @@ class ConfigurationSerializer(serializers.ModelSerializer):
         read_only_fields = ('priority',)
 
     def validate_instrument_configs(self, value):
-        # TODO: remove this check once we support multiple instrument configs
-        if len(value) != 1:
-            raise serializers.ValidationError(_(
-                'Currently only a single instrument_config is supported. This restriction will be lifted in the future.'
-            ))
         if [instrument_config.get('fill_window', False) for instrument_config in value].count(True) > 1:
             raise serializers.ValidationError(_('Only one instrument_config can have `fill_window` set'))
         return value
@@ -248,6 +243,13 @@ class ConfigurationSerializer(serializers.ModelSerializer):
         modes = configdb.get_modes_by_type(instrument_type)
         default_modes = configdb.get_default_modes_by_type(instrument_type)
         guiding_config = data['guiding_config']
+
+        # Validate the number of instrument configs if this is not a SOAR instrument
+        # TODO: remove this check once we support multiple instrument configs
+        if len(data['instrument_configs']) != 1 and 'SOAR' not in instrument_type.upper():
+            raise serializers.ValidationError(_(
+                'Currently only a single instrument_config is supported. This restriction will be lifted in the future.'
+            ))
 
         # Validate the guide mode
         guide_validation_helper = ModeValidationHelper('guiding', instrument_type, default_modes, modes)
