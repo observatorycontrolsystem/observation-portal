@@ -13,7 +13,7 @@ class MembershipFilter(django_filters.FilterSet):
     class Meta:
         model = Membership
         fields = ('first_name', 'last_name', 'username', 'email')
-        
+
 
 class ProposalFilter(django_filters.FilterSet):
     semester = django_filters.ModelChoiceFilter(
