@@ -8,10 +8,11 @@ class MembershipFilter(django_filters.FilterSet):
     first_name = django_filters.CharFilter(field_name='user__first_name', lookup_expr='icontains', label='First name contains')
     last_name = django_filters.CharFilter(field_name='user__last_name', lookup_expr='icontains', label='Last name contains')
     username = django_filters.CharFilter(field_name='user__username', lookup_expr='icontains', label='UserId contains')
+    email = django_filters.CharFilter(field_name='user__email', lookup_expr='icontains', label='Email contains')
 
     class Meta:
         model = Membership
-        fields = ('first_name', 'last_name', 'username')
+        fields = ('first_name', 'last_name', 'username', 'email')
         
 
 class ProposalFilter(django_filters.FilterSet):
