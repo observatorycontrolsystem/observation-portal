@@ -12,6 +12,7 @@ function archiveAjaxSetup(){
         jqXHR.setRequestHeader('Authorization', 'Token ' + sessionStorage.getItem('archiveAuthToken'));
       }
     });
+    $(document).trigger('archivelogin');
   });
 }
 
