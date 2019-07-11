@@ -16,7 +16,18 @@
         </h4>
         {% if user == object.pi %}
         <h4>Co Investigators <small><i id="toggleci" class="fa fa-eye"></i></small></h4>
-        <table class="table" id="cilist">
+        <div id="cilist">
+          {% if members_are_paginated %}
+          <form method="get" role="form" action="">
+            <div class="form-row">
+              <div class="col mb-0 mt-auto">{% bootstrap_field members_filter.form.first_name form_group_class="form-group mb-0 mt-auto" %}</div>
+              <div class="col mb-0 mt-auto">{% bootstrap_field members_filter.form.last_name form_group_class="form-group mb-0 mt-auto" %}</div>
+              <div class="col mb-0 mt-auto">{% bootstrap_field members_filter.form.username form_group_class="form-group mb-0 mt-auto" %}</div>
+              <div class="col-1 mb-0 mt-auto">{% bootstrap_button button_type="submit" content="Filter" button_class="btn-outline-secondary" %}</div>
+            </div>
+          </form>
+          {% endif %}
+        <table class="table table-responsive">
           <thead>
             <tr><th>Name</th><th>UserId</th><th>Email</th><th>Hour Limit</th><th>Hours Requested</th>
               {% if object.public %}
@@ -28,7 +39,7 @@
             </tr>
           </thead>
           <tbody>
-          {% for mem in object.membership_set.all %}
+          {% for mem in members_page %}
           {% if mem.role != 'PI' %}
             <tr>
               <td>{{ mem.user.first_name }} {{ mem.user.last_name }}</td>
@@ -62,6 +73,16 @@
           {% endfor %}
           </tbody>
         </table>
+        {% if members_are_paginated %}
+        <div class="row">
+          <div class="col">
+            <span class="float-left"> {% bootstrap_pagination members_page size="small" parameter_name="ci_page" extra=request.GET.urlencode %}</span>
+            <span class="float-right">{{ members_page.paginator.count }} Co Investigators</span>
+          </div>
+        </div>
+        {% endif %}
+        <br/>
+        </div>
         {% endif %}
         <h4>Time Allocation</h4>
         <table class="table">

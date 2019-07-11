@@ -1,8 +1,18 @@
 import django_filters
 from django.utils import timezone
 from dateutil.parser import parse
-from observation_portal.proposals.models import Semester, Proposal
+from observation_portal.proposals.models import Semester, Proposal, Membership
 
+
+class MembershipFilter(django_filters.FilterSet):
+    first_name = django_filters.CharFilter(field_name='user__first_name', lookup_expr='icontains', label='First name contains')
+    last_name = django_filters.CharFilter(field_name='user__last_name', lookup_expr='icontains', label='Last name contains')
+    username = django_filters.CharFilter(field_name='user__username', lookup_expr='icontains', label='UserId contains')
+
+    class Meta:
+        model = Membership
+        fields = ('first_name', 'last_name', 'username')
+        
 
 class ProposalFilter(django_filters.FilterSet):
     semester = django_filters.ModelChoiceFilter(
