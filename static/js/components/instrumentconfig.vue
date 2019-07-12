@@ -25,7 +25,7 @@
           <ul>
             <li>
               Try the
-              <a href="https://lco.global/files/etc/exposure_time_calculator.html" target="_blank">
+              <a href=" https://exposure-time-calculator.lco.global/" target="_blank">
                 online Exposure Time Calculator.
               </a>
             </li>
