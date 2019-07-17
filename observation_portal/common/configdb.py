@@ -463,6 +463,12 @@ class ConfigDB(object):
                 return instrument['science_camera']['camera_type']['name']
         return instrument_type
 
+    def get_instrument_type_telescope_class(self, instrument_type):
+        for instrument in self.get_instruments():
+            if instrument_type.upper() == instrument['science_camera']['camera_type']['code'].upper():
+                return instrument['__str__'].split('.')[2][0:3]
+        return instrument_type[0:3]
+
     def get_active_instrument_types(self, location: dict) -> set:
         """Get the available instrument_types.
 
