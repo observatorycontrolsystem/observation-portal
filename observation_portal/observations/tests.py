@@ -11,7 +11,7 @@ from datetime import timedelta
 from io import StringIO
 from django.core.management import call_command
 
-from observation_portal.requestgroups.models import RequestGroup, Window, Location
+from observation_portal.requestgroups.models import RequestGroup, Window, Location, Request
 from observation_portal.observations.time_accounting import configuration_time_used
 from observation_portal.observations.models import Observation, ConfigurationStatus, Summary
 from observation_portal.proposals.models import Proposal, Membership, Semester, TimeAllocation
@@ -291,6 +291,33 @@ class TestPostScheduleApi(SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:schedule-list'), data=bad_observation)
         self.assertEqual(response.status_code, 400)
         self.assertIn('dec', str(response.content))
+
+    def test_delete_observation_leaves_request(self):
+        response = self.client.post(reverse('api:schedule-list'), data=self.observation)
+        self.assertEqual(response.status_code, 201)
+        obj_json = response.json()
+        observation = Observation.objects.get(pk=obj_json['id'])
+        observation.state = 'CANCELED'
+        observation.save()
+        Observation.delete_old_observations(datetime(2099, 1, 1))
+        request = Request.objects.get(id=obj_json['request']['id'])
+        self.assertEqual(request.id, obj_json['request']['id'])
+        with self.assertRaises(Observation.DoesNotExist):
+            observation = Observation.objects.get(pk=obj_json['id'])
+
+    def test_cant_delete_observation_with_started_configuration_statuses(self):
+        response = self.client.post(reverse('api:schedule-list'), data=self.observation)
+        self.assertEqual(response.status_code, 201)
+        obj_json = response.json()
+        observation = Observation.objects.get(pk=obj_json['id'])
+        observation.state = 'CANCELED'
+        observation.save()
+        configuration_status = observation.configuration_statuses.all()[0]
+        configuration_status.state = 'ATTEMPTED'
+        configuration_status.save()
+        Observation.delete_old_observations(datetime(2099, 1, 1))
+        observation = Observation.objects.get(pk=obj_json['id'])
+        self.assertEqual(observation.id, obj_json['id'])
 
 
 class TestPostScheduleMultiConfigApi(SetTimeMixin, APITestCase):
