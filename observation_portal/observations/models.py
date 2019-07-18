@@ -76,7 +76,9 @@ class Observation(models.Model):
 
     @staticmethod
     def delete_old_observations(cutoff):
-        observations = Observation.objects.filter(start__lt=cutoff, end__lt=cutoff, state='CANCELED')
+        observations = Observation.objects.filter(start__lt=cutoff, end__lt=cutoff, state='CANCELED').exclude(
+            configuration_statuses__state__in=['ATTEMPTED', 'FAILED', 'COMPLETED']
+        )
         total_deleted, deleted_dict = observations.delete()
         logger.warning('Deleted {} objects: {} observations, {} configuration_statuses, and {} summaries'.format(
             total_deleted, deleted_dict.get('observations.Observation', 0),
