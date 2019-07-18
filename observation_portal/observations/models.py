@@ -5,7 +5,9 @@ from django.utils import timezone
 from datetime import timedelta
 
 from observation_portal.requestgroups.models import Request, Configuration
+import logging
 
+logger = logging.getLogger()
 
 class Observation(models.Model):
     STATE_CHOICES = (
@@ -71,6 +73,16 @@ class Observation(models.Model):
         aborted = observations.filter(pk__in=observation_ids_to_abort).update(state='ABORTED', modified=now)
 
         return deleted_observations.get('observations.Observation', 0) + canceled + aborted
+
+    @staticmethod
+    def delete_old_observations(cutoff):
+        observations = Observation.objects.filter(start__lt=cutoff, end__lt=cutoff, state='CANCELED')
+        total_deleted, deleted_dict = observations.delete()
+        logger.warning('Deleted {} objects: {} observations, {} configuration_statuses, and {} summaries'.format(
+            total_deleted, deleted_dict.get('observations.Observation', 0),
+            deleted_dict.get('observations.ConfigurationStatus', 0),
+            deleted_dict.get('observations.Summary', 0)
+        ))
 
     def as_dict(self, no_request=False):
         ret_dict = model_to_dict(self)
