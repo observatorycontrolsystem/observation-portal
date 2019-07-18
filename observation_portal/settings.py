@@ -103,6 +103,9 @@ WSGI_APPLICATION = 'observation_portal.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
 
+# https://www.postgresql.org/docs/9.6/runtime-config-client.html#GUC-IDLE-IN-TRANSACTION-SESSION-TIMEOUT
+PORTAL_IDLE_IN_TRANSACTION_TIMEOUT = 60 * 60 * 1000  # 1 hour
+
 DATABASES = {
    'default': {
        'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
@@ -110,7 +113,10 @@ DATABASES = {
        'USER': os.getenv('DB_USER', 'postgres'),
        'PASSWORD': os.getenv('DB_PASSWORD', ''),
        'HOST': os.getenv('DB_HOST', '127.0.0.1'),
-       'PORT': os.getenv('DB_PORT', '5432')
+       'PORT': os.getenv('DB_PORT', '5432'),
+       'OPTIONS': {
+           'options': f'-c idle_in_transaction_session_timeout={PORTAL_IDLE_IN_TRANSACTION_TIMEOUT}'
+       }
    }
 }
 
