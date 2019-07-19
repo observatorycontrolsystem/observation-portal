@@ -84,7 +84,7 @@ class Observation(models.Model):
         total_obs_deleted = 0
         total_cs_deleted = 0
         total_sm_deleted = 0
-        for observation in observations:
+        for observation in observations[:100000]:
             num_deleted, deleted_dict = observation.delete()
             total_deleted += num_deleted
             total_obs_deleted += deleted_dict.get('observations.Observation', 0)
