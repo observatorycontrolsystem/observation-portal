@@ -5,7 +5,9 @@ from django.utils import timezone
 from datetime import timedelta
 
 from observation_portal.requestgroups.models import Request, Configuration
+import logging
 
+logger = logging.getLogger()
 
 class Observation(models.Model):
     STATE_CHOICES = (
@@ -71,6 +73,27 @@ class Observation(models.Model):
         aborted = observations.filter(pk__in=observation_ids_to_abort).update(state='ABORTED', modified=now)
 
         return deleted_observations.get('observations.Observation', 0) + canceled + aborted
+
+    @staticmethod
+    def delete_old_observations(cutoff):
+        observations = Observation.objects.filter(start__lt=cutoff, end__lt=cutoff, state='CANCELED').exclude(
+            configuration_statuses__state__in=['ATTEMPTED', 'FAILED', 'COMPLETED']
+        )
+        logger.warning('There are {} observations to be deleted. Only the first 100,000 will be deleted this run'.format(len(observations)))
+        total_deleted = 0
+        total_obs_deleted = 0
+        total_cs_deleted = 0
+        total_sm_deleted = 0
+        for observation in observations[:100000]:
+            num_deleted, deleted_dict = observation.delete()
+            total_deleted += num_deleted
+            total_obs_deleted += deleted_dict.get('observations.Observation', 0)
+            total_cs_deleted += deleted_dict.get('observations.ConfigurationStatus', 0)
+            total_sm_deleted += deleted_dict.get('observations.Summary', 0)
+
+        logger.warning('Deleted {} objects: {} observations, {} configuration_statuses, and {} summaries'.format(
+            total_deleted, total_obs_deleted, total_cs_deleted, total_sm_deleted
+        ))
 
     def as_dict(self, no_request=False):
         ret_dict = model_to_dict(self)
