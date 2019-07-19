@@ -12,9 +12,10 @@
       {% bootstrap_pagination page_obj extra=request.GET.urlencode %}
     </span>
     {% endif %}
+    {% with last_update=filter.qs.first.modified %}
     <span class="float-right text-right">
-        {{ filter.qs.count }} observations<br/>
-        Last Update: <strong>{{ filter.qs.first.modified }}</strong>
+        {{ page_obj.paginator.count }} observations<br/>
+        Last Update: <strong>{{ last_update }}</strong>
     </span>
     <table class="table">
       <thead>
@@ -66,9 +67,10 @@
     </span>
     {% endif %}
     <span class="float-right text-right">
-      Last Update: <strong>{{ filter.qs.first.modified }}</strong><br/>
-      {{ filter.qs.count }} observations
+      Last Update: <strong>{{ last_update }}</strong><br/>
+      {{ page_obj.paginator.count }} observations
     </span>
+    {% endwith %}
   </div>
   <div class="col-md-2">
     <form class="form" method="GET" action="{% url 'observations:observation-list' %}">
