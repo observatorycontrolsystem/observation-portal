@@ -79,11 +79,20 @@ class Observation(models.Model):
         observations = Observation.objects.filter(start__lt=cutoff, end__lt=cutoff, state='CANCELED').exclude(
             configuration_statuses__state__in=['ATTEMPTED', 'FAILED', 'COMPLETED']
         )
-        total_deleted, deleted_dict = observations.delete()
+        logger.warning('There are {} observations to be deleted. Only the first 100,000 will be deleted this run'.format(len(observations)))
+        total_deleted = 0
+        total_obs_deleted = 0
+        total_cs_deleted = 0
+        total_sm_deleted = 0
+        for observation in observations:
+            num_deleted, deleted_dict = observation.delete()
+            total_deleted += num_deleted
+            total_obs_deleted += deleted_dict.get('observations.Observation', 0)
+            total_cs_deleted += deleted_dict.get('observations.ConfigurationStatus', 0)
+            total_sm_deleted += deleted_dict.get('observations.Summary', 0)
+
         logger.warning('Deleted {} objects: {} observations, {} configuration_statuses, and {} summaries'.format(
-            total_deleted, deleted_dict.get('observations.Observation', 0),
-            deleted_dict.get('observations.ConfigurationStatus', 0),
-            deleted_dict.get('observations.Summary', 0)
+            total_deleted, total_obs_deleted, total_cs_deleted, total_sm_deleted
         ))
 
     def as_dict(self, no_request=False):
