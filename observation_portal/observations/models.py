@@ -101,11 +101,7 @@ class Observation(models.Model):
 
     @property
     def instrument_types(self):
-        return set(
-            Configuration.objects.filter(
-                configuration_status__in=self.configuration_statuses.all()
-            ).values_list('instrument_type', flat=True)
-        )
+        return set(self.request.configurations.values_list('instrument_type', flat=True))
 
 
 class ConfigurationStatus(models.Model):

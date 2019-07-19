@@ -11,6 +11,7 @@ from observation_portal.observations.models import Observation
 from observation_portal.common.mixins import StaffRequiredMixin
 from observation_portal.common.configdb import configdb
 from observation_portal.observations.filters import ObservationFilter
+from observation_portal.observations.viewsets import observations_queryset
 
 
 class ObservationDetailView(StaffRequiredMixin, DetailView):
@@ -23,6 +24,7 @@ class ObservationListView(StaffRequiredMixin, FilterView):
     paginate_by = 50
     ordering = '-start'
     template_name = 'observations/observation_list.html'
+    queryset = observations_queryset()
 
     def get_filterset_kwargs(self, filterset_class):
         kwargs = super(ObservationListView, self).get_filterset_kwargs(filterset_class)
