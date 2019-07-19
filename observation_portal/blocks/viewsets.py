@@ -38,7 +38,8 @@ class PondBlockViewSet(ListAsDictMixin, viewsets.ModelViewSet):
             'request__configurations__acquisition_config',
             'request__configurations__guiding_config', 'request__configurations__constraints',
             'request__configurations__instrument_configs__rois', 'configuration_statuses',
-            'configuration_statuses__summary', 'request__request_group', 'request__request_group__proposal'
+            'configuration_statuses__summary', 'request__request_group', 'request__request_group__proposal',
+            'configuration_statuses__configuration', 'request__request_group__submitter'
         ).distinct()
 
     def perform_create(self, serializer):
