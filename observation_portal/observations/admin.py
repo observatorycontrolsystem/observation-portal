@@ -31,8 +31,9 @@ class ConfigurationStatusAdmin(admin.ModelAdmin):
 
 
 class SummaryAdmin(admin.ModelAdmin):
-    list_display = ('start', 'end', 'state', 'reason', 'time_completed')
+    list_display = ('id', 'start', 'end', 'state', 'reason', 'time_completed')
     list_filter = ('state', )
+    raw_id_fields = ('configuration_status', )
 
 
 admin.site.register(Observation, ObservationAdmin)
