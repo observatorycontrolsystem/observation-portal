@@ -77,4 +77,4 @@ class ConfigurationStatusFilter(django_filters.FilterSet):
 
     class Meta:
         model = ConfigurationStatus
-        fields = '__all__'
+        fields = ('guide_camera_name',)
