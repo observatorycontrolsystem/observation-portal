@@ -554,8 +554,10 @@ class Target(models.Model):
 
     def as_dict(self):
         ret_dict = model_to_dict(self, exclude=self.SERIALIZER_EXCLUDE)
+        extra_params = ret_dict.get('extra_params', {})
         target_helper = TARGET_TYPE_HELPER_MAP[ret_dict['type'].upper()](ret_dict)
         ret_dict = {k: ret_dict.get(k) for k in target_helper.fields}
+        ret_dict['extra_params'] = extra_params
         return ret_dict
 
     @property
