@@ -187,7 +187,7 @@ function getFieldDescription(value) {
 function formatJson(dict){
   let stringVal = '';
   for(let key in dict){
-    if (!_.isEmpty(dict[key])) {
+    if (!_.isEmpty(dict[key]) || _.isNumber(dict[key])) {
       if (!_.isEmpty(stringVal)) {
         stringVal += ', ';
       }
