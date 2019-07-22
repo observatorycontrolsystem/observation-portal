@@ -200,7 +200,9 @@ class TargetSerializer(serializers.ModelSerializer):
         # Only return data for the specific target type
         data = super().to_representation(instance)
         target_helper = TARGET_TYPE_HELPER_MAP[data['type']](data)
-        return {k: data.get(k) for k in target_helper.fields if data.get(k) is not None}
+        target_dict = {k: data.get(k) for k in target_helper.fields if data.get(k) is not None}
+        target_dict['extra_params'] = data.get('extra_params', {})
+        return target_dict
 
     def validate(self, data):
         target_helper = TARGET_TYPE_HELPER_MAP[data['type']](data)
