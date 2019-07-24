@@ -250,7 +250,7 @@ class ConfigDB(object):
             Available instrument types
         """
         if only_schedulable:
-            exclude_states = ['DISABLED', 'ENABLED', 'COMMISSIONING']
+            exclude_states = ['DISABLED', 'MANUAL', 'COMMISSIONING', 'STANDBY']
         telescope_instrument_types = {}
         for instrument in self.get_instruments(exclude_states=exclude_states):
             if instrument['telescope_key'] not in telescope_instrument_types:
@@ -312,7 +312,7 @@ class ConfigDB(object):
              Telescope keys
         """
         if only_schedulable:
-            exclude_states = ['DISABLED', 'ENABLED', 'COMMISSIONING']
+            exclude_states = ['DISABLED', 'MANUAL', 'COMMISSIONING', 'STANDBY']
         instrument_telescopes = set()
         for instrument in self.get_instruments(exclude_states=exclude_states):
             if instrument['science_camera']['camera_type']['code'].upper() == instrument_type:
@@ -478,7 +478,7 @@ class ConfigDB(object):
             Available instrument_types (i.e. 1M0-SCICAM-SBIG, etc.)
         """
         instrument_types = set()
-        for instrument in self.get_instruments(exclude_states=['DISABLED', 'ENABLED', 'COMMISSIONING']):
+        for instrument in self.get_instruments(exclude_states=['DISABLED', 'MANUAL', 'COMMISSIONING', 'STANDBY']):
             split_string = instrument['__str__'].lower().split('.')
             if (location.get('site', '').lower() in split_string[0]
                     and location.get('enclosure', '').lower() in split_string[1]
