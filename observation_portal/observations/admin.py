@@ -16,7 +16,7 @@ class ConfigurationStatusInline(admin.TabularInline):
 
 
 class ObservationAdmin(admin.ModelAdmin):
-    list_display = ('id', 'state', 'site', 'enclosure', 'telescope', 'start', 'end')
+    list_display = ('id', 'state', 'site', 'enclosure', 'telescope', 'start', 'end', 'priority')
     list_filter = ('site', 'state')
     raw_id_fields = ('request', )
     form = ObservationForm
@@ -31,8 +31,9 @@ class ConfigurationStatusAdmin(admin.ModelAdmin):
 
 
 class SummaryAdmin(admin.ModelAdmin):
-    list_display = ('start', 'end', 'state', 'reason', 'time_completed')
+    list_display = ('id', 'start', 'end', 'state', 'reason', 'time_completed')
     list_filter = ('state', )
+    raw_id_fields = ('configuration_status', )
 
 
 admin.site.register(Observation, ObservationAdmin)

@@ -8,8 +8,9 @@ import logging
 
 from observation_portal.observations.models import Observation
 from observation_portal.blocks.filters import PondBlockFilter
-from observation_portal.blocks.conversion import (convert_pond_blocks_to_observations,
-                                                convert_observations_to_pond_blocks)
+from observation_portal.blocks.conversion import (
+    convert_pond_blocks_to_observations, convert_observations_to_pond_blocks, PondBlockError
+)
 from observation_portal.observations.serializers import ScheduleSerializer
 from observation_portal.common.mixins import ListAsDictMixin
 
@@ -37,14 +38,18 @@ class PondBlockViewSet(ListAsDictMixin, viewsets.ModelViewSet):
             'request__configurations__acquisition_config',
             'request__configurations__guiding_config', 'request__configurations__constraints',
             'request__configurations__instrument_configs__rois', 'configuration_statuses',
-            'configuration_statuses__summary', 'request__request_group', 'request__request_group__proposal'
+            'configuration_statuses__summary', 'request__request_group', 'request__request_group__proposal',
+            'configuration_statuses__configuration', 'request__request_group__submitter'
         ).distinct()
 
     def perform_create(self, serializer):
         serializer.save(submitter=self.request.user, submitter_id=self.request.user.id)
 
     def create(self, request, *args, **kwargs):
-        observations = convert_pond_blocks_to_observations(request.data)
+        try:
+            observations = convert_pond_blocks_to_observations(request.data)
+        except PondBlockError as e:
+            return Response({'error': str(e)}, 400)
         request._full_data = observations
         return super().create(request, *args, **kwargs)
 

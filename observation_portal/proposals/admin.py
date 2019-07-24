@@ -91,10 +91,12 @@ class MembershipAdmin(admin.ModelAdmin):
 
 class ProposalInviteAdmin(admin.ModelAdmin):
     model = ProposalInvite
+    raw_id_fields = ['proposal']
 
 
 class ProposalNotificationAdmin(admin.ModelAdmin):
     model = ProposalNotification
+    raw_id_fields = ['proposal', 'user']
 
 
 admin.site.register(Semester, SemesterAdmin)

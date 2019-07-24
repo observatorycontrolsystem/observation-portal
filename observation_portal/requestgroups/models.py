@@ -196,10 +196,11 @@ class Request(models.Model):
         ret_dict['configurations'] = [c.as_dict() for c in self.configurations.all()]
         if not for_observation:
             if self.request_group.observation_type == RequestGroup.DIRECT:
-                observation = self.observation_set.first()
-                ret_dict['location'] = {'site': observation.site, 'enclosure': observation.enclosure,
-                                        'telescope': observation.telescope}
-                ret_dict['windows'] = [{'start': observation.start, 'end': observation.end}]
+                if self.observation_set.count() > 0:
+                    observation = self.observation_set.first()
+                    ret_dict['location'] = {'site': observation.site, 'enclosure': observation.enclosure,
+                                            'telescope': observation.telescope}
+                    ret_dict['windows'] = [{'start': observation.start, 'end': observation.end}]
             else:
                 ret_dict['location'] = self.location.as_dict() if hasattr(self, 'location') else {}
                 ret_dict['windows'] = [w.as_dict() for w in self.windows.all()]
@@ -516,7 +517,7 @@ class Target(models.Model):
         help_text='Perihelion distance (AU)'
     )
     eccentricity = models.FloatField(
-        null=True, blank=True, validators=[MinValueValidator(0.0), MaxValueValidator(0.99)],
+        null=True, blank=True, validators=[MinValueValidator(0.0)],
         help_text='Eccentricity of the orbit'
     )
     meanlong = models.FloatField(
@@ -553,8 +554,10 @@ class Target(models.Model):
 
     def as_dict(self):
         ret_dict = model_to_dict(self, exclude=self.SERIALIZER_EXCLUDE)
+        extra_params = ret_dict.get('extra_params', {})
         target_helper = TARGET_TYPE_HELPER_MAP[ret_dict['type'].upper()](ret_dict)
         ret_dict = {k: ret_dict.get(k) for k in target_helper.fields}
+        ret_dict['extra_params'] = extra_params
         return ret_dict
 
     @property

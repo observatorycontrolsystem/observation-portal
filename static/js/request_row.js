@@ -10,7 +10,7 @@ $('.downloadall').click(function(){
   downloadAll($(this).data('requestid'));
 });
 
-$(document).ready(function() {
+function loadThumbnail() {
   $('.thumbnail-small').each(function(idx, elem) {
     getLatestFrame($(elem).data('request'), function(frame) {
       if (!frame) {
@@ -21,6 +21,7 @@ $(document).ready(function() {
         $(elem).attr('alt', frame.filename);
         $(elem).attr('title', frame.filename);
         $(elem).prev().show().html('<center><span class="fa fa-spinner fa-spin"></span></center>');
+        $('button[data-requestid="' + $(elem).data('request') +'"]').prop('disabled', false);
         getThumbnail(frame.id, 75, function(data) {
           if (data.error) {
             $(elem).prev().html(data.error);
@@ -32,11 +33,18 @@ $(document).ready(function() {
       }
     });
   });
+}
 
+$(document).on('archivelogin', function() {
+  loadThumbnail();
+});
+
+$(document).ready(function() {
+  loadThumbnail();
   $('.pending-details').each(function() {
     let that = $(this);
     let requestId = $(this).data('request');
-    $.getJSON('/api/requests/' + requestId + '/?exclude_canceled=true', function(data) {
+    $.getJSON('/api/requests/' + requestId + '/observations/?exclude_canceled=true', function(data) {
       let content = '';
       if (data.length > 0) {
         data = data.reverse(); // get the latest non canceled block

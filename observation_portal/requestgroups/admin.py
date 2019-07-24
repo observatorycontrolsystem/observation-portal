@@ -64,6 +64,7 @@ class RequestGroupAdmin(admin.ModelAdmin):
     list_filter = ('state', 'created', 'modified')
     search_fields = ('name',)
     readonly_fields = ('requests', 'requests_count')
+    raw_id_fields = ('proposal', 'submitter')
 
     def requests_count(self, obj):
         return obj.requests.count()
@@ -106,6 +107,7 @@ class LocationAdmin(admin.ModelAdmin):
     )
     form = LocationForm
     list_filter = ('telescope_class',)
+    raw_id_fields = ('request',)
 
 
 class TargetAdmin(admin.ModelAdmin):
@@ -142,6 +144,7 @@ class TargetAdmin(admin.ModelAdmin):
         'dailymot',
         'epochofperih',
     )
+    raw_id_fields = ('configuration', )
     list_filter = ('type',)
     search_fields = ('name',)
 
@@ -178,6 +181,7 @@ class ConstraintsAdmin(admin.ModelAdmin):
         'max_seeing',
         'min_transparency',
     )
+    raw_id_fields = ('configuration',)
 
 
 class AcquisitionConfigAdmin(admin.ModelAdmin):
@@ -186,6 +190,7 @@ class AcquisitionConfigAdmin(admin.ModelAdmin):
         'configuration',
         'mode',
     )
+    raw_id_fields = ('configuration',)
 
 
 class GuidingConfigAdmin(admin.ModelAdmin):
@@ -196,6 +201,7 @@ class GuidingConfigAdmin(admin.ModelAdmin):
         'mode',
         'exposure_time'
     )
+    raw_id_fields = ('configuration',)
 
 
 admin.site.register(Constraints, ConstraintsAdmin)

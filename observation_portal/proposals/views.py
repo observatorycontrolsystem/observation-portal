@@ -11,12 +11,12 @@ from django.contrib import messages
 from django_filters.views import FilterView
 from django.utils.translation import ugettext as _
 from django.contrib.auth.mixins import UserPassesTestMixin
+from django.core.paginator import Paginator
 
 from observation_portal.sciapplications.models import Call
 from observation_portal.proposals.forms import ProposalNotificationForm
 from observation_portal.proposals.models import Proposal, Membership, ProposalNotification, Semester, ProposalInvite
-from observation_portal.proposals.filters import ProposalFilter
-
+from observation_portal.proposals.filters import ProposalFilter, MembershipFilter
 
 class ProposalDetailView(LoginRequiredMixin, DetailView):
     model = Proposal
@@ -42,6 +42,14 @@ class ProposalDetailView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         enabled = ProposalNotification.objects.filter(user=self.request.user, proposal=self.get_object()).exists()
         context['notification_form'] = ProposalNotificationForm(initial={'notifications_enabled': enabled})
+        # Paginate and allow fitering on CoI's as some proposals have a large number of them
+        members_queryset = self.get_object().membership_set.filter(role=Membership.CI).order_by('id')
+        members_filter = MembershipFilter(self.request.GET, queryset=members_queryset)
+        paginate_by = 25
+        members_paginator = Paginator(members_filter.qs, paginate_by)
+        context['members_page'] = members_paginator.get_page(self.request.GET.get('ci_page'))
+        context['members_filter'] = members_filter
+        context['members_are_paginated'] = members_queryset.count() > paginate_by
         return context
 
 

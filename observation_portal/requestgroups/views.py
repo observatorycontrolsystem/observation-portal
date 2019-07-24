@@ -187,7 +187,7 @@ class InstrumentsInformationView(APIView):
         for instrument_type in configdb.get_active_instrument_types({}):
             info[instrument_type] = {
                 'type': 'SPECTRA' if configdb.is_spectrograph(instrument_type) else 'IMAGE',
-                'class': instrument_type[0:3],
+                'class': configdb.get_instrument_type_telescope_class(instrument_type),
                 'name': configdb.get_instrument_type_full_name(instrument_type),
                 'optical_elements': configdb.get_optical_elements(instrument_type),
                 'modes': configdb.get_modes_by_type(instrument_type),

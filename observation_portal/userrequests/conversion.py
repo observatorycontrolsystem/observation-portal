@@ -89,6 +89,14 @@ def convert_userrequest_to_requestgroup(userrequest):
     for request in requestgroup['requests']:
         target = request['target']
         target['type'] = ur_target_type_to_rg(target['type'])
+
+        target_extra_params = {}
+        if 'vmag' in target and target['vmag'] is not None:
+            target_extra_params['v_magnitude'] = float(target['vmag'])
+        if 'radvel' in target and target['radvel'] is not None:
+            target_extra_params['radial_velocity'] = float(target['radvel'])
+        target['extra_params'] = target_extra_params
+
         constraints = request['constraints']
         configurations = []
         if 'observatory' in request['location']:

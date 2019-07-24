@@ -89,6 +89,7 @@
                                 <b-col class="font-weight-bold text-nowrap" v-if="configuration.target[idx]">{{ idx | formatField }}</b-col>
                                 <b-col v-if="x" class="text-right">
                                   <span v-if="idx === 'name'">{{ x }}</span>
+                                  <span v-else-if="isObjEmpty(x) && idx==='extra_params'">None</span>
                                   <span v-else>{{ x | formatValue }}</span>
                                   <em v-if="idx === 'ra'" class="text-muted"> ({{ x | raAsSexigesimal }})</em>
                                   <em v-if="idx === 'dec'" class="text-muted"> ({{ x | decAsSexigesimal }})</em>

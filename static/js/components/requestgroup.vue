@@ -46,10 +46,10 @@
           <div v-if="!simple_interface">
             <ul>
               <li>
-                <a target="_blank" href="https://lco.global/documentation/rapid-response-mode/">More information about Rapid Response mode.</a>
+                <a target="_blank" href="https://lco.global/documentation/special-scheduling-modes/">More information about Rapid Response mode.</a>
               </li>
               <li>
-                <a target="_blank" href="https://lco.global/files/User_Documentation/the_new_priority_factor.pdf">
+                <a target="_blank" href=" https://lco.global/documents/20/the_new_priority_factor.pdf">
                   More information about IntraProprosal Priority (IPP).
                 </a>
               </li>
@@ -60,8 +60,8 @@
           <b-form>
             <customfield 
               v-model="requestgroup.name"
-              label="Title" 
-              field="title" 
+              label="Name" 
+              field="name" 
               :errors="errors.name"
               @input="update"
             />
@@ -227,11 +227,11 @@
           }
           that.available_instruments = allowed_instruments;
           that.update();
+        }).done(function() {
+          if (QueryString().requestgroupid) {
+            that.fetchRequestGroup(QueryString().requestgroupid);
+          }
         });
-      }).done(function() {
-        if (QueryString().requestgroupid) {
-          that.fetchRequestGroup(QueryString().requestgroupid);
-        }
       });
     },
     computed: {

@@ -25,7 +25,7 @@
           <ul>
             <li>
               Try the
-              <a href="https://lco.global/files/etc/exposure_time_calculator.html" target="_blank">
+              <a href=" https://exposure-time-calculator.lco.global/" target="_blank">
                 online Exposure Time Calculator.
               </a>
             </li>
@@ -88,6 +88,7 @@
                 :label="opticalElementGroup.label"
                 :field="opticalElementGroup.type"
                 :options="opticalElementGroup.options"
+                :lowerOptions="true"
                 :errors="{}"
                 @input="updateOpticalElement"
               />
@@ -168,6 +169,13 @@ export default {
     return {
       defocus: 0,
       opticalElementUpdates: 0
+    }
+  },
+  mounted: function() {
+    // If a draft is loaded in that has a defocus set in the extra_params, update the defocus
+    // here since extra_params is not reactive and cannot be watched 
+    if (this.instrumentconfig.extra_params.defocus) {
+      this.defocus = this.instrumentconfig.extra_params.defocus;
     }
   },
   computed: {

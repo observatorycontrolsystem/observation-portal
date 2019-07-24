@@ -38,9 +38,7 @@
     ],
     watch: {
       requestid: function(){
-        $('#archive-table').bootstrapTable('refresh',
-          {url: archiveRoot + 'frames/?limit=1000&REQNUM=' + this.requestid}
-        );
+        this.refreshTable();
       }
     },
     methods: {
@@ -58,6 +56,13 @@
       },
       downloadAll: function(){
         downloadAll(this.requestid);
+      },
+      refreshTable: function() {
+        if (this.requestid) {
+          $('#archive-table').bootstrapTable('refresh',
+            {url: archiveRoot + 'frames/?limit=1000&REQNUM=' + this.requestid}
+          );
+        }
       }
     },
     computed: {
@@ -132,6 +137,9 @@
           }
         }]
       });
+      $(document).on('archivelogin', function() {
+        that.refreshTable();
+      })
     }
   };
 </script>

@@ -200,7 +200,9 @@ class TargetSerializer(serializers.ModelSerializer):
         # Only return data for the specific target type
         data = super().to_representation(instance)
         target_helper = TARGET_TYPE_HELPER_MAP[data['type']](data)
-        return {k: data.get(k) for k in target_helper.fields if data.get(k) is not None}
+        target_dict = {k: data.get(k) for k in target_helper.fields if data.get(k) is not None}
+        target_dict['extra_params'] = data.get('extra_params', {})
+        return target_dict
 
     def validate(self, data):
         target_helper = TARGET_TYPE_HELPER_MAP[data['type']](data)
@@ -224,11 +226,6 @@ class ConfigurationSerializer(serializers.ModelSerializer):
         read_only_fields = ('priority',)
 
     def validate_instrument_configs(self, value):
-        # TODO: remove this check once we support multiple instrument configs
-        if len(value) != 1:
-            raise serializers.ValidationError(_(
-                'Currently only a single instrument_config is supported. This restriction will be lifted in the future.'
-            ))
         if [instrument_config.get('fill_window', False) for instrument_config in value].count(True) > 1:
             raise serializers.ValidationError(_('Only one instrument_config can have `fill_window` set'))
         return value
@@ -248,6 +245,13 @@ class ConfigurationSerializer(serializers.ModelSerializer):
         modes = configdb.get_modes_by_type(instrument_type)
         default_modes = configdb.get_default_modes_by_type(instrument_type)
         guiding_config = data['guiding_config']
+
+        # Validate the number of instrument configs if this is not a SOAR instrument
+        # TODO: remove this check once we support multiple instrument configs
+        if len(data['instrument_configs']) != 1 and 'SOAR' not in instrument_type.upper():
+            raise serializers.ValidationError(_(
+                'Currently only a single instrument_config is supported. This restriction will be lifted in the future.'
+            ))
 
         # Validate the guide mode
         guide_validation_helper = ModeValidationHelper('guiding', instrument_type, default_modes, modes)
@@ -631,7 +635,7 @@ class RequestGroupSerializer(serializers.ModelSerializer):
         )
         extra_kwargs = {
             'proposal': {'error_messages': {'null': 'Please provide a proposal.'}},
-            'name': {'error_messages': {'blank': 'Please provide a title.'}}
+            'name': {'error_messages': {'blank': 'Please provide a name.'}}
         }
 
     @transaction.atomic

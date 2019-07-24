@@ -15,6 +15,18 @@ from observation_portal.observations.filters import ObservationFilter, Configura
 from observation_portal.common.mixins import ListAsDictMixin, CreateListModelMixin
 
 
+def observations_queryset():
+    qs = Observation.objects.all()
+    return qs.prefetch_related('request', 'request__configurations', 'request__configurations__instrument_configs',
+                               'request__configurations__target', 'request__request_group__proposal',
+                               'request__configurations__acquisition_config', 'request__request_group',
+                               'request__configurations__guiding_config', 'request__configurations__constraints',
+                               'request__configurations__instrument_configs__rois',
+                               'configuration_statuses', 'configuration_statuses__summary',
+                               'configuration_statuses__configuration',
+                               'request__request_group__submitter').distinct()
+
+
 class ScheduleViewSet(ListAsDictMixin, CreateListModelMixin, viewsets.ModelViewSet):
     permission_classes = (IsAdminUser,)
     http_method_names = ['get', 'post', 'head', 'options']
@@ -30,16 +42,7 @@ class ScheduleViewSet(ListAsDictMixin, CreateListModelMixin, viewsets.ModelViewS
         serializer.save(submitter=self.request.user, submitter_id=self.request.user.id)
 
     def get_queryset(self):
-        qs = Observation.objects.all()
-        return qs.prefetch_related('request', 'request__configurations', 'request__configurations__instrument_configs',
-                                   'request__configurations__target', 'request__request_group__proposal',
-                                   'request__configurations__acquisition_config', 'request__request_group',
-                                   'request__configurations__guiding_config', 'request__configurations__constraints',
-                                   'request__configurations__instrument_configs__rois',
-                                   'configuration_statuses', 'configuration_statuses__summary',
-                                   'configuration_statuses__configuration',
-                                   'request__request_group__submitter').distinct()
-
+        return observations_queryset()
 
 class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelViewSet):
     permission_classes = (IsAdminUser,)
@@ -53,8 +56,7 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
     ordering = ('-id',)
 
     def get_queryset(self):
-        qs = Observation.objects.all()
-        return qs.prefetch_related('request', 'request__request_group').distinct()
+        return observations_queryset()
 
     @action(detail=False, methods=['post'])
     def cancel(self, request):
