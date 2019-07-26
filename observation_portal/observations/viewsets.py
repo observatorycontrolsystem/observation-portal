@@ -13,18 +13,27 @@ from observation_portal.observations.serializers import (ObservationSerializer, 
                                                          ScheduleSerializer, CancelObservationsSerializer)
 from observation_portal.observations.filters import ObservationFilter, ConfigurationStatusFilter
 from observation_portal.common.mixins import ListAsDictMixin, CreateListModelMixin
+from observation_portal.accounts.permissions import IsAdminOrReadOnly
 
 
-def observations_queryset():
-    qs = Observation.objects.all()
-    return qs.prefetch_related('request', 'request__configurations', 'request__configurations__instrument_configs',
-                               'request__configurations__target', 'request__request_group__proposal',
-                               'request__configurations__acquisition_config', 'request__request_group',
-                               'request__configurations__guiding_config', 'request__configurations__constraints',
-                               'request__configurations__instrument_configs__rois',
-                               'configuration_statuses', 'configuration_statuses__summary',
-                               'configuration_statuses__configuration',
-                               'request__request_group__submitter').distinct()
+def observations_queryset(request):
+    if request.user.is_authenticated:
+        if request.user.profile.staff_view and request.user.is_staff:
+            qs = Observation.objects.all()
+        else:
+            qs = Observation.objects.filter(request__request_group__proposal__in=request.user.proposal_set.all())
+            if request.user.profile.view_authored_requests_only:
+                qs = qs.filter(request__submitter=request.user)
+    else:
+        qs = Observation.objects.filter(request__request_group__proposal__public=True)
+    return qs.prefetch_related(
+        'request', 'request__configurations', 'request__configurations__instrument_configs',
+        'request__configurations__target', 'request__request_group__proposal',
+        'request__configurations__acquisition_config', 'request__request_group',
+        'request__configurations__guiding_config', 'request__configurations__constraints',
+        'request__configurations__instrument_configs__rois', 'configuration_statuses',
+        'configuration_statuses__summary', 'configuration_statuses__configuration', 'request__request_group__submitter'
+    ).distinct()
 
 
 class ScheduleViewSet(ListAsDictMixin, CreateListModelMixin, viewsets.ModelViewSet):
@@ -42,10 +51,11 @@ class ScheduleViewSet(ListAsDictMixin, CreateListModelMixin, viewsets.ModelViewS
         serializer.save(submitter=self.request.user, submitter_id=self.request.user.id)
 
     def get_queryset(self):
-        return observations_queryset()
+        return observations_queryset(self.request)
+
 
 class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelViewSet):
-    permission_classes = (IsAdminUser,)
+    permission_classes = (IsAdminOrReadOnly, )
     http_method_names = ['get', 'post', 'head', 'options']
     filter_class = ObservationFilter
     serializer_class = ObservationSerializer
@@ -56,7 +66,7 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
     ordering = ('-id',)
 
     def get_queryset(self):
-        return observations_queryset()
+        return observations_queryset(self.request)
 
     @action(detail=False, methods=['post'])
     def cancel(self, request):
@@ -130,8 +140,7 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
                             errors[i] = individual_serializer.error
             site = request.data[0]['site']
             cache.set(cache_key + f"_{site}", timezone.now(), None)
-            return Response({'num_created': len(observations),
-                                 'errors': errors}, status=201)
+            return Response({'num_created': len(observations), 'errors': errors}, status=201)
 
 
 class ConfigurationStatusViewSet(viewsets.ModelViewSet):
@@ -145,4 +154,3 @@ class ConfigurationStatusViewSet(viewsets.ModelViewSet):
     )
     queryset = ConfigurationStatus.objects.all().prefetch_related('summary')
     ordering = ('-id',)
-

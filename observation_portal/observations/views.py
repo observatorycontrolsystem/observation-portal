@@ -8,30 +8,33 @@ from rest_framework.response import Response
 from datetime import timedelta
 
 from observation_portal.observations.models import Observation
-from observation_portal.common.mixins import StaffRequiredMixin
 from observation_portal.common.configdb import configdb
 from observation_portal.observations.filters import ObservationFilter
 from observation_portal.observations.viewsets import observations_queryset
 
 
-class ObservationDetailView(StaffRequiredMixin, DetailView):
+class ObservationDetailView(DetailView):
     model = Observation
 
+    def get_queryset(self):
+        return observations_queryset(self.request)
 
-class ObservationListView(StaffRequiredMixin, FilterView):
+
+class ObservationListView(FilterView):
     model = Observation
     filterset_class = ObservationFilter
     paginate_by = 50
-    ordering = '-start'
     template_name = 'observations/observation_list.html'
-    queryset = observations_queryset()
+
+    def get_queryset(self):
+        return observations_queryset(self.request).order_by('-start')
 
     def get_filterset_kwargs(self, filterset_class):
         kwargs = super(ObservationListView, self).get_filterset_kwargs(filterset_class)
         # If there are no query parameters or the only query parameter is for pagination, default to
         # filtering out all canceled observations as generally users coming to the page will want
         # those observations filtered out
-        if (kwargs['data'] is None or (len(kwargs['data']) == 1 and 'page' in kwargs['data'])):
+        if kwargs['data'] is None or (len(kwargs['data']) == 1 and 'page' in kwargs['data']):
             kwargs['data'] = {
                 'state': ['COMPLETED', 'PENDING', 'IN_PROGRESS', 'ABORTED', 'FAILED']
             }
