@@ -299,7 +299,7 @@ class TestPostScheduleApi(SetTimeMixin, APITestCase):
         observation = Observation.objects.get(pk=obj_json['id'])
         observation.state = 'CANCELED'
         observation.save()
-        Observation.delete_old_observations(datetime(2099, 1, 1))
+        Observation.delete_old_observations(datetime(2099, 1, 1, tzinfo=timezone.utc))
         request = Request.objects.get(id=obj_json['request']['id'])
         self.assertEqual(request.id, obj_json['request']['id'])
         with self.assertRaises(Observation.DoesNotExist):
@@ -315,7 +315,7 @@ class TestPostScheduleApi(SetTimeMixin, APITestCase):
         configuration_status = observation.configuration_statuses.all()[0]
         configuration_status.state = 'ATTEMPTED'
         configuration_status.save()
-        Observation.delete_old_observations(datetime(2099, 1, 1))
+        Observation.delete_old_observations(datetime(2099, 1, 1, tzinfo=timezone.utc))
         observation = Observation.objects.get(pk=obj_json['id'])
         self.assertEqual(observation.id, obj_json['id'])
 
@@ -1146,11 +1146,11 @@ class TestTimeAccountingCommand(TestObservationApiBase):
 
     def _add_observation(self, state, time_completed):
         observation = Observation.objects.create(request=self.requestgroup.requests.first(), state=state, site='tst', enclosure='domb', telescope='1m0a',
-        start=datetime(2016,9,5,22,35,39), end=datetime(2016,9,5,23,35,40))
+        start=datetime(2016,9,5,22,35,39, tzinfo=timezone.utc), end=datetime(2016,9,5,23,35,40, tzinfo=timezone.utc))
         config_status = ConfigurationStatus.objects.create(observation=observation, configuration=self.requestgroup.requests.first().configurations.first(),
         state=state, instrument_name='xx03', guide_camera_name='xx03')
-        Summary.objects.create(configuration_status=config_status, start=datetime(2016,9,5,22,35,39),
-        end=datetime(2016,9,5,23,35,40), time_completed=time_completed, state=state)
+        Summary.objects.create(configuration_status=config_status, start=datetime(2016,9,5,22,35,39, tzinfo=timezone.utc),
+        end=datetime(2016,9,5,23,35,40, tzinfo=timezone.utc), time_completed=time_completed, state=state)
         return observation
 
     def test_with_no_obs_command_reports_no_time_used(self):
