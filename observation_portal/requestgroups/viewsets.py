@@ -153,7 +153,7 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
         serializer = RequestGroupSerializer(data=request.data, context={'request': request})
         req_durations = {}
         if serializer.is_valid():
-            req_durations = get_request_duration_dict(serializer.validated_data['requests'])
+            req_durations = get_request_duration_dict(serializer.validated_data['requests'], request.user.get_username())
             errors = {}
         else:
             errors = serializer.errors
@@ -179,7 +179,8 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
             if isinstance(req, dict) and req.get('cadence'):
                 cadence_request_serializer = CadenceRequestSerializer(data=req)
                 if cadence_request_serializer.is_valid():
-                    expanded_requests.extend(expand_cadence_request(cadence_request_serializer.validated_data))
+                    expanded_requests.extend(expand_cadence_request(cadence_request_serializer.validated_data,
+                                                                    request.user.get_username()))
                 else:
                     return Response(cadence_request_serializer.errors, status=400)
             else:
@@ -230,11 +231,11 @@ class RequestViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
 
     @action(detail=True)
     def airmass(self, request, pk=None):
-        return Response(get_airmasses_for_request_at_sites(self.get_object().as_dict()))
+        return Response(get_airmasses_for_request_at_sites(self.get_object().as_dict(), username=request.user.get_username()))
 
     @action(detail=True)
     def telescope_states(self, request, pk=None):
-        telescope_states = get_telescope_states_for_request(self.get_object().as_dict())
+        telescope_states = get_telescope_states_for_request(self.get_object().as_dict(), request.user.get_username())
         str_telescope_states = {str(k): v for k, v in telescope_states.items()}
         return Response(str_telescope_states)
 

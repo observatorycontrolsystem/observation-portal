@@ -174,7 +174,7 @@ class AirmassView(APIView):
     def post(self, request):
         serializer = RequestSerializer(data=request.data)
         if serializer.is_valid():
-            return Response(get_airmasses_for_request_at_sites(serializer.validated_data))
+            return Response(get_airmasses_for_request_at_sites(serializer.validated_data, username=request.user.get_username()))
         else:
             return Response(serializer.errors)
 
@@ -184,7 +184,8 @@ class InstrumentsInformationView(APIView):
 
     def get(self, request):
         info = {}
-        for instrument_type in configdb.get_active_instrument_types({}):
+        username = request.user.get_username()
+        for instrument_type in configdb.get_instrument_types({}, only_schedulable= username != 'eng'):
             info[instrument_type] = {
                 'type': 'SPECTRA' if configdb.is_spectrograph(instrument_type) else 'IMAGE',
                 'class': configdb.get_instrument_type_telescope_class(instrument_type),

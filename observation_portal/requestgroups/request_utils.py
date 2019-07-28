@@ -27,7 +27,7 @@ MOLECULE_TYPE_DISPLAY = {
 }
 
 
-def get_telescope_states_for_request(request_dict):
+def get_telescope_states_for_request(request_dict, username=''):
     # TODO: update to support multiple instruments in a list
     instrument_type = request_dict['configurations'][0]['instrument_type']
     site_intervals = {}
@@ -40,7 +40,7 @@ def get_telescope_states_for_request(request_dict):
     )
     for site, details in site_data.items():
         if site not in site_intervals:
-            site_intervals[site] = get_filtered_rise_set_intervals_by_site(request_dict, site).get(site, [])
+            site_intervals[site] = get_filtered_rise_set_intervals_by_site(request_dict, site=site, username=username).get(site, [])
     # If you have no sites, return the empty dict here
     if not site_intervals:
         return {}
@@ -72,7 +72,7 @@ def date_range_from_interval(start_time, end_time, dt=timedelta(minutes=15)):
         time += dt
 
 
-def get_airmasses_for_request_at_sites(request_dict):
+def get_airmasses_for_request_at_sites(request_dict, username=''):
     # TODO: Change to work with multiple instrument types and multiple constraints and multiple targets
     data = {'airmass_data': {}}
     instrument_type = request_dict['configurations'][0]['instrument_type']
@@ -93,7 +93,7 @@ def get_airmasses_for_request_at_sites(request_dict):
             site_lat = Angle(degrees=site_details['latitude'])
             site_lon = Angle(degrees=site_details['longitude'])
             site_alt = site_details['altitude']
-            intervals = get_filtered_rise_set_intervals_by_site(request_dict, site_id).get(site_id, [])
+            intervals = get_filtered_rise_set_intervals_by_site(request_dict, site_id, username=username).get(site_id, [])
             for interval in intervals:
                 night_times.extend(
                     [time for time in date_range_from_interval(interval[0], interval[1], dt=timedelta(minutes=10))])

@@ -63,7 +63,8 @@ class ConfigDB(object):
         return self._get_configdb_data('sites')
 
     def get_sites_with_instrument_type_and_location(
-        self, instrument_type: str = '', site_code: str = '', enclosure_code: str = '', telescope_code: str = ''
+        self, instrument_type: str = '', site_code: str = '', enclosure_code: str = '', telescope_code: str = '',
+        admin_user: bool = False
     ) -> dict:
         """Get the location details for each site for which a resource exists.
 
@@ -79,7 +80,7 @@ class ConfigDB(object):
             Site location details
         """
         telescope_details = self.get_telescopes_with_instrument_type_and_location(
-            instrument_type, site_code, enclosure_code, telescope_code
+            instrument_type, site_code, enclosure_code, telescope_code, admin_user
         )
         site_details = {}
         for code in telescope_details.keys():
@@ -174,7 +175,7 @@ class ConfigDB(object):
         return {'names': instrument_names, 'types': instrument_types}
 
     def get_telescopes_with_instrument_type_and_location(
-            self, instrument_type='', site_code='', enclosure_code='', telescope_code=''
+            self, instrument_type='', site_code='', enclosure_code='', telescope_code='', admin_user=False
     ):
         site_data = self.get_site_data()
         telescope_details = {}
@@ -186,7 +187,7 @@ class ConfigDB(object):
                             if not telescope_code or telescope_code == telescope['code']:
                                 code = '.'.join([telescope['code'], enclosure['code'], site['code']])
                                 for instrument in telescope['instrument_set']:
-                                    if self.is_schedulable(instrument):
+                                    if self.is_schedulable(instrument) or (admin_user and self.is_active(instrument)):
                                         camera_type = instrument['science_camera']['camera_type']['code']
                                         if not instrument_type or instrument_type.upper() == camera_type.upper():
                                             if code not in telescope_details:
@@ -249,6 +250,7 @@ class ConfigDB(object):
         Returns:
             Available instrument types
         """
+        exclude_states = ['DISABLED']
         if only_schedulable:
             exclude_states = ['DISABLED', 'MANUAL', 'COMMISSIONING', 'STANDBY']
         telescope_instrument_types = {}
@@ -311,6 +313,7 @@ class ConfigDB(object):
         Returns:
              Telescope keys
         """
+        exclude_states = ['DISABLED']
         if only_schedulable:
             exclude_states = ['DISABLED', 'MANUAL', 'COMMISSIONING', 'STANDBY']
         instrument_telescopes = set()
@@ -469,7 +472,7 @@ class ConfigDB(object):
                 return instrument['__str__'].split('.')[2][0:3]
         return instrument_type[0:3]
 
-    def get_active_instrument_types(self, location: dict) -> set:
+    def get_instrument_types(self, location: dict, only_schedulable: bool = False) -> set:
         """Get the available instrument_types.
 
         Parameters:
@@ -478,7 +481,10 @@ class ConfigDB(object):
             Available instrument_types (i.e. 1M0-SCICAM-SBIG, etc.)
         """
         instrument_types = set()
-        for instrument in self.get_instruments(exclude_states=['DISABLED', 'MANUAL', 'COMMISSIONING', 'STANDBY']):
+        exclude_states = ['DISABLED']
+        if only_schedulable:
+            exclude_states = ['DISABLED', 'MANUAL', 'COMMISSIONING', 'STANDBY']
+        for instrument in self.get_instruments(exclude_states=exclude_states):
             split_string = instrument['__str__'].lower().split('.')
             if (location.get('site', '').lower() in split_string[0]
                     and location.get('enclosure', '').lower() in split_string[1]
