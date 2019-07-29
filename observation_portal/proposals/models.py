@@ -134,6 +134,18 @@ class Proposal(models.Model):
 
         logger.info('Users added to proposal {0}: {1}'.format(self, emails))
 
+    def send_time_allocation_reminder(self):
+        subject = _('Your LCO Time Allocation Summary')
+        message = render_to_string(
+            'proposals/timeallocationreminder.html',
+            {
+                'proposal': self,
+                'allocations': self.timeallocation_set.filter(semester=self.current_semester)
+            }
+        )
+
+        send_mail.send(subject, message, 'science-support@lco.global', [self.pi.email])
+
     def __str__(self):
         return self.id
 
