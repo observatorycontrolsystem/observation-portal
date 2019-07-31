@@ -23,6 +23,6 @@ def run():
     )
     scheduler.add_job(
         time_allocation_reminder.send,
-        CronTrigger.from_crontab('0 * 1 * *')  # monthly
+        CronTrigger.from_crontab('0 0 1 * *')  # monthly
     )
     scheduler.start()
