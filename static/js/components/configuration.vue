@@ -139,6 +139,8 @@
   </panel>
 </template>
 <script>
+  import _ from 'lodash';
+
   import { collapseMixin } from '../utils.js';
   import panel from './util/panel.vue';
   import customalert from './util/customalert.vue';
@@ -189,12 +191,12 @@
     },
     computed: {
       spectraConfigurationOptions: function() {
-        if (this.selectedinstrument) {
+        if (_.get(this.available_instruments, this.selectedinstrument, {}).type === 'SPECTRA') {
           if (this.selectedinstrument.includes('NRES')) {
             return [
               {value: 'NRES_SPECTRUM', 'text': 'Spectrum'}
             ]
-          } else if (this.selectedinstrument.includes('FLOYDS')) {
+          } else {
             return [
               {value: 'SPECTRUM', text: 'Spectrum'},
               {value: 'LAMP_FLAT', text: 'Lamp Flat'},
