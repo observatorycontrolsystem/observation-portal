@@ -398,35 +398,49 @@ class TestRiseSetUtils(TestCase):
             'observation_portal.common.configdb.ConfigDB.get_sites_with_instrument_type_and_location'
         )
         mock_configdb = configdb_patcher.start()
-        mock_configdb.return_value = {'tst': {'latitude': -30.1673833333,
-                                              'longitude': -70.8047888889,
-                                              'horizon': 15.0,
-                                              'altitude': 100.0,
-                                              'ha_limit_pos': 4.6,
-                                              'ha_limit_neg': -4.6},
-                                      'abc': {'latitude': -32.3805542,
-                                              'longitude': 20.8101815,
-                                              'horizon': 15.0,
-                                              'altitude': 100.0,
-                                              'ha_limit_pos': 4.6,
-                                              'ha_limit_neg': -4.6}
-                                      }
+        mock_configdb.return_value = {
+            'tst': {
+                'latitude': -30.1673833333,
+                'longitude': -70.8047888889,
+                'horizon': 15.0,
+                'altitude': 100.0,
+                'ha_limit_pos': 4.6,
+                'ha_limit_neg': -4.6,
+                'zenith_blind_spot': 0.0
+            },
+            'abc': {
+                'latitude': -32.3805542,
+                'longitude': 20.8101815,
+                'horizon': 15.0,
+                'altitude': 100.0,
+                'ha_limit_pos': 4.6,
+                'ha_limit_neg': -4.6,
+                'zenith_blind_spot': 0.0
+            }
+        }
         configdb_patcher2 = patch(
             'observation_portal.common.configdb.ConfigDB.get_telescopes_with_instrument_type_and_location')
         mock_configdb2 = configdb_patcher2.start()
-        mock_configdb2.return_value = {'1m0a.doma.tst': {'latitude': -30.1673833333,
-                                              'longitude':-70.8047888889,
-                                              'horizon': 15.0,
-                                              'altitude': 100.0,
-                                              'ha_limit_pos': 4.6,
-                                              'ha_limit_neg': -4.6},
-                                      '1m0a.doma.abc': {'latitude': -32.3805542,
-                                              'longitude': 20.8101815,
-                                              'horizon': 15.0,
-                                              'altitude': 100.0,
-                                              'ha_limit_pos': 4.6,
-                                              'ha_limit_neg': -4.6}
-                                      }
+        mock_configdb2.return_value = {
+            '1m0a.doma.tst': {
+                'latitude': -30.1673833333,
+                'longitude':-70.8047888889,
+                'horizon': 15.0,
+                'altitude': 100.0,
+                'ha_limit_pos': 4.6,
+                'ha_limit_neg': -4.6,
+                'zenith_blind_spot': 0.0
+            },
+            '1m0a.doma.abc': {
+                'latitude': -32.3805542,
+                'longitude': 20.8101815,
+                 'horizon': 15.0,
+                 'altitude': 100.0,
+                 'ha_limit_pos': 4.6,
+                 'ha_limit_neg': -4.6,
+                 'zenith_blind_spot': 0.0
+            }
+        }
 
         request_dict = {'location': {'telescope_class': '1m0'},
                         'windows': [
