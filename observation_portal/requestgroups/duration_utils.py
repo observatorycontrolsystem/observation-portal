@@ -115,10 +115,11 @@ def get_request_duration_sum(requestgroup_dict):
 
 
 def get_num_exposures(instrument_config_dict, instrument_name,  time_available):
-    mol_duration_per_exp = get_instrument_configuration_duration_per_exposure(instrument_config_dict, instrument_name)
+    duration_per_exp = get_instrument_configuration_duration_per_exposure(instrument_config_dict, instrument_name)
     exposure_time = time_available.total_seconds()
-    num_exposures = exposure_time // mol_duration_per_exp
-
+    num_exposures = exposure_time // duration_per_exp
+    if exposure_time % duration_per_exp == 0:
+        num_exposures -= 1
     return max(1, num_exposures)
 
 

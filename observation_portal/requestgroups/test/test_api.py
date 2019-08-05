@@ -1615,6 +1615,21 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         self.assertEqual(rg['requests'][0]['configurations'][0]['instrument_configs'][0]['exposure_count'], 5)
         self.assertEqual(response.status_code, 201)
 
+    @patch('observation_portal.requestgroups.serializers.get_largest_interval')
+    def test_fill_window_exposures_fit_exactly(self, mock_largest_interval):
+        # Will result in an exact number of exposures with overhead that fit into the available time
+        mock_largest_interval.return_value = timedelta(seconds=340)
+        n_exposures_fit_exactly = 5
+        good_data = self.generic_payload.copy()
+        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['exposure_time'] = 10
+        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['fill_window'] = True
+        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(
+            response.json()['requests'][0]['configurations'][0]['instrument_configs'][0]['exposure_count'],
+            n_exposures_fit_exactly - 1
+        )
+
     def test_configuration_type_matches_instrument(self):
         bad_data = self.generic_payload.copy()
         bad_data['requests'][0]['configurations'][0]['type'] = 'SPECTRUM'
