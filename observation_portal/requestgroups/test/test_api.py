@@ -1615,14 +1615,16 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         self.assertEqual(rg['requests'][0]['configurations'][0]['instrument_configs'][0]['exposure_count'], 5)
         self.assertEqual(response.status_code, 201)
 
-    @patch('observation_portal.requestgroups.serializers.get_largest_interval')
-    def test_fill_window_exposures_fit_exactly(self, mock_largest_interval):
-        # Will result in an exact number of exposures with overhead that fit into the available time
-        mock_largest_interval.return_value = timedelta(seconds=340)
-        n_exposures_fit_exactly = 5
+    def test_fill_window_when_exposures_fit_exactly(self):
         good_data = self.generic_payload.copy()
+        good_data['requests'][0]['windows'][0] = {
+            'start': '2016-09-29T23:12:00Z',
+            'end': '2016-09-29T23:21:30Z'
+        }
         good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['exposure_time'] = 10
         good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['fill_window'] = True
+        # The largest interval is 570s, available time is 460s, and instrument config duration is 46s
+        n_exposures_fit_exactly = 10
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(
