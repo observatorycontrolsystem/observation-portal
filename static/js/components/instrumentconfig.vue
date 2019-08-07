@@ -66,9 +66,15 @@
               v-if="suggestedLampFlatSlitExposureTime" 
             >
               Suggested exposure time for a Lamp Flat with 
-              slit {{ instrumentconfig.optical_elements.slit }} 
+              slit {{ instrumentconfig.optical_elements.slit }} and readout mode {{ instrumentconfig.mode }}
               is <strong>{{ suggestedLampFlatSlitExposureTime }} seconds</strong>
-            </div>              
+            </div>     
+            <div 
+              slot="extra-help-text"
+              v-else-if="suggestedArcExposureTime" 
+            >
+              Suggested exposure time for an Arc is <strong>{{ suggestedArcExposureTime }} seconds</strong>
+            </div>        
             </customfield>
             <customselect
               v-if="readoutModeOptions.length > 1"
@@ -137,7 +143,7 @@
 <script>
 import _ from 'lodash';
 
-import { collapseMixin, slitWidthToExposureTime } from '../utils.js';
+import { collapseMixin, lampFlatDefaultExposureTime, arcDefaultExposureTime } from '../utils.js';
 import customfield from './util/customfield.vue';
 import customselect from './util/customselect.vue';
 import panel from './util/panel.vue';
@@ -273,8 +279,16 @@ export default {
       // Update on optical element updates
       this.opticalElementUpdates;
       let slitWidth = this.instrumentconfig.optical_elements.slit;
+      let readoutMode = this.instrumentconfig.mode;
       if (this.configurationType === 'LAMP_FLAT' && slitWidth) {
-        return slitWidthToExposureTime(slitWidth);
+        return lampFlatDefaultExposureTime(slitWidth, this.selectedinstrument, readoutMode);
+      } else {
+        return undefined;
+      }
+    },
+    suggestedArcExposureTime: function() {
+      if (this.configurationType === 'ARC') {
+        return arcDefaultExposureTime(this.selectedinstrument);
       } else {
         return undefined;
       }

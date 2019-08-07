@@ -2,22 +2,44 @@ import moment from 'moment';
 import _ from 'lodash';
 import $ from 'jquery';
 
-function slitWidthToExposureTime(slitWidth){
+
+function isSoarInstrument(instrumentType) {
+  return _.lowerCase(instrumentType).includes('soar');
+}
+
+function lampFlatDefaultExposureTime(slitWidth, instrumentType, readoutMode){
   // Lamp flats are affected by the slit width, so exposure time needs to scale with it
-  if(slitWidth.includes('1.2')){
-    return 70;
-  }
-  else if(slitWidth.includes('1.6')){
-    return 50;
-  }
-  else if(slitWidth.includes('2.0')){
-    return 40;
-  }
-  else if(slitWidth.includes('6.0')){
-    return 15;
+  if (isSoarInstrument(instrumentType)) {
+    if (readoutMode.includes('400m1')) {
+      return 3;
+    } else if (readoutMode.includes('400m2')) {
+      return 2;
+    }
+  } else {
+    if (slitWidth.includes('1.2')) {
+      return 70;
+    }
+    else if (slitWidth.includes('1.6')) {
+      return 50;
+    }
+    else if (slitWidth.includes('2.0')) {
+      return 40;
+    }
+    else if (slitWidth.includes('6.0')) {
+      return 15;
+    }
   }
   return 60;
 }
+
+function arcDefaultExposureTime(instrumentType){
+  if (isSoarInstrument(instrumentType)) {
+    return 0.5;
+  } else {
+    return 60;
+  }
+}
+
 
 function semesterStart(datetime){
   if(datetime.month() < 3 ){
@@ -320,7 +342,7 @@ let colorPalette = [  // useful assigning colors to datasets.
 
 export {
   semesterStart, semesterEnd, sexagesimalRaToDecimal, sexagesimalDecToDecimal, QueryString, formatJson, formatValue,
-  formatDate, formatField, datetimeFormat, collapseMixin, siteToColor, siteCodeToName, slitWidthToExposureTime,
-  observatoryCodeToNumber, telescopeCodeToName, colorPalette, julianToModifiedJulian, getFieldDescription,
-  decimalRaToSexigesimal, decimalDecToSexigesimal, tooltipConfig, addCsrfProtection
+  formatDate, formatField, datetimeFormat, collapseMixin, siteToColor, siteCodeToName, arcDefaultExposureTime, 
+  lampFlatDefaultExposureTime, observatoryCodeToNumber, telescopeCodeToName, colorPalette, julianToModifiedJulian, 
+  getFieldDescription, decimalRaToSexigesimal, decimalDecToSexigesimal, tooltipConfig, addCsrfProtection
 };
