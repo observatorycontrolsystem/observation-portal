@@ -1615,6 +1615,23 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         self.assertEqual(rg['requests'][0]['configurations'][0]['instrument_configs'][0]['exposure_count'], 5)
         self.assertEqual(response.status_code, 201)
 
+    def test_fill_window_when_exposures_fit_exactly(self):
+        good_data = self.generic_payload.copy()
+        good_data['requests'][0]['windows'][0] = {
+            'start': '2016-09-29T23:12:00Z',
+            'end': '2016-09-29T23:21:30Z'
+        }
+        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['exposure_time'] = 10
+        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['fill_window'] = True
+        # The largest interval is 570s, available time is 460s, and instrument config duration is 46s
+        n_exposures_fit_exactly = 10
+        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(
+            response.json()['requests'][0]['configurations'][0]['instrument_configs'][0]['exposure_count'],
+            n_exposures_fit_exactly - 1
+        )
+
     def test_configuration_type_matches_instrument(self):
         bad_data = self.generic_payload.copy()
         bad_data['requests'][0]['configurations'][0]['type'] = 'SPECTRUM'
