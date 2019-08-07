@@ -4,11 +4,13 @@ import $ from 'jquery';
 
 
 function isSoarInstrument(instrumentType) {
-  return _.lowerCase(instrumentType).includes('soar');
+  return _.toLower(instrumentType).includes('soar');
 }
 
-function lampFlatDefaultExposureTime(slitWidth, instrumentType, readoutMode){
+function lampFlatDefaultExposureTime(slitWidth, instrumentType, readoutMode) {
   // Lamp flats are affected by the slit width, so exposure time needs to scale with it
+  readoutMode = _.toLower(readoutMode);
+  slitWidth = _.toLower(slitWidth);
   if (isSoarInstrument(instrumentType)) {
     if (readoutMode.includes('400m1')) {
       return 3;
@@ -32,14 +34,13 @@ function lampFlatDefaultExposureTime(slitWidth, instrumentType, readoutMode){
   return 60;
 }
 
-function arcDefaultExposureTime(instrumentType){
+function arcDefaultExposureTime(instrumentType) {
   if (isSoarInstrument(instrumentType)) {
     return 0.5;
   } else {
     return 60;
   }
 }
-
 
 function semesterStart(datetime){
   if(datetime.month() < 3 ){

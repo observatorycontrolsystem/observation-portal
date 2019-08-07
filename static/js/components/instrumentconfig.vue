@@ -280,14 +280,14 @@ export default {
       this.opticalElementUpdates;
       let slitWidth = this.instrumentconfig.optical_elements.slit;
       let readoutMode = this.instrumentconfig.mode;
-      if (this.configurationType === 'LAMP_FLAT' && slitWidth) {
+      if (this.configurationType === 'LAMP_FLAT' && slitWidth && readoutMode && this.selectedinstrument) {
         return lampFlatDefaultExposureTime(slitWidth, this.selectedinstrument, readoutMode);
       } else {
         return undefined;
       }
     },
     suggestedArcExposureTime: function() {
-      if (this.configurationType === 'ARC') {
+      if (this.configurationType === 'ARC' && this.selectedinstrument) {
         return arcDefaultExposureTime(this.selectedinstrument);
       } else {
         return undefined;
