@@ -2,12 +2,12 @@ import os
 import copy
 import requests
 
-VALHALLA_API_TOKEN = os.getenv('VALHALLA_API_TOKEN', 'd7844baee20312a243ebc2551ecf99f02484d446')
+VALHALLA_API_TOKEN = os.getenv('VALHALLA_API_TOKEN', 'changeme')
 VALHALLA_URL = os.getenv('VALHALLA_URL', 'http://valhalla-request-shim.lco.gtn/api/userrequests/')
 if not VALHALLA_URL.endswith('/'):
     VALHALLA_URL += '/'
 VALHALLA_HEADERS = {'Authorization': 'Token ' + str(VALHALLA_API_TOKEN)}
-VALIDATION_PROPOSAL = os.getenv('VALHALLA_VALIDATE_PROPOSAL', 'ValidationProposal')
+VALIDATION_PROPOSAL = os.getenv('VALHALLA_VALIDATE_PROPOSAL', 'changeme')
 
 
 def ur_target_type_to_rg(target_type):
