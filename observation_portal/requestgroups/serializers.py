@@ -580,12 +580,12 @@ class RequestSerializer(serializers.ModelSerializer):
             for configuration in data['configurations']:
                 for instrument_config in configuration['instrument_configs']:
                     if instrument_config.get('fill_window'):
-                        configuration_duration = get_instrument_configuration_duration(
+                        instrument_config_duration = get_instrument_configuration_duration(
                             instrument_config, configuration['instrument_type']
                         )
                         num_exposures = get_num_exposures(
                             instrument_config, configuration['instrument_type'],
-                            largest_interval - timedelta(seconds=duration - configuration_duration)
+                            largest_interval - timedelta(seconds=duration - instrument_config_duration)
                         )
                         instrument_config['exposure_count'] = num_exposures
                         duration = get_request_duration(data)

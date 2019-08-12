@@ -286,15 +286,16 @@ def get_rise_set_site(site_detail):
 
 
 def get_rise_set_visibility(rise_set_site, start, end, site_detail):
-        return Visibility(
-            site=rise_set_site,
-            start_date=start,
-            end_date=end,
-            horizon=site_detail['horizon'],
-            ha_limit_neg=site_detail['ha_limit_neg'],
-            ha_limit_pos=site_detail['ha_limit_pos'],
-            twilight='nautical'
-        )
+    return Visibility(
+        site=rise_set_site,
+        start_date=start,
+        end_date=end,
+        horizon=site_detail['horizon'],
+        ha_limit_neg=site_detail['ha_limit_neg'],
+        ha_limit_pos=site_detail['ha_limit_pos'],
+        zenith_blind_spot=site_detail['zenith_blind_spot'],
+        twilight='nautical'
+    )
 
 
 def get_site_rise_set_intervals(start, end, site_code):

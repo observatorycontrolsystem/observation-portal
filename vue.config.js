@@ -29,7 +29,9 @@ module.exports = {
         tools: './static/js/tools'
       },
       output: {
-        filename: '[name].[contenthash].js'
+        filename: process.env.NODE_ENV === 'production'
+          ? '[name].[contenthash].js'
+          : '[name].[hash].dev.js'
       },
       plugins: [
         new BundleTracker({filename: './static/webpack-stats.json'}),

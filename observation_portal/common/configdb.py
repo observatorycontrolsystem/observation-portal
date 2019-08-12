@@ -197,7 +197,8 @@ class ConfigDB(object):
                                                     'horizon': telescope['horizon'],
                                                     'altitude': site['elevation'],
                                                     'ha_limit_pos': telescope['ha_limit_pos'],
-                                                    'ha_limit_neg': telescope['ha_limit_neg']
+                                                    'ha_limit_neg': telescope['ha_limit_neg'],
+                                                    'zenith_blind_spot': telescope['zenith_blind_spot']
                                                 }
         return telescope_details
 
@@ -252,7 +253,7 @@ class ConfigDB(object):
         """
         exclude_states = ['DISABLED']
         if only_schedulable:
-            exclude_states = ['DISABLED', 'MANUAL', 'COMMISSIONING', 'STANDBY']
+            exclude_states = ['DISABLED', 'ENABLED', 'MANUAL', 'COMMISSIONING', 'STANDBY']
         telescope_instrument_types = {}
         for instrument in self.get_instruments(exclude_states=exclude_states):
             if instrument['telescope_key'] not in telescope_instrument_types:
@@ -315,7 +316,7 @@ class ConfigDB(object):
         """
         exclude_states = ['DISABLED']
         if only_schedulable:
-            exclude_states = ['DISABLED', 'MANUAL', 'COMMISSIONING', 'STANDBY']
+            exclude_states = ['DISABLED', 'ENABLED', 'MANUAL', 'COMMISSIONING', 'STANDBY']
         instrument_telescopes = set()
         for instrument in self.get_instruments(exclude_states=exclude_states):
             if instrument['science_camera']['camera_type']['code'].upper() == instrument_type:
@@ -483,7 +484,7 @@ class ConfigDB(object):
         instrument_types = set()
         exclude_states = ['DISABLED']
         if only_schedulable:
-            exclude_states = ['DISABLED', 'MANUAL', 'COMMISSIONING', 'STANDBY']
+            exclude_states = ['DISABLED', 'ENABLED', 'MANUAL', 'COMMISSIONING', 'STANDBY']
         for instrument in self.get_instruments(exclude_states=exclude_states):
             split_string = instrument['__str__'].lower().split('.')
             if (location.get('site', '').lower() in split_string[0]

@@ -93,7 +93,7 @@
 <script>
   import _ from 'lodash';
 
-  import { collapseMixin, slitWidthToExposureTime } from '../utils.js';
+  import { collapseMixin, arcDefaultExposureTime, lampFlatDefaultExposureTime } from '../utils.js';
   import configuration from './configuration.vue';
   import window from './window.vue';
   import panel from './util/panel.vue';
@@ -251,21 +251,25 @@
         for (let c in calibs) {
           calibs[c] = _.cloneDeep(request.configurations[configuration_id]);
           for (let ic in calibs[c].instrument_configs) {
-            calibs[c].instrument_configs[ic].exposure_time = 60;
+            calibs[c].instrument_configs[ic].exposure_time = arcDefaultExposureTime(this.instrument_type);
           }
         }
         calibs[0].type = 'LAMP_FLAT'; calibs[1].type = 'ARC';
         calibs[0].guiding_config.optional = true; calibs[1].guiding_config.optional = true;
         calibs[0].guiding_config.mode = 'ON'; calibs[1].guiding_config.mode = 'ON';
         for (let ic in calibs[0].instrument_configs) {
-          calibs[0].instrument_configs[ic].exposure_time = slitWidthToExposureTime(calibs[0].instrument_configs[ic].optical_elements.slit);
+          calibs[0].instrument_configs[ic].exposure_time = lampFlatDefaultExposureTime(
+            calibs[0].instrument_configs[ic].optical_elements.slit, this.instrument_type, calibs[0].instrument_configs[ic].mode
+          );
         }
         request.configurations.unshift(calibs[0], calibs[1]);
         calibs[2].type = 'ARC'; calibs[3].type = 'LAMP_FLAT';
         calibs[2].guiding_config.optional = true; calibs[3].guiding_config.optional = true;
         calibs[2].guiding_config.mode = 'ON'; calibs[3].guiding_config.mode = 'ON';
         for (let ic in calibs[3].instrument_configs) {
-          calibs[3].instrument_configs[ic].exposure_time = slitWidthToExposureTime(calibs[3].instrument_configs[ic].optical_elements.slit);
+          calibs[3].instrument_configs[ic].exposure_time = lampFlatDefaultExposureTime(
+            calibs[3].instrument_configs[ic].optical_elements.slit, this.instrument_type, calibs[3].instrument_configs[ic].mode
+          );
         }
         request.configurations.push(calibs[2], calibs[3]);
         this.update();

@@ -11,5 +11,5 @@ You may view your proposal here:
 https://observe.lco.global{{ ddt.get_absolute_url }}
 
 Warm Regards,
-Todd Boroson
+Lisa Storrie-Lombardi
 Director, LCO
