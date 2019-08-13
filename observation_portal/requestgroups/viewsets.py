@@ -97,7 +97,7 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
         ).prefetch_related(
             Prefetch('requests', queryset=request_query),
             Prefetch('proposal', queryset=Proposal.objects.only('id').all()),
-            Prefetch('submitter', queryset=User.objects.only('username').all())
+            Prefetch('submitter', queryset=User.objects.only('username', 'is_staff').all())
         ).distinct()
 
         # queryset now contains all the schedulable URs and their associated requests and data
@@ -129,7 +129,9 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
                     )
                     continue
                 if time_left * OVERHEAD_ALLOWANCE >= (duration / 3600.0):
-                    request_group_data.append(request_group.as_dict())
+                    request_group_dict = request_group.as_dict()
+                    request_group_dict['is_staff'] = request_group.submitter.is_staff
+                    request_group_data.append(request_group_dict)
                     break
                 else:
                     logger.warning(
