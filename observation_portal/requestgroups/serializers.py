@@ -231,14 +231,14 @@ class ConfigurationSerializer(serializers.ModelSerializer):
         return value
 
     def validate_instrument_type(self, value):
-        username = ''
+        is_staff = False
         request_context = self.context.get('request')
         if request_context:
-            username = request_context.user.get_username()
-        if value and value not in configdb.get_instrument_types({}, only_schedulable=username != 'eng'):
+            is_staff = request_context.user.is_staff
+        if value and value not in configdb.get_instrument_types({}, only_schedulable=(not is_staff)):
             raise serializers.ValidationError(
                 _('Invalid instrument type {}. Valid instruments may include: {}').format(
-                    value, ', '.join(configdb.get_instrument_types({}, only_schedulable=username != 'eng'))
+                    value, ', '.join(configdb.get_instrument_types({}, only_schedulable=(not is_staff)))
                 )
             )
         return value
@@ -544,15 +544,15 @@ class RequestSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, data):
-        username = ''
+        is_staff = False
         request_context = self.context.get('request')
         if request_context:
-            username = request_context.user.get_username()
+            is_staff = request_context.user.is_staff
         # check if the instrument specified is allowed
         # TODO: Check if ALL instruments are available at a resource defined by location
         if 'location' in data:
             valid_instruments = configdb.get_instrument_types(data.get('location', {}),
-                                                              only_schedulable=username != 'eng')
+                                                              only_schedulable=(not is_staff))
             for configuration in data['configurations']:
                 if configuration['instrument_type'] not in valid_instruments:
                     msg = _("Invalid instrument type '{}' at site={}, enc={}, tel={}. \n").format(
@@ -575,7 +575,7 @@ class RequestSerializer(serializers.ModelSerializer):
         # check that the requests window has enough rise_set visible time to accomodate the requests duration
         if data.get('windows'):
             duration = get_request_duration(data)
-            rise_set_intervals_by_site = get_filtered_rise_set_intervals_by_site(data, username=username)
+            rise_set_intervals_by_site = get_filtered_rise_set_intervals_by_site(data, is_staff=is_staff)
             largest_interval = get_largest_interval(rise_set_intervals_by_site)
             for configuration in data['configurations']:
                 for instrument_config in configuration['instrument_configs']:

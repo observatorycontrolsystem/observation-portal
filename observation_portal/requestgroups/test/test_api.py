@@ -217,9 +217,9 @@ class TestUserPostRequestApi(SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('Invalid instrument type', str(response.content))
 
-    def test_post_requestgroup_manual_instrument_allowed_for_eng(self):
+    def test_post_requestgroup_manual_instrument_allowed_for_staff(self):
         good_data = self.generic_payload.copy()
-        eng_user = blend_user(user_params={'username': 'eng'})
+        eng_user = blend_user(user_params={'username': 'eng', 'is_staff': True})
         membership = mixer.blend(Membership, user=eng_user, proposal=self.proposal)
         self.client.force_login(eng_user)
         good_data['requests'][0]['location']['site'] = 'tst'

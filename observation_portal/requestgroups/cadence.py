@@ -5,7 +5,7 @@ from django.utils import timezone
 from datetime import timedelta
 
 
-def expand_cadence_request(request_dict, username=''):
+def expand_cadence_request(request_dict, is_staff=False):
     '''
     Takes in a valid cadence request (valid request with cadence block), and expands the request into a list of requests
     with their windows determined by the cadence parameters. Only valid requests that pass rise-set are returned, with
@@ -26,7 +26,7 @@ def expand_cadence_request(request_dict, username=''):
 
         # test the rise_set of this window
         request_dict['windows'] = [{'start': window_start, 'end': window_end}]
-        intervals_by_site = get_filtered_rise_set_intervals_by_site(request_dict, username=username)
+        intervals_by_site = get_filtered_rise_set_intervals_by_site(request_dict, is_staff=is_staff)
         largest_interval = get_largest_interval(intervals_by_site)
         if largest_interval.total_seconds() >= request_duration and window_end > timezone.now():
             # this cadence window passes rise_set and is in the future so add it to the list

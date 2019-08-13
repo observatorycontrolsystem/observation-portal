@@ -64,7 +64,7 @@ class ConfigDB(object):
 
     def get_sites_with_instrument_type_and_location(
         self, instrument_type: str = '', site_code: str = '', enclosure_code: str = '', telescope_code: str = '',
-        admin_user: bool = False
+        staff_user: bool = False
     ) -> dict:
         """Get the location details for each site for which a resource exists.
 
@@ -80,7 +80,7 @@ class ConfigDB(object):
             Site location details
         """
         telescope_details = self.get_telescopes_with_instrument_type_and_location(
-            instrument_type, site_code, enclosure_code, telescope_code, admin_user
+            instrument_type, site_code, enclosure_code, telescope_code, staff_user
         )
         site_details = {}
         for code in telescope_details.keys():
@@ -175,7 +175,7 @@ class ConfigDB(object):
         return {'names': instrument_names, 'types': instrument_types}
 
     def get_telescopes_with_instrument_type_and_location(
-            self, instrument_type='', site_code='', enclosure_code='', telescope_code='', admin_user=False
+            self, instrument_type='', site_code='', enclosure_code='', telescope_code='', staff_user=False
     ):
         site_data = self.get_site_data()
         telescope_details = {}
@@ -187,7 +187,7 @@ class ConfigDB(object):
                             if not telescope_code or telescope_code == telescope['code']:
                                 code = '.'.join([telescope['code'], enclosure['code'], site['code']])
                                 for instrument in telescope['instrument_set']:
-                                    if self.is_schedulable(instrument) or (admin_user and self.is_active(instrument)):
+                                    if self.is_schedulable(instrument) or (staff_user and self.is_active(instrument)):
                                         camera_type = instrument['science_camera']['camera_type']['code']
                                         if not instrument_type or instrument_type.upper() == camera_type.upper():
                                             if code not in telescope_details:
