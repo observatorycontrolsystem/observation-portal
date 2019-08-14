@@ -13,7 +13,7 @@ from rise_set.visibility import Visibility
 from rise_set.moving_objects import MovingViolation
 from django.core.cache import cache
 
-from observation_portal.common.configdb import configdb
+from observation_portal.common.configdb import configdb, ConfigDB
 from observation_portal.common.downtimedb import DowntimeDB
 from observation_portal.requestgroups.target_helpers import TARGET_TYPE_HELPER_MAP
 
@@ -75,12 +75,13 @@ def get_rise_set_intervals_by_site(request: dict) -> dict:
 def get_filtered_rise_set_intervals_by_site(request_dict, site='', is_staff=False):
     intervals = {}
     site = site if site else request_dict['location'].get('site', '')
+    only_schedulable = not (is_staff and ConfigDB.is_location_fully_set(request_dict.get('location', {})))
     telescope_details = configdb.get_telescopes_with_instrument_type_and_location(
         request_dict['configurations'][0]['instrument_type'],
         site,
         request_dict['location'].get('enclosure', ''),
         request_dict['location'].get('telescope', ''),
-        is_staff
+        only_schedulable
     )
     if not telescope_details:
         return intervals

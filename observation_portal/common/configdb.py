@@ -64,7 +64,7 @@ class ConfigDB(object):
 
     def get_sites_with_instrument_type_and_location(
         self, instrument_type: str = '', site_code: str = '', enclosure_code: str = '', telescope_code: str = '',
-        staff_user: bool = False
+        only_schedulable: bool = True
     ) -> dict:
         """Get the location details for each site for which a resource exists.
 
@@ -76,11 +76,12 @@ class ConfigDB(object):
             site_code: 3-letter site code
             enclosure_code: 4-letter enclosure code
             telescope_code: 4-letter telescope code
+            only_schedulable: whether to only include SCHEDULABLE instrumets or all non-DISABLED
         Returns:
             Site location details
         """
         telescope_details = self.get_telescopes_with_instrument_type_and_location(
-            instrument_type, site_code, enclosure_code, telescope_code, staff_user
+            instrument_type, site_code, enclosure_code, telescope_code, only_schedulable
         )
         site_details = {}
         for code in telescope_details.keys():
@@ -175,7 +176,7 @@ class ConfigDB(object):
         return {'names': instrument_names, 'types': instrument_types}
 
     def get_telescopes_with_instrument_type_and_location(
-            self, instrument_type='', site_code='', enclosure_code='', telescope_code='', staff_user=False
+            self, instrument_type='', site_code='', enclosure_code='', telescope_code='', only_schedulable=True
     ):
         site_data = self.get_site_data()
         telescope_details = {}
@@ -187,7 +188,8 @@ class ConfigDB(object):
                             if not telescope_code or telescope_code == telescope['code']:
                                 code = '.'.join([telescope['code'], enclosure['code'], site['code']])
                                 for instrument in telescope['instrument_set']:
-                                    if self.is_schedulable(instrument) or (staff_user and self.is_active(instrument)):
+                                    if (self.is_schedulable(instrument) or
+                                            (not only_schedulable and self.is_active(instrument))):
                                         camera_type = instrument['science_camera']['camera_type']['code']
                                         if not instrument_type or instrument_type.upper() == camera_type.upper():
                                             if code not in telescope_details:
@@ -596,6 +598,13 @@ class ConfigDB(object):
     @staticmethod
     def is_schedulable(instrument: dict) -> bool:
         return instrument['state'] == 'SCHEDULABLE'
+
+    @staticmethod
+    def is_location_fully_set(location: dict) -> bool:
+        for constraint in ['telescope_class', 'telescope', 'enclosure', 'site']:
+            if constraint not in location or not location.get(constraint):
+                return False
+        return True
 
 
 configdb = ConfigDB()

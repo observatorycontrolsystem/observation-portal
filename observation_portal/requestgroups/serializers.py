@@ -18,7 +18,7 @@ from observation_portal.requestgroups.models import (
 from observation_portal.requestgroups.models import DraftRequestGroup
 from observation_portal.common.state_changes import debit_ipp_time, TimeAllocationError, validate_ipp
 from observation_portal.requestgroups.target_helpers import TARGET_TYPE_HELPER_MAP
-from observation_portal.common.configdb import configdb, ConfigDBException
+from observation_portal.common.configdb import configdb, ConfigDB, ConfigDBException
 from observation_portal.requestgroups.duration_utils import (
     get_request_duration, get_request_duration_sum, get_total_duration_dict, OVERHEAD_ALLOWANCE,
     get_instrument_configuration_duration, get_num_exposures, get_semester_in
@@ -545,14 +545,17 @@ class RequestSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         is_staff = False
+        only_schedulable = True
         request_context = self.context.get('request')
         if request_context:
             is_staff = request_context.user.is_staff
+            only_schedulable = not (is_staff and ConfigDB.is_location_fully_set(data.get('location', {})))
         # check if the instrument specified is allowed
         # TODO: Check if ALL instruments are available at a resource defined by location
         if 'location' in data:
+            # Check if the location is fully specified, and if not then use only schedulable instruments
             valid_instruments = configdb.get_instrument_types(data.get('location', {}),
-                                                              only_schedulable=(not is_staff))
+                                                              only_schedulable=only_schedulable)
             for configuration in data['configurations']:
                 if configuration['instrument_type'] not in valid_instruments:
                     msg = _("Invalid instrument type '{}' at site={}, enc={}, tel={}. \n").format(
@@ -564,6 +567,9 @@ class RequestSerializer(serializers.ModelSerializer):
                     msg += _("Valid instruments include: ")
                     for inst_name in valid_instruments:
                         msg += inst_name + ', '
+                    msg += '.'
+                    if is_staff and not only_schedulable:
+                        msg += '\nStaff users must fully specify location to schedule on non-SCHEDULABLE instruments'
                     raise serializers.ValidationError(msg)
 
         if 'acceptability_threshold' not in data:
