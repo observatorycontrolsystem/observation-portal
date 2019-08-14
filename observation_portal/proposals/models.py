@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.utils.translation import ugettext as _
 from django.template.loader import render_to_string
 from django.urls import reverse
+from django.utils.html import strip_tags
 from collections import namedtuple
 import logging
 
@@ -144,8 +145,9 @@ class Proposal(models.Model):
                     'allocations': self.timeallocation_set.filter(semester=self.current_semester)
                 }
             )
+            plain_message = strip_tags(message)
 
-            send_mail.send(subject, message, 'science-support@lco.global', [self.pi.email])
+            send_mail.send(subject, plain_message, 'science-support@lco.global', [self.pi.email], html_message=message)
         else:
             logger.warn('Proposal {} does not have a PI!'.format(self))
 
