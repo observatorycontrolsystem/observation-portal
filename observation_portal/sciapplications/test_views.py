@@ -646,17 +646,17 @@ class TestSciAppIndex(TestCase):
             proposal_type=Call.COLLAB_PROPOSAL,
         )
         sca = mixer.blend(ScienceCollaborationAllocation, admin=self.user)
-        mixer.blend(CollaborationAllocation, sca=sca, telescope_name='1 meter', alloc=9)
+        ca = mixer.blend(CollaborationAllocation, sca=sca, telescope_name='1 meter', allocation=9)
         app = mixer.blend(
             ScienceApplication,
             status=ScienceApplication.DRAFT,
             submitter=self.user,
             call=call
         )
-        instrument = mixer.blend(Instrument, code='1M0-SCICAM-SBIG', telescope_class='1m0')
+        instrument = mixer.blend(Instrument, code='1M0-SCICAM-SBIG')
         tr = mixer.blend(TimeRequest, science_application=app, instrument=instrument, std_time=8)
         response = self.client.get(reverse('sciapplications:index'))
-        self.assertContains(response, '{0}/{1}'.format(tr.std_time, sca.one_meter_alloc))
+        self.assertContains(response, '{0}/{1}'.format(tr.std_time, ca.allocation))
 
 
 class TestSciAppDetail(TestCase):
