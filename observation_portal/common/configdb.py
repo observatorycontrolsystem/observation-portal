@@ -128,6 +128,14 @@ class ConfigDB(object):
                     telescope_classes.add(telescope['code'][:-1])
         return [(telescope_class, telescope_class) for telescope_class in telescope_classes]
 
+    def get_telescope_name_tuples(self):
+        telescope_names = set()
+        for site in self.get_site_data():
+            for enclosure in site['enclosure_set']:
+                for telescope in enclosure['telescope_set']:
+                    telescope_names.add(telescope['name'].strip().lower())
+        return [(telescope_name, telescope_name) for telescope_name in telescope_names]
+
     def get_instrument_type_tuples(self):
         instrument_types = set()
         for site in self.get_site_data():
@@ -238,8 +246,8 @@ class ConfigDB(object):
                                 telescope=telescope['code']
                             )
                             instrument['telescope_key'] = telescope_key
+                            instrument['telescope_name'] = telescope['name'].strip().lower()
                             instruments.append(instrument)
-
         return instruments
 
     def get_instrument_types_per_telescope(self, only_schedulable: bool = False) -> dict:
@@ -285,23 +293,21 @@ class ConfigDB(object):
                 instrument_names.add(instrument['science_camera']['code'].lower())
         return instrument_names
 
-    def get_instrument_types_per_telescope_class(self, exclude_states=None) -> dict:
+    def get_instrument_types_per_telescope_name(self, exclude_states=None) -> dict:
         """Get a set of instrument types.
 
-        Instrument types are returned by telescope class (0m4, 1m0, etc...)
+        Instrument types are returned by telescope name (1 meter, 2 meter, etc...)
 
         Parameters:
-            only_schedulable: Whether to only include schedulable telescopes
+            exclude_states: Instrument states to exclude
         Returns:
             Instrument types separated by class
         """
-        telescope_instrument_types = {}
+        telescope_instrument_names = defaultdict(set)
         for instrument in self.get_instruments(exclude_states=exclude_states):
-            tel_code = instrument['telescope_key'].telescope[:3]
-            if tel_code not in telescope_instrument_types:
-                telescope_instrument_types[tel_code] = set()
-            telescope_instrument_types[tel_code].add(instrument['science_camera']['camera_type']['code'].upper())
-        return telescope_instrument_types
+            tel_name = instrument['telescope_name']
+            telescope_instrument_names[tel_name].add(instrument['science_camera']['camera_type']['code'].upper())
+        return telescope_instrument_names
 
     def get_telescopes_per_instrument_type(self, instrument_type: str, only_schedulable: bool = False) -> set:
         """Get a set of telescope keys.

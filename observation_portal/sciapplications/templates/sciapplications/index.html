@@ -57,7 +57,14 @@
         </p>
         <table class="table">
             <thead>
-                <tr><td>Semester</td><td>1 Meter</td><td>2 Meter</td><td>0.4 Meter</td><td>Deadline</td><td></td></tr>
+                <tr>
+                    <td>Semester</td>
+                    {% for alloc in user.sciencecollaborationallocation.collaborationallocation_set.all %}
+                    <td>{{ alloc.telescope_name|title }}</td>
+                    {% endfor %}
+                    <td>Deadline</td>
+                    <td></td>
+                </tr>
             </thead>
             <tbody>
                 {% for call in calls %}
@@ -65,9 +72,9 @@
                 {% time_requested_by_sca user.sciencecollaborationallocation call.semester as time_requested %}
                 <tr>
                     <td>{{ call.semester }}</td>
-                    <td>{{ time_requested.1m0 }}/{{ request.user.sciencecollaborationallocation.one_meter_alloc }}</td>
-                    <td>{{ time_requested.2m0 }}/{{ request.user.sciencecollaborationallocation.two_meter_alloc }}</td>
-                    <td>{{ time_requested.0m4 }}/{{ request.user.sciencecollaborationallocation.four_meter_alloc }}</td>
+                    {% for alloc in user.sciencecollaborationallocation.collaborationallocation_set.all %}
+                    <td>{{ time_requested|get_from_dict:alloc.telescope_name }}/{{ alloc.allocation }}</td>
+                    {% endfor %}
                     <td>{{ call.deadline }}</td>
                     <td><a href="{% url 'sciapplications:create' call=call.id %}" class="btn btn-info">Add Proposal</a></td>
                 </tr>
@@ -83,9 +90,9 @@
                 <tr>
                     <td>{% trans 'Title' %}</td>
                     <td>{% trans 'Rank' %}</td>
-                    <td>{% trans '1m0' %}</td>
-                    <td>{% trans '2m0' %}</td>
-                    <td>{% trans '0m4' %}</td>
+                    {% for alloc in user.sciencecollaborationallocation.collaborationallocation_set.all %}
+                    <td>{% trans alloc.telescope_name|title %}</td>
+                    {% endfor %}
                     <td>{% trans 'Semester' %}</td>
                     <td>{% trans 'Deadline' %}</td>
                     <td>{% trans 'Status' %}</td>
@@ -99,9 +106,9 @@
                 <tr>
                     <td><a href="{% url 'sciapplications:update' pk=app.id %}">{{ app.title }}</a></td>
                     <td>{{ app.tac_rank }}</td>
-                    <td>{{ app.time_requested_by_class.1m0 }}</td>
-                    <td>{{ app.time_requested_by_class.2m0 }}</td>
-                    <td>{{ app.time_requested_by_class.0m4 }}</td>
+                    {% for alloc in user.sciencecollaborationallocation.collaborationallocation_set.all  %}
+                    <td>{{ app.time_requested_by_telescope_name|get_from_dict:alloc.telescope_name }}</td>
+                    {% endfor %}
                     <td>{{ app.call.semester }}</td>
                     <td>{{ app.call.deadline }}</td>
                     <td>{{ app.status }}</td>
@@ -123,9 +130,9 @@
                 <tr>
                     <td>{% trans 'Title' %}</td>
                     <td>{% trans 'Rank' %}</td>
-                    <td>{% trans '1m0' %}</td>
-                    <td>{% trans '2m0' %}</td>
-                    <td>{% trans '0m4' %}</td>
+                    {% for alloc in user.sciencecollaborationallocation.collaborationallocation_set.all %}
+                    <td>{% trans alloc.telescope_name|title %}</td>
+                    {% endfor %}
                     <td>{% trans 'Semester' %}</td>
                     <td>{% trans 'Deadline' %}</td>
                     <td>{% trans 'Status' %}</td>
@@ -138,9 +145,10 @@
                 <tr>
                     <td>{{ app.title }}</td>
                     <td>{{ app.tac_rank }}</td>
-                    <td>{{ app.time_requested_by_class.1m0 }}</td>
-                    <td>{{ app.time_requested_by_class.2m0 }}</td>
-                    <td>{{ app.time_requested_by_class.0m4 }}</td>
+
+                    {% for alloc in user.sciencecollaborationallocation.collaborationallocation_set.all  %}
+                    <td>{{ app.time_requested_by_telescope_name|get_from_dict:alloc.telescope_name }}</td>
+                    {% endfor %}
                     <td>{{ app.call.semester }}</td>
                     <td>{{ app.call.deadline }}</td>
                     <td>{{ app.status }}</td>

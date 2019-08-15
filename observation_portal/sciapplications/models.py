@@ -132,13 +132,15 @@ class ScienceApplication(models.Model):
         )
 
     @property
-    def time_requested_by_class(self):
-        telescope_instrument_types = configdb.get_instrument_types_per_telescope_class(exclude_states=['DISABLED'])
+    def time_requested_by_telescope_name(self):
+        telescope_instrument_types = configdb.get_instrument_types_per_telescope_name(exclude_states=['DISABLED'])
         time_requests = {}
-        for tel_code, instrument_types in telescope_instrument_types.items():
-            time_requests[tel_code] = sum(
+        for tel_name, instrument_types in telescope_instrument_types.items():
+            time_requests[tel_name] = sum(
                 sum([tr.std_time, tr.rr_time, tr.tc_time]) for tr in self.timerequest_set.filter(
-                    instrument__code__in=list(instrument_types)))
+                    instrument__code__in=list(instrument_types)
+                )
+            )
         return time_requests
 
     def get_absolute_url(self):
