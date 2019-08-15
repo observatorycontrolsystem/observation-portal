@@ -32,9 +32,8 @@ def get_telescope_states_for_request(request_dict, is_staff=False):
     instrument_type = request_dict['configurations'][0]['instrument_type']
     site_intervals = {}
     only_schedulable = not (is_staff and ConfigDB.is_location_fully_set(request_dict.get('location', {})))
-    telescopes = []
     # Build up the list of telescopes and their rise set intervals for the target on this request
-    telescope_details = configdb.get_telescopes_with_instrument_type_and_location(
+    site_data = configdb.get_sites_with_instrument_type_and_location(
         instrument_type=instrument_type,
         site_code=request_dict['location']['site'] if 'site' in request_dict['location'] else '',
         enclosure_code=request_dict['location']['enclosure'] if 'enclosure' in request_dict['location'] else '',
@@ -42,11 +41,7 @@ def get_telescope_states_for_request(request_dict, is_staff=False):
         only_schedulable=only_schedulable
     )
 
-    for code in telescope_details.keys():
-        split_code = code.split('.')
-        telescope_key = TelescopeKey(site=split_code[2], enclosure=split_code[1], telescope=split_code[0])
-        telescopes.append(telescope_key)
-        site = split_code[2]
+    for site, details in site_data.items():
         if site not in site_intervals:
             site_intervals[site] = get_filtered_rise_set_intervals_by_site(request_dict, site=site, is_staff=is_staff).get(site, [])
 
@@ -61,8 +56,8 @@ def get_telescope_states_for_request(request_dict, is_staff=False):
         start=min_window_time,
         end=max_window_time,
         sites=list(site_intervals.keys()),
-        telescopes=telescopes,
         instrument_types=[instrument_type],
+        location_dict=request_dict.get('location', {}),
         only_schedulable=only_schedulable
     ).get()
     # Remove the empty intervals from the dictionary

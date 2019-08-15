@@ -35,7 +35,7 @@ class TelescopeStates(object):
         ('Enclosure Shutter Mode: ', 'ENCLOSURE_DISABLED')
     ])
 
-    def __init__(self, start, end, telescopes=None, sites=None, instrument_types=None, only_schedulable=True):
+    def __init__(self, start, end, telescopes=None, sites=None, instrument_types=None, location_dict={}, only_schedulable=True):
         try:
             self.es = Elasticsearch([settings.ELASTICSEARCH_URL])
         except LocationValueError:
@@ -44,7 +44,7 @@ class TelescopeStates(object):
 
         self.instrument_types = instrument_types
         self.only_schedulable = only_schedulable
-        self.available_telescopes = self._get_available_telescopes()
+        self.available_telescopes = self._get_available_telescopes(location_dict)
 
         sites = list({tk.site for tk in self.available_telescopes}) if not sites else sites
         telescopes = list({tk.telescope for tk in self.available_telescopes if tk.site in sites}) \
@@ -54,8 +54,9 @@ class TelescopeStates(object):
         self.end = end.replace(tzinfo=timezone.utc).replace(microsecond=0)
         self.event_data = self._get_es_data(sites, telescopes)
 
-    def _get_available_telescopes(self):
-        telescope_to_instruments = configdb.get_instrument_types_per_telescope(only_schedulable=self.only_schedulable)
+    def _get_available_telescopes(self, location_dict={}):
+        telescope_to_instruments = configdb.get_instrument_types_per_telescope(location=location_dict,
+                                                                               only_schedulable=self.only_schedulable)
         if not self.instrument_types:
             available_telescopes = telescope_to_instruments.keys()
         else:

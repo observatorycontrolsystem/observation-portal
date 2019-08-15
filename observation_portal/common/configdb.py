@@ -245,7 +245,7 @@ class ConfigDB(object):
 
         return instruments
 
-    def get_instrument_types_per_telescope(self, only_schedulable: bool = False) -> dict:
+    def get_instrument_types_per_telescope(self, location: dict = {}, only_schedulable: bool = False) -> dict:
         """Get a set of available instrument types per telescope.
 
         Parameters:
@@ -258,11 +258,16 @@ class ConfigDB(object):
             exclude_states = ['DISABLED', 'ENABLED', 'MANUAL', 'COMMISSIONING', 'STANDBY']
         telescope_instrument_types = {}
         for instrument in self.get_instruments(exclude_states=exclude_states):
-            if instrument['telescope_key'] not in telescope_instrument_types:
-                telescope_instrument_types[instrument['telescope_key']] = []
-            instrument_type = instrument['science_camera']['camera_type']['code'].upper()
-            if instrument_type not in telescope_instrument_types[instrument['telescope_key']]:
-                telescope_instrument_types[instrument['telescope_key']].append(instrument_type)
+            split_string = instrument['__str__'].lower().split('.')
+            if (location.get('site', '').lower() in split_string[0]
+                    and location.get('enclosure', '').lower() in split_string[1]
+                    and location.get('telescope_class', '').lower() in split_string[2]
+                    and location.get('telescope', '').lower() in split_string[2]):
+                if instrument['telescope_key'] not in telescope_instrument_types:
+                    telescope_instrument_types[instrument['telescope_key']] = []
+                instrument_type = instrument['science_camera']['camera_type']['code'].upper()
+                if instrument_type not in telescope_instrument_types[instrument['telescope_key']]:
+                    telescope_instrument_types[instrument['telescope_key']].append(instrument_type)
         return telescope_instrument_types
 
     def get_instrument_names(
