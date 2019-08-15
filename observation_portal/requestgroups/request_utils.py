@@ -31,12 +31,14 @@ def get_telescope_states_for_request(request_dict, is_staff=False):
     # TODO: update to support multiple instruments in a list
     instrument_type = request_dict['configurations'][0]['instrument_type']
     site_intervals = {}
+    only_schedulable = not (is_staff and ConfigDB.is_location_fully_set(request_dict.get('location', {})))
     # Build up the list of telescopes and their rise set intervals for the target on this request
     site_data = configdb.get_sites_with_instrument_type_and_location(
         instrument_type=instrument_type,
         site_code=request_dict['location']['site'] if 'site' in request_dict['location'] else '',
         enclosure_code=request_dict['location']['enclosure'] if 'enclosure' in request_dict['location'] else '',
-        telescope_code=request_dict['location']['telescope'] if 'telescope' in request_dict['location'] else ''
+        telescope_code=request_dict['location']['telescope'] if 'telescope' in request_dict['location'] else '',
+        only_schedulable=only_schedulable
     )
     for site, details in site_data.items():
         if site not in site_intervals:
