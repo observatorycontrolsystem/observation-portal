@@ -7,6 +7,7 @@ from observation_portal.common.configdb import configdb, ConfigDB
 from observation_portal.common.telescope_states import TelescopeStates, filter_telescope_states_by_intervals
 from observation_portal.common.rise_set_utils import get_rise_set_target, get_filtered_rise_set_intervals_by_site
 from observation_portal.requestgroups.target_helpers import TARGET_TYPE_HELPER_MAP
+import logging
 
 # TODO: Use configuration types from configdb
 
@@ -32,6 +33,7 @@ def get_telescope_states_for_request(request_dict, is_staff=False):
     instrument_type = request_dict['configurations'][0]['instrument_type']
     site_intervals = {}
     only_schedulable = not (is_staff and ConfigDB.is_location_fully_set(request_dict.get('location', {})))
+    logging.getLogger().warning("telescope_states is_staff = {}, location = {}, only_schedulable = {}".format(is_staff, request_dict.get('location'), only_schedulable))
     # Build up the list of telescopes and their rise set intervals for the target on this request
     site_data = configdb.get_sites_with_instrument_type_and_location(
         instrument_type=instrument_type,
