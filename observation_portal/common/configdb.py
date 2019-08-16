@@ -161,6 +161,14 @@ class ConfigDB(object):
                 configuration_types.add(config_type.upper())
         return [(config_type, config_type) for config_type in configuration_types]
 
+    def get_raw_telescope_name(self, telescope_name):
+        for site in self.get_site_data():
+            for enclosure in site['enclosure_set']:
+                for telescope in enclosure['telescope_set']:
+                    if telescope['name'].strip().lower() == telescope_name.strip().lower():
+                        return telescope['name'].strip()
+        return telescope_name
+
     def get_instruments_at_location(self, site_code, enclosure_code, telescope_code, only_schedulable=False):
         instrument_names = set()
         instrument_types = set()

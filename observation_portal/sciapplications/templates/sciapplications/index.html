@@ -60,7 +60,7 @@
                 <tr>
                     <td>Semester</td>
                     {% for alloc in user.sciencecollaborationallocation.collaborationallocation_set.all %}
-                    <td>{{ alloc.telescope_name|title }}</td>
+                    <td>{{ alloc.telescope_name|raw_telescope_name }}</td>
                     {% endfor %}
                     <td>Deadline</td>
                     <td></td>
@@ -91,7 +91,7 @@
                     <td>{% trans 'Title' %}</td>
                     <td>{% trans 'Rank' %}</td>
                     {% for alloc in user.sciencecollaborationallocation.collaborationallocation_set.all %}
-                    <td>{% trans alloc.telescope_name|title %}</td>
+                    <td>{% trans alloc.telescope_name|raw_telescope_name %}</td>
                     {% endfor %}
                     <td>{% trans 'Semester' %}</td>
                     <td>{% trans 'Deadline' %}</td>
@@ -131,7 +131,7 @@
                     <td>{% trans 'Title' %}</td>
                     <td>{% trans 'Rank' %}</td>
                     {% for alloc in user.sciencecollaborationallocation.collaborationallocation_set.all %}
-                    <td>{% trans alloc.telescope_name|title %}</td>
+                    <td>{% trans alloc.telescope_name|raw_telescope_name %}</td>
                     {% endfor %}
                     <td>{% trans 'Semester' %}</td>
                     <td>{% trans 'Deadline' %}</td>

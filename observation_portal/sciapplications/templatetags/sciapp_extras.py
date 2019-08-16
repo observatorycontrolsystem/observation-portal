@@ -3,12 +3,19 @@ from boto3 import client
 from botocore.client import Config
 from django.conf import settings
 
+from observation_portal.common.configdb import configdb
+
 register = template.Library()
 
 
 @register.filter
 def get_from_dict(dictionary, key):
     return dictionary.get(key, '')
+
+
+@register.filter
+def raw_telescope_name(alloc_telescope_name):
+    return configdb.get_raw_telescope_name(alloc_telescope_name)
 
 
 @register.simple_tag
