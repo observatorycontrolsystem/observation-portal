@@ -58,6 +58,9 @@ class CollaborationAllocation(models.Model):
     telescope_name = models.CharField(max_length=255)
     allocation = models.FloatField(default=0)
 
+    def __str__(self):
+        return f'CollaborationAllocation for {self.sca.id}-{self.telescope_name}'
+
 
 class Proposal(models.Model):
     id = models.CharField(max_length=255, primary_key=True)
