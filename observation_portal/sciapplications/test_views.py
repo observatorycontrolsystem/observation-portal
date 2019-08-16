@@ -11,7 +11,7 @@ from weasyprint import HTML
 from unittest.mock import MagicMock, patch
 from django_dramatiq.test import DramatiqTestCase
 
-from observation_portal.proposals.models import Semester, ScienceCollaborationAllocation
+from observation_portal.proposals.models import Semester, ScienceCollaborationAllocation, CollaborationAllocation
 from observation_portal.accounts.models import Profile
 from observation_portal.sciapplications.models import ScienceApplication, Call, Instrument, TimeRequest, CoInvestigator
 from observation_portal.sciapplications.forms import ScienceProposalAppForm, DDTProposalAppForm, KeyProjectAppForm
@@ -645,17 +645,18 @@ class TestSciAppIndex(TestCase):
             opens=timezone.now(),
             proposal_type=Call.COLLAB_PROPOSAL,
         )
-        sca = mixer.blend(ScienceCollaborationAllocation, admin=self.user, one_meter_alloc=9)
+        sca = mixer.blend(ScienceCollaborationAllocation, admin=self.user)
+        ca = mixer.blend(CollaborationAllocation, sca=sca, telescope_name='1 meter', allocation=9)
         app = mixer.blend(
             ScienceApplication,
             status=ScienceApplication.DRAFT,
             submitter=self.user,
             call=call
         )
-        instrument = mixer.blend(Instrument, code='1M0-SCICAM-SBIG', telescope_class='1m0')
+        instrument = mixer.blend(Instrument, code='1M0-SCICAM-SBIG')
         tr = mixer.blend(TimeRequest, science_application=app, instrument=instrument, std_time=8)
         response = self.client.get(reverse('sciapplications:index'))
-        self.assertContains(response, '{0}/{1}'.format(tr.std_time, sca.one_meter_alloc))
+        self.assertContains(response, '{0}/{1}'.format(tr.std_time, ca.allocation))
 
 
 class TestSciAppDetail(TestCase):

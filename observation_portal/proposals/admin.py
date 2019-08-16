@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 from django.contrib import admin
 
-from observation_portal.proposals.forms import TimeAllocationForm
+from observation_portal.proposals.forms import TimeAllocationForm, CollaborationAllocationForm
 
 from observation_portal.proposals.models import (
     Semester,
     ScienceCollaborationAllocation,
+    CollaborationAllocation,
     Proposal,
     TimeAllocation,
     Membership,
@@ -20,9 +21,16 @@ class SemesterAdmin(admin.ModelAdmin):
     raw_id_fields = ('proposals',)
 
 
+class CollaborationAllocationAdminInline(admin.TabularInline):
+    model = CollaborationAllocation
+    form = CollaborationAllocationForm
+    extra = 0
+
+
 class ScienceCollaborationAllocationAdmin(admin.ModelAdmin):
     list_display = ('id', 'name')
     raw_id_fields = ['admin']
+    inlines = [CollaborationAllocationAdminInline]
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
@@ -49,7 +57,6 @@ class ProposalAdmin(admin.ModelAdmin):
         'created',
         'modified'
     )
-
     list_filter = ('active', 'sca', 'public')
     raw_id_fields = ('users',)
     inlines = [TimeAllocationAdminInline]
