@@ -23,7 +23,7 @@ def observations_queryset(request):
         else:
             qs = Observation.objects.filter(request__request_group__proposal__in=request.user.proposal_set.all())
             if request.user.profile.view_authored_requests_only:
-                qs = qs.filter(request__submitter=request.user)
+                qs = qs.filter(request__request_group__submitter=request.user)
     else:
         qs = Observation.objects.filter(request__request_group__proposal__public=True)
     return qs.prefetch_related(

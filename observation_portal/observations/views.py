@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django_filters.views import FilterView
 from django.views.generic import DetailView
 from rest_framework.views import APIView
@@ -5,7 +7,6 @@ from rest_framework.permissions import IsAdminUser
 from django.core.cache import cache
 from django.utils import timezone
 from rest_framework.response import Response
-from datetime import timedelta
 
 from observation_portal.observations.models import Observation
 from observation_portal.common.configdb import configdb
