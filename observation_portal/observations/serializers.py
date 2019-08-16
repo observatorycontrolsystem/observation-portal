@@ -290,8 +290,12 @@ class ObservationSerializer(serializers.ModelSerializer):
                 break
 
         if not in_a_window:
-            raise serializers.ValidationError(_('The start {} and end {} times do not fall within any window of the request'.format(data['start'].isoformat(), data['end'].isoformat())))
-
+            raise serializers.ValidationError(_(
+                'The start {} and end {} times do not fall within any window of the request'.format(
+                    data['start'].isoformat(),
+                    data['end'].isoformat()
+                )
+            ))
         # Validate that the site, enclosure, and telescope match the location of the request
         if (
             data['request'].location.site and data['request'].location.site != data['site'] or
@@ -343,6 +347,6 @@ class CancelObservationsSerializer(serializers.Serializer):
 
     def validate(self, data):
         if 'ids' not in data and ('start' not in data or 'end' not in data):
-            raise serializers.ValidationError("Must include either a observation id list or a start and end time")
+            raise serializers.ValidationError("Must include either an observation id list or a start and end time")
 
         return data
