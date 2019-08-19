@@ -1,17 +1,17 @@
 <template>
   <panel :show="show"
-    :id="'target' + $parent.$parent.$parent.index + $parent.index" 
-    :errors="errors" 
-    :canremove="false" 
-    :cancopy="false" 
-    icon="fas fa-crosshairs" 
-    title="Target" 
-    @show="show = $event"    
+    :id="'target' + $parent.$parent.$parent.index + $parent.index"
+    :errors="errors"
+    :canremove="false"
+    :cancopy="false"
+    icon="fas fa-crosshairs"
+    title="Target"
+    @show="show = $event"
   >
-    <customalert 
-      v-for="error in errors.non_field_errors" 
-      :key="error" 
-      alertclass="danger" 
+    <customalert
+      v-for="error in errors.non_field_errors"
+      :key="error"
+      alertclass="danger"
       :dismissible="false"
     >
       {{ error }}
@@ -19,108 +19,108 @@
     <b-container class="p-0">
       <b-row>
         <b-col md="6" v-show="show">
-          <archive 
-            v-if="target.ra && target.dec" 
-            :ra="target.ra" 
+          <archive
+            v-if="target.ra && target.dec"
+            :ra="target.ra"
             :dec="target.dec"
           />
         </b-col>
         <b-col :md="show ? 6 : 12">
           <b-form>
-            <customfield 
-              v-model="target.name" 
-              label="Name" 
-              field="name" 
+            <customfield
+              v-model="target.name"
+              label="Name"
+              field="name"
               :errors="errors.name"
-              @input="update" 
+              @input="update"
             >
-              <div 
-                v-show="lookingUP || lookupFail" 
+              <div
+                v-show="lookingUP || lookupFail"
                 slot="extra-help-text"
               >
                 <i v-show="lookingUP" class="fa fa-spinner fa-spin fa-fw"></i> {{ lookupText }}
               </div>
             </customfield>
             <customselect v-if="!simple_interface"
-              v-model="target.type" 
-              label="Type" 
-              field="type" 
-              :errors="errors.type" 
+              v-model="target.type"
+              label="Type"
+              field="type"
+              :errors="errors.type"
               :options="[
                 {value: 'ICRS',text: 'Sidereal'},
                 {value: 'ORBITAL_ELEMENTS',text:'Non-Sidereal'}
               ]"
-              @input="update" 
+              @input="update"
             />
             <span class="sidereal" v-show="target.type === 'ICRS'">
-              <customfield 
-                v-model="ra_display" 
-                label="Right Ascension" 
-                field="ra" 
+              <customfield
+                v-model="ra_display"
+                label="Right Ascension"
+                field="ra"
                 desc="Decimal degrees or HH:MM:SS.S"
                 :errors="errors.ra"
-                @blur="updateRA" 
+                @blur="updateRA"
               >
                 <div
                   slot="extra-help-text"
-                  v-if="target.ra" 
+                  v-if="target.ra"
                 >
                   {{ ra_help_text }}
                 </div>
               </customfield>
-              <customfield 
-                v-model="dec_display" 
-                label="Declination" 
-                field="dec" 
+              <customfield
+                v-model="dec_display"
+                label="Declination"
+                field="dec"
                 desc="Decimal degrees or DD:MM:SS.S"
                 :errors="errors.dec"
-                @blur="updateDec" 
+                @blur="updateDec"
               >
-                <div 
+                <div
                   slot="extra-help-text"
-                  v-if="target.dec" 
+                  v-if="target.dec"
                 >
                   {{ dec_help_text }}
-                </div>              
+                </div>
               </customfield>
               <customfield v-if="!simple_interface"
-                v-model="target.proper_motion_ra" 
-                label="Proper Motion RA" 
+                v-model="target.proper_motion_ra"
+                label="Proper Motion RA"
                 field="proper_motion_ra"
                 desc="Units are milliarcseconds per year. Max 20000."
-                :errors="errors.proper_motion_ra" 
-                @input="update" 
+                :errors="errors.proper_motion_ra"
+                @input="update"
               />
               <customfield v-if="!simple_interface"
-                v-model="target.proper_motion_dec" 
-                label="Proper Motion Dec" 
+                v-model="target.proper_motion_dec"
+                label="Proper Motion Dec"
                 field="proper_motion_dec"
                 desc="Units are milliarcseconds per year. Max 20000."
-                :errors="errors.proper_motion_dec" 
-                @input="update" 
+                :errors="errors.proper_motion_dec"
+                @input="update"
               />
               <customfield v-if="!simple_interface"
-                v-model="target.epoch" 
-                label="Epoch" 
-                field="epoch" 
-                desc="Julian Years. Max 2100." 
+                v-model="target.epoch"
+                label="Epoch"
+                field="epoch"
+                desc="Julian Years. Max 2100."
                 :errors="errors.epoch"
-                @input="update"               
+                @input="update"
               />
               <customfield v-if="!simple_interface"
-                v-model="target.parallax" 
-                label="Parallax" 
-                field="parallax" 
-                desc="+0.45 mas. Max 2000." 
-                :errors="errors.parallax" 
+                v-model="target.parallax"
+                label="Parallax"
+                field="parallax"
+                desc="+0.45 mas. Max 2000."
+                :errors="errors.parallax"
                 @input="update"
               />
             </span>
             <span class="non-sidereal" v-show="target.type === 'ORBITAL_ELEMENTS'">
-              <customselect 
-                v-model="target.scheme" 
-                label="Scheme" 
-                field="scheme" 
+              <customselect
+                v-model="target.scheme"
+                label="Scheme"
+                field="scheme"
                 desc="The orbital elements scheme to use with this target"
                 :errors="errors.scheme"
                 :options="[
@@ -128,92 +128,92 @@
                   {value: 'MPC_COMET', text: 'MPC Comet'},
                   {value: 'JPL_MAJOR_PLANET', text: 'JPL Major Planet'}
                 ]"
-                @input="update" 
+                @input="update"
               />
-              <customfield 
-                v-model="target.epochofel" 
-                label="Epoch of Elements" 
+              <customfield
+                v-model="target.epochofel"
+                label="Epoch of Elements"
                 field="epochofel"
-                desc="The epoch of the orbital elements in MJD"
-                :errors="errors.epochofel" 
-                @input="update" 
+                desc="The epoch of the orbital elements in MJD. MJD = JD - 2400000.5"
+                :errors="errors.epochofel"
+                @input="update"
               />
-              <customfield 
-                v-model="target.orbinc" 
-                label="Orbital Inclination" 
-                field="orbinc" 
+              <customfield
+                v-model="target.orbinc"
+                label="Orbital Inclination"
+                field="orbinc"
                 :errors="errors.orbinc"
                 @input="update"
               />
-              <customfield 
-                v-model="target.longascnode" 
-                label="Longitude of Ascending Node" 
+              <customfield
+                v-model="target.longascnode"
+                label="Longitude of Ascending Node"
                 field="longascnode"
                 desc="Angle in Degrees"
-                :errors="errors.longascnode" 
-                @input="update" 
+                :errors="errors.longascnode"
+                @input="update"
               />
-              <customfield 
-                v-model="target.argofperih" 
-                label="Argument of Perihelion" 
+              <customfield
+                v-model="target.argofperih"
+                label="Argument of Perihelion"
                 field="argofperih"
                 desc="Angle in Degrees"
-                :errors="errors.argofperih" 
-                @input="update" 
+                :errors="errors.argofperih"
+                @input="update"
               />
-              <customfield 
-                v-model="target.eccentricity" 
-                label="Eccentricity" 
+              <customfield
+                v-model="target.eccentricity"
+                label="Eccentricity"
                 field="eccentricity"
                 desc="0 to 0.99"
-                :errors="errors.eccentricity" 
-                @input="update" 
+                :errors="errors.eccentricity"
+                @input="update"
               />
             </span>
             <span v-show="target.scheme === 'MPC_MINOR_PLANET' || target.scheme == 'JPL_MAJOR_PLANET'">
-              <customfield 
-                v-model="target.meandist" 
-                label="Semimajor Axis" 
+              <customfield
+                v-model="target.meandist"
+                label="Semimajor Axis"
                 field="meandist"
                 desc="Astronomical Units (AU)"
-                :errors="errors.meandist" 
-                @input="update" 
+                :errors="errors.meandist"
+                @input="update"
               />
-              <customfield 
-                v-model="target.meananom" 
-                label="Mean Anomaly" 
+              <customfield
+                v-model="target.meananom"
+                label="Mean Anomaly"
                 field="meananom"
                 desc="Angle in Degrees"
-                :errors="errors.meananom" 
-                @input="update" 
+                :errors="errors.meananom"
+                @input="update"
               />
             </span>
             <span v-show="target.scheme === 'JPL_MAJOR_PLANET'">
-              <customfield 
-                v-model="target.dailymot" 
-                label="Daily Motion" 
+              <customfield
+                v-model="target.dailymot"
+                label="Daily Motion"
                 field="dailymot"
                 desc="Degrees"
-                :errors="errors.dailymot" 
-                @input="update" 
+                :errors="errors.dailymot"
+                @input="update"
               />
             </span>
             <span v-show="target.scheme === 'MPC_COMET'">
-              <customfield 
-                v-model="target.perihdist" 
-                label="Perihelion Distance" 
+              <customfield
+                v-model="target.perihdist"
+                label="Perihelion Distance"
                 field="perihdist"
                 desc="Astronomical Units (AU)"
-                :errors="errors.perihdist" 
-                @input="update" 
+                :errors="errors.perihdist"
+                @input="update"
               />
-              <customfield 
-                v-model="target.epochofperih" 
-                label="Epoch of Perihelion" 
+              <customfield
+                v-model="target.epochofperih"
+                label="Epoch of Perihelion"
                 field="epochofperih"
                 desc="Modified Juian Days"
-                :errors="errors.epochofperih" 
-                @input="update" 
+                :errors="errors.epochofperih"
+                @input="update"
               />
             </span>
           </b-form>
@@ -226,9 +226,9 @@
   import _ from 'lodash';
   import $ from 'jquery';
 
-  import { 
-    collapseMixin, sexagesimalRaToDecimal, sexagesimalDecToDecimal, 
-    julianToModifiedJulian, decimalRaToSexigesimal, decimalDecToSexigesimal 
+  import {
+    collapseMixin, sexagesimalRaToDecimal, sexagesimalDecToDecimal,
+    julianToModifiedJulian, decimalRaToSexigesimal, decimalDecToSexigesimal
   } from '../utils.js';
   import archive from './archive.vue';
   import panel from './util/panel.vue';
@@ -238,15 +238,15 @@
 
   export default {
     props: [
-      'target', 
-      'errors', 
-      'parentshow', 
+      'target',
+      'errors',
+      'parentshow',
       'simple_interface'
     ],
     components: {
-      customfield, 
-      customselect, 
-      panel, 
+      customfield,
+      customselect,
+      panel,
       customalert,
       archive
     },
