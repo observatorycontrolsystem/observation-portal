@@ -102,6 +102,7 @@ class ProposalInviteAdmin(admin.ModelAdmin):
 
 
 class ProposalNotificationAdmin(admin.ModelAdmin):
+    search_fields = ['proposal__id', 'user__username', 'user__email']
     model = ProposalNotification
     raw_id_fields = ['proposal', 'user']
 
