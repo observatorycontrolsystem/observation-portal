@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 """
 
 import os
+from lcogt_logging import LCOGTFormatter
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -76,6 +77,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'observation_portal.common.middleware.AcceptTermsMiddlware',
+    'observation_portal.common.middleware.RequestLogMiddleware',
 ]
 
 ROOT_URLCONF = 'observation_portal.urls'
@@ -245,9 +247,15 @@ REST_FRAMEWORK = {
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'default': {
+            '()': LCOGTFormatter
+        }
+    },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
+            'formatter': 'default'
         },
     },
     'loggers': {
@@ -258,7 +266,7 @@ LOGGING = {
         'rise_set': {
             'level': 'WARNING'
         },
-        'valhalla_request': {
+        'portal_request': {
             'level': 'INFO',
             'propogate': False
         }
