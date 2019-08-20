@@ -61,13 +61,14 @@ def get_configuration_duration(configuration_dict):
     return conf_duration
 
 
-def get_request_duration_dict(request_dict):
+def get_request_duration_dict(request_dict, is_staff=False):
     req_durations = {'requests': []}
     for req in request_dict:
         req_info = {'duration': get_request_duration(req)}
         conf_durations = [get_configuration_duration(conf) for conf in req['configurations']]
         req_info['configurations'] = conf_durations
-        req_info['largest_interval'] = get_largest_interval(get_filtered_rise_set_intervals_by_site(req)).total_seconds()
+        rise_set_intervals = get_filtered_rise_set_intervals_by_site(req, is_staff=is_staff)
+        req_info['largest_interval'] = get_largest_interval(rise_set_intervals).total_seconds()
         req_info['largest_interval'] -= (PER_CONFIGURATION_STARTUP_TIME + PER_CONFIGURATION_GAP)
         req_durations['requests'].append(req_info)
     req_durations['duration'] = sum([req['duration'] for req in req_durations['requests']])

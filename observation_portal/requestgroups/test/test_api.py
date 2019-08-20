@@ -209,6 +209,37 @@ class TestUserPostRequestApi(SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('You do not have sufficient time', str(response.content))
 
+    def test_post_requestgroup_manual_instrument_not_allowed(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['location']['site'] = 'tst'
+        bad_data['requests'][0]['location']['enclosure'] = 'domc'
+        bad_data['requests'][0]['location']['telescope'] = '1m0a'
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Invalid instrument type', str(response.content))
+
+    def test_post_requestgroup_manual_instrument_not_allowed_with_staff_without_full_location(self):
+        eng_user = blend_user(user_params={'username': 'eng', 'is_staff': True})
+        membership = mixer.blend(Membership, user=eng_user, proposal=self.proposal)
+        self.client.force_login(eng_user)
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['location']['site'] = 'tst'
+        bad_data['requests'][0]['location']['enclosure'] = 'domc'
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Invalid instrument type', str(response.content))
+
+    def test_post_requestgroup_manual_instrument_allowed_for_staff(self):
+        good_data = self.generic_payload.copy()
+        eng_user = blend_user(user_params={'username': 'eng', 'is_staff': True})
+        membership = mixer.blend(Membership, user=eng_user, proposal=self.proposal)
+        self.client.force_login(eng_user)
+        good_data['requests'][0]['location']['site'] = 'tst'
+        good_data['requests'][0]['location']['enclosure'] = 'domc'
+        good_data['requests'][0]['location']['telescope'] = '1m0a'
+        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
+        self.assertEqual(response.status_code, 201)
+
     def test_post_requestgroup_not_enough_time_allocation_for_instrument(self):
         bad_data = self.generic_payload.copy()
         self.time_allocation_1m0_sbig.std_time_used = 99.99

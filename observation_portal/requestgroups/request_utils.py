@@ -3,7 +3,7 @@ from rise_set.angle import Angle
 from rise_set.astrometry import calculate_airmass_at_times
 import requests
 
-from observation_portal.common.configdb import configdb
+from observation_portal.common.configdb import configdb, ConfigDB, TelescopeKey
 from observation_portal.common.telescope_states import TelescopeStates, filter_telescope_states_by_intervals
 from observation_portal.common.rise_set_utils import get_rise_set_target, get_filtered_rise_set_intervals_by_site
 from observation_portal.requestgroups.target_helpers import TARGET_TYPE_HELPER_MAP
@@ -11,36 +11,40 @@ from observation_portal.requestgroups.target_helpers import TARGET_TYPE_HELPER_M
 # TODO: Use configuration types from configdb
 
 MOLECULE_TYPE_DISPLAY = {
-  'EXPOSE': 'Imaging',
-  'SKY_FLAT': 'Sky Flat',
-  'STANDARD': 'Standard',
-  'ARC': 'Arc',
-  'LAMP_FLAT': 'Lamp Flat',
-  'SPECTRUM': 'Spectrum',
-  'AUTO_FOCUS': 'Auto Focus',
-  'TRIPLE': 'Triple',
-  'NRES_TEST': 'NRES Test',
-  'NRES_SPECTRUM': 'NRES Spectrum',
-  'NRES_EXPOSE': 'NRES Expose',
-  'ENGINEERING': 'Engineering',
-  'SCRIPT': 'Script'
+    'EXPOSE': 'Imaging',
+    'SKY_FLAT': 'Sky Flat',
+    'STANDARD': 'Standard',
+    'ARC': 'Arc',
+    'LAMP_FLAT': 'Lamp Flat',
+    'SPECTRUM': 'Spectrum',
+    'AUTO_FOCUS': 'Auto Focus',
+    'TRIPLE': 'Triple',
+    'NRES_TEST': 'NRES Test',
+    'NRES_SPECTRUM': 'NRES Spectrum',
+    'NRES_EXPOSE': 'NRES Expose',
+    'ENGINEERING': 'Engineering',
+    'SCRIPT': 'Script'
 }
 
 
-def get_telescope_states_for_request(request_dict):
+def get_telescope_states_for_request(request_dict, is_staff=False):
     # TODO: update to support multiple instruments in a list
     instrument_type = request_dict['configurations'][0]['instrument_type']
     site_intervals = {}
+    only_schedulable = not (is_staff and ConfigDB.is_location_fully_set(request_dict.get('location', {})))
     # Build up the list of telescopes and their rise set intervals for the target on this request
     site_data = configdb.get_sites_with_instrument_type_and_location(
-      instrument_type=instrument_type,
-      site_code=request_dict['location']['site'] if 'site' in request_dict['location'] else '',
-      enclosure_code=request_dict['location']['enclosure'] if 'enclosure' in request_dict['location'] else '',
-      telescope_code=request_dict['location']['telescope'] if 'telescope' in request_dict['location'] else ''
+        instrument_type=instrument_type,
+        site_code=request_dict['location']['site'] if 'site' in request_dict['location'] else '',
+        enclosure_code=request_dict['location']['enclosure'] if 'enclosure' in request_dict['location'] else '',
+        telescope_code=request_dict['location']['telescope'] if 'telescope' in request_dict['location'] else '',
+        only_schedulable=only_schedulable
     )
+
     for site, details in site_data.items():
         if site not in site_intervals:
-            site_intervals[site] = get_filtered_rise_set_intervals_by_site(request_dict, site).get(site, [])
+            site_intervals[site] = get_filtered_rise_set_intervals_by_site(request_dict, site=site, is_staff=is_staff).get(site, [])
+
     # If you have no sites, return the empty dict here
     if not site_intervals:
         return {}
@@ -49,17 +53,19 @@ def get_telescope_states_for_request(request_dict):
     min_window_time = min([window['start'] for window in request_dict['windows']])
     max_window_time = max([window['end'] for window in request_dict['windows']])
     telescope_states = TelescopeStates(
-      start=min_window_time,
-      end=max_window_time,
-      sites=list(site_intervals.keys()),
-      instrument_types=[instrument_type]
+        start=min_window_time,
+        end=max_window_time,
+        sites=list(site_intervals.keys()),
+        instrument_types=[instrument_type],
+        location_dict=request_dict.get('location', {}),
+        only_schedulable=only_schedulable
     ).get()
     # Remove the empty intervals from the dictionary
     site_intervals = {site: intervals for site, intervals in site_intervals.items() if intervals}
 
     # Filter the telescope states list with the site intervals
     filtered_telescope_states = filter_telescope_states_by_intervals(
-      telescope_states, site_intervals, min_window_time, max_window_time
+        telescope_states, site_intervals, min_window_time, max_window_time
     )
 
     return filtered_telescope_states
@@ -72,20 +78,22 @@ def date_range_from_interval(start_time, end_time, dt=timedelta(minutes=15)):
         time += dt
 
 
-def get_airmasses_for_request_at_sites(request_dict):
+def get_airmasses_for_request_at_sites(request_dict, is_staff=False):
     # TODO: Change to work with multiple instrument types and multiple constraints and multiple targets
     data = {'airmass_data': {}}
     instrument_type = request_dict['configurations'][0]['instrument_type']
     constraints = request_dict['configurations'][0]['constraints']
     target = request_dict['configurations'][0]['target']
     target_type = str(target.get('type', '')).upper()
+    only_schedulable = not (is_staff and ConfigDB.is_location_fully_set(request_dict.get('location', {})))
 
     if target_type in ['ICRS', 'ORBITAL_ELEMENTS'] and TARGET_TYPE_HELPER_MAP[target_type](target).is_valid():
         site_data = configdb.get_sites_with_instrument_type_and_location(
             instrument_type=instrument_type,
             site_code=request_dict['location'].get('site'),
             enclosure_code=request_dict['location'].get('enclosure'),
-            telescope_code=request_dict['location'].get('telescope')
+            telescope_code=request_dict['location'].get('telescope'),
+            only_schedulable=only_schedulable
         )
         rs_target = get_rise_set_target(target)
         for site_id, site_details in site_data.items():
@@ -93,7 +101,7 @@ def get_airmasses_for_request_at_sites(request_dict):
             site_lat = Angle(degrees=site_details['latitude'])
             site_lon = Angle(degrees=site_details['longitude'])
             site_alt = site_details['altitude']
-            intervals = get_filtered_rise_set_intervals_by_site(request_dict, site_id).get(site_id, [])
+            intervals = get_filtered_rise_set_intervals_by_site(request_dict, site_id, is_staff=is_staff).get(site_id, [])
             for interval in intervals:
                 night_times.extend(
                     [time for time in date_range_from_interval(interval[0], interval[1], dt=timedelta(minutes=10))])
@@ -103,7 +111,7 @@ def get_airmasses_for_request_at_sites(request_dict):
                     data['airmass_data'][site_id] = {}
                 data['airmass_data'][site_id]['times'] = [time.strftime('%Y-%m-%dT%H:%M') for time in night_times]
                 data['airmass_data'][site_id]['airmasses'] = calculate_airmass_at_times(
-                  night_times, rs_target, site_lat, site_lon, site_alt
+                    night_times, rs_target, site_lat, site_lon, site_alt
                 )
                 data['airmass_limit'] = constraints['max_airmass']
 

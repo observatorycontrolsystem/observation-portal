@@ -305,7 +305,7 @@ class ObservationSerializer(serializers.ModelSerializer):
 
         # Validate that the site, enclosure, telescope has the appropriate instrument
         available_instruments = configdb.get_instruments_at_location(
-            data['site'], data['enclosure'], data['telescope'], only_schedulable=True
+            data['site'], data['enclosure'], data['telescope'], only_schedulable=False
         )
         for configuration in data['request'].configurations.all():
             if configuration.instrument_type.lower() not in available_instruments['types']:
