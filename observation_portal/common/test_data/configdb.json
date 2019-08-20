@@ -273,7 +273,7 @@
                   "__str__": "tst.doma.1m0a.xx06-xx07"
                 },
                 {
-                  "state": "ENABLED",
+                  "state": "MANUAL",
                   "code": "xx08",
                   "autoguider_camera": {
                     "code": "xx09",
@@ -406,7 +406,7 @@
               "horizon": 15.0,
               "ha_limit_pos": 4.6,
               "ha_limit_neg": -4.6,
-              "zenith_blind_spot":0.0,
+              "zenith_blind_spot": 0.0,
               "slew_rate": 0.0,
               "minimum_slew_overhead": 2.0,
               "maximum_slew_overhead": 2.0,
@@ -962,6 +962,151 @@
                     ]
                   },
                   "__str__": "tst.domb.2m0a.xx02-xx02"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "domc",
+          "telescope_set": [
+            {
+              "code": "1m0a",
+              "name": "1 Meter",
+              "lat": -32.3805542,
+              "long": 20.8100352,
+              "horizon": 15.0,
+              "ha_limit_pos": 4.6,
+              "ha_limit_neg": -4.6,
+              "zenith_blind_spot": 0.0,
+              "slew_rate": 0.0,
+              "minimum_slew_overhead": 2.0,
+              "maximum_slew_overhead": 2.0,
+              "instrument_change_overhead": 30.0,
+              "instrument_set": [
+                {
+                  "state": "MANUAL",
+                  "code": "xx11",
+                  "autoguider_camera": {
+                    "code": "ef11",
+                    "camera_type": {
+                      "code": "1M0-SCICAM-AG",
+                      "allow_self_guiding": true
+                    }
+                  },
+                  "science_camera": {
+                    "code": "xx11",
+                    "camera_type": {
+                      "code": "1M0-SCICAM-SBIG",
+                      "name": "1M0-SCICAM-SBIG",
+                      "allow_self_guiding": true,
+                      "default_mode": {
+                        "binning": 2,
+                        "readout": 14.5
+                      },
+                      "configuration_types": [
+                        "EXPOSE",
+                        "BIAS",
+                        "DARK",
+                        "SCRIPT"
+                      ],
+                      "default_acceptability_threshold": 100,
+                      "pixels_x": 1000,
+                      "pixels_y": 1000,
+                      "max_rois": 0,
+                      "config_change_time": 0,
+                      "acquire_processing_time": 0,
+                      "acquire_exposure_time": 0,
+                      "front_padding": 90,
+                      "filter_change_time": 2,
+                      "fixed_overhead_per_exposure": 1,
+                      "mode_set": [
+                        {
+                          "binning": 1,
+                          "readout": 35.0
+                        },
+                        {
+                          "binning": 2,
+                          "readout": 14.5
+                        },
+                        {
+                          "binning": 3,
+                          "readout": 11.5
+                        }
+                      ],
+                      "mode_types": [
+                        {
+                          "type": "readout",
+                          "default": "1m0_sbig_2",
+                          "modes": [
+                            {
+                              "code": "1m0_sbig_1",
+                              "overhead": 35.0,
+                              "params": {
+                                "binning": 1
+                              }
+                            },
+                            {
+                              "code": "1m0_sbig_2",
+                              "overhead": 14.5,
+                              "params": {
+                                "binning": 2
+                              }
+                            },
+                            {
+                              "code": "1m0_sbig_3",
+                              "overhead": 11.5,
+                              "params": {
+                                "binning": 3
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "type": "acquisition",
+                          "default": "OFF",
+                          "modes": [
+                            {
+                              "code": "OFF",
+                              "overhead": 0.0,
+                              "params": {}
+                            }
+                          ]
+                        },
+                        {
+                          "type": "guiding",
+                          "default": "OFF",
+                          "modes": [
+                            {
+                              "code": "OFF",
+                              "overhead": 0.0,
+                              "params": {}
+                            },
+                            {
+                              "code": "ON",
+                              "overhead": 0.0,
+                              "params": {}
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "filters": "air",
+                    "optical_element_groups": [
+                      {
+                        "type": "filters",
+                        "element_change_overhead": 2,
+                        "optical_elements": [
+                          {
+                            "name": "Air",
+                            "code": "air",
+                            "schedulable": false
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "__str__": "tst.domc.1m0a.xx11-xx11"
                 }
               ]
             }
