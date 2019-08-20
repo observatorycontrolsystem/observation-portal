@@ -972,6 +972,7 @@
           "telescope_set": [
             {
               "code": "1m0a",
+              "name": "1 Meter",
               "lat": -32.3805542,
               "long": 20.8100352,
               "horizon": 15.0,
