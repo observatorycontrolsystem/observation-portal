@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.utils.translation import ugettext as _
 from django.template.loader import render_to_string
 from django.urls import reverse
+from django.utils.html import strip_tags
 from collections import namedtuple
 import logging
 
@@ -39,26 +40,26 @@ class ScienceCollaborationAllocation(models.Model):
     id = models.CharField(max_length=20, primary_key=True)
     name = models.CharField(max_length=255, blank=True, default='')
     admin = models.OneToOneField(User, null=True, blank=True, on_delete=models.SET_NULL)
-    # TODO: Replace these allocations with something else
-    one_meter_alloc = models.PositiveIntegerField(default=0, blank=True)
-    two_meter_alloc = models.PositiveIntegerField(default=0, blank=True)
-    four_meter_alloc = models.PositiveIntegerField(verbose_name='0.4 Meter Alloc', default=0, blank=True)
 
     def __str__(self):
         return self.id
 
     def time_requested_for_semester(self, semester):
-        allocs = {
-            '1m0': 0,
-            '2m0': 0,
-            '0m4': 0
-        }
+        allocs = {ca.telescope_name: 0 for ca in self.collaborationallocation_set.all()}
         for sciapp in self.admin.scienceapplication_set.filter(call__semester=semester, call__proposal_type='COLAB'):
-            for k, v in sciapp.time_requested_by_class.items():
+            for k, v in sciapp.time_requested_by_telescope_name.items():
                 if k in allocs:
                     allocs[k] += v
-
         return allocs
+
+
+class CollaborationAllocation(models.Model):
+    sca = models.ForeignKey(ScienceCollaborationAllocation, on_delete=models.CASCADE)
+    telescope_name = models.CharField(max_length=255)
+    allocation = models.FloatField(default=0)
+
+    def __str__(self):
+        return f'CollaborationAllocation for {self.sca.id}-{self.telescope_name}'
 
 
 class Proposal(models.Model):
@@ -144,8 +145,9 @@ class Proposal(models.Model):
                     'allocations': self.timeallocation_set.filter(semester=self.current_semester)
                 }
             )
+            plain_message = strip_tags(message)
 
-            send_mail.send(subject, message, 'science-support@lco.global', [self.pi.email])
+            send_mail.send(subject, plain_message, 'science-support@lco.global', [self.pi.email], html_message=message)
         else:
             logger.warn('Proposal {} does not have a PI!'.format(self))
 
