@@ -261,7 +261,7 @@ class ConfigDB(object):
                             instruments.append(instrument)
         return instruments
 
-    def get_instrument_types_per_telescope(self, location: dict = {}, only_schedulable: bool = False) -> dict:
+    def get_instrument_types_per_telescope(self, location: dict = None, only_schedulable: bool = False) -> dict:
         """Get a set of available instrument types per telescope.
 
         Parameters:
@@ -269,6 +269,8 @@ class ConfigDB(object):
         Returns:
             Available instrument types
         """
+        if not location:
+            location = {}
         exclude_states = ['DISABLED']
         if only_schedulable:
             exclude_states = ['DISABLED', 'ENABLED', 'MANUAL', 'COMMISSIONING', 'STANDBY']

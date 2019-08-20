@@ -3,7 +3,7 @@ from rise_set.angle import Angle
 from rise_set.astrometry import calculate_airmass_at_times
 import requests
 
-from observation_portal.common.configdb import configdb, ConfigDB, TelescopeKey
+from observation_portal.common.configdb import configdb, ConfigDB
 from observation_portal.common.telescope_states import TelescopeStates, filter_telescope_states_by_intervals
 from observation_portal.common.rise_set_utils import get_rise_set_target, get_filtered_rise_set_intervals_by_site
 from observation_portal.requestgroups.target_helpers import TARGET_TYPE_HELPER_MAP
