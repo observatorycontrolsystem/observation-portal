@@ -197,6 +197,7 @@ AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID', None)
 AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY', None)
 AWS_S3_CUSTOM_DOMAIN = 's3-us-west-2.amazonaws.com/{}'.format(AWS_STORAGE_BUCKET_NAME)
 AWS_IS_GZIPPED = True
+AWS_LOCATION = os.getenv('AWS_LOCATION', 'media')
 AWS_DEFAULT_ACL = None
 
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
