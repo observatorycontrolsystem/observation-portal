@@ -9,7 +9,7 @@ from observation_portal.requestgroups.models import (
     AcquisitionConfig, GuidingConfig
 )
 from observation_portal.proposals.models import Proposal, TimeAllocation, Semester
-from observation_portal.common.configdb import ConfigDBException
+from observation_portal.common.configdb import InstrumentNotFoundException
 from observation_portal.common.test_helpers import SetTimeMixin
 from observation_portal.requestgroups.duration_utils import PER_CONFIGURATION_STARTUP_TIME, PER_CONFIGURATION_GAP
 
@@ -399,6 +399,14 @@ class TestRequestDuration(SetTimeMixin, TestCase):
         self.instrument_config_expose.configuration = self.configuration_expose
         self.instrument_config_expose.save()
 
-        with self.assertRaises(ConfigDBException) as context:
+        with self.assertRaises(InstrumentNotFoundException) as context:
             _ = self.configuration_expose.duration
             self.assertTrue('not found in configdb' in context.exception)
+
+    def test_get_duration_from_non_existent_camera_old_request(self):
+        Semester.objects.all().delete()
+        Semester.objects.create(start=datetime(year=2999, month=1, day=1), end=datetime(year=2999, month=6, day=1))
+        self.configuration_expose.instrument_type = 'FAKE-CAMERA'
+        self.configuration_expose.request = self.request
+        self.configuration_expose.save()
+        self.assertEqual(self.request.duration, -1)

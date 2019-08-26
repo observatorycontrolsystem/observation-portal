@@ -4,7 +4,7 @@ from django.utils import timezone
 import logging
 
 from observation_portal.proposals.models import TimeAllocationKey, Proposal, Semester
-from observation_portal.common.configdb import configdb
+from observation_portal.common.configdb import configdb, InstrumentNotFoundException
 from observation_portal.common.rise_set_utils import (get_filtered_rise_set_intervals_by_site, get_largest_interval,
                                                       get_distance_between, get_rise_set_target)
 

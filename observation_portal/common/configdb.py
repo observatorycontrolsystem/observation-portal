@@ -15,6 +15,11 @@ class ConfigDBException(Exception):
     pass
 
 
+class InstrumentNotFoundException(Exception):
+    """Raised in an instrument is not found in the database """
+    pass
+
+
 class TelescopeKey(namedtuple('TelescopeKey', ['site', 'enclosure', 'telescope'])):
     """Generate the key of a telescope."""
     __slots__ = ()
@@ -553,7 +558,7 @@ class ConfigDB(object):
             # if the binning is not found, return the default binning (Added to support legacy 2x2 Sinistro obs)
             return default_mode['overhead'] + camera_type['fixed_overhead_per_exposure']
 
-        raise ConfigDBException(f'Instrument type {instrument_type} not found in configdb.')
+        raise InstrumentNotFoundException(f'Instrument type {instrument_type} not found in configdb.')
 
     def get_request_overheads(self, instrument_type: str) -> dict:
         """Get the set of overheads needed to compute the duration of a request.
@@ -597,7 +602,7 @@ class ConfigDB(object):
                                     for oeg in instrument['science_camera']['optical_element_groups']
                                 }
                             }
-        raise ConfigDBException(f'Instrument type {instrument_type} not found in configdb.')
+        raise InstrumentNotFoundException(f'Instrument type {instrument_type} not found in configdb.')
 
     @staticmethod
     def is_spectrograph(instrument_type):

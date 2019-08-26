@@ -7,10 +7,13 @@ from django.core.cache import cache
 from django.urls import reverse
 from django.forms.models import model_to_dict
 from django.utils.functional import lazy
+from django.utils import timezone
+from pytz import utc
+from datetime import datetime
 import logging
 
-from observation_portal.common.configdb import configdb
-from observation_portal.proposals.models import Proposal, TimeAllocationKey
+from observation_portal.common.configdb import configdb, InstrumentNotFoundException
+from observation_portal.proposals.models import Proposal, TimeAllocationKey, Semester
 from observation_portal.requestgroups.target_helpers import TARGET_TYPE_HELPER_MAP
 from observation_portal.common.rise_set_utils import get_rise_set_target
 from observation_portal.requestgroups.duration_utils import (
@@ -210,8 +213,17 @@ class Request(models.Model):
     def duration(self):
         cached_duration = cache.get('request_duration_{}'.format(self.id))
         if not cached_duration:
-            duration = get_request_duration({'configurations': [c.as_dict() for c in self.configurations.all()],
-                                             'windows': [w.as_dict() for w in self.windows.all()]})
+            try:
+                duration = get_request_duration({'configurations': [c.as_dict() for c in self.configurations.all()],
+                                                 'windows': [w.as_dict() for w in self.windows.all()]})
+            except InstrumentNotFoundException as e:
+                # Is this an old request?
+                if self.max_window_time < min([s.start for s in Semester.current_semesters()] or [timezone.now()]):
+                    logger.warn('Setting bogus duration for reqeuest with unknown instrument type')
+                    duration = -1
+                else:
+                    raise e
+
             cache.set('request_duration_{}'.format(self.id), duration, 86400 * 30 * 6)
             return duration
         else:
@@ -219,11 +231,11 @@ class Request(models.Model):
 
     @property
     def min_window_time(self):
-        return min([window.start for window in self.windows.all()])
+        return min([window.start for window in self.windows.all()] or [datetime.fromtimestamp(0).replace(tzinfo=utc)])
 
     @property
     def max_window_time(self):
-        return max([window.end for window in self.windows.all()])
+        return max([window.end for window in self.windows.all()] or [datetime.fromtimestamp(0).replace(tzinfo=utc)])
 
     @property
     def semester(self):
