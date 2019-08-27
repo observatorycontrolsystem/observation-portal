@@ -1,4 +1,5 @@
 from rest_framework.test import APITestCase
+from rest_framework import serializers
 from observation_portal.common.test_helpers import SetTimeMixin
 from django.utils import timezone
 from mixer.backend.django import mixer
@@ -944,6 +945,65 @@ class TestUpdateConfigurationStatusApi(TestObservationApiBase):
         self.assertEqual(request.state, 'PENDING')
         self.requestgroup.refresh_from_db()
         self.assertEqual(self.requestgroup.state, 'PENDING')
+
+
+class TestUpdateObservationApi(TestObservationApiBase):
+    def setUp(self):
+        super().setUp()
+
+    def test_update_observation_end_time_succeeds(self):
+        original_end = datetime(2016, 9, 5, 23, 35, 40).replace(tzinfo=timezone.utc)
+        observation = self._generate_observation_data(
+            self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
+        )
+        self._create_observation(observation)
+        observation = Observation.objects.first()
+        self.assertEqual(observation.end, original_end)
+
+        new_end = datetime(2016, 9, 5, 23, 47, 22).replace(tzinfo=timezone.utc)
+        update_data = {"end": datetime.strftime(new_end, '%Y-%m-%dT%H:%M:%SZ')}
+        self.client.patch(reverse('api:observations-detail', args=(observation.id,)), update_data)
+        observation.refresh_from_db()
+        self.assertEqual(observation.end, new_end)
+
+    def test_update_observation_end_before_start_does_nothing(self):
+        original_end = datetime(2016, 9, 5, 23, 35, 40).replace(tzinfo=timezone.utc)
+        observation = self._generate_observation_data(
+            self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
+        )
+        self._create_observation(observation)
+        observation = Observation.objects.first()
+
+        new_end = datetime(2016, 9, 5, 19, 35, 40).replace(tzinfo=timezone.utc)
+        update_data = {"end": datetime.strftime(new_end, '%Y-%m-%dT%H:%M:%SZ')}
+        self.client.patch(reverse('api:observations-detail', args=(observation.id,)), update_data)
+        observation.refresh_from_db()
+        self.assertEqual(observation.end, original_end)
+
+    def test_update_observation_end_must_be_in_future(self):
+        observation = self._generate_observation_data(
+            self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
+        )
+        self._create_observation(observation)
+        observation = Observation.objects.first()
+
+        new_end = datetime(2016, 8, 5, 19, 35, 40).replace(tzinfo=timezone.utc)
+        update_data = {"end": datetime.strftime(new_end, '%Y-%m-%dT%H:%M:%SZ')}
+        response = self.client.patch(reverse('api:observations-detail', args=(observation.id,)), update_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['non_field_errors'], ['Updated end time must be in the future'])
+
+    def test_update_observation_update_must_include_end(self):
+        observation = self._generate_observation_data(
+            self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
+        )
+        self._create_observation(observation)
+        observation = Observation.objects.first()
+
+        update_data = {'field_1': 'testtest', 'not_end': 2341}
+        response = self.client.patch(reverse('api:observations-detail', args=(observation.id,)), update_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['non_field_errors'], ['Observation update must include `end` field'])
 
 
 class TestLastScheduled(TestObservationApiBase):

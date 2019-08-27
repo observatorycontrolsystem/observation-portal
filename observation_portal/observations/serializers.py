@@ -279,6 +279,14 @@ class ObservationSerializer(serializers.ModelSerializer):
         fields = ('site', 'enclosure', 'telescope', 'start', 'end', 'priority', 'configuration_statuses', 'request')
 
     def validate(self, data):
+        if self.context.get('request').method == 'PATCH':
+            # For a partial update, only validate that the 'end' field is set, and that it is > now
+            if 'end' not in data:
+                raise serializers.ValidationError(_('Observation update must include `end` field'))
+            if data['end'] <= timezone.now():
+                raise serializers.ValidationError(_('Updated end time must be in the future'))
+            return data
+
         if data['end'] <= data['start']:
             raise serializers.ValidationError(_('End time must be after start time'))
 
@@ -320,6 +328,14 @@ class ObservationSerializer(serializers.ModelSerializer):
                 )))
 
         return data
+
+    def update(self, instance, validated_data):
+        if validated_data['end'] > instance.start:
+            # Only update the end time if it is > start time
+            instance.end = validated_data['end']
+            instance.save()
+
+        return instance
 
     def create(self, validated_data):
         configuration_statuses = validated_data.pop('configuration_statuses')
