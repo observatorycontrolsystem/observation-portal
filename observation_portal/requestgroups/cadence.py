@@ -28,7 +28,7 @@ def expand_cadence_request(request_dict, is_staff=False):
         request_dict['windows'] = [{'start': window_start, 'end': window_end}]
         intervals_by_site = get_filtered_rise_set_intervals_by_site(request_dict, is_staff=is_staff)
         largest_interval = get_largest_interval(intervals_by_site)
-        if largest_interval.total_seconds() >= request_duration and window_end > timezone.now():
+        if largest_interval.total_seconds() > request_duration and window_end > timezone.now():
             # this cadence window passes rise_set and is in the future so add it to the list
             request_copy = request_dict.copy()
             del request_copy['cadence']
