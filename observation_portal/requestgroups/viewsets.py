@@ -11,7 +11,8 @@ from dateutil.parser import parse
 from django.contrib.auth.models import User
 
 from observation_portal.proposals.models import Proposal, Semester, TimeAllocation
-from observation_portal.requestgroups.models import RequestGroup, Request, DraftRequestGroup, InstrumentConfig, Configuration
+from observation_portal.requestgroups.models import (RequestGroup, Request, DraftRequestGroup, InstrumentConfig,
+                                                     Configuration)
 from observation_portal.requestgroups.filters import RequestGroupFilter, RequestFilter
 from observation_portal.requestgroups.cadence import expand_cadence_request
 from observation_portal.requestgroups.serializers import RequestSerializer, RequestGroupSerializer
@@ -96,7 +97,7 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
         ).prefetch_related(
             Prefetch('requests', queryset=request_query),
             Prefetch('proposal', queryset=Proposal.objects.only('id').all()),
-            Prefetch('submitter', queryset=User.objects.only('username').all())
+            Prefetch('submitter', queryset=User.objects.only('username', 'is_staff').all())
         ).distinct()
 
         # queryset now contains all the schedulable URs and their associated requests and data
@@ -128,7 +129,9 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
                     )
                     continue
                 if time_left * OVERHEAD_ALLOWANCE >= (duration / 3600.0):
-                    request_group_data.append(request_group.as_dict())
+                    request_group_dict = request_group.as_dict()
+                    request_group_dict['is_staff'] = request_group.submitter.is_staff
+                    request_group_data.append(request_group_dict)
                     break
                 else:
                     logger.warning(
@@ -153,7 +156,7 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
         serializer = RequestGroupSerializer(data=request.data, context={'request': request})
         req_durations = {}
         if serializer.is_valid():
-            req_durations = get_request_duration_dict(serializer.validated_data['requests'])
+            req_durations = get_request_duration_dict(serializer.validated_data['requests'], request.user.is_staff)
             errors = {}
         else:
             errors = serializer.errors
@@ -179,7 +182,8 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
             if isinstance(req, dict) and req.get('cadence'):
                 cadence_request_serializer = CadenceRequestSerializer(data=req)
                 if cadence_request_serializer.is_valid():
-                    expanded_requests.extend(expand_cadence_request(cadence_request_serializer.validated_data))
+                    expanded_requests.extend(expand_cadence_request(cadence_request_serializer.validated_data,
+                                                                    request.user.is_staff))
                 else:
                     return Response(cadence_request_serializer.errors, status=400)
             else:
@@ -230,11 +234,11 @@ class RequestViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
 
     @action(detail=True)
     def airmass(self, request, pk=None):
-        return Response(get_airmasses_for_request_at_sites(self.get_object().as_dict()))
+        return Response(get_airmasses_for_request_at_sites(self.get_object().as_dict(), is_staff=request.user.is_staff))
 
     @action(detail=True)
     def telescope_states(self, request, pk=None):
-        telescope_states = get_telescope_states_for_request(self.get_object().as_dict())
+        telescope_states = get_telescope_states_for_request(self.get_object().as_dict(), is_staff=request.user.is_staff)
         str_telescope_states = {str(k): v for k, v in telescope_states.items()}
         return Response(str_telescope_states)
 
