@@ -1,5 +1,4 @@
 from rest_framework.test import APITestCase
-from rest_framework import serializers
 from observation_portal.common.test_helpers import SetTimeMixin
 from django.utils import timezone
 from mixer.backend.django import mixer
@@ -965,6 +964,10 @@ class TestUpdateObservationApi(TestObservationApiBase):
         self.client.patch(reverse('api:observations-detail', args=(observation.id,)), update_data)
         observation.refresh_from_db()
         self.assertEqual(observation.end, new_end)
+
+
+
+        self.assertEqual(1, 2)
 
     def test_update_observation_end_before_start_does_nothing(self):
         original_end = datetime(2016, 9, 5, 23, 35, 40).replace(tzinfo=timezone.utc)
