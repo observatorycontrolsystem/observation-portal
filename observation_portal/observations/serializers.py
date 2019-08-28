@@ -279,6 +279,14 @@ class ObservationSerializer(serializers.ModelSerializer):
         fields = ('site', 'enclosure', 'telescope', 'start', 'end', 'priority', 'configuration_statuses', 'request')
 
     def validate(self, data):
+        # If the user is not staff, check that they are allowed to make this observation
+        user = self.context['request'].user
+        proposal = data['request'].request_group.proposal
+        if not user.is_staff and proposal not in user.proposal_set.filter(direct_submission=True):
+            raise serializers.ValidationError(_(
+                'Non staff users can only create observations on proposals they belong to that allow direct submission'
+            ))
+
         if data['end'] <= data['start']:
             raise serializers.ValidationError(_('End time must be after start time'))
 

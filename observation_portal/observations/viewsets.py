@@ -13,7 +13,7 @@ from observation_portal.observations.serializers import (ObservationSerializer, 
                                                          ScheduleSerializer, CancelObservationsSerializer)
 from observation_portal.observations.filters import ObservationFilter, ConfigurationStatusFilter
 from observation_portal.common.mixins import ListAsDictMixin, CreateListModelMixin
-from observation_portal.accounts.permissions import IsAdminOrReadOnly
+from observation_portal.accounts.permissions import IsAdminOrReadOnly, IsDirectUser
 
 
 def observations_queryset(request):
@@ -37,7 +37,7 @@ def observations_queryset(request):
 
 
 class ScheduleViewSet(ListAsDictMixin, CreateListModelMixin, viewsets.ModelViewSet):
-    permission_classes = (IsAdminUser,)
+    permission_classes = (IsAdminOrReadOnly | IsDirectUser,)
     http_method_names = ['get', 'post', 'head', 'options']
     serializer_class = ScheduleSerializer
     filter_class = ObservationFilter
@@ -55,7 +55,7 @@ class ScheduleViewSet(ListAsDictMixin, CreateListModelMixin, viewsets.ModelViewS
 
 
 class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelViewSet):
-    permission_classes = (IsAdminOrReadOnly, )
+    permission_classes = (IsAdminOrReadOnly | IsDirectUser,)
     http_method_names = ['get', 'post', 'head', 'options']
     filter_class = ObservationFilter
     serializer_class = ObservationSerializer
@@ -82,7 +82,6 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
             observations = self.get_queryset()
             if 'ids' in cancel_serializer.data:
                 observations = observations.filter(pk__in=cancel_serializer.data['ids'])
-
             if 'start' in cancel_serializer.data:
                 observations = observations.filter(end__gt=cancel_serializer.data['start'])
             if 'end' in cancel_serializer.data:
@@ -101,6 +100,8 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
                     request__request_group__observation_type=RequestGroup.RAPID_RESPONSE)
             if not cancel_serializer.data.get('include_direct', False):
                 observations = observations.exclude(request__request_group__observation_type=RequestGroup.DIRECT)
+            if not request.user.is_staff:
+                observations = observations.filter(request__request_group__proposal__direct_submission=True)
             observations = observations.filter(state__in=['PENDING', 'IN_PROGRESS'])
             # Receive a list of observation id's to cancel
             num_canceled = Observation.cancel(observations)
