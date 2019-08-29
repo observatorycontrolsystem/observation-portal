@@ -279,7 +279,7 @@ class ObservationSerializer(serializers.ModelSerializer):
         fields = ('site', 'enclosure', 'telescope', 'start', 'end', 'priority', 'configuration_statuses', 'request')
 
     def validate(self, data):
-        # If the user is not staff, check that they are allowed to make this observation
+        # If the user is not staff, check that they are allowed to create this observation
         user = self.context['request'].user
         proposal = data['request'].request_group.proposal
         if not user.is_staff and proposal not in user.proposal_set.filter(direct_submission=True):

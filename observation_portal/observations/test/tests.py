@@ -122,7 +122,7 @@ class TestPostScheduleApi(SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json()['name'], self.observation['name'])
 
-    def test_post_observation_non_staff_is_direct_user_on_own_proposal(self):
+    def test_post_observation_non_staff_is_direct_user_on_own_direct_proposal(self):
         other_user = blend_user()
         mixer.blend(Membership, user=other_user, proposal=self.proposal)
         self.client.force_login(other_user)
@@ -141,7 +141,7 @@ class TestPostScheduleApi(SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(len(Observation.objects.all()), 0)
 
-    def test_post_observation_authenticated_is_direct_user_on_other_proposal(self):
+    def test_post_observation_non_staff_direct_user_on_other_proposal(self):
         other_user = blend_user()
         other_proposal = mixer.blend(Proposal, direct_submission=True)
         mixer.blend(Membership, proposal=other_proposal, user=other_user)
@@ -149,6 +149,7 @@ class TestPostScheduleApi(SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:schedule-list'), data=self.observation)
         self.assertEqual(response.status_code, 400)
         self.assertIn('do not belong to the proposal', str(response.content))
+        self.assertEqual(len(Observation.objects.all()), 0)
 
     def test_post_multiple_observations_succeeds(self):
         observations = [self.observation, self.observation, self.observation]
@@ -479,10 +480,10 @@ class TestPostObservationApi(TestObservationApiBase):
         self.assertEqual(response.status_code, 403)
         self.assertEqual(len(Observation.objects.all()), 0)
 
-    def test_non_staff_on_direct_proposal_submits_on_other_proposal_fails(self):
+    def test_non_staff_direct_user_submits_on_other_proposal_fails(self):
         non_staff_user = blend_user()
-        proposal = mixer.blend(Proposal, direct_submission=True)
-        mixer.blend(Membership, user=non_staff_user, proposal=proposal)
+        other_proposal = mixer.blend(Proposal, direct_submission=True)
+        mixer.blend(Membership, user=non_staff_user, proposal=other_proposal)
         self.client.force_login(non_staff_user)
         observation = self._generate_observation_data(
             self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
@@ -491,7 +492,7 @@ class TestPostObservationApi(TestObservationApiBase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(len(Observation.objects.all()), 0)
 
-    def test_non_staff_on_direct_proposal_submits_to_another_non_direct_proposal_of_theirs_fails(self):
+    def test_non_staff_direct_user_submits_to_non_direct_proposal_of_theirs_fails(self):
         non_staff_user = blend_user()
         proposal1 = mixer.blend(Proposal, direct_submission=True)
         mixer.blend(Membership, user=non_staff_user, proposal=proposal1)
@@ -510,7 +511,7 @@ class TestPostObservationApi(TestObservationApiBase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(len(Observation.objects.all()), 0)
 
-    def test_non_staff_on_direct_proposal_submits_on_own_proposal_succeeds(self):
+    def test_non_staff_direct_user_submits_on_own_direct_proposal_succeeds(self):
         non_staff_user = blend_user()
         proposal = mixer.blend(Proposal, direct_submission=True)
         mixer.blend(Membership, user=non_staff_user, proposal=proposal)
@@ -738,18 +739,19 @@ class TestPostObservationApi(TestObservationApiBase):
         self.assertEqual(len(ConfigurationStatus.objects.all()), 0)
 
     def test_non_staff_direct_user_cancels_observations_in_own_direct_proposal_succeeds(self):
+        self.proposal.direct_submission = True
+        self.proposal.save()
         observation = self._generate_observation_data(
             self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
         )
         self._create_observation([observation])
         other_user = blend_user()
         self.client.force_login(other_user)
-        self.proposal.direct_submission = True
-        self.proposal.save()
         mixer.blend(Membership, proposal=self.proposal, user=other_user)
         cancel_dict = {'ids': [Observation.objects.first().id]}
         response = self.client.post(reverse('api:observations-cancel'), data=cancel_dict)
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['canceled'], 1)
 
     def test_non_staff_direct_user_cancels_observations_in_own_non_direct_proposal_fails(self):
         observation = self._generate_observation_data(
@@ -775,6 +777,12 @@ class TestPostObservationApi(TestObservationApiBase):
         other_proposal = mixer.blend(Proposal, direct_submission=True)
         mixer.blend(Membership, proposal=other_proposal, user=other_user)
         cancel_dict = {'ids': [Observation.objects.first().id]}
+        # Check when the other proposal is not direct submission
+        response = self.client.post(reverse('api:observations-cancel'), data=cancel_dict)
+        self.assertEqual(response.json()['canceled'], 0)
+        # Now check when the other proposal is direct submission
+        self.proposal.direct_submission = True
+        self.proposal.save()
         response = self.client.post(reverse('api:observations-cancel'), data=cancel_dict)
         self.assertEqual(response.json()['canceled'], 0)
 
