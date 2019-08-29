@@ -100,7 +100,7 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
                     request__request_group__observation_type=RequestGroup.RAPID_RESPONSE)
             if not cancel_serializer.data.get('include_direct', False):
                 observations = observations.exclude(request__request_group__observation_type=RequestGroup.DIRECT)
-            if not request.user.is_staff:
+            if request.user and not request.user.is_staff:
                 observations = observations.filter(request__request_group__proposal__direct_submission=True)
             observations = observations.filter(state__in=['PENDING', 'IN_PROGRESS'])
             # Receive a list of observation id's to cancel
