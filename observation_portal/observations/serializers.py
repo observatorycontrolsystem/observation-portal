@@ -348,9 +348,11 @@ class ObservationSerializer(serializers.ModelSerializer):
                     start__lte=instance.end,
                     start__gte=old_end_time,
                     state='PENDING'
-                ).exclude(
-                    request__request_group__observation_type=RequestGroup.RAPID_RESPONSE
                 )
+                if instance.request.request_group.observation_type != RequestGroup.RAPID_RESPONSE:
+                    observations = observations.exclude(
+                        request__request_group__observation_type=RequestGroup.RAPID_RESPONSE
+                    )
                 num_canceled = Observation.cancel(observations)
                 logger.info(
                     "updated end time for observation {instance.id} to {instance.end}. Canceled {num_canceled} overlapping observations.")
