@@ -403,14 +403,15 @@ class TestObservationApiBase(SetTimeMixin, APITestCase):
         configuration.save()
 
     @staticmethod
-    def _generate_observation_data(request_id, configuration_id_list, guide_camera_name='xx03'):
+    def _generate_observation_data(request_id, configuration_id_list, guide_camera_name='xx03',
+                                   start="2016-09-05T22:35:39Z", end="2016-09-05T23:35:40Z"):
         observation = {
             "request": request_id,
             "site": "tst",
             "enclosure": "domb",
             "telescope": "1m0a",
-            "start": "2016-09-05T22:35:39Z",
-            "end": "2016-09-05T23:35:40Z",
+            "start": start,
+            "end": end,
             "configuration_statuses": []
         }
         for configuration_id in configuration_id_list:
@@ -950,6 +951,17 @@ class TestUpdateObservationApi(TestObservationApiBase):
     def setUp(self):
         super().setUp()
 
+    def _create_clone_observation(self, observation, start, end):
+        return mixer.blend(
+            Observation,
+            site=observation.site,
+            enclosure=observation.enclosure,
+            telescope=observation.telescope,
+            start=start.replace(tzinfo=timezone.utc),
+            end=end.replace(tzinfo=timezone.utc),
+            request=observation.request
+        )
+
     def test_update_observation_end_time_succeeds(self):
         original_end = datetime(2016, 9, 5, 23, 35, 40).replace(tzinfo=timezone.utc)
         observation = self._generate_observation_data(
@@ -965,9 +977,32 @@ class TestUpdateObservationApi(TestObservationApiBase):
         observation.refresh_from_db()
         self.assertEqual(observation.end, new_end)
 
+    def test_update_observation_end_time_cancels_overlapping_observations(self):
+        original_end = datetime(2016, 9, 2, 23, 35, 40).replace(tzinfo=timezone.utc)
+        self.window.start = datetime(2016, 9, 1, tzinfo=timezone.utc)
+        self.window.save()
+        observation = self._generate_observation_data(
+            self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id],
+            start="2016-09-02T22:35:39Z",
+            end="2016-09-02T23:35:40Z"
+        )
+        self._create_observation(observation)
+        observation = Observation.objects.first()
+        cancel_obs_1 = self._create_clone_observation(observation, datetime(2016, 9, 2, 23, 35, 41), datetime(2016, 9, 2, 23, 39, 59))
+        cancel_obs_2 = self._create_clone_observation(observation, datetime(2016, 9, 2, 23, 40, 0), datetime(2016, 9, 2, 13, 55, 34))
+        extra_obs_1 = self._create_clone_observation(observation, datetime(2016, 9, 2, 23, 55, 35), datetime(2016, 9, 3, 0, 14, 21))
 
-
-        self.assertEqual(1, 2)
+        new_end = datetime(2016, 9, 2, 23, 47, 22).replace(tzinfo=timezone.utc)
+        update_data = {"end": datetime.strftime(new_end, '%Y-%m-%dT%H:%M:%SZ')}
+        self.client.patch(reverse('api:observations-detail', args=(observation.id,)), update_data)
+        observation.refresh_from_db()
+        self.assertEqual(observation.end, new_end)
+        cancel_obs_1.refresh_from_db()
+        self.assertEqual(cancel_obs_1.state, 'CANCELED')
+        cancel_obs_2.refresh_from_db()
+        self.assertEqual(cancel_obs_2.state, 'CANCELED')
+        extra_obs_1.refresh_from_db()
+        self.assertEqual(extra_obs_1.state, 'PENDING')
 
     def test_update_observation_end_before_start_does_nothing(self):
         original_end = datetime(2016, 9, 5, 23, 35, 40).replace(tzinfo=timezone.utc)

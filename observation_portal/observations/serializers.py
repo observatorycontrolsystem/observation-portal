@@ -9,6 +9,10 @@ from observation_portal.requestgroups.serializers import (RequestSerializer, Req
 from observation_portal.requestgroups.models import RequestGroup, AcquisitionConfig, GuidingConfig, Target
 from observation_portal.proposals.models import Proposal
 
+import logging
+
+logger = logging.getLogger()
+
 
 class SummarySerializer(serializers.ModelSerializer):
     class Meta:
@@ -332,8 +336,24 @@ class ObservationSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         if validated_data['end'] > instance.start:
             # Only update the end time if it is > start time
+            old_end_time = instance.end
             instance.end = validated_data['end']
             instance.save()
+            # Cancel observations that used to be under this observation
+            if instance.end > old_end_time:
+                observations = Observation.objects.filter(
+                    site=instance.site,
+                    enclosure=instance.enclosure,
+                    telescope=instance.telescope,
+                    start__lte=instance.end,
+                    start__gte=old_end_time,
+                    state='PENDING'
+                ).exclude(
+                    request__request_group__observation_type=RequestGroup.RAPID_RESPONSE
+                )
+                num_canceled = Observation.cancel(observations)
+                logger.info(
+                    "updated end time for observation {instance.id} to {instance.end}. Canceled {num_canceled} overlapping observations.")
 
         return instance
 
