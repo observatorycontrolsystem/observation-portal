@@ -194,8 +194,10 @@ class ScheduleSerializer(serializers.ModelSerializer):
 
             # Also check the guide and acquisition cameras are valid if specified
             # But only if the guide mode is set
-            if (configuration['guiding_config']['mode'] != GuidingConfig.OFF or
-                    configuration['acquisition_config']['mode'] != AcquisitionConfig.OFF):
+            if (
+                    configuration['guiding_config'].get('mode', GuidingConfig.OFF) != GuidingConfig.OFF or
+                    configuration['acquisition_config'].get('mode', AcquisitionConfig.OFF) != AcquisitionConfig.OFF
+            ):
                 if not configuration.get('guide_camera_name', ''):
                     if (
                         'extra_params' in configuration
