@@ -1377,6 +1377,13 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         self.assertIn('optical element magic of type filter is not available', str(response.content))
         self.assertEqual(response.status_code, 400)
 
+    def test_filter_case_is_overridden(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter'] = 'AiR'
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertEqual(response.json()['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter'], 'air')
+        self.assertEqual(response.status_code, 201)
+
     def test_filter_not_necessary_for_type(self):
         good_data = self.generic_payload.copy()
 
