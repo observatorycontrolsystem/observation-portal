@@ -59,7 +59,7 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
     ordering = ('-id',)
 
     def get_queryset(self):
-        return observations_queryset()
+        return observations_queryset().prefetch_related('request__windows', 'request__location').distinct()
 
     @action(detail=False, methods=['post'])
     def cancel(self, request):
@@ -117,9 +117,11 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
             site = request.data[0]['site']
             logger.warn('Begin saving {} observations for {} site'.format(len(request.data), site))
             serializer = self.get_serializer(data=request.data)
+            logger.warn('Created serializer for {} observations for {} site'.format(len(request.data), site))
             errors = {}
             try:
                 serializer.is_valid(raise_exception=True)
+                logger.warn('Finished validating {} observations for {} site'.format(len(request.data), site))
                 observations = serializer.save()
                 logger.warn('Finished bulk saving {} observations for {} site'.format(len(observations), site))
             except ValidationError:
