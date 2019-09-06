@@ -9,6 +9,9 @@ from observation_portal.requestgroups.serializers import (RequestSerializer, Req
 from observation_portal.requestgroups.models import RequestGroup, AcquisitionConfig, GuidingConfig, Target
 from observation_portal.proposals.models import Proposal
 
+import logging
+logger = logging.getLogger()
+
 
 class SummarySerializer(serializers.ModelSerializer):
     class Meta:
@@ -286,6 +289,9 @@ class ObservationSerializer(serializers.ModelSerializer):
 
         # Validate that the start and end times are in one of the requests windows
         in_a_window = False
+        logger.warn("Validating the observation is within a window: request {}, start {}, end {}".format(
+            data['request'].id, data['start'], data['end']
+        ))
         for window in data['request'].windows.all():
             if data['start'] >= window.start.replace(microsecond=0) and data['end'] <= window.end:
                 in_a_window = True
@@ -293,6 +299,10 @@ class ObservationSerializer(serializers.ModelSerializer):
 
         if not in_a_window:
             raise serializers.ValidationError(_('The start {} and end {} times do not fall within any window of the request'.format(data['start'].isoformat(), data['end'].isoformat())))
+
+        logger.warn("Validating the observation location is valid: request {}, site {}, enc {}, tel {}".format(
+            data['request'].id, data['site'], data['enclosure'], data['telescope']
+        ))
 
         # Validate that the site, enclosure, and telescope match the location of the request
         if (
@@ -306,6 +316,12 @@ class ObservationSerializer(serializers.ModelSerializer):
             )))
 
         # Validate that the site, enclosure, telescope has the appropriate instrument
+
+        logger.warn("Validating the instrument is available: request {}, instrument type {}, instrument name {}".format(
+            data['request'].id, data['request'].configurations.first().instrument_type,
+            data['configuration_statuses'][0]['instrument_name']
+        ))
+
         available_instruments = configdb.get_instruments_at_location(
             data['site'], data['enclosure'], data['telescope'], only_schedulable=False
         )
