@@ -14,6 +14,9 @@ from observation_portal.observations.serializers import (ObservationSerializer, 
 from observation_portal.observations.filters import ObservationFilter, ConfigurationStatusFilter
 from observation_portal.common.mixins import ListAsDictMixin, CreateListModelMixin
 
+import logging
+logger = logging.getLogger()
+
 
 def observations_queryset():
     qs = Observation.objects.all()
@@ -106,32 +109,37 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
         cache_key = 'observation_portal_last_schedule_time'
         if not isinstance(request.data, list):
             # Just do the default create for the single block case
-            created_obs = super().create(request, args, kwargs)
             site = request.data['site']
+            created_obs = super().create(request, args, kwargs)
             cache.set(cache_key + f"_{site}", timezone.now(), None)
             return created_obs
         else:
+            site = request.data[0]['site']
+            logger.warn('Begin saving {} observations for {} site'.format(len(request.data), site))
             serializer = self.get_serializer(data=request.data)
             errors = {}
             try:
                 serializer.is_valid(raise_exception=True)
                 observations = serializer.save()
+                logger.warn('Finished bulk saving {} observations for {} site'.format(len(observations), site))
             except ValidationError:
                 # fall back to individually serializing and saving requests if there are any with errors
                 observations = []
                 for i, error in enumerate(serializer.errors):
                     if error:
+                        logger.warn('Observation {} had serialization error {} for {} site'.format(i, error, site))
                         errors[i] = error
                     else:
                         individual_serializer = self.get_serializer(data=serializer.initial_data[i])
                         if individual_serializer.is_valid():
                             observations.append(individual_serializer.save())
                         else:
+                            logger.warn('Observation {} had serialization error {} for {} site'.format(i, individual_serializer.error, site))
                             errors[i] = individual_serializer.error
-            site = request.data[0]['site']
             cache.set(cache_key + f"_{site}", timezone.now(), None)
+            logger.warn('Finished updating observations cache for {} site'.format(site))
             return Response({'num_created': len(observations),
-                                 'errors': errors}, status=201)
+                             'errors': errors}, status=201)
 
 
 class ConfigurationStatusViewSet(viewsets.ModelViewSet):
