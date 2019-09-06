@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.utils import timezone
+from django.core.cache import cache
 from django.utils.translation import ugettext as _
 
 from observation_portal.common.configdb import configdb
@@ -358,6 +359,7 @@ class ObservationSerializer(serializers.ModelSerializer):
                 num_canceled = Observation.cancel(observations)
                 logger.info(
                     "updated end time for observation {instance.id} to {instance.end}. Canceled {num_canceled} overlapping observations.")
+            cache.set('observation_portal_last_change_time', timezone.now(), None)
 
         return instance
 
