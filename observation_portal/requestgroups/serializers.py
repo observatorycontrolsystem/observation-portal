@@ -662,6 +662,7 @@ class RequestGroupSerializer(serializers.ModelSerializer):
         request_data = validated_data.pop('requests')
 
         request_group = RequestGroup.objects.create(**validated_data)
+        logger.warn("requestgroup serializer create created rg")
 
         for r in request_data:
             configurations_data = r.pop('configurations')
@@ -669,11 +670,14 @@ class RequestGroupSerializer(serializers.ModelSerializer):
             location_data = r.pop('location', {})
             windows_data = r.pop('windows', [])
             request = Request.objects.create(request_group=request_group, **r)
+            logger.warn("requestgroup serializer create created req")
 
             if validated_data['observation_type'] != RequestGroup.DIRECT:
                 Location.objects.create(request=request, **location_data)
+                logger.warn("requestgroup serializer create created location")
                 for window_data in windows_data:
                     Window.objects.create(request=request, **window_data)
+                    logger.warn("requestgroup serializer create created window")
 
             for configuration_data in configurations_data:
                 instrument_configs_data = configuration_data.pop('instrument_configs')
@@ -682,11 +686,13 @@ class RequestGroupSerializer(serializers.ModelSerializer):
                 target_data = configuration_data.pop('target')
                 constraints_data = configuration_data.pop('constraints')
                 configuration = Configuration.objects.create(request=request, **configuration_data)
+                logger.warn("requestgroup serializer create created configuration")
 
                 AcquisitionConfig.objects.create(configuration=configuration, **acquisition_config_data)
                 GuidingConfig.objects.create(configuration=configuration, **guiding_config_data)
                 Target.objects.create(configuration=configuration, **target_data)
                 Constraints.objects.create(configuration=configuration, **constraints_data)
+                logger.warn("requestgroup serializer create created other stuff")
 
                 for instrument_config_data in instrument_configs_data:
                     rois_data = []
@@ -694,11 +700,13 @@ class RequestGroupSerializer(serializers.ModelSerializer):
                         rois_data = instrument_config_data.pop('rois')
                     instrument_config = InstrumentConfig.objects.create(configuration=configuration,
                                                                         **instrument_config_data)
+                    logger.warn("requestgroup serializer create created instrument config")
                     for roi_data in rois_data:
                         RegionOfInterest.objects.create(instrument_config=instrument_config, **roi_data)
 
         if validated_data['observation_type'] == RequestGroup.NORMAL:
             debit_ipp_time(request_group)
+            logger.warn("requestgroup serializer create debitted ipp time")
 
         logger.info('RequestGroup created', extra={'tags': {
             'user': request_group.submitter.username,
