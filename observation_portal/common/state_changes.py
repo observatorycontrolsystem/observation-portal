@@ -149,6 +149,7 @@ def validate_ipp(request_group_dict, total_duration_dict):
         time_allocations_dict[tak] -= (duration_hours * ipp_value)
 
 
+@transaction.atomic
 def debit_ipp_time(request_group):
     ipp_value = request_group.ipp_value - 1
     if ipp_value <= 0:
@@ -175,6 +176,7 @@ def debit_ipp_time(request_group):
     logger.warn("debit_ipp_time end")
 
 
+@transaction.atomic
 def modify_ipp_time_from_requests(ipp_val, requests_list, modification='debit'):
     ipp_value = ipp_val - 1
     if ipp_value == 0:
