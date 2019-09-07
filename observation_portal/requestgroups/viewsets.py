@@ -64,7 +64,9 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
         ).distinct()
 
     def perform_create(self, serializer):
+        logger.warning("requestgroups perform_create start")
         serializer.save(submitter=self.request.user)
+        logger.warning("requestgroups perform_create end")
 
     @action(detail=False, methods=['get'], permission_classes=(IsAdminUser,))
     def schedulable_requests(self, request):

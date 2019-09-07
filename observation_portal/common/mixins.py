@@ -2,6 +2,9 @@ from django_filters import fields, IsoDateTimeFilter
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.forms import DateTimeField
 
+import logging
+
+logger = logging.getLogger()
 
 class ListAsDictMixin(object):
     def list(self, request, *args, **kwargs):
@@ -15,6 +18,7 @@ class ListAsDictMixin(object):
 # from https://stackoverflow.com/questions/14666199/how-do-i-create-multiple-model-instances-with-django-rest-framework
 class CreateListModelMixin(object):
     def get_serializer(self, *args, **kwargs):
+        logger.warn("create list model mixin get serializer start")
         if isinstance(kwargs.get('data', {}), list):
             kwargs['many'] = True
         return super().get_serializer(*args, **kwargs)

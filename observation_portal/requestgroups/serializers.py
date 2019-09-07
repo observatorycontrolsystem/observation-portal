@@ -658,6 +658,7 @@ class RequestGroupSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def create(self, validated_data):
+        logger.warn("requestgroup serializer create start")
         request_data = validated_data.pop('requests')
 
         request_group = RequestGroup.objects.create(**validated_data)
@@ -706,9 +707,11 @@ class RequestGroupSerializer(serializers.ModelSerializer):
         }})
         cache.set('observation_portal_last_change_time', timezone.now(), None)
 
+        logger.warn("requestgroup serializer create end")
         return request_group
 
     def validate(self, data):
+        logger.warn("requestgroup serializer validate start")
         # check that the user belongs to the supplied proposal
         user = self.context['request'].user
         if data['proposal'] not in user.proposal_set.all():
@@ -808,9 +811,12 @@ class RequestGroupSerializer(serializers.ModelSerializer):
         except TimeAllocationError as e:
             raise serializers.ValidationError(repr(e))
 
+        logger.warn("requestgroup serializer validate end")
+
         return data
 
     def validate_requests(self, value):
+        logger.warn("requestgroup serializer validate request start")
         if not value:
             raise serializers.ValidationError(_('You must specify at least 1 request'))
         return value
