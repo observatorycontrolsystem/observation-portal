@@ -6,7 +6,7 @@
     :index="index" 
     :errors="errors"
     :canremove="this.index > 0" 
-    :cancopy="false"
+    :cancopy="true"
     @remove="$emit('remove')"
     @copy="$emit('copy')"
     @show="show = $event"

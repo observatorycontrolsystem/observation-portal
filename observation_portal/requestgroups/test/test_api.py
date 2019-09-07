@@ -1554,7 +1554,6 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         for i, configuration in enumerate(rg['requests'][0]['configurations']):
             self.assertEqual(configuration['priority'], i + 1)
 
-    @skip("Requires multiple instrument configs")
     def test_fill_window_on_more_than_one_instrument_config_fails(self):
         bad_data = self.generic_payload.copy()
         bad_data['requests'][0]['configurations'][0]['instrument_configs'].append(
@@ -1576,7 +1575,6 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
                            initial_exposure_count)
         self.assertEqual(response.status_code, 201)
 
-    @skip("Requires multiple instrument configs")
     def test_fill_window_two_instrument_configs_one_false_fills_the_window(self):
         good_data = self.generic_payload.copy()
         good_data['requests'][0]['configurations'][0]['instrument_configs'].append(
@@ -1591,7 +1589,6 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
                            initial_exposure_count)
         self.assertEqual(response.status_code, 201)
 
-    @skip("Requires multiple instrument configs")
     def test_fill_window_two_instrument_configs_one_blank_fills_the_window(self):
         good_data = self.generic_payload.copy()
         good_data['requests'][0]['configurations'][0]['instrument_configs'].append(
@@ -1604,7 +1601,6 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         self.assertGreater(rg['requests'][0]['configurations'][0]['instrument_configs'][0]['exposure_count'], initial_exposure_count)
         self.assertEqual(response.status_code, 201)
 
-    @skip("Requires multiple instrument configs")
     def test_fill_window_two_instrument_configs_first_fills_the_window(self):
         good_data = self.generic_payload.copy()
         good_data['requests'][0]['configurations'][0]['instrument_configs'].append(
@@ -1760,15 +1756,6 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertEqual(response.status_code, 400)
         self.assertIn('Must submit at least one bound for a region of interest', str(response.content))
-
-    def test_multiple_instrument_configs_currently_rejected(self):
-        bad_data = self.generic_payload.copy()
-        bad_data['requests'][0]['configurations'][0]['instrument_configs'].append(
-            bad_data['requests'][0]['configurations'][0]['instrument_configs'][0].copy()
-        )
-        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn('Currently only a single instrument_config', str(response.content))
 
     def test_multiple_same_targets_and_constraints_accepted(self):
         good_data = self.generic_payload.copy()
