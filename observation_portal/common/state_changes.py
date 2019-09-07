@@ -156,7 +156,7 @@ def debit_ipp_time(request_group):
         return
     try:
         logger.warn("debit_ipp_time getting time allocations")
-        time_allocations = request_group.timeallocations
+        time_allocations = request_group.timeallocations.select_for_update()
         time_allocations_dict = {
             TimeAllocationKey(ta.semester.id, ta.instrument_type): ta for ta in time_allocations.all()
         }
@@ -167,7 +167,7 @@ def debit_ipp_time(request_group):
             time_allocations_dict[tak].ipp_time_available -= (ipp_value * duration_hours)
             logger.warn("debit_ipp_time saving time allocation")
             time_allocations_dict[tak].save()
-            
+      
     except Exception as e:
         logger.warning(_(
             f'Problem debiting ipp on creation for request_group {request_group.id} on proposal '
@@ -183,7 +183,7 @@ def modify_ipp_time_from_requests(ipp_val, requests_list, modification='debit'):
         return
     try:
         for request in requests_list:
-            time_allocations = request.timeallocations
+            time_allocations = request.timeallocations.select_for_update()
             for time_allocation in time_allocations:
                 duration_hours = request.duration / 3600
                 modified_time = time_allocation.ipp_time_available

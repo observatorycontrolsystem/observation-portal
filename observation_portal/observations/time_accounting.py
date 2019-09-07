@@ -8,7 +8,7 @@ import logging
 
 logger = logging.getLogger()
 
-
+@transaction.atomic
 def on_summary_update_time_accounting(current, instance):
     """ Whenever a summary is created or updated, do time accounting based on the completed time """
     observation_type = instance.configuration_status.observation.request.request_group.observation_type
@@ -24,7 +24,7 @@ def on_summary_update_time_accounting(current, instance):
 
     if time_difference:
         with transaction.atomic():
-            time_allocations = instance.configuration_status.observation.request.timeallocations
+            time_allocations = instance.configuration_status.observation.request.timeallocations.select_for_update()
             for time_allocation in time_allocations:
                 if time_allocation.instrument_type.upper() == instance.configuration_status.configuration.instrument_type.upper():
                     if observation_type == RequestGroup.NORMAL:
