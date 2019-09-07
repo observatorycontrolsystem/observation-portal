@@ -154,20 +154,25 @@ def debit_ipp_time(request_group):
     if ipp_value <= 0:
         return
     try:
+        logger.warn("debit_ipp_time getting time allocations")
         time_allocations = request_group.timeallocations
         time_allocations_dict = {
             TimeAllocationKey(ta.semester.id, ta.instrument_type): ta for ta in time_allocations.all()
         }
+        logger.warn("debit_ipp_time getting total duration")
         total_duration_dict = request_group.total_duration
         for tak, duration in total_duration_dict.items():
             duration_hours = duration / 3600
             time_allocations_dict[tak].ipp_time_available -= (ipp_value * duration_hours)
+            logger.warn("debit_ipp_time saving time allocation")
             time_allocations_dict[tak].save()
+            
     except Exception as e:
         logger.warning(_(
             f'Problem debiting ipp on creation for request_group {request_group.id} on proposal '
             f'{request_group.proposal.id}: {repr(e)}'
         ))
+    logger.warn("debit_ipp_time end")
 
 
 def modify_ipp_time_from_requests(ipp_val, requests_list, modification='debit'):
