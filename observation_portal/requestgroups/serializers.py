@@ -713,7 +713,7 @@ class RequestGroupSerializer(serializers.ModelSerializer):
             'tracking_num': request_group.id,
             'name': request_group.name
         }})
-        cache.set('observation_portal_last_change_time', timezone.now(), None)
+        # cache.set('observation_portal_last_change_time', timezone.now(), None)
 
         logger.warn("requestgroup serializer create end")
         return request_group
