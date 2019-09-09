@@ -156,7 +156,7 @@ def debit_ipp_time(request_group):
         return
     try:
         logger.warn("debit_ipp_time getting time allocations")
-        time_allocations = request_group.timeallocations.select_for_update()
+        time_allocations = request_group.timeallocations.select_for_update(nowait=True)
         time_allocations_dict = {
             TimeAllocationKey(ta.semester.id, ta.instrument_type): ta for ta in time_allocations.all()
         }
@@ -183,7 +183,7 @@ def modify_ipp_time_from_requests(ipp_val, requests_list, modification='debit'):
         return
     try:
         for request in requests_list:
-            time_allocations = request.timeallocations.select_for_update()
+            time_allocations = request.timeallocations.select_for_update(nowait=True)
             for time_allocation in time_allocations:
                 duration_hours = request.duration / 3600
                 modified_time = time_allocation.ipp_time_available
