@@ -168,7 +168,7 @@ def debit_ipp_time(request_group):
             ipp_difference = ipp_value * duration_hours
             # time_allocations_dict[tak].ipp_time_available -= (ipp_value * duration_hours)
             logger.warn("debit_ipp_time saving time allocation")
-            TimeAllocation.objects.filter(id=time_allocations_dict[tak].id).update(ipp_time_available=F('ipp_time_available') - ipp_difference)
+            TimeAllocation.objects.select_for_update(of=('self')).filter(id=time_allocations_dict[tak].id).update(ipp_time_available=F('ipp_time_available') - ipp_difference)
             # time_allocations_dict[tak].save()
     except Exception as e:
         logger.warning(_(
@@ -205,7 +205,7 @@ def modify_ipp_time_from_requests(ipp_val, requests_list, modification='debit'):
                         f'available after crediting will be capped at ipp_limit'
                     ))
                     modified_time = time_allocation.ipp_limit - time_allocation.ipp_time_available
-                TimeAllocation.objects.filter(id=time_allocation.id).update(ipp_time_available=F('ipp_time_available') + modified_time)
+                TimeAllocation.objects.select_for_update(of=('self')).filter(id=time_allocation.id).update(ipp_time_available=F('ipp_time_available') + modified_time)
                 # time_allocation.ipp_time_available = modified_time
                 # time_allocation.save()
     except Exception as e:
