@@ -1,5 +1,6 @@
 from django.utils import timezone
 from django.db import transaction
+from django.db.models import F
 from django.utils.translation import ugettext as _
 from django.core.cache import cache
 
@@ -156,7 +157,7 @@ def debit_ipp_time(request_group):
         return
     try:
         logger.warn("debit_ipp_time getting time allocations")
-        time_allocations = request_group.timeallocations.select_for_update(nowait=True)
+        time_allocations = request_group.timeallocations
         time_allocations_dict = {
             TimeAllocationKey(ta.semester.id, ta.instrument_type): ta for ta in time_allocations.all()
         }
@@ -164,10 +165,11 @@ def debit_ipp_time(request_group):
         total_duration_dict = request_group.total_duration
         for tak, duration in total_duration_dict.items():
             duration_hours = duration / 3600
-            time_allocations_dict[tak].ipp_time_available -= (ipp_value * duration_hours)
+            ipp_difference = ipp_value * duration_hours
+            # time_allocations_dict[tak].ipp_time_available -= (ipp_value * duration_hours)
             logger.warn("debit_ipp_time saving time allocation")
-            time_allocations_dict[tak].save()
-      
+            TimeAllocation.objects.filter(id=time_allocations_dict[tak].id).update(ipp_time_available=F('ipp_time_available') - ipp_difference)
+            # time_allocations_dict[tak].save()
     except Exception as e:
         logger.warning(_(
             f'Problem debiting ipp on creation for request_group {request_group.id} on proposal '
@@ -183,28 +185,29 @@ def modify_ipp_time_from_requests(ipp_val, requests_list, modification='debit'):
         return
     try:
         for request in requests_list:
-            time_allocations = request.timeallocations.select_for_update(nowait=True)
+            time_allocations = request.timeallocations
             for time_allocation in time_allocations:
                 duration_hours = request.duration / 3600
-                modified_time = time_allocation.ipp_time_available
+                modified_time = 0
                 if modification == 'debit':
                     modified_time -= (duration_hours * ipp_value)
                 elif modification == 'credit':
                     modified_time += abs(ipp_value) * duration_hours
-                if modified_time < 0:
+                if (modified_time + time_allocation.ipp_time_available) < 0:
                     logger.warning(_(
                         f'ipp debiting for request {request.id} would set ipp_time_available < 0. Time available after '
                         f'debiting will be capped at 0'
                     ))
-                    modified_time = 0
-                elif modified_time > time_allocation.ipp_limit:
+                    modified_time = time_allocation.ipp_time_available
+                elif (modified_time + time_allocation.ipp_time_available) > time_allocation.ipp_limit:
                     logger.warning(_(
                         f'ipp crediting for request {request.id} would set ipp_time_available > ipp_limit. Time '
                         f'available after crediting will be capped at ipp_limit'
                     ))
-                    modified_time = time_allocation.ipp_limit
-                time_allocation.ipp_time_available = modified_time
-                time_allocation.save()
+                    modified_time = time_allocation.ipp_limit - time_allocation.ipp_time_available
+                TimeAllocation.objects.filter(id=time_allocation.id).update(ipp_time_available=F('ipp_time_available') + modified_time)
+                # time_allocation.ipp_time_available = modified_time
+                # time_allocation.save()
     except Exception as e:
         logger.warning(_(f'Problem {modification}ing ipp time for request {request.id}: {repr(e)}'))
 
