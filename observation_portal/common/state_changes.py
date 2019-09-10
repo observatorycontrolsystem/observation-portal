@@ -1,5 +1,6 @@
 from django.utils import timezone
 from django.db import transaction
+from django.db.models import F
 from django.utils.translation import ugettext as _
 from django.core.cache import cache
 
@@ -12,12 +13,10 @@ from math import isclose, floor
 
 logger = logging.getLogger(__name__)
 
-
 REQUEST_STATE_MAP = {
-    'PENDING': ['COMPLETED', 'WINDOW_EXPIRED', 'CANCELED'],
-    'COMPLETED': [],
-    'WINDOW_EXPIRED': ['COMPLETED'],
-    'CANCELED': ['COMPLETED'],
+    'COMPLETED': ['PENDING', 'WINDOW_EXPIRED', 'CANCELED'],
+    'WINDOW_EXPIRED': ['PENDING'],
+    'CANCELED': ['PENDING']
 }
 
 TERMINAL_REQUEST_STATES = ['COMPLETED', 'CANCELED', 'WINDOW_EXPIRED']
@@ -41,7 +40,7 @@ class TimeAllocationError(Exception):
 
 
 def valid_request_state_change(old_state, new_state, obj):
-    if new_state not in REQUEST_STATE_MAP[old_state]:
+    if old_state not in REQUEST_STATE_MAP[new_state]:
         raise InvalidStateChange(_(f'Cannot transition from request state {old_state} to {new_state} for {obj}'))
 
 
@@ -65,7 +64,6 @@ def on_configuration_status_state_change(instance):
     update_request_group_state(instance.observation.request.request_group)
 
 
-@transaction.atomic
 def on_request_state_change(old_request, new_request):
     if old_request.state == new_request.state:
         return
@@ -92,15 +90,13 @@ def on_request_state_change(old_request, new_request):
                 modify_ipp_time_from_requests(ipp_value, [new_request], 'credit')
 
 
-@transaction.atomic
 def on_requestgroup_state_change(old_requestgroup, new_requestgroup):
     if old_requestgroup.state == new_requestgroup.state:
         return
     valid_request_state_change(old_requestgroup.state, new_requestgroup.state, old_requestgroup)
     if new_requestgroup.state in TERMINAL_REQUEST_STATES:
-        for r in new_requestgroup.requests.filter(state__in=['PENDING']):
-            r.state = new_requestgroup.state
-            r.save()
+        new_requestgroup.requests.filter(state__iexact='PENDING').update(
+            state=new_requestgroup.state, modified=timezone.now())
 
 
 def update_observation_state(observation):
@@ -161,8 +157,10 @@ def debit_ipp_time(request_group):
         total_duration_dict = request_group.total_duration
         for tak, duration in total_duration_dict.items():
             duration_hours = duration / 3600
-            time_allocations_dict[tak].ipp_time_available -= (ipp_value * duration_hours)
-            time_allocations_dict[tak].save()
+            ipp_difference = ipp_value * duration_hours
+            with transaction.atomic():
+                TimeAllocation.objects.select_for_update(of=('self')).filter(id=time_allocations_dict[tak].id).update(
+                    ipp_time_available=F('ipp_time_available') - ipp_difference)
     except Exception as e:
         logger.warning(_(
             f'Problem debiting ipp on creation for request_group {request_group.id} on proposal '
@@ -179,25 +177,26 @@ def modify_ipp_time_from_requests(ipp_val, requests_list, modification='debit'):
             time_allocations = request.timeallocations
             for time_allocation in time_allocations:
                 duration_hours = request.duration / 3600
-                modified_time = time_allocation.ipp_time_available
+                modified_time = 0
                 if modification == 'debit':
                     modified_time -= (duration_hours * ipp_value)
                 elif modification == 'credit':
                     modified_time += abs(ipp_value) * duration_hours
-                if modified_time < 0:
+                if (modified_time + time_allocation.ipp_time_available) < 0:
                     logger.warning(_(
                         f'ipp debiting for request {request.id} would set ipp_time_available < 0. Time available after '
                         f'debiting will be capped at 0'
                     ))
-                    modified_time = 0
-                elif modified_time > time_allocation.ipp_limit:
+                    modified_time = time_allocation.ipp_time_available
+                elif (modified_time + time_allocation.ipp_time_available) > time_allocation.ipp_limit:
                     logger.warning(_(
                         f'ipp crediting for request {request.id} would set ipp_time_available > ipp_limit. Time '
                         f'available after crediting will be capped at ipp_limit'
                     ))
-                    modified_time = time_allocation.ipp_limit
-                time_allocation.ipp_time_available = modified_time
-                time_allocation.save()
+                    modified_time = time_allocation.ipp_limit - time_allocation.ipp_time_available
+                with transaction.atomic():
+                    TimeAllocation.objects.select_for_update(of=('self')).filter(
+                        id=time_allocation.id).update(ipp_time_available=F('ipp_time_available') + modified_time)
     except Exception as e:
         logger.warning(_(f'Problem {modification}ing ipp time for request {request.id}: {repr(e)}'))
 
@@ -228,11 +227,10 @@ def update_request_state(request, configuration_statuses, request_group_expired)
 
     with transaction.atomic():
         # Re-get the request and lock. If the new state is a valid state transition, set it on the request atomically.
-        req = Request.objects.select_for_update().get(pk=request.id)
-        if new_request_state in REQUEST_STATE_MAP[req.state]:
+        if (Request.objects.select_for_update().get(
+            pk=request.id, state__in=REQUEST_STATE_MAP[new_request_state]).update(
+                state=new_request_state, modified=timezone.now())):
             state_changed = True
-            req.state = new_request_state
-        req.save()
 
     return state_changed
 
@@ -264,23 +262,17 @@ def update_request_states_for_window_expiration():
                 if request.max_window_time < now:
                     logger.info(f'Expiring request {request.id}', extra={'tags': {'request_num': request.id}})
                     with transaction.atomic():
-                        req = Request.objects.select_for_update().get(pk=request.id)
-                        if req.state == 'PENDING':
-                            req.state = 'WINDOW_EXPIRED'
+                        if Request.objects.select_for_update().get(pk=request.id, state='PENDING').update(state='WINDOW_EXPIRED'):
                             states_changed = True
                             request_states_changed = True
-                            req.save()
         else:
             for request in request_group.requests.all().prefetch_related('observation_set'):
                 if request.observation_set.first().end < now:
                     logger.info(f'Expiring DIRECT request {request.id}', extra={'tags': {'request_num': request.id}})
                     with transaction.atomic():
-                        req = Request.objects.select_for_update().get(pk=request.id)
-                        if req.state == 'PENDING':
-                            req.state = 'WINDOW_EXPIRED'
+                        if Request.objects.select_for_update().get(pk=request.id, state='PENDING').update(state='WINDOW_EXPIRED'):
                             states_changed = True
                             request_states_changed = True
-                            req.save()
         if request_states_changed:
             update_request_group_state(request_group)
     return states_changed
@@ -290,9 +282,8 @@ def update_request_group_state(request_group):
     """Update the state of the request group if possible. Return True if the state changed, else False."""
     new_request_group_state = aggregate_request_states(request_group)
     with transaction.atomic():
-        request_group = RequestGroup.objects.select_for_update().get(pk=request_group.id)
-        if new_request_group_state in REQUEST_STATE_MAP[request_group.state]:
-            request_group.state = new_request_group_state
-            request_group.save()
+        if (RequestGroup.objects.select_for_update().get(
+            pk=request_group.id, state__in=REQUEST_STATE_MAP[new_request_group_state]).update(
+                state=new_request_group_state, modified=timezone.now())):
             return True
     return False
