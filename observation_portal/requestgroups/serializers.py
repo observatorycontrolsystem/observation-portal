@@ -656,53 +656,53 @@ class RequestGroupSerializer(serializers.ModelSerializer):
             'name': {'error_messages': {'blank': 'Please provide a name.'}}
         }
 
-    @transaction.atomic
     def create(self, validated_data):
         logger.warn("requestgroup serializer create start")
         request_data = validated_data.pop('requests')
 
-        request_group = RequestGroup.objects.create(**validated_data)
-        logger.warn("requestgroup serializer create created rg")
+        with transaction.atomic():
+            request_group = RequestGroup.objects.create(**validated_data)
+            logger.warn("requestgroup serializer create created rg")
 
-        for r in request_data:
-            configurations_data = r.pop('configurations')
+            for r in request_data:
+                configurations_data = r.pop('configurations')
 
-            location_data = r.pop('location', {})
-            windows_data = r.pop('windows', [])
-            request = Request.objects.create(request_group=request_group, **r)
-            logger.warn("requestgroup serializer create created req")
+                location_data = r.pop('location', {})
+                windows_data = r.pop('windows', [])
+                request = Request.objects.create(request_group=request_group, **r)
+                logger.warn("requestgroup serializer create created req")
 
-            if validated_data['observation_type'] != RequestGroup.DIRECT:
-                Location.objects.create(request=request, **location_data)
-                logger.warn("requestgroup serializer create created location")
-                for window_data in windows_data:
-                    Window.objects.create(request=request, **window_data)
-                    logger.warn("requestgroup serializer create created window")
+                if validated_data['observation_type'] != RequestGroup.DIRECT:
+                    Location.objects.create(request=request, **location_data)
+                    logger.warn("requestgroup serializer create created location")
+                    for window_data in windows_data:
+                        Window.objects.create(request=request, **window_data)
+                        logger.warn("requestgroup serializer create created window")
 
-            for configuration_data in configurations_data:
-                instrument_configs_data = configuration_data.pop('instrument_configs')
-                acquisition_config_data = configuration_data.pop('acquisition_config')
-                guiding_config_data = configuration_data.pop('guiding_config')
-                target_data = configuration_data.pop('target')
-                constraints_data = configuration_data.pop('constraints')
-                configuration = Configuration.objects.create(request=request, **configuration_data)
-                logger.warn("requestgroup serializer create created configuration")
+                for configuration_data in configurations_data:
+                    instrument_configs_data = configuration_data.pop('instrument_configs')
+                    acquisition_config_data = configuration_data.pop('acquisition_config')
+                    guiding_config_data = configuration_data.pop('guiding_config')
+                    target_data = configuration_data.pop('target')
+                    constraints_data = configuration_data.pop('constraints')
+                    configuration = Configuration.objects.create(request=request, **configuration_data)
+                    logger.warn("requestgroup serializer create created configuration")
 
-                AcquisitionConfig.objects.create(configuration=configuration, **acquisition_config_data)
-                GuidingConfig.objects.create(configuration=configuration, **guiding_config_data)
-                Target.objects.create(configuration=configuration, **target_data)
-                Constraints.objects.create(configuration=configuration, **constraints_data)
-                logger.warn("requestgroup serializer create created other stuff")
+                    AcquisitionConfig.objects.create(configuration=configuration, **acquisition_config_data)
+                    GuidingConfig.objects.create(configuration=configuration, **guiding_config_data)
+                    Target.objects.create(configuration=configuration, **target_data)
+                    Constraints.objects.create(configuration=configuration, **constraints_data)
+                    logger.warn("requestgroup serializer create created other stuff")
 
-                for instrument_config_data in instrument_configs_data:
-                    rois_data = []
-                    if 'rois' in instrument_config_data:
-                        rois_data = instrument_config_data.pop('rois')
-                    instrument_config = InstrumentConfig.objects.create(configuration=configuration,
-                                                                        **instrument_config_data)
-                    logger.warn("requestgroup serializer create created instrument config")
-                    for roi_data in rois_data:
-                        RegionOfInterest.objects.create(instrument_config=instrument_config, **roi_data)
+                    for instrument_config_data in instrument_configs_data:
+                        rois_data = []
+                        if 'rois' in instrument_config_data:
+                            rois_data = instrument_config_data.pop('rois')
+                        instrument_config = InstrumentConfig.objects.create(configuration=configuration,
+                                                                            **instrument_config_data)
+                        logger.warn("requestgroup serializer create created instrument config")
+                        for roi_data in rois_data:
+                            RegionOfInterest.objects.create(instrument_config=instrument_config, **roi_data)
 
         if validated_data['observation_type'] == RequestGroup.NORMAL:
             debit_ipp_time(request_group)
@@ -713,7 +713,7 @@ class RequestGroupSerializer(serializers.ModelSerializer):
             'tracking_num': request_group.id,
             'name': request_group.name
         }})
-        # cache.set('observation_portal_last_change_time', timezone.now(), None)
+        cache.set('observation_portal_last_change_time', timezone.now(), None)
 
         logger.warn("requestgroup serializer create end")
         return request_group
