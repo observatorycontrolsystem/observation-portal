@@ -1,8 +1,10 @@
 from datetime import timedelta
 from django.db import transaction
+from django.db.models import F
 from observation_portal.requestgroups.duration_utils import get_configuration_duration
 from observation_portal.requestgroups.models import RequestGroup
 from observation_portal.common.configdb import configdb
+from observation_portal.proposals.models import TimeAllocation
 
 import logging
 
@@ -20,27 +22,28 @@ def on_summary_update_time_accounting(current, instance):
     if current is not None:
         current_config_time = configuration_time_used(current, observation_type)
     new_config_time = configuration_time_used(instance, observation_type)
-    time_difference = new_config_time - current_config_time
+    time_difference = (new_config_time - current_config_time).total_seconds() / 3600.0
 
     if time_difference:
         time_allocations = instance.configuration_status.observation.request.timeallocations
-        with transaction.atomic():
-            for time_allocation in time_allocations:
-                if time_allocation.instrument_type.upper() == instance.configuration_status.configuration.instrument_type.upper():
-                    if observation_type == RequestGroup.NORMAL:
-                        time_used = timedelta(hours=time_allocation.std_time_used)
-                        time_allocation.std_time_used = (time_used + time_difference).total_seconds() / 3600.0
-                    elif observation_type == RequestGroup.RAPID_RESPONSE:
-                        time_used = timedelta(hours=time_allocation.rr_time_used)
-                        time_allocation.rr_time_used = (time_used + time_difference).total_seconds() / 3600.0
-                    elif observation_type == RequestGroup.TIME_CRITICAL:
-                        time_used = timedelta(hours=time_allocation.tc_time_used)
-                        time_allocation.tc_time_used = (time_used + time_difference).total_seconds() / 3600.0
-                    else:
-                        logger.warning('Failed to perform time accounting on configuration_status {}. Observation Type'
-                                       '{} was not valid'.format(instance.configuration_status.id, observation_type))
-                        continue
-                    time_allocation.save()
+        for time_allocation in time_allocations:
+            if time_allocation.instrument_type.upper() == instance.configuration_status.configuration.instrument_type.upper():
+                if observation_type == RequestGroup.NORMAL:
+                    with transaction.atomic():
+                        TimeAllocation.objects.select_for_update(of=('self')).filter(
+                            id=time_allocation.id).update(std_time_used=F('std_time_used') + time_difference)
+                elif observation_type == RequestGroup.RAPID_RESPONSE:
+                    with transaction.atomic():
+                        TimeAllocation.objects.select_for_update(of=('self')).filter(
+                            id=time_allocation.id).update(rr_time_used=F('rr_time_used') + time_difference)
+                elif observation_type == RequestGroup.TIME_CRITICAL:
+                    with transaction.atomic():
+                        TimeAllocation.objects.select_for_update(of=('self')).filter(
+                            id=time_allocation.id).update(tc_time_used=F('tc_time_used') + time_difference)
+                else:
+                    logger.warning('Failed to perform time accounting on configuration_status {}. Observation Type'
+                                   '{} was not valid'.format(instance.configuration_status.id, observation_type))
+                    continue
 
 
 def configuration_time_used(summary, observation_type):

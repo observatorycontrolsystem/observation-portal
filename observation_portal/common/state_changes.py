@@ -7,6 +7,7 @@ from django.core.cache import cache
 from observation_portal.proposals.models import TimeAllocation, TimeAllocationKey
 from observation_portal.requestgroups.request_utils import exposure_completion_percentage
 from observation_portal.requestgroups.models import RequestGroup, Request
+from observation_portal.observations.models import Observation
 
 import logging
 from math import isclose, floor
@@ -44,7 +45,6 @@ def valid_request_state_change(old_state, new_state, obj):
         raise InvalidStateChange(_(f'Cannot transition from request state {old_state} to {new_state} for {obj}'))
 
 
-@transaction.atomic
 def on_configuration_status_state_change(instance):
     # Configuration Status state has changed, so do the necessary updates to the corresponding Observation,
     # Request, and RequestGroup
@@ -64,19 +64,19 @@ def on_configuration_status_state_change(instance):
     update_request_group_state(instance.observation.request.request_group)
 
 
-def on_request_state_change(old_request, new_request):
-    if old_request.state == new_request.state:
+def on_request_state_change(old_request_state, new_request):
+    if old_request_state == new_request.state:
         return
     cache.set('observation_portal_last_change_time', timezone.now(), None)
-    valid_request_state_change(old_request.state, new_request.state, old_request)
+    valid_request_state_change(old_request_state, new_request.state, new_request)
     # Must be a valid transition, so do ipp time accounting here if it is a normal type observation
-    if old_request.request_group.observation_type == RequestGroup.NORMAL:
+    if new_request.request_group.observation_type == RequestGroup.NORMAL:
         if new_request.state == 'COMPLETED':
             ipp_value = new_request.request_group.ipp_value
             if ipp_value < 1.0:
                 modify_ipp_time_from_requests(ipp_value, [new_request], 'credit')
             else:
-                if old_request.state == 'WINDOW_EXPIRED':
+                if old_request_state == 'WINDOW_EXPIRED':
                     try:
                         modify_ipp_time_from_requests(ipp_value, [new_request], 'debit')
                     except TimeAllocationError as tae:
@@ -90,33 +90,36 @@ def on_request_state_change(old_request, new_request):
                 modify_ipp_time_from_requests(ipp_value, [new_request], 'credit')
 
 
-def on_requestgroup_state_change(old_requestgroup, new_requestgroup):
-    if old_requestgroup.state == new_requestgroup.state:
+def on_requestgroup_state_change(old_requestgroup_state, new_requestgroup):
+    if old_requestgroup_state == new_requestgroup.state:
         return
-    valid_request_state_change(old_requestgroup.state, new_requestgroup.state, old_requestgroup)
+    valid_request_state_change(old_requestgroup_state, new_requestgroup.state, new_requestgroup)
     if new_requestgroup.state in TERMINAL_REQUEST_STATES:
-        new_requestgroup.requests.filter(state__iexact='PENDING').update(
-            state=new_requestgroup.state, modified=timezone.now())
+        with transaction.atomic():
+            new_requestgroup.requests.select_for_update(of=('self')).filter(state__iexact='PENDING').update(
+                state=new_requestgroup.state, modified=timezone.now())
 
 
 def update_observation_state(observation):
+    new_state = observation.state
     states = [config_status.state for config_status in observation.configuration_statuses.all()]
     if all([state == 'PENDING' for state in states]):
-        observation.state = 'PENDING'
+        new_state = 'PENDING'
     elif all([state == 'PENDING' or state == 'ATTEMPTED' for state in states]):
-        observation.state = 'IN_PROGRESS'
+        new_state = 'IN_PROGRESS'
     elif any([state == 'FAILED' for state in states]):
-        observation.state = 'FAILED'
+        new_state = 'FAILED'
     elif any([state == 'ABORTED' for state in states]):
-        observation.state = 'ABORTED'
+        new_state = 'ABORTED'
     elif all([state == 'COMPLETED' for state in states]):
-        observation.state = 'COMPLETED'
+        new_state = 'COMPLETED'
+
+    with transaction.atomic():
+        Observation.objects.get(pk=observation.id).update(state=new_state)
 
     if observation.state in ['FAILED', 'ABORTED']:
         # If the observation has failed, trigger a reschedule
         cache.set('observation_portal_last_change_time', timezone.now(), None)
-
-    observation.save()
 
 
 def validate_ipp(request_group_dict, total_duration_dict):
@@ -214,12 +217,13 @@ def update_request_state(request, configuration_statuses, request_group_expired)
     """Update a request state given a set of configuration statuses for an observation of that request. Return
     True if the state changed, else False."""
     state_changed = False
+    old_state = request.state
 
-    if request.state == 'COMPLETED':
+    if old_state == 'COMPLETED':
         return state_changed
 
     new_request_state = get_request_state_from_configuration_statuses(
-        request.state, request.acceptability_threshold, configuration_statuses
+        old_state, request.acceptability_threshold, configuration_statuses
     )
     # If the state is not a terminal state and the request group has expired, mark the request as expired
     if new_request_state not in TERMINAL_REQUEST_STATES and request_group_expired:
@@ -231,6 +235,9 @@ def update_request_state(request, configuration_statuses, request_group_expired)
             pk=request.id, state__in=REQUEST_STATE_MAP[new_request_state]).update(
                 state=new_request_state, modified=timezone.now())):
             state_changed = True
+
+    if state_changed:
+        on_request_state_change(old_state, Request.objects.get(pk=request.id))
 
     return state_changed
 
@@ -265,6 +272,7 @@ def update_request_states_for_window_expiration():
                         if Request.objects.select_for_update().get(pk=request.id, state='PENDING').update(state='WINDOW_EXPIRED'):
                             states_changed = True
                             request_states_changed = True
+                    on_request_state_change('PENDING', Request.objects.get(pk=request.id))
         else:
             for request in request_group.requests.all().prefetch_related('observation_set'):
                 if request.observation_set.first().end < now:
@@ -273,6 +281,7 @@ def update_request_states_for_window_expiration():
                         if Request.objects.select_for_update().get(pk=request.id, state='PENDING').update(state='WINDOW_EXPIRED'):
                             states_changed = True
                             request_states_changed = True
+                    on_request_state_change('PENDING', Request.objects.get(pk=request.id))
         if request_states_changed:
             update_request_group_state(request_group)
     return states_changed
@@ -281,9 +290,15 @@ def update_request_states_for_window_expiration():
 def update_request_group_state(request_group):
     """Update the state of the request group if possible. Return True if the state changed, else False."""
     new_request_group_state = aggregate_request_states(request_group)
+    requestgroup_state_changed = False
+    old_state = request_group.state
     with transaction.atomic():
         if (RequestGroup.objects.select_for_update().get(
             pk=request_group.id, state__in=REQUEST_STATE_MAP[new_request_group_state]).update(
                 state=new_request_group_state, modified=timezone.now())):
-            return True
-    return False
+            requestgroup_state_changed = True
+
+    if requestgroup_state_changed:
+        on_requestgroup_state_change(old_state, RequestGroup.objects.get(pk=request_group.id))
+
+    return requestgroup_state_changed
