@@ -3,6 +3,7 @@ import logging
 from json import JSONDecodeError
 
 from rest_framework import serializers
+from rest_framework.fields import empty
 from django.utils.translation import ugettext as _
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.cache import cache
@@ -708,7 +709,20 @@ class RequestGroupSerializer(serializers.ModelSerializer):
 
         return request_group
 
+    def is_valid(self, raise_exception=False):
+        logger.warn("RG serializer is_valid start")
+        valid = super().is_valid(raise_exception)
+        logger.warn("RG serializer is_valid end")
+        return valid
+
+    def run_validation(self, data=empty):
+        logger.warn("RG serializer run_validation start")
+        out = super().run_validation(data)
+        logger.warn("RG serializer run_validation end")
+        return out
+
     def validate(self, data):
+        logger.warn("RG serializer validate start")
         # check that the user belongs to the supplied proposal
         user = self.context['request'].user
         if data['proposal'] not in user.proposal_set.all():
@@ -807,6 +821,8 @@ class RequestGroupSerializer(serializers.ModelSerializer):
             )
         except TimeAllocationError as e:
             raise serializers.ValidationError(repr(e))
+
+        logger.warn("RG serializer validate end")
 
         return data
 
