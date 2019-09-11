@@ -1,6 +1,6 @@
 import logging
 
-from rest_framework import viewsets, filters
+from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action, list_route
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAdminUser
@@ -64,7 +64,22 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
         ).distinct()
 
     def perform_create(self, serializer):
+        logger.warn("RG perform_create start")
         serializer.save(submitter=self.request.user)
+        logger.warn("RG perform_create end")
+
+    def create(self, request, *args, **kwargs):
+        name = request.data['name']
+        logger.warn(f'RG create start {name}')
+        serializer = self.get_serializer(data=request.data)
+        logger.warn(f'RG create got serializer {name}')
+        serializer.is_valid(raise_exception=True)
+        logger.warn(f'RG create serializer is_valid {name}')
+        self.perform_create(serializer)
+        logger.warn(f'RG create finished perform_create {name}')
+        headers = self.get_success_headers(serializer.data)
+        logger.warn(f'RG create end {name}')
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     @action(detail=False, methods=['get'], permission_classes=(IsAdminUser,))
     def schedulable_requests(self, request):
