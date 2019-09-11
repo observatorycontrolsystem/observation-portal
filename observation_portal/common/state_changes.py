@@ -17,7 +17,8 @@ logger = logging.getLogger(__name__)
 REQUEST_STATE_MAP = {
     'COMPLETED': ['PENDING', 'WINDOW_EXPIRED', 'CANCELED'],
     'WINDOW_EXPIRED': ['PENDING'],
-    'CANCELED': ['PENDING']
+    'CANCELED': ['PENDING'],
+    'PENDING': []
 }
 
 TERMINAL_REQUEST_STATES = ['COMPLETED', 'CANCELED', 'WINDOW_EXPIRED']
@@ -95,9 +96,11 @@ def on_requestgroup_state_change(old_requestgroup_state, new_requestgroup):
         return
     valid_request_state_change(old_requestgroup_state, new_requestgroup.state, new_requestgroup)
     if new_requestgroup.state in TERMINAL_REQUEST_STATES:
-        with transaction.atomic():
-            new_requestgroup.requests.select_for_update(of=('self')).filter(state__iexact='PENDING').update(
-                state=new_requestgroup.state, modified=timezone.now())
+        for request in new_requestgroup.requests.filter(state__iexact='PENDING'):
+            request.state = new_requestgroup.state
+            request.save()
+        # new_requestgroup.requests.select_for_update(of=('self')).filter(state__iexact='PENDING').update(
+        #     state=new_requestgroup.state, modified=timezone.now())
 
 
 def update_observation_state(observation):
@@ -115,9 +118,9 @@ def update_observation_state(observation):
         new_state = 'COMPLETED'
 
     with transaction.atomic():
-        Observation.objects.get(pk=observation.id).update(state=new_state)
+        Observation.objects.filter(pk=observation.id).update(state=new_state)
 
-    if observation.state in ['FAILED', 'ABORTED']:
+    if new_state in ['FAILED', 'ABORTED']:
         # If the observation has failed, trigger a reschedule
         cache.set('observation_portal_last_change_time', timezone.now(), None)
 
@@ -179,7 +182,7 @@ def modify_ipp_time_from_requests(ipp_val, requests_list, modification='debit'):
         for request in requests_list:
             time_allocations = request.timeallocations
             for time_allocation in time_allocations:
-                duration_hours = request.duration / 3600
+                duration_hours = request.duration / 3600.0
                 modified_time = 0
                 if modification == 'debit':
                     modified_time -= (duration_hours * ipp_value)
@@ -190,7 +193,7 @@ def modify_ipp_time_from_requests(ipp_val, requests_list, modification='debit'):
                         f'ipp debiting for request {request.id} would set ipp_time_available < 0. Time available after '
                         f'debiting will be capped at 0'
                     ))
-                    modified_time = time_allocation.ipp_time_available
+                    modified_time = -time_allocation.ipp_time_available
                 elif (modified_time + time_allocation.ipp_time_available) > time_allocation.ipp_limit:
                     logger.warning(_(
                         f'ipp crediting for request {request.id} would set ipp_time_available > ipp_limit. Time '
@@ -225,13 +228,17 @@ def update_request_state(request, configuration_statuses, request_group_expired)
     new_request_state = get_request_state_from_configuration_statuses(
         old_state, request.acceptability_threshold, configuration_statuses
     )
+
     # If the state is not a terminal state and the request group has expired, mark the request as expired
     if new_request_state not in TERMINAL_REQUEST_STATES and request_group_expired:
         new_request_state = 'WINDOW_EXPIRED'
 
+    if new_request_state == old_state:
+        return False
+
     with transaction.atomic():
         # Re-get the request and lock. If the new state is a valid state transition, set it on the request atomically.
-        if (Request.objects.select_for_update().get(
+        if (Request.objects.select_for_update().filter(
             pk=request.id, state__in=REQUEST_STATE_MAP[new_request_state]).update(
                 state=new_request_state, modified=timezone.now())):
             state_changed = True
@@ -269,7 +276,7 @@ def update_request_states_for_window_expiration():
                 if request.max_window_time < now:
                     logger.info(f'Expiring request {request.id}', extra={'tags': {'request_num': request.id}})
                     with transaction.atomic():
-                        if Request.objects.select_for_update().get(pk=request.id, state='PENDING').update(state='WINDOW_EXPIRED'):
+                        if Request.objects.select_for_update().filter(pk=request.id, state='PENDING').update(state='WINDOW_EXPIRED'):
                             states_changed = True
                             request_states_changed = True
                     on_request_state_change('PENDING', Request.objects.get(pk=request.id))
@@ -278,7 +285,7 @@ def update_request_states_for_window_expiration():
                 if request.observation_set.first().end < now:
                     logger.info(f'Expiring DIRECT request {request.id}', extra={'tags': {'request_num': request.id}})
                     with transaction.atomic():
-                        if Request.objects.select_for_update().get(pk=request.id, state='PENDING').update(state='WINDOW_EXPIRED'):
+                        if Request.objects.select_for_update().filter(pk=request.id, state='PENDING').update(state='WINDOW_EXPIRED'):
                             states_changed = True
                             request_states_changed = True
                     on_request_state_change('PENDING', Request.objects.get(pk=request.id))
@@ -293,7 +300,7 @@ def update_request_group_state(request_group):
     requestgroup_state_changed = False
     old_state = request_group.state
     with transaction.atomic():
-        if (RequestGroup.objects.select_for_update().get(
+        if (RequestGroup.objects.select_for_update().filter(
             pk=request_group.id, state__in=REQUEST_STATE_MAP[new_request_group_state]).update(
                 state=new_request_group_state, modified=timezone.now())):
             requestgroup_state_changed = True
