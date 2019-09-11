@@ -3,7 +3,14 @@ import logging
 from json import JSONDecodeError
 
 from rest_framework import serializers
-from rest_framework.fields import empty
+
+from rest_framework.fields import empty, SkipField, get_error_detail, set_value
+from collections.abc import Mapping
+from collections import OrderedDict
+from django.core.exceptions import ValidationError as DjangoValidationError
+from rest_framework.exceptions import ErrorDetail, ValidationError
+from rest_framework.settings import api_settings
+
 from django.utils.translation import ugettext as _
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.cache import cache
@@ -735,6 +742,58 @@ class RequestGroupSerializer(serializers.ModelSerializer):
             raise Exception(repr(exc))
         logger.warn("RG serializer run_validation end")
         return value
+
+    def to_internal_value(self, data):
+        """
+        Dict of native values <- Dict of primitive datatypes.
+        """
+        logger.warn("RG serializer to_internal_value start")
+        if not isinstance(data, Mapping):
+            message = self.error_messages['invalid'].format(
+                datatype=type(data).__name__
+            )
+            raise ValidationError({
+                api_settings.NON_FIELD_ERRORS_KEY: [message]
+            }, code='invalid')
+
+        ret = OrderedDict()
+        errors = OrderedDict()
+        fields = self._writable_fields
+        logger.warn("RG serializer to_internal_value pre checking fields")
+
+        for field in fields:
+            validate_method = getattr(self, 'validate_' + field.field_name, None)
+            logger.warn(f"RG serializer to_internal_value validating {field.field_name}")
+
+            primitive_value = field.get_value(data)
+            logger.warn(f"RG serializer to_internal_value field {field.field_name} has primitive value {primitive_value}")
+
+            try:
+                validated_value = field.run_validation(primitive_value)
+                logger.warn("RG Serializer to_internal_value ran field validation")
+                if validate_method is not None:
+                    validated_value = validate_method(validated_value)
+                    logger.warn("RG Serializer to_internal_value ran field validation with validate method")
+            except ValidationError as exc:
+                logger.warn("RG Serializer to_internal_value validation error")
+                errors[field.field_name] = exc.detail
+            except DjangoValidationError as exc:
+                logger.warn("RG Serializer to_internal_value django validation error")
+                errors[field.field_name] = get_error_detail(exc)
+            except SkipField:
+                logger.warn("RG Serializer to_internal_value validation skipfield error")
+                pass
+            else:
+                set_value(ret, field.source_attrs, validated_value)
+                logger.warn(f"RG Serializer to_internal_value field set_value to {validated_value}")
+
+        if errors:
+            logger.warn("RG Serializer to_internal_value validation errors raised")
+            raise ValidationError(errors)
+
+        logger.warn("RG serializer to_internal_value end")
+
+        return ret
 
     def validate(self, data):
         logger.warn("RG serializer validate start")
