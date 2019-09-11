@@ -44,6 +44,7 @@ class ConfigDB(object):
         ))
         data = caches['locmem'].get(resource)
         if not data:
+            logger.warn("Configdb data not cached, getting it now!!!!")
             try:
                 r = requests.get(settings.CONFIGDB_URL + f'/{resource}/')
                 r.raise_for_status()
@@ -55,7 +56,9 @@ class ConfigDB(object):
             except KeyError:
                 raise ConfigDBException(error_message)
             # Cache the results for 15 minutes.
+            logger.warn("caching configdb data!!!")
             caches['locmem'].set(resource, data, 900)
+            logger.warn("Configdb data now cached!!!")
         return data
 
     def get_site_data(self):

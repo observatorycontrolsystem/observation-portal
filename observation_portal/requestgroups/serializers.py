@@ -555,9 +555,11 @@ class RequestSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, data):
+        logger.warn("R serializer validate start")
         is_staff = False
         only_schedulable = True
         request_context = self.context.get('request')
+        logger.warn("R serializer validate got context")
         if request_context:
             is_staff = request_context.user.is_staff
             only_schedulable = not (is_staff and ConfigDB.is_location_fully_set(data.get('location', {})))
@@ -567,6 +569,7 @@ class RequestSerializer(serializers.ModelSerializer):
             # Check if the location is fully specified, and if not then use only schedulable instruments
             valid_instruments = configdb.get_instrument_types(data.get('location', {}),
                                                               only_schedulable=only_schedulable)
+            logger.warn("R serializer validate got valid instruments")
             for configuration in data['configurations']:
                 if configuration['instrument_type'] not in valid_instruments:
                     msg = _("Invalid instrument type '{}' at site={}, enc={}, tel={}. \n").format(
@@ -592,7 +595,9 @@ class RequestSerializer(serializers.ModelSerializer):
         # check that the requests window has enough rise_set visible time to accomodate the requests duration
         if data.get('windows'):
             duration = get_request_duration(data)
+            logger.warn("R serializer validate got duration")
             rise_set_intervals_by_site = get_filtered_rise_set_intervals_by_site(data, is_staff=is_staff)
+            logger.warn("R serializer validate rise set intervals by site")
             largest_interval = get_largest_interval(rise_set_intervals_by_site)
             for configuration in data['configurations']:
                 for instrument_config in configuration['instrument_configs']:
@@ -631,6 +636,7 @@ class RequestSerializer(serializers.ModelSerializer):
                         duration / 3600.0
                     )
                 )
+        logger.warn("R serializer validate end")
         return data
 
 
