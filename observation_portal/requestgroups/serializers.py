@@ -717,9 +717,24 @@ class RequestGroupSerializer(serializers.ModelSerializer):
 
     def run_validation(self, data=empty):
         logger.warn("RG serializer run_validation start")
-        out = super().run_validation(data)
+        (is_empty_value, data) = self.validate_empty_values(data)
+        logger.warn("RG serializer run_validation validate_empty_values")
+        if is_empty_value:
+            return data
+
+        value = self.to_internal_value(data)
+        logger.warn("RG serializer run_validation to_internal_value")
+        try:
+            self.run_validators(value)
+            logger.warn("RG serializer run_validation run_validators")
+            value = self.validate(value)
+            logger.warn("RG serializer run_validation validate")
+            assert value is not None, '.validate() should return the validated data'
+        except Exception as exc:
+            logger.warn("RG serializer run_validation exception {}".format(repr(exc)))
+            raise Exception(repr(exc))
         logger.warn("RG serializer run_validation end")
-        return out
+        return value
 
     def validate(self, data):
         logger.warn("RG serializer validate start")
