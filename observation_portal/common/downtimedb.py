@@ -59,12 +59,16 @@ class DowntimeDB(object):
         '''
         downtime_intervals = caches['locmem'].get('downtime_intervals', [])
         if not downtime_intervals:
+            logger.warn("DowntimeDB getting downtime intervals!!!")
             # If the cache has expired, attempt to update the downtime intervals
             try:
                 data = DowntimeDB._get_downtime_data()
+                logger.warn("DowntimeDB got downtime intervals!!!")
                 downtime_intervals = DowntimeDB._order_downtime_by_resource(data)
+                logger.warn("DowntimeDB ordered downtime intervals!!!")
                 caches['locmem'].set('downtime_intervals', downtime_intervals, 900)
                 caches['locmem'].set('downtime_intervals.no_expire', downtime_intervals)
+                logger.warn("DowntimeDB cached downtime intervals!!!")
             except DowntimeDBException as e:
                 downtime_intervals = caches['locmem'].get('downtime_intervals.no_expire', [])
                 logger.warning(repr(e))
