@@ -243,7 +243,7 @@ class ScheduleSerializer(serializers.ModelSerializer):
             rg = rgs.save()
 
             observation = Observation.objects.create(request=rg.requests.first(), **obs_fields)
-            
+
             for i, config in enumerate(rg.requests.first().configurations.all()):
                 ConfigurationStatus.objects.create(
                     configuration=config,
