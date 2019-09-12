@@ -213,11 +213,13 @@ class TargetSerializer(serializers.ModelSerializer):
         return target_dict
 
     def validate(self, data):
+        logger.warn("target serializer validate start")
         target_helper = TARGET_TYPE_HELPER_MAP[data['type']](data)
         if target_helper.is_valid():
             data.update(target_helper.data)
         else:
             raise serializers.ValidationError(target_helper.error_dict)
+        logger.warn("target serializer validate end")
         return data
 
 
@@ -252,6 +254,7 @@ class ConfigurationSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, data):
+        logger.warn("configuration serializer validate start")
         # TODO: Validate the guiding optical elements on the guiding instrument types
         instrument_type = data['instrument_type']
         modes = configdb.get_modes_by_type(instrument_type)
@@ -439,6 +442,7 @@ class ConfigurationSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(_(
                 f'configuration type {data["type"]} is not valid for instrument type {instrument_type}'
             ))
+        logger.warn("configuration serializer validate end")
         return data
 
 
@@ -453,6 +457,7 @@ class LocationSerializer(serializers.ModelSerializer):
         exclude = Location.SERIALIZER_EXCLUDE
 
     def validate(self, data):
+        logger.warn("location serializer validate start")
         if 'enclosure' in data and 'site' not in data:
             raise serializers.ValidationError(_("Must specify a site with an enclosure."))
         if 'telescope' in data and 'enclosure' not in data:
@@ -475,6 +480,7 @@ class LocationSerializer(serializers.ModelSerializer):
                 if 'telescope' in data and data['telescope'] not in tel_list:
                     msg = _('Telescope {} not valid. Valid choices: {}').format(data['telescope'], ', '.join(tel_list))
                     raise serializers.ValidationError(msg)
+        logger.warn("location serializer validate end")
 
         return data
 
@@ -495,6 +501,7 @@ class WindowSerializer(serializers.ModelSerializer):
         exclude = Window.SERIALIZER_EXCLUDE
 
     def validate(self, data):
+        logger.warn("window serializer validate start")
         if 'start' not in data:
             data['start'] = timezone.now()
         if data['end'] <= data['start']:
@@ -503,6 +510,8 @@ class WindowSerializer(serializers.ModelSerializer):
 
         if not get_semester_in(data['start'], data['end']):
             raise serializers.ValidationError('The observation window does not fit within any defined semester.')
+        
+        logger.warn("window serializer validate end")
         return data
 
     def validate_end(self, value):
