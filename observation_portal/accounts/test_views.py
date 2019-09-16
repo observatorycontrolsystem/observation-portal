@@ -1,9 +1,11 @@
+from datetime import datetime
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import User
 from django.contrib import auth
 from mixer.backend.django import mixer
+from django.utils import timezone
 from django.core import mail
 from django_dramatiq.test import DramatiqTestCase
 
@@ -120,6 +122,24 @@ class TestRegistration(TestCase):
         self.assertTrue(Membership.objects.filter(user__username=self.reg_data['username']).exists())
         invitation = ProposalInvite.objects.get(pk=invitations[1].id)
         self.assertTrue(invitation.used)
+        self.assertTrue(Membership.objects.filter(user__username=self.reg_data['username']).exists())
+
+    def test_reqistration_with_multiple_invites_for_same_proposal(self):
+        proposal = mixer.blend(Proposal)
+        first_invitation = mixer.blend(
+            ProposalInvite, email=self.reg_data['email'], proposal=proposal,
+            sent=datetime(year=2018, month=10, day=10, tzinfo=timezone.utc), used=None
+        )
+        second_invitation = mixer.blend(
+            ProposalInvite, email=self.reg_data['email'].upper(), proposal=proposal,
+            sent=datetime(year=2019, month=10, day=10, tzinfo=timezone.utc), used=None
+        )
+        self.assertEqual(ProposalInvite.objects.all().count(), 2)
+        self.client.post(reverse('registration_register'), self.reg_data, follow=True)
+        first_invitation.refresh_from_db()
+        second_invitation.refresh_from_db()
+        self.assertFalse(first_invitation.used)
+        self.assertTrue(second_invitation.used)
         self.assertTrue(Membership.objects.filter(user__username=self.reg_data['username']).exists())
 
     def test_education_register(self):

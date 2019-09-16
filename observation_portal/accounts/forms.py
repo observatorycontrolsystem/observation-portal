@@ -39,8 +39,14 @@ class CustomRegistrationForm(RegistrationFormTermsOfService, RegistrationFormUni
             view_authored_requests_only=self.cleaned_data['education_user'],
             simple_interface=self.cleaned_data['education_user']
         )
-        for invite in ProposalInvite.objects.filter(email__iexact=new_user_instance.email):
-            invite.accept(new_user_instance)
+        # There may be more than one proposal invite for the same proposal for the same user. Use the latest invite
+        # that was sent if this is the case.
+        proposal_invites = {}
+        for proposal_invite in ProposalInvite.objects.filter(email__iexact=new_user_instance.email).order_by('sent'):
+            proposal_invites[proposal_invite.proposal.id] = proposal_invite
+
+        for proposal_id in proposal_invites:
+            proposal_invites[proposal_id].accept(new_user_instance)
 
         return new_user_instance
 
