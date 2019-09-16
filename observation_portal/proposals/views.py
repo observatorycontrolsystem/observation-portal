@@ -115,7 +115,10 @@ class InviteCreateView(LoginRequiredMixin, View):
                 validate_email(email)
             except ValidationError:
                 valid = False
-                messages.error(request, _('Please enter a valid email address: {}'.format(email)))
+                messages.error(request, _(f'Please enter a valid email address: {email}'))
+            if email.lower() == request.user.email.lower():
+                messages.error(request, f'You cannot invite yourself ({email}) to be a Co-Investigator')
+                valid = False
         if valid:
             proposal.add_users(emails, Membership.CI)
             messages.success(request, _('Co Investigator(s) invited'))

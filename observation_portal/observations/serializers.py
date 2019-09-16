@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.utils import timezone
 from django.core.cache import cache
+from django.db import transaction
 from django.utils.translation import ugettext as _
 
 from observation_portal.common.configdb import configdb
@@ -241,17 +242,20 @@ class ScheduleSerializer(serializers.ModelSerializer):
             del configuration['instrument_name']
             del configuration['guide_camera_name']
 
-        rgs = ObserveRequestGroupSerializer(data=validated_data, context=self.context)
-        rgs.is_valid(True)
-        rg = rgs.save()
+        with transaction.atomic():
+            rgs = ObserveRequestGroupSerializer(data=validated_data, context=self.context)
+            rgs.is_valid(True)
+            rg = rgs.save()
 
-        observation = Observation.objects.create(request=rg.requests.first(), **obs_fields)
+            observation = Observation.objects.create(request=rg.requests.first(), **obs_fields)
 
-        for i, config in enumerate(rg.requests.first().configurations.all()):
-            ConfigurationStatus.objects.create(configuration=config, observation=observation,
-                                               instrument_name=config_instrument_names[i][0],
-                                               guide_camera_name=config_instrument_names[i][1])
-
+            for i, config in enumerate(rg.requests.first().configurations.all()):
+                ConfigurationStatus.objects.create(
+                    configuration=config,
+                    observation=observation,
+                    instrument_name=config_instrument_names[i][0],
+                    guide_camera_name=config_instrument_names[i][1]
+                )
         return observation
 
     def to_representation(self, instance):
@@ -305,7 +309,10 @@ class ObservationSerializer(serializers.ModelSerializer):
                 break
 
         if not in_a_window:
-            raise serializers.ValidationError(_('The start {} and end {} times do not fall within any window of the request'.format(data['start'].isoformat(), data['end'].isoformat())))
+            raise serializers.ValidationError(_(
+                'The start {} and end {} times do not fall within any window of the request'.format(
+                    data['start'].isoformat(), data['end'].isoformat())
+            ))
 
         # Validate that the site, enclosure, and telescope match the location of the request
         if (
@@ -365,10 +372,10 @@ class ObservationSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         configuration_statuses = validated_data.pop('configuration_statuses')
-        observation = Observation.objects.create(**validated_data)
-        for configuration_status in configuration_statuses:
-            ConfigurationStatus.objects.create(observation=observation, **configuration_status)
-
+        with transaction.atomic():
+            observation = Observation.objects.create(**validated_data)
+            for configuration_status in configuration_statuses:
+                ConfigurationStatus.objects.create(observation=observation, **configuration_status)
         return observation
 
 
