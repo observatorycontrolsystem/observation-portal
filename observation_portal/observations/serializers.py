@@ -365,7 +365,7 @@ class ObservationSerializer(serializers.ModelSerializer):
                     )
                 num_canceled = Observation.cancel(observations)
                 logger.info(
-                    "updated end time for observation {instance.id} to {instance.end}. Canceled {num_canceled} overlapping observations.")
+                    f"updated end time for observation {instance.id} to {instance.end}. Canceled {num_canceled} overlapping observations.")
             cache.set('observation_portal_last_change_time', timezone.now(), None)
 
         return instance

@@ -951,7 +951,8 @@ class TestUpdateObservationApi(TestObservationApiBase):
     def setUp(self):
         super().setUp()
 
-    def _create_clone_observation(self, observation, start, end):
+    @staticmethod
+    def _create_clone_observation(observation, start, end):
         return mixer.blend(
             Observation,
             site=observation.site,
@@ -978,7 +979,6 @@ class TestUpdateObservationApi(TestObservationApiBase):
         self.assertEqual(observation.end, new_end)
 
     def test_update_observation_end_time_cancels_proper_overlapping_observations(self):
-        original_end = datetime(2016, 9, 2, 23, 35, 40).replace(tzinfo=timezone.utc)
         self.window.start = datetime(2016, 9, 1, tzinfo=timezone.utc)
         self.window.save()
         observation = self._generate_observation_data(
