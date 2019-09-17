@@ -21,4 +21,3 @@ def cb_summary_pre_save(sender, instance, *args, **kwargs):
     else:
         current_summary = None
     on_summary_update_time_accounting(current_summary, instance)
-

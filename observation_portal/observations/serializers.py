@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from django.utils import timezone
+from django.core.cache import cache
+from django.db import transaction
 from django.utils.translation import ugettext as _
 
 from observation_portal.common.configdb import configdb
@@ -8,6 +10,10 @@ from observation_portal.requestgroups.serializers import (RequestSerializer, Req
                                                           ConfigurationSerializer, TargetSerializer)
 from observation_portal.requestgroups.models import RequestGroup, AcquisitionConfig, GuidingConfig, Target
 from observation_portal.proposals.models import Proposal
+
+import logging
+
+logger = logging.getLogger()
 
 
 class SummarySerializer(serializers.ModelSerializer):
@@ -190,8 +196,10 @@ class ScheduleSerializer(serializers.ModelSerializer):
 
             # Also check the guide and acquisition cameras are valid if specified
             # But only if the guide mode is set
-            if (configuration['guiding_config']['mode'] != GuidingConfig.OFF or
-                    configuration['acquisition_config']['mode'] != AcquisitionConfig.OFF):
+            if (
+                    configuration['guiding_config'].get('mode', GuidingConfig.OFF) != GuidingConfig.OFF or
+                    configuration['acquisition_config'].get('mode', AcquisitionConfig.OFF) != AcquisitionConfig.OFF
+            ):
                 if not configuration.get('guide_camera_name', ''):
                     if (
                         'extra_params' in configuration
@@ -234,17 +242,20 @@ class ScheduleSerializer(serializers.ModelSerializer):
             del configuration['instrument_name']
             del configuration['guide_camera_name']
 
-        rgs = ObserveRequestGroupSerializer(data=validated_data, context=self.context)
-        rgs.is_valid(True)
-        rg = rgs.save()
+        with transaction.atomic():
+            rgs = ObserveRequestGroupSerializer(data=validated_data, context=self.context)
+            rgs.is_valid(True)
+            rg = rgs.save()
 
-        observation = Observation.objects.create(request=rg.requests.first(), **obs_fields)
+            observation = Observation.objects.create(request=rg.requests.first(), **obs_fields)
 
-        for i, config in enumerate(rg.requests.first().configurations.all()):
-            ConfigurationStatus.objects.create(configuration=config, observation=observation,
-                                               instrument_name=config_instrument_names[i][0],
-                                               guide_camera_name=config_instrument_names[i][1])
-
+            for i, config in enumerate(rg.requests.first().configurations.all()):
+                ConfigurationStatus.objects.create(
+                    configuration=config,
+                    observation=observation,
+                    instrument_name=config_instrument_names[i][0],
+                    guide_camera_name=config_instrument_names[i][1]
+                )
         return observation
 
     def to_representation(self, instance):
@@ -287,6 +298,14 @@ class ObservationSerializer(serializers.ModelSerializer):
                 'Non staff users can only create observations on proposals they belong to that allow direct submission'
             ))
 
+        if self.context.get('request').method == 'PATCH':
+            # For a partial update, only validate that the 'end' field is set, and that it is > now
+            if 'end' not in data:
+                raise serializers.ValidationError(_('Observation update must include `end` field'))
+            if data['end'] <= timezone.now():
+                raise serializers.ValidationError(_('Updated end time must be in the future'))
+            return data
+
         if data['end'] <= data['start']:
             raise serializers.ValidationError(_('End time must be after start time'))
 
@@ -300,10 +319,10 @@ class ObservationSerializer(serializers.ModelSerializer):
         if not in_a_window:
             raise serializers.ValidationError(_(
                 'The start {} and end {} times do not fall within any window of the request'.format(
-                    data['start'].isoformat(),
-                    data['end'].isoformat()
+                    data['start'].isoformat(), data['end'].isoformat()
                 )
             ))
+
         # Validate that the site, enclosure, and telescope match the location of the request
         if (
             data['request'].location.site and data['request'].location.site != data['site'] or
@@ -333,12 +352,39 @@ class ObservationSerializer(serializers.ModelSerializer):
 
         return data
 
+    def update(self, instance, validated_data):
+        if validated_data['end'] > instance.start:
+            # Only update the end time if it is > start time
+            old_end_time = instance.end
+            instance.end = validated_data['end']
+            instance.save()
+            # Cancel observations that used to be under this observation
+            if instance.end > old_end_time:
+                observations = Observation.objects.filter(
+                    site=instance.site,
+                    enclosure=instance.enclosure,
+                    telescope=instance.telescope,
+                    start__lte=instance.end,
+                    start__gte=old_end_time,
+                    state='PENDING'
+                )
+                if instance.request.request_group.observation_type != RequestGroup.RAPID_RESPONSE:
+                    observations = observations.exclude(
+                        request__request_group__observation_type=RequestGroup.RAPID_RESPONSE
+                    )
+                num_canceled = Observation.cancel(observations)
+                logger.info(
+                    f"updated end time for observation {instance.id} to {instance.end}. Canceled {num_canceled} overlapping observations.")
+            cache.set('observation_portal_last_change_time', timezone.now(), None)
+
+        return instance
+
     def create(self, validated_data):
         configuration_statuses = validated_data.pop('configuration_statuses')
-        observation = Observation.objects.create(**validated_data)
-        for configuration_status in configuration_statuses:
-            ConfigurationStatus.objects.create(observation=observation, **configuration_status)
-
+        with transaction.atomic():
+            observation = Observation.objects.create(**validated_data)
+            for configuration_status in configuration_statuses:
+                ConfigurationStatus.objects.create(observation=observation, **configuration_status)
         return observation
 
 

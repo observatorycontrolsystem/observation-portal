@@ -210,6 +210,17 @@ class TestProposalInvite(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Please enter a valid email address')
 
+    def test_pi_cannot_invite_themselves_as_coi(self):
+        self.client.force_login(self.pi_user)
+        response = self.client.post(
+            reverse('proposals:invite', kwargs={'pk': self.proposal.id}),
+            data={'email': self.pi_user.email},
+            follow=True
+        )
+        self.assertFalse(ProposalInvite.objects.filter(email=self.pi_user.email, proposal=self.proposal).exists())
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, f'You cannot invite yourself ({self.pi_user.email}) to be a Co-Investigator')
+
 
 class TestProposalList(TestCase):
     def setUp(self):
