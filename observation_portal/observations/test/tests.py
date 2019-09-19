@@ -1238,6 +1238,89 @@ class TestUpdateObservationApi(TestObservationApiBase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()['non_field_errors'], ['Observation update must include `end` field'])
 
+    def test_update_observation_non_staff_non_direct_user_fails(self):
+        observation = self._generate_observation_data(
+            self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
+        )
+        self._create_observation(observation)
+        observation = Observation.objects.first()
+        original_end = observation.end
+        non_staff_user = blend_user()
+        mixer.blend(Membership, user=non_staff_user, proposal=self.proposal)
+        self.client.force_login(non_staff_user)
+        new_end = datetime(2016, 9, 5, 23, 47, 22).replace(tzinfo=timezone.utc)
+        update_data = {'end': datetime.strftime(new_end, '%Y-%m-%dT%H:%M:%SZ')}
+        response = self.client.patch(reverse('api:observations-detail', args=(observation.id,)), update_data)
+        self.assertEqual(response.status_code, 403)
+        observation.refresh_from_db()
+        self.assertEqual(original_end, observation.end)
+
+    def test_update_observation_unauthenticated_fails(self):
+        observation = self._generate_observation_data(
+            self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
+        )
+        self._create_observation(observation)
+        observation = Observation.objects.first()
+        original_end = observation.end
+        self.client.logout()
+        new_end = datetime(2016, 9, 5, 23, 47, 22).replace(tzinfo=timezone.utc)
+        update_data = {'end': datetime.strftime(new_end, '%Y-%m-%dT%H:%M:%SZ')}
+        response = self.client.patch(reverse('api:observations-detail', args=(observation.id,)), update_data)
+        self.assertEqual(response.status_code, 403)
+        observation.refresh_from_db()
+        self.assertEqual(original_end, observation.end)
+
+    def test_update_observation_non_staff_direct_user_on_own_proposals(self):
+        observation = self._generate_observation_data(
+            self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
+        )
+        self._create_observation(observation)
+        observation = Observation.objects.first()
+        original_end = observation.end
+        non_staff_user = blend_user()
+        mixer.blend(Membership, user=non_staff_user, proposal=self.proposal)
+        self.client.force_login(non_staff_user)
+        new_end = datetime(2016, 9, 5, 23, 47, 22).replace(tzinfo=timezone.utc)
+        update_data = {'end': datetime.strftime(new_end, '%Y-%m-%dT%H:%M:%SZ')}
+        # Check when the proposal is not direct. Should fail.
+        response = self.client.patch(reverse('api:observations-detail', args=(observation.id,)), update_data)
+        self.assertEqual(response.status_code, 403)
+        observation.refresh_from_db()
+        self.assertEqual(original_end, observation.end)
+        # Check when the proposal is direct. Should succeed.
+        self.proposal.direct_submission = True
+        self.proposal.save()
+        response = self.client.patch(reverse('api:observations-detail', args=(observation.id,)), update_data)
+        self.assertEqual(response.status_code, 200)
+        observation.refresh_from_db()
+        self.assertEqual(new_end, observation.end)
+
+    def test_update_observation_non_staff_direct_user_on_other_proposals_fail(self):
+        observation = self._generate_observation_data(
+            self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
+        )
+        self._create_observation(observation)
+        observation = Observation.objects.first()
+        original_end = observation.end
+        non_staff_user = blend_user()
+        other_proposal = mixer.blend(Proposal, direct_submission=True)
+        mixer.blend(Membership, user=non_staff_user, proposal=other_proposal)
+        self.client.force_login(non_staff_user)
+        new_end = datetime(2016, 9, 5, 23, 47, 22).replace(tzinfo=timezone.utc)
+        update_data = {'end': datetime.strftime(new_end, '%Y-%m-%dT%H:%M:%SZ')}
+        # Check when the other proposal is not direct submission
+        response = self.client.patch(reverse('api:observations-detail', args=(observation.id,)), update_data)
+        self.assertEqual(response.status_code, 404)  # 404 because this user cannot even see the observation
+        observation.refresh_from_db()
+        self.assertEqual(original_end, observation.end)
+        # Check when the other proposal is direct submission
+        self.proposal.direct_submission = True
+        self.proposal.save()
+        response = self.client.patch(reverse('api:observations-detail', args=(observation.id,)), update_data)
+        self.assertEqual(response.status_code, 404)  # 404 because this user cannot even see the observation
+        observation.refresh_from_db()
+        self.assertEqual(original_end, observation.end)
+
 
 class TestLastScheduled(TestObservationApiBase):
     def setUp(self):

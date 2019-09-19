@@ -290,12 +290,18 @@ class ObservationSerializer(serializers.ModelSerializer):
         fields = ('site', 'enclosure', 'telescope', 'start', 'end', 'priority', 'configuration_statuses', 'request')
 
     def validate(self, data):
-        # If the user is not staff, check that they are allowed to create this observation
         user = self.context['request'].user
-        proposal = data['request'].request_group.proposal
+        if self.instance is not None:
+            # An observation already exists, must be a patch and data won't have the request, so get request like this
+            proposal = self.instance.request.request_group.proposal
+        else:
+            proposal = data['request'].request_group.proposal
+
+        # If the user is not staff, check that they are allowed to perform the action
         if not user.is_staff and proposal not in user.proposal_set.filter(direct_submission=True):
             raise serializers.ValidationError(_(
-                'Non staff users can only create observations on proposals they belong to that allow direct submission'
+                'Non staff users can only create or update observations on proposals they belong to that '
+                'allow direct submission'
             ))
 
         if self.context.get('request').method == 'PATCH':
@@ -374,7 +380,9 @@ class ObservationSerializer(serializers.ModelSerializer):
                     )
                 num_canceled = Observation.cancel(observations)
                 logger.info(
-                    f"updated end time for observation {instance.id} to {instance.end}. Canceled {num_canceled} overlapping observations.")
+                    f"updated end time for observation {instance.id} to {instance.end}. "
+                    f"Canceled {num_canceled} overlapping observations."
+                )
             cache.set('observation_portal_last_change_time', timezone.now(), None)
 
         return instance
