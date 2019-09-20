@@ -72,7 +72,8 @@
         }
       };
       return {
-        options: options
+        options: options,
+        plotItemToObservationIds: {},
       };
     },
     computed: {
@@ -113,6 +114,7 @@
             if (observation.start !== previousObservation.start || observation.site !== previousObservation.site || observation.state !== previousObservation.state
               || observation.enclosure !== previousObservation.enclosure || observation.telescope !== previousObservation.telescope) {
               let className = 'timeline_observation ' + previousObservation.state;
+              this.plotItemToObservationIds[index] = previousObservation.id;
               visGroups.add({id: index, content: previousObservationIndex});
               visData.add({
                 id: index,
@@ -130,6 +132,7 @@
             }
             previousObservation = observation;
           }
+          this.plotItemToObservationIds[index] = previousObservation.id;
           visGroups.add({id: index, content: previousObservationIndex});
           visData.add({
             id: index,
@@ -176,6 +179,13 @@
     },
     mounted: function () {
       this.plot = this.buildPlot();
+      let that = this;
+      this.plot.on('click', function(event) {
+        let observationId = that.plotItemToObservationIds[event.item];
+        if (observationId) {
+          window.location.assign('/observations/' + observationId);
+        }
+      })
     },
     methods: {
       buildPlot: function () {
