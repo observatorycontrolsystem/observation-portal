@@ -26,6 +26,8 @@
           <col style="width: 5%">
           <col style="width: 5%">
           <col style="width: 5%">
+          <col style="width: 5%">
+          <col style="width: 5%">
         </colgroup>
         <thead><tr>
           <th>PI Name</th>
@@ -38,6 +40,8 @@
           <th>Sinistro (1m)</th>
           <th>SBIG (0.4m)</th>
           <th>SBIG (2.0m)</th>
+          <th>GHTS REDCAM (4.0m)</th>
+          <th>GHTS REDCAM IMAGER (4.0m)</th>
         </tr></thead>
         <tbody>
           {% for proposal in sca.list %}
@@ -69,6 +73,12 @@
             </td>
             <td>
               {{ proposal.current_allocation.2M0SCICAMSBIG.std|floatformat:0 }}
+            </td>
+            <td>
+              {{ proposal.current_allocation.SOAR_GHTS_REDCAM.std|floatformat:0 }}
+            </td>
+            <td>
+              {{ proposal.current_allocation.SOAR_GHTS_REDCAM_IMAGER.std|floatformat:0 }}
             </td>
           </tr>
           {% endfor %}
