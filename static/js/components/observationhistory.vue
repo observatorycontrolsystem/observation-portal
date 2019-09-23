@@ -72,8 +72,7 @@
         }
       };
       return {
-        options: options,
-        plotItemToObservationIds: {},
+        options: options
       };
     },
     computed: {
@@ -114,11 +113,11 @@
             if (observation.start !== previousObservation.start || observation.site !== previousObservation.site || observation.state !== previousObservation.state
               || observation.enclosure !== previousObservation.enclosure || observation.telescope !== previousObservation.telescope) {
               let className = 'timeline_observation ' + previousObservation.state;
-              this.plotItemToObservationIds[index] = previousObservation.id;
               visGroups.add({id: index, content: previousObservationIndex});
               visData.add({
                 id: index,
                 group: index,
+                observationId: previousObservation.id,
                 title: 'telescope: ' + previousObservation.site + '.' + previousObservation.enclosure + '.' + previousObservation.telescope + previousObservation.percent_completed + previousObservation.fail_reason + '<br/>start: ' + previousObservation.start.replace('T', ' ') + '<br/>end: ' + previousObservation.end.replace('T', ' '),
                 className: className,
                 start: previousObservation.start,
@@ -132,11 +131,11 @@
             }
             previousObservation = observation;
           }
-          this.plotItemToObservationIds[index] = previousObservation.id;
           visGroups.add({id: index, content: previousObservationIndex});
           visData.add({
             id: index,
             group: index,
+            observationId: previousObservation.id,
             title: 'telescope: ' + previousObservation.site + '.' + previousObservation.enclosure + '.' + previousObservation.telescope + previousObservation.percent_completed + previousObservation.fail_reason + '<br/>start: ' + previousObservation.start.replace('T', ' ') + '<br/>end: ' + previousObservation.end.replace('T', ' '),
             className: 'timeline_observation ' + previousObservation.state,
             start: previousObservation.start,
@@ -181,9 +180,12 @@
       this.plot = this.buildPlot();
       let that = this;
       this.plot.on('click', function(event) {
-        let observationId = that.plotItemToObservationIds[event.item];
-        if (observationId) {
-          window.location.assign('/observations/' + observationId);
+        if (event.item !== null) {
+          // An observation on the timeline was cliked, get that observation info
+          let item = that.toVis.datasets.get(event.item);
+          if (item !== null) {
+            window.location.assign('/observations/' + item.observationId);
+          }
         }
       })
     },
