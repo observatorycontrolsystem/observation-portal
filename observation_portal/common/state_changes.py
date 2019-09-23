@@ -104,23 +104,30 @@ def on_requestgroup_state_change(old_requestgroup, new_requestgroup):
 
 
 def update_observation_state(observation):
-    states = [config_status.state for config_status in observation.configuration_statuses.all()]
-    if all([state == 'PENDING' for state in states]):
-        observation.state = 'PENDING'
-    elif all([state == 'PENDING' or state == 'ATTEMPTED' for state in states]):
-        observation.state = 'IN_PROGRESS'
-    elif any([state == 'FAILED' for state in states]):
-        observation.state = 'FAILED'
-    elif any([state == 'ABORTED' for state in states]):
-        observation.state = 'ABORTED'
-    elif all([state == 'COMPLETED' for state in states]):
-        observation.state = 'COMPLETED'
+    observation_state = get_observation_state(observation.configuration_statuses.all())
 
-    if observation.state in ['FAILED', 'ABORTED']:
+    if observation_state in ['FAILED', 'ABORTED']:
         # If the observation has failed, trigger a reschedule
         cache.set('observation_portal_last_change_time', timezone.now(), None)
 
-    observation.save()
+    if observation_state:
+        observation.state = observation_state
+        observation.save()
+
+
+def get_observation_state(configuration_statuses):
+    states = [config_status.state for config_status in configuration_statuses]
+    if all([state == 'PENDING' for state in states]):
+        return 'PENDING'
+    elif all([state == 'PENDING' or state == 'ATTEMPTED' for state in states]):
+        return 'IN_PROGRESS'
+    elif any([state == 'FAILED' for state in states]):
+        return 'FAILED'
+    elif any([state == 'ABORTED' for state in states]):
+        return 'ABORTED'
+    elif all([state == 'COMPLETED' for state in states]):
+        return 'COMPLETED'
+    return None
 
 
 def validate_ipp(request_group_dict, total_duration_dict):
@@ -204,9 +211,11 @@ def modify_ipp_time_from_requests(ipp_val, requests_list, modification='debit'):
 
 def get_request_state_from_configuration_statuses(request_state, acceptability_threshold, configuration_statuses):
     """Determine request state from all the configuration statuses associated with one of the request's observations"""
-    observation = configuration_statuses[0].observation
-    completion_percent = exposure_completion_percentage(observation)
-    if isclose(acceptability_threshold, completion_percent) or completion_percent >= acceptability_threshold:
+    observation_state = get_observation_state(configuration_statuses)
+    completion_percent = exposure_completion_percentage(configuration_statuses)
+    if isclose(acceptability_threshold, completion_percent) or \
+            completion_percent >= acceptability_threshold or \
+            observation_state == 'COMPLETED':
         return 'COMPLETED'
     return request_state
 
