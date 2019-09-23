@@ -290,6 +290,20 @@ class ObservationSerializer(serializers.ModelSerializer):
         fields = ('site', 'enclosure', 'telescope', 'start', 'end', 'priority', 'configuration_statuses', 'request')
 
     def validate(self, data):
+        user = self.context['request'].user
+        if self.instance is not None:
+            # An observation already exists, must be a patch and data won't have the request, so get request like this
+            proposal = self.instance.request.request_group.proposal
+        else:
+            proposal = data['request'].request_group.proposal
+
+        # If the user is not staff, check that they are allowed to perform the action
+        if not user.is_staff and proposal not in user.proposal_set.filter(direct_submission=True):
+            raise serializers.ValidationError(_(
+                'Non staff users can only create or update observations on proposals they belong to that '
+                'allow direct submission'
+            ))
+
         if self.context.get('request').method == 'PATCH':
             # For a partial update, only validate that the 'end' field is set, and that it is > now
             if 'end' not in data:
@@ -311,7 +325,8 @@ class ObservationSerializer(serializers.ModelSerializer):
         if not in_a_window:
             raise serializers.ValidationError(_(
                 'The start {} and end {} times do not fall within any window of the request'.format(
-                    data['start'].isoformat(), data['end'].isoformat())
+                    data['start'].isoformat(), data['end'].isoformat()
+                )
             ))
 
         # Validate that the site, enclosure, and telescope match the location of the request
@@ -365,7 +380,9 @@ class ObservationSerializer(serializers.ModelSerializer):
                     )
                 num_canceled = Observation.cancel(observations)
                 logger.info(
-                    f"updated end time for observation {instance.id} to {instance.end}. Canceled {num_canceled} overlapping observations.")
+                    f"updated end time for observation {instance.id} to {instance.end}. "
+                    f"Canceled {num_canceled} overlapping observations."
+                )
             cache.set('observation_portal_last_change_time', timezone.now(), None)
 
         return instance
@@ -392,6 +409,6 @@ class CancelObservationsSerializer(serializers.Serializer):
 
     def validate(self, data):
         if 'ids' not in data and ('start' not in data or 'end' not in data):
-            raise serializers.ValidationError("Must include either a observation id list or a start and end time")
+            raise serializers.ValidationError("Must include either an observation id list or a start and end time")
 
         return data
