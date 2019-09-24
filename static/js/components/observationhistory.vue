@@ -117,6 +117,7 @@
               visData.add({
                 id: index,
                 group: index,
+                observationId: previousObservation.id,
                 title: 'telescope: ' + previousObservation.site + '.' + previousObservation.enclosure + '.' + previousObservation.telescope + previousObservation.percent_completed + previousObservation.fail_reason + '<br/>start: ' + previousObservation.start.replace('T', ' ') + '<br/>end: ' + previousObservation.end.replace('T', ' '),
                 className: className,
                 start: previousObservation.start,
@@ -134,6 +135,7 @@
           visData.add({
             id: index,
             group: index,
+            observationId: previousObservation.id,
             title: 'telescope: ' + previousObservation.site + '.' + previousObservation.enclosure + '.' + previousObservation.telescope + previousObservation.percent_completed + previousObservation.fail_reason + '<br/>start: ' + previousObservation.start.replace('T', ' ') + '<br/>end: ' + previousObservation.end.replace('T', ' '),
             className: 'timeline_observation ' + previousObservation.state,
             start: previousObservation.start,
@@ -176,6 +178,16 @@
     },
     mounted: function () {
       this.plot = this.buildPlot();
+      let that = this;
+      this.plot.on('click', function(event) {
+        if (event.item !== null) {
+          // An observation on the timeline was cliked, get that observation info
+          let item = that.toVis.datasets.get(event.item);
+          if (item !== null) {
+            window.location.assign('/observations/' + item.observationId);
+          }
+        }
+      })
     },
     methods: {
       buildPlot: function () {

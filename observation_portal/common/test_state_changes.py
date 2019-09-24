@@ -135,6 +135,26 @@ class TestStateChanges(SetTimeMixin, TestCase):
             request.refresh_from_db()
             self.assertEqual(request.state, request_states[i])
 
+    def test_request_state_completed_if_a_config_status_completed_but_acceptability_threshold_not_reached(self):
+        request = self.requestgroup.requests.first()
+        request.acceptability_threshold = 90
+        request.save()
+        observation = request.observation_set.first()
+        for cs in observation.configuration_statuses.all():
+            summary = cs.summary
+            summary.time_completed = 0.0
+            summary.save()
+            cs.state = 'COMPLETED'
+            cs.save()
+        observation.refresh_from_db()
+        self.requestgroup.refresh_from_db()
+        self.assertEqual(observation.state, 'COMPLETED')
+        self.assertEqual(self.requestgroup.state, 'PENDING')
+        request_states = ['COMPLETED', 'PENDING', 'PENDING']
+        for i, request in enumerate(self.requestgroup.requests.all()):
+            request.refresh_from_db()
+            self.assertEqual(request.state, request_states[i])
+
     def test_request_state_complete_if_was_expired_but_config_statuses_complete(self):
         request = self.requestgroup.requests.first()
         request.state = 'WINDOW_EXPIRED'

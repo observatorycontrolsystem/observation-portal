@@ -9,6 +9,7 @@ import logging
 
 logger = logging.getLogger()
 
+
 class Observation(models.Model):
     STATE_CHOICES = (
         ('PENDING', 'PENDING'),

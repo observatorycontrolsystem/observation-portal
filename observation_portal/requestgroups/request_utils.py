@@ -118,10 +118,10 @@ def get_airmasses_for_request_at_sites(request_dict, is_staff=False):
     return data
 
 
-def exposure_completion_percentage(observation):
+def exposure_completion_percentage(configuration_statuses):
     total_exposure_time = 0
     completed_exposure_time = 0
-    for configuration_status in observation.configuration_statuses.all():
+    for configuration_status in configuration_statuses:
         if hasattr(configuration_status, 'summary'):
             completed_exposure_time += configuration_status.summary.time_completed
         configuration_exposure_time = 0

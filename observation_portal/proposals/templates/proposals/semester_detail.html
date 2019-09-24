@@ -26,6 +26,8 @@
           <col style="width: 5%">
           <col style="width: 5%">
           <col style="width: 5%">
+          <col style="width: 5%">
+          <col style="width: 5%">
         </colgroup>
         <thead><tr>
           <th>PI Name</th>
@@ -38,6 +40,8 @@
           <th>Sinistro (1m)</th>
           <th>SBIG (0.4m)</th>
           <th>SBIG (2.0m)</th>
+          <th>GHTS REDCAM (4.0m)</th>
+          <th>GHTS REDCAM IMAGER (4.0m)</th>
         </tr></thead>
         <tbody>
           {% for proposal in sca.list %}
@@ -47,8 +51,8 @@
             <td>
               <a class="showAbstract">
               {{ proposal.title }}
-              <span class="title hidden">{{ proposal.title }}</span>
-              <span class="abstract hidden">{{ proposal.abstract }}</span>
+              <span class="title d-none">{{ proposal.title }}</span>
+              <span class="abstract d-none">{{ proposal.abstract }}</span>
               </a>
             </td>
             <td>{% for semester in proposal.semester_set.all.distinct %} {{ semester }} {% endfor %}</td>
@@ -70,6 +74,12 @@
             <td>
               {{ proposal.current_allocation.2M0SCICAMSBIG.std|floatformat:0 }}
             </td>
+            <td>
+              {{ proposal.current_allocation.SOAR_GHTS_REDCAM.std|floatformat:0 }}
+            </td>
+            <td>
+              {{ proposal.current_allocation.SOAR_GHTS_REDCAM_IMAGER.std|floatformat:0 }}
+            </td>
           </tr>
           {% endfor %}
         </tbody>
@@ -81,8 +91,8 @@
   <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
         <h4 class="modal-title" id="myModalLabel"></h4>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
       </div>
       <div class="modal-body" id="myModalBody">
       </div>
