@@ -95,12 +95,11 @@ def on_requestgroup_state_change(old_requestgroup_state, new_requestgroup):
     if old_requestgroup_state == new_requestgroup.state:
         return
     valid_request_state_change(old_requestgroup_state, new_requestgroup.state, new_requestgroup)
-    if new_requestgroup.state in TERMINAL_REQUEST_STATES:
+    if new_requestgroup.state in ['CANCELED', 'WINDOW_EXPIRED']:
+        # Just because the RG is marked as completed, doesn't mean we should mark a pending R as completed
         for request in new_requestgroup.requests.filter(state__exact='PENDING'):
             request.state = new_requestgroup.state
             request.save()
-        # new_requestgroup.requests.select_for_update(of=('self')).filter(state__iexact='PENDING').update(
-        #     state=new_requestgroup.state, modified=timezone.now())
 
 
 def update_observation_state(observation):
