@@ -96,7 +96,7 @@ def on_requestgroup_state_change(old_requestgroup_state, new_requestgroup):
         return
     valid_request_state_change(old_requestgroup_state, new_requestgroup.state, new_requestgroup)
     if new_requestgroup.state in TERMINAL_REQUEST_STATES:
-        for request in new_requestgroup.requests.filter(state__iexact='PENDING'):
+        for request in new_requestgroup.requests.filter(state__exact='PENDING'):
             request.state = new_requestgroup.state
             request.save()
         # new_requestgroup.requests.select_for_update(of=('self')).filter(state__iexact='PENDING').update(
@@ -170,7 +170,7 @@ def debit_ipp_time(request_group):
             duration_hours = duration / 3600
             ipp_difference = ipp_value * duration_hours
             with transaction.atomic():
-                TimeAllocation.objects.select_for_update(of=('self')).filter(id=time_allocations_dict[tak].id).update(
+                TimeAllocation.objects.select_for_update().filter(id=time_allocations_dict[tak].id).update(
                     ipp_time_available=F('ipp_time_available') - ipp_difference)
     except Exception as e:
         logger.warning(_(
@@ -206,7 +206,7 @@ def modify_ipp_time_from_requests(ipp_val, requests_list, modification='debit'):
                     ))
                     modified_time = time_allocation.ipp_limit - time_allocation.ipp_time_available
                 with transaction.atomic():
-                    TimeAllocation.objects.select_for_update(of=('self')).filter(
+                    TimeAllocation.objects.select_for_update().filter(
                         id=time_allocation.id).update(ipp_time_available=F('ipp_time_available') + modified_time)
     except Exception as e:
         logger.warning(_(f'Problem {modification}ing ipp time for request {request.id}: {repr(e)}'))

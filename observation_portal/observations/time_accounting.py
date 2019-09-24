@@ -30,15 +30,15 @@ def on_summary_update_time_accounting(current, instance):
             if time_allocation.instrument_type.upper() == instance.configuration_status.configuration.instrument_type.upper():
                 if observation_type == RequestGroup.NORMAL:
                     with transaction.atomic():
-                        TimeAllocation.objects.select_for_update(of=('self')).filter(
+                        TimeAllocation.objects.select_for_update().filter(
                             id=time_allocation.id).update(std_time_used=F('std_time_used') + time_difference)
                 elif observation_type == RequestGroup.RAPID_RESPONSE:
                     with transaction.atomic():
-                        TimeAllocation.objects.select_for_update(of=('self')).filter(
+                        TimeAllocation.objects.select_for_update().filter(
                             id=time_allocation.id).update(rr_time_used=F('rr_time_used') + time_difference)
                 elif observation_type == RequestGroup.TIME_CRITICAL:
                     with transaction.atomic():
-                        TimeAllocation.objects.select_for_update(of=('self')).filter(
+                        TimeAllocation.objects.select_for_update().filter(
                             id=time_allocation.id).update(tc_time_used=F('tc_time_used') + time_difference)
                 else:
                     logger.warning('Failed to perform time accounting on configuration_status {}. Observation Type'
