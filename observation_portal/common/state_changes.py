@@ -9,6 +9,7 @@ from observation_portal.requestgroups.request_utils import exposure_completion_p
 from observation_portal.requestgroups.models import RequestGroup, Request
 from observation_portal.observations.models import Observation
 
+from collections import defaultdict
 import logging
 from math import isclose, floor
 
@@ -160,11 +161,16 @@ def debit_ipp_time(request_group):
     if ipp_value <= 0:
         return
     try:
+        total_duration_dict = defaultdict(int)
+        for request in request_group.requests.all():
+            tak = request.time_allocation_key
+            total_duration_dict[tak] += request.duration
+
         time_allocations = request_group.timeallocations
         time_allocations_dict = {
             TimeAllocationKey(ta.semester.id, ta.instrument_type): ta for ta in time_allocations.all()
         }
-        total_duration_dict = request_group.total_duration
+
         for tak, duration in total_duration_dict.items():
             duration_hours = duration / 3600
             ipp_difference = ipp_value * duration_hours
