@@ -66,7 +66,7 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
     ordering = ('-id',)
 
     def get_queryset(self):
-        return observations_queryset().prefetch_related('request__windows', 'request__location').distinct()
+        return observations_queryset(self.request).prefetch_related('request__windows', 'request__location').distinct()
 
     @action(detail=False, methods=['post'])
     def cancel(self, request):
