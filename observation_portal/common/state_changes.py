@@ -297,6 +297,7 @@ def update_request_states_for_window_expiration():
                         on_request_state_change('PENDING', Request.objects.get(pk=request.id))
         else:
             for request in request_group.requests.all().prefetch_related('observation_set'):
+                request_state_changed = False
                 if request.observation_set.first().end < now:
                     logger.info(f'Expiring DIRECT request {request.id}', extra={'tags': {'request_num': request.id}})
                     with transaction.atomic():
