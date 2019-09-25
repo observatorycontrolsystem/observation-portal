@@ -274,30 +274,35 @@ def update_request_states_for_window_expiration():
     """Update the state of all requests and request_groups to WINDOW_EXPIRED if their last window has passed.
     Return True if any states changed, else False."""
     now = timezone.now()
-    states_changed = False
+    any_states_changed = False
     for request_group in RequestGroup.objects.exclude(state__in=TERMINAL_REQUEST_STATES):
         request_states_changed = False
         if request_group.observation_type != RequestGroup.DIRECT:
             for request in request_group.requests.filter(state='PENDING').prefetch_related('windows'):
+                request_state_changed = False
                 if request.max_window_time < now:
                     logger.info(f'Expiring request {request.id}', extra={'tags': {'request_num': request.id}})
                     with transaction.atomic():
                         if Request.objects.select_for_update().filter(pk=request.id, state='PENDING').update(state='WINDOW_EXPIRED'):
-                            states_changed = True
+                            any_states_changed = True
                             request_states_changed = True
-                    on_request_state_change('PENDING', Request.objects.get(pk=request.id))
+                            request_state_changed = True
+                    if request_state_changed:
+                        on_request_state_change('PENDING', Request.objects.get(pk=request.id))
         else:
             for request in request_group.requests.all().prefetch_related('observation_set'):
                 if request.observation_set.first().end < now:
                     logger.info(f'Expiring DIRECT request {request.id}', extra={'tags': {'request_num': request.id}})
                     with transaction.atomic():
                         if Request.objects.select_for_update().filter(pk=request.id, state='PENDING').update(state='WINDOW_EXPIRED'):
-                            states_changed = True
+                            any_states_changed = True
                             request_states_changed = True
-                    on_request_state_change('PENDING', Request.objects.get(pk=request.id))
+                            request_state_changed = True
+                    if request_state_changed:
+                        on_request_state_change('PENDING', Request.objects.get(pk=request.id))
         if request_states_changed:
             update_request_group_state(request_group)
-    return states_changed
+    return any_states_changed
 
 
 def update_request_group_state(request_group):
