@@ -13,7 +13,7 @@ def cb_requestgroup_pre_save(sender, instance, *args, **kwargs):
     if instance.id:
         # This is an update to the model
         current_data = RequestGroup.objects.get(pk=instance.pk)
-        on_requestgroup_state_change(current_data, instance)
+        on_requestgroup_state_change(current_data.state, instance)
 
 
 @receiver(pre_save, sender=Request)
@@ -23,7 +23,7 @@ def cb_request_pre_save(sender, instance, *args, **kwargs):
     if instance.id:
         # This is an update to the model
         current_data = Request.objects.get(pk=instance.pk)
-        on_request_state_change(current_data, instance)
+        on_request_state_change(current_data.state, instance)
 
 
 @receiver(post_save, sender=RequestGroup)
