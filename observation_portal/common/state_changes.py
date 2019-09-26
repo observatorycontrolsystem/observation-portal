@@ -108,7 +108,7 @@ def update_observation_state(observation):
 
     if observation_state:
         with transaction.atomic():
-            Observation.objects.filter(pk=observation.id).update(state=observation_state)
+            Observation.objects.filter(pk=observation.id).update(state=observation_state, modified=timezone.now())
 
     if observation_state in ['FAILED', 'ABORTED']:
         # If the observation has failed, trigger a reschedule
@@ -289,7 +289,8 @@ def update_request_states_for_window_expiration():
                 if request.max_window_time < now:
                     logger.info(f'Expiring request {request.id}', extra={'tags': {'request_num': request.id}})
                     with transaction.atomic():
-                        if Request.objects.select_for_update().filter(pk=request.id, state='PENDING').update(state='WINDOW_EXPIRED'):
+                        if Request.objects.select_for_update().filter(pk=request.id, state='PENDING').update(
+                                state='WINDOW_EXPIRED', modified=timezone.now()):
                             any_states_changed = True
                             request_states_changed = True
                             request_state_changed = True
@@ -301,7 +302,8 @@ def update_request_states_for_window_expiration():
                 if request.observation_set.first().end < now:
                     logger.info(f'Expiring DIRECT request {request.id}', extra={'tags': {'request_num': request.id}})
                     with transaction.atomic():
-                        if Request.objects.select_for_update().filter(pk=request.id, state='PENDING').update(state='WINDOW_EXPIRED'):
+                        if Request.objects.select_for_update().filter(pk=request.id, state='PENDING').update(
+                                state='WINDOW_EXPIRED', modified=timezone.now()):
                             any_states_changed = True
                             request_states_changed = True
                             request_state_changed = True
