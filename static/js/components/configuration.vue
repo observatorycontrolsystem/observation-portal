@@ -175,13 +175,19 @@
       collapseMixin
     ],
     data: function() {
+      let currentGuideOption = 'ON';
+      if (this.configuration.guiding_config.mode == 'OFF'){
+        currentGuideOption = 'OFF';
+      } else if (this.configuration.guiding_config.optional){
+        currentGuideOption = 'OPTIONAL';
+      }
       return {
         show: true,
         acquireHistory: {
           mode: '',
           extra_params: {}
         },
-        selectedImagerGuidingOption: 'OPTIONAL',
+        selectedImagerGuidingOption: currentGuideOption,
         imagerGuidingOptions: [
           {value: 'OPTIONAL', text: 'Optional'},
           {value: 'ON', text: 'On'},
