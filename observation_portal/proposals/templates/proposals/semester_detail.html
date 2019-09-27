@@ -27,7 +27,6 @@
           <col style="width: 5%">
           <col style="width: 5%">
           <col style="width: 5%">
-          <col style="width: 5%">
         </colgroup>
         <thead><tr>
           <th>PI Name</th>
@@ -39,7 +38,6 @@
           <th>NRES (1m)</th>
           <th>Sinistro (1m)</th>
           <th>SBIG (0.4m)</th>
-          <th>SBIG (2.0m)</th>
           <th>GHTS REDCAM (4.0m)</th>
           <th>GHTS REDCAM IMAGER (4.0m)</th>
         </tr></thead>
@@ -70,9 +68,6 @@
             </td>
             <td>
               {{ proposal.current_allocation.0M4SCICAMSBIG.std|floatformat:0 }}
-            </td>
-            <td>
-              {{ proposal.current_allocation.2M0SCICAMSBIG.std|floatformat:0 }}
             </td>
             <td>
               {{ proposal.current_allocation.SOAR_GHTS_REDCAM.std|floatformat:0 }}
