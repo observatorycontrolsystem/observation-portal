@@ -258,7 +258,7 @@ class DraftRequestGroupViewSet(viewsets.ModelViewSet):
         serializer.save(author=self.request.user)
 
     def get_queryset(self):
-        if self.request.user.is_staff:
+        if self.request.user.is_staff and self.request.user.profile.staff_view:
             return DraftRequestGroup.objects.all()
         elif self.request.user.is_authenticated:
             return DraftRequestGroup.objects.filter(proposal__in=self.request.user.proposal_set.all())
