@@ -4,6 +4,7 @@ from django.contrib.postgres.fields import JSONField
 from django.utils.functional import cached_property
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.core.cache import cache
+from django.utils import timezone
 from django.urls import reverse
 from django.forms.models import model_to_dict
 from django.utils.functional import lazy
@@ -16,6 +17,7 @@ from observation_portal.common.rise_set_utils import get_rise_set_target
 from observation_portal.requestgroups.duration_utils import (
     get_request_duration,
     get_configuration_duration,
+    get_complete_configurations_duration,
     get_instrument_configuration_duration,
     get_total_duration_dict,
     get_semester_in
@@ -240,6 +242,21 @@ class Request(models.Model):
             semester__end__gte=self.max_window_time,
             instrument_type__in=[conf.instrument_type for conf in self.configurations.all()]
         )
+
+    def get_remaining_duration(self, configurations_after_priority):
+        start_time = (min([window.start for window in self.windows.all()])
+                      if self.windows else timezone.now())
+        configurations_list = [config.as_dict() for config in self.configurations.all()]
+        try:
+            configurations = sorted(configurations_list, key=lambda x: x['priority'])
+        except KeyError:
+            configurations = configurations_list
+        duration = get_complete_configurations_duration(
+            configurations,
+            start_time,
+            configurations_after_priority
+        )
+        return duration
 
 
 class Location(models.Model):

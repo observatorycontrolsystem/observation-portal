@@ -1114,6 +1114,72 @@ class TestUpdateConfigurationStatusApi(TestObservationApiBase):
         self.requestgroup.refresh_from_db()
         self.assertEqual(self.requestgroup.state, 'PENDING')
 
+    def test_update_configuration_status_end_time_succeeds(self):
+        original_end = datetime(2016, 9, 5, 23, 35, 40).replace(tzinfo=timezone.utc)
+        observation = self._generate_observation_data(
+            self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
+        )
+        self._create_observation(observation)
+        configuration_status = ConfigurationStatus.objects.first()
+
+        new_end = datetime(2016, 9, 5, 23, 47, 22).replace(tzinfo=timezone.utc)
+        update_data = {"end": datetime.strftime(new_end, '%Y-%m-%dT%H:%M:%SZ')}
+        self.client.patch(reverse('api:configurationstatus-detail', args=(configuration_status.id,)), update_data)
+        observation = Observation.objects.first()
+        self.assertEqual(observation.end, new_end)
+
+    def test_lengthen_first_configuration_status_end_time_with_multiple_configs(self):
+        original_end = datetime(2016, 9, 5, 23, 35, 40).replace(tzinfo=timezone.utc)
+        create_simple_configuration(self.requestgroup.requests.first(), priority=2)
+        create_simple_configuration(self.requestgroup.requests.first(), priority=3)
+        configuration_ids = [config.id for config in self.requestgroup.requests.first().configurations.all()]
+        observation = self._generate_observation_data(self.requestgroup.requests.first().id, configuration_ids)
+        self._create_observation(observation)
+        configuration_status = ConfigurationStatus.objects.first()
+
+        new_end = datetime(2016, 9, 5, 23, 47, 22).replace(tzinfo=timezone.utc)
+        update_data = {"end": datetime.strftime(new_end, '%Y-%m-%dT%H:%M:%SZ')}
+        self.client.patch(reverse('api:configurationstatus-detail', args=(configuration_status.id,)), update_data)
+        observation = Observation.objects.first()
+        new_obs_end = new_end + timedelta(seconds=self.requestgroup.requests.first().get_remaining_duration(
+            configuration_status.configuration.priority))
+        self.assertEqual(observation.end, new_obs_end)
+
+    def test_shorten_first_configuration_status_end_time_with_multiple_configs(self):
+        original_end = datetime(2016, 9, 5, 23, 35, 40).replace(tzinfo=timezone.utc)
+        create_simple_configuration(self.requestgroup.requests.first(), priority=2)
+        create_simple_configuration(self.requestgroup.requests.first(), priority=3)
+        configuration_ids = [config.id for config in self.requestgroup.requests.first().configurations.all()]
+        observation = self._generate_observation_data(self.requestgroup.requests.first().id, configuration_ids)
+        self._create_observation(observation)
+        configuration_status = ConfigurationStatus.objects.first()
+
+        new_end = datetime(2016, 9, 5, 23, 13, 31).replace(tzinfo=timezone.utc)
+        update_data = {"end": datetime.strftime(new_end, '%Y-%m-%dT%H:%M:%SZ')}
+        self.client.patch(reverse('api:configurationstatus-detail', args=(configuration_status.id,)), update_data)
+        observation = Observation.objects.first()
+        new_obs_end = new_end + timedelta(seconds=self.requestgroup.requests.first().get_remaining_duration(
+            configuration_status.configuration.priority))
+        self.assertEqual(observation.end, new_obs_end)
+
+    def test_update_last_configuration_status_end_time_is_same_as_obs_end(self):
+        original_end = datetime(2016, 9, 5, 23, 35, 40).replace(tzinfo=timezone.utc)
+        create_simple_configuration(self.requestgroup.requests.first(), priority=2)
+        create_simple_configuration(self.requestgroup.requests.first(), priority=3)
+        configuration_ids = [config.id for config in self.requestgroup.requests.first().configurations.all()]
+        observation = self._generate_observation_data(self.requestgroup.requests.first().id, configuration_ids)
+        self._create_observation(observation)
+        configuration_status = ConfigurationStatus.objects.last()
+
+        new_end = datetime(2016, 9, 5, 23, 47, 22).replace(tzinfo=timezone.utc)
+        update_data = {"end": datetime.strftime(new_end, '%Y-%m-%dT%H:%M:%SZ')}
+        self.client.patch(reverse('api:configurationstatus-detail', args=(configuration_status.id,)), update_data)
+        observation = Observation.objects.first()
+        new_obs_end = new_end + timedelta(seconds=self.requestgroup.requests.first().get_remaining_duration(
+            configuration_status.configuration.priority))
+        self.assertEqual(new_obs_end, new_end)
+        self.assertEqual(observation.end, new_obs_end)
+
 
 class TestUpdateObservationApi(TestObservationApiBase):
     def setUp(self):

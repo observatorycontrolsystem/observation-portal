@@ -13,6 +13,8 @@ from observation_portal.proposals.models import Proposal
 
 import logging
 
+from datetime import timedelta
+
 logger = logging.getLogger()
 
 
@@ -27,6 +29,7 @@ class ConfigurationStatusSerializer(serializers.ModelSerializer):
     summary = SummarySerializer(required=False)
     instrument_name = serializers.CharField(required=False)
     guide_camera_name = serializers.CharField(required=False)
+    end = serializers.DateTimeField(required=False)
 
     class Meta:
         model = ConfigurationStatus
@@ -35,7 +38,9 @@ class ConfigurationStatusSerializer(serializers.ModelSerializer):
     def validate(self, data):
         data = super().validate(data)
         if self.context.get('request').method == 'PATCH':
-            # For a partial update, don't try to validate the field set
+            # For a partial update, only validate the end time if its set
+            if 'end' in data and data['end'] <= timezone.now():
+                raise serializers.ValidationError(_('Updated end time must be in the future'))
             return data
 
         if ('guide_camera_name' in data and
@@ -65,6 +70,11 @@ class ConfigurationStatusSerializer(serializers.ModelSerializer):
                               'events': summary.get('events', {})
                               }
                 )
+
+        if 'end' in validated_data:
+            obs_end_time = validated_data['end']
+            obs_end_time += timedelta(seconds=instance.observation.request.get_remaining_duration(instance.configuration.priority))
+            instance.observation.update_end_time(obs_end_time)
 
         return instance
 
@@ -359,33 +369,7 @@ class ObservationSerializer(serializers.ModelSerializer):
         return data
 
     def update(self, instance, validated_data):
-        if validated_data['end'] > instance.start:
-            # Only update the end time if it is > start time
-            old_end_time = instance.end
-            instance.end = validated_data['end']
-            instance.save()
-            # Cancel observations that used to be under this observation
-            if instance.end > old_end_time:
-                observations = Observation.objects.filter(
-                    site=instance.site,
-                    enclosure=instance.enclosure,
-                    telescope=instance.telescope,
-                    start__lte=instance.end,
-                    start__gte=old_end_time,
-                    state='PENDING'
-                )
-                if instance.request.request_group.observation_type != RequestGroup.RAPID_RESPONSE:
-                    observations = observations.exclude(
-                        request__request_group__observation_type=RequestGroup.RAPID_RESPONSE
-                    )
-                num_canceled = Observation.cancel(observations)
-                logger.info(
-                    f"updated end time for observation {instance.id} to {instance.end}. "
-                    f"Canceled {num_canceled} overlapping observations."
-                )
-            cache.set('observation_portal_last_change_time', timezone.now(), None)
-
-        return instance
+        return instance.update_end_time(validated_data['end'])
 
     def create(self, validated_data):
         configuration_statuses = validated_data.pop('configuration_statuses')
