@@ -11,38 +11,38 @@ class ObservationFilter(mixins.CustomIsoDateTimeFilterMixin, django_filters.Filt
     site = django_filters.MultipleChoiceFilter(choices=configdb.get_site_tuples())
     enclosure = django_filters.MultipleChoiceFilter(choices=configdb.get_enclosure_tuples())
     telescope = django_filters.MultipleChoiceFilter(choices=configdb.get_telescope_tuples())
-    start_after = django_filters.IsoDateTimeFilter(
-        field_name='start',
-        lookup_expr='gte',
-        label='Start after',
-        widget=forms.TextInput(attrs={'class': 'input', 'type': 'date'})
-    )
     time_span = django_filters.DateRangeFilter(
         field_name='start',
         label='Time Span'
     )
+    start_after = django_filters.IsoDateTimeFilter(
+        field_name='start',
+        lookup_expr='gte',
+        label='Start After (Inclusive)',
+        widget=forms.TextInput(attrs={'class': 'input', 'type': 'date'})
+    )
     start_before = django_filters.IsoDateTimeFilter(
         field_name='start',
         lookup_expr='lt',
-        label='Start before',
+        label='Start Before',
         widget=forms.TextInput(attrs={'class': 'input', 'type': 'date'})
     )
     end_after = django_filters.IsoDateTimeFilter(
         field_name='end',
         lookup_expr='gte',
-        label='End after',
+        label='End After (Inclusive)',
         widget=forms.TextInput(attrs={'class': 'input', 'type': 'date'})
     )
     end_before = django_filters.IsoDateTimeFilter(
         field_name='end',
         lookup_expr='lt',
-        label='End before',
+        label='End Before',
         widget=forms.TextInput(attrs={'class': 'input', 'type': 'date'})
     )
     modified_after = django_filters.IsoDateTimeFilter(
         field_name='modified',
         lookup_expr='gte',
-        label='Modified After',
+        label='Modified After (Inclusive)',
         widget=forms.TextInput(attrs={'class': 'input', 'type': 'date'})
     )
     request_id = django_filters.CharFilter(field_name='request__id')
