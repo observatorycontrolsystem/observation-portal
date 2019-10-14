@@ -1163,7 +1163,6 @@ class TestUpdateConfigurationStatusApi(TestObservationApiBase):
         self.assertEqual(observation.end, new_obs_end)
 
     def test_update_last_configuration_status_end_time_is_same_as_obs_end(self):
-        original_end = datetime(2016, 9, 5, 23, 35, 40).replace(tzinfo=timezone.utc)
         create_simple_configuration(self.requestgroup.requests.first(), priority=2)
         create_simple_configuration(self.requestgroup.requests.first(), priority=3)
         configuration_ids = [config.id for config in self.requestgroup.requests.first().configurations.all()]
