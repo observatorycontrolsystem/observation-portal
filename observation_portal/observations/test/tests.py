@@ -1115,7 +1115,6 @@ class TestUpdateConfigurationStatusApi(TestObservationApiBase):
         self.assertEqual(self.requestgroup.state, 'PENDING')
 
     def test_update_configuration_status_end_time_succeeds(self):
-        original_end = datetime(2016, 9, 5, 23, 35, 40).replace(tzinfo=timezone.utc)
         observation = self._generate_observation_data(
             self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
         )
@@ -1129,7 +1128,6 @@ class TestUpdateConfigurationStatusApi(TestObservationApiBase):
         self.assertEqual(observation.end, new_end)
 
     def test_lengthen_first_configuration_status_end_time_with_multiple_configs(self):
-        original_end = datetime(2016, 9, 5, 23, 35, 40).replace(tzinfo=timezone.utc)
         create_simple_configuration(self.requestgroup.requests.first(), priority=2)
         create_simple_configuration(self.requestgroup.requests.first(), priority=3)
         configuration_ids = [config.id for config in self.requestgroup.requests.first().configurations.all()]
@@ -1146,7 +1144,6 @@ class TestUpdateConfigurationStatusApi(TestObservationApiBase):
         self.assertEqual(observation.end, new_obs_end)
 
     def test_shorten_first_configuration_status_end_time_with_multiple_configs(self):
-        original_end = datetime(2016, 9, 5, 23, 35, 40).replace(tzinfo=timezone.utc)
         create_simple_configuration(self.requestgroup.requests.first(), priority=2)
         create_simple_configuration(self.requestgroup.requests.first(), priority=3)
         configuration_ids = [config.id for config in self.requestgroup.requests.first().configurations.all()]
