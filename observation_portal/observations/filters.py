@@ -8,9 +8,9 @@ from observation_portal.common import mixins
 
 
 class ObservationFilter(mixins.CustomIsoDateTimeFilterMixin, django_filters.FilterSet):
-    site = django_filters.MultipleChoiceFilter(choices=configdb.get_site_tuples())
-    enclosure = django_filters.MultipleChoiceFilter(choices=configdb.get_enclosure_tuples())
-    telescope = django_filters.MultipleChoiceFilter(choices=configdb.get_telescope_tuples())
+    site = django_filters.MultipleChoiceFilter(choices=sorted(configdb.get_site_tuples()))
+    enclosure = django_filters.MultipleChoiceFilter(choices=sorted(configdb.get_enclosure_tuples()))
+    telescope = django_filters.MultipleChoiceFilter(choices=sorted(configdb.get_telescope_tuples()))
     time_span = django_filters.DateRangeFilter(
         field_name='start',
         label='Time Span'
@@ -60,12 +60,12 @@ class ObservationFilter(mixins.CustomIsoDateTimeFilterMixin, django_filters.Filt
     )
     proposal = django_filters.CharFilter(field_name='request__request_group__proposal__id', label='Proposal')
     instrument_type = django_filters.MultipleChoiceFilter(
-        choices=configdb.get_instrument_type_tuples(),
+        choices=sorted(configdb.get_instrument_type_tuples()),
         label='Instrument Type',
         field_name='configuration_statuses__configuration__instrument_type'
     )
     configuration_type = django_filters.MultipleChoiceFilter(
-        choices=configdb.get_configuration_type_tuples(),
+        choices=sorted(configdb.get_configuration_type_tuples()),
         label='Configuration Type',
         field_name='configuration_statuses__configuration__type'
     )
