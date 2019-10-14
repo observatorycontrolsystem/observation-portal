@@ -17,6 +17,10 @@ class ObservationFilter(mixins.CustomIsoDateTimeFilterMixin, django_filters.Filt
         label='Start after',
         widget=forms.TextInput(attrs={'class': 'input', 'type': 'date'})
     )
+    time_span = django_filters.DateRangeFilter(
+        field_name='start',
+        label='Time Span'
+    )
     start_before = django_filters.IsoDateTimeFilter(
         field_name='start',
         lookup_expr='lt',
