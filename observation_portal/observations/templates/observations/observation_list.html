@@ -74,6 +74,7 @@
   </div>
   <div class="col-md-2">
     <form class="form" method="GET" action="{% url 'observations:observation-list' %}">
+    {% buttons submit="Filter" reset="Reset" %}{% endbuttons %}
     {% bootstrap_form filter.form exclude="end_after,end_before" %}
     {% buttons submit="Filter" reset="Reset" %}{% endbuttons %}
     </form>

@@ -8,37 +8,41 @@ from observation_portal.common import mixins
 
 
 class ObservationFilter(mixins.CustomIsoDateTimeFilterMixin, django_filters.FilterSet):
-    site = django_filters.MultipleChoiceFilter(choices=configdb.get_site_tuples())
-    enclosure = django_filters.MultipleChoiceFilter(choices=configdb.get_enclosure_tuples())
-    telescope = django_filters.MultipleChoiceFilter(choices=configdb.get_telescope_tuples())
+    site = django_filters.MultipleChoiceFilter(choices=sorted(configdb.get_site_tuples()))
+    enclosure = django_filters.MultipleChoiceFilter(choices=sorted(configdb.get_enclosure_tuples()))
+    telescope = django_filters.MultipleChoiceFilter(choices=sorted(configdb.get_telescope_tuples()))
+    time_span = django_filters.DateRangeFilter(
+        field_name='start',
+        label='Time Span'
+    )
     start_after = django_filters.IsoDateTimeFilter(
         field_name='start',
         lookup_expr='gte',
-        label='Start after',
+        label='Start After (Inclusive)',
         widget=forms.TextInput(attrs={'class': 'input', 'type': 'date'})
     )
     start_before = django_filters.IsoDateTimeFilter(
         field_name='start',
         lookup_expr='lt',
-        label='Start before',
+        label='Start Before',
         widget=forms.TextInput(attrs={'class': 'input', 'type': 'date'})
     )
     end_after = django_filters.IsoDateTimeFilter(
         field_name='end',
         lookup_expr='gte',
-        label='End after',
+        label='End After (Inclusive)',
         widget=forms.TextInput(attrs={'class': 'input', 'type': 'date'})
     )
     end_before = django_filters.IsoDateTimeFilter(
         field_name='end',
         lookup_expr='lt',
-        label='End before',
+        label='End Before',
         widget=forms.TextInput(attrs={'class': 'input', 'type': 'date'})
     )
     modified_after = django_filters.IsoDateTimeFilter(
         field_name='modified',
         lookup_expr='gte',
-        label='Modified After',
+        label='Modified After (Inclusive)',
         widget=forms.TextInput(attrs={'class': 'input', 'type': 'date'})
     )
     request_id = django_filters.CharFilter(field_name='request__id')
@@ -56,12 +60,12 @@ class ObservationFilter(mixins.CustomIsoDateTimeFilterMixin, django_filters.Filt
     )
     proposal = django_filters.CharFilter(field_name='request__request_group__proposal__id', label='Proposal')
     instrument_type = django_filters.MultipleChoiceFilter(
-        choices=configdb.get_instrument_type_tuples(),
+        choices=sorted(configdb.get_instrument_type_tuples()),
         label='Instrument Type',
         field_name='configuration_statuses__configuration__instrument_type'
     )
     configuration_type = django_filters.MultipleChoiceFilter(
-        choices=configdb.get_configuration_type_tuples(),
+        choices=sorted(configdb.get_configuration_type_tuples()),
         label='Configuration Type',
         field_name='configuration_statuses__configuration__type'
     )
