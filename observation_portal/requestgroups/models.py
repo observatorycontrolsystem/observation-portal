@@ -244,13 +244,13 @@ class Request(models.Model):
         )
 
     def get_remaining_duration(self, configurations_after_priority):
-        start_time = (min([window.start for window in self.windows.all()])
-                      if self.windows else timezone.now())
-        configurations_list = [config.as_dict() for config in self.configurations.all()]
+        request_dict = self.as_dict()
+        start_time = (min([window['start'] for window in request_dict['windows']])
+                      if 'windows' in request_dict and request_dict['windows'] else timezone.now())
         try:
-            configurations = sorted(configurations_list, key=lambda x: x['priority'])
+            configurations = sorted(request_dict['configurations'], key=lambda x: x['priority'])
         except KeyError:
-            configurations = configurations_list
+            configurations = request_dict['configurations']
         duration = get_complete_configurations_duration(
             configurations,
             start_time,
