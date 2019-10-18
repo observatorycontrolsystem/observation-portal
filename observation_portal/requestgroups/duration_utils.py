@@ -138,6 +138,75 @@ def get_slew_distance(target_dict1, target_dict2, start_time):
     return distance_between.in_degrees() * 3600
 
 
+def get_complete_configurations_duration(configurations_list, start_time, priority_after=-1):
+    previous_conf_type = ''
+    previous_optical_elements = {}
+    previous_instrument = ''
+    previous_target = {}
+    duration = 0
+    for configuration_dict in configurations_list:
+        if configuration_dict['priority'] > priority_after:
+            duration += get_configuration_duration(configuration_dict)['duration']
+            request_overheads = configdb.get_request_overheads(configuration_dict['instrument_type'])
+            # Add the instrument change time if the instrument has changed
+            if previous_instrument != configuration_dict['instrument_type']:
+                duration += request_overheads['instrument_change_overhead']
+            previous_instrument = configuration_dict['instrument_type']
+
+            # Now add in optical element change time if the set of optical elements has changed
+            for inst_config in configuration_dict['instrument_configs']:
+                optical_elements = inst_config.get('optical_elements', {})
+                change_overhead = 0
+                for oe_type, oe_value in optical_elements.items():
+                    if oe_type not in previous_optical_elements or oe_value != previous_optical_elements[oe_type]:
+                        if '{}s'.format(oe_type) in request_overheads['optical_element_change_overheads']:
+                            change_overhead = max(request_overheads['optical_element_change_overheads']['{}s'.format(oe_type)], change_overhead)
+                previous_optical_elements = optical_elements
+                duration += change_overhead
+
+            # Now add in the slew time between targets (configurations). Only Sidereal can be calculated based on position.
+            if (
+                    not previous_target
+                    or previous_target['type'].upper() != 'ICRS'
+                    or configuration_dict['target']['type'].upper() != 'ICRS'
+            ):
+                duration += request_overheads['maximum_slew_overhead']
+            elif previous_target != configuration_dict['target']:
+                duration += min(max(get_slew_distance(previous_target, configuration_dict['target'], start_time)
+                                    * request_overheads['slew_rate'], request_overheads['minimum_slew_overhead']),
+                                request_overheads['maximum_slew_overhead'])
+            previous_target = configuration_dict['target']
+
+            # Now add the Acquisition overhead if this request requires it
+            if configuration_dict['acquisition_config']['mode'] != 'OFF':
+                if configuration_dict['acquisition_config']['mode'] in request_overheads['acquisition_overheads']:
+                    duration += request_overheads['acquisition_overheads'][configuration_dict['acquisition_config']['mode']]
+                    if 'exposure_time' in configuration_dict['acquisition_config'] and configuration_dict['acquisition_config']['exposure_time']:
+                        duration += configuration_dict['acquisition_config']['exposure_time']
+                    else:
+                        duration += request_overheads['default_acquisition_exposure_time']
+
+            # Now add the Guiding overhead if this request requires it
+            guide_optional = configuration_dict['guiding_config']['optional'] if 'optional' in configuration_dict['guiding_config'] \
+                else True
+            if configuration_dict['guiding_config']['mode'] != 'OFF' and not guide_optional:
+                if configuration_dict['guiding_config']['mode'] in request_overheads['guiding_overheads']:
+                    duration += request_overheads['guiding_overheads'][configuration_dict['guiding_config']['mode']]
+
+            # TODO: find out if we need to have a configuration type change time for spectrographs?
+            if configdb.is_spectrograph(configuration_dict['instrument_type']):
+                if previous_conf_type != configuration_dict['type']:
+                    duration += request_overheads['config_change_overhead']
+            previous_conf_type = configuration_dict['type']
+        else:
+            previous_conf_type = configuration_dict['type']
+            previous_instrument = configuration_dict['instrument_type']
+            previous_target = configuration_dict['target']
+            previous_optical_elements = configuration_dict['instrument_configs'][-1].get('optical_elements', {})
+
+    return duration
+
+
 def get_request_duration(request_dict):
     # calculate the total time needed by the request, based on its instrument and exposures
     duration = 0
@@ -151,60 +220,8 @@ def get_request_duration(request_dict):
         configurations = sorted(request_dict['configurations'], key=lambda x: x['priority'])
     except KeyError:
         configurations = request_dict['configurations']
-    for configuration in configurations:
-        duration += get_configuration_duration(configuration)['duration']
-        request_overheads = configdb.get_request_overheads(configuration['instrument_type'])
-        # Add the instrument change time if the instrument has changed
-        if previous_instrument != configuration['instrument_type']:
-            duration += request_overheads['instrument_change_overhead']
-        previous_instrument = configuration['instrument_type']
-
-        # Now add in optical element change time if the set of optical elements has changed
-        for inst_config in configuration['instrument_configs']:
-            optical_elements = inst_config.get('optical_elements', {})
-            change_overhead = 0
-            for oe_type, oe_value in optical_elements.items():
-                if oe_type not in previous_optical_elements or oe_value != previous_optical_elements[oe_type]:
-                    if '{}s'.format(oe_type) in request_overheads['optical_element_change_overheads']:
-                        change_overhead = max(request_overheads['optical_element_change_overheads']['{}s'.format(oe_type)], change_overhead)
-            previous_optical_elements = optical_elements
-            duration += change_overhead
-
-        # Now add in the slew time between targets (configurations). Only Sidereal can be calculated based on position.
-        if (
-                not previous_target
-                or previous_target['type'].upper() != 'ICRS'
-                or configuration['target']['type'].upper() != 'ICRS'
-        ):
-            duration += request_overheads['maximum_slew_overhead']
-        elif previous_target != configuration['target']:
-            duration += min(max(get_slew_distance(previous_target, configuration['target'], start_time)
-                                * request_overheads['slew_rate'], request_overheads['minimum_slew_overhead']),
-                            request_overheads['maximum_slew_overhead'])
-        previous_target = configuration['target']
-
-        # Now add the Acquisition overhead if this request requires it
-        if configuration['acquisition_config']['mode'] != 'OFF':
-            if configuration['acquisition_config']['mode'] in request_overheads['acquisition_overheads']:
-                duration += request_overheads['acquisition_overheads'][configuration['acquisition_config']['mode']]
-                if 'exposure_time' in configuration['acquisition_config'] and configuration['acquisition_config']['exposure_time']:
-                    duration += configuration['acquisition_config']['exposure_time']
-                else:
-                    duration += request_overheads['default_acquisition_exposure_time']
-
-        # Now add the Guiding overhead if this request requires it
-        guide_optional = configuration['guiding_config']['optional'] if 'optional' in configuration['guiding_config'] \
-            else True
-        if configuration['guiding_config']['mode'] != 'OFF' and not guide_optional:
-            if configuration['guiding_config']['mode'] in request_overheads['guiding_overheads']:
-                duration += request_overheads['guiding_overheads'][configuration['guiding_config']['mode']]
-
-        # TODO: find out if we need to have a configuration type change time for spectrographs?
-        if configdb.is_spectrograph(configuration['instrument_type']):
-            if previous_conf_type != configuration['type']:
-                duration += request_overheads['config_change_overhead']
-        previous_conf_type = configuration['type']
-
+    duration += get_complete_configurations_duration(configurations, start_time)
+    request_overheads = configdb.get_request_overheads(request_dict['configurations'][0]['instrument_type'])
     duration += request_overheads['front_padding']
     duration = ceil(duration)
 

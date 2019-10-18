@@ -2,9 +2,10 @@ from django.db import models
 from django.contrib.postgres.fields import JSONField
 from django.forms.models import model_to_dict
 from django.utils import timezone
+from django.core.cache import cache
 from datetime import timedelta
 
-from observation_portal.requestgroups.models import Request, Configuration
+from observation_portal.requestgroups.models import Request, RequestGroup, Configuration
 import logging
 
 logger = logging.getLogger()
@@ -74,6 +75,34 @@ class Observation(models.Model):
         aborted = observations.filter(pk__in=observation_ids_to_abort).update(state='ABORTED', modified=now)
 
         return deleted_observations.get('observations.Observation', 0) + canceled + aborted
+
+    def update_end_time(self, new_end_time):
+        if new_end_time > self.start:
+            # Only update the end time if it is > start time
+            old_end_time = self.end
+            self.end = new_end_time
+            self.save()
+            # Cancel observations that used to be under this observation
+            if new_end_time > old_end_time:
+                observations = Observation.objects.filter(
+                    site=self.site,
+                    enclosure=self.enclosure,
+                    telescope=self.telescope,
+                    start__lte=self.end,
+                    start__gte=old_end_time,
+                    state='PENDING'
+                )
+                if self.request.request_group.observation_type != RequestGroup.RAPID_RESPONSE:
+                    observations = observations.exclude(
+                        request__request_group__observation_type=RequestGroup.RAPID_RESPONSE
+                    )
+                num_canceled = Observation.cancel(observations)
+                logger.info(
+                    f"updated end time for observation {self.id} to {self.end}. "
+                    f"Canceled {num_canceled} overlapping observations."
+                )
+            cache.set('observation_portal_last_change_time', timezone.now(), None)
+        return self
 
     @staticmethod
     def delete_old_observations(cutoff):
