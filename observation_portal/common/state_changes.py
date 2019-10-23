@@ -8,6 +8,7 @@ from observation_portal.proposals.models import TimeAllocation, TimeAllocationKe
 from observation_portal.requestgroups.request_utils import exposure_completion_percentage
 from observation_portal.requestgroups.models import RequestGroup, Request
 from observation_portal.observations.models import Observation
+from observation_portal.proposals.notifications import requestgroup_notifications
 
 from collections import defaultdict
 import logging
@@ -96,8 +97,8 @@ def on_requestgroup_state_change(old_requestgroup_state, new_requestgroup):
     if old_requestgroup_state == new_requestgroup.state:
         return
     valid_request_state_change(old_requestgroup_state, new_requestgroup.state, new_requestgroup)
+    # Pending child requests of a requestgroup in a terminal state other than complete should update their state also
     if new_requestgroup.state in ['CANCELED', 'WINDOW_EXPIRED']:
-        # Just because the RG is marked as completed, doesn't mean we should mark a pending R as completed
         for request in new_requestgroup.requests.filter(state__exact='PENDING'):
             request.state = new_requestgroup.state
             request.save()
@@ -326,6 +327,8 @@ def update_request_group_state(request_group):
             requestgroup_state_changed = True
 
     if requestgroup_state_changed:
-        on_requestgroup_state_change(old_state, RequestGroup.objects.get(pk=request_group.id))
+        updated_request_group = RequestGroup.objects.get(pk=request_group.id)
+        on_requestgroup_state_change(old_state, updated_request_group)
+        requestgroup_notifications(updated_request_group)
 
     return requestgroup_state_changed
