@@ -143,6 +143,7 @@
                 label="Orbital Inclination"
                 field="orbinc"
                 :errors="errors.orbinc"
+                desc="Angle in Degrees"
                 @input="update"
               />
               <customfield

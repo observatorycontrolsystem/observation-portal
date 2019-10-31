@@ -489,7 +489,26 @@ class TestRequestGroupIPP(SetTimeMixin, APITestCase):
 
         # verify that now that the object is saved, ipp has been debited
         time_allocation = TimeAllocation.objects.get(pk=self.time_allocation_1m0_sbig.id)
-        self.assertLess(time_allocation.ipp_time_available, 5.0)
+        duration = Request.objects.get(request_group=response.json()['id']).duration / 3600.0
+        self.assertAlmostEqual(time_allocation.ipp_time_available, 5.0 - (duration * (rg['ipp_value'] - 1.0)), 5)
+
+    def test_request_group_multi_debit_ipp_on_creation(self):
+        self.assertEqual(self.time_allocation_1m0_sbig.ipp_time_available, 5.0)
+
+        rg = self.generic_payload.copy()
+        rg['operator'] = 'MANY'
+        rg['requests'].append(copy.deepcopy(rg['requests'][0]))
+        response = self.client.post(reverse('api:request_groups-list'), data=rg)
+        self.assertEqual(response.status_code, 201)
+
+        # verify that now that the object is saved, ipp has been debited
+        time_allocation = TimeAllocation.objects.get(pk=self.time_allocation_1m0_sbig.id)
+        requests = Request.objects.filter(request_group=response.json()['id'])
+        duration = 0.0
+        for req in requests:
+            duration += req.duration
+        duration /= 3600.0
+        self.assertAlmostEqual(time_allocation.ipp_time_available, 5.0 - (duration * (rg['ipp_value'] - 1.0)), 5)
 
     def test_tc_request_group_no_debit_ipp_on_creation(self):
         self.assertEqual(self.time_allocation_1m0_sbig.ipp_time_available, 5.0)

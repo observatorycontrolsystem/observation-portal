@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from django.utils import timezone
+from django.core.cache import cache
+from django.db import transaction
 from django.utils.translation import ugettext as _
 
 from observation_portal.common.configdb import configdb
@@ -8,6 +10,12 @@ from observation_portal.requestgroups.serializers import (RequestSerializer, Req
                                                           ConfigurationSerializer, TargetSerializer)
 from observation_portal.requestgroups.models import RequestGroup, AcquisitionConfig, GuidingConfig, Target
 from observation_portal.proposals.models import Proposal
+
+import logging
+
+from datetime import timedelta
+
+logger = logging.getLogger()
 
 
 class SummarySerializer(serializers.ModelSerializer):
@@ -21,6 +29,7 @@ class ConfigurationStatusSerializer(serializers.ModelSerializer):
     summary = SummarySerializer(required=False)
     instrument_name = serializers.CharField(required=False)
     guide_camera_name = serializers.CharField(required=False)
+    end = serializers.DateTimeField(required=False)
 
     class Meta:
         model = ConfigurationStatus
@@ -29,7 +38,9 @@ class ConfigurationStatusSerializer(serializers.ModelSerializer):
     def validate(self, data):
         data = super().validate(data)
         if self.context.get('request').method == 'PATCH':
-            # For a partial update, don't try to validate the field set
+            # For a partial update, only validate the end time if its set
+            if 'end' in data and data['end'] <= timezone.now():
+                raise serializers.ValidationError(_('Updated end time must be in the future'))
             return data
 
         if ('guide_camera_name' in data and
@@ -59,6 +70,11 @@ class ConfigurationStatusSerializer(serializers.ModelSerializer):
                               'events': summary.get('events', {})
                               }
                 )
+
+        if 'end' in validated_data:
+            obs_end_time = validated_data['end']
+            obs_end_time += timedelta(seconds=instance.observation.request.get_remaining_duration(instance.configuration.priority))
+            instance.observation.update_end_time(obs_end_time)
 
         return instance
 
@@ -236,17 +252,20 @@ class ScheduleSerializer(serializers.ModelSerializer):
             del configuration['instrument_name']
             del configuration['guide_camera_name']
 
-        rgs = ObserveRequestGroupSerializer(data=validated_data, context=self.context)
-        rgs.is_valid(True)
-        rg = rgs.save()
+        with transaction.atomic():
+            rgs = ObserveRequestGroupSerializer(data=validated_data, context=self.context)
+            rgs.is_valid(True)
+            rg = rgs.save()
 
-        observation = Observation.objects.create(request=rg.requests.first(), **obs_fields)
+            observation = Observation.objects.create(request=rg.requests.first(), **obs_fields)
 
-        for i, config in enumerate(rg.requests.first().configurations.all()):
-            ConfigurationStatus.objects.create(configuration=config, observation=observation,
-                                               instrument_name=config_instrument_names[i][0],
-                                               guide_camera_name=config_instrument_names[i][1])
-
+            for i, config in enumerate(rg.requests.first().configurations.all()):
+                ConfigurationStatus.objects.create(
+                    configuration=config,
+                    observation=observation,
+                    instrument_name=config_instrument_names[i][0],
+                    guide_camera_name=config_instrument_names[i][1]
+                )
         return observation
 
     def to_representation(self, instance):
@@ -281,6 +300,28 @@ class ObservationSerializer(serializers.ModelSerializer):
         fields = ('site', 'enclosure', 'telescope', 'start', 'end', 'priority', 'configuration_statuses', 'request')
 
     def validate(self, data):
+        user = self.context['request'].user
+        if self.instance is not None:
+            # An observation already exists, must be a patch and data won't have the request, so get request like this
+            proposal = self.instance.request.request_group.proposal
+        else:
+            proposal = data['request'].request_group.proposal
+
+        # If the user is not staff, check that they are allowed to perform the action
+        if not user.is_staff and proposal not in user.proposal_set.filter(direct_submission=True):
+            raise serializers.ValidationError(_(
+                'Non staff users can only create or update observations on proposals they belong to that '
+                'allow direct submission'
+            ))
+
+        if self.context.get('request').method == 'PATCH':
+            # For a partial update, only validate that the 'end' field is set, and that it is > now
+            if 'end' not in data:
+                raise serializers.ValidationError(_('Observation update must include `end` field'))
+            if data['end'] <= timezone.now():
+                raise serializers.ValidationError(_('Updated end time must be in the future'))
+            return data
+
         if data['end'] <= data['start']:
             raise serializers.ValidationError(_('End time must be after start time'))
 
@@ -292,7 +333,11 @@ class ObservationSerializer(serializers.ModelSerializer):
                 break
 
         if not in_a_window:
-            raise serializers.ValidationError(_('The start {} and end {} times do not fall within any window of the request'.format(data['start'].isoformat(), data['end'].isoformat())))
+            raise serializers.ValidationError(_(
+                'The start {} and end {} times do not fall within any window of the request'.format(
+                    data['start'].isoformat(), data['end'].isoformat()
+                )
+            ))
 
         # Validate that the site, enclosure, and telescope match the location of the request
         if (
@@ -323,12 +368,15 @@ class ObservationSerializer(serializers.ModelSerializer):
 
         return data
 
+    def update(self, instance, validated_data):
+        return instance.update_end_time(validated_data['end'])
+
     def create(self, validated_data):
         configuration_statuses = validated_data.pop('configuration_statuses')
-        observation = Observation.objects.create(**validated_data)
-        for configuration_status in configuration_statuses:
-            ConfigurationStatus.objects.create(observation=observation, **configuration_status)
-
+        with transaction.atomic():
+            observation = Observation.objects.create(**validated_data)
+            for configuration_status in configuration_statuses:
+                ConfigurationStatus.objects.create(observation=observation, **configuration_status)
         return observation
 
 
@@ -345,6 +393,6 @@ class CancelObservationsSerializer(serializers.Serializer):
 
     def validate(self, data):
         if 'ids' not in data and ('start' not in data or 'end' not in data):
-            raise serializers.ValidationError("Must include either a observation id list or a start and end time")
+            raise serializers.ValidationError("Must include either an observation id list or a start and end time")
 
         return data

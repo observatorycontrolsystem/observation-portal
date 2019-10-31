@@ -5,6 +5,8 @@ from datetime import timedelta
 from unittest.mock import patch
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
+from django.core import mail
+from django_dramatiq.test import DramatiqTestCase
 
 from observation_portal.observations.signals.handlers import cb_configurationstatus_post_save
 import observation_portal.observations.signals.handlers  # noqa
@@ -13,7 +15,7 @@ from observation_portal.common.test_helpers import (
     create_simple_requestgroup, create_simple_many_requestgroup, create_simple_configuration, SetTimeMixin,
     disconnect_signal
 )
-from observation_portal.proposals.models import Proposal
+from observation_portal.proposals.models import Proposal, Membership
 from observation_portal.accounts.models import Profile
 from observation_portal.observations.models import Observation, ConfigurationStatus, Summary
 from observation_portal.requestgroups.models import Request, RequestGroup, Window
@@ -129,6 +131,26 @@ class TestStateChanges(SetTimeMixin, TestCase):
         observation.refresh_from_db()
         self.requestgroup.refresh_from_db()
         self.assertEqual(observation.state, 'FAILED')
+        self.assertEqual(self.requestgroup.state, 'PENDING')
+        request_states = ['COMPLETED', 'PENDING', 'PENDING']
+        for i, request in enumerate(self.requestgroup.requests.all()):
+            request.refresh_from_db()
+            self.assertEqual(request.state, request_states[i])
+
+    def test_request_state_completed_if_a_config_status_completed_but_acceptability_threshold_not_reached(self):
+        request = self.requestgroup.requests.first()
+        request.acceptability_threshold = 90
+        request.save()
+        observation = request.observation_set.first()
+        for cs in observation.configuration_statuses.all():
+            summary = cs.summary
+            summary.time_completed = 0.0
+            summary.save()
+            cs.state = 'COMPLETED'
+            cs.save()
+        observation.refresh_from_db()
+        self.requestgroup.refresh_from_db()
+        self.assertEqual(observation.state, 'COMPLETED')
         self.assertEqual(self.requestgroup.state, 'PENDING')
         request_states = ['COMPLETED', 'PENDING', 'PENDING']
         for i, request in enumerate(self.requestgroup.requests.all()):
@@ -276,12 +298,13 @@ class TestStateChanges(SetTimeMixin, TestCase):
             self.assertEqual(request.state, request_states[i])
 
 
-class TestStateFromConfigurationStatuses(SetTimeMixin, TestCase):
+class TestStateFromConfigurationStatuses(SetTimeMixin, DramatiqTestCase):
     def setUp(self):
         super().setUp()
         self.proposal = dmixer.blend(Proposal)
         self.user = dmixer.blend(User)
-        dmixer.blend(Profile, user=self.user)
+        dmixer.blend(Membership, user=self.user, proposal=self.proposal)
+        dmixer.blend(Profile, user=self.user, notifications_enabled=True)
         self.client.force_login(self.user)
         self.now = timezone.now()
         self.window = dmixer.blend(Window, start=self.now - timedelta(days=1), end=self.now + timedelta(days=1))
@@ -329,6 +352,8 @@ class TestStateFromConfigurationStatuses(SetTimeMixin, TestCase):
             initial_state, 100, observation.configuration_statuses.all()
         )
         self.assertEqual(request_state, initial_state)
+        # requestgroup state is not completed, no email sent
+        self.assertEqual(len(mail.outbox), 0)
 
     def test_ongoinging_configuration_statuses_in_use_initial(self):
         observation = dmixer.blend(
@@ -351,6 +376,8 @@ class TestStateFromConfigurationStatuses(SetTimeMixin, TestCase):
             initial_state, 100, observation.configuration_statuses.all()
         )
         self.assertEqual(request_state, initial_state)
+        # requestgroup state is not completed, no email sent
+        self.assertEqual(len(mail.outbox), 0)
 
     def test_configuration_statuses_failed_but_threshold_complete(self):
         observation = dmixer.blend(
@@ -369,6 +396,12 @@ class TestStateFromConfigurationStatuses(SetTimeMixin, TestCase):
             initial_state, 90, observation.configuration_statuses.all()
         )
         self.assertEqual(request_state, 'COMPLETED')
+        # The requestgroup state changed to complete, so an email should be sent
+        self.requestgroup.refresh_from_db()
+        self.assertEqual(self.requestgroup.state, 'COMPLETED')
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(self.requestgroup.name, str(mail.outbox[0].message()))
+        self.assertEqual(mail.outbox[0].to, [self.user.email])
 
     def test_configuration_statuses_failed_but_threshold_complete_multi(self):
         observation = dmixer.blend(
@@ -397,6 +430,12 @@ class TestStateFromConfigurationStatuses(SetTimeMixin, TestCase):
             initial_state, 95, observation.configuration_statuses.all()
         )
         self.assertEqual(request_state, 'COMPLETED')
+        # The requestgroup state changed to complete, so an email should be sent
+        self.requestgroup.refresh_from_db()
+        self.assertEqual(self.requestgroup.state, 'COMPLETED')
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(self.requestgroup.name, str(mail.outbox[0].message()))
+        self.assertEqual(mail.outbox[0].to, [self.user.email])
 
 
 class TestRequestState(SetTimeMixin, TestCase):
