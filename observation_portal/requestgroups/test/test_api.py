@@ -1685,6 +1685,65 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
             n_exposures_fit_exactly - 1
         )
 
+    def test_multiple_instrument_configs_with_different_rotator_modes_fails(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'].append(
+            self.extra_configuration['instrument_configs'][0].copy()
+        )
+        bad_data['requests'][0]['configurations'][0]['instrument_type'] = '2M0-FLOYDS-SCICAM'
+        bad_data['requests'][0]['location']['telescope_class'] = '2m0'
+        bad_data['requests'][0]['configurations'][0]['type'] = 'SPECTRUM'
+        del bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
+        del bad_data['requests'][0]['configurations'][0]['instrument_configs'][1]['optical_elements']['filter']
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['slit'] = 'slit_1.6as'
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][1]['optical_elements']['slit'] = 'slit_1.6as'
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['rotator_mode'] = 'SKY'
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params'] = {}
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params']['rotator_angle'] = '1'
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][1]['rotator_mode'] = 'VFLOAT'
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('within the same configuration must be the same', str(response.content))
+
+    def test_multiple_instrument_configs_with_same_rotator_modes_succeeds(self):
+        good_data = self.generic_payload.copy()
+        good_data['requests'][0]['configurations'][0]['instrument_configs'].append(
+            self.extra_configuration['instrument_configs'][0].copy()
+        )
+        good_data['requests'][0]['configurations'][0]['instrument_type'] = '2M0-FLOYDS-SCICAM'
+        good_data['requests'][0]['location']['telescope_class'] = '2m0'
+        good_data['requests'][0]['configurations'][0]['type'] = 'SPECTRUM'
+        del good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
+        del good_data['requests'][0]['configurations'][0]['instrument_configs'][1]['optical_elements']['filter']
+        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['slit'] = 'slit_1.6as'
+        good_data['requests'][0]['configurations'][0]['instrument_configs'][1]['optical_elements']['slit'] = 'slit_1.6as'
+        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['rotator_mode'] = 'VFLOAT'
+        good_data['requests'][0]['configurations'][0]['instrument_configs'][1]['rotator_mode'] = 'VFLOAT'
+        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
+        self.assertEqual(response.status_code, 201)
+
+    def test_script_type_not_allowed_for_multiple_instrument_configs(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'].append(
+            self.extra_configuration['instrument_configs'][0].copy()
+        )
+        bad_data['requests'][0]['configurations'][0]['type'] = 'SCRIPT'
+        bad_data['requests'][0]['configurations'][0]['extra_params'] = {}
+        bad_data['requests'][0]['configurations'][0]['extra_params']['script_name'] = 'my_cool_thing'
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('are not allowed for type SCRIPT', str(response.content))
+
+    def test_skyflat_not_allowed_for_multiple_instrument_configs(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'].append(
+            self.extra_configuration['instrument_configs'][0].copy()
+        )
+        bad_data['requests'][0]['configurations'][0]['type'] = 'SKY_FLAT'
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('are not allowed for type SKY_FLAT', str(response.content))
+
     def test_configuration_type_matches_instrument(self):
         bad_data = self.generic_payload.copy()
         bad_data['requests'][0]['configurations'][0]['type'] = 'SPECTRUM'

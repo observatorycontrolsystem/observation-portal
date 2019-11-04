@@ -228,6 +228,8 @@ class ConfigurationSerializer(serializers.ModelSerializer):
     def validate_instrument_configs(self, value):
         if [instrument_config.get('fill_window', False) for instrument_config in value].count(True) > 1:
             raise serializers.ValidationError(_('Only one instrument_config can have `fill_window` set'))
+        if len(set([instrument_config.get('rotator_mode', '') for instrument_config in value])) > 1:
+            raise serializers.ValidationError(_('Rotator modes within the same configuration must be the same'))
         return value
 
     def validate_instrument_type(self, value):
@@ -249,6 +251,9 @@ class ConfigurationSerializer(serializers.ModelSerializer):
         modes = configdb.get_modes_by_type(instrument_type)
         default_modes = configdb.get_default_modes_by_type(instrument_type)
         guiding_config = data['guiding_config']
+
+        if len(data['instrument_configs']) > 1 and data['type'] in ['SCRIPT', 'SKY_FLAT']:
+            raise serializers.ValidationError(_(f'Multiple instrument configs are not allowed for type {data["type"]}'))
 
         # Validate the guide mode
         guide_validation_helper = ModeValidationHelper('guiding', instrument_type, default_modes, modes)
@@ -364,7 +369,6 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                     )))
                 else:
                     instrument_config['optical_elements'][oe_type] = available_elements[value.lower()]
-
 
             # Also check that any optical element group in configdb is specified in the request unless we are a BIAS or
             # DARK or SCRIPT type observation

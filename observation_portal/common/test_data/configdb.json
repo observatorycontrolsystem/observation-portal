@@ -48,7 +48,8 @@
                         "EXPOSE",
                         "BIAS",
                         "DARK",
-                        "SCRIPT"
+                        "SCRIPT",
+                        "SKY_FLAT"
                       ],
                       "default_acceptability_threshold": 90,
                       "pixels_x": 1000,
@@ -172,7 +173,8 @@
                         "EXPOSE",
                         "BIAS",
                         "DARK",
-                        "SCRIPT"
+                        "SCRIPT",
+                        "SKY_FLAT"
                       ],
                       "default_acceptability_threshold": 90,
                       "pixels_x": 1000,
@@ -296,7 +298,8 @@
                         "EXPOSE",
                         "BIAS",
                         "DARK",
-                        "SCRIPT"
+                        "SCRIPT",
+                        "SKY_FLAT"
                       ],
                       "default_acceptability_threshold": 90,
                       "pixels_x": 1000,
@@ -598,7 +601,8 @@
                         "EXPOSE",
                         "BIAS",
                         "DARK",
-                        "SCRIPT"
+                        "SCRIPT",
+                        "SKY_FLAT"
                       ],
                       "default_acceptability_threshold": 100,
                       "pixels_x": 1000,
@@ -1008,7 +1012,8 @@
                         "EXPOSE",
                         "BIAS",
                         "DARK",
-                        "SCRIPT"
+                        "SCRIPT",
+                        "SKY_FLAT"
                       ],
                       "default_acceptability_threshold": 100,
                       "pixels_x": 1000,
