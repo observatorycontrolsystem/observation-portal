@@ -230,6 +230,20 @@ function formatValue(value){
   return value;
 }
 
+function extractTopLevelErrors(errors) {
+  let topLevelErrors = [];
+  if (_.isString(errors)) {
+    // The error will be a string if a validate_xxx method of the parent serializer
+    // returned an error, for example the validate_instrument_configs method on the 
+    // ConfigurationSerializer. These should be displayed at the top of a section.
+    topLevelErrors = _.concat(topLevelErrors, [errors]);
+  }
+  if (errors.non_field_errors) {
+    topLevelErrors = _.concat(topLevelErrors, errors.non_field_errors);
+  }
+  return topLevelErrors;
+}
+
 function getCookie(name) {
   var cookieValue = null;
   if (document.cookie && document.cookie !== '') {
@@ -345,5 +359,6 @@ export {
   semesterStart, semesterEnd, sexagesimalRaToDecimal, sexagesimalDecToDecimal, QueryString, formatJson, formatValue,
   formatDate, formatField, datetimeFormat, collapseMixin, siteToColor, siteCodeToName, arcDefaultExposureTime, 
   lampFlatDefaultExposureTime, observatoryCodeToNumber, telescopeCodeToName, colorPalette, julianToModifiedJulian, 
-  getFieldDescription, decimalRaToSexigesimal, decimalDecToSexigesimal, tooltipConfig, addCsrfProtection
+  getFieldDescription, decimalRaToSexigesimal, decimalDecToSexigesimal, tooltipConfig, addCsrfProtection,
+  extractTopLevelErrors
 };

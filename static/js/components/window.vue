@@ -12,7 +12,7 @@
     @show="show = $event"
   >
     <customalert 
-      v-for="error in errors.non_field_errors" 
+      v-for="error in topLevelErrors" 
       :key="error" 
       alertclass="danger" 
       :dismissible="false"
@@ -107,7 +107,7 @@
   import $ from 'jquery';
   import _ from 'lodash';
 
-  import { collapseMixin } from '../utils.js';
+  import { collapseMixin, extractTopLevelErrors } from '../utils.js';
   import panel from './util/panel.vue';
   import customalert from './util/customalert.vue';
   import customdatetime from './util/customdatetime.vue';
@@ -144,6 +144,11 @@
         period: 24.0,
         jitter: 12.0
       };
+    },
+    computed: {
+      topLevelErrors: function() {
+        return extractTopLevelErrors(this.errors);
+      },
     },
     methods: {
       update: function() {
