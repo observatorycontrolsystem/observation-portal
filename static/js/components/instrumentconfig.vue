@@ -6,13 +6,13 @@
     :index="index" 
     :errors="errors"
     :canremove="this.index > 0" 
-    :cancopy="false"
+    :cancopy="true"
     @remove="$emit('remove')"
     @copy="$emit('copy')"
     @show="show = $event"
   >
     <customalert 
-      v-for="error in errors.non_field_errors" 
+      v-for="error in topLevelErrors"
       :key="error" 
       alertclass="danger" 
       :dismissible="false"
@@ -143,7 +143,12 @@
 <script>
 import _ from 'lodash';
 
-import { collapseMixin, lampFlatDefaultExposureTime, arcDefaultExposureTime } from '../utils.js';
+import { 
+  collapseMixin, 
+  lampFlatDefaultExposureTime, 
+  arcDefaultExposureTime, 
+  extractTopLevelErrors 
+} from '../utils.js';
 import customfield from './util/customfield.vue';
 import customselect from './util/customselect.vue';
 import panel from './util/panel.vue';
@@ -185,6 +190,9 @@ export default {
     }
   },
   computed: {
+    topLevelErrors: function() {
+      return extractTopLevelErrors(this.errors);
+    },
     instrumentHasRotatorModes: function() {
       return this.available_instruments[this.selectedinstrument] && 'rotator' in this.available_instruments[this.selectedinstrument].modes;
     },
