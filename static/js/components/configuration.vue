@@ -363,13 +363,13 @@
       },
       setupAcquireAndGuideFieldsForType: function(configurationType) {
         if (configurationType) {
-          if (configurationType === 'SPECTRUM' || configurationType === 'NRES_SPECTRUM') {
+          if (configurationType.includes('SPECTRUM')) {
             this.setGuidingFields('ON');
             this.setAcquireFields();
           } else if (configurationType == 'LAMP_FLAT' || configurationType == 'ARC') {
             this.setGuidingFields('OPTIONAL');
             this.turnOffAcquisition();
-          } else if (configurationType == 'EXPOSE') {
+          } else if (configurationType.includes('EXPOSE')) {
             this.setGuidingFields(this.selectedImagerGuidingOption);
             this.setAcquireFields();
           }

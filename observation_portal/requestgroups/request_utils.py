@@ -12,15 +12,18 @@ from observation_portal.requestgroups.target_helpers import TARGET_TYPE_HELPER_M
 
 MOLECULE_TYPE_DISPLAY = {
     'EXPOSE': 'Imaging',
+    'REPEAT_EXPOSE': 'Repeat Imaging',
     'SKY_FLAT': 'Sky Flat',
     'STANDARD': 'Standard',
     'ARC': 'Arc',
     'LAMP_FLAT': 'Lamp Flat',
     'SPECTRUM': 'Spectrum',
+    'REPEAT_SPECTRUM': 'Repeat Spectrum',
     'AUTO_FOCUS': 'Auto Focus',
     'TRIPLE': 'Triple',
     'NRES_TEST': 'NRES Test',
     'NRES_SPECTRUM': 'NRES Spectrum',
+    'REPEAT_NRES_SPECTRUM': 'Repeat NRES Spectrum',
     'NRES_EXPOSE': 'NRES Expose',
     'ENGINEERING': 'Engineering',
     'SCRIPT': 'Script'

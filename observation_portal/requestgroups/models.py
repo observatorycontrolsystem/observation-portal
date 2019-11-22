@@ -325,15 +325,18 @@ class Window(models.Model):
 class Configuration(models.Model):
     TYPES = (
         ('EXPOSE', 'EXPOSE'),
+        ('REPEAT_EXPOSE', 'REPEAT_EXPOSE'),
         ('SKY_FLAT', 'SKY_FLAT'),
         ('STANDARD', 'STANDARD'),
         ('ARC', 'ARC'),
         ('LAMP_FLAT', 'LAMP_FLAT'),
         ('SPECTRUM', 'SPECTRUM'),
+        ('REPEAT_SPECTRUM', 'REPEAT_SPECTRUM'),
         ('AUTO_FOCUS', 'AUTO_FOCUS'),
         ('TRIPLE', 'TRIPLE'),
         ('NRES_TEST', 'NRES_TEST'),
         ('NRES_SPECTRUM', 'NRES_SPECTRUM'),
+        ('REPEAT_NRES_SPECTRUM', 'REPEAT_NRES_SPECTRUM'),
         ('NRES_EXPOSE', 'NRES_EXPOSE'),
         ('NRES_DARK', 'NRES_DARK'),
         ('NRES_BIAS', 'NRES_BIAS'),
@@ -360,6 +363,16 @@ class Configuration(models.Model):
         max_length=50, choices=TYPES,
         help_text='The type of exposures for the observations under this Configuration'
     )
+
+    duration = models.FloatField(
+        verbose_name='configuration duration',
+        blank=True,
+        null=True,
+        validators=[MinValueValidator(0.0)],
+        help_text='The requested duration for this configuration to be looped. '
+                  'Only applicable to REPEAT_* type configurations.'
+    )
+
     extra_params = JSONField(
         default=dict,
         blank=True,

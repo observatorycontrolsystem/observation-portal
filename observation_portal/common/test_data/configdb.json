@@ -46,6 +46,7 @@
                       },
                       "configuration_types": [
                         "EXPOSE",
+                        "REPEAT_EXPOSE",
                         "BIAS",
                         "DARK",
                         "SCRIPT",
@@ -171,6 +172,7 @@
                       },
                       "configuration_types": [
                         "EXPOSE",
+                        "REPEAT_EXPOSE",
                         "BIAS",
                         "DARK",
                         "SCRIPT",
@@ -296,6 +298,7 @@
                       },
                       "configuration_types": [
                         "EXPOSE",
+                        "REPEAT_EXPOSE",
                         "BIAS",
                         "DARK",
                         "SCRIPT",
@@ -443,6 +446,7 @@
                       },
                       "configuration_types": [
                         "SPECTRUM",
+                        "REPEAT_SPECTRUM",
                         "LAMP_FLAT",
                         "ARC",
                         "SCRIPT"
@@ -599,6 +603,7 @@
                       },
                       "configuration_types": [
                         "EXPOSE",
+                        "REPEAT_EXPOSE",
                         "BIAS",
                         "DARK",
                         "SCRIPT",
@@ -724,6 +729,7 @@
                       },
                       "configuration_types": [
                         "NRES_SPECTRUM",
+                        "REPEAT_NRES_SPECTRUM",
                         "NRES_EXPOSE",
                         "NRES_TEST",
                         "LAMP_FLAT",
@@ -855,6 +861,7 @@
                       },
                       "configuration_types": [
                         "SPECTRUM",
+                        "REPEAT_SPECTRUM",
                         "LAMP_FLAT",
                         "ARC",
                         "SCRIPT"
@@ -1010,6 +1017,7 @@
                       },
                       "configuration_types": [
                         "EXPOSE",
+                        "REPEAT_EXPOSE",
                         "BIAS",
                         "DARK",
                         "SCRIPT",
