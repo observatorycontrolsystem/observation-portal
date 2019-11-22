@@ -423,6 +423,13 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                     'Must specify a script_name in extra_params for SCRIPT configuration type'
                 ))
 
+        # Validate duration is set if it's a REPEAT_* type configuration
+        if 'REPEAT' in data['type']:
+            if 'duration' not in data or data['duration'] is None:
+                raise serializers.ValidationError(_(
+                    'Must specify a configuration duration for REPEAT_* type configurations.'
+                ))
+
         # Validate the configuration type is available for the instrument requested
         if data['type'] not in configdb.get_configuration_types(instrument_type):
             raise serializers.ValidationError(_(
