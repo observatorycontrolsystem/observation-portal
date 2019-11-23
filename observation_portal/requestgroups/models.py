@@ -364,12 +364,12 @@ class Configuration(models.Model):
         help_text='The type of exposures for the observations under this Configuration'
     )
 
-    duration = models.FloatField(
+    repeat_duration = models.FloatField(
         verbose_name='configuration duration',
         blank=True,
         null=True,
         validators=[MinValueValidator(0.0)],
-        help_text='The requested duration for this configuration to be looped. '
+        help_text='The requested duration for this configuration to be repeated within. '
                   'Only applicable to REPEAT_* type configurations.'
     )
 

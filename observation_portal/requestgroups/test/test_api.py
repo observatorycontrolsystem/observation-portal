@@ -1379,6 +1379,38 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         # The only readout mode for floyds is 2m0_floyds_1
         self.assertEqual(response.json()['requests'][0]['configurations'][0]['instrument_configs'][0]['mode'], '2m0_floyds_1')
 
+    def test_repeat_exposure_rejected_without_configuration_duration_set(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['type'] = 'REPEAT_EXPOSE'
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Must specify a configuration repeat_duration for REPEAT_EXPOSE type configurations.',
+                      str(response.content))
+
+    def test_repeat_duration_rejected_for_non_repeat_exposure(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['repeat_duration'] = 500.0
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('You may only specify a repeat_duration for REPEAT_* type configurations.',
+                      str(response.content))
+
+    def test_repeat_exposure_accepted_when_configuration_duration_fits_instrument_configs(self):
+        good_data = self.generic_payload.copy()
+        good_data['requests'][0]['configurations'][0]['type'] = 'REPEAT_EXPOSE'
+        good_data['requests'][0]['configurations'][0]['repeat_duration'] = 500.0
+        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
+        self.assertEqual(response.status_code, 201)
+
+    def test_repeat_exposure_rejected_when_configuration_duration_too_small(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['type'] = 'REPEAT_EXPOSE'
+        bad_data['requests'][0]['configurations'][0]['repeat_duration'] = 1.0
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Configuration repeat_duration of 1.0 is less than the minimum',
+                      str(response.content))
+
     def test_many_missing_required_fields(self):
         bad_data = self.generic_payload.copy()
         bad_data['requests'][0]['configurations'][0]['instrument_type'] = '1M0-NRES-SCICAM'

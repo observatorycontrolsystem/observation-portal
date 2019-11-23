@@ -56,9 +56,9 @@ def get_configuration_duration(configuration_dict):
         )} for ic in configuration_dict['instrument_configs']
     ]
     conf_duration['instrument_configs'] = instrumentconf_durations
-    if ('REPEAT' in configuration_dict['type'] and 'duration' in configuration_dict
-            and configuration_dict['duration'] is not None):
-        conf_duration['duration'] = configuration_dict['duration']
+    if ('REPEAT' in configuration_dict['type'] and 'repeat_duration' in configuration_dict
+            and configuration_dict['repeat_duration'] is not None):
+        conf_duration['duration'] = configuration_dict['repeat_duration']
     else:
         conf_duration['duration'] = sum([icd['duration'] for icd in instrumentconf_durations])
     conf_duration['duration'] += (PER_CONFIGURATION_GAP + PER_CONFIGURATION_STARTUP_TIME)
