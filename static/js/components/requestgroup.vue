@@ -78,8 +78,9 @@
               label="Mode"
               field="observation_type" v-on:input="update"
               desc="Rapid Response (RR) requests bypass normal scheduling and are executed immediately. 
-                    Time Critical (TC) requests are given a large fixed priority that will beat any Normal requests.
-                    These mode are only available if a proposal was granted RR or TC time."
+                    Time Critical (TC) requests are given a large fixed priority that will beat any 
+                    requests that use default queue scheduling.
+                    These modes are only available if a proposal was granted RR or TC time."
               :errors="errors.observation_type"
               :options="[
                 {value: 'NORMAL', text: 'Queue scheduled (default)'},
