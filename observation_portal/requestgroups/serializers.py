@@ -787,20 +787,22 @@ class RequestGroupSerializer(serializers.ModelSerializer):
 
                 if time_available <= 0.0:
                     raise serializers.ValidationError(
-                        _("Proposal {} does not have any time left allocated in semester {} on {} instruments").format(
-                            data['proposal'], tak.semester, tak.instrument_type)
+                        _("Proposal {} does not have any {} time left allocated in semester {} on {} instruments").format(
+                            data['proposal'], data['observation_type'], tak.semester, tak.instrument_type)
                     )
                 elif time_available * OVERHEAD_ALLOWANCE < (duration / 3600.0):
                     raise serializers.ValidationError(
-                        _("Proposal {} does not have enough time allocated in semester {}").format(
-                            data['proposal'], tak.semester)
+                        _("Proposal {} does not have enough {} time allocated in semester {}").format(
+                            data['proposal'], data['observation_type'], tak.semester)
                     )
             # validate the ipp debitting that will take place later
             if data['observation_type'] == RequestGroup.NORMAL:
                 validate_ipp(data, total_duration_dict)
         except ObjectDoesNotExist:
             raise serializers.ValidationError(
-                _("You do not have sufficient time allocated on the instrument you're requesting for this proposal.")
+                _("You do not have sufficient {} time allocated on the instrument you're requesting for this proposal.".format(
+                    data['observation_type']
+                ))
             )
         except TimeAllocationError as e:
             raise serializers.ValidationError(repr(e))
