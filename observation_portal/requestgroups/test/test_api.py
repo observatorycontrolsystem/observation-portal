@@ -207,7 +207,7 @@ class TestUserPostRequestApi(SetTimeMixin, APITestCase):
         bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['slit'] = 'slit_6.0as'
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('You do not have sufficient time', str(response.content))
+        self.assertIn('You do not have sufficient NORMAL time', str(response.content))
 
     def test_post_requestgroup_manual_instrument_not_allowed(self):
         bad_data = self.generic_payload.copy()
@@ -246,7 +246,7 @@ class TestUserPostRequestApi(SetTimeMixin, APITestCase):
         self.time_allocation_1m0_sbig.save()
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('does not have enough time allocated', str(response.content))
+        self.assertIn('does not have enough NORMAL time allocated', str(response.content))
 
     def test_post_requestgroup_not_enough_rr_time_allocation_for_instrument(self):
         bad_data = self.generic_payload.copy()
@@ -257,7 +257,7 @@ class TestUserPostRequestApi(SetTimeMixin, APITestCase):
         self.time_allocation_1m0_sbig.save()
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('does not have enough time allocated', str(response.content))
+        self.assertIn('does not have enough RAPID_RESPONSE time allocated', str(response.content))
 
     def test_post_requestgroup_rr_future_start_time(self):
         bad_data = self.generic_payload.copy()
@@ -291,7 +291,7 @@ class TestUserPostRequestApi(SetTimeMixin, APITestCase):
         self.time_allocation_1m0_sbig.save()
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('does not have any time left allocated', str(response.content))
+        self.assertIn('does not have any NORMAL time left allocated', str(response.content))
 
     def test_post_requestgroup_time_limit_reached(self):
         self.membership.time_limit = 0
