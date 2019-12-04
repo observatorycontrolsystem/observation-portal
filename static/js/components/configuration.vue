@@ -85,7 +85,16 @@
                 :errors="errors.repeat_duration" 
                 desc="Seconds"
                 @input="update"
-              />
+              >
+                <b-input-group-append slot="inline-input">
+                  <b-button
+                    @click="configurationFillDuration"
+                    :disabled="duration_data.duration > 0 ? false : true"
+                  >
+                    Fill
+                  </b-button>
+                </b-input-group-append>
+              </customfield>
             </div>
             <div v-if="acquireModeOptions.length > 1 && !simple_interface && configuration.type !== 'LAMP_FLAT' && configuration.type !== 'ARC'">
               <customselect 
@@ -128,7 +137,6 @@
       @remove="removeInstrumentConfiguration(idx)" 
       @copy="addInstrumentConfiguration(idx)" 
       @instrumentconfigupdate="instumentConfigurationUpdated" 
-      @instrumentconfigurationfillwindow="configurationFillWindow"
     />
     <target 
       :target="configuration.target" 
@@ -277,8 +285,8 @@
         }
         this.update();
       },
-      configurationFillWindow: function(instrumentconfigId) {
-        this.$emit('configurationfillwindow', {configId: this.index, instrumentconfigId: instrumentconfigId});
+      configurationFillDuration: function() {
+        this.$emit('configurationfillduration', this.index);
       },
       generateCalibs: function() {
         this.$emit('generateCalibs', this.index);

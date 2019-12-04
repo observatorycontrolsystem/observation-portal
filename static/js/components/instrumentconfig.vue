@@ -317,9 +317,6 @@ export default {
           return;
         }
       }
-    },
-    instrumentConfigurationfillWindow: function() {
-      this.$emit('instrumentconfigurationfillwindow', this.index);
     }
   },
   watch: {
