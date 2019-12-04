@@ -121,6 +121,17 @@
                             </td>
                         </tr>
                         <tr>
+                          <td colspan="2"></td>
+                          <td>Time Critical</td>
+                          <td>
+                              <div class="progress">
+                                  <div class="progress-bar" role="progress-bar" style="min-width: 3em; width:{% widthratio ta.tc_time_used ta.tc_allocation 100 %}%">
+                                      {{ ta.tc_time_used|floatformat}}/{{ ta.tc_allocation }}
+                                  </div>
+                              </div>
+                          </td>
+                        </tr>
+                        <tr>
                             <td colspan="2"></td>
                             <td>Rapid Response</td>
                             <td>
