@@ -235,7 +235,7 @@
       },
       configurationFillDuration: function(configId) {
         if ('largest_interval' in this.duration_data) {
-          let config_duration = this.duration_data.configurations[configId];
+          let config_duration = this.duration_data.configurations[configId].duration;
           let available_time = this.duration_data.largest_interval - this.duration_data.duration + config_duration;
           this.request.configurations[configId].repeat_duration = available_time - 1;
           this.update();
