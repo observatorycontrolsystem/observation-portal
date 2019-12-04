@@ -224,8 +224,8 @@
         }
         else {
           return [
-            {value: 'EXPOSE', text: 'Image'},
-            {value: 'REPEAT_EXPOSE', text: 'Image Sequence'}
+            {value: 'EXPOSE', text: 'Expose'},
+            {value: 'REPEAT_EXPOSE', text: 'Expose Sequence'}
           ]
         }
         return [];

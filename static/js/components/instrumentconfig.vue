@@ -35,25 +35,12 @@
           <b-form>
             <customfield 
               v-model="instrumentconfig.exposure_count" 
-              v-if="!configurationType.includes('REPEAT')"
               label="Exposure Count" 
               field="exposure_count" 
               type="number"
               :errors="errors.exposure_count" 
-              desc="Clicking the 'Fill' button will set the exposure count to the number of 
-                    exposures (including overheads) that will fit in the largest observing window. 
-                    This button is disabled until the entire observation request has passed validation."
               @input="update"
-            >
-              <b-input-group-append slot="inline-input">
-                <b-button
-                  @click="instrumentConfigurationfillWindow"
-                  :disabled="duration_data.duration > 0 ? false : true"
-                >
-                  Fill
-                </b-button>
-              </b-input-group-append>
-            </customfield>
+            />
             <customfield 
               v-model="instrumentconfig.exposure_time" 
               label="Exposure Time" 
@@ -381,11 +368,6 @@ export default {
     defocus: function(value) {
       this.instrumentconfig.extra_params.defocus = value || undefined;
       this.update();
-    },
-    configurationType: function(value) {
-      if (value.includes('REPEAT')) {
-        this.instrumentconfig.exposure_count = 1;
-      }
     },
     datatype: function(value) {
       if (value === 'IMAGE') {
