@@ -66,9 +66,11 @@
                       variant="light"
                     >
                       <b-row>
-                        <b-col md="6">Type: {{ configuration.type }}</b-col>
-                        <b-col md="6" v-if="configuration.target">Target: {{ configuration.target.name }}</b-col>
-                        <b-col md="6" v-else>Target: None</b-col>
+                        <b-col md="4">Type: {{ configuration.type }}</b-col>
+                        <b-col md="4" v-if="configuration.repeat_duration"> Duration: {{ configuration.repeat_duration}}</b-col>
+                        <b-col md="4" v-else></b-col>
+                        <b-col md="4" v-if="configuration.target">Target: {{ configuration.target.name }}</b-col>
+                        <b-col md="4" v-else>Target: None</b-col>
                       </b-row>
                     </b-button>
                   </b-card-header>

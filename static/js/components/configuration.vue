@@ -65,15 +65,25 @@
               @input="update" 
             />
             <div 
-              class="spectra" 
-              v-if="datatype === 'SPECTRA' && !simple_interface"
+              class="configurationType" 
+              v-if="!simple_interface"
             >
               <customselect 
                 v-model="configuration.type" 
                 label="Type" 
-                desc="The type of exposure"
+                desc="The type of configuration"
                 :errors="errors.type" 
-                :options="spectraConfigurationOptions"
+                :options="configurationTypeOptions"
+                @input="update"
+              />
+            </div>
+            <div class="repeatDuration" v-if="configuration.type.includes('REPEAT')">
+              <customfield 
+                v-model="configuration.repeat_duration" 
+                label="Duration" 
+                field="repeat_duration" 
+                :errors="errors.repeat_duration" 
+                desc="Seconds"
                 @input="update"
               />
             </div>
@@ -196,19 +206,27 @@
       };
     },
     computed: {
-      spectraConfigurationOptions: function() {
+      configurationTypeOptions: function() {
         if (_.get(this.available_instruments, this.selectedinstrument, {}).type === 'SPECTRA') {
           if (this.selectedinstrument.includes('NRES')) {
             return [
-              {value: 'NRES_SPECTRUM', 'text': 'Spectrum'}
+              {value: 'NRES_SPECTRUM', text: 'Spectrum'},
+              {value: 'REPEAT_NRES_SPECTRUM', text: 'Spectrum Sequence'}
             ]
           } else {
             return [
               {value: 'SPECTRUM', text: 'Spectrum'},
+              {value: 'REPEAT_SPECTRUM', text: 'Spectrum Sequence'},
               {value: 'LAMP_FLAT', text: 'Lamp Flat'},
               {value: 'ARC', text: 'Arc'}
             ]
           }
+        }
+        else {
+          return [
+            {value: 'EXPOSE', text: 'Image'},
+            {value: 'REPEAT_EXPOSE', text: 'Image Sequence'}
+          ]
         }
         return [];
       },
@@ -428,6 +446,9 @@
       },
       'configuration.type': function(value) {
         this.setupAcquireAndGuideFieldsForType(value);
+        if (!value.includes('REPEAT')) {
+          this.configuration.repeat_duration = undefined;
+        }
       }
     }
   };

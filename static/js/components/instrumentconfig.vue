@@ -35,6 +35,7 @@
           <b-form>
             <customfield 
               v-model="instrumentconfig.exposure_count" 
+              v-if="!configurationType.includes('REPEAT')"
               label="Exposure Count" 
               field="exposure_count" 
               type="number"
@@ -380,6 +381,11 @@ export default {
     defocus: function(value) {
       this.instrumentconfig.extra_params.defocus = value || undefined;
       this.update();
+    },
+    configurationType: function(value) {
+      if (value.includes('REPEAT')) {
+        this.instrumentconfig.exposure_count = 1;
+      }
     },
     datatype: function(value) {
       if (value === 'IMAGE') {
