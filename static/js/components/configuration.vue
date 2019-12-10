@@ -71,7 +71,9 @@
               <customselect 
                 v-model="configuration.type" 
                 label="Type" 
-                desc="The type of configuration"
+                desc="Normally, all Instrument Configurations are executed once, sequentially. If set to 
+                      'Exposure Sequence', 'Spectrum Sequence' or 'NRES Spectrum Sequence', all 
+                      Instrument Configurations are repeated in a loop for a specified duration."
                 :errors="errors.type" 
                 :options="configurationTypeOptions"
                 @input="update"
@@ -83,7 +85,9 @@
                 label="Duration" 
                 field="repeat_duration" 
                 :errors="errors.repeat_duration" 
-                desc="Seconds"
+                desc="Period (in seconds) over which to repeat Instrument Configurations. Clicking the 
+                      'Fill' button increases the duration to the longest interval over which the target 
+                      is visible in the observing window."
                 @input="update"
               >
                 <b-input-group-append slot="inline-input">
@@ -232,8 +236,8 @@
         }
         else {
           return [
-            {value: 'EXPOSE', text: 'Expose'},
-            {value: 'REPEAT_EXPOSE', text: 'Expose Sequence'}
+            {value: 'EXPOSE', text: 'Exposure'},
+            {value: 'REPEAT_EXPOSE', text: 'Exposure Sequence'}
           ]
         }
         return [];
