@@ -225,6 +225,14 @@ class ConfigurationSerializer(serializers.ModelSerializer):
         exclude = Configuration.SERIALIZER_EXCLUDE
         read_only_fields = ('priority',)
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # Only return the repeat duration if its a REPEAT type configuration
+        if 'REPEAT' not in data.get('type') and 'repeat_duration' in data:
+            del data['repeat_duration']
+
+        return data
+
     def validate_instrument_configs(self, value):
         if [instrument_config.get('fill_window', False) for instrument_config in value].count(True) > 1:
             raise serializers.ValidationError(_('Only one instrument_config can have `fill_window` set'))
