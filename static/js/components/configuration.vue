@@ -87,7 +87,8 @@
                 :errors="errors.repeat_duration" 
                 desc="Period (in seconds) over which to repeat Instrument Configurations. Clicking the 
                       'Fill' button increases the duration to the longest interval over which the target 
-                      is visible in the observing window."
+                      is visible in the observing window. This button is disabled until the entire 
+                      request has passed validation."
                 @input="update"
               >
                 <b-input-group-append slot="inline-input">
