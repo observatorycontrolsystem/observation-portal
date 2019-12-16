@@ -65,17 +65,41 @@
               @input="update" 
             />
             <div 
-              class="spectra" 
-              v-if="datatype === 'SPECTRA' && !simple_interface"
+              class="configurationType" 
+              v-if="!simple_interface"
             >
               <customselect 
                 v-model="configuration.type" 
                 label="Type" 
-                desc="The type of exposure"
+                desc="Normally, all Instrument Configurations are executed once, sequentially. If set to 
+                      'Exposure Sequence', 'Spectrum Sequence' or 'NRES Spectrum Sequence', all 
+                      Instrument Configurations are repeated in a loop for a specified duration."
                 :errors="errors.type" 
-                :options="spectraConfigurationOptions"
+                :options="configurationTypeOptions"
                 @input="update"
               />
+            </div>
+            <div class="repeatDuration" v-if="configuration.type.includes('REPEAT')">
+              <customfield 
+                v-model="configuration.repeat_duration" 
+                label="Duration" 
+                field="repeat_duration" 
+                :errors="errors.repeat_duration" 
+                desc="Period (in seconds) over which to repeat Instrument Configurations. Clicking the 
+                      'Fill' button increases the duration to the longest interval over which the target 
+                      is visible in the observing window. This button is disabled until the entire 
+                      request has passed validation."
+                @input="update"
+              >
+                <b-input-group-append slot="inline-input">
+                  <b-button
+                    @click="configurationFillDuration"
+                    :disabled="duration_data.duration > 0 ? false : true"
+                  >
+                    Fill
+                  </b-button>
+                </b-input-group-append>
+              </customfield>
             </div>
             <div v-if="acquireModeOptions.length > 1 && !simple_interface && configuration.type !== 'LAMP_FLAT' && configuration.type !== 'ARC'">
               <customselect 
@@ -118,7 +142,6 @@
       @remove="removeInstrumentConfiguration(idx)" 
       @copy="addInstrumentConfiguration(idx)" 
       @instrumentconfigupdate="instumentConfigurationUpdated" 
-      @instrumentconfigurationfillwindow="configurationFillWindow"
     />
     <target 
       :target="configuration.target" 
@@ -196,19 +219,27 @@
       };
     },
     computed: {
-      spectraConfigurationOptions: function() {
+      configurationTypeOptions: function() {
         if (_.get(this.available_instruments, this.selectedinstrument, {}).type === 'SPECTRA') {
           if (this.selectedinstrument.includes('NRES')) {
             return [
-              {value: 'NRES_SPECTRUM', 'text': 'Spectrum'}
+              {value: 'NRES_SPECTRUM', text: 'Spectrum'},
+              {value: 'REPEAT_NRES_SPECTRUM', text: 'Spectrum Sequence'}
             ]
           } else {
             return [
               {value: 'SPECTRUM', text: 'Spectrum'},
+              {value: 'REPEAT_SPECTRUM', text: 'Spectrum Sequence'},
               {value: 'LAMP_FLAT', text: 'Lamp Flat'},
               {value: 'ARC', text: 'Arc'}
             ]
           }
+        }
+        else {
+          return [
+            {value: 'EXPOSE', text: 'Exposure'},
+            {value: 'REPEAT_EXPOSE', text: 'Exposure Sequence'}
+          ]
         }
         return [];
       },
@@ -259,8 +290,8 @@
         }
         this.update();
       },
-      configurationFillWindow: function(instrumentconfigId) {
-        this.$emit('configurationfillwindow', {configId: this.index, instrumentconfigId: instrumentconfigId});
+      configurationFillDuration: function() {
+        this.$emit('configurationfillduration', this.index);
       },
       generateCalibs: function() {
         this.$emit('generateCalibs', this.index);
@@ -363,13 +394,13 @@
       },
       setupAcquireAndGuideFieldsForType: function(configurationType) {
         if (configurationType) {
-          if (configurationType === 'SPECTRUM' || configurationType === 'NRES_SPECTRUM') {
+          if (configurationType.includes('SPECTRUM')) {
             this.setGuidingFields('ON');
             this.setAcquireFields();
           } else if (configurationType == 'LAMP_FLAT' || configurationType == 'ARC') {
             this.setGuidingFields('OPTIONAL');
             this.turnOffAcquisition();
-          } else if (configurationType == 'EXPOSE') {
+          } else if (configurationType.includes('EXPOSE')) {
             this.setGuidingFields(this.selectedImagerGuidingOption);
             this.setAcquireFields();
           }
@@ -428,6 +459,9 @@
       },
       'configuration.type': function(value) {
         this.setupAcquireAndGuideFieldsForType(value);
+        if (!value.includes('REPEAT')) {
+          this.configuration.repeat_duration = undefined;
+        }
       }
     }
   };

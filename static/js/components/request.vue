@@ -73,7 +73,7 @@
       @copy="addConfiguration(idx)" 
       @generateCalibs="generateCalibs"
       @configurationupdated="configurationUpdated" 
-      @configurationfillwindow="configurationFillWindow" 
+      @configurationfillduration="configurationFillDuration" 
     />
     <window v-for="(window, idx) in request.windows" :key="'window' + idx"
       ref="window" 
@@ -233,15 +233,11 @@
           this.update();
         }
       },
-      configurationFillWindow: function(ids) {
-        console.log('configurationfillwindow');
+      configurationFillDuration: function(configId) {
         if ('largest_interval' in this.duration_data) {
-          let num_exposures = this.request.configurations[ids.configId].instrument_configs[ids.instrumentconfigId].exposure_count;
-          let instrumentconfig_duration = this.duration_data.configurations[ids.configId].instrument_configs[ids.instrumentconfigId].duration;
-          let available_time = this.duration_data.largest_interval - this.duration_data.duration + instrumentconfig_duration;
-          let timePerImage = instrumentconfig_duration / num_exposures;
-          num_exposures = Math.floor(available_time / timePerImage);
-          this.request.configurations[ids.configId].instrument_configs[ids.instrumentconfigId].exposure_count = Math.max(1, num_exposures);
+          let config_duration = this.duration_data.configurations[configId].duration;
+          let available_time = this.duration_data.largest_interval - this.duration_data.duration + config_duration;
+          this.request.configurations[configId].repeat_duration = Math.floor(available_time) - 1;
           this.update();
         }
       },

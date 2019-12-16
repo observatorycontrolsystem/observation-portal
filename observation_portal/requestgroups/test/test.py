@@ -110,10 +110,12 @@ class TestRequestDuration(SetTimeMixin, TestCase):
         self.configuration_spectrum_2 = mixer.blend(Configuration, instrument_type='2M0-FLOYDS-SCICAM', type='SPECTRUM')
         self.configuration_arc = mixer.blend(Configuration, instrument_type='2M0-FLOYDS-SCICAM', type='ARC')
         self.configuration_lampflat = mixer.blend(Configuration, instrument_type='2M0-FLOYDS-SCICAM', type='LAMP_FLAT')
+        self.configuration_repeat_expose = mixer.blend(Configuration, instrument_type='1M0-SCICAM-SBIG',
+                                                       type='REPEAT_EXPOSE', repeat_duration=500)
 
         configurations = [self.configuration_expose, self.configuration_spectrum, self.configuration_arc,
                           self.configuration_lampflat, self.configuration_expose_2, self.configuration_expose_3,
-                          self.configuration_spectrum_2]
+                          self.configuration_spectrum_2, self.configuration_repeat_expose]
 
         mixer.cycle(len(configurations)).blend(AcquisitionConfig, configuration=(c for c in configurations))
         mixer.cycle(len(configurations)).blend(GuidingConfig, configuration=(c for c in configurations))
@@ -148,6 +150,10 @@ class TestRequestDuration(SetTimeMixin, TestCase):
         self.instrument_config_lampflat = mixer.blend(
             InstrumentConfig, bin_x=1, bin_y=1, exposure_time=60, exposure_count=1,
             optical_elements={'slit': 'slit_1.6as'}, configuration=self.configuration_lampflat
+        )
+        self.instrument_config_repeat_expose = mixer.blend(
+            InstrumentConfig, bin_x=2, bin_y=2, exposure_time=30, exposure_count=1,
+            optical_elements={'filter': 'b'}, mode='1m0_sbig_2', configuration=self.configuration_repeat_expose
         )
 
         self.instrument_change_overhead_1m = 0
@@ -229,6 +235,50 @@ class TestRequestDuration(SetTimeMixin, TestCase):
         num_filter_changes = 2
 
         self.assertEqual(duration, math.ceil(exp_1_duration + exp_2_duration + exp_3_duration + self.sbig_front_padding + num_filter_changes*self.sbig_filter_optical_element_change_overhead + (PER_CONFIGURATION_GAP + PER_CONFIGURATION_STARTUP_TIME + self.minimum_slew_time)))
+
+    def test_single_repeat_configuration_duration(self):
+        self.configuration_repeat_expose.request = self.request
+        self.configuration_repeat_expose.save()
+
+        configuration_duration = self.configuration_repeat_expose.repeat_duration + PER_CONFIGURATION_GAP + PER_CONFIGURATION_STARTUP_TIME
+        self.assertEqual(configuration_duration, self.configuration_repeat_expose.duration)
+
+        mixer.blend(
+            InstrumentConfig, bin_x=2, bin_y=2, exposure_time=30, exposure_count=1,
+            optical_elements={'filter': 'g'}, mode='1m0_sbig_2', configuration=self.configuration_repeat_expose
+        )
+        mixer.blend(
+            InstrumentConfig, bin_x=2, bin_y=2, exposure_time=30, exposure_count=1,
+            optical_elements={'filter': 'r'}, mode='1m0_sbig_2'
+        )
+        # configuration duration is unchanged after adding instrument configs
+        self.assertEqual(configuration_duration, self.configuration_repeat_expose.duration)
+
+    def test_repeat_configuration_multi_config_request_duration(self):
+        self.configuration_repeat_expose.request = self.request
+        self.configuration_repeat_expose.save()
+        self.configuration_expose.request = self.request
+        self.configuration_expose.save()
+        self.configuration_expose_2.request = self.request
+        self.configuration_expose_2.save()
+        self.instrument_config_expose_1.configuration = self.configuration_expose
+        self.instrument_config_expose_1.save()
+        self.instrument_config_expose_2.configuration = self.configuration_expose_2
+        self.instrument_config_expose_2.save()
+
+        exp_time1 = self.instrument_config_expose_1.exposure_time
+        exp_count1 = self.instrument_config_expose_1.exposure_count
+        exp_time2 = self.instrument_config_expose_2.exposure_time
+        exp_count2 = self.instrument_config_expose_2.exposure_count
+        exp_1_duration = exp_count1 * (exp_time1 + self.sbig_readout_time2 + self.sbig_fixed_overhead_per_exposure)
+        exp_2_duration = exp_count2 * (exp_time2 + self.sbig_readout_time2 + self.sbig_fixed_overhead_per_exposure)
+        repeat_config_duration = self.configuration_repeat_expose.repeat_duration
+        num_configurations = 3
+        num_filter_changes = 2
+        duration = self.request.duration
+
+        self.assertEqual(duration, math.ceil(exp_1_duration + exp_2_duration + repeat_config_duration + self.sbig_front_padding + num_configurations*(
+            PER_CONFIGURATION_GAP + PER_CONFIGURATION_STARTUP_TIME + self.minimum_slew_time) + num_filter_changes*self.sbig_filter_optical_element_change_overhead))
 
     def test_ccd_multiple_configuration_request_duration(self):
         self.instrument_config_expose_1.configuration = self.configuration_expose

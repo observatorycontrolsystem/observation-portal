@@ -31,13 +31,13 @@
     },
     computed: {
       guiLink: function() {
-        return archiveUIRoot + '?OBSTYPE=EXPOSE&start=2014-05-01&covers=POINT(' + this.ra + ' ' + this.dec +')';
+        return archiveUIRoot + '?OBSTYPE=EXPOSE&OBSTYPE=REPEAT_EXPOSE&start=2014-05-01&covers=POINT(' + this.ra + ' ' + this.dec +')';
       }
     },
     methods:{
       setResultCount: _.debounce(function() {
         let that = this;
-        $.getJSON(archiveRoot + 'frames/?OBSTYPE=EXPOSE&covers=POINT(' + that.ra + ' ' + that.dec +')', function(data) {
+        $.getJSON(archiveRoot + 'frames/?OBSTYPE=EXPOSE&OBSTYPE=REPEAT_EXPOSE&covers=POINT(' + that.ra + ' ' + that.dec +')', function(data) {
           that.resultCount = data.count;
         });
       }, 500)

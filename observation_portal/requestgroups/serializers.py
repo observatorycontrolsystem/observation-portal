@@ -225,6 +225,14 @@ class ConfigurationSerializer(serializers.ModelSerializer):
         exclude = Configuration.SERIALIZER_EXCLUDE
         read_only_fields = ('priority',)
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # Only return the repeat duration if its a REPEAT type configuration
+        if 'REPEAT' not in data.get('type') and 'repeat_duration' in data:
+            del data['repeat_duration']
+
+        return data
+
     def validate_instrument_configs(self, value):
         if [instrument_config.get('fill_window', False) for instrument_config in value].count(True) > 1:
             raise serializers.ValidationError(_('Only one instrument_config can have `fill_window` set'))
@@ -421,6 +429,29 @@ class ConfigurationSerializer(serializers.ModelSerializer):
             ):
                 raise serializers.ValidationError(_(
                     'Must specify a script_name in extra_params for SCRIPT configuration type'
+                ))
+
+        # Validate duration is set if it's a REPEAT_* type configuration
+        if 'REPEAT' in data['type']:
+            if 'repeat_duration' not in data or data['repeat_duration'] is None:
+                raise serializers.ValidationError(_(
+                    f'Must specify a configuration repeat_duration for {data["type"]} type configurations.'
+                ))
+            else:
+                # Validate that the duration exceeds the minimum to run everything at least once
+                min_duration = sum(
+                    [get_instrument_configuration_duration(
+                        ic, data['instrument_type']) for ic in data['instrument_configs']]
+                )
+                if min_duration > data['repeat_duration']:
+                    raise serializers.ValidationError(_(
+                        f'Configuration repeat_duration of {data["repeat_duration"]} is less than the minimum of '
+                        f'{min_duration} required to repeat at least once'
+                    ))
+        else:
+            if 'repeat_duration' in data and data['repeat_duration'] is not None:
+                raise serializers.ValidationError(_(
+                    'You may only specify a repeat_duration for REPEAT_* type configurations.'
                 ))
 
         # Validate the configuration type is available for the instrument requested
