@@ -277,7 +277,8 @@ class TestRequestDuration(SetTimeMixin, TestCase):
         num_filter_changes = 2
         duration = self.request.duration
 
-        self.assertEqual(duration, math.ceil(exp_1_duration + exp_2_duration + repeat_config_duration + self.sbig_front_padding + num_configurations*(PER_CONFIGURATION_GAP + PER_CONFIGURATION_STARTUP_TIME + self.minimum_slew_time) + num_filter_changes*self.sbig_filter_optical_element_change_overhead))
+        self.assertEqual(duration, math.ceil(exp_1_duration + exp_2_duration + repeat_config_duration + self.sbig_front_padding + num_configurations*(
+            PER_CONFIGURATION_GAP + PER_CONFIGURATION_STARTUP_TIME + self.minimum_slew_time) + num_filter_changes*self.sbig_filter_optical_element_change_overhead))
 
     def test_ccd_multiple_configuration_request_duration(self):
         self.instrument_config_expose_1.configuration = self.configuration_expose
