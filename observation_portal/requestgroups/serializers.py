@@ -144,7 +144,6 @@ class RegionOfInterestSerializer(serializers.ModelSerializer):
 
 
 class InstrumentConfigSerializer(serializers.ModelSerializer):
-    fill_window = serializers.BooleanField(required=False, write_only=True)
     rois = RegionOfInterestSerializer(many=True, required=False)
 
     class Meta:
@@ -214,6 +213,7 @@ class TargetSerializer(serializers.ModelSerializer):
 
 
 class ConfigurationSerializer(serializers.ModelSerializer):
+    fill_window = serializers.BooleanField(required=False, write_only=True)
     constraints = ConstraintsSerializer()
     instrument_configs = InstrumentConfigSerializer(many=True)
     acquisition_config = AcquisitionConfigSerializer()
@@ -234,8 +234,6 @@ class ConfigurationSerializer(serializers.ModelSerializer):
         return data
 
     def validate_instrument_configs(self, value):
-        if [instrument_config.get('fill_window', False) for instrument_config in value].count(True) > 1:
-            raise serializers.ValidationError(_('Only one instrument_config can have `fill_window` set'))
         if len(set([instrument_config.get('rotator_mode', '') for instrument_config in value])) > 1:
             raise serializers.ValidationError(_('Rotator modes within the same configuration must be the same'))
         return value
@@ -549,6 +547,10 @@ class RequestSerializer(serializers.ModelSerializer):
         if not value:
             raise serializers.ValidationError(_('You must specify at least 1 configuration'))
 
+        # Only one configuration can have the fill_window attribute set
+        if [config.get('fill_window', False) for config in value].count(True) > 1:
+            raise serializers.ValidationError(_('Only one configuration can have `fill_window` set'))
+
         constraints = value[0]['constraints']
         # Set the relative priority of molecules in order
         for i, configuration in enumerate(value):
@@ -615,22 +617,16 @@ class RequestSerializer(serializers.ModelSerializer):
             rise_set_intervals_by_site = get_filtered_rise_set_intervals_by_site(data, is_staff=is_staff)
             largest_interval = get_largest_interval(rise_set_intervals_by_site)
             for configuration in data['configurations']:
-                for instrument_config in configuration['instrument_configs']:
-                    if instrument_config.get('fill_window'):
-                        instrument_config_duration = get_instrument_configuration_duration(
-                            instrument_config, configuration['instrument_type']
-                        )
-                        num_exposures = get_num_exposures(
-                            instrument_config, configuration['instrument_type'],
-                            largest_interval - timedelta(seconds=duration - instrument_config_duration)
-                        )
-                        instrument_config['exposure_count'] = num_exposures
-                        duration = get_request_duration(data)
-                    # delete the fill window attribute, it is only used for this validation
-                    try:
-                        del instrument_config['fill_window']
-                    except KeyError:
-                        pass
+                if 'REPEAT' in configuration['type'].upper() and configuration.get('fill_window'):
+                    max_configuration_duration = largest_interval.total_seconds() - duration + configuration.get('repeat_duration', 0) - 1
+                    configuration['repeat_duration'] = max_configuration_duration
+                    duration = get_request_duration(data)
+
+                # delete the fill window attribute, it is only used for this validation
+                try:
+                    del configuration['fill_window']
+                except KeyError:
+                    pass
             if largest_interval.total_seconds() <= 0:
                 raise serializers.ValidationError(
                     _(
