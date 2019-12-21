@@ -620,7 +620,6 @@ class InstrumentConfig(models.Model):
     )
     exposure_count = models.PositiveIntegerField(
         validators=[MinValueValidator(1)],
-        # TODO: Update help text. Maybe move fill window instructions to a better place and improve them.
         help_text='The number of exposures to take. This field must be set to a value greater than 0.'
     )
     bin_x = models.PositiveSmallIntegerField(
