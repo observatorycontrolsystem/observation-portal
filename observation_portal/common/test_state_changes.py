@@ -703,6 +703,65 @@ class TestRequestState(SetTimeMixin, TestCase):
             self.assertFalse(state_changed)
             self.assertEqual(self.request.state, 'PENDING')
 
+    def test_request_state_repeat_configuration_failed_and_threshold_failed(self):
+        with disconnect_signal(post_save, cb_configurationstatus_post_save, ConfigurationStatus):
+            self.request.state = 'PENDING'
+            self.request.save()
+            repeat_configuration = self.request.configurations.first()
+            repeat_configuration.type = 'REPEAT_EXPOSE'
+            repeat_configuration.repeat_duration = 2000
+            repeat_configuration.save()
+
+            observation = dmixer.blend(
+                Observation, request=self.request, start=self.now - timedelta(minutes=30),
+                end=self.now - timedelta(minutes=20)
+            )
+            for configuration in self.request.configurations.all():
+                if configuration.id == repeat_configuration.id:
+                    cs = dmixer.blend(
+                        ConfigurationStatus, observation=observation, configuration=configuration, state='FAILED',
+                    )
+                    dmixer.blend(Summary, configuration_status=cs, time_completed=1000)
+                else:
+                    cs = dmixer.blend(
+                        ConfigurationStatus, observation=observation, configuration=configuration, state='FAILED',
+                    )
+                    dmixer.blend(Summary, configuration_status=cs, time_completed=0)
+            state_changed = update_request_state(self.request, observation.configuration_statuses.all(), False)
+            self.request.refresh_from_db()
+            self.assertFalse(state_changed)
+            self.assertEqual(self.request.state, 'PENDING')
+
+    def test_request_state_repeat_configuration_failed_but_threshold_reached(self):
+        with disconnect_signal(post_save, cb_configurationstatus_post_save, ConfigurationStatus):
+            self.request.state = 'PENDING'
+            self.request.acceptability_threshold = 90
+            self.request.save()
+            repeat_configuration = self.request.configurations.last()
+            repeat_configuration.type = 'REPEAT_EXPOSE'
+            repeat_configuration.repeat_duration = 2000
+            repeat_configuration.save()
+
+            observation = dmixer.blend(
+                Observation, request=self.request, start=self.now - timedelta(minutes=30),
+                end=self.now - timedelta(minutes=20)
+            )
+            for configuration in self.request.configurations.all():
+                if configuration.id == repeat_configuration.id:
+                    cs = dmixer.blend(
+                        ConfigurationStatus, observation=observation, configuration=configuration, state='FAILED',
+                    )
+                    dmixer.blend(Summary, configuration_status=cs, time_completed=1999)
+                else:
+                    cs = dmixer.blend(
+                        ConfigurationStatus, observation=observation, configuration=configuration, state='COMPLETED',
+                    )
+                    dmixer.blend(Summary, configuration_status=cs, time_completed=100)
+            state_changed = update_request_state(self.request, observation.configuration_statuses.all(), False)
+            self.request.refresh_from_db()
+            self.assertTrue(state_changed)
+            self.assertEqual(self.request.state, 'COMPLETED')
+
 
 class TestAggregateRequestStates(TestCase):
     def test_many_all_complete(self):
