@@ -122,20 +122,30 @@ def get_airmasses_for_request_at_sites(request_dict, is_staff=False):
 
 
 def exposure_completion_percentage(configuration_statuses):
-    total_exposure_time = 0
-    completed_exposure_time = 0
+    total_time = 0
+    completed_time = 0
     for configuration_status in configuration_statuses:
-        if hasattr(configuration_status, 'summary'):
-            completed_exposure_time += configuration_status.summary.time_completed
-        configuration_exposure_time = 0
-        for instrument_config in configuration_status.configuration.instrument_configs.all():
-            configuration_exposure_time += instrument_config.exposure_count * instrument_config.exposure_time
-        total_exposure_time += configuration_exposure_time
+        is_repeat_type = (
+                'REPEAT' in configuration_status.configuration.type and
+                configuration_status.configuration.repeat_duration is not None
+        )
+        has_summary = hasattr(configuration_status, 'summary')
+        if is_repeat_type:
+            if has_summary:
+                completed_time += (
+                    configuration_status.summary.end - configuration_status.summary.start
+                ).total_seconds()
+            total_time += configuration_status.configuration.repeat_duration
+        else:
+            if has_summary:
+                completed_time += configuration_status.summary.time_completed
+            for instrument_config in configuration_status.configuration.instrument_configs.all():
+                total_time += instrument_config.exposure_count * instrument_config.exposure_time
 
-    if float(total_exposure_time) == 0:
+    if float(total_time) == 0:
         return 100.0
 
-    return (completed_exposure_time / total_exposure_time) * 100.0
+    return (completed_time / total_time) * 100.0
 
 
 def return_paginated_results(collection, url):
