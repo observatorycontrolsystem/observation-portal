@@ -130,19 +130,17 @@ def exposure_completion_percentage(configuration_statuses):
                 configuration_status.configuration.repeat_duration is not None
         )
         has_summary = hasattr(configuration_status, 'summary')
-        configuration_total_time = 0
         if is_repeat_type:
             if has_summary:
                 completed_time += (
-                        configuration_status.summary.end - configuration_status.summary.start
+                    configuration_status.summary.end - configuration_status.summary.start
                 ).total_seconds()
-            configuration_total_time = configuration_status.configuration.repeat_duration
+            total_time += configuration_status.configuration.repeat_duration
         else:
             if has_summary:
                 completed_time += configuration_status.summary.time_completed
             for instrument_config in configuration_status.configuration.instrument_configs.all():
-                configuration_total_time += instrument_config.exposure_count * instrument_config.exposure_time
-        total_time += configuration_total_time
+                total_time += instrument_config.exposure_count * instrument_config.exposure_time
 
     if float(total_time) == 0:
         return 100.0
