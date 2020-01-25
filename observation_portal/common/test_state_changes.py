@@ -721,7 +721,8 @@ class TestRequestState(SetTimeMixin, TestCase):
                     cs = dmixer.blend(
                         ConfigurationStatus, observation=observation, configuration=configuration, state='FAILED',
                     )
-                    dmixer.blend(Summary, configuration_status=cs, time_completed=1000)
+                    dmixer.blend(Summary, configuration_status=cs, time_completed=1000, start=observation.start,
+                                 end=observation.start + timedelta(seconds=1000))
                 else:
                     cs = dmixer.blend(
                         ConfigurationStatus, observation=observation, configuration=configuration, state='FAILED',
@@ -746,12 +747,14 @@ class TestRequestState(SetTimeMixin, TestCase):
                 Observation, request=self.request, start=self.now - timedelta(minutes=30),
                 end=self.now - timedelta(minutes=20)
             )
+            repeat_starts = observation.start + timedelta(seconds=300)
             for configuration in self.request.configurations.all():
                 if configuration.id == repeat_configuration.id:
                     cs = dmixer.blend(
                         ConfigurationStatus, observation=observation, configuration=configuration, state='FAILED',
                     )
-                    dmixer.blend(Summary, configuration_status=cs, time_completed=1999)
+                    dmixer.blend(Summary, configuration_status=cs, time_completed=1999,
+                                 start=repeat_starts, end=repeat_starts + timedelta(seconds=1999))
                 else:
                     cs = dmixer.blend(
                         ConfigurationStatus, observation=observation, configuration=configuration, state='COMPLETED',
