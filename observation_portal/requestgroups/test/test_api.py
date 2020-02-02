@@ -1605,63 +1605,64 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         for i, configuration in enumerate(rg['requests'][0]['configurations']):
             self.assertEqual(configuration['priority'], i + 1)
 
-    def test_fill_window_on_more_than_one_instrument_config_fails(self):
+    def test_fill_window_on_more_than_one_configuration_fails(self):
         bad_data = self.generic_payload.copy()
-        bad_data['requests'][0]['configurations'][0]['instrument_configs'].append(
-            self.extra_configuration['instrument_configs'][0].copy()
+        bad_data['requests'][0]['configurations'][0]['type'] = 'REPEAT_EXPOSE'
+        bad_data['requests'][0]['configurations'][0]['repeat_duration'] = 250
+        bad_data['requests'][0]['configurations'].append(
+            bad_data['requests'][0]['configurations'][0].copy()
         )
-        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['fill_window'] = True
-        bad_data['requests'][0]['configurations'][0]['instrument_configs'][1]['fill_window'] = True
+        bad_data['requests'][0]['configurations'][0]['fill_window'] = True
+        bad_data['requests'][0]['configurations'][1]['fill_window'] = True
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertIn('Only one instrument_config can have `fill_window` set', str(response.content))
+        self.assertIn('Only one configuration can have `fill_window` set', str(response.content))
         self.assertEqual(response.status_code, 400)
 
     def test_fill_window_one_configuration_fills_the_window(self):
         good_data = self.generic_payload.copy()
-        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['fill_window'] = True
-        initial_exposure_count = good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['exposure_count']
+        initial_repeat_duration = 250
+        good_data['requests'][0]['configurations'][0]['type'] = 'REPEAT_EXPOSE'
+        good_data['requests'][0]['configurations'][0]['repeat_duration'] = initial_repeat_duration
+        good_data['requests'][0]['configurations'][0]['fill_window'] = True
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
         rg = response.json()
-        self.assertGreater(rg['requests'][0]['configurations'][0]['instrument_configs'][0]['exposure_count'],
-                           initial_exposure_count)
+        self.assertGreater(rg['requests'][0]['configurations'][0]['repeat_duration'],
+                           initial_repeat_duration)
         self.assertEqual(response.status_code, 201)
 
-    def test_fill_window_two_instrument_configs_one_false_fills_the_window(self):
+    def test_fill_window_two_configs_one_false_fills_the_window(self):
         good_data = self.generic_payload.copy()
-        good_data['requests'][0]['configurations'][0]['instrument_configs'].append(
-            self.extra_configuration['instrument_configs'][0].copy()
+        initial_repeat_duration = 250
+        good_data['requests'][0]['configurations'][0]['type'] = 'REPEAT_EXPOSE'
+        good_data['requests'][0]['configurations'][0]['repeat_duration'] = initial_repeat_duration
+        good_data['requests'][0]['configurations'].append(
+            good_data['requests'][0]['configurations'][0].copy()
         )
-        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['fill_window'] = True
-        good_data['requests'][0]['configurations'][0]['instrument_configs'][1]['fill_window'] = False
-        initial_exposure_count = good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['exposure_count']
+        good_data['requests'][0]['configurations'][0]['fill_window'] = True
+        good_data['requests'][0]['configurations'][1]['fill_window'] = False
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
         rg = response.json()
-        self.assertGreater(rg['requests'][0]['configurations'][0]['instrument_configs'][0]['exposure_count'],
-                           initial_exposure_count)
+        self.assertGreater(rg['requests'][0]['configurations'][0]['repeat_duration'],
+                           initial_repeat_duration)
+        self.assertEqual(rg['requests'][0]['configurations'][1]['repeat_duration'],
+                         initial_repeat_duration)
         self.assertEqual(response.status_code, 201)
 
-    def test_fill_window_two_instrument_configs_one_blank_fills_the_window(self):
+    def test_fill_window_two_configs_one_blank_fills_the_window(self):
         good_data = self.generic_payload.copy()
-        good_data['requests'][0]['configurations'][0]['instrument_configs'].append(
-            self.extra_configuration['instrument_configs'][0].copy()
+        initial_repeat_duration = 250
+        good_data['requests'][0]['configurations'][0]['type'] = 'REPEAT_EXPOSE'
+        good_data['requests'][0]['configurations'][0]['repeat_duration'] = initial_repeat_duration
+        good_data['requests'][0]['configurations'].append(
+            good_data['requests'][0]['configurations'][0].copy()
         )
-        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['fill_window'] = True
-        initial_exposure_count = good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['exposure_count']
+        good_data['requests'][0]['configurations'][0]['fill_window'] = True
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
         rg = response.json()
-        self.assertGreater(rg['requests'][0]['configurations'][0]['instrument_configs'][0]['exposure_count'], initial_exposure_count)
-        self.assertEqual(response.status_code, 201)
-
-    def test_fill_window_two_instrument_configs_first_fills_the_window(self):
-        good_data = self.generic_payload.copy()
-        good_data['requests'][0]['configurations'][0]['instrument_configs'].append(
-            self.extra_configuration['instrument_configs'][0].copy()
-        )
-        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['fill_window'] = True
-        initial_exposure_count = good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['exposure_count']
-        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
-        rg = response.json()
-        self.assertGreater(rg['requests'][0]['configurations'][0]['instrument_configs'][0]['exposure_count'], initial_exposure_count)
+        self.assertGreater(rg['requests'][0]['configurations'][0]['repeat_duration'],
+                           initial_repeat_duration)
+        self.assertEqual(rg['requests'][0]['configurations'][1]['repeat_duration'],
+                         initial_repeat_duration)
         self.assertEqual(response.status_code, 201)
 
     def test_fill_window_not_enough_time_fails(self):
@@ -1670,52 +1671,29 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
             'start': '2016-09-29T21:12:18Z',
             'end': '2016-09-29T21:21:19Z'
         }
-        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['fill_window'] = True
+        bad_data['requests'][0]['configurations'][0]['type'] = 'REPEAT_EXPOSE'
+        bad_data['requests'][0]['configurations'][0]['repeat_duration'] = 250
+        bad_data['requests'][0]['configurations'][0]['fill_window'] = True
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertIn('the target is never visible within the time window', str(response.content))
         self.assertEqual(response.status_code, 400)
 
     def test_fill_window_confined_window_fills_the_window(self):
         good_data = self.generic_payload.copy()
+        initial_repeat_duration = 250
         good_data['requests'][0]['windows'][0] = {
             'start': '2016-09-29T23:12:18Z',
             'end': '2016-09-29T23:21:19Z'
         }
-        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['fill_window'] = True
+        good_data['requests'][0]['configurations'][0]['type'] = 'REPEAT_EXPOSE'
+        good_data['requests'][0]['configurations'][0]['repeat_duration'] = initial_repeat_duration
+        good_data['requests'][0]['configurations'][0]['fill_window'] = True
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
         rg = response.json()
-        self.assertEqual(rg['requests'][0]['configurations'][0]['instrument_configs'][0]['exposure_count'], 3)
+        self.assertGreater(rg['requests'][0]['configurations'][0]['repeat_duration'],
+                           initial_repeat_duration)
+        self.assertEqual(rg['requests'][0]['configurations'][0]['repeat_duration'], 430.0)
         self.assertEqual(response.status_code, 201)
-
-    def test_fill_window_confined_window_2_fills_the_window(self):
-        good_data = self.generic_payload.copy()
-        good_data['requests'][0]['windows'][0] = {
-            'start': '2016-09-29T23:12:18Z',
-            'end': '2016-09-29T23:21:19Z'
-        }
-        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['exposure_time'] = 50
-        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['fill_window'] = True
-        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
-        rg = response.json()
-        self.assertEqual(rg['requests'][0]['configurations'][0]['instrument_configs'][0]['exposure_count'], 5)
-        self.assertEqual(response.status_code, 201)
-
-    def test_fill_window_when_exposures_fit_exactly(self):
-        good_data = self.generic_payload.copy()
-        good_data['requests'][0]['windows'][0] = {
-            'start': '2016-09-29T23:12:00Z',
-            'end': '2016-09-29T23:21:30Z'
-        }
-        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['exposure_time'] = 10
-        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['fill_window'] = True
-        # The largest interval is 570s, available time is 460s, and instrument config duration is 46s
-        n_exposures_fit_exactly = 10
-        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
-        self.assertEqual(response.status_code, 201)
-        self.assertEqual(
-            response.json()['requests'][0]['configurations'][0]['instrument_configs'][0]['exposure_count'],
-            n_exposures_fit_exactly - 1
-        )
 
     def test_multiple_instrument_configs_with_different_rotator_modes_fails(self):
         bad_data = self.generic_payload.copy()

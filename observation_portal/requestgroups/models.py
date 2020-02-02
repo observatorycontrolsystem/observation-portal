@@ -370,7 +370,9 @@ class Configuration(models.Model):
         null=True,
         validators=[MinValueValidator(0.0)],
         help_text='The requested duration for this configuration to be repeated within. '
-                  'Only applicable to REPEAT_* type configurations.'
+                  'Only applicable to REPEAT_* type configurations. Setting parameter fill_window '
+                  'to True will cause this value to automatically be filled in to the max '
+                  'possible given its visibility within the observing window.'
     )
 
     extra_params = JSONField(
@@ -618,11 +620,7 @@ class InstrumentConfig(models.Model):
     )
     exposure_count = models.PositiveIntegerField(
         validators=[MinValueValidator(1)],
-        # TODO: Update help text. Maybe move fill window instructions to a better place and improve them.
-        help_text='The number of exposures to take. This field must be set to a value greater than 0, but optionally '
-                  'you can add a boolean fill_window field to the Configuration upon submission with a value '
-                  'of true. If this is set, the exposure_count will be set to the number of exposures (including '
-                  'overheads) that will fit in the observing window.'
+        help_text='The number of exposures to take. This field must be set to a value greater than 0.'
     )
     bin_x = models.PositiveSmallIntegerField(
         verbose_name='y binning', default=1, blank=True,
