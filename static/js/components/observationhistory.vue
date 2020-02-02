@@ -101,10 +101,13 @@
             }
             observation.state = state;
 
-            if (observation.fail_reason !== '') {
+            if (_.isString(observation.fail_reason) && observation.fail_reason !== '') {
               observation.fail_reason = '<br/>reason: ' + observation.fail_reason;
+            } else {
+              observation.fail_reason = '';
             }
-            if (observation.percent_completed > 0) {
+
+            if (_.isFinite(observation.percent_completed) && observation.percent_completed > 0) {
               observation.percent_completed = '<br/>percent completed: ' + observation.percent_completed.toFixed(1);
             }
             else {
