@@ -410,34 +410,42 @@
             let fail_reason = '';
             for (let csIndex in that.observationData[observationIdx].configuration_statuses) {
               let configurationStatus = that.observationData[observationIdx].configuration_statuses[csIndex];
+              let summaryExists = !_.isEmpty(configurationStatus.summary);
+              if (summaryExists) {
+                fail_reason = that.getFailReason(fail_reason, configurationStatus.summary.reason);
+              }
               // Find the configuration that goes with this configuration status
-              let configuration = that.request.configurations[0];
+              let configuration;
               for (let cIndex in that.request.configurations) {
                 if (that.request.configurations[cIndex].id === configurationStatus.configuration) {
                   configuration = that.request.configurations[cIndex];
                   break;
                 }
               }
-              if (_.startsWith(configuration.type, 'REPEAT') && configuration.repeat_duration) {
-                if (!_.isEmpty(configurationStatus.summary)) {
-                  let start = new Date(configurationStatus.summary.start);
-                  let end = new Date(configurationStatus.summary.end);
-                  time_completed += (end - start) / 1000;
-                  fail_reason = that.getFailReason(fail_reason, configurationStatus.summary.reason);
-                }
-                total_time += configuration.repeat_duration;
-              } else {
-                if (!_.isEmpty(configurationStatus.summary)) {
-                  time_completed += configurationStatus.summary.time_completed;
-                  fail_reason = that.getFailReason(fail_reason, configurationStatus.summary.reason);
-                }
-                for (let icIndex in configuration.instrument_configs) {
-                  let instConfig = configuration.instrument_configs[icIndex];
-                  total_time += instConfig.exposure_time * instConfig.exposure_count;
+              if (configuration) {
+                if (_.startsWith(configuration.type, 'REPEAT') && configuration.repeat_duration) {
+                  if (summaryExists) {
+                    let start = new Date(configurationStatus.summary.start);
+                    let end = new Date(configurationStatus.summary.end);
+                    time_completed += (end - start) / 1000;
+                  }
+                  total_time += configuration.repeat_duration;
+                } else {
+                  if (summaryExists) {
+                    time_completed += configurationStatus.summary.time_completed;
+                  }
+                  for (let icIndex in configuration.instrument_configs) {
+                    let instConfig = configuration.instrument_configs[icIndex];
+                    total_time += instConfig.exposure_time * instConfig.exposure_count;
+                  }
                 }
               }
             }
-            that.observationData[observationIdx].percent_completed = (time_completed / total_time) * 100.0;
+            let percentCompleted;
+            if (total_time > 0) {
+              percentCompleted = (time_completed / total_time) * 100.0;
+            }
+            that.observationData[observationIdx].percent_completed = percentCompleted;
             that.observationData[observationIdx].fail_reason = fail_reason;
           }
         });
