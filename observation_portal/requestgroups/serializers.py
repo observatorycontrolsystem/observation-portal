@@ -236,6 +236,8 @@ class ConfigurationSerializer(serializers.ModelSerializer):
     def validate_instrument_configs(self, value):
         if len(set([instrument_config.get('rotator_mode', '') for instrument_config in value])) > 1:
             raise serializers.ValidationError(_('Rotator modes within the same configuration must be the same'))
+        if len(value) < 1:
+            raise serializers.ValidationError(_('A configuration must have at least one instrument configuration'))
         return value
 
     def validate_instrument_type(self, value):
