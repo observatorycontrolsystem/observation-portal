@@ -1287,6 +1287,13 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         self.generic_payload['proposal'] = self.proposal.id
         self.extra_configuration = copy.deepcopy(self.generic_payload['requests'][0]['configurations'][0])
 
+    def test_must_have_at_least_one_instrument_config(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'] = []
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('must have at least one instrument configuration', str(response.content))
+
     def test_default_guide_mode_for_spectrograph(self):
         good_data = self.generic_payload.copy()
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
