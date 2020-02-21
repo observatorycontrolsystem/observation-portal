@@ -13,11 +13,9 @@ from observation_portal.requestgroups import views
 from observation_portal.common import state_changes
 
 from observation_portal.requestgroups.contention import Pressure
-from observation_portal.accounts.models import Profile
 from observation_portal.accounts.test_utils import blend_user
 
 from django.urls import reverse
-from django.contrib.auth.models import User
 from django.core import cache
 from dateutil.parser import parse as datetime_parser
 from rest_framework.test import APITestCase
@@ -26,7 +24,6 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 import copy
 import random
-from unittest import skip
 from unittest.mock import patch
 
 generic_payload = {
@@ -2143,100 +2140,6 @@ class TestCancelRequestGroupApi(SetTimeMixin, APITestCase):
         self.assertEqual(RequestGroup.objects.get(pk=requestgroup.id).state, 'COMPLETED')
         self.assertEqual(Request.objects.get(pk=expired_r.id).state, 'WINDOW_EXPIRED')
         self.assertEqual(Request.objects.get(pk=completed_r.id).state, 'COMPLETED')
-
-
-@patch('observation_portal.common.state_changes.modify_ipp_time_from_requests')
-class TestUpdateRequestStatesAPI(APITestCase):
-    def setUp(self):
-        self.user = blend_user(user_params={'is_staff': True})
-        self.proposal = mixer.blend(Proposal)
-        mixer.blend(Membership, user=self.user, proposal=self.proposal)
-        self.client.force_login(self.user)
-        self.rg = mixer.blend(RequestGroup, operator='MANY', state='PENDING', proposal=self.proposal,
-                              modified=timezone.now() - timedelta(weeks=2), observation_type=RequestGroup.NORMAL)
-        self.requests = mixer.cycle(3).blend(Request, request_group=self.rg, state='PENDING', modified=timezone.now() - timedelta(weeks=2))
-
-    ## TODO update to remove mocked lake stuff
-    # @responses.activate
-    # def test_no_pond_blocks_no_state_changed(self, modify_mock):
-    #     pond_blocks = []
-    #     now = timezone.now()
-    #     mixer.cycle(3).blend(Window, request=(r for r in self.requests), start=now - timedelta(days=2),
-    #                          end=now + timedelta(days=1))
-    #
-    #     responses.add(responses.GET, 'http://configdbdev.lco.gtn' + '/blocks/',
-    #             json={'next': None, 'results': pond_blocks}, status=200)
-    #     one_week_ahead = timezone.now() + timedelta(weeks=1)
-    #     response = self.client.get(reverse('api:isDirty') + '?last_query_time=' + parse.quote(one_week_ahead.isoformat()))
-    #     response_json = response.json()
-    #
-    #     self.assertFalse(response_json['isDirty'])
-    #
-    # @responses.activate
-    # def test_pond_blocks_no_state_changed(self, modify_mock):
-    #     now = timezone.now()
-    #     mixer.cycle(3).blend(Window, request=(r for r in self.requests), start=now - timedelta(days=2),
-    #                          end=now + timedelta(days=1))
-    #     molecules1 = basic_mixer.cycle(3).blend(PondMolecule, completed=False, failed=False, request_num=self.requests[0].id,
-    #                                             tracking_num=self.rg.id, events=[])
-    #     molecules2 = basic_mixer.cycle(3).blend(PondMolecule, completed=False, failed=False, request_num=self.requests[1].id,
-    #                                             tracking_num=self.rg.id, events=[])
-    #     molecules3 = basic_mixer.cycle(3).blend(PondMolecule, completed=False, failed=False, request_num=self.requests[2].id,
-    #                                             tracking_num=self.rg.id, events=[])
-    #     pond_blocks = basic_mixer.cycle(3).blend(PondBlock, molecules=(m for m in [molecules1, molecules2, molecules3]),
-    #                                              start=now + timedelta(minutes=30), end=now + timedelta(minutes=40))
-    #     pond_blocks = [pb._to_dict() for pb in pond_blocks]
-    #     responses.add(responses.GET, 'http://configdbdev.lco.gtn' + '/blocks/',
-    #             json={'next': None, 'results': pond_blocks}, status=200)
-    #
-    #     one_week_ahead = timezone.now() + timedelta(weeks=1)
-    #     response = self.client.get(reverse('api:isDirty') + '?last_query_time=' + parse.quote(one_week_ahead.isoformat()))
-    #     response_json = response.json()
-    #
-    #     self.assertFalse(response_json['isDirty'])
-    #     for i, req in enumerate(self.requests):
-    #         req.refresh_from_db()
-    #         self.assertEqual(req.state, 'PENDING')
-    #     self.rg.refresh_from_db()
-    #     self.assertEqual(self.rg.state, 'PENDING')
-    #
-    # @responses.activate
-    # def test_pond_blocks_state_change_completed(self, modify_mock):
-    #     now = timezone.now()
-    #     mixer.cycle(3).blend(Window, request=(r for r in self.requests), start=now - timedelta(days=2),
-    #                          end=now - timedelta(days=1))
-    #     molecules1 = basic_mixer.cycle(3).blend(PondMolecule, completed=True, failed=False, request_num=self.requests[0].id,
-    #                                             tracking_num=self.rg.id, events=[])
-    #     molecules2 = basic_mixer.cycle(3).blend(PondMolecule, completed=False, failed=False, request_num=self.requests[1].id,
-    #                                             tracking_num=self.rg.id, events=[])
-    #     molecules3 = basic_mixer.cycle(3).blend(PondMolecule, completed=False, failed=False, request_num=self.requests[2].id,
-    #                                             tracking_num=self.rg.id, events=[])
-    #     pond_blocks = basic_mixer.cycle(3).blend(PondBlock, molecules=(m for m in [molecules1, molecules2, molecules3]),
-    #                                              start=now - timedelta(minutes=30), end=now - timedelta(minutes=20))
-    #     pond_blocks = [pb._to_dict() for pb in pond_blocks]
-    #     responses.add(responses.GET, 'http://configdbdev.lco.gtn' + '/blocks/',
-    #             json={'next': None, 'results': pond_blocks}, status=200)
-    #
-    #     response = self.client.get(reverse('api:isDirty'))
-    #     response_json = response.json()
-    #
-    #     self.assertTrue(response_json['isDirty'])
-    #
-    #     request_states = ['COMPLETED', 'WINDOW_EXPIRED', 'WINDOW_EXPIRED']
-    #     for i, req in enumerate(self.requests):
-    #         req.refresh_from_db()
-    #         self.assertEqual(req.state, request_states[i])
-    #     self.rg.refresh_from_db()
-    #     self.assertEqual(self.rg.state, 'COMPLETED')
-    #
-    # @responses.activate
-    # def test_bad_data_from_pond(self, modify_mock):
-    #     responses.add(responses.GET, 'http://configdbdev.lco.gtn' + '/blocks/',
-    #                   body='Internal Server Error', status=500, content_type='application/json')
-    #
-    #     response = self.client.get(reverse('api:isDirty'))
-    #
-    #     self.assertEqual(response.status_code, 500)
 
 
 @patch('observation_portal.common.state_changes.modify_ipp_time_from_requests')
