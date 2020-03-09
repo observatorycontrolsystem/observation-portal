@@ -322,6 +322,14 @@ class TestPostScheduleApi(SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('dec', str(response.content))
 
+    def test_post_observation_hour_angle_target_of_zero_succeeds(self):
+        good_observation = copy.deepcopy(self.observation)
+        good_observation['request']['configurations'][0]['target']['type'] = 'HOUR_ANGLE'
+        good_observation['request']['configurations'][0]['target']['hour_angle'] = 0
+        del good_observation['request']['configurations'][0]['target']['ra']
+        response = self.client.post(reverse('api:schedule-list'), data=good_observation)
+        self.assertEqual(response.status_code, 201)
+
     def test_delete_observation_leaves_request(self):
         response = self.client.post(reverse('api:schedule-list'), data=self.observation)
         self.assertEqual(response.status_code, 201)
