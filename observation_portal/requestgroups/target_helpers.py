@@ -46,7 +46,7 @@ class ICRSTargetHelper(BaseTargetHelper):
             'epoch', 'hour_angle'
         )
 
-        if target['type'] == 'HOUR_ANGLE':
+        if target.get('type') == 'HOUR_ANGLE':
             self.required_fields = ('hour_angle', 'dec')
         else:
             self.required_fields = ('ra', 'dec')
