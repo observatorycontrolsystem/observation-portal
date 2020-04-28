@@ -3,6 +3,7 @@ from rest_framework.permissions import IsAdminUser
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
+from rest_framework.schemas.openapi import AutoSchema
 from django.core.cache import cache
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
@@ -37,6 +38,7 @@ def observations_queryset(request):
 
 
 class ScheduleViewSet(ListAsDictMixin, CreateListModelMixin, viewsets.ModelViewSet):
+    schema = AutoSchema(tags=['Observations API'])
     permission_classes = (IsAdminOrReadOnly | IsDirectUser,)
     http_method_names = ['get', 'post', 'head', 'options']
     serializer_class = ScheduleSerializer
@@ -55,6 +57,7 @@ class ScheduleViewSet(ListAsDictMixin, CreateListModelMixin, viewsets.ModelViewS
 
 
 class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelViewSet):
+    schema = AutoSchema(tags=['Observations API'])
     permission_classes = (IsAdminOrReadOnly | IsDirectUser,)
     http_method_names = ['get', 'post', 'head', 'options', 'patch']
     filter_class = ObservationFilter
@@ -145,6 +148,7 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
 
 
 class ConfigurationStatusViewSet(viewsets.ModelViewSet):
+    schema = AutoSchema(tags=['Observations API'])
     permission_classes = (IsAdminUser,)
     http_method_names = ['get', 'patch']
     serializer_class = ConfigurationStatusSerializer

@@ -1,6 +1,7 @@
 from rest_framework import viewsets, filters
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.schemas.openapi import AutoSchema
 
 from observation_portal.common.mixins import ListAsDictMixin
 from observation_portal.proposals.filters import SemesterFilter, ProposalFilter
@@ -9,6 +10,7 @@ from observation_portal.proposals.serializers import ProposalSerializer, Semeste
 
 
 class ProposalViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
+    schema = AutoSchema(tags=['Proposals API'])
     permission_classes = (IsAuthenticated,)
     serializer_class = ProposalSerializer
     filter_class = ProposalFilter
@@ -27,6 +29,7 @@ class ProposalViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
 
 
 class SemesterViewSet(viewsets.ReadOnlyModelViewSet):
+    schema = AutoSchema(tags=['Proposals API'])
     permission_classes = (AllowAny,)
     serializer_class = SemesterSerialzer
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)

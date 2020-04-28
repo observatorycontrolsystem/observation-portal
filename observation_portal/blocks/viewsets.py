@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 class PondBlockViewSet(ListAsDictMixin, viewsets.ModelViewSet):
+    schema = None
     permission_classes = (IsAuthenticatedOrReadOnly,)
     http_method_names = ['get', 'post', 'head', 'options']
     serializer_class = ScheduleSerializer

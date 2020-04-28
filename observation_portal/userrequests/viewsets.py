@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 class UserRequestViewSet(ListAsDictMixin, viewsets.ModelViewSet):
+    schema = None
     permission_classes = (IsAuthenticatedOrReadOnly,)
     http_method_names = ['get', 'post', 'head', 'options']
     serializer_class = RequestGroupSerializer

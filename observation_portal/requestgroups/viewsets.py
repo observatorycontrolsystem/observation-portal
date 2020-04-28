@@ -4,6 +4,7 @@ from rest_framework import viewsets, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAdminUser
+from rest_framework.schemas.openapi import AutoSchema
 from django.utils import timezone
 from django.db.models import Prefetch
 from django_filters.rest_framework import DjangoFilterBackend
@@ -30,6 +31,7 @@ logger = logging.getLogger(__name__)
 
 
 class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
+    schema = AutoSchema(tags=['Requests API'])
     permission_classes = (IsAuthenticatedOrReadOnly,)
     http_method_names = ['get', 'post', 'head', 'options']
     serializer_class = RequestGroupSerializer
@@ -206,6 +208,7 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
 
 
 class RequestViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
+    schema = AutoSchema(tags=['Requests API'])
     permission_classes = (IsAuthenticatedOrReadOnly,)
     serializer_class = RequestSerializer
     filter_class = RequestFilter
@@ -251,6 +254,7 @@ class RequestViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
 
 
 class DraftRequestGroupViewSet(viewsets.ModelViewSet):
+    schema = None
     serializer_class = DraftRequestGroupSerializer
     ordering = ('-modified',)
 

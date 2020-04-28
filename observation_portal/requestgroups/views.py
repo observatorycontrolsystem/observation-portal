@@ -6,6 +6,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.cache import cache
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAdminUser
+from rest_framework.schemas.openapi import AutoSchema
 from django.http import HttpResponseBadRequest, HttpResponseRedirect
 from django.utils import timezone
 from django.urls import reverse
@@ -119,6 +120,7 @@ class RequestCreateView(LoginRequiredMixin, TemplateView):
 
 
 class TelescopeStatesView(APIView):
+    schema = AutoSchema(tags=['Utility API'])
     """
     Retrieves the telescope states for all telescopes between the start and end times
     """
@@ -141,6 +143,7 @@ class TelescopeAvailabilityView(APIView):
     """
     Retrieves the nightly percent availability of each telescope between the start and end times
     """
+    schema = AutoSchema(tags=['Utility API'])
     permission_classes = (AllowAny,)
 
     def get(self, request):
@@ -169,6 +172,7 @@ class AirmassView(APIView):
     """
     Gets the airmasses for the request at available sites
     """
+    schema = AutoSchema(tags=['Requests API'])
     permission_classes = (AllowAny,)
 
     def post(self, request):
@@ -182,6 +186,7 @@ class AirmassView(APIView):
 
 
 class InstrumentsInformationView(APIView):
+    schema = AutoSchema(tags=['Utility API'])
     permission_classes = (AllowAny,)
 
     def get(self, request):
@@ -200,6 +205,7 @@ class InstrumentsInformationView(APIView):
 
 
 class ContentionView(APIView):
+    schema = AutoSchema(tags=['Utility API'])
     permission_classes = (AllowAny,)
 
     def get(self, request, instrument_type):
@@ -211,6 +217,7 @@ class ContentionView(APIView):
 
 
 class PressureView(APIView):
+    schema = AutoSchema(tags=['Utility API'])
     permission_classes = (AllowAny,)
 
     def get(self, request):
@@ -227,6 +234,7 @@ class ObservationPortalLastChangedView(APIView):
     '''
         Returns the datetime of the last status of requests change or new requests addition
     '''
+    schema = AutoSchema(tags=['Requests API'])
     permission_classes = (IsAdminUser,)
 
     def get(self, request):

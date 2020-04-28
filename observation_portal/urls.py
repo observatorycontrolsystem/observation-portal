@@ -18,7 +18,6 @@ from django.conf.urls import url, include
 from django.urls import path
 from django.views.generic import TemplateView
 from rest_framework.routers import DefaultRouter
-from rest_framework.authtoken.views import obtain_auth_token
 from rest_framework import permissions
 from rest_framework.schemas import get_schema_view
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
@@ -30,7 +29,7 @@ from observation_portal.blocks.viewsets import PondBlockViewSet
 from observation_portal.requestgroups.views import TelescopeStatesView, TelescopeAvailabilityView, AirmassView
 from observation_portal.requestgroups.views import InstrumentsInformationView, ObservationPortalLastChangedView
 from observation_portal.requestgroups.views import ContentionView, PressureView
-from observation_portal.accounts.views import ProfileApiView
+from observation_portal.accounts.views import ProfileApiView, MyAuthTokenView
 from observation_portal.proposals.viewsets import ProposalViewSet, SemesterViewSet
 from observation_portal.observations.views import LastScheduledView
 from observation_portal.observations.viewsets import ObservationViewSet, ScheduleViewSet, ConfigurationStatusViewSet
@@ -55,7 +54,7 @@ router.register(r'configurationstatus', ConfigurationStatusViewSet, 'configurati
 
 api_urlpatterns = ([
     url(r'^', include(router.urls)),
-    url(r'^api-token-auth/', obtain_auth_token, name='api-token-auth'),
+    url(r'^api-token-auth/', MyAuthTokenView.as_view(), name='api-token-auth'),
     url(r'^telescope_states/', TelescopeStatesView.as_view(), name='telescope_states'),
     url(r'^telescope_availability/', TelescopeAvailabilityView.as_view(), name='telescope_availability'),
     url(r'profile/', ProfileApiView.as_view(), name='profile'),

@@ -4,6 +4,7 @@ from django_filters.views import FilterView
 from django.views.generic import DetailView
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAdminUser
+from rest_framework.schemas.openapi import AutoSchema
 from django.core.cache import cache
 from django.utils import timezone
 from rest_framework.response import Response
@@ -50,6 +51,7 @@ class LastScheduledView(APIView):
         We are only updating when observations are submitted, and not when they are cancelled, because a site should
         not really care if the only change was removing things from it's schedule.
     """
+    schema = AutoSchema(tags=['Observations API'])
     permission_classes = (IsAdminUser,)
 
     def get(self, request):
