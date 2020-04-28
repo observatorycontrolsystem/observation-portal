@@ -20,6 +20,7 @@ class RequestGroupFilter(django_filters.FilterSet):
     modified_after = django_filters.DateTimeFilter(field_name='requests__modified', lookup_expr='gte', label='Modified After', distinct=True)
     modified_before = django_filters.DateTimeFilter(field_name='requests__modified', lookup_expr='lte', label='Modified Before', distinct=True)
     order = django_filters.OrderingFilter(
+        label='Ordered By',
         fields=(
             ('name', 'name'),
             ('modified', 'modified'),

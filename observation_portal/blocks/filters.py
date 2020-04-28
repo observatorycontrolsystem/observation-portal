@@ -49,7 +49,7 @@ class PondBlockFilter(mixins.CustomIsoDateTimeFilterMixin, django_filters.Filter
         field_name='configuration_statuses__configuration__instrument_type'
     )
     canceled = django_filters.BooleanFilter(method='filter_canceled')
-    order = django_filters.OrderingFilter(fields=('start', 'modified'))
+    order = django_filters.OrderingFilter(label='Ordered By', fields=('start', 'modified'))
     time_span = django_filters.DateRangeFilter(field_name='start')
 
     class Meta:

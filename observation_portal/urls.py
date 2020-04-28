@@ -20,8 +20,7 @@ from django.views.generic import TemplateView
 from rest_framework.routers import DefaultRouter
 from rest_framework.authtoken.views import obtain_auth_token
 from rest_framework import permissions
-from drf_yasg.views import get_schema_view
-from drf_yasg import openapi
+from rest_framework.schemas import get_schema_view
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.conf.urls.static import static
 
@@ -69,16 +68,14 @@ api_urlpatterns = ([
 ], 'api')
 
 schema_view = get_schema_view(
-   openapi.Info(
-      title="Observation Portal API",
-      default_version='v1',
-      description="Test description",
-      terms_of_service="https://lco.global/policies/terms/",
-      contact=openapi.Contact(email="science-support@lco.global"),
-      license=openapi.License(name="GPL 3.0 License"),
-   ),
-   public=True,
-   permission_classes=(permissions.AllowAny,),
+    title="Observation Portal API",
+    version='2.0',
+    description="Test description",
+)
+
+redoc_view = TemplateView.as_view(
+    template_name='redoc.html',
+    extra_context={'schema_url': 'openapi-schema'}
 )
 
 urlpatterns = [
@@ -92,7 +89,8 @@ urlpatterns = [
     url(r'^apply/', include(sciapplications_urls)),
     path('admin/', admin.site.urls),
     url(r'^help/', TemplateView.as_view(template_name='help.html'), name='help'),
-    url(r'^redoc/$', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+    path('openapi', schema_view, name='openapi-schema'),
+    path('redoc', redoc_view, name='redoc')
 ]
 
 if settings.DEBUG:

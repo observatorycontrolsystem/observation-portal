@@ -30,6 +30,7 @@ class UserRequestFilter(django_filters.FilterSet):
     modified_before = django_filters.DateTimeFilter(field_name='requests__modified', lookup_expr='lte',
                                                     label='Modified Before', distinct=True)
     order = django_filters.OrderingFilter(
+        label='Ordered By',
         fields=(
             ('name', 'title'),
             ('modified', 'modified'),

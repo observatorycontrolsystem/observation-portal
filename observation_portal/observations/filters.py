@@ -70,6 +70,7 @@ class ObservationFilter(mixins.CustomIsoDateTimeFilterMixin, django_filters.Filt
         field_name='configuration_statuses__configuration__type'
     )
     ordering = django_filters.OrderingFilter(
+        label='Ordered By',
         fields=['start', 'end', 'modified', 'created', 'state']
     )
 
