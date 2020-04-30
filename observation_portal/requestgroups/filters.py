@@ -1,5 +1,6 @@
 import django_filters
 from observation_portal.requestgroups.models import RequestGroup, Request
+from observation_portal.common.configdb import configdb
 
 
 class RequestGroupFilter(django_filters.FilterSet):
@@ -45,3 +46,29 @@ class RequestFilter(django_filters.FilterSet):
     class Meta:
         model = Request
         fields = ('state',)
+
+
+class TelescopeStatesFilter(django_filters.FilterSet):
+    start = django_filters.DateTimeFilter(lookup_expr='gte', label='Start time for states')
+    end = django_filters.DateTimeFilter(lookup_expr='gte', label='End time for states')
+    site = django_filters.MultipleChoiceFilter(
+        choices=sorted(configdb.get_site_tuples()),
+        label='One or Multiple site codes'
+    )
+    telescope = django_filters.MultipleChoiceFilter(
+        choices=sorted(configdb.get_telescope_tuples()),
+        label='One or Multiple telescope codes',
+    )
+
+class TelescopeAvailabilityFilter(TelescopeStatesFilter):
+    combine = django_filters.BooleanFilter(label='Group results by telescope class per site')
+
+class PressureFilter(django_filters.FilterSet):
+    site = django_filters.ChoiceFilter(
+        choices=sorted(configdb.get_site_tuples(include_all=True)),
+        label='Site code or `all`'
+    )
+    instrument = django_filters.ChoiceFilter(
+        choices=sorted(configdb.get_instrument_type_tuples(include_all=True)),
+        label='Instrument type or `all`'
+    )

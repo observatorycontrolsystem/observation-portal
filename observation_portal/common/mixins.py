@@ -40,3 +40,24 @@ class CustomIsoDateTimeFilterMixin(object):
             if isinstance(f, IsoDateTimeFilter):
                 f.field_class = CustomIsoDateTimeField
         return filters
+
+
+# This is useful to add to APIView to allow schema generation to infer its serializer output fields
+# Along with setting this mixin, you should also set the `serializer_class` parameter like on the ViewSet class
+class GetSerializerMixin(object):
+    def get_serializer(self, *args, **kwargs):
+        kwargs['context'] = {
+            'request': self.request,
+            'format': self.format_kwarg,
+            'view': self
+        }
+        return self.serializer_class(*args, **kwargs)
+
+
+# This is useful to add to APIView with `get` method to remove 'list' parameter and wrapping the return
+# structure in an array which happens by default for get methods during schema generation
+# It may need to go first in inheritance to make sure its init is called
+class RetrieveMixin(object):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        setattr(self, 'action', 'retrieve')
