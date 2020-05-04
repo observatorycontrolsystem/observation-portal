@@ -65,10 +65,10 @@ class TelescopeAvailabilityFilter(TelescopeStatesFilter):
 
 class PressureFilter(django_filters.FilterSet):
     site = django_filters.ChoiceFilter(
-        choices=sorted(configdb.get_site_tuples(include_all=True)),
-        label='Site code or `all`'
+        choices=sorted(configdb.get_site_tuples()),
+        label='Site code - defaults to all sites if none is given'
     )
     instrument = django_filters.ChoiceFilter(
-        choices=sorted(configdb.get_instrument_type_tuples(include_all=True)),
-        label='Instrument type or `all`'
+        choices=sorted(configdb.get_instrument_type_tuples()),
+        label='Instrument type - defaults to all instrument types if none is given'
     )

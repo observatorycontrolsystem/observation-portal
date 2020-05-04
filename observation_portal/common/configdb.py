@@ -90,13 +90,12 @@ class ConfigDB(object):
                 site_details[site] = telescope_details[code]
         return site_details
 
-    def get_site_tuples(self, include_blank=False, include_all=False):
+    def get_site_tuples(self, include_blank=False):
         site_data = self.get_site_data()
         sites = [(site['code'], site['code']) for site in site_data]
         if include_blank:
             sites.append(('', ''))
-        if include_all:
-            sites.append(('all', 'all'))
+
         return sites
 
     def get_enclosure_tuples(self, include_blank=False):
@@ -140,15 +139,14 @@ class ConfigDB(object):
                     telescope_names.add(telescope['name'].strip().lower())
         return [(telescope_name, telescope_name) for telescope_name in telescope_names]
 
-    def get_instrument_type_tuples(self, include_all=False):
+    def get_instrument_type_tuples(self):
         instrument_types = set()
         for site in self.get_site_data():
             for enclosure in site['enclosure_set']:
                 for telescope in enclosure['telescope_set']:
                     for instrument in telescope['instrument_set']:
                         instrument_types.add(instrument['science_camera']['camera_type']['code'].upper())
-        if include_all:
-            instrument_types.add('all')
+
         return [(instrument_type, instrument_type) for instrument_type in instrument_types]
 
     def get_instrument_name_tuples(self):

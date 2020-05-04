@@ -11,17 +11,12 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.http import HttpResponseBadRequest, HttpResponseRedirect
 from django.utils import timezone
 from django.urls import reverse
-from dateutil.parser import parse
 from datetime import timedelta
 from rest_framework.views import APIView
 import logging
 
 from observation_portal.common.mixins import GetSerializerMixin, RetrieveMixin
-from observation_portal.common.configdb import configdb
-from observation_portal.common.telescope_states import (
-    TelescopeStates, get_telescope_availability_per_day, combine_telescope_availabilities_by_site_and_class,
-    ElasticSearchException
-)
+from observation_portal.common.telescope_states import ElasticSearchException
 from observation_portal.requestgroups.request_utils import get_airmasses_for_request_at_sites
 from observation_portal.requestgroups.models import RequestGroup, Request
 from observation_portal.requestgroups.schema_serializers import (TelescopeStatesSerializer, InstrumentsInfoSerializer,
@@ -30,23 +25,8 @@ from observation_portal.requestgroups.schema_serializers import (TelescopeStates
 from observation_portal.requestgroups.serializers import RequestSerializer
 from observation_portal.requestgroups.filters import (
     RequestGroupFilter, TelescopeStatesFilter, TelescopeAvailabilityFilter, PressureFilter)
-from observation_portal.requestgroups.contention import Contention, Pressure
 
 logger = logging.getLogger(__name__)
-
-
-def get_start_end_parameters(request, default_days_back):
-    try:
-        start = parse(request.query_params.get('start'))
-    except TypeError:
-        start = timezone.now() - timedelta(days=default_days_back)
-    start = start.replace(tzinfo=timezone.utc)
-    try:
-        end = parse(request.query_params.get('end'))
-    except TypeError:
-        end = timezone.now()
-    end = end.replace(tzinfo=timezone.utc)
-    return start, end
 
 
 def requestgroup_queryset(request):
@@ -142,17 +122,9 @@ class TelescopeStatesView(RetrieveMixin, APIView, GetSerializerMixin):
     permission_classes = (AllowAny,)
 
     def get(self, request):
-        try:
-            start, end = get_start_end_parameters(request, default_days_back=0)
-        except ValueError as e:
-            return HttpResponseBadRequest(str(e))
-        sites = request.query_params.getlist('site')
-        telescopes = request.query_params.getlist('telescope')
-        telescope_states = TelescopeStates(
-            start, end, sites=sites, telescopes=telescopes).get()
-        str_telescope_states = {str(k): v for k, v in telescope_states.items()}
-
-        return Response(str_telescope_states)
+        ser = TelescopeStatesSerializer(data=request.query_params)
+        if ser.is_valid(raise_exception=True):
+            return Response(ser.data)
 
 
 class TelescopeAvailabilityView(RetrieveMixin, APIView, GetSerializerMixin):
@@ -170,27 +142,13 @@ class TelescopeAvailabilityView(RetrieveMixin, APIView, GetSerializerMixin):
 
     def get(self, request):
         try:
-            start, end = get_start_end_parameters(request, default_days_back=1)
-        except ValueError as e:
-            return HttpResponseBadRequest(str(e))
-        combine = request.query_params.get('combine')
-        sites = request.query_params.getlist('site')
-        telescopes = request.query_params.getlist('telescope')
-        try:
-            telescope_availability = get_telescope_availability_per_day(
-                start, end, sites=sites, telescopes=telescopes
-            )
+            ser = TelescopesAvailabilitySerializer(data=request.query_params)
+            if ser.is_valid(raise_exception=True):
+                return Response(ser.data)
         except ElasticSearchException:
             logger.warning(
                 'Error connecting to ElasticSearch. Is SBA reachable?')
             return Response('ConnectionError')
-        if combine:
-            telescope_availability = combine_telescope_availabilities_by_site_and_class(
-                telescope_availability)
-        str_telescope_availability = {
-            str(k): v for k, v in telescope_availability.items()}
-
-        return Response(str_telescope_availability)
 
 
 class AirmassView(APIView):
@@ -219,18 +177,9 @@ class InstrumentsInformationView(RetrieveMixin, APIView, GetSerializerMixin):
     serializer_class = InstrumentsInfoSerializer
 
     def get(self, request):
-        info = {}
-        is_staff = request.user.is_staff
-        for instrument_type in configdb.get_instrument_types({}, only_schedulable=(not is_staff)):
-            info[instrument_type] = {
-                'type': 'SPECTRA' if configdb.is_spectrograph(instrument_type) else 'IMAGE',
-                'class': configdb.get_instrument_type_telescope_class(instrument_type),
-                'name': configdb.get_instrument_type_full_name(instrument_type),
-                'optical_elements': configdb.get_optical_elements(instrument_type),
-                'modes': configdb.get_modes_by_type(instrument_type),
-                'default_acceptability_threshold': configdb.get_default_acceptability_threshold(instrument_type)
-            }
-        return Response(info)
+        ser = InstrumentsInfoSerializer(data={'is_staff': request.user.is_staff})
+        if ser.is_valid(raise_exception=True):
+            return Response(ser.data)
 
 
 class ContentionView(RetrieveMixin, APIView, GetSerializerMixin):
@@ -243,11 +192,9 @@ class ContentionView(RetrieveMixin, APIView, GetSerializerMixin):
     permission_classes = (AllowAny,)
 
     def get(self, request, instrument_type):
-        if request.user.is_staff:
-            contention = Contention(instrument_type, anonymous=False)
-        else:
-            contention = Contention(instrument_type)
-        return Response(contention.data())
+        ser = ContentionSerializer(data={'instrument_type': instrument_type, 'is_staff': request.user.is_staff})
+        if ser.is_valid(raise_exception=True):
+            return Response(ser.data)
 
 
 class PressureView(RetrieveMixin, APIView, GetSerializerMixin):
@@ -264,13 +211,11 @@ class PressureView(RetrieveMixin, APIView, GetSerializerMixin):
     permission_classes = (AllowAny,)
 
     def get(self, request):
-        instrument_type = request.GET.get('instrument')
-        site = request.GET.get('site')
-        if request.user.is_staff:
-            pressure = Pressure(instrument_type, site, anonymous=False)
-        else:
-            pressure = Pressure(instrument_type, site)
-        return Response(pressure.data())
+        ser = PressureSerializer(data={'instrument_type': request.GET.get('instrument'),
+                                       'site': request.GET.get('site'),
+                                       'is_staff': request.user.is_staff})
+        if ser.is_valid(raise_exception=True):
+            return Response(ser.data)
 
 
 class ObservationPortalLastChangedView(APIView):
