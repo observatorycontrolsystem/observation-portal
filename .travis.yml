@@ -3,17 +3,19 @@ dist: xenial   # required for Python >= 3.7
 python:
 - '3.6'
 - '3.7'
+- '3.8'
 env:
 - NODE_VERSION='10'
 before_install:
 - nvm install $NODE_VERSION
 addons:
-  postgresql: "9.6"
+  postgresql: '9.6'
   apt:
     packages:
     - gfortran
 services:
   - postgresql
+  - docker
 before_script:
   - psql -c 'create database observation_portal;' -U postgres
 install:
@@ -23,3 +25,6 @@ install:
 - npm run build
 script: coverage run manage.py test --settings=test_settings
 after_success: coveralls
+deploy:
+  provider: script
+  script: bash docker_push
