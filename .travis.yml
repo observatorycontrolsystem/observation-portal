@@ -28,5 +28,6 @@ after_success: coveralls
 deploy:
   provider: script
   script: bash docker_push
+  skip_cleanup: true
   on:
     branch: test_conventions
