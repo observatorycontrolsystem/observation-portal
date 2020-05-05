@@ -40,7 +40,9 @@ def get_rise_set_intervals_by_site(request: dict) -> dict:
     Returns:
         rise_set intervals by site
     """
-    site_details = configdb.get_sites_with_instrument_type_and_location()
+    site_details = configdb.get_sites_with_instrument_type_and_location(
+        instrument_type=request['configurations'][0]['instrument_type']
+    )
     intervals_by_site = {}
     for site in site_details:
         intervals_by_site[site] = None
