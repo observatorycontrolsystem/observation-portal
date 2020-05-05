@@ -5,7 +5,11 @@ python:
 - '3.7'
 - '3.8'
 env:
-- NODE_VERSION='10'
+  matrix:
+  - NODE_VERSION='10'
+  - DOCKER_USERNAME='observatorycontrolsystem'
+  global:
+    secure: XFVgYDFERZR63Vmy5nfxgXz14MGVWELvb7/jUjQAZG7hV5rNBvEx3wBnpS8joNv9gH2r+LiMnVYTywWyyzcF4XP/c41/tkyhE/sp9yT3XU+x3Zb06JS17165FY5qlDSGlosfKLETazAtTpYaO0ZNlMQr6urASDEaFLUaFmWw/hJU+g3aS4V9InjxT0c/2uLEC+aZArupbtbzJey2Ow/kh/OY9ltcPNpkzkveTMHqox+PCnMDpEHawKRZg1v/aVCncAbqEtM0BKdqZd3nMOcU5tpDp6m/ERYEJo/RrC+3BXswWOduhR0XjCLv3D20SyHKA9IPENTKclvX3D2CQ+O5hk4XxOCYmXXlS0ELw847KwmzJr4qHP6r8ujEhmSawB0yMZY2C6fSZJw8pvmw2B8VCOBNqn3KxbPq9gy96x1N5u6Q+jCCAVxYrLVSq/C4Ir2VrTx4ueGhJFcZsU1CxTEnZKrkoKwKpP7lAXXmsawszuygXjv9mNxfUMdQbR4eu9dGtFKldX72hLiGxmaUy5EJsiq/bvHTJU9xzhuGXEF4RcmLqC65zV1CPU6diEqy7pl6XVCsJeIePWAtrE8YCcUbzK+miQltIf/jyut3fbYtzLRR3IHHg+dhlRPBHNWlxhvkSX2MB+k/l4/1XXXI86NOJ+ofxDvZ9/usMfUpgPZewg8=
 before_install:
 - nvm install $NODE_VERSION
 addons:
@@ -14,10 +18,10 @@ addons:
     packages:
     - gfortran
 services:
-  - postgresql
-  - docker
+- postgresql
+- docker
 before_script:
-  - psql -c 'create database observation_portal;' -U postgres
+- psql -c 'create database observation_portal;' -U postgres
 install:
 - pip install -U coverage coveralls
 - pip install -r requirements.txt
