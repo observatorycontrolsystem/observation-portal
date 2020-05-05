@@ -30,7 +30,7 @@ script: coverage run manage.py test --settings=test_settings
 after_success: coveralls
 deploy:
   provider: script
-  script: bash docker_push
+  script: bash docker_push $TRAVIS_TAG
   skip_cleanup: true
   on:
     branch: test_conventions
