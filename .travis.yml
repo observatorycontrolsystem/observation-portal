@@ -33,4 +33,4 @@ deploy:
   script: bash docker_push $TRAVIS_TAG
   skip_cleanup: true
   on:
-    branch: test_conventions
+    tags: true
