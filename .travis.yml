@@ -37,4 +37,4 @@ deploy:
   script: docker push $DOCKER_IMAGE
   skip_cleanup: true
   on:
-    branch: test_conventions
+    tags: true
