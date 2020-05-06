@@ -28,9 +28,13 @@ install:
 - npm run build
 script: coverage run manage.py test --settings=test_settings
 after_success: coveralls
+before_deploy:
+- echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+- export DOCKER_IMAGE=${DOCKER_USERNAME}/observation-portal:${TRAVIS_TAG:-latest}
+- docker build -t $DOCKER_IMAGE .
 deploy:
   provider: script
-  script: bash docker_push $TRAVIS_TAG
+  script: docker push $DOCKER_IMAGE
   skip_cleanup: true
   on:
-    tags: true
+    branch: test_conventions
