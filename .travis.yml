@@ -31,7 +31,7 @@ after_success: coveralls
 before_deploy:
 - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 - export DOCKER_REPOSITORY=observatorycontrolsystem/observation-portal
-- docker build -t DOCKER_REPOSITORY .
+- docker build -t $DOCKER_REPOSITORY .
 deploy:
 - provider: script
   script: IMAGE=$DOCKER_REPOSITORY:$TRAVIS_TAG; docker tag $DOCKER_REPOSITORY $IMAGE && docker push $IMAGE
