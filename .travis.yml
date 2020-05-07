@@ -31,16 +31,16 @@ after_success: coveralls
 before_deploy:
 - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 - export DOCKER_REPOSITORY=observatorycontrolsystem/observation-portal
-- docker build -t $DOCKER_IMAGE .
+- docker build -t DOCKER_REPOSITORY .
 deploy:
 - provider: script
-  script: docker push $DOCKER_REPOSITORY:$TRAVIS_TAG
+  script: IMAGE=$DOCKER_REPOSITORY:$TRAVIS_TAG; docker tag $DOCKER_REPOSITORY $IMAGE && docker push $IMAGE
   skip_cleanup: true
   on:
     repo: LCOGT/observation-portal
     tags: true
 - provider: script
-  script: docker push $DOCKER_REPOSITORY:$TRAVIS_COMMIT
+  script: IMAGE=$DOCKER_REPOSITORY:$TRAVIS_COMMIT; docker tag $DOCKER_REPOSITORY $IMAGE && docker push $IMAGE
   skip_cleanup: true
   on:
     repo: LCOGT/observation-portal
