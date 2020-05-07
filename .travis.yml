@@ -30,11 +30,18 @@ script: coverage run manage.py test --settings=test_settings
 after_success: coveralls
 before_deploy:
 - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-- export DOCKER_IMAGE=observatorycontrolsystem/observation-portal:${TRAVIS_TAG:-latest}
+- export DOCKER_REPOSITORY=observatorycontrolsystem/observation-portal
 - docker build -t $DOCKER_IMAGE .
 deploy:
-  provider: script
-  script: docker push $DOCKER_IMAGE
+- provider: script
+  script: docker push $DOCKER_REPOSITORY:$TRAVIS_TAG
   skip_cleanup: true
   on:
+    repo: LCOGT/observation-portal
     tags: true
+- provider: script
+  script: docker push $DOCKER_REPOSITORY:$TRAVIS_COMMIT
+  skip_cleanup: true
+  on:
+    repo: LCOGT/observation-portal
+    all_branches: true
