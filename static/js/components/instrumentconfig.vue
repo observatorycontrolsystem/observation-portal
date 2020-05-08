@@ -41,7 +41,8 @@
               :errors="errors.exposure_count" 
               @input="update"
             />
-            <customfield 
+            <customfield
+              v-if="selectedinstrument != '2M0-SCICAM-MUSCAT'"
               v-model="instrumentconfig.exposure_time" 
               label="Exposure Time" 
               field="exposure_time" 
@@ -64,6 +65,56 @@
               Suggested exposure time for an Arc is <strong>{{ suggestedArcExposureTime }} seconds</strong>
             </div>        
             </customfield>
+
+            <!-- MUSCAT instrument specific fields -->
+            <customselect
+              v-if="selectedinstrument == '2M0-SCICAM-MUSCAT'"
+              v-model="exposure_mode"
+              label="Exposure Mode"
+              field="exposure_mode"
+              :options="exposureModeOptions"
+              :errors="null"
+              desc="Exposure Mode. SYNCHRONOUS syncs the start time of exposures on all 4 cameras.
+                    ASYNCHRONOUS takes exposures as quickly as possible on each camera"
+              @input="update"
+            />
+            <customfield
+              v-if="selectedinstrument == '2M0-SCICAM-MUSCAT'"
+              v-model="exposure_time_g"
+              label="Exposure Time g'"
+              field="exposure_time_g"
+              :errors="null"
+              desc="Exposure Time for the g-band camera in Seconds"
+              @input="update"
+            />
+            <customfield
+              v-if="selectedinstrument == '2M0-SCICAM-MUSCAT'"
+              v-model="exposure_time_r"
+              label="Exposure Time r'"
+              field="exposure_time_r"
+              :errors="null"
+              desc="Exposure Time for the r-band camera in Seconds"
+              @input="update"
+            />
+            <customfield
+              v-if="selectedinstrument == '2M0-SCICAM-MUSCAT'"
+              v-model="exposure_time_i"
+              label="Exposure Time i'"
+              field="exposure_time_i"
+              :errors="null"
+              desc="Exposure Time for the i-band camera in Seconds"
+              @input="update"
+            />
+            <customfield
+              v-if="selectedinstrument == '2M0-SCICAM-MUSCAT'"
+              v-model="exposure_time_z"
+              label="Exposure Time z'"
+              field="exposure_time_z"
+              :errors="null"
+              desc="Exposure Time for the z-band camera in Seconds"
+              @input="update"
+            />
+
             <customselect
               v-if="readoutModeOptions.length > 1"
               v-model="instrumentconfig.mode"
@@ -167,14 +218,38 @@ export default {
   data: function() {
     return {
       defocus: 0,
-      opticalElementUpdates: 0
+      exposure_time_g = 0,
+      exposure_time_r = 0,
+      exposure_time_i = 0,
+      exposure_time_z = 0,
+      exposure_mode = 0,
+      opticalElementUpdates: 0,
+      exposureModeOptions: [
+          {value: 'SYNCHRONOUS', text: 'Synchronous'},
+          {value: 'ASYNCHRONOUS', text: 'Asynchronous'}
+      ]
     }
   },
   mounted: function() {
-    // If a draft is loaded in that has a defocus set in the extra_params, update the defocus
+    // If a draft is loaded in that has any extra_params set, update the corresponding params
     // here since extra_params is not reactive and cannot be watched 
     if (this.instrumentconfig.extra_params.defocus) {
       this.defocus = this.instrumentconfig.extra_params.defocus;
+    }
+    if (this.instrumentconfig.extra_params.exposure_time_g) {
+      this.exposure_time_g = this.instrumentconfig.extra_params.exposure_time_g;
+    }
+    if (this.instrumentconfig.extra_params.exposure_time_r) {
+      this.exposure_time_g = this.instrumentconfig.extra_params.exposure_time_r;
+    }
+    if (this.instrumentconfig.extra_params.exposure_time_i) {
+      this.exposure_time_g = this.instrumentconfig.extra_params.exposure_time_i;
+    }
+    if (this.instrumentconfig.extra_params.exposure_time_z) {
+      this.exposure_time_g = this.instrumentconfig.extra_params.exposure_time_z;
+    }
+    if (this.instrumentconfig.extra_params.exposure_mode) {
+      this.exposure_time_g = this.instrumentconfig.extra_params.exposure_mode;
     }
   },
   computed: {
@@ -365,6 +440,42 @@ export default {
     defocus: function(value) {
       this.instrumentconfig.extra_params.defocus = value || undefined;
       this.update();
+    },
+    exposure_time_g: function(value) {
+      this.instrumentconfig.extra_params.exposure_time_g = value || undefined;
+      this.update();
+    },
+    exposure_time_r: function(value) {
+      this.instrumentconfig.extra_params.exposure_time_r = value || undefined;
+      this.update();
+    },
+    exposure_time_i: function(value) {
+      this.instrumentconfig.extra_params.exposure_time_i = value || undefined;
+      this.update();
+    },
+    exposure_time_z: function(value) {
+      this.instrumentconfig.extra_params.exposure_time_z = value || undefined;
+      this.update();
+    },
+    exposure_mode: function(value) {
+      this.instrumentconfig.extra_params.exposure_mode = value || undefined;
+      this.update();
+    },
+    selectedinstrument: function(value) {
+      if (value === '2M0-SCICAM-MUSCT') {
+        this.instrumentconfig.extra_params.exposure_time_g = this.instrumentconfig.exposure_time;
+        this.instrumentconfig.extra_params.exposure_time_r = this.instrumentconfig.exposure_time;
+        this.instrumentconfig.extra_params.exposure_time_i = this.instrumentconfig.exposure_time;
+        this.instrumentconfig.extra_params.exposure_time_z = this.instrumentconfig.exposure_time;
+        this.instrumentconfig.extra_params.exposure_mode = "SYNCHRONOUS";
+      }
+      else {
+        this.instrumentconfig.extra_params.exposure_time_g = undefined;
+        this.instrumentconfig.extra_params.exposure_time_r = undefined;
+        this.instrumentconfig.extra_params.exposure_time_i = undefined;
+        this.instrumentconfig.extra_params.exposure_time_z = undefined;
+        this.instrumentconfig.extra_params.exposure_mode = undefined;
+      }
     },
     datatype: function(value) {
       if (value === 'IMAGE') {
