@@ -39,5 +39,5 @@ deploy:
   script: docker push $IMAGE
   skip_cleanup: true
   on:
-    repo: LCOGT/observation-portal
+    repo: observatorycontrolsystem/observation-portal
     all_branches: true
