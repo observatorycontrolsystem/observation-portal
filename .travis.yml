@@ -30,19 +30,13 @@ script: coverage run manage.py test --settings=test_settings
 after_success: coveralls
 before_deploy:
 - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-- export DOCKER_REPOSITORY=observatorycontrolsystem/observation-portal
-- export COMMIT=${TRAVIS_COMMIT::6}
-- docker build -t $DOCKER_REPOSITORY .
-- env
+- export SHORT_COMMIT=${TRAVIS_COMMIT::12}
+- export IMAGE_TAG=${TRAVIS_TAG:-$SHORT_COMMIT}
+- export IMAGE=observatorycontrolsystem/observation-portal:$IMAGE_TAG
+- docker build -t $IMAGE .
 deploy:
 - provider: script
-  script: IMAGE=$DOCKER_REPOSITORY:$TRAVIS_TAG; docker tag $DOCKER_REPOSITORY $IMAGE && docker push $IMAGE
-  skip_cleanup: true
-  on:
-    repo: LCOGT/observation-portal
-    tags: true
-- provider: script
-  script: bash -c 'IMAGE=$DOCKER_REPOSITORY:$COMMIT; echo $IMAGE && docker tag $DOCKER_REPOSITORY $IMAGE && docker push $IMAGE'
+  script: docker push $IMAGE
   skip_cleanup: true
   on:
     repo: LCOGT/observation-portal
