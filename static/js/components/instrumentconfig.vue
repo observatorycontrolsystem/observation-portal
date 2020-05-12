@@ -81,7 +81,7 @@
             <customfield
               v-if="selectedinstrument == '2M0-SCICAM-MUSCAT'"
               v-model="exposure_time_g"
-              label="Exposure Time g'"
+              label="Exposure Time g"
               field="exposure_time_g"
               :errors="null"
               desc="Exposure Time for the g-band camera in Seconds"
@@ -90,7 +90,7 @@
             <customfield
               v-if="selectedinstrument == '2M0-SCICAM-MUSCAT'"
               v-model="exposure_time_r"
-              label="Exposure Time r'"
+              label="Exposure Time r"
               field="exposure_time_r"
               :errors="null"
               desc="Exposure Time for the r-band camera in Seconds"
@@ -99,7 +99,7 @@
             <customfield
               v-if="selectedinstrument == '2M0-SCICAM-MUSCAT'"
               v-model="exposure_time_i"
-              label="Exposure Time i'"
+              label="Exposure Time i"
               field="exposure_time_i"
               :errors="null"
               desc="Exposure Time for the i-band camera in Seconds"
@@ -108,7 +108,7 @@
             <customfield
               v-if="selectedinstrument == '2M0-SCICAM-MUSCAT'"
               v-model="exposure_time_z"
-              label="Exposure Time z'"
+              label="Exposure Time z"
               field="exposure_time_z"
               :errors="null"
               desc="Exposure Time for the z-band camera in Seconds"
@@ -218,15 +218,15 @@ export default {
   data: function() {
     return {
       defocus: 0,
-      exposure_time_g = 0,
-      exposure_time_r = 0,
-      exposure_time_i = 0,
-      exposure_time_z = 0,
-      exposure_mode = 0,
+      exposure_time_g: 0,
+      exposure_time_r: 0,
+      exposure_time_i: 0,
+      exposure_time_z: 0,
+      exposure_mode: "SYNCHRONOUS",
       opticalElementUpdates: 0,
       exposureModeOptions: [
-          {value: 'SYNCHRONOUS', text: 'Synchronous'},
-          {value: 'ASYNCHRONOUS', text: 'Asynchronous'}
+          {value: "SYNCHRONOUS", text: "Synchronous"},
+          {value: "ASYNCHRONOUS", text: "Asynchronous"}
       ]
     }
   },
@@ -240,16 +240,16 @@ export default {
       this.exposure_time_g = this.instrumentconfig.extra_params.exposure_time_g;
     }
     if (this.instrumentconfig.extra_params.exposure_time_r) {
-      this.exposure_time_g = this.instrumentconfig.extra_params.exposure_time_r;
+      this.exposure_time_r = this.instrumentconfig.extra_params.exposure_time_r;
     }
     if (this.instrumentconfig.extra_params.exposure_time_i) {
-      this.exposure_time_g = this.instrumentconfig.extra_params.exposure_time_i;
+      this.exposure_time_i = this.instrumentconfig.extra_params.exposure_time_i;
     }
     if (this.instrumentconfig.extra_params.exposure_time_z) {
-      this.exposure_time_g = this.instrumentconfig.extra_params.exposure_time_z;
+      this.exposure_time_z = this.instrumentconfig.extra_params.exposure_time_z;
     }
     if (this.instrumentconfig.extra_params.exposure_mode) {
-      this.exposure_time_g = this.instrumentconfig.extra_params.exposure_mode;
+      this.exposure_mode = this.instrumentconfig.extra_params.exposure_mode;
     }
   },
   computed: {
@@ -298,13 +298,14 @@ export default {
           let oe_type = oe_group_type.substring(0, oe_group_type.length - 1);
           oe_groups[oe_type] = {};
           oe_groups[oe_type]['type'] = oe_type;
-          oe_groups[oe_type]['label'] = _.capitalize(oe_type);
+          oe_groups[oe_type]['label'] = _.capitalize(oe_type).split("_").join(" ");
           let elements = [];
           for (let element in this.available_instruments[this.selectedinstrument].optical_elements[oe_group_type]) {
             if (this.available_instruments[this.selectedinstrument].optical_elements[oe_group_type][element].schedulable) {
               elements.push({
                 value: this.available_instruments[this.selectedinstrument].optical_elements[oe_group_type][element].code,
-                text: this.available_instruments[this.selectedinstrument].optical_elements[oe_group_type][element].name
+                text: this.available_instruments[this.selectedinstrument].optical_elements[oe_group_type][element].name,
+                default: this.available_instruments[this.selectedinstrument].optical_elements[oe_group_type][element].default
               });
             }
           }
@@ -430,8 +431,12 @@ export default {
         this.instrumentconfig.optical_elements.filter = 'b';
       } else {
         for (let oe_type in value) {
-          if (value[oe_type]['options'].length > 0) {
-            this.instrumentconfig.optical_elements[oe_type] = value[oe_type]['options'][0].value;
+          for (let oe_value_idx in value[oe_type]['options'])
+          {
+            if (value[oe_type]['options'][oe_value_idx].default)
+            {
+              this.instrumentconfig.optical_elements[oe_type] = value[oe_type]['options'][oe_value_idx].value;
+            }
           }
         }
       }
@@ -462,12 +467,12 @@ export default {
       this.update();
     },
     selectedinstrument: function(value) {
-      if (value === '2M0-SCICAM-MUSCT') {
-        this.instrumentconfig.extra_params.exposure_time_g = this.instrumentconfig.exposure_time;
-        this.instrumentconfig.extra_params.exposure_time_r = this.instrumentconfig.exposure_time;
-        this.instrumentconfig.extra_params.exposure_time_i = this.instrumentconfig.exposure_time;
-        this.instrumentconfig.extra_params.exposure_time_z = this.instrumentconfig.exposure_time;
-        this.instrumentconfig.extra_params.exposure_mode = "SYNCHRONOUS";
+      if (value === '2M0-SCICAM-MUSCAT') {
+        this.instrumentconfig.extra_params.exposure_time_g = this.exposure_time_g = this.instrumentconfig.exposure_time;
+        this.instrumentconfig.extra_params.exposure_time_r = this.exposure_time_r = this.instrumentconfig.exposure_time;
+        this.instrumentconfig.extra_params.exposure_time_i = this.exposure_time_i = this.instrumentconfig.exposure_time;
+        this.instrumentconfig.extra_params.exposure_time_z = this.exposure_time_z = this.instrumentconfig.exposure_time;
+        this.instrumentconfig.extra_params.exposure_mode = this.exposure_mode = "SYNCHRONOUS";
       }
       else {
         this.instrumentconfig.extra_params.exposure_time_g = undefined;

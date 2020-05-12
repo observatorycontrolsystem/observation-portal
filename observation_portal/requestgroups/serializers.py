@@ -36,8 +36,14 @@ class ModeValidationHelper:
         self._instrument_type = instrument_type
         self._default_modes = default_modes
         self._modes = modes
-        self._mode_key = 'rotator_mode' if self._mode_type == 'rotator' else 'mode'
+        self._set_mode_key(self._mode_type)
         self._modes_by_code = {}
+
+    def _set_mode_key(self, mode_type):
+        if mode_type == 'rotator' or mode_type == 'exposure':
+            self._mode_key = mode_type + '_mode'
+        else:
+            self._mode_key = 'mode'
 
     def _possible_modes(self) -> list:
         possible_modes = []
@@ -48,18 +54,18 @@ class ModeValidationHelper:
             possible_modes.extend(self._modes[self._mode_type]['modes'])
         return possible_modes
 
-    def _unavailable_msg(self, config: dict) -> str:
+    def _unavailable_msg(self, mode_value: str, config: dict) -> str:
         if self._mode_type in self._modes:
-            if not config[self._mode_key].lower() in [m['code'].lower() for m in self._modes[self._mode_type]['modes']]:
+            if not mode_value.lower() in [m['code'].lower() for m in self._modes[self._mode_type]['modes']]:
                 return (
-                    f'{self._mode_type.capitalize()} mode {config[self._mode_key]} is not available for '
+                    f'{self._mode_type.capitalize()} mode {mode_value} is not available for '
                     f'instrument type {self._instrument_type}'
                 )
         return ''
 
-    def _missing_fields_msg(self, config) -> str:
+    def _missing_fields_msg(self, mode_value: str, config: dict) -> str:
         missing_fields = []
-        mode = configdb.get_mode_with_code(self._instrument_type, config[self._mode_key], self._mode_type)
+        mode = configdb.get_mode_with_code(self._instrument_type, mode_value, self._mode_type)
         if 'required_fields' in mode.get('params', {}):
             for field in mode['params']['required_fields']:
                 if 'extra_params' not in config or field not in config['extra_params']:
@@ -85,19 +91,19 @@ class ModeValidationHelper:
             # There are many possible modes, make the user choose.
             mode['error'] = (
                 f'Must set a {self._mode_type} mode, choose '
-                f'from {", ".join([mode["code"] for mode in self._modes["guiding"]["modes"]])}'
+                f'from {", ".join([mode["code"] for mode in self._modes[self._mode_type]["modes"]])}'
             )
         return mode
 
-    def get_mode_error_msg(self, config: dict) -> str:
+    def get_mode_error_msg(self, mode_value: str, config: dict) -> str:
         """Return an error message if there is a problem with the mode"""
         if self._mode_type in self._modes:
             # Check if the mode exists
-            unavailable_msg = self._unavailable_msg(config)
+            unavailable_msg = self._unavailable_msg(mode_value, config)
             if unavailable_msg:
                 return unavailable_msg
             # Check if there are any required params that are not set
-            missing_fields_msg = self._missing_fields_msg(config)
+            missing_fields_msg = self._missing_fields_msg(mode_value, config)
             if missing_fields_msg:
                 return missing_fields_msg
         return ''
@@ -274,7 +280,7 @@ class ConfigurationSerializer(serializers.ModelSerializer):
             else:
                 guiding_config['mode'] = GuidingConfig.OFF
 
-        guide_mode_error_msg = guide_validation_helper.get_mode_error_msg(guiding_config)
+        guide_mode_error_msg = guide_validation_helper.get_mode_error_msg(guiding_config['mode'], guiding_config)
         if guide_mode_error_msg:
             raise serializers.ValidationError(_(guide_mode_error_msg))
 
@@ -302,7 +308,8 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                 else:
                     acquisition_config['mode'] = AcquisitionConfig.OFF
 
-            acquire_mode_error_msg = acquire_validation_helper.get_mode_error_msg(acquisition_config)
+            acquire_mode_error_msg = acquire_validation_helper.get_mode_error_msg(acquisition_config['mode'], 
+                                                                                  acquisition_config)
             if acquire_mode_error_msg:
                 raise serializers.ValidationError(_(acquire_mode_error_msg))
 
@@ -333,7 +340,8 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                         raise serializers.ValidationError(_(str(cdbe)))
             else:
                 # A readout mode is set - validate the mode
-                readout_error_msg = readout_validation_helper.get_mode_error_msg(instrument_config)
+                readout_error_msg = readout_validation_helper.get_mode_error_msg(instrument_config['mode'], 
+                                                                                 instrument_config)
                 if readout_error_msg:
                     raise serializers.ValidationError(_(readout_error_msg))
 
@@ -360,7 +368,8 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                     if rotator_mode_to_set['mode']:
                         instrument_config['rotator_mode'] = rotator_mode_to_set['mode']['code']
 
-                rotator_error_msg = rotator_mode_validation_helper.get_mode_error_msg(instrument_config)
+                rotator_error_msg = rotator_mode_validation_helper.get_mode_error_msg(instrument_config['rotator_mode'],
+                                                                                      instrument_config)
                 if rotator_error_msg:
                     raise serializers.ValidationError(_(rotator_error_msg))
 
@@ -421,6 +430,35 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                             ))
                         )
 
+            # Validate the exposure modes
+            if 'exposure' in modes:
+                exposure_mode_validation_helper = ModeValidationHelper('exposure', instrument_type, default_modes,
+                                                                       modes)
+                if exposure_mode_validation_helper.mode_is_not_set(instrument_config['extra_params']):
+                    exposure_mode_to_set = exposure_mode_validation_helper.get_mode_to_set()
+                    if exposure_mode_to_set['error']:
+                        raise serializers.ValidationError(_(rotator_mode_to_set['error']))
+                    if exposure_mode_to_set['mode']:
+                        instrument_config['extra_params']['exposure_mode'] = exposure_mode_to_set['mode']['code']
+
+                exposure_mode_error_msg = exposure_mode_validation_helper.get_mode_error_msg(
+                    instrument_config['extra_params']['exposure_mode'],
+                    instrument_config
+                )
+                if exposure_mode_error_msg:
+                    raise serializers.ValidationError(_(exposure_mode_error_msg))
+
+            # Validate the exposure times for MUSCAT are positive numbers
+            if instrument_type.upper() == '2M0-SCICAM-MUSCAT':
+                exposure_fields = ['exposure_time_g', 'exposure_time_r', 'exposure_time_i', 'exposure_time_z']
+                for exposure_field in exposure_fields:
+                    try:
+                        exposure_time = float(instrument_config['extra_params'][exposure_field])
+                        if exposure_time < 0:
+                            raise serializers.ValidationError(_(f'Muscat instrument extra_param {exposure_field} must be a positive number.'))
+                    except ValueError:
+                        raise serializers.ValidationError(_(f'Muscat instrument extra_param {exposure_field} must be a positive number.'))
+
         if data['type'] == 'SCRIPT':
             if (
                     'extra_params' not in data
@@ -459,6 +497,7 @@ class ConfigurationSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(_(
                 f'configuration type {data["type"]} is not valid for instrument type {instrument_type}'
             ))
+
         return data
 
 
