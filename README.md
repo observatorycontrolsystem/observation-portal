@@ -33,7 +33,7 @@ Optional prerequisites can be skipped for reduced functionality.
 | Cache | `CACHE_BACKEND` | The remote Django cache backend | `django.core.cache.backends.locmem.LocMemCache` |
 | | `CACHE_LOCATION` | The cache location or connection string | `unique-snowflake` |
 | | `LOCAL_CACHE_BACKEND` | The local Django cache backend to use | `django.core.cache.backends.locmem.LocMemCache` |
-| Static and Media Files | `AWS_BUCKET_NAME` | The name of the AWS bucket in which to store static and media files | `observe.lco.global` |
+| Static and Media Files | `AWS_BUCKET_NAME` | The name of the AWS bucket in which to store static and media files | `observation-portal-test-bucket` |
 | | `AWS_REGION` | The AWS region | `us-west-2` |
 | | `AWS_ACCESS_KEY_ID` | The AWS user access key with read/write priveleges on the s3 bucket | `None` |
 | | `AWS_SECRET_ACCESS_KEY` | The AWS user secret key to use with the access key | `None` |
@@ -45,9 +45,9 @@ Optional prerequisites can be skipped for reduced functionality.
 | | `EMAIL_HOST_USER` | The SMTP user | *`Empty string`* |
 | | `EMAIL_HOST_PASSWORD` | The SMTP password | *`Empty string`* |
 | | `EMAIL_PORT` | The SMTP port | `587` |
-| External Services | `CONFIGDB_URL` | The url to the configuration database | `http://configdbdev.lco.gtn` |
-| | `DOWNTIMEDB_URL` | The url to the downtime database | `http://downtimedb.lco.gtn` |
-| | `ELASTICSEARCH_URL` | The url to the elasticsearch cluster | `http://elasticsearchdev.lco.gtn` |
+| External Services | `CONFIGDB_URL` | The url to the configuration database | `http://localhost` |
+| | `DOWNTIMEDB_URL` | The url to the downtime database | `http://localhost` |
+| | `ELASTICSEARCH_URL` | The url to the elasticsearch cluster | `http://localhost` |
 | Task Scheduling | `DRAMATIQ_BROKER_HOST` | The broker host for dramatiq | `redis` |
 | | `DRAMATIQ_BROKER_PORT` | The broker port for dramatiq | `6379` |
 
