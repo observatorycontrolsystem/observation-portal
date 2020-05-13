@@ -169,8 +169,11 @@ class InstrumentConfigSerializer(serializers.ModelSerializer):
 
         extra_param_max_exp_time = 0
         for field, value in data.get('extra_params').items():
-            if 'exposure_time' in field and float(value) > extra_param_max_exp_time:
-                extra_param_max_exp_time = float(value)
+            try:
+                if 'exposure_time' in field and float(value) > extra_param_max_exp_time:
+                    extra_param_max_exp_time = float(value)
+            except ValueError:
+                pass
         if extra_param_max_exp_time > 0:
             data['exposure_time'] = extra_param_max_exp_time
 
