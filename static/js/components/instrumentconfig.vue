@@ -378,6 +378,16 @@ export default {
       }
       this.update();
     },
+    updateExposureTime: function() {
+      this.instrumentconfig.exposure_time = Math.max(
+        this.instrumentconfig.extra_params.exposure_time_g,
+        this.instrumentconfig.extra_params.exposure_time_r,
+        this.instrumentconfig.extra_params.exposure_time_i,
+        this.instrumentconfig.extra_params.exposure_time_z
+      );
+
+      this.update();
+    },
     updateOpticalElement: function() {
       // The optical element fields are not reactive as they change/ are deleted/ don't exist on start.
       // Increment this reactive variable to watch for changed to the optical elements
@@ -448,19 +458,19 @@ export default {
     },
     exposure_time_g: function(value) {
       this.instrumentconfig.extra_params.exposure_time_g = value || undefined;
-      this.update();
+      this.updateExposureTime();
     },
     exposure_time_r: function(value) {
       this.instrumentconfig.extra_params.exposure_time_r = value || undefined;
-      this.update();
+      this.updateExposureTime();
     },
     exposure_time_i: function(value) {
       this.instrumentconfig.extra_params.exposure_time_i = value || undefined;
-      this.update();
+      this.updateExposureTime();
     },
     exposure_time_z: function(value) {
       this.instrumentconfig.extra_params.exposure_time_z = value || undefined;
-      this.update();
+      this.updateExposureTime();
     },
     exposure_mode: function(value) {
       this.instrumentconfig.extra_params.exposure_mode = value || undefined;

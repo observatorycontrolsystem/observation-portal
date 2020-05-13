@@ -166,6 +166,23 @@ class InstrumentConfigSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(_(
                 'Currently only square binnings are supported. Please submit with bin_x == bin_y'
             ))
+
+        extra_param_max_exp_time = 0
+        for field, value in data.get('extra_params').items():
+            if 'exposure_time' in field and float(value) > extra_param_max_exp_time:
+                extra_param_max_exp_time = float(value)
+        if extra_param_max_exp_time > 0:
+            data['exposure_time'] = extra_param_max_exp_time
+
+        return data
+
+    def to_internal_value(self, data):
+        data = super().to_internal_value(data)
+        for field, value in data.get('extra_params', {}).items():
+            try:
+                data['extra_params'][field] = float(value)
+            except ValueError:
+                pass
         return data
 
     def to_representation(self, instance):
