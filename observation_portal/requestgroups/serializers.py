@@ -328,7 +328,7 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                 else:
                     acquisition_config['mode'] = AcquisitionConfig.OFF
 
-            acquire_mode_error_msg = acquire_validation_helper.get_mode_error_msg(acquisition_config['mode'], 
+            acquire_mode_error_msg = acquire_validation_helper.get_mode_error_msg(acquisition_config['mode'],
                                                                                   acquisition_config)
             if acquire_mode_error_msg:
                 raise serializers.ValidationError(_(acquire_mode_error_msg))
@@ -360,7 +360,7 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                         raise serializers.ValidationError(_(str(cdbe)))
             else:
                 # A readout mode is set - validate the mode
-                readout_error_msg = readout_validation_helper.get_mode_error_msg(instrument_config['mode'], 
+                readout_error_msg = readout_validation_helper.get_mode_error_msg(instrument_config['mode'],
                                                                                  instrument_config)
                 if readout_error_msg:
                     raise serializers.ValidationError(_(readout_error_msg))
