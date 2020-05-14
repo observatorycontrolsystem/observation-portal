@@ -144,7 +144,8 @@
                             "code": "air",
                             "schedulable": false
                           }
-                        ]
+                        ],
+                        "default": "air"
                       }
                     ]
                   },
@@ -270,7 +271,8 @@
                             "code": "air",
                             "schedulable": false
                           }
-                        ]
+                        ],
+                        "default": "air"
                       }
                     ]
                   },
@@ -396,7 +398,8 @@
                             "code": "air",
                             "schedulable": false
                           }
-                        ]
+                        ],
+                        "default": "air"
                       }
                     ]
                   },
@@ -554,7 +557,8 @@
                             "code": "slit_1.2as",
                             "schedulable": true
                           }
-                        ]
+                        ],
+                        "default": "slit_1.6as"
                       }
                     ]
                   },
@@ -701,7 +705,8 @@
                             "code": "air",
                             "schedulable": false
                           }
-                        ]
+                        ],
+                        "default": "air"
                       }
                     ]
                   },
@@ -968,7 +973,8 @@
                             "code": "slit_1.2as",
                             "schedulable": true
                           }
-                        ]
+                        ],
+                        "default": "slit_1.6as"
                       }
                     ]
                   },
@@ -1115,7 +1121,8 @@
                             "code": "air",
                             "schedulable": false
                           }
-                        ]
+                        ],
+                        "default": "air"
                       }
                     ]
                   },
