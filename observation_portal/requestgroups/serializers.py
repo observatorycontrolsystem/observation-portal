@@ -54,7 +54,7 @@ class ModeValidationHelper:
             possible_modes.extend(self._modes[self._mode_type]['modes'])
         return possible_modes
 
-    def _unavailable_msg(self, mode_value: str, config: dict) -> str:
+    def _unavailable_msg(self, mode_value: str) -> str:
         if self._mode_type in self._modes:
             if not mode_value.lower() in [m['code'].lower() for m in self._modes[self._mode_type]['modes']]:
                 return (
@@ -457,7 +457,7 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                 if exposure_mode_validation_helper.mode_is_not_set(instrument_config['extra_params']):
                     exposure_mode_to_set = exposure_mode_validation_helper.get_mode_to_set()
                     if exposure_mode_to_set['error']:
-                        raise serializers.ValidationError(_(rotator_mode_to_set['error']))
+                        raise serializers.ValidationError(_(exposure_mode_to_set['error']))
                     if exposure_mode_to_set['mode']:
                         instrument_config['extra_params']['exposure_mode'] = exposure_mode_to_set['mode']['code']
 
