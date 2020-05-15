@@ -1,5 +1,6 @@
 import json
 import logging
+from math import isnan
 from json import JSONDecodeError
 
 from rest_framework import serializers
@@ -99,7 +100,7 @@ class ModeValidationHelper:
         """Return an error message if there is a problem with the mode"""
         if self._mode_type in self._modes:
             # Check if the mode exists
-            unavailable_msg = self._unavailable_msg(mode_value, config)
+            unavailable_msg = self._unavailable_msg(mode_value)
             if unavailable_msg:
                 return unavailable_msg
             # Check if there are any required params that are not set
@@ -150,6 +151,7 @@ class RegionOfInterestSerializer(serializers.ModelSerializer):
 
 
 class InstrumentConfigSerializer(serializers.ModelSerializer):
+    exposure_time = serializers.FloatField(required=False, allow_null=True)
     rois = RegionOfInterestSerializer(many=True, required=False)
 
     class Meta:
@@ -478,6 +480,15 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                             raise serializers.ValidationError(_(f'Muscat instrument extra_param {exposure_field} must be a positive number.'))
                     except ValueError:
                         raise serializers.ValidationError(_(f'Muscat instrument extra_param {exposure_field} must be a positive number.'))
+            # This applies the exposure_time requirement only to non-muscat instruments.
+            # I wish I could figure out a better way to do this, but it needs info about the instrument_type which is a level up.
+            else:
+                if instrument_config.get('exposure_time', None) is None:
+                    raise serializers.ValidationError({'instrument_configs': [{'exposure_time': [_('This value cannot be null.')]}]})
+                if isnan(instrument_config.get('exposure_time')):
+                    raise serializers.ValidationError({'instrument_configs': [{'exposure_time': [_('A valid number is required.')]}]})
+                if instrument_config['exposure_time'] < 0:
+                    raise serializers.ValidationError({'instrument_configs': [{'exposure_time': [_('This value cannot be negative.')]}]})
 
         if data['type'] == 'SCRIPT':
             if (
