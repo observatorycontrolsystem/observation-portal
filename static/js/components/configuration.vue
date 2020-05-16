@@ -53,7 +53,7 @@
         <b-col :md="show ? 6 : 12">
           <b-form>
             <customselect 
-              v-if="!simple_interface && datatype !='SPECTRA'"
+              v-if="!simple_interface && datatype !='SPECTRA' && guideModeOptions.length > 1"
               v-model="selectedImagerGuidingOption" 
               label="Guiding" 
               field="mode" 
@@ -277,6 +277,7 @@
             }
             if (this.available_instruments[this.selectedinstrument].modes.guiding.modes[gm].code == 'ON'){
               guideModes.push({text: 'Optional', value: 'OPTIONAL'})
+              this.selectedImagerGuidingOption = 'OPTIONAL';
             }
           }
           return guideModes;
