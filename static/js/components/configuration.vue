@@ -277,7 +277,6 @@
             }
             if (this.available_instruments[this.selectedinstrument].modes.guiding.modes[gm].code == 'ON'){
               guideModes.push({text: 'Optional', value: 'OPTIONAL'})
-              this.selectedImagerGuidingOption = 'OPTIONAL';
             }
           }
           return guideModes;
@@ -444,6 +443,10 @@
       },
       selectedinstrument: function(value) {
         if (this.configuration.instrument_type !== value) {
+          // Set the guide mode to OPTIONAL for muscat
+          if (value == '2M0-SCICAM-MUSCAT') {
+            this.selectedImagerGuidingOption = 'OPTIONAL';
+          }
           if (this.datatype === 'SPECTRA') {
             // Need to set up spectrograph here because the instrument might have changed
             // from NRES to FLOYDS, which have different aquire modes and configuration types
