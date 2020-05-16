@@ -61,7 +61,7 @@
                     attempted but observations are carried out even if guiding fails. If set to On, 
                     observations are aborted if guiding fails."
               :errors="{}" 
-              :options="imagerGuidingOptions"
+              :options="guideModeOptions"
               @input="update" 
             />
             <div 
@@ -241,7 +241,6 @@
             {value: 'REPEAT_EXPOSE', text: 'Exposure Sequence'}
           ]
         }
-        return [];
       },
       acquireModeOptions: function() {
         let options = [];
@@ -265,6 +264,25 @@
           }
         }
         return options;
+      },
+      guideModeOptions: function() {
+        if (this.selectedinstrument in this.available_instruments) {
+          let guideModes = [];
+          for (let gm in this.available_instruments[this.selectedinstrument].modes.guiding.modes) {
+            if (this.selectedinstrument != '2M0-SCICAM-MUSCAT') {
+              guideModes.push({
+                  text: this.available_instruments[this.selectedinstrument].modes.guiding.modes[gm].name,
+                  value: this.available_instruments[this.selectedinstrument].modes.guiding.modes[gm].code,
+              });
+            }
+            if (this.available_instruments[this.selectedinstrument].modes.guiding.modes[gm].code == 'ON'){
+              guideModes.push({text: 'Optional', value: 'OPTIONAL'})
+            }
+          }
+          return guideModes;
+        } else {
+          return [];
+        }
       },
       requiredAcquireModeFields: function() {
         for (let i in this.acquireModeOptions) {
