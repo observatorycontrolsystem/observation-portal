@@ -85,21 +85,21 @@
                               "code": "1m0_sbig_1",
                               "overhead": 35.0,
                               "params": {
-                                "binning": 1
+                                "binning": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             },
                             {
                               "code": "1m0_sbig_2",
                               "overhead": 14.5,
                               "params": {
-                                "binning": 2
+                                "binning": {"type": "integer", "allowed": [2], "default": 2}
                               }
                             },
                             {
                               "code": "1m0_sbig_3",
                               "overhead": 11.5,
                               "params": {
-                                "binning": 3
+                                "binning": {"type": "integer", "allowed": [3], "default": 3}
                               }
                             }
                           ]
@@ -212,21 +212,21 @@
                               "code": "1m0_sbig_1",
                               "overhead": 35.0,
                               "params": {
-                                "binning": 1
+                                "binning": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             },
                             {
                               "code": "1m0_sbig_2",
                               "overhead": 14.5,
                               "params": {
-                                "binning": 2
+                                "binning": {"type": "integer", "allowed": [2], "default": 2}
                               }
                             },
                             {
                               "code": "1m0_sbig_3",
                               "overhead": 11.5,
                               "params": {
-                                "binning": 3
+                                "binning": {"type": "integer", "allowed": [3], "default": 3}
                               }
                             }
                           ]
@@ -339,21 +339,21 @@
                               "code": "1m0_sbig_1",
                               "overhead": 35.0,
                               "params": {
-                                "binning": 1
+                                "binning": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             },
                             {
                               "code": "1m0_sbig_2",
                               "overhead": 14.5,
                               "params": {
-                                "binning": 2
+                                "binning": {"type": "integer", "allowed": [2], "default": 2}
                               }
                             },
                             {
                               "code": "1m0_sbig_3",
                               "overhead": 11.5,
                               "params": {
-                                "binning": 3
+                                "binning": {"type": "integer", "allowed": [3], "default": 3}
                               }
                             }
                           ]
@@ -473,7 +473,7 @@
                               "code": "2m0_floyds_1",
                               "overhead": 25.0,
                               "params": {
-                                "binning": 1
+                                "binning": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             }
                           ]
@@ -491,9 +491,9 @@
                               "code": "BRIGHTEST",
                               "overhead": 90.0,
                               "params": {
-                                "required_fields": [
-                                  "acquire_radius"
-                                ]
+                                "extra_params": {"type": "dict", "schema": {
+                                  "acquire_radius": {"type": "float", "min": 0, "max": 15, "required": true}
+                                }}
                               }
                             }
                           ]
@@ -522,9 +522,9 @@
                               "code": "SKY",
                               "overhead": 0.0,
                               "params": {
-                                "required_fields": [
-                                  "rotator_angle"
-                                ]
+                                "extra_params": {"type": "dict", "schema": {
+                                  "rotator_angle": {"type": "float", "min": 0, "max": 360}
+                                }}
                               }
                             }
                           ]
@@ -646,21 +646,21 @@
                               "code": "1m0_sbig_1",
                               "overhead": 35.0,
                               "params": {
-                                "binning": 1
+                                "binning": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             },
                             {
                               "code": "1m0_sbig_2",
                               "overhead": 14.5,
                               "params": {
-                                "binning": 2
+                                "binning": {"type": "integer", "allowed": [2], "default": 2}
                               }
                             },
                             {
                               "code": "1m0_sbig_3",
                               "overhead": 11.5,
                               "params": {
-                                "binning": 3
+                                "binning": {"type": "integer", "allowed": [3], "default": 3}
                               }
                             }
                           ]
@@ -769,14 +769,14 @@
                               "code": "1m0_nres_1",
                               "overhead": 35.0,
                               "params": {
-                                "binning": 1
+                                "binning": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             },
                             {
                               "code": "1m0_nres_2",
                               "overhead": 90.5,
                               "params": {
-                                "binning": 2
+                                "binning": {"type": "integer", "allowed": [2], "default": 2}
                               }
                             }
                           ]
@@ -794,11 +794,11 @@
                               "code": "MYMODE",
                               "overhead": 400.0,
                               "params": {
-                                "required_fields": [
-                                  "field1",
-                                  "field2",
-                                  "field3"
-                                ]
+                                "extra_params": {"type": "dict", "schema": {
+                                  "field1": {"type": "string", "required": true},
+                                  "field2": {"type": "string", "required": true},
+                                  "field3": {"type": "string", "required": true}
+                                }}
                               }
                             }
                           ]
@@ -889,7 +889,7 @@
                               "code": "2m0_floyds_1",
                               "overhead": 25.0,
                               "params": {
-                                "binning": 1
+                                "binning": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             }
                           ]
@@ -907,9 +907,9 @@
                               "code": "BRIGHTEST",
                               "overhead": 90.0,
                               "params": {
-                                "required_fields": [
-                                  "acquire_radius"
-                                ]
+                                "extra_params": {"type": "dict", "schema": {
+                                  "acquire_radius": {"type": "float", "min": 0, "max": 15, "required": true}
+                                }}
                               }
                             }
                           ]
@@ -938,9 +938,9 @@
                               "code": "SKY",
                               "overhead": 0.0,
                               "params": {
-                                "required_fields": [
-                                  "rotator_angle"
-                                ]
+                                "extra_params": {"type": "dict", "schema": {
+                                  "rotator_angle": {"type": "float", "min": 0, "max": 360}
+                                }}
                               }
                             }
                           ]
@@ -1062,21 +1062,21 @@
                               "code": "1m0_sbig_1",
                               "overhead": 35.0,
                               "params": {
-                                "binning": 1
+                                "binning": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             },
                             {
                               "code": "1m0_sbig_2",
                               "overhead": 14.5,
                               "params": {
-                                "binning": 2
+                                "binning": {"type": "integer", "allowed": [2], "default": 2}
                               }
                             },
                             {
                               "code": "1m0_sbig_3",
                               "overhead": 11.5,
                               "params": {
-                                "binning": 3
+                                "binning": {"type": "integer", "allowed": [3], "default": 3}
                               }
                             }
                           ]

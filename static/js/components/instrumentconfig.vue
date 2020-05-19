@@ -269,7 +269,7 @@ export default {
           readoutModes.push({
               text: this.available_instruments[this.selectedinstrument].modes.readout.modes[rm].name,
               value: this.available_instruments[this.selectedinstrument].modes.readout.modes[rm].code,
-              binning: this.available_instruments[this.selectedinstrument].modes.readout.modes[rm].params.binning
+              binning: this.available_instruments[this.selectedinstrument].modes.readout.modes[rm].params.binning.default
           });
         }
         return readoutModes;

@@ -31,6 +31,17 @@ from observation_portal.common.rise_set_utils import get_filtered_rise_set_inter
 logger = logging.getLogger(__name__)
 
 
+def cerberus_validation_error_to_str(validation_errors: dict) -> str:
+    error_str = ''
+    for field, value in validation_errors.items():
+        if isinstance(value, dict) or (isinstance(value, list) and len(value) == 1 and isinstance(value[0], dict)):
+            error_str += f'{field}[{cerberus_validation_error_to_str(value[0])}]'
+        else:
+            error_str += f'{field} error: {", ".join(value)}. '
+
+    return error_str.rstrip()
+
+
 class ModeValidationHelper:
     """Class used to validate modes of different types"""
     def __init__(self, mode_type, instrument_type, default_modes, modes):
@@ -92,7 +103,7 @@ class ModeValidationHelper:
                 f'Must set a {self._mode_type} mode, choose '
                 f'from {", ".join([mode["code"] for mode in self._modes[self._mode_type]["modes"]])}'
             )
-        return mode
+        return mode        
 
     def get_mode_error_msg(self, mode_value: str, config: dict) -> str:
         """Return an error message if there is a problem with the mode"""
@@ -104,7 +115,7 @@ class ModeValidationHelper:
             # Check if there are any required params that are not set
             validation_errors = self._mode_validation(mode_value, config)
             if validation_errors:
-                return f'{self._mode_type.capitalize()} mode {mode_value} requirements are not met: {str(validation_errors)}'
+                return f'{self._mode_type.capitalize()} mode {mode_value} requirements are not met: {cerberus_validation_error_to_str(validation_errors)}'
         return ''
 
 
@@ -347,8 +358,8 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                         raise serializers.ValidationError(_(readout_mode_to_set['error']))
                     if readout_mode_to_set['mode']:
                         instrument_config['mode'] = readout_mode_to_set['mode']['code']
-                        instrument_config['bin_x'] = readout_mode_to_set['mode']['params']['binning']
-                        instrument_config['bin_y'] = readout_mode_to_set['mode']['params']['binning']
+                        instrument_config['bin_x'] = readout_mode_to_set['mode']['params']['binning']['default']
+                        instrument_config['bin_y'] = readout_mode_to_set['mode']['params']['binning']['default']
 
                 elif 'bin_x' in instrument_config:
                     # A binning is set already - figure out what the readout mode should be from that
@@ -369,10 +380,10 @@ class ConfigurationSerializer(serializers.ModelSerializer):
                 # sure that those that are set are ok
                 readout_mode = configdb.get_mode_with_code(instrument_type, instrument_config['mode'], 'readout')
                 if 'bin_x' not in instrument_config:
-                    instrument_config['bin_x'] = readout_mode['params']['binning']
-                    instrument_config['bin_y'] = readout_mode['params']['binning']
+                    instrument_config['bin_x'] = readout_mode['params']['binning']['default']
+                    instrument_config['bin_y'] = readout_mode['params']['binning']['default']
 
-                elif instrument_config['bin_x'] != readout_mode['params']['binning']:
+                elif instrument_config['bin_x'] != readout_mode['params']['binning']['default']:
                     raise serializers.ValidationError(_(
                         f'Binning {instrument_config["bin_x"]} is not a valid binning for readout mode '
                         f'{instrument_config["mode"]} for instrument type {instrument_type}'
