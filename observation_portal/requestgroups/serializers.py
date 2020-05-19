@@ -3,6 +3,7 @@ import logging
 from math import isnan
 from json import JSONDecodeError
 
+from cerberus import Validator
 from rest_framework import serializers
 from django.utils.translation import ugettext as _
 from django.core.exceptions import ObjectDoesNotExist
@@ -64,19 +65,16 @@ class ModeValidationHelper:
                 )
         return ''
 
-    def _missing_fields_msg(self, mode_value: str, config: dict) -> str:
-        missing_fields = []
+    def _mode_validation(self, mode_value: str, config: dict) -> dict:
         mode = configdb.get_mode_with_code(self._instrument_type, mode_value, self._mode_type)
-        if 'required_fields' in mode.get('params', {}):
-            for field in mode['params']['required_fields']:
-                if 'extra_params' not in config or field not in config['extra_params']:
-                    missing_fields.append(field)
-        if missing_fields:
-            return (
-                f'{self._mode_type.capitalize()} Mode {mode["code"]} requires [{", ".join(missing_fields)}] '
-                f'set in extra params'
-            )
-        return ''
+        if mode.get('params'):
+            # TODO change the params field in configdb to be validation_schema or something better
+            validator = Validator(mode['params'])
+            validator.allow_unknown = True
+            validator.validate(config)
+            return validator.errors
+
+        return {}
 
     def mode_is_not_set(self, config: dict) -> bool:
         return self._mode_key not in config or not config[self._mode_key]
@@ -104,9 +102,9 @@ class ModeValidationHelper:
             if unavailable_msg:
                 return unavailable_msg
             # Check if there are any required params that are not set
-            missing_fields_msg = self._missing_fields_msg(mode_value, config)
-            if missing_fields_msg:
-                return missing_fields_msg
+            validation_errors = self._mode_validation(mode_value, config)
+            if validation_errors:
+                return f'{self._mode_type.capitalize()} mode {mode_value} requirements are not met: {str(validation_errors)}'
         return ''
 
 

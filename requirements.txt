@@ -25,6 +25,7 @@ redis==3.2.1
 django-redis-cache<2.1
 gunicorn[gevent]>=19,<20
 lcogt-logging==0.3.2
+cerberus>1.0,<2.0
 
 responses==0.10.6
 mixer==6.1.3
