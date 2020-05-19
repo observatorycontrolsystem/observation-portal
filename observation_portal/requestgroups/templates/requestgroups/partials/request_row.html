@@ -24,7 +24,7 @@
         <div class="col-md-4 requestgroup-block">
           <br/>
           <div class="row margin-top-md border-right mx-auto">
-            <div class="col-md-4">
+            <div>
               <div class="btn-group mr-2" role="group" aria-label="button group">
                 <a href="{% url 'api:requests-detail' pk=request.id %}" class="btn btn-outline-secondary btn-sm"><i class="fa fa-fw fa-code"></i> View in API</a>
                 {% if request.state == 'COMPLETED' %}
