@@ -1294,6 +1294,27 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('must have at least one instrument configuration', str(response.content))
 
+    def test_must_have_exposure_time(self):
+        bad_data = self.generic_payload.copy()
+        del bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['exposure_time']
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('exposure_time', str(response.content))
+
+    def test_must_have_positive_exposure_time(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['exposure_time'] = -10.1
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('exposure_time', str(response.content))
+
+    def test_must_have_non_nan_exposure_time(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['exposure_time'] = 'nan'
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('exposure_time', str(response.content))
+
     def test_default_guide_mode_for_spectrograph(self):
         good_data = self.generic_payload.copy()
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
@@ -1941,6 +1962,13 @@ class TestMuscatValidationApi(SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertEqual(response.status_code, 400)
         self.assertIn('exposure_time_g', str(response.content))
+
+    def test_muscat_rejects_bad_exposure_mode(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params']['exposure_mode'] = "Invalid"
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Exposure mode Invalid', str(response.content))
 
     def test_muscat_extra_param_exposure_time_must_be_number(self):
         bad_data = self.generic_payload.copy()
