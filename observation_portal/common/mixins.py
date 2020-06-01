@@ -42,7 +42,7 @@ class CustomIsoDateTimeFilterMixin(object):
         return filters
 
 class ExtraParamsFormatter(object):
-    ''' This should be mixed in with Serializers that have extra_params JSON fields, to ensure the float values are 
+    ''' This should be mixed in with Serializers that have extra_params JSON fields, to ensure the float values are
         stored as float values in the db instead of as strings
     '''
     def to_internal_value(self, data):
