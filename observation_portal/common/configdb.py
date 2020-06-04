@@ -368,6 +368,10 @@ class ConfigDB(object):
                 for optical_element_group in instrument['science_camera']['optical_element_groups']:
                     for element in optical_element_group['optical_elements']:
                         if element['code'] not in optical_elements_tracker[optical_element_group['type']]:
+                            if optical_element_group['default'].upper() == element['code'].upper():
+                                element['default'] = True
+                            else:
+                                element['default'] = False
                             optical_elements_tracker[optical_element_group['type']].add(element['code'])
                             optical_elements[optical_element_group['type']].append(element)
         return optical_elements
