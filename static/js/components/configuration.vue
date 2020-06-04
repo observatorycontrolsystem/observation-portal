@@ -53,7 +53,7 @@
         <b-col :md="show ? 6 : 12">
           <b-form>
             <customselect 
-              v-if="!simple_interface && datatype !='SPECTRA'"
+              v-if="!simple_interface && datatype !='SPECTRA' && guideModeOptions.length > 1"
               v-model="selectedImagerGuidingOption" 
               label="Guiding" 
               field="mode" 
@@ -61,7 +61,7 @@
                     attempted but observations are carried out even if guiding fails. If set to On, 
                     observations are aborted if guiding fails."
               :errors="{}" 
-              :options="imagerGuidingOptions"
+              :options="guideModeOptions"
               @input="update" 
             />
             <div 
@@ -241,7 +241,6 @@
             {value: 'REPEAT_EXPOSE', text: 'Exposure Sequence'}
           ]
         }
-        return [];
       },
       acquireModeOptions: function() {
         let options = [];
@@ -265,6 +264,25 @@
           }
         }
         return options;
+      },
+      guideModeOptions: function() {
+        if (this.selectedinstrument in this.available_instruments) {
+          let guideModes = [];
+          for (let gm in this.available_instruments[this.selectedinstrument].modes.guiding.modes) {
+            if (this.selectedinstrument != '2M0-SCICAM-MUSCAT') {
+              guideModes.push({
+                  text: this.available_instruments[this.selectedinstrument].modes.guiding.modes[gm].name,
+                  value: this.available_instruments[this.selectedinstrument].modes.guiding.modes[gm].code,
+              });
+            }
+            if (this.available_instruments[this.selectedinstrument].modes.guiding.modes[gm].code == 'ON'){
+              guideModes.push({text: 'Optional', value: 'OPTIONAL'})
+            }
+          }
+          return guideModes;
+        } else {
+          return [];
+        }
       },
       requiredAcquireModeFields: function() {
         for (let i in this.acquireModeOptions) {
@@ -425,6 +443,10 @@
       },
       selectedinstrument: function(value) {
         if (this.configuration.instrument_type !== value) {
+          // Set the guide mode to OPTIONAL for muscat
+          if (value == '2M0-SCICAM-MUSCAT') {
+            this.selectedImagerGuidingOption = 'OPTIONAL';
+          }
           if (this.datatype === 'SPECTRA') {
             // Need to set up spectrograph here because the instrument might have changed
             // from NRES to FLOYDS, which have different aquire modes and configuration types
