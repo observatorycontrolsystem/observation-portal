@@ -1291,6 +1291,35 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('must have at least one instrument configuration', str(response.content))
 
+    def test_extra_params_saved_as_float_not_string(self):
+        good_data = self.generic_payload.copy()
+        good_data['requests'][0]['configurations'][0]['extra_params'] = {'test_value': '1.15'}
+        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
+        self.assertEqual(response.status_code, 201)
+        extra_params = response.json()['requests'][0]['configurations'][0]['extra_params']
+        self.assertEqual(extra_params['test_value'], 1.15)
+
+    def test_must_have_exposure_time(self):
+        bad_data = self.generic_payload.copy()
+        del bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['exposure_time']
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('exposure_time', str(response.content))
+
+    def test_must_have_positive_exposure_time(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['exposure_time'] = -10.1
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('exposure_time', str(response.content))
+
+    def test_must_have_non_nan_exposure_time(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['exposure_time'] = 'nan'
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('exposure_time', str(response.content))
+
     def test_default_guide_mode_for_spectrograph(self):
         good_data = self.generic_payload.copy()
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
@@ -1876,6 +1905,89 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertEqual(response.status_code, 400)
         self.assertIn('Currently only a single constraints', str(response.content))
+
+
+class TestMuscatValidationApi(SetTimeMixin, APITestCase):
+    def setUp(self):
+        super().setUp()
+        self.proposal = mixer.blend(Proposal)
+        self.user = blend_user()
+        self.client.force_login(self.user)
+
+        semester = mixer.blend(
+            Semester, id='2016B', start=datetime(2016, 9, 1, tzinfo=timezone.utc),
+            end=datetime(2016, 12, 31, tzinfo=timezone.utc)
+        )
+        self.time_allocation_1m0_sbig = mixer.blend(
+            TimeAllocation, proposal=self.proposal, semester=semester, instrument_type='2M0-SCICAM-MUSCAT',
+            std_allocation=100.0, std_time_used=0.0, rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
+            ipp_time_available=5.0
+        )
+        mixer.blend(Membership, user=self.user, proposal=self.proposal)
+        self.generic_payload = copy.deepcopy(generic_payload)
+        self.generic_payload['proposal'] = self.proposal.id
+        self.generic_payload['requests'][0]['configurations'][0]['instrument_type'] = '2M0-SCICAM-MUSCAT'
+        self.generic_payload['requests'][0]['location']['telescope_class'] = '2m0'
+        del self.generic_payload['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
+        self.generic_payload['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params'] = {
+            'exposure_time_g': 33.0,
+            'exposure_time_r': 29.0,
+            'exposure_time_i': 27.5,
+            'exposure_time_z': 25.8,
+            'exposure_mode': 'SYNCHRONOUS'
+        }
+        self.generic_payload['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements'] = {
+            'diffuser_g_position': "in",
+            'diffuser_r_position': "out",
+            'diffuser_i_position': "out",
+            'diffuser_z_position': "out",
+        }
+
+    def test_accepts_good_muscat_request(self):
+        good_data = self.generic_payload.copy()
+        max_exposure_time = good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params']['exposure_time_g']
+        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
+        self.assertEqual(response.status_code, 201)
+        inst_config = response.json()['requests'][0]['configurations'][0]['instrument_configs'][0]
+        # check that the exposure_time field was set to the max of the extra params exposure times
+        self.assertEqual(inst_config['exposure_time'], max_exposure_time)
+
+    def test_sets_default_muscat_exposure_mode(self):
+        good_data = self.generic_payload.copy()
+        del good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params']['exposure_mode']
+        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
+        self.assertEqual(response.status_code, 201)
+        inst_config = response.json()['requests'][0]['configurations'][0]['instrument_configs'][0]
+        # check that the exposure_mode field is set to the default of SYNCHRONOUS
+        self.assertEqual(inst_config['extra_params']['exposure_mode'], 'SYNCHRONOUS')
+
+    def test_muscat_requires_extra_params_exposure_times_set(self):
+        bad_data = self.generic_payload.copy()
+        del bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params']['exposure_time_g']
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('exposure_time_g', str(response.content))
+
+    def test_muscat_rejects_bad_exposure_mode(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params']['exposure_mode'] = "Invalid"
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Exposure mode Invalid', str(response.content))
+
+    def test_muscat_extra_param_exposure_time_must_be_number(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params']['exposure_time_g'] = 'NotANumber'
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('exposure_time_g must be a positive number', str(response.content))
+
+    def test_muscat_extra_param_exposure_time_must_be_positive(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params']['exposure_time_g'] = -33.2
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('exposure_time_g must be a positive number', str(response.content))
 
 
 class TestGetRequestApi(APITestCase):

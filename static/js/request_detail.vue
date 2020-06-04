@@ -108,6 +108,7 @@
                                 <td><strong>Exposure Time</strong></td>
                                 <td><strong>Exposure Count</strong></td>
                                 <td><strong>Optical Elements</strong></td>
+                                <td><strong>Extra Params</strong></td>
                               </tr>
                             </thead>
                             <tbody>
@@ -120,6 +121,8 @@
                                 <td>{{ instrument_config.exposure_time | formatValue }}</td>
                                 <td>{{ instrument_config.exposure_count | formatValue }}</td>
                                 <td v-if="!isObjEmpty(instrument_config.optical_elements)">{{ instrument_config.optical_elements | formatValue }}</td>
+                                <td v-else>None</td>
+                                <td v-if="!isObjEmpty(instrument_config.extra_params)">{{ instrument_config.extra_params | formatValue }}</td>
                                 <td v-else>None</td>
                               </tr>
                             </tbody>

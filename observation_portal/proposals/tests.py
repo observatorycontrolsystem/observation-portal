@@ -13,6 +13,7 @@ from observation_portal.proposals.models import ProposalInvite, Proposal, Member
 from observation_portal.requestgroups.models import RequestGroup, Configuration, InstrumentConfig
 from observation_portal.accounts.models import Profile
 from observation_portal.common.test_helpers import create_simple_requestgroup
+from observation_portal.proposals.tasks import time_allocation_reminder
 from observation_portal.requestgroups.signals import handlers  # DO NOT DELETE, needed to active signals
 
 
@@ -154,6 +155,54 @@ class TestProposalNotifications(DramatiqTestCase):
         self.requestgroup.save()
 
         self.broker.join("default")
+        self.worker.join()
+
+        self.assertEqual(len(mail.outbox), 0)
+
+
+class TestTimeAllocationEmail(DramatiqTestCase):
+    def setUp(self):
+        super().setUp()
+        self.pi = mixer.blend(User)
+        self.coi = mixer.blend(User)
+        self.proposal = mixer.blend(Proposal, active=True)
+        mixer.blend(Membership, user=self.pi, proposal=self.proposal, role='PI')
+        mixer.blend(Membership, user=self.coi, proposal=self.proposal, role='CI')
+        now = timezone.now()
+        self.current_semester = mixer.blend(
+            Semester, start=now, end=now + datetime.timedelta(days=30))
+
+        self.future_semester = mixer.blend(
+            Semester, start=now + datetime.timedelta(days=30), end=now + datetime.timedelta(days=60)
+        )
+
+    def test_sends_email_to_pi_for_current_active_proposal(self):
+        mixer.blend(TimeAllocation, proposal=self.proposal, semester=self.current_semester)
+        time_allocation_reminder()
+
+        self.broker.join('default')
+        self.worker.join()
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(self.proposal.id, str(mail.outbox[0].message()))
+        self.assertEqual(mail.outbox[0].to, [self.pi.email])
+
+    def test_does_not_send_email_for_active_proposal_with_no_current_allocations(self):
+        mixer.blend(TimeAllocation, proposal=self.proposal, semester=self.future_semester)
+        time_allocation_reminder()
+
+        self.broker.join('default')
+        self.worker.join()
+
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_does_not_send_email_for_inactive_proposal(self):
+        mixer.blend(TimeAllocation, proposal=self.proposal, semester=self.current_semester)
+        self.proposal.active = False
+        self.proposal.save()
+        time_allocation_reminder()
+
+        self.broker.join('default')
         self.worker.join()
 
         self.assertEqual(len(mail.outbox), 0)

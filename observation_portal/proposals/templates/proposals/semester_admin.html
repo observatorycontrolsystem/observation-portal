@@ -68,13 +68,13 @@
         <td {% if ta.std_allocation > 0 and ta.std_time_used >= ta.std_allocation %} class="bg-danger" {% endif %}>
           {{ ta.std_time_used|floatformat }}
         </td>
-        <td>{{ ta.tc_allocation|floatformat }}</td>
-        <td {% if ta.tc_allocation > 0 and ta.tc_time_used >= ta.tc_allocation %} class="bg-danger" {% endif %}>
-          {{ ta.tc_time_used|floatformat }}
-        </td>
         <td>{{ ta.rr_allocation|floatformat }}</td>
         <td {% if ta.rr_allocation > 0 and ta.rr_time_used >= ta.rr_allocation %} class="bg-danger" {% endif %}>
           {{ ta.rr_time_used|floatformat }}
+        </td>
+        <td>{{ ta.tc_allocation|floatformat }}</td>
+        <td {% if ta.tc_allocation > 0 and ta.tc_time_used >= ta.tc_allocation %} class="bg-danger" {% endif %}>
+          {{ ta.tc_time_used|floatformat }}
         </td>
         <td>{{ ta.ipp_limit|floatformat }}</td>
         <td>{{ ta.ipp_time_available|floatformat }}</td>

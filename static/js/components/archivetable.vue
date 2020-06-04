@@ -60,7 +60,7 @@
       refreshTable: function() {
         if (this.requestid) {
           $('#archive-table').bootstrapTable('refresh',
-            {url: archiveRoot + 'frames/?limit=1000&REQNUM=' + this.requestid}
+            {url: archiveRoot + 'frames/?limit=1000&exclude_OBSTYPE=GUIDE&REQNUM=' + this.requestid}
           );
         }
       }
