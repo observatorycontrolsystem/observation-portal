@@ -36,11 +36,14 @@ def cerberus_validation_error_to_str(validation_errors: dict) -> str:
     error_str = ''
     for field, value in validation_errors.items():
         if isinstance(value, dict) or (isinstance(value, list) and len(value) == 1 and isinstance(value[0], dict)):
-            error_str += f'{field}[{cerberus_validation_error_to_str(value[0])}]'
+            error_str += f'{field}{{{cerberus_validation_error_to_str(value[0])}}}'
         else:
-            error_str += f'{field} error: {", ".join(value)}. '
+            error_str += f'{field} error: {", ".join(value)}, '
 
-    return error_str.rstrip()
+    error_str = error_str.rstrip()
+    if error_str[-1] == ',':
+        error_str = error_str[:-1]
+    return error_str
 
 
 class ModeValidationHelper:

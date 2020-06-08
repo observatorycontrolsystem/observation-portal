@@ -1987,14 +1987,16 @@ class TestMuscatValidationApi(SetTimeMixin, APITestCase):
         bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params']['exposure_time_g'] = 'NotANumber'
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('exposure_time_g must be a positive number', str(response.content))
+        self.assertIn('exposure_time_g error: must be of float type', str(response.content))
 
     def test_muscat_extra_param_exposure_time_must_be_positive(self):
         bad_data = self.generic_payload.copy()
         bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params']['exposure_time_g'] = -33.2
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params']['exposure_time_i'] = -33.2
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('exposure_time_g must be a positive number', str(response.content))
+        self.assertIn('exposure_time_g error: min value is 0', str(response.content))
+        self.assertIn('exposure_time_i error: min value is 0', str(response.content))
 
 
 class TestGetRequestApi(APITestCase):
