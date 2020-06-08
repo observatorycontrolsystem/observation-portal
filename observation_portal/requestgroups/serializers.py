@@ -79,9 +79,8 @@ class ModeValidationHelper:
 
     def _mode_validation(self, mode_value: str, config: dict) -> dict:
         mode = configdb.get_mode_with_code(self._instrument_type, mode_value, self._mode_type)
-        if mode.get('params'):
-            # TODO change the params field in configdb to be validation_schema or something better
-            validator = Validator(mode['params'])
+        if mode.get('validation_schema'):
+            validator = Validator(mode['validation_schema'])
             validator.allow_unknown = True
             validator.validate(config)
             return validator.errors
@@ -104,7 +103,7 @@ class ModeValidationHelper:
                 f'Must set a {self._mode_type} mode, choose '
                 f'from {", ".join([mode["code"] for mode in self._modes[self._mode_type]["modes"]])}'
             )
-        return mode        
+        return mode
 
     def get_mode_error_msg(self, mode_value: str, config: dict) -> str:
         """Return an error message if there is a problem with the mode"""
@@ -350,8 +349,8 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
                         raise serializers.ValidationError(_(readout_mode_to_set['error']))
                     if readout_mode_to_set['mode']:
                         instrument_config['mode'] = readout_mode_to_set['mode']['code']
-                        instrument_config['bin_x'] = readout_mode_to_set['mode']['params']['binning']['default']
-                        instrument_config['bin_y'] = readout_mode_to_set['mode']['params']['binning']['default']
+                        instrument_config['bin_x'] = readout_mode_to_set['mode']['validation_schema']['binning']['default']
+                        instrument_config['bin_y'] = readout_mode_to_set['mode']['validation_schema']['binning']['default']
 
                 elif 'bin_x' in instrument_config:
                     # A binning is set already - figure out what the readout mode should be from that
@@ -372,10 +371,10 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
                 # sure that those that are set are ok
                 readout_mode = configdb.get_mode_with_code(instrument_type, instrument_config['mode'], 'readout')
                 if 'bin_x' not in instrument_config:
-                    instrument_config['bin_x'] = readout_mode['params']['binning']['default']
-                    instrument_config['bin_y'] = readout_mode['params']['binning']['default']
+                    instrument_config['bin_x'] = readout_mode['validation_schema']['binning']['default']
+                    instrument_config['bin_y'] = readout_mode['validation_schema']['binning']['default']
 
-                elif instrument_config['bin_x'] != readout_mode['params']['binning']['default']:
+                elif instrument_config['bin_x'] != readout_mode['validation_schema']['binning']['default']:
                     raise serializers.ValidationError(_(
                         f'Binning {instrument_config["bin_x"]} is not a valid binning for readout mode '
                         f'{instrument_config["mode"]} for instrument type {instrument_type}'
