@@ -191,7 +191,7 @@ DATETIME_FORMAT = 'Y-m-d H:i:s'
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
-AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_BUCKET_NAME', 'observe.lco.global')
+AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_BUCKET_NAME', 'observation-portal-test-bucket')
 AWS_REGION = os.getenv('AWS_REGION', 'us-west-2')
 AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID', None)
 AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY', None)
@@ -219,9 +219,9 @@ EMAIL_PORT = os.getenv('EMAIL_PORT', 587)
 DEFAULT_FROM_EMAIL = 'Webmaster <portal@lco.global>'
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
-ELASTICSEARCH_URL = os.getenv('ELASTICSEARCH_URL', 'http://elasticsearchdev.lco.gtn')
-CONFIGDB_URL = os.getenv('CONFIGDB_URL', 'http://configdbdev.lco.gtn')
-DOWNTIMEDB_URL = os.getenv('DOWNTIMEDB_URL', 'http://downtimedb.lco.gtn')
+ELASTICSEARCH_URL = os.getenv('ELASTICSEARCH_URL', 'http://localhost')
+CONFIGDB_URL = os.getenv('CONFIGDB_URL', 'http://localhost')
+DOWNTIMEDB_URL = os.getenv('DOWNTIMEDB_URL', 'http://localhost')
 
 REST_FRAMEWORK = {
     'TEST_REQUEST_DEFAULT_FORMAT': 'json',

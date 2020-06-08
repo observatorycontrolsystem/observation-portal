@@ -817,8 +817,7 @@
                       ]
                     },
                     "filters": "air",
-                    "optical_element_groups": [
-                    ]
+                    "optical_element_groups": []
                   },
                   "__str__": "tst.domb.1m0a.nres02-nres02"
                 }
@@ -979,6 +978,408 @@
                     ]
                   },
                   "__str__": "tst.domb.2m0a.xx02-xx02"
+                },
+                {
+                  "code": "mc03",
+                  "state": "SCHEDULABLE",
+                  "science_camera": {
+                    "code": "mc03",
+                    "camera_type": {
+                      "size": "26.4x26.4",
+                      "pscale": 1.0,
+                      "default_mode": {
+                        "id": 43,
+                        "binning": 1,
+                        "overhead": 10,
+                        "readout": 10.0
+                      },
+                      "name": "2.0 meter Muscat",
+                      "code": "2M0-SCICAM-MUSCAT",
+                      "mode_set": [
+                        {
+                          "binning": 1,
+                          "overhead": 10,
+                          "readout": 10.0
+                        }
+                      ],
+                      "fixed_overhead_per_exposure": 1.0,
+                      "front_padding": 90.0,
+                      "filter_change_time": 0.0,
+                      "config_change_time": 0.0,
+                      "acquire_exposure_time": 0.0,
+                      "acquire_processing_time": 0.0,
+                      "mode_types": [
+                        {
+                          "type": "acquisition",
+                          "modes": [
+                            {
+                              "name": "Acquire Off",
+                              "overhead": 0.0,
+                              "code": "OFF",
+                              "params": {}
+                            }
+                          ],
+                          "default": "OFF"
+                        },
+                        {
+                          "type": "readout",
+                          "modes": [
+                            {
+                              "name": "Muscat Slow Readout",
+                              "overhead": 10.0,
+                              "code": "MUSCAT_SLOW",
+                              "params": {
+                                "binning": 1
+                              }
+                            }
+                          ],
+                          "default": "MUSCAT_SLOW"
+                        },
+                        {
+                          "type": "exposure",
+                          "modes": [
+                            {
+                              "name": "Muscat Synchronous Exposure Mode",
+                              "overhead": 0.0,
+                              "code": "SYNCHRONOUS",
+                              "params": {
+                                "required_fields": [
+                                  "exposure_time_g",
+                                  "exposure_time_r",
+                                  "exposure_time_i",
+                                  "exposure_time_z",
+                                  "exposure_mode"
+                                ]
+                              }
+                            },
+                            {
+                              "name": "Muscat Asynchronous Exposure Mode",
+                              "overhead": 0.0,
+                              "code": "ASYNCHRONOUS",
+                              "params": {
+                                "required_fields": [
+                                  "exposure_time_g",
+                                  "exposure_time_r",
+                                  "exposure_time_i",
+                                  "exposure_time_z",
+                                  "exposure_mode"
+                                ]
+                              }
+                            }
+                          ],
+                          "default": "SYNCHRONOUS"
+                        },
+                        {
+                          "type": "guiding",
+                          "modes": [
+                            {
+                              "name": "On",
+                              "overhead": 0.0,
+                              "code": "ON",
+                              "params": {}
+                            }
+                          ],
+                          "default": "ON"
+                        }
+                      ],
+                      "default_acceptability_threshold": 90.0,
+                      "pixels_x": 2048,
+                      "pixels_y": 2048,
+                      "max_rois": 0,
+                      "allow_self_guiding": true,
+                      "configuration_types": [
+                        "EXPOSE",
+                        "REPEAT_EXPOSE",
+                        "BIAS",
+                        "DARK",
+                        "STANDARD",
+                        "SCRIPT",
+                        "AUTO_FOCUS",
+                        "SKY_FLAT",
+                        "ENGINEERING"
+                      ]
+                    },
+                    "optical_elements": {
+                      "diffuser_g_positions": "in,out",
+                      "diffuser_r_positions": "in,out",
+                      "diffuser_i_positions": "in,out",
+                      "diffuser_z_positions": "in,out"
+                    },
+                    "optical_element_groups": [
+                      {
+                        "name": "Diffuser g'",
+                        "type": "diffuser_g_positions",
+                        "optical_elements": [
+                          {
+                            "name": "In Beam",
+                            "code": "in",
+                            "schedulable": true
+                          },
+                          {
+                            "name": "Out of Beam",
+                            "code": "out",
+                            "schedulable": true
+                          }
+                        ],
+                        "element_change_overhead": 0.0,
+                        "default": "out"
+                      },
+                      {
+                        "name": "Diffuser r'",
+                        "type": "diffuser_r_positions",
+                        "optical_elements": [
+                          {
+                            "name": "In Beam",
+                            "code": "in",
+                            "schedulable": true
+                          },
+                          {
+                            "name": "Out of Beam",
+                            "code": "out",
+                            "schedulable": true
+                          }
+                        ],
+                        "element_change_overhead": 0.0,
+                        "default": "out"
+                      },
+                      {
+                        "name": "Diffuser i'",
+                        "type": "diffuser_i_positions",
+                        "optical_elements": [
+                          {
+                            "name": "In Beam",
+                            "code": "in",
+                            "schedulable": true
+                          },
+                          {
+                            "name": "Out of Beam",
+                            "code": "out",
+                            "schedulable": true
+                          }
+                        ],
+                        "element_change_overhead": 0.0,
+                        "default": "out"
+                      },
+                      {
+                        "name": "Diffuser z'",
+                        "type": "diffuser_z_positions",
+                        "optical_elements": [
+                          {
+                            "name": "In Beam",
+                            "code": "in",
+                            "schedulable": true
+                          },
+                          {
+                            "name": "Out of Beam",
+                            "code": "out",
+                            "schedulable": true
+                          }
+                        ],
+                        "element_change_overhead": 0.0,
+                        "default": "out"
+                      }
+                    ]
+                  },
+                  "autoguider_camera": {
+                    "code": "mc03",
+                    "camera_type": {
+                      "id": 57,
+                      "size": "26.4x26.4",
+                      "pscale": 1.0,
+                      "default_mode": {
+                        "id": 43,
+                        "binning": 1,
+                        "overhead": 10,
+                        "readout": 10.0
+                      },
+                      "name": "2.0 meter Muscat",
+                      "code": "2M0-SCICAM-MUSCAT",
+                      "mode_set": [
+                        {
+                          "binning": 1,
+                          "overhead": 10,
+                          "readout": 10.0
+                        }
+                      ],
+                      "fixed_overhead_per_exposure": 1.0,
+                      "front_padding": 90.0,
+                      "filter_change_time": 0.0,
+                      "config_change_time": 0.0,
+                      "acquire_exposure_time": 0.0,
+                      "acquire_processing_time": 0.0,
+                      "mode_types": [
+                        {
+                          "type": "acquisition",
+                          "modes": [
+                            {
+                              "name": "Acquire Off",
+                              "overhead": 0.0,
+                              "code": "OFF",
+                              "params": {}
+                            }
+                          ],
+                          "default": "OFF"
+                        },
+                        {
+                          "type": "readout",
+                          "modes": [
+                            {
+                              "name": "Muscat Slow Readout",
+                              "overhead": 10.0,
+                              "code": "MUSCAT_SLOW",
+                              "params": {
+                                "binning": 1
+                              }
+                            }
+                          ],
+                          "default": "MUSCAT_SLOW"
+                        },
+                        {
+                          "type": "exposure",
+                          "modes": [
+                            {
+                              "name": "Muscat Synchronous Exposure Mode",
+                              "overhead": 0.0,
+                              "code": "SYNCHRONOUS",
+                              "params": {
+                                "required_fields": [
+                                  "exposure_time_g",
+                                  "exposure_time_r",
+                                  "exposure_time_i",
+                                  "exposure_time_z",
+                                  "exposure_mode"
+                                ]
+                              }
+                            },
+                            {
+                              "name": "Muscat Asynchronous Exposure Mode",
+                              "overhead": 0.0,
+                              "code": "ASYNCHRONOUS",
+                              "params": {
+                                "required_fields": [
+                                  "exposure_time_g",
+                                  "exposure_time_r",
+                                  "exposure_time_i",
+                                  "exposure_time_z",
+                                  "exposure_mode"
+                                ]
+                              }
+                            }
+                          ],
+                          "default": "SYNCHRONOUS"
+                        },
+                        {
+                          "type": "guiding",
+                          "modes": [
+                            {
+                              "name": "On",
+                              "overhead": 0.0,
+                              "code": "ON",
+                              "params": {}
+                            }
+                          ],
+                          "default": "ON"
+                        }
+                      ],
+                      "default_acceptability_threshold": 90.0,
+                      "pixels_x": 2048,
+                      "pixels_y": 2048,
+                      "max_rois": 0,
+                      "allow_self_guiding": true,
+                      "configuration_types": [
+                        "EXPOSE",
+                        "REPEAT_EXPOSE",
+                        "BIAS",
+                        "DARK",
+                        "STANDARD",
+                        "SCRIPT",
+                        "AUTO_FOCUS",
+                        "SKY_FLAT",
+                        "ENGINEERING"
+                      ]
+                    },
+                    "optical_elements": {
+                      "diffuser_g_positions": "in,out",
+                      "diffuser_r_positions": "in,out",
+                      "diffuser_i_positions": "in,out",
+                      "diffuser_z_positions": "in,out"
+                    },
+                    "optical_element_groups": [
+                      {
+                        "name": "Diffuser g'",
+                        "type": "diffuser_g_positions",
+                        "optical_elements": [
+                          {
+                            "name": "In Beam",
+                            "code": "in",
+                            "schedulable": true
+                          },
+                          {
+                            "name": "Out of Beam",
+                            "code": "out",
+                            "schedulable": true
+                          }
+                        ],
+                        "element_change_overhead": 0.0,
+                        "default": "out"
+                      },
+                      {
+                        "name": "Diffuser r'",
+                        "type": "diffuser_r_positions",
+                        "optical_elements": [
+                          {
+                            "name": "In Beam",
+                            "code": "in",
+                            "schedulable": true
+                          },
+                          {
+                            "name": "Out of Beam",
+                            "code": "out",
+                            "schedulable": true
+                          }
+                        ],
+                        "element_change_overhead": 0.0,
+                        "default": "out"
+                      },
+                      {
+                        "name": "Diffuser i'",
+                        "type": "diffuser_i_positions",
+                        "optical_elements": [
+                          {
+                            "name": "In Beam",
+                            "code": "in",
+                            "schedulable": true
+                          },
+                          {
+                            "name": "Out of Beam",
+                            "code": "out",
+                            "schedulable": true
+                          }
+                        ],
+                        "element_change_overhead": 0.0,
+                        "default": "out"
+                      },
+                      {
+                        "name": "Diffuser z'",
+                        "type": "diffuser_z_positions",
+                        "optical_elements": [
+                          {
+                            "name": "In Beam",
+                            "code": "in",
+                            "schedulable": true
+                          },
+                          {
+                            "name": "Out of Beam",
+                            "code": "out",
+                            "schedulable": true
+                          }
+                        ],
+                        "element_change_overhead": 0.0,
+                        "default": "out"
+                      }
+                    ]
+                  },
+                  "__str__": "tst.domb.2m0a.mc03-mc03"
                 }
               ]
             }

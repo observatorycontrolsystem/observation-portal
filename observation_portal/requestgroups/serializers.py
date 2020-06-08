@@ -20,6 +20,7 @@ from observation_portal.requestgroups.models import (
 from observation_portal.requestgroups.models import DraftRequestGroup
 from observation_portal.common.state_changes import debit_ipp_time, TimeAllocationError, validate_ipp
 from observation_portal.requestgroups.target_helpers import TARGET_TYPE_HELPER_MAP
+from observation_portal.common.mixins import ExtraParamsFormatter
 from observation_portal.common.configdb import configdb, ConfigDB, ConfigDBException
 from observation_portal.requestgroups.duration_utils import (
     get_request_duration, get_request_duration_sum, get_total_duration_dict, OVERHEAD_ALLOWANCE,
@@ -159,7 +160,7 @@ class RegionOfInterestSerializer(serializers.ModelSerializer):
         return data
 
 
-class InstrumentConfigSerializer(serializers.ModelSerializer):
+class InstrumentConfigSerializer(ExtraParamsFormatter, serializers.ModelSerializer):
     exposure_time = serializers.FloatField(required=False, allow_null=True)
     rois = RegionOfInterestSerializer(many=True, required=False)
 
@@ -190,15 +191,6 @@ class InstrumentConfigSerializer(serializers.ModelSerializer):
 
         return data
 
-    def to_internal_value(self, data):
-        data = super().to_internal_value(data)
-        for field, value in data.get('extra_params', {}).items():
-            try:
-                data['extra_params'][field] = float(value)
-            except ValueError:
-                pass
-        return data
-
     def to_representation(self, instance):
         data = super().to_representation(instance)
         if not data['rois']:
@@ -215,7 +207,7 @@ class AcquisitionConfigSerializer(serializers.ModelSerializer):
         return data
 
 
-class GuidingConfigSerializer(serializers.ModelSerializer):
+class GuidingConfigSerializer(ExtraParamsFormatter, serializers.ModelSerializer):
     class Meta:
         model = GuidingConfig
         exclude = GuidingConfig.SERIALIZER_EXCLUDE
@@ -224,7 +216,7 @@ class GuidingConfigSerializer(serializers.ModelSerializer):
         return data
 
 
-class TargetSerializer(serializers.ModelSerializer):
+class TargetSerializer(ExtraParamsFormatter, serializers.ModelSerializer):
     class Meta:
         model = Target
         exclude = Target.SERIALIZER_EXCLUDE
@@ -249,7 +241,7 @@ class TargetSerializer(serializers.ModelSerializer):
         return data
 
 
-class ConfigurationSerializer(serializers.ModelSerializer):
+class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer):
     fill_window = serializers.BooleanField(required=False, write_only=True)
     constraints = ConstraintsSerializer()
     instrument_configs = InstrumentConfigSerializer(many=True)
