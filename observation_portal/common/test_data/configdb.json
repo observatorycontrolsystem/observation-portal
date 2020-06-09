@@ -85,21 +85,24 @@
                               "code": "1m0_sbig_1",
                               "overhead": 35.0,
                               "validation_schema": {
-                                "binning": {"type": "integer", "allowed": [1], "default": 1}
+                                "bin_x": {"type": "integer", "allowed": [1], "default": 1},
+                                "bin_y": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             },
                             {
                               "code": "1m0_sbig_2",
                               "overhead": 14.5,
                               "validation_schema": {
-                                "binning": {"type": "integer", "allowed": [2], "default": 2}
+                                "bin_x": {"type": "integer", "allowed": [2], "default": 2},
+                                "bin_y": {"type": "integer", "allowed": [2], "default": 2}
                               }
                             },
                             {
                               "code": "1m0_sbig_3",
                               "overhead": 11.5,
                               "validation_schema": {
-                                "binning": {"type": "integer", "allowed": [3], "default": 3}
+                                "bin_x": {"type": "integer", "allowed": [3], "default": 3},
+                                "bin_y": {"type": "integer", "allowed": [3], "default": 3}
                               }
                             }
                           ]
@@ -212,21 +215,24 @@
                               "code": "1m0_sbig_1",
                               "overhead": 35.0,
                               "validation_schema": {
-                                "binning": {"type": "integer", "allowed": [1], "default": 1}
+                                "bin_x": {"type": "integer", "allowed": [1], "default": 1},
+                                "bin_y": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             },
                             {
                               "code": "1m0_sbig_2",
                               "overhead": 14.5,
                               "validation_schema": {
-                                "binning": {"type": "integer", "allowed": [2], "default": 2}
+                                "bin_x": {"type": "integer", "allowed": [2], "default": 2},
+                                "bin_y": {"type": "integer", "allowed": [2], "default": 2}
                               }
                             },
                             {
                               "code": "1m0_sbig_3",
                               "overhead": 11.5,
                               "validation_schema": {
-                                "binning": {"type": "integer", "allowed": [3], "default": 3}
+                                "bin_x": {"type": "integer", "allowed": [3], "default": 3},
+                                "bin_y": {"type": "integer", "allowed": [3], "default": 3}
                               }
                             }
                           ]
@@ -339,21 +345,24 @@
                               "code": "1m0_sbig_1",
                               "overhead": 35.0,
                               "validation_schema": {
-                                "binning": {"type": "integer", "allowed": [1], "default": 1}
+                                "bin_x": {"type": "integer", "allowed": [1], "default": 1},
+                                "bin_y": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             },
                             {
                               "code": "1m0_sbig_2",
                               "overhead": 14.5,
                               "validation_schema": {
-                                "binning": {"type": "integer", "allowed": [2], "default": 2}
+                                "bin_x": {"type": "integer", "allowed": [2], "default": 2},
+                                "bin_y": {"type": "integer", "allowed": [2], "default": 2}
                               }
                             },
                             {
                               "code": "1m0_sbig_3",
                               "overhead": 11.5,
                               "validation_schema": {
-                                "binning": {"type": "integer", "allowed": [3], "default": 3}
+                                "bin_x": {"type": "integer", "allowed": [3], "default": 3},
+                                "bin_y": {"type": "integer", "allowed": [3], "default": 3}
                               }
                             }
                           ]
@@ -473,7 +482,8 @@
                               "code": "2m0_floyds_1",
                               "overhead": 25.0,
                               "validation_schema": {
-                                "binning": {"type": "integer", "allowed": [1], "default": 1}
+                                "bin_x": {"type": "integer", "allowed": [1], "default": 1},
+                                "bin_y": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             }
                           ]
@@ -646,21 +656,24 @@
                               "code": "1m0_sbig_1",
                               "overhead": 35.0,
                               "validation_schema": {
-                                "binning": {"type": "integer", "allowed": [1], "default": 1}
+                                "bin_x": {"type": "integer", "allowed": [1], "default": 1},
+                                "bin_y": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             },
                             {
                               "code": "1m0_sbig_2",
                               "overhead": 14.5,
                               "validation_schema": {
-                                "binning": {"type": "integer", "allowed": [2], "default": 2}
+                                "bin_x": {"type": "integer", "allowed": [2], "default": 2},
+                                "bin_y": {"type": "integer", "allowed": [2], "default": 2}
                               }
                             },
                             {
                               "code": "1m0_sbig_3",
                               "overhead": 11.5,
                               "validation_schema": {
-                                "binning": {"type": "integer", "allowed": [3], "default": 3}
+                                "bin_x": {"type": "integer", "allowed": [3], "default": 3},
+                                "bin_y": {"type": "integer", "allowed": [3], "default": 3}
                               }
                             }
                           ]
@@ -769,14 +782,16 @@
                               "code": "1m0_nres_1",
                               "overhead": 35.0,
                               "validation_schema": {
-                                "binning": {"type": "integer", "allowed": [1], "default": 1}
+                                "bin_x": {"type": "integer", "allowed": [1], "default": 1},
+                                "bin_y": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             },
                             {
                               "code": "1m0_nres_2",
                               "overhead": 90.5,
                               "validation_schema": {
-                                "binning": {"type": "integer", "allowed": [2], "default": 2}
+                                "bin_x": {"type": "integer", "allowed": [2], "default": 2},
+                                "bin_y": {"type": "integer", "allowed": [2], "default": 2}
                               }
                             }
                           ]
@@ -888,7 +903,8 @@
                               "code": "2m0_floyds_1",
                               "overhead": 25.0,
                               "validation_schema": {
-                                "binning": {"type": "integer", "allowed": [1], "default": 1}
+                                "bin_x": {"type": "integer", "allowed": [1], "default": 1},
+                                "bin_y": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             }
                           ]
@@ -1029,7 +1045,8 @@
                               "overhead": 10.0,
                               "code": "MUSCAT_SLOW",
                               "validation_schema": {
-                                "binning": {"type": "integer", "allowed": [1], "default": 1}
+                                "bin_x": {"type": "integer", "allowed": [1], "default": 1},
+                                "bin_y": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             }
                           ],
@@ -1228,7 +1245,8 @@
                               "overhead": 10.0,
                               "code": "MUSCAT_SLOW",
                               "validation_schema": {
-                                "binning": {"type": "integer", "allowed": [1], "default": 1}
+                                "bin_x": {"type": "integer", "allowed": [1], "default": 1},
+                                "bin_y": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             }
                           ],
@@ -1463,21 +1481,24 @@
                               "code": "1m0_sbig_1",
                               "overhead": 35.0,
                               "validation_schema": {
-                                "binning": {"type": "integer", "allowed": [1], "default": 1}
+                                "bin_x": {"type": "integer", "allowed": [1], "default": 1},
+                                "bin_y": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             },
                             {
                               "code": "1m0_sbig_2",
                               "overhead": 14.5,
                               "validation_schema": {
-                                "binning": {"type": "integer", "allowed": [2], "default": 2}
+                                "bin_x": {"type": "integer", "allowed": [2], "default": 2},
+                                "bin_y": {"type": "integer", "allowed": [2], "default": 2}
                               }
                             },
                             {
                               "code": "1m0_sbig_3",
                               "overhead": 11.5,
                               "validation_schema": {
-                                "binning": {"type": "integer", "allowed": [3], "default": 3}
+                                "bin_x": {"type": "integer", "allowed": [3], "default": 3},
+                                "bin_y": {"type": "integer", "allowed": [3], "default": 3}
                               }
                             }
                           ]

@@ -344,7 +344,7 @@ class TestUserPostRequestApi(SetTimeMixin, APITestCase):
         bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['slit'] = 'slit_6.0as'
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('Acquisition mode BRIGHTEST requirements are not met: extra_params[acquire_radius error: required field.]', str(response.content))
+        self.assertIn('Acquisition mode BRIGHTEST requirements are not met: extra_params{acquire_radius error: required field}', str(response.content))
 
     def test_post_requestgroup_acquire_mode_brightest(self):
         good_data = self.generic_payload.copy()
@@ -1459,7 +1459,7 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         bad_data['requests'][0]['configurations'][0]['acquisition_config']['mode'] = 'MYMODE'
         bad_data['requests'][0]['configurations'][0]['acquisition_config']['extra_params']['field1'] = 'some-arg'
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertIn('Acquisition mode MYMODE requirements are not met: extra_params[field2 error: required field. field3 error: required field.]', str(response.content))
+        self.assertIn('Acquisition mode MYMODE requirements are not met: extra_params{field2 error: required field, field3 error: required field}', str(response.content))
 
     def test_invalid_filter_for_instrument(self):
         bad_data = self.generic_payload.copy()
@@ -1572,7 +1572,7 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_x'] = 5
         bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_y'] = 5
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertIn('Binning 5 is not a valid binning for readout mode 1m0_sbig_2', str(response.content))
+        self.assertIn('Readout mode 1m0_sbig_2 requirements are not met: bin_x error: unallowed value 5, bin_y error: unallowed value 5', str(response.content))
         self.assertEqual(response.status_code, 400)
 
     def test_readout_mode_sets_default_binning(self):

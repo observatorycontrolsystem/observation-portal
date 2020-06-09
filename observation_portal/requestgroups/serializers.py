@@ -81,14 +81,18 @@ class ModeValidationHelper:
         return ''
 
     def _mode_validation(self, mode_value: str, config: dict) -> dict:
+        """ Returns tuple of the potentially modified config dict and an error string"""
         mode = configdb.get_mode_with_code(self._instrument_type, mode_value, self._mode_type)
         if mode.get('validation_schema'):
             validator = Validator(mode['validation_schema'])
             validator.allow_unknown = True
-            validator.validate(config)
-            return validator.errors
+            validated_config = validator.validated(config)
+            if validator.errors:
+                return config, validator.errors
+            else:
+                return validated_config, {}
 
-        return {}
+        return config, {}
 
     def mode_is_not_set(self, config: dict) -> bool:
         return self._mode_key not in config or not config[self._mode_key]
@@ -108,18 +112,21 @@ class ModeValidationHelper:
             )
         return mode
 
-    def get_mode_error_msg(self, mode_value: str, config: dict) -> str:
+    def get_validated_config_and_error(self, mode_value: str, config: dict) -> str:
         """Return an error message if there is a problem with the mode"""
+        error_str = ''
         if self._mode_type in self._modes:
             # Check if the mode exists
             unavailable_msg = self._unavailable_msg(mode_value)
             if unavailable_msg:
-                return unavailable_msg
+                return config, unavailable_msg
             # Check if there are any required params that are not set
-            validation_errors = self._mode_validation(mode_value, config)
+            validated_config, validation_errors = self._mode_validation(mode_value, config)
             if validation_errors:
-                return f'{self._mode_type.capitalize()} mode {mode_value} requirements are not met: {cerberus_validation_error_to_str(validation_errors)}'
-        return ''
+                return config, f'{self._mode_type.capitalize()} mode {mode_value} requirements are not met: {cerberus_validation_error_to_str(validation_errors)}'
+            else:
+                return validated_config, ''
+        return config, error_str
 
 
 class CadenceSerializer(serializers.Serializer):
@@ -305,7 +312,10 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
             else:
                 guiding_config['mode'] = GuidingConfig.OFF
 
-        guide_mode_error_msg = guide_validation_helper.get_mode_error_msg(guiding_config['mode'], guiding_config)
+        guiding_config, guide_mode_error_msg = guide_validation_helper.get_validated_config_and_error(
+            guiding_config['mode'], guiding_config
+        )
+        data['guiding_config'] = guiding_config
         if guide_mode_error_msg:
             raise serializers.ValidationError(_(guide_mode_error_msg))
 
@@ -333,13 +343,15 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
                 else:
                     acquisition_config['mode'] = AcquisitionConfig.OFF
 
-            acquire_mode_error_msg = acquire_validation_helper.get_mode_error_msg(acquisition_config['mode'],
-                                                                                  acquisition_config)
+            acquisition_config, acquire_mode_error_msg = acquire_validation_helper.get_validated_config_and_error(
+                acquisition_config['mode'], acquisition_config
+            )
+            data['acquisition_config'] = acquisition_config
             if acquire_mode_error_msg:
                 raise serializers.ValidationError(_(acquire_mode_error_msg))
 
         available_optical_elements = configdb.get_optical_elements(instrument_type)
-        for instrument_config in data['instrument_configs']:
+        for i, instrument_config in enumerate(data['instrument_configs']):
             # Validate the readout mode and the binning. Readout modes and binning are tied
             # together- If one is set, we can determine the other.
             # TODO: Remove the binning checks when binnings are removed entirely
@@ -352,9 +364,6 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
                         raise serializers.ValidationError(_(readout_mode_to_set['error']))
                     if readout_mode_to_set['mode']:
                         instrument_config['mode'] = readout_mode_to_set['mode']['code']
-                        instrument_config['bin_x'] = readout_mode_to_set['mode']['validation_schema']['binning']['default']
-                        instrument_config['bin_y'] = readout_mode_to_set['mode']['validation_schema']['binning']['default']
-
                 elif 'bin_x' in instrument_config:
                     # A binning is set already - figure out what the readout mode should be from that
                     try:
@@ -363,25 +372,13 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
                         )['code']
                     except ConfigDBException as cdbe:
                         raise serializers.ValidationError(_(str(cdbe)))
-            else:
-                # A readout mode is set - validate the mode
-                readout_error_msg = readout_validation_helper.get_mode_error_msg(instrument_config['mode'],
-                                                                                 instrument_config)
-                if readout_error_msg:
-                    raise serializers.ValidationError(_(readout_error_msg))
-
-                # At this point the readout mode that is set is valid. Now either set the binnings, or make
-                # sure that those that are set are ok
-                readout_mode = configdb.get_mode_with_code(instrument_type, instrument_config['mode'], 'readout')
-                if 'bin_x' not in instrument_config:
-                    instrument_config['bin_x'] = readout_mode['validation_schema']['binning']['default']
-                    instrument_config['bin_y'] = readout_mode['validation_schema']['binning']['default']
-
-                elif instrument_config['bin_x'] != readout_mode['validation_schema']['binning']['default']:
-                    raise serializers.ValidationError(_(
-                        f'Binning {instrument_config["bin_x"]} is not a valid binning for readout mode '
-                        f'{instrument_config["mode"]} for instrument type {instrument_type}'
-                    ))
+            # A readout mode is now set - validate the mode
+            instrument_config, readout_error_msg = readout_validation_helper.get_validated_config_and_error(
+                instrument_config['mode'], instrument_config
+            )
+            data['instrument_configs'][i] = instrument_config
+            if readout_error_msg:
+                raise serializers.ValidationError(_(readout_error_msg))
 
             # Validate the rotator modes
             if 'rotator' in modes:
@@ -393,8 +390,10 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
                     if rotator_mode_to_set['mode']:
                         instrument_config['rotator_mode'] = rotator_mode_to_set['mode']['code']
 
-                rotator_error_msg = rotator_mode_validation_helper.get_mode_error_msg(instrument_config['rotator_mode'],
-                                                                                      instrument_config)
+                instrument_config, rotator_error_msg = rotator_mode_validation_helper.get_validated_config_and_error(
+                    instrument_config['rotator_mode'], instrument_config
+                )
+                data['instrument_configs'][i] = instrument_config
                 if rotator_error_msg:
                     raise serializers.ValidationError(_(rotator_error_msg))
 
@@ -466,12 +465,12 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
                     if exposure_mode_to_set['mode']:
                         instrument_config['extra_params']['exposure_mode'] = exposure_mode_to_set['mode']['code']
 
-                exposure_mode_error_msg = exposure_mode_validation_helper.get_mode_error_msg(
-                    instrument_config['extra_params']['exposure_mode'],
-                    instrument_config
+                instrument_config, exposure_mode_error = exposure_mode_validation_helper.get_validated_config_and_error(
+                    instrument_config['extra_params']['exposure_mode'], instrument_config
                 )
-                if exposure_mode_error_msg:
-                    raise serializers.ValidationError(_(exposure_mode_error_msg))
+                data['instrument_configs'][i] = instrument_config
+                if exposure_mode_error:
+                    raise serializers.ValidationError(_(exposure_mode_error))
 
             # Validate the exposure times for MUSCAT are positive numbers
             if instrument_type.upper() == '2M0-SCICAM-MUSCAT':
