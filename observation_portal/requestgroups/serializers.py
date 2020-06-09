@@ -472,19 +472,9 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
                 if exposure_mode_error:
                     raise serializers.ValidationError(_(exposure_mode_error))
 
-            # Validate the exposure times for MUSCAT are positive numbers
-            if instrument_type.upper() == '2M0-SCICAM-MUSCAT':
-                exposure_fields = ['exposure_time_g', 'exposure_time_r', 'exposure_time_i', 'exposure_time_z']
-                for exposure_field in exposure_fields:
-                    try:
-                        exposure_time = float(instrument_config['extra_params'][exposure_field])
-                        if exposure_time < 0:
-                            raise serializers.ValidationError(_(f'Muscat instrument extra_param {exposure_field} must be a positive number.'))
-                    except ValueError:
-                        raise serializers.ValidationError(_(f'Muscat instrument extra_param {exposure_field} must be a positive number.'))
             # This applies the exposure_time requirement only to non-muscat instruments.
             # I wish I could figure out a better way to do this, but it needs info about the instrument_type which is a level up.
-            else:
+            if instrument_type.upper() != '2M0-SCICAM-MUSCAT':
                 if instrument_config.get('exposure_time', None) is None:
                     raise serializers.ValidationError({'instrument_configs': [{'exposure_time': [_('This value cannot be null.')]}]})
                 if isnan(instrument_config.get('exposure_time')):
