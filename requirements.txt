@@ -15,7 +15,7 @@ django-dramatiq>=0.7,<0.8
 django-storages>=1.7,<1.8
 time_intervals<2.0
 numpy>=1.16,<1.17
-rise-set==0.4.12
+ocs-rise-set==0.5.1
 elasticsearch>=5,<6
 WeasyPrint>=0.47<0.48
 PyPDF2>=1.26,<1.27
