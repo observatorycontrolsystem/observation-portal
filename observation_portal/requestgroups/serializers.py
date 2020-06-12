@@ -47,86 +47,90 @@ def cerberus_validation_error_to_str(validation_errors: dict) -> str:
 
 
 class ModeValidationHelper:
-    """Class used to validate modes of different types"""
-    def __init__(self, mode_type, instrument_type, default_modes, modes):
+    """Class used to validate GenericModes of different types defined in ConfigDB"""
+    def __init__(self, mode_type, instrument_type, modes_group, mode_key='mode', is_extra_param_mode=False):
         self._mode_type = mode_type.lower()
         self._instrument_type = instrument_type
-        self._default_modes = default_modes
-        self._modes = modes
-        self._set_mode_key(self._mode_type)
+        self._modes_group = modes_group
+        self._mode_key = mode_key
+        self.is_extra_param_mode = is_extra_param_mode
+        self.is_validated = False
+        self.validation_errors = ''
         self._modes_by_code = {}
 
-    def _set_mode_key(self, mode_type):
-        if mode_type == 'rotator' or mode_type == 'exposure':
-            self._mode_key = mode_type + '_mode'
+    def _get_mode_from_config_dict(self, config_dict):
+        if self.is_extra_param_mode:
+            return config_dict.get('extra_params', {}).get(self._mode_key, '')
+        return config_dict.get(self._mode_key, '')
+
+    def _set_mode_in_config_dict(self, mode_value, config_dict):
+        if self.is_extra_param_mode:
+            if 'extra_params' not in config_dict:
+                config_dict['extra_params'] = {}
+            config_dict['extra_params'][self._mode_key] = mode_value
         else:
-            self._mode_key = 'mode'
+            config_dict[self._mode_key] = mode_value
+        return config_dict
 
-    def _possible_modes(self) -> list:
-        possible_modes = []
-        if self._mode_type in self._default_modes:
-            possible_modes.append(self._default_modes[self._mode_type])
-        elif self._mode_type in self._modes:
-            # There are modes to choose from. This would normally not happen since defaults should be set.
-            possible_modes.extend(self._modes[self._mode_type]['modes'])
-        return possible_modes
+    def validate(self, config_dict):
+        """Validates the mode using its relevant configuration dict
 
-    def _unavailable_msg(self, mode_value: str) -> str:
-        if self._mode_type in self._modes:
-            if not mode_value.lower() in [m['code'].lower() for m in self._modes[self._mode_type]['modes']]:
-                return (
+        Returns a validated configuration dict with the mode filled in. If no mode is given in the input
+        dict, a default mode will be filled in if availble. If the mode has a validation_schema, it will
+        be used to validate the input dict. If any error is encountered during the process, A serializer
+        ValidationError will be raised with the error.
+
+        Args:
+            config_dict (dict): A dictionary of input structure that this mode is a part of
+        Returns:
+            dict: A version of the input dictionary with defaults filled in based on the validation_schema
+        Raises:
+            serializers.ValidationError: If validation fails
+        """
+        mode_value = self._get_mode_from_config_dict(config_dict)
+        if not mode_value:
+            mode_value = self.get_default_mode()
+            if not mode_value:
+                return config_dict
+        if not self.mode_exists(mode_value):
+            return config_dict
+        config_dict = self._set_mode_in_config_dict(mode_value, config_dict)
+        mode = configdb.get_mode_with_code(self._instrument_type, mode_value, self._mode_type)
+        validation_schema = mode.get('validation_schema', {})
+        validator = Validator(validation_schema)
+        validator.allow_unknown = True
+        validated_config_dict = validator.validated(config_dict) or config_dict.copy()
+        if validator.errors:
+            raise serializers.ValidationError(_(
+                f'{self._mode_type.capitalize()} mode {mode_value} requirements are not met: {cerberus_validation_error_to_str(validator.errors)}'
+            ))
+        self.is_validated = True
+        return validated_config_dict
+
+    def mode_exists(self, mode_value: str) -> str:
+        if self._modes_group and mode_value:
+            if not mode_value.lower() in [m['code'].lower() for m in self._modes_group['modes']]:
+                raise serializers.ValidationError(_(
                     f'{self._mode_type.capitalize()} mode {mode_value} is not available for '
                     f'instrument type {self._instrument_type}'
-                )
-        return ''
+                ))
+        return True
 
-    def _mode_validation(self, mode_value: str, config: dict) -> dict:
-        """ Returns tuple of the potentially modified config dict and an error string"""
-        mode = configdb.get_mode_with_code(self._instrument_type, mode_value, self._mode_type)
-        if mode.get('validation_schema'):
-            validator = Validator(mode['validation_schema'])
-            validator.allow_unknown = True
-            validated_config = validator.validated(config)
-            if validator.errors:
-                return config, validator.errors
-            else:
-                return validated_config, {}
-
-        return config, {}
-
-    def mode_is_not_set(self, config: dict) -> bool:
-        return self._mode_key not in config or not config[self._mode_key]
-
-    def get_mode_to_set(self) -> dict:
+    def get_default_mode(self) -> dict:
         """Choose a mode to set"""
-        mode = {'error': '', 'mode': {}}
-        possible_modes = self._possible_modes()
+        possible_modes = self._modes_group['modes']
         if len(possible_modes) == 1:
             # There is only one mode to choose from, so set that.
-            mode['mode'] = possible_modes[0]
+            return possible_modes[0]['code']
+        elif self._modes_group.get('default'):
+            return self._modes_group['default']
         elif len(possible_modes) > 1:
             # There are many possible modes, make the user choose.
-            mode['error'] = (
+            raise serializers.ValidationError(_(
                 f'Must set a {self._mode_type} mode, choose '
-                f'from {", ".join([mode["code"] for mode in self._modes[self._mode_type]["modes"]])}'
-            )
-        return mode
-
-    def get_validated_config_and_error(self, mode_value: str, config: dict) -> str:
-        """Return an error message if there is a problem with the mode"""
-        error_str = ''
-        if self._mode_type in self._modes:
-            # Check if the mode exists
-            unavailable_msg = self._unavailable_msg(mode_value)
-            if unavailable_msg:
-                return config, unavailable_msg
-            # Check if there are any required params that are not set
-            validated_config, validation_errors = self._mode_validation(mode_value, config)
-            if validation_errors:
-                return config, f'{self._mode_type.capitalize()} mode {mode_value} requirements are not met: {cerberus_validation_error_to_str(validation_errors)}'
-            else:
-                return validated_config, ''
-        return config, error_str
+                f'from {", ".join([mode["code"] for mode in self._modes_group["modes"]])}'
+            ))
+        return ''
 
 
 class CadenceSerializer(serializers.Serializer):
@@ -207,7 +211,7 @@ class InstrumentConfigSerializer(ExtraParamsFormatter, serializers.ModelSerializ
         return data
 
 
-class AcquisitionConfigSerializer(serializers.ModelSerializer):
+class AcquisitionConfigSerializer(ExtraParamsFormatter, serializers.ModelSerializer):
     class Meta:
         model = AcquisitionConfig
         exclude = AcquisitionConfig.SERIALIZER_EXCLUDE
@@ -302,22 +306,13 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
             raise serializers.ValidationError(_(f'Multiple instrument configs are not allowed for type {data["type"]}'))
 
         # Validate the guide mode
-        guide_validation_helper = ModeValidationHelper('guiding', instrument_type, default_modes, modes)
-        if guide_validation_helper.mode_is_not_set(guiding_config):
-            guide_mode_to_set = guide_validation_helper.get_mode_to_set()
-            if guide_mode_to_set['error']:
-                raise serializers.ValidationError(_(guide_mode_to_set['error']))
-            if guide_mode_to_set['mode']:
-                guiding_config['mode'] = guide_mode_to_set['mode']['code']
-            else:
-                guiding_config['mode'] = GuidingConfig.OFF
+        guide_validation_helper = ModeValidationHelper('guiding', instrument_type, modes['guiding'])
 
-        guiding_config, guide_mode_error_msg = guide_validation_helper.get_validated_config_and_error(
-            guiding_config['mode'], guiding_config
-        )
+        guiding_config = guide_validation_helper.validate(guiding_config)
+        if not guiding_config.get('mode'):
+            # Guiding modes have an implicit default of OFF (we could just put this in all relevent validation_schema)
+            guiding_config['mode'] = GuidingConfig.OFF
         data['guiding_config'] = guiding_config
-        if guide_mode_error_msg:
-            raise serializers.ValidationError(_(guide_mode_error_msg))
 
         if configdb.is_spectrograph(instrument_type) and data['type'] not in ['LAMP_FLAT', 'ARC', 'NRES_BIAS', 'NRES_DARK']:
             if 'optional' in guiding_config and guiding_config['optional']:
@@ -333,69 +328,37 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
         else:
             # Validate acquire modes
             acquisition_config = data['acquisition_config']
-            acquire_validation_helper = ModeValidationHelper('acquisition', instrument_type, default_modes, modes)
-            if acquire_validation_helper.mode_is_not_set(acquisition_config):
-                acquire_mode_to_set = acquire_validation_helper.get_mode_to_set()
-                if acquire_mode_to_set['error']:
-                    raise serializers.ValidationError(_(acquire_mode_to_set['error']))
-                if acquire_mode_to_set['mode']:
-                    acquisition_config['mode'] = acquire_mode_to_set['mode']['code']
-                else:
-                    acquisition_config['mode'] = AcquisitionConfig.OFF
-
-            acquisition_config, acquire_mode_error_msg = acquire_validation_helper.get_validated_config_and_error(
-                acquisition_config['mode'], acquisition_config
-            )
+            acquire_validation_helper = ModeValidationHelper('acquisition', instrument_type, modes['acquisition'])
+            acquisition_config = acquire_validation_helper.validate(acquisition_config)
+            if not acquisition_config.get('mode'):
+                # Acquisition modes have an implicit default of OFF (we could just put this in all relevent validation_schema)
+                acquisition_config['mode'] = AcquisitionConfig.OFF
             data['acquisition_config'] = acquisition_config
-            if acquire_mode_error_msg:
-                raise serializers.ValidationError(_(acquire_mode_error_msg))
 
         available_optical_elements = configdb.get_optical_elements(instrument_type)
         for i, instrument_config in enumerate(data['instrument_configs']):
             # Validate the readout mode and the binning. Readout modes and binning are tied
             # together- If one is set, we can determine the other.
             # TODO: Remove the binning checks when binnings are removed entirely
-            readout_validation_helper = ModeValidationHelper('readout', instrument_type, default_modes, modes)
-            if readout_validation_helper.mode_is_not_set(instrument_config):
-                if 'bin_x' not in instrument_config and 'bin_y' not in instrument_config:
-                    # Set the readout mode as well as the binning
-                    readout_mode_to_set = readout_validation_helper.get_mode_to_set()
-                    if readout_mode_to_set['error']:
-                        raise serializers.ValidationError(_(readout_mode_to_set['error']))
-                    if readout_mode_to_set['mode']:
-                        instrument_config['mode'] = readout_mode_to_set['mode']['code']
-                elif 'bin_x' in instrument_config:
-                    # A binning is set already - figure out what the readout mode should be from that
-                    try:
-                        instrument_config['mode'] = configdb.get_readout_mode_with_binning(
-                            instrument_type, instrument_config['bin_x']
-                        )['code']
-                    except ConfigDBException as cdbe:
-                        raise serializers.ValidationError(_(str(cdbe)))
-            # A readout mode is now set - validate the mode
-            instrument_config, readout_error_msg = readout_validation_helper.get_validated_config_and_error(
-                instrument_config['mode'], instrument_config
-            )
+            readout_mode = instrument_config.get('mode', '')
+            if not readout_mode and 'bin_x' in instrument_config:
+                # A binning is set already - figure out what the readout mode should be from that
+                try:
+                    readout_mode = instrument_config['mode'] = configdb.get_readout_mode_with_binning(
+                        instrument_type, instrument_config['bin_x']
+                    )['code']
+                except ConfigDBException as cdbe:
+                    raise serializers.ValidationError(_(str(cdbe)))
+            readout_validation_helper = ModeValidationHelper('readout', instrument_type, modes['readout'])
+            instrument_config = readout_validation_helper.validate(instrument_config)
             data['instrument_configs'][i] = instrument_config
-            if readout_error_msg:
-                raise serializers.ValidationError(_(readout_error_msg))
 
             # Validate the rotator modes
             if 'rotator' in modes:
-                rotator_mode_validation_helper = ModeValidationHelper('rotator', instrument_type, default_modes, modes)
-                if rotator_mode_validation_helper.mode_is_not_set(instrument_config):
-                    rotator_mode_to_set = rotator_mode_validation_helper.get_mode_to_set()
-                    if rotator_mode_to_set['error']:
-                        raise serializers.ValidationError(_(rotator_mode_to_set['error']))
-                    if rotator_mode_to_set['mode']:
-                        instrument_config['rotator_mode'] = rotator_mode_to_set['mode']['code']
-
-                instrument_config, rotator_error_msg = rotator_mode_validation_helper.get_validated_config_and_error(
-                    instrument_config['rotator_mode'], instrument_config
-                )
+                rotator_mode_validation_helper = ModeValidationHelper('rotator', instrument_type, modes['rotator'],
+                                                                      mode_key='rotator_mode')
+                instrument_config = rotator_mode_validation_helper.validate(instrument_config)
                 data['instrument_configs'][i] = instrument_config
-                if rotator_error_msg:
-                    raise serializers.ValidationError(_(rotator_error_msg))
 
             # Check that the optical elements specified are valid in configdb
             for oe_type, value in instrument_config.get('optical_elements', {}).items():
@@ -456,21 +419,11 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
 
             # Validate the exposure modes
             if 'exposure' in modes:
-                exposure_mode_validation_helper = ModeValidationHelper('exposure', instrument_type, default_modes,
-                                                                       modes)
-                if exposure_mode_validation_helper.mode_is_not_set(instrument_config['extra_params']):
-                    exposure_mode_to_set = exposure_mode_validation_helper.get_mode_to_set()
-                    if exposure_mode_to_set['error']:
-                        raise serializers.ValidationError(_(exposure_mode_to_set['error']))
-                    if exposure_mode_to_set['mode']:
-                        instrument_config['extra_params']['exposure_mode'] = exposure_mode_to_set['mode']['code']
-
-                instrument_config, exposure_mode_error = exposure_mode_validation_helper.get_validated_config_and_error(
-                    instrument_config['extra_params']['exposure_mode'], instrument_config
+                exposure_mode_validation_helper = ModeValidationHelper(
+                    'exposure', instrument_type, modes['exposure'], mode_key='exposure_mode', is_extra_param_mode=True
                 )
+                instrument_config = exposure_mode_validation_helper.validate(instrument_config)
                 data['instrument_configs'][i] = instrument_config
-                if exposure_mode_error:
-                    raise serializers.ValidationError(_(exposure_mode_error))
 
             # This applies the exposure_time requirement only to non-muscat instruments.
             # I wish I could figure out a better way to do this, but it needs info about the instrument_type which is a level up.
