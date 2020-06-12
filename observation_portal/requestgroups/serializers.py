@@ -209,7 +209,7 @@ class InstrumentConfigSerializer(ExtraParamsFormatter, serializers.ModelSerializ
         return data
 
 
-class AcquisitionConfigSerializer(serializers.ModelSerializer):
+class AcquisitionConfigSerializer(ExtraParamsFormatter, serializers.ModelSerializer):
     class Meta:
         model = AcquisitionConfig
         exclude = AcquisitionConfig.SERIALIZER_EXCLUDE
