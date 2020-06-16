@@ -16,6 +16,8 @@ def expire_access_tokens():
 
 @dramatiq.actor()
 def send_mail(*args, **kwargs):
+    # Add logging for emails - args[0] is subject and args[3] is recipients
+    logger.info(f"Sending email to {','.join(args[3])} with subject {args[0]}")
     django_send_mail(*args, **kwargs)
 
 
