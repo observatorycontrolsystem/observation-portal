@@ -47,7 +47,7 @@ def on_summary_update_time_accounting(current, instance):
 
 
 def configuration_time_used(summary, observation_type):
-    """ Calculates the block bounded time completed for time accounting purposes """
+    """ Calculates the observation bounded time completed for time accounting purposes """
     configuration_time = timedelta(seconds=0)
     configuration_time += summary.end - summary.start
 

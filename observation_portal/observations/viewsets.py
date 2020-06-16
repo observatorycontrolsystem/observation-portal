@@ -116,7 +116,7 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
         """
         cache_key = 'observation_portal_last_schedule_time'
         if not isinstance(request.data, list):
-            # Just do the default create for the single block case
+            # Just do the default create for the single observation case
             created_obs = super().create(request, args, kwargs)
             site = request.data['site']
             cache.set(cache_key + f"_{site}", timezone.now(), None)
