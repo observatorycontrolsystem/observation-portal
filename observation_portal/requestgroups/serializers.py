@@ -35,14 +35,12 @@ logger = logging.getLogger(__name__)
 def cerberus_validation_error_to_str(validation_errors: dict) -> str:
     error_str = ''
     for field, value in validation_errors.items():
-        if isinstance(value, dict) or (isinstance(value, list) and len(value) == 1 and isinstance(value[0], dict)):
+        if (isinstance(value, list) and len(value) == 1 and isinstance(value[0], dict)):
             error_str += f'{field}{{{cerberus_validation_error_to_str(value[0])}}}'
         else:
             error_str += f'{field} error: {", ".join(value)}, '
 
-    error_str = error_str.rstrip()
-    if error_str[-1] == ',':
-        error_str = error_str[:-1]
+    error_str = error_str.rstrip(', ')
     return error_str
 
 
@@ -107,7 +105,7 @@ class ModeValidationHelper:
         self.is_validated = True
         return validated_config_dict
 
-    def mode_exists(self, mode_value: str) -> str:
+    def mode_exists(self, mode_value: str) -> bool:
         if self._modes_group and mode_value:
             if not mode_value.lower() in [m['code'].lower() for m in self._modes_group['modes']]:
                 raise serializers.ValidationError(_(
@@ -116,7 +114,7 @@ class ModeValidationHelper:
                 ))
         return True
 
-    def get_default_mode(self) -> dict:
+    def get_default_mode(self) -> str:
         """Choose a mode to set"""
         possible_modes = self._modes_group['modes']
         if len(possible_modes) == 1:
