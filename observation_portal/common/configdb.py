@@ -420,24 +420,6 @@ class ConfigDB(object):
 
         raise ConfigDBException(f'No readout mode found with binning {binning} for instrument type {instrument_type}')
 
-    def get_default_modes_by_type(self, instrument_type: str, mode_type: str = '') -> dict:
-        """Get the default mode of each available mode_type.
-
-        Parameters:
-            instrument_type: Instrument type for which to get the default mode
-            mode_type: Mode type to restrict to, empty string is no restriction
-        Returns:
-             Default modes
-        """
-        modes = self.get_modes_by_type(instrument_type, mode_type)
-        default_modes = {}
-        for m_type, m_set in modes.items():
-            for mode in m_set['modes']:
-                if 'default' in m_set and mode['code'] == m_set['default']:
-                    default_modes[m_type] = mode
-                    break
-        return default_modes
-
     def get_binnings(self, instrument_type: str) -> set:
         """Create a set of available binning modes.
 
