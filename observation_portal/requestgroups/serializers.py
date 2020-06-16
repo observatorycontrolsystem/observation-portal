@@ -53,9 +53,6 @@ class ModeValidationHelper:
         self._modes_group = modes_group
         self._mode_key = mode_key
         self.is_extra_param_mode = is_extra_param_mode
-        self.is_validated = False
-        self.validation_errors = ''
-        self._modes_by_code = {}
 
     def _get_mode_from_config_dict(self, config_dict):
         if self.is_extra_param_mode:
@@ -103,7 +100,6 @@ class ModeValidationHelper:
             raise serializers.ValidationError(_(
                 f'{self._mode_type.capitalize()} mode {mode_value} requirements are not met: {cerberus_validation_error_to_str(validator.errors)}'
             ))
-        self.is_validated = True
         return validated_config_dict
 
     def mode_exists(self, mode_value: str) -> bool:
