@@ -84,22 +84,25 @@
                             {
                               "code": "1m0_sbig_1",
                               "overhead": 35.0,
-                              "params": {
-                                "binning": 1
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [1], "default": 1},
+                                "bin_y": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             },
                             {
                               "code": "1m0_sbig_2",
                               "overhead": 14.5,
-                              "params": {
-                                "binning": 2
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [2], "default": 2},
+                                "bin_y": {"type": "integer", "allowed": [2], "default": 2}
                               }
                             },
                             {
                               "code": "1m0_sbig_3",
                               "overhead": 11.5,
-                              "params": {
-                                "binning": 3
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [3], "default": 3},
+                                "bin_y": {"type": "integer", "allowed": [3], "default": 3}
                               }
                             }
                           ]
@@ -111,7 +114,7 @@
                             {
                               "code": "OFF",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ]
                         },
@@ -122,12 +125,12 @@
                             {
                               "code": "OFF",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             },
                             {
                               "code": "ON",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ]
                         }
@@ -211,22 +214,25 @@
                             {
                               "code": "1m0_sbig_1",
                               "overhead": 35.0,
-                              "params": {
-                                "binning": 1
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [1], "default": 1},
+                                "bin_y": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             },
                             {
                               "code": "1m0_sbig_2",
                               "overhead": 14.5,
-                              "params": {
-                                "binning": 2
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [2], "default": 2},
+                                "bin_y": {"type": "integer", "allowed": [2], "default": 2}
                               }
                             },
                             {
                               "code": "1m0_sbig_3",
                               "overhead": 11.5,
-                              "params": {
-                                "binning": 3
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [3], "default": 3},
+                                "bin_y": {"type": "integer", "allowed": [3], "default": 3}
                               }
                             }
                           ]
@@ -238,7 +244,7 @@
                             {
                               "code": "OFF",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ]
                         },
@@ -249,12 +255,12 @@
                             {
                               "code": "OFF",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             },
                             {
                               "code": "ON",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ]
                         }
@@ -338,22 +344,25 @@
                             {
                               "code": "1m0_sbig_1",
                               "overhead": 35.0,
-                              "params": {
-                                "binning": 1
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [1], "default": 1},
+                                "bin_y": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             },
                             {
                               "code": "1m0_sbig_2",
                               "overhead": 14.5,
-                              "params": {
-                                "binning": 2
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [2], "default": 2},
+                                "bin_y": {"type": "integer", "allowed": [2], "default": 2}
                               }
                             },
                             {
                               "code": "1m0_sbig_3",
                               "overhead": 11.5,
-                              "params": {
-                                "binning": 3
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [3], "default": 3},
+                                "bin_y": {"type": "integer", "allowed": [3], "default": 3}
                               }
                             }
                           ]
@@ -365,7 +374,7 @@
                             {
                               "code": "OFF",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ]
                         },
@@ -376,12 +385,12 @@
                             {
                               "code": "OFF",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             },
                             {
                               "code": "ON",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ]
                         }
@@ -472,8 +481,9 @@
                             {
                               "code": "2m0_floyds_1",
                               "overhead": 25.0,
-                              "params": {
-                                "binning": 1
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [1], "default": 1},
+                                "bin_y": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             }
                           ]
@@ -485,15 +495,15 @@
                             {
                               "code": "WCS",
                               "overhead": 90.0,
-                              "params": {}
+                              "validation_schema": {}
                             },
                             {
                               "code": "BRIGHTEST",
                               "overhead": 90.0,
-                              "params": {
-                                "required_fields": [
-                                  "acquire_radius"
-                                ]
+                              "validation_schema": {
+                                "extra_params": {"type": "dict", "schema": {
+                                  "acquire_radius": {"type": "float", "min": 0, "max": 15, "required": true}
+                                }}
                               }
                             }
                           ]
@@ -505,7 +515,7 @@
                             {
                               "code": "ON",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ]
                         },
@@ -516,15 +526,15 @@
                             {
                               "code": "VFLOAT",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             },
                             {
                               "code": "SKY",
                               "overhead": 0.0,
-                              "params": {
-                                "required_fields": [
-                                  "rotator_angle"
-                                ]
+                              "validation_schema": {
+                                "extra_params": {"type": "dict", "schema": {
+                                  "rotator_angle": {"type": "float", "min": 0, "max": 360}
+                                }}
                               }
                             }
                           ]
@@ -645,22 +655,25 @@
                             {
                               "code": "1m0_sbig_1",
                               "overhead": 35.0,
-                              "params": {
-                                "binning": 1
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [1], "default": 1},
+                                "bin_y": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             },
                             {
                               "code": "1m0_sbig_2",
                               "overhead": 14.5,
-                              "params": {
-                                "binning": 2
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [2], "default": 2},
+                                "bin_y": {"type": "integer", "allowed": [2], "default": 2}
                               }
                             },
                             {
                               "code": "1m0_sbig_3",
                               "overhead": 11.5,
-                              "params": {
-                                "binning": 3
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [3], "default": 3},
+                                "bin_y": {"type": "integer", "allowed": [3], "default": 3}
                               }
                             }
                           ]
@@ -672,7 +685,7 @@
                             {
                               "code": "OFF",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ]
                         },
@@ -683,12 +696,12 @@
                             {
                               "code": "OFF",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             },
                             {
                               "code": "ON",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ]
                         }
@@ -768,15 +781,17 @@
                             {
                               "code": "1m0_nres_1",
                               "overhead": 35.0,
-                              "params": {
-                                "binning": 1
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [1], "default": 1},
+                                "bin_y": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             },
                             {
                               "code": "1m0_nres_2",
                               "overhead": 90.5,
-                              "params": {
-                                "binning": 2
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [2], "default": 2},
+                                "bin_y": {"type": "integer", "allowed": [2], "default": 2}
                               }
                             }
                           ]
@@ -788,17 +803,17 @@
                             {
                               "code": "WCS",
                               "overhead": 400.0,
-                              "params": {}
+                              "validation_schema": {}
                             },
                             {
                               "code": "MYMODE",
                               "overhead": 400.0,
-                              "params": {
-                                "required_fields": [
-                                  "field1",
-                                  "field2",
-                                  "field3"
-                                ]
+                              "validation_schema": {
+                                "extra_params": {"type": "dict", "schema": {
+                                  "field1": {"type": "string", "required": true},
+                                  "field2": {"type": "string", "required": true},
+                                  "field3": {"type": "string", "required": true}
+                                }}
                               }
                             }
                           ]
@@ -810,7 +825,7 @@
                             {
                               "code": "ON",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ]
                         }
@@ -887,8 +902,9 @@
                             {
                               "code": "2m0_floyds_1",
                               "overhead": 25.0,
-                              "params": {
-                                "binning": 1
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [1], "default": 1},
+                                "bin_y": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             }
                           ]
@@ -900,15 +916,15 @@
                             {
                               "code": "WCS",
                               "overhead": 90.0,
-                              "params": {}
+                              "validation_schema": {}
                             },
                             {
                               "code": "BRIGHTEST",
                               "overhead": 90.0,
-                              "params": {
-                                "required_fields": [
-                                  "acquire_radius"
-                                ]
+                              "validation_schema": {
+                                "extra_params": {"type": "dict", "schema": {
+                                  "acquire_radius": {"type": "float", "min": 0, "max": 15, "required": true}
+                                }}
                               }
                             }
                           ]
@@ -920,7 +936,7 @@
                             {
                               "code": "ON",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ]
                         },
@@ -931,15 +947,15 @@
                             {
                               "code": "VFLOAT",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             },
                             {
                               "code": "SKY",
                               "overhead": 0.0,
-                              "params": {
-                                "required_fields": [
-                                  "rotator_angle"
-                                ]
+                              "validation_schema": {
+                                "extra_params": {"type": "dict", "schema": {
+                                  "rotator_angle": {"type": "float", "min": 0, "max": 360}
+                                }}
                               }
                             }
                           ]
@@ -1016,7 +1032,7 @@
                               "name": "Acquire Off",
                               "overhead": 0.0,
                               "code": "OFF",
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ],
                           "default": "OFF"
@@ -1028,8 +1044,9 @@
                               "name": "Muscat Slow Readout",
                               "overhead": 10.0,
                               "code": "MUSCAT_SLOW",
-                              "params": {
-                                "binning": 1
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [1], "default": 1},
+                                "bin_y": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             }
                           ],
@@ -1042,28 +1059,28 @@
                               "name": "Muscat Synchronous Exposure Mode",
                               "overhead": 0.0,
                               "code": "SYNCHRONOUS",
-                              "params": {
-                                "required_fields": [
-                                  "exposure_time_g",
-                                  "exposure_time_r",
-                                  "exposure_time_i",
-                                  "exposure_time_z",
-                                  "exposure_mode"
-                                ]
+                              "validation_schema": {
+                                "extra_params": {"type": "dict", "schema": {
+                                  "exposure_time_g": {"type": "float", "min": 0, "required": true},
+                                  "exposure_time_r": {"type": "float", "min": 0, "required": true},
+                                  "exposure_time_i": {"type": "float", "min": 0, "required": true},
+                                  "exposure_time_z": {"type": "float", "min": 0, "required": true},
+                                  "exposure_mode": {"type": "string", "allowed": ["SYNCHRONOUS"], "required": true}
+                                }}
                               }
                             },
                             {
                               "name": "Muscat Asynchronous Exposure Mode",
                               "overhead": 0.0,
                               "code": "ASYNCHRONOUS",
-                              "params": {
-                                "required_fields": [
-                                  "exposure_time_g",
-                                  "exposure_time_r",
-                                  "exposure_time_i",
-                                  "exposure_time_z",
-                                  "exposure_mode"
-                                ]
+                              "validation_schema": {
+                                "extra_params": {"type": "dict", "schema": {
+                                  "exposure_time_g": {"type": "float", "min": 0, "required": true},
+                                  "exposure_time_r": {"type": "float", "min": 0, "required": true},
+                                  "exposure_time_i": {"type": "float", "min": 0, "required": true},
+                                  "exposure_time_z": {"type": "float", "min": 0, "required": true},
+                                  "exposure_mode": {"type": "string", "allowed": ["ASYNCHRONOUS"], "required": true}
+                                }}
                               }
                             }
                           ],
@@ -1076,7 +1093,7 @@
                               "name": "On",
                               "overhead": 0.0,
                               "code": "ON",
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ],
                           "default": "ON"
@@ -1215,7 +1232,7 @@
                               "name": "Acquire Off",
                               "overhead": 0.0,
                               "code": "OFF",
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ],
                           "default": "OFF"
@@ -1227,8 +1244,9 @@
                               "name": "Muscat Slow Readout",
                               "overhead": 10.0,
                               "code": "MUSCAT_SLOW",
-                              "params": {
-                                "binning": 1
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [1], "default": 1},
+                                "bin_y": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             }
                           ],
@@ -1241,28 +1259,28 @@
                               "name": "Muscat Synchronous Exposure Mode",
                               "overhead": 0.0,
                               "code": "SYNCHRONOUS",
-                              "params": {
-                                "required_fields": [
-                                  "exposure_time_g",
-                                  "exposure_time_r",
-                                  "exposure_time_i",
-                                  "exposure_time_z",
-                                  "exposure_mode"
-                                ]
+                              "validation_schema": {
+                                "extra_params": {"type": "dict", "schema": {
+                                  "exposure_time_g": {"type": "float", "min": 0, "required": true},
+                                  "exposure_time_r": {"type": "float", "min": 0, "required": true},
+                                  "exposure_time_i": {"type": "float", "min": 0, "required": true},
+                                  "exposure_time_z": {"type": "float", "min": 0, "required": true},
+                                  "exposure_mode": {"type": "string", "allowed": ["SYNCHRONOUS"], "required": true}
+                                }}
                               }
                             },
                             {
                               "name": "Muscat Asynchronous Exposure Mode",
                               "overhead": 0.0,
                               "code": "ASYNCHRONOUS",
-                              "params": {
-                                "required_fields": [
-                                  "exposure_time_g",
-                                  "exposure_time_r",
-                                  "exposure_time_i",
-                                  "exposure_time_z",
-                                  "exposure_mode"
-                                ]
+                              "validation_schema": {
+                                "extra_params": {"type": "dict", "schema": {
+                                  "exposure_time_g": {"type": "float", "min": 0, "required": true},
+                                  "exposure_time_r": {"type": "float", "min": 0, "required": true},
+                                  "exposure_time_i": {"type": "float", "min": 0, "required": true},
+                                  "exposure_time_z": {"type": "float", "min": 0, "required": true},
+                                  "exposure_mode": {"type": "string", "allowed": ["ASYNCHRONOUS"], "required": true}
+                                }}
                               }
                             }
                           ],
@@ -1275,7 +1293,7 @@
                               "name": "On",
                               "overhead": 0.0,
                               "code": "ON",
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ],
                           "default": "ON"
@@ -1462,22 +1480,25 @@
                             {
                               "code": "1m0_sbig_1",
                               "overhead": 35.0,
-                              "params": {
-                                "binning": 1
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [1], "default": 1},
+                                "bin_y": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             },
                             {
                               "code": "1m0_sbig_2",
                               "overhead": 14.5,
-                              "params": {
-                                "binning": 2
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [2], "default": 2},
+                                "bin_y": {"type": "integer", "allowed": [2], "default": 2}
                               }
                             },
                             {
                               "code": "1m0_sbig_3",
                               "overhead": 11.5,
-                              "params": {
-                                "binning": 3
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [3], "default": 3},
+                                "bin_y": {"type": "integer", "allowed": [3], "default": 3}
                               }
                             }
                           ]
@@ -1489,7 +1510,7 @@
                             {
                               "code": "OFF",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ]
                         },
@@ -1500,12 +1521,12 @@
                             {
                               "code": "OFF",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             },
                             {
                               "code": "ON",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ]
                         }

@@ -10,7 +10,7 @@ from rise_set.astrometry import (
 from rise_set.angle import Angle
 from rise_set.rates import ProperMotion
 from rise_set.visibility import Visibility
-from rise_set.moving_objects import MovingViolation
+from rise_set.exceptions import MovingViolation
 from django.core.cache import cache
 
 from observation_portal.common.configdb import configdb, ConfigDB
