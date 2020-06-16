@@ -21,4 +21,7 @@ def send_mail(*args, **kwargs):
 
 @dramatiq.actor()
 def send_mass_mail(emails):
+    # Add logging for emails sent out
+    for email_tuple in emails:
+        logger.info(f"Sending email to {','.join(email_tuple[3])} with subject {email_tuple[0]}")
     django_send_mass_mail(emails)
