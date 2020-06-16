@@ -45,6 +45,7 @@ def cerberus_validation_error_to_str(validation_errors: dict) -> str:
 
 
 class ModeValidationHelper:
+
     """Class used to validate GenericModes of different types defined in ConfigDB"""
     def __init__(self, mode_type, instrument_type, modes_group, mode_key='mode', is_extra_param_mode=False):
         self._mode_type = mode_type.lower()
@@ -297,7 +298,6 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
         # TODO: Validate the guiding optical elements on the guiding instrument types
         instrument_type = data['instrument_type']
         modes = configdb.get_modes_by_type(instrument_type)
-        default_modes = configdb.get_default_modes_by_type(instrument_type)
         guiding_config = data['guiding_config']
 
         if len(data['instrument_configs']) > 1 and data['type'] in ['SCRIPT', 'SKY_FLAT']:
