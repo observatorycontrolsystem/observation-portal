@@ -4,25 +4,58 @@ html {
 }
 
 body {
-    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
-    font-size: 14px;
+    font-family: 'Libre Franklin', sans-serif;
+    font-size: 1.125em;
     line-height: 1.42857143;
     color: #333;
     margin-bottom: 45px;
+    background-color: #090a0f;
 }
 
 p {
     margin: 0 0 10px;
 }
 
+h1,h2,h3,h4,h5,h6 {
+  font-family: 'Heebo', sans-serif;
+  line-height: 1.25em;
+  padding: 0.5em 0;
+  color:#090a0f;
+}
+
+a {
+	color: #009ec3;
+	text-decoration: none;
+}
 a:hover {
-    color: #337ab7;
-    text-decoration: none;
+	background-color: #ffcd05;
+}
+
+a.navbar-brand:hover {
+  background-color: rgba(0,0,0,0);
+}
+
+.navbar-dark .navbar-nav .nav-link {
+  color:#fff;
+}
+
+.container.navbar-bg {
+  background-color: #0B3053;
+}
+
+.container {
+  background-color: #fff;
+}
+
+.fullheight{
+  min-height:calc(100vh - 200px);
 }
 
 #lco-name {
-    padding-top: 10px !important;
-    line-height: 1.1em;
+  font-family: 'Heebo', sans-serif;
+  line-height: 1.1em;
+  font-size:1.25em;
+  color:#fff;
 }
 
 .grey {
@@ -131,7 +164,6 @@ a:hover {
 }
 
 .btn {
-    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
     line-height: 1.42857143;
     text-transform: none;
     font-size: 14px;
@@ -311,4 +343,23 @@ a:hover {
  .btn-outline-secondary {
     border-color: #bababa;
     color: #000000;
+}
+
+@media screen and (min-width:1200px){
+  .container {
+    max-width: 1440px;
+    padding: 0 70px;
+  }
+  .container.navbar-bg {
+    padding: 0 20px;
+  }
+}
+
+@media (max-width: 991.98px){
+  #lco-name {
+    display:none;
+}
+.navbar-brand img {
+  width:50%;
+}
 }

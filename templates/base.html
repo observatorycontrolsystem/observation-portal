@@ -13,34 +13,29 @@
     <link rel="apple-touch-icon" href="https://cdn.lco.global/mainstyle/img/favicon.png">
     <link rel="shortcut icon" type="image/png" href="https://cdn.lco.global/mainstyle/img/favicon-trans.png"/>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
-    <link href='https://cdn.lco.global/mainstyle/css/affogato-1.0.0.css' rel="stylesheet">
-    <link href='https://cdn.lco.global/mainstyle/css/lco-1.0.0.css' rel="stylesheet">
-    <link href="{% static 'css/main.css' %}" rel="stylesheet">   
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@700&family=Libre+Franklin:ital,wght@0,400;0,700;1,500&display=swap" rel="stylesheet">
+    <link href="{% static 'css/main.css' %}" rel="stylesheet">
     {% block extra_css %}
     {% endblock %}
   </head>
   <body>
-    <nav class="navbar navbar-expand-md navbar-light head downPage">
-      <div class="navbar-header branding branding-logo">
-        <a href="https://lco.global" title="LCO.global" rel="home"><img src="https://cdn.lco.global/mainstyle/img/LCO-logo-web.jpg" alt="Las Cumbres Observatory" /></a>
-      </div>
-      <div class="navbar-header branding pl-md-3">
-        <div id="lco-name">
-          <a href="/" class="grey">Observation <br/> Portal</a> {% if user.profile.simple_interface %}<span class="basic">basic mode</span>{% endif %}
-        </div>
-      </div>
+    <div class="container navbar-bg">
+    <nav class="navbar navbar-expand-lg navbar-dark head">
+      <a href="https://lco.global" title="LCO.global" rel="home" class="navbar-brand"><img src="{% static 'lco-logo2.png' %}" alt="Las Cumbres Observatory" class="img-fluid" /></a>
+      <span class="navbar-text" id="lco-name">
+        Observation<br/>Portal {% if user.profile.simple_interface %}<span class="basic">basic mode</span>{% endif %}</h1>
+      </span>
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarOptions" aria-controls="navbarOptions" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
-      <div class="navbar-collapse collapse headNav" id="navbarOptions">
-        <ul class="nav navbar-nav navbar-main ml-auto">
-          <li class="nav-item"><a class="nav-link" href="{% url 'requestgroups:list' %}">Home</a>
+      <div class="navbar-collapse collapse" id="navbarOptions">
+        <ul class="navbar-nav ml-auto">
+          <li class="nav-item"><a class="nav-link" href="{% url 'requestgroups:list' %}">Home</a></li>
           <li class="nav-item"><a class="nav-link" href="{% url 'requestgroups:create' %}">Submit Observation</a></li>
           <li class="nav-item"><a class="nav-link" href="{% url 'proposals:list' %}?active=True">Manage Proposals</a></li>
           <li class="nav-item"><a class="nav-link" href="https://lco.global/observatory/tools/">Planning Tools</a></li>
           <li class="nav-item"><a class="nav-link" href="{% url 'help' %}">Help</a></li>
-        </ul>
-        <ul class="nav navbar-nav navbar-right">
+
           {% if user.is_authenticated %}
           <li class="dropdown nav-item">
               <a class="dropdown-toggle nav-link" id="userNavOptions" data-toggle="dropdown" href="#">{{ user.username }}</a>
@@ -55,12 +50,8 @@
         </ul>
       </div>
     </nav>
-    <section>
-      <div class="intro downPage blue">
-      &nbsp;
-      </div>
-    </section>
-    <div class="container">
+  </div>
+    <div class="container fullheight">
         <div class="row">
             <div class="col-md-12">
                 <div class="messages">
@@ -71,11 +62,12 @@
         {% block content %}
         {% endblock %}
     </div>
-    <div class="footer">
+    <div class="container text-center white">
       Copyright © {% now "Y" %} Las Cumbres Observatory. All rights reserved. <br/>
       <a title="terms of service" href="https://lco.global/observatory/termsofservice/">Terms of Service</a>&nbsp;
       <a title="privacy policy" href="https://lco.global/privacy-policy/">Privacy Policy</a>&nbsp;
       <a title="github" href="https://github.com/LCOGT/observation-portal"><i class="fab fa-github"></i> View on Github</a>
+    </div>
     </div>
   </body>
   {% block javascript %}
