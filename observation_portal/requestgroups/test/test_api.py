@@ -13,11 +13,9 @@ from observation_portal.requestgroups import views
 from observation_portal.common import state_changes
 
 from observation_portal.requestgroups.contention import Pressure
-from observation_portal.accounts.models import Profile
 from observation_portal.accounts.test_utils import blend_user
 
 from django.urls import reverse
-from django.contrib.auth.models import User
 from django.core import cache
 from dateutil.parser import parse as datetime_parser
 from rest_framework.test import APITestCase
@@ -26,7 +24,6 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 import copy
 import random
-from unittest import skip
 from unittest.mock import patch
 
 generic_payload = {
@@ -336,11 +333,15 @@ class TestUserPostRequestApi(SetTimeMixin, APITestCase):
 
     def test_post_requestgroup_acquire_mode_brightest_no_radius(self):
         bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['location']['telescope_class'] = '2m0'
         bad_data['requests'][0]['configurations'][0]['instrument_type'] = '2M0-FLOYDS-SCICAM'
+        bad_data['requests'][0]['configurations'][0]['type'] = 'SPECTRUM'
         bad_data['requests'][0]['configurations'][0]['acquisition_config']['mode'] = 'BRIGHTEST'
+        del bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['slit'] = 'slit_6.0as'
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('requires [acquire_radius] set in extra param', str(response.content))
+        self.assertIn('Acquisition mode BRIGHTEST requirements are not met: extra_params{acquire_radius error: required field}', str(response.content))
 
     def test_post_requestgroup_acquire_mode_brightest(self):
         good_data = self.generic_payload.copy()
@@ -1455,7 +1456,7 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         bad_data['requests'][0]['configurations'][0]['acquisition_config']['mode'] = 'MYMODE'
         bad_data['requests'][0]['configurations'][0]['acquisition_config']['extra_params']['field1'] = 'some-arg'
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertIn('Acquisition Mode MYMODE requires [field2, field3] set', str(response.content))
+        self.assertIn('Acquisition mode MYMODE requirements are not met: extra_params{field2 error: required field, field3 error: required field}', str(response.content))
 
     def test_invalid_filter_for_instrument(self):
         bad_data = self.generic_payload.copy()
@@ -1568,7 +1569,7 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_x'] = 5
         bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_y'] = 5
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertIn('Binning 5 is not a valid binning for readout mode 1m0_sbig_2', str(response.content))
+        self.assertIn('Readout mode 1m0_sbig_2 requirements are not met: bin_x error: unallowed value 5, bin_y error: unallowed value 5', str(response.content))
         self.assertEqual(response.status_code, 400)
 
     def test_readout_mode_sets_default_binning(self):
@@ -1983,14 +1984,16 @@ class TestMuscatValidationApi(SetTimeMixin, APITestCase):
         bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params']['exposure_time_g'] = 'NotANumber'
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('exposure_time_g must be a positive number', str(response.content))
+        self.assertIn('exposure_time_g error: must be of float type', str(response.content))
 
     def test_muscat_extra_param_exposure_time_must_be_positive(self):
         bad_data = self.generic_payload.copy()
         bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params']['exposure_time_g'] = -33.2
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params']['exposure_time_i'] = -33.2
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('exposure_time_g must be a positive number', str(response.content))
+        self.assertIn('exposure_time_g error: min value is 0', str(response.content))
+        self.assertIn('exposure_time_i error: min value is 0', str(response.content))
 
 
 class TestGetRequestApi(APITestCase):
@@ -2255,100 +2258,6 @@ class TestCancelRequestGroupApi(SetTimeMixin, APITestCase):
         self.assertEqual(RequestGroup.objects.get(pk=requestgroup.id).state, 'COMPLETED')
         self.assertEqual(Request.objects.get(pk=expired_r.id).state, 'WINDOW_EXPIRED')
         self.assertEqual(Request.objects.get(pk=completed_r.id).state, 'COMPLETED')
-
-
-@patch('observation_portal.common.state_changes.modify_ipp_time_from_requests')
-class TestUpdateRequestStatesAPI(APITestCase):
-    def setUp(self):
-        self.user = blend_user(user_params={'is_staff': True})
-        self.proposal = mixer.blend(Proposal)
-        mixer.blend(Membership, user=self.user, proposal=self.proposal)
-        self.client.force_login(self.user)
-        self.rg = mixer.blend(RequestGroup, operator='MANY', state='PENDING', proposal=self.proposal,
-                              modified=timezone.now() - timedelta(weeks=2), observation_type=RequestGroup.NORMAL)
-        self.requests = mixer.cycle(3).blend(Request, request_group=self.rg, state='PENDING', modified=timezone.now() - timedelta(weeks=2))
-
-    ## TODO update to remove mocked lake stuff
-    # @responses.activate
-    # def test_no_pond_blocks_no_state_changed(self, modify_mock):
-    #     pond_blocks = []
-    #     now = timezone.now()
-    #     mixer.cycle(3).blend(Window, request=(r for r in self.requests), start=now - timedelta(days=2),
-    #                          end=now + timedelta(days=1))
-    #
-    #     responses.add(responses.GET, 'http://configdbdev.lco.gtn' + '/blocks/',
-    #             json={'next': None, 'results': pond_blocks}, status=200)
-    #     one_week_ahead = timezone.now() + timedelta(weeks=1)
-    #     response = self.client.get(reverse('api:isDirty') + '?last_query_time=' + parse.quote(one_week_ahead.isoformat()))
-    #     response_json = response.json()
-    #
-    #     self.assertFalse(response_json['isDirty'])
-    #
-    # @responses.activate
-    # def test_pond_blocks_no_state_changed(self, modify_mock):
-    #     now = timezone.now()
-    #     mixer.cycle(3).blend(Window, request=(r for r in self.requests), start=now - timedelta(days=2),
-    #                          end=now + timedelta(days=1))
-    #     molecules1 = basic_mixer.cycle(3).blend(PondMolecule, completed=False, failed=False, request_num=self.requests[0].id,
-    #                                             tracking_num=self.rg.id, events=[])
-    #     molecules2 = basic_mixer.cycle(3).blend(PondMolecule, completed=False, failed=False, request_num=self.requests[1].id,
-    #                                             tracking_num=self.rg.id, events=[])
-    #     molecules3 = basic_mixer.cycle(3).blend(PondMolecule, completed=False, failed=False, request_num=self.requests[2].id,
-    #                                             tracking_num=self.rg.id, events=[])
-    #     pond_blocks = basic_mixer.cycle(3).blend(PondBlock, molecules=(m for m in [molecules1, molecules2, molecules3]),
-    #                                              start=now + timedelta(minutes=30), end=now + timedelta(minutes=40))
-    #     pond_blocks = [pb._to_dict() for pb in pond_blocks]
-    #     responses.add(responses.GET, 'http://configdbdev.lco.gtn' + '/blocks/',
-    #             json={'next': None, 'results': pond_blocks}, status=200)
-    #
-    #     one_week_ahead = timezone.now() + timedelta(weeks=1)
-    #     response = self.client.get(reverse('api:isDirty') + '?last_query_time=' + parse.quote(one_week_ahead.isoformat()))
-    #     response_json = response.json()
-    #
-    #     self.assertFalse(response_json['isDirty'])
-    #     for i, req in enumerate(self.requests):
-    #         req.refresh_from_db()
-    #         self.assertEqual(req.state, 'PENDING')
-    #     self.rg.refresh_from_db()
-    #     self.assertEqual(self.rg.state, 'PENDING')
-    #
-    # @responses.activate
-    # def test_pond_blocks_state_change_completed(self, modify_mock):
-    #     now = timezone.now()
-    #     mixer.cycle(3).blend(Window, request=(r for r in self.requests), start=now - timedelta(days=2),
-    #                          end=now - timedelta(days=1))
-    #     molecules1 = basic_mixer.cycle(3).blend(PondMolecule, completed=True, failed=False, request_num=self.requests[0].id,
-    #                                             tracking_num=self.rg.id, events=[])
-    #     molecules2 = basic_mixer.cycle(3).blend(PondMolecule, completed=False, failed=False, request_num=self.requests[1].id,
-    #                                             tracking_num=self.rg.id, events=[])
-    #     molecules3 = basic_mixer.cycle(3).blend(PondMolecule, completed=False, failed=False, request_num=self.requests[2].id,
-    #                                             tracking_num=self.rg.id, events=[])
-    #     pond_blocks = basic_mixer.cycle(3).blend(PondBlock, molecules=(m for m in [molecules1, molecules2, molecules3]),
-    #                                              start=now - timedelta(minutes=30), end=now - timedelta(minutes=20))
-    #     pond_blocks = [pb._to_dict() for pb in pond_blocks]
-    #     responses.add(responses.GET, 'http://configdbdev.lco.gtn' + '/blocks/',
-    #             json={'next': None, 'results': pond_blocks}, status=200)
-    #
-    #     response = self.client.get(reverse('api:isDirty'))
-    #     response_json = response.json()
-    #
-    #     self.assertTrue(response_json['isDirty'])
-    #
-    #     request_states = ['COMPLETED', 'WINDOW_EXPIRED', 'WINDOW_EXPIRED']
-    #     for i, req in enumerate(self.requests):
-    #         req.refresh_from_db()
-    #         self.assertEqual(req.state, request_states[i])
-    #     self.rg.refresh_from_db()
-    #     self.assertEqual(self.rg.state, 'COMPLETED')
-    #
-    # @responses.activate
-    # def test_bad_data_from_pond(self, modify_mock):
-    #     responses.add(responses.GET, 'http://configdbdev.lco.gtn' + '/blocks/',
-    #                   body='Internal Server Error', status=500, content_type='application/json')
-    #
-    #     response = self.client.get(reverse('api:isDirty'))
-    #
-    #     self.assertEqual(response.status_code, 500)
 
 
 @patch('observation_portal.common.state_changes.modify_ipp_time_from_requests')
