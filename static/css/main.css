@@ -29,6 +29,7 @@ a {
 }
 a:hover {
 	background-color: #ffcd05;
+  text-decoration: none;
 }
 
 a.navbar-brand:hover {
