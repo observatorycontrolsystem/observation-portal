@@ -323,13 +323,11 @@ export default {
         let modes = this.available_instruments[this.selectedinstrument].modes.rotator.modes;
         for (let i in modes) {
           requiredModeFields = [];          
-          if ('required_fields' in modes[i].params) {
-            for (let j in modes[i].params.required_fields) {
-              requiredModeFields.push(
-                modes[i].params.required_fields[j]
-              )
+          if ('extra_params' in modes[i].validation_schema) {
+            for (let j in modes[i].validation_schema.extra_params.schema) {
+              requiredModeFields.push(j)
             }
-          }          
+          }         
           options.push({
             value: modes[i].code, 
             text: modes[i].name,
