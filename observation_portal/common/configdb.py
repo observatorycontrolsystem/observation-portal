@@ -368,6 +368,10 @@ class ConfigDB(object):
                 for optical_element_group in instrument['science_camera']['optical_element_groups']:
                     for element in optical_element_group['optical_elements']:
                         if element['code'] not in optical_elements_tracker[optical_element_group['type']]:
+                            if optical_element_group['default'].upper() == element['code'].upper():
+                                element['default'] = True
+                            else:
+                                element['default'] = False
                             optical_elements_tracker[optical_element_group['type']].add(element['code'])
                             optical_elements[optical_element_group['type']].append(element)
         return optical_elements
@@ -411,28 +415,10 @@ class ConfigDB(object):
                 reverse=True
             )  # Start with the default
             for mode in modes:
-                if mode['params'].get('binning', -1) == binning:
+                if mode['validation_schema'].get('bin_x', {}).get('default', -1) == binning:
                     return mode
 
         raise ConfigDBException(f'No readout mode found with binning {binning} for instrument type {instrument_type}')
-
-    def get_default_modes_by_type(self, instrument_type: str, mode_type: str = '') -> dict:
-        """Get the default mode of each available mode_type.
-
-        Parameters:
-            instrument_type: Instrument type for which to get the default mode
-            mode_type: Mode type to restrict to, empty string is no restriction
-        Returns:
-             Default modes
-        """
-        modes = self.get_modes_by_type(instrument_type, mode_type)
-        default_modes = {}
-        for m_type, m_set in modes.items():
-            for mode in m_set['modes']:
-                if 'default' in m_set and mode['code'] == m_set['default']:
-                    default_modes[m_type] = mode
-                    break
-        return default_modes
 
     def get_binnings(self, instrument_type: str) -> set:
         """Create a set of available binning modes.
@@ -448,8 +434,8 @@ class ConfigDB(object):
         available_binnings = set()
         readout_modes = self.get_modes_by_type(instrument_type, 'readout')
         for mode in readout_modes['readout']['modes'] if 'readout' in readout_modes else []:
-            if 'binning' in mode['params']:
-                available_binnings.add(mode['params']['binning'])
+            if 'bin_x' in mode['validation_schema'] and 'default' in mode['validation_schema']['bin_x']:
+                available_binnings.add(mode['validation_schema']['bin_x']['default'])
         return available_binnings
 
     def get_default_binning(self, instrument_type: str) -> Union[None, int]:
@@ -462,8 +448,9 @@ class ConfigDB(object):
         """
         readout_modes = self.get_modes_by_type(instrument_type, 'readout')
         for mode in readout_modes['readout']['modes'] if 'readout' in readout_modes else []:
-            if readout_modes['readout']['default'] == mode['code'] and 'binning' in mode['params']:
-                return mode['params']['binning']
+            if (readout_modes['readout']['default'] == mode['code'] and 'bin_x' in mode['validation_schema']
+                and 'default' in mode['validation_schema']['bin_x']):
+                return mode['validation_schema']['bin_x']['default']
         return None
 
     def get_default_acceptability_threshold(self, instrument_type):
@@ -548,7 +535,7 @@ class ConfigDB(object):
                     default_mode = mode
                 if readout_mode and readout_mode.lower() != mode['code'].lower():
                     continue
-                if 'binning' in mode['params'] and mode['params']['binning'] == binning:
+                if mode['validation_schema'].get('bin_x', {}).get('default', -1) == binning:
                     return mode['overhead'] + camera_type['fixed_overhead_per_exposure']
             # if the binning is not found, return the default binning (Added to support legacy 2x2 Sinistro obs)
             return default_mode['overhead'] + camera_type['fixed_overhead_per_exposure']

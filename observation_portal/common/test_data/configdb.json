@@ -64,22 +64,25 @@
                             {
                               "code": "1m0_sbig_1",
                               "overhead": 35.0,
-                              "params": {
-                                "binning": 1
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [1], "default": 1},
+                                "bin_y": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             },
                             {
                               "code": "1m0_sbig_2",
                               "overhead": 14.5,
-                              "params": {
-                                "binning": 2
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [2], "default": 2},
+                                "bin_y": {"type": "integer", "allowed": [2], "default": 2}
                               }
                             },
                             {
                               "code": "1m0_sbig_3",
                               "overhead": 11.5,
-                              "params": {
-                                "binning": 3
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [3], "default": 3},
+                                "bin_y": {"type": "integer", "allowed": [3], "default": 3}
                               }
                             }
                           ]
@@ -91,7 +94,7 @@
                             {
                               "code": "OFF",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ]
                         },
@@ -102,12 +105,12 @@
                             {
                               "code": "OFF",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             },
                             {
                               "code": "ON",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ]
                         }
@@ -123,7 +126,8 @@
                             "code": "air",
                             "schedulable": false
                           }
-                        ]
+                        ],
+                        "default": "air"
                       }
                     ]
                   },
@@ -169,22 +173,25 @@
                             {
                               "code": "1m0_sbig_1",
                               "overhead": 35.0,
-                              "params": {
-                                "binning": 1
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [1], "default": 1},
+                                "bin_y": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             },
                             {
                               "code": "1m0_sbig_2",
                               "overhead": 14.5,
-                              "params": {
-                                "binning": 2
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [2], "default": 2},
+                                "bin_y": {"type": "integer", "allowed": [2], "default": 2}
                               }
                             },
                             {
                               "code": "1m0_sbig_3",
                               "overhead": 11.5,
-                              "params": {
-                                "binning": 3
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [3], "default": 3},
+                                "bin_y": {"type": "integer", "allowed": [3], "default": 3}
                               }
                             }
                           ]
@@ -196,7 +203,7 @@
                             {
                               "code": "OFF",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ]
                         },
@@ -207,12 +214,12 @@
                             {
                               "code": "OFF",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             },
                             {
                               "code": "ON",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ]
                         }
@@ -228,7 +235,8 @@
                             "code": "air",
                             "schedulable": false
                           }
-                        ]
+                        ],
+                        "default": "air"
                       }
                     ]
                   },
@@ -274,22 +282,25 @@
                             {
                               "code": "1m0_sbig_1",
                               "overhead": 35.0,
-                              "params": {
-                                "binning": 1
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [1], "default": 1},
+                                "bin_y": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             },
                             {
                               "code": "1m0_sbig_2",
                               "overhead": 14.5,
-                              "params": {
-                                "binning": 2
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [2], "default": 2},
+                                "bin_y": {"type": "integer", "allowed": [2], "default": 2}
                               }
                             },
                             {
                               "code": "1m0_sbig_3",
                               "overhead": 11.5,
-                              "params": {
-                                "binning": 3
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [3], "default": 3},
+                                "bin_y": {"type": "integer", "allowed": [3], "default": 3}
                               }
                             }
                           ]
@@ -301,7 +312,7 @@
                             {
                               "code": "OFF",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ]
                         },
@@ -312,12 +323,12 @@
                             {
                               "code": "OFF",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             },
                             {
                               "code": "ON",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ]
                         }
@@ -333,7 +344,8 @@
                             "code": "air",
                             "schedulable": false
                           }
-                        ]
+                        ],
+                        "default": "air"
                       }
                     ]
                   },
@@ -394,8 +406,9 @@
                             {
                               "code": "2m0_floyds_1",
                               "overhead": 25.0,
-                              "params": {
-                                "binning": 1
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [1], "default": 1},
+                                "bin_y": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             }
                           ]
@@ -407,15 +420,15 @@
                             {
                               "code": "WCS",
                               "overhead": 90.0,
-                              "params": {}
+                              "validation_schema": {}
                             },
                             {
                               "code": "BRIGHTEST",
                               "overhead": 90.0,
-                              "params": {
-                                "required_fields": [
-                                  "acquire_radius"
-                                ]
+                              "validation_schema": {
+                                "extra_params": {"type": "dict", "schema": {
+                                  "acquire_radius": {"type": "float", "min": 0, "max": 15, "required": true}
+                                }}
                               }
                             }
                           ]
@@ -427,7 +440,7 @@
                             {
                               "code": "ON",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ]
                         },
@@ -438,15 +451,15 @@
                             {
                               "code": "VFLOAT",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             },
                             {
                               "code": "SKY",
                               "overhead": 0.0,
-                              "params": {
-                                "required_fields": [
-                                  "rotator_angle"
-                                ]
+                              "validation_schema": {
+                                "extra_params": {"type": "dict", "schema": {
+                                  "rotator_angle": {"type": "float", "min": 0, "max": 360}
+                                }}
                               }
                             }
                           ]
@@ -478,7 +491,8 @@
                             "code": "slit_1.2as",
                             "schedulable": true
                           }
-                        ]
+                        ],
+                        "default": "slit_1.6as"
                       }
                     ]
                   },
@@ -545,22 +559,25 @@
                             {
                               "code": "1m0_sbig_1",
                               "overhead": 35.0,
-                              "params": {
-                                "binning": 1
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [1], "default": 1},
+                                "bin_y": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             },
                             {
                               "code": "1m0_sbig_2",
                               "overhead": 14.5,
-                              "params": {
-                                "binning": 2
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [2], "default": 2},
+                                "bin_y": {"type": "integer", "allowed": [2], "default": 2}
                               }
                             },
                             {
                               "code": "1m0_sbig_3",
                               "overhead": 11.5,
-                              "params": {
-                                "binning": 3
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [3], "default": 3},
+                                "bin_y": {"type": "integer", "allowed": [3], "default": 3}
                               }
                             }
                           ]
@@ -572,7 +589,7 @@
                             {
                               "code": "OFF",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ]
                         },
@@ -583,12 +600,12 @@
                             {
                               "code": "OFF",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             },
                             {
                               "code": "ON",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ]
                         }
@@ -604,7 +621,8 @@
                             "code": "air",
                             "schedulable": false
                           }
-                        ]
+                        ],
+                        "default": "air"
                       }
                     ]
                   },
@@ -650,15 +668,17 @@
                             {
                               "code": "1m0_nres_1",
                               "overhead": 35.0,
-                              "params": {
-                                "binning": 1
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [1], "default": 1},
+                                "bin_y": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             },
                             {
                               "code": "1m0_nres_2",
                               "overhead": 90.5,
-                              "params": {
-                                "binning": 2
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [2], "default": 2},
+                                "bin_y": {"type": "integer", "allowed": [2], "default": 2}
                               }
                             }
                           ]
@@ -670,17 +690,17 @@
                             {
                               "code": "WCS",
                               "overhead": 400.0,
-                              "params": {}
+                              "validation_schema": {}
                             },
                             {
                               "code": "MYMODE",
                               "overhead": 400.0,
-                              "params": {
-                                "required_fields": [
-                                  "field1",
-                                  "field2",
-                                  "field3"
-                                ]
+                              "validation_schema": {
+                                "extra_params": {"type": "dict", "schema": {
+                                  "field1": {"type": "string", "required": true},
+                                  "field2": {"type": "string", "required": true},
+                                  "field3": {"type": "string", "required": true}
+                                }}
                               }
                             }
                           ]
@@ -692,14 +712,13 @@
                             {
                               "code": "ON",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ]
                         }
                       ]
                     },
-                    "optical_element_groups": [
-                    ]
+                    "optical_element_groups": []
                   },
                   "__str__": "tst.domb.1m0a.nres02-nres02"
                 }
@@ -757,8 +776,9 @@
                             {
                               "code": "2m0_floyds_1",
                               "overhead": 25.0,
-                              "params": {
-                                "binning": 1
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [1], "default": 1},
+                                "bin_y": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             }
                           ]
@@ -770,15 +790,15 @@
                             {
                               "code": "WCS",
                               "overhead": 90.0,
-                              "params": {}
+                              "validation_schema": {}
                             },
                             {
                               "code": "BRIGHTEST",
                               "overhead": 90.0,
-                              "params": {
-                                "required_fields": [
-                                  "acquire_radius"
-                                ]
+                              "validation_schema": {
+                                "extra_params": {"type": "dict", "schema": {
+                                  "acquire_radius": {"type": "float", "min": 0, "max": 15, "required": true}
+                                }}
                               }
                             }
                           ]
@@ -790,7 +810,7 @@
                             {
                               "code": "ON",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ]
                         },
@@ -801,15 +821,15 @@
                             {
                               "code": "VFLOAT",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             },
                             {
                               "code": "SKY",
                               "overhead": 0.0,
-                              "params": {
-                                "required_fields": [
-                                  "rotator_angle"
-                                ]
+                              "validation_schema": {
+                                "extra_params": {"type": "dict", "schema": {
+                                  "rotator_angle": {"type": "float", "min": 0, "max": 360}
+                                }}
                               }
                             }
                           ]
@@ -841,11 +861,416 @@
                             "code": "slit_1.2as",
                             "schedulable": true
                           }
-                        ]
+                        ],
+                        "default": "slit_1.6as"
                       }
                     ]
                   },
                   "__str__": "tst.domb.2m0a.xx02-xx02"
+                },
+                {
+                  "code": "mc03",
+                  "state": "SCHEDULABLE",
+                  "science_camera": {
+                    "code": "mc03",
+                    "camera_type": {
+                      "size": "26.4x26.4",
+                      "pscale": 1.0,
+                      "default_mode": {
+                        "id": 43,
+                        "binning": 1,
+                        "overhead": 10,
+                        "readout": 10.0
+                      },
+                      "name": "2.0 meter Muscat",
+                      "code": "2M0-SCICAM-MUSCAT",
+                      "mode_set": [
+                        {
+                          "binning": 1,
+                          "overhead": 10,
+                          "readout": 10.0
+                        }
+                      ],
+                      "fixed_overhead_per_exposure": 1.0,
+                      "front_padding": 90.0,
+                      "filter_change_time": 0.0,
+                      "config_change_time": 0.0,
+                      "acquire_exposure_time": 0.0,
+                      "acquire_processing_time": 0.0,
+                      "mode_types": [
+                        {
+                          "type": "acquisition",
+                          "modes": [
+                            {
+                              "name": "Acquire Off",
+                              "overhead": 0.0,
+                              "code": "OFF",
+                              "validation_schema": {}
+                            }
+                          ],
+                          "default": "OFF"
+                        },
+                        {
+                          "type": "readout",
+                          "modes": [
+                            {
+                              "name": "Muscat Slow Readout",
+                              "overhead": 10.0,
+                              "code": "MUSCAT_SLOW",
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [1], "default": 1},
+                                "bin_y": {"type": "integer", "allowed": [1], "default": 1}
+                              }
+                            }
+                          ],
+                          "default": "MUSCAT_SLOW"
+                        },
+                        {
+                          "type": "exposure",
+                          "modes": [
+                            {
+                              "name": "Muscat Synchronous Exposure Mode",
+                              "overhead": 0.0,
+                              "code": "SYNCHRONOUS",
+                              "validation_schema": {
+                                "extra_params": {"type": "dict", "schema": {
+                                  "exposure_time_g": {"type": "float", "min": 0, "required": true},
+                                  "exposure_time_r": {"type": "float", "min": 0, "required": true},
+                                  "exposure_time_i": {"type": "float", "min": 0, "required": true},
+                                  "exposure_time_z": {"type": "float", "min": 0, "required": true},
+                                  "exposure_mode": {"type": "string", "allowed": ["SYNCHRONOUS"], "required": true}
+                                }}
+                              }
+                            },
+                            {
+                              "name": "Muscat Asynchronous Exposure Mode",
+                              "overhead": 0.0,
+                              "code": "ASYNCHRONOUS",
+                              "validation_schema": {
+                                "extra_params": {"type": "dict", "schema": {
+                                  "exposure_time_g": {"type": "float", "min": 0, "required": true},
+                                  "exposure_time_r": {"type": "float", "min": 0, "required": true},
+                                  "exposure_time_i": {"type": "float", "min": 0, "required": true},
+                                  "exposure_time_z": {"type": "float", "min": 0, "required": true},
+                                  "exposure_mode": {"type": "string", "allowed": ["ASYNCHRONOUS"], "required": true}
+                                }}
+                              }
+                            }
+                          ],
+                          "default": "SYNCHRONOUS"
+                        },
+                        {
+                          "type": "guiding",
+                          "modes": [
+                            {
+                              "name": "On",
+                              "overhead": 0.0,
+                              "code": "ON",
+                              "validation_schema": {}
+                            }
+                          ],
+                          "default": "ON"
+                        }
+                      ],
+                      "default_acceptability_threshold": 90.0,
+                      "pixels_x": 2048,
+                      "pixels_y": 2048,
+                      "max_rois": 0,
+                      "allow_self_guiding": true,
+                      "configuration_types": [
+                        "EXPOSE",
+                        "REPEAT_EXPOSE",
+                        "BIAS",
+                        "DARK",
+                        "STANDARD",
+                        "SCRIPT",
+                        "AUTO_FOCUS",
+                        "SKY_FLAT",
+                        "ENGINEERING"
+                      ]
+                    },
+                    "optical_elements": {
+                      "diffuser_g_positions": "in,out",
+                      "diffuser_r_positions": "in,out",
+                      "diffuser_i_positions": "in,out",
+                      "diffuser_z_positions": "in,out"
+                    },
+                    "optical_element_groups": [
+                      {
+                        "name": "Diffuser g'",
+                        "type": "diffuser_g_positions",
+                        "optical_elements": [
+                          {
+                            "name": "In Beam",
+                            "code": "in",
+                            "schedulable": true
+                          },
+                          {
+                            "name": "Out of Beam",
+                            "code": "out",
+                            "schedulable": true
+                          }
+                        ],
+                        "element_change_overhead": 0.0,
+                        "default": "out"
+                      },
+                      {
+                        "name": "Diffuser r'",
+                        "type": "diffuser_r_positions",
+                        "optical_elements": [
+                          {
+                            "name": "In Beam",
+                            "code": "in",
+                            "schedulable": true
+                          },
+                          {
+                            "name": "Out of Beam",
+                            "code": "out",
+                            "schedulable": true
+                          }
+                        ],
+                        "element_change_overhead": 0.0,
+                        "default": "out"
+                      },
+                      {
+                        "name": "Diffuser i'",
+                        "type": "diffuser_i_positions",
+                        "optical_elements": [
+                          {
+                            "name": "In Beam",
+                            "code": "in",
+                            "schedulable": true
+                          },
+                          {
+                            "name": "Out of Beam",
+                            "code": "out",
+                            "schedulable": true
+                          }
+                        ],
+                        "element_change_overhead": 0.0,
+                        "default": "out"
+                      },
+                      {
+                        "name": "Diffuser z'",
+                        "type": "diffuser_z_positions",
+                        "optical_elements": [
+                          {
+                            "name": "In Beam",
+                            "code": "in",
+                            "schedulable": true
+                          },
+                          {
+                            "name": "Out of Beam",
+                            "code": "out",
+                            "schedulable": true
+                          }
+                        ],
+                        "element_change_overhead": 0.0,
+                        "default": "out"
+                      }
+                    ]
+                  },
+                  "autoguider_camera": {
+                    "code": "mc03",
+                    "camera_type": {
+                      "id": 57,
+                      "size": "26.4x26.4",
+                      "pscale": 1.0,
+                      "default_mode": {
+                        "id": 43,
+                        "binning": 1,
+                        "overhead": 10,
+                        "readout": 10.0
+                      },
+                      "name": "2.0 meter Muscat",
+                      "code": "2M0-SCICAM-MUSCAT",
+                      "mode_set": [
+                        {
+                          "binning": 1,
+                          "overhead": 10,
+                          "readout": 10.0
+                        }
+                      ],
+                      "fixed_overhead_per_exposure": 1.0,
+                      "front_padding": 90.0,
+                      "filter_change_time": 0.0,
+                      "config_change_time": 0.0,
+                      "acquire_exposure_time": 0.0,
+                      "acquire_processing_time": 0.0,
+                      "mode_types": [
+                        {
+                          "type": "acquisition",
+                          "modes": [
+                            {
+                              "name": "Acquire Off",
+                              "overhead": 0.0,
+                              "code": "OFF",
+                              "validation_schema": {}
+                            }
+                          ],
+                          "default": "OFF"
+                        },
+                        {
+                          "type": "readout",
+                          "modes": [
+                            {
+                              "name": "Muscat Slow Readout",
+                              "overhead": 10.0,
+                              "code": "MUSCAT_SLOW",
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [1], "default": 1},
+                                "bin_y": {"type": "integer", "allowed": [1], "default": 1}
+                              }
+                            }
+                          ],
+                          "default": "MUSCAT_SLOW"
+                        },
+                        {
+                          "type": "exposure",
+                          "modes": [
+                            {
+                              "name": "Muscat Synchronous Exposure Mode",
+                              "overhead": 0.0,
+                              "code": "SYNCHRONOUS",
+                              "validation_schema": {
+                                "extra_params": {"type": "dict", "schema": {
+                                  "exposure_time_g": {"type": "float", "min": 0, "required": true},
+                                  "exposure_time_r": {"type": "float", "min": 0, "required": true},
+                                  "exposure_time_i": {"type": "float", "min": 0, "required": true},
+                                  "exposure_time_z": {"type": "float", "min": 0, "required": true},
+                                  "exposure_mode": {"type": "string", "allowed": ["SYNCHRONOUS"], "required": true}
+                                }}
+                              }
+                            },
+                            {
+                              "name": "Muscat Asynchronous Exposure Mode",
+                              "overhead": 0.0,
+                              "code": "ASYNCHRONOUS",
+                              "validation_schema": {
+                                "extra_params": {"type": "dict", "schema": {
+                                  "exposure_time_g": {"type": "float", "min": 0, "required": true},
+                                  "exposure_time_r": {"type": "float", "min": 0, "required": true},
+                                  "exposure_time_i": {"type": "float", "min": 0, "required": true},
+                                  "exposure_time_z": {"type": "float", "min": 0, "required": true},
+                                  "exposure_mode": {"type": "string", "allowed": ["ASYNCHRONOUS"], "required": true}
+                                }}
+                              }
+                            }
+                          ],
+                          "default": "SYNCHRONOUS"
+                        },
+                        {
+                          "type": "guiding",
+                          "modes": [
+                            {
+                              "name": "On",
+                              "overhead": 0.0,
+                              "code": "ON",
+                              "validation_schema": {}
+                            }
+                          ],
+                          "default": "ON"
+                        }
+                      ],
+                      "default_acceptability_threshold": 90.0,
+                      "pixels_x": 2048,
+                      "pixels_y": 2048,
+                      "max_rois": 0,
+                      "allow_self_guiding": true,
+                      "configuration_types": [
+                        "EXPOSE",
+                        "REPEAT_EXPOSE",
+                        "BIAS",
+                        "DARK",
+                        "STANDARD",
+                        "SCRIPT",
+                        "AUTO_FOCUS",
+                        "SKY_FLAT",
+                        "ENGINEERING"
+                      ]
+                    },
+                    "optical_elements": {
+                      "diffuser_g_positions": "in,out",
+                      "diffuser_r_positions": "in,out",
+                      "diffuser_i_positions": "in,out",
+                      "diffuser_z_positions": "in,out"
+                    },
+                    "optical_element_groups": [
+                      {
+                        "name": "Diffuser g'",
+                        "type": "diffuser_g_positions",
+                        "optical_elements": [
+                          {
+                            "name": "In Beam",
+                            "code": "in",
+                            "schedulable": true
+                          },
+                          {
+                            "name": "Out of Beam",
+                            "code": "out",
+                            "schedulable": true
+                          }
+                        ],
+                        "element_change_overhead": 0.0,
+                        "default": "out"
+                      },
+                      {
+                        "name": "Diffuser r'",
+                        "type": "diffuser_r_positions",
+                        "optical_elements": [
+                          {
+                            "name": "In Beam",
+                            "code": "in",
+                            "schedulable": true
+                          },
+                          {
+                            "name": "Out of Beam",
+                            "code": "out",
+                            "schedulable": true
+                          }
+                        ],
+                        "element_change_overhead": 0.0,
+                        "default": "out"
+                      },
+                      {
+                        "name": "Diffuser i'",
+                        "type": "diffuser_i_positions",
+                        "optical_elements": [
+                          {
+                            "name": "In Beam",
+                            "code": "in",
+                            "schedulable": true
+                          },
+                          {
+                            "name": "Out of Beam",
+                            "code": "out",
+                            "schedulable": true
+                          }
+                        ],
+                        "element_change_overhead": 0.0,
+                        "default": "out"
+                      },
+                      {
+                        "name": "Diffuser z'",
+                        "type": "diffuser_z_positions",
+                        "optical_elements": [
+                          {
+                            "name": "In Beam",
+                            "code": "in",
+                            "schedulable": true
+                          },
+                          {
+                            "name": "Out of Beam",
+                            "code": "out",
+                            "schedulable": true
+                          }
+                        ],
+                        "element_change_overhead": 0.0,
+                        "default": "out"
+                      }
+                    ]
+                  },
+                  "__str__": "tst.domb.2m0a.mc03-mc03"
                 }
               ]
             }
@@ -908,22 +1333,25 @@
                             {
                               "code": "1m0_sbig_1",
                               "overhead": 35.0,
-                              "params": {
-                                "binning": 1
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [1], "default": 1},
+                                "bin_y": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             },
                             {
                               "code": "1m0_sbig_2",
                               "overhead": 14.5,
-                              "params": {
-                                "binning": 2
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [2], "default": 2},
+                                "bin_y": {"type": "integer", "allowed": [2], "default": 2}
                               }
                             },
                             {
                               "code": "1m0_sbig_3",
                               "overhead": 11.5,
-                              "params": {
-                                "binning": 3
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [3], "default": 3},
+                                "bin_y": {"type": "integer", "allowed": [3], "default": 3}
                               }
                             }
                           ]
@@ -935,7 +1363,7 @@
                             {
                               "code": "OFF",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ]
                         },
@@ -946,12 +1374,12 @@
                             {
                               "code": "OFF",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             },
                             {
                               "code": "ON",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ]
                         }
@@ -967,7 +1395,8 @@
                             "code": "air",
                             "schedulable": false
                           }
-                        ]
+                        ],
+                        "default": "air"
                       }
                     ]
                   },
