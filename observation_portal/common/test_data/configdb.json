@@ -40,10 +40,6 @@
                       "code": "1M0-SCICAM-SBIG",
                       "name": "1M0-SCICAM-SBIG",
                       "allow_self_guiding": true,
-                      "default_mode": {
-                        "binning": 2,
-                        "readout": 14.5
-                      },
                       "configuration_types": [
                         "EXPOSE",
                         "REPEAT_EXPOSE",
@@ -57,25 +53,9 @@
                       "pixels_y": 1000,
                       "max_rois": 1,
                       "config_change_time": 0,
-                      "acquire_processing_time": 0,
                       "acquire_exposure_time": 0,
                       "front_padding": 90,
-                      "filter_change_time": 2,
                       "fixed_overhead_per_exposure": 1,
-                      "mode_set": [
-                        {
-                          "binning": 1,
-                          "readout": 35.0
-                        },
-                        {
-                          "binning": 2,
-                          "readout": 14.5
-                        },
-                        {
-                          "binning": 3,
-                          "readout": 11.5
-                        }
-                      ],
                       "mode_types": [
                         {
                           "type": "readout",
@@ -136,7 +116,6 @@
                         }
                       ]
                     },
-                    "filters": "air",
                     "optical_element_groups": [
                       {
                         "type": "filters",
@@ -170,10 +149,6 @@
                       "code": "1M0-SCICAM-SBIG",
                       "name": "1M0-SCICAM-SBIG",
                       "allow_self_guiding": true,
-                      "default_mode": {
-                        "binning": 2,
-                        "readout": 14.5
-                      },
                       "configuration_types": [
                         "EXPOSE",
                         "REPEAT_EXPOSE",
@@ -187,25 +162,9 @@
                       "pixels_y": 1000,
                       "max_rois": 1,
                       "config_change_time": 0,
-                      "acquire_processing_time": 0,
                       "acquire_exposure_time": 0,
                       "front_padding": 90,
-                      "filter_change_time": 2,
                       "fixed_overhead_per_exposure": 1,
-                      "mode_set": [
-                        {
-                          "binning": 1,
-                          "readout": 35.0
-                        },
-                        {
-                          "binning": 2,
-                          "readout": 14.5
-                        },
-                        {
-                          "binning": 3,
-                          "readout": 11.5
-                        }
-                      ],
                       "mode_types": [
                         {
                           "type": "readout",
@@ -266,7 +225,6 @@
                         }
                       ]
                     },
-                    "filters": "air",
                     "optical_element_groups": [
                       {
                         "type": "filters",
@@ -300,10 +258,6 @@
                       "code": "1M0-SCICAM-SBIG",
                       "name": "1M0-SCICAM-SBIG",
                       "allow_self_guiding": true,
-                      "default_mode": {
-                        "binning": 2,
-                        "readout": 14.5
-                      },
                       "configuration_types": [
                         "EXPOSE",
                         "REPEAT_EXPOSE",
@@ -317,25 +271,9 @@
                       "pixels_y": 1000,
                       "max_rois": 1,
                       "config_change_time": 0,
-                      "acquire_processing_time": 0,
                       "acquire_exposure_time": 0,
                       "front_padding": 90,
-                      "filter_change_time": 2,
                       "fixed_overhead_per_exposure": 1,
-                      "mode_set": [
-                        {
-                          "binning": 1,
-                          "readout": 35.0
-                        },
-                        {
-                          "binning": 2,
-                          "readout": 14.5
-                        },
-                        {
-                          "binning": 3,
-                          "readout": 11.5
-                        }
-                      ],
                       "mode_types": [
                         {
                           "type": "readout",
@@ -396,7 +334,6 @@
                         }
                       ]
                     },
-                    "filters": "air",
                     "optical_element_groups": [
                       {
                         "type": "filters",
@@ -447,15 +384,9 @@
                       "name": "2M0-FLOYDS-SCICAM",
                       "allow_self_guiding": false,
                       "config_change_time": 30,
-                      "acquire_processing_time": 60,
                       "acquire_exposure_time": 30,
                       "front_padding": 240,
-                      "filter_change_time": 0,
                       "fixed_overhead_per_exposure": 0.5,
-                      "default_mode": {
-                        "binning": 1,
-                        "readout": 25
-                      },
                       "configuration_types": [
                         "SPECTRUM",
                         "REPEAT_SPECTRUM",
@@ -467,12 +398,6 @@
                       "pixels_x": 1000,
                       "pixels_y": 1000,
                       "max_rois": 0,
-                      "mode_set": [
-                        {
-                          "binning": 1,
-                          "readout": 25
-                        }
-                      ],
                       "mode_types": [
                         {
                           "type": "readout",
@@ -541,7 +466,6 @@
                         }
                       ]
                     },
-                    "filters": "slit_6.0as,slit_1.6as,slit_2.0as,slit_1.2as",
                     "optical_element_groups": [
                       {
                         "type": "slits",
@@ -611,10 +535,6 @@
                       "code": "1M0-SCICAM-SBIG",
                       "name": "1M0-SCICAM-SBIG",
                       "allow_self_guiding": true,
-                      "default_mode": {
-                        "binning": 2,
-                        "readout": 14.5
-                      },
                       "configuration_types": [
                         "EXPOSE",
                         "REPEAT_EXPOSE",
@@ -628,25 +548,9 @@
                       "pixels_y": 1000,
                       "max_rois": 0,
                       "config_change_time": 0,
-                      "acquire_processing_time": 0,
                       "acquire_exposure_time": 0,
                       "front_padding": 90,
-                      "filter_change_time": 2,
                       "fixed_overhead_per_exposure": 1,
-                      "mode_set": [
-                        {
-                          "binning": 1,
-                          "readout": 35.0
-                        },
-                        {
-                          "binning": 2,
-                          "readout": 14.5
-                        },
-                        {
-                          "binning": 3,
-                          "readout": 11.5
-                        }
-                      ],
                       "mode_types": [
                         {
                           "type": "readout",
@@ -707,7 +611,6 @@
                         }
                       ]
                     },
-                    "filters": "air",
                     "optical_element_groups": [
                       {
                         "type": "filters",
@@ -741,10 +644,6 @@
                       "code": "1M0-NRES-SCICAM",
                       "name": "1M0-NRES-SCICAM",
                       "allow_self_guiding": false,
-                      "default_mode": {
-                        "binning": 2,
-                        "readout": 90.5
-                      },
                       "configuration_types": [
                         "NRES_SPECTRUM",
                         "REPEAT_NRES_SPECTRUM",
@@ -759,21 +658,9 @@
                       "pixels_y": 1000,
                       "max_rois": 0,
                       "config_change_time": 0,
-                      "acquire_processing_time": 90,
                       "acquire_exposure_time": 10,
                       "front_padding": 270,
-                      "filter_change_time": 2,
                       "fixed_overhead_per_exposure": 1,
-                      "mode_set": [
-                        {
-                          "binning": 1,
-                          "readout": 35.0
-                        },
-                        {
-                          "binning": 2,
-                          "readout": 90.5
-                        }
-                      ],
                       "mode_types": [
                         {
                           "type": "readout",
@@ -831,7 +718,6 @@
                         }
                       ]
                     },
-                    "filters": "air",
                     "optical_element_groups": []
                   },
                   "__str__": "tst.domb.1m0a.nres02-nres02"
@@ -869,15 +755,9 @@
                       "name": "2M0-FLOYDS-SCICAM",
                       "allow_self_guiding": false,
                       "config_change_time": 30,
-                      "acquire_processing_time": 60,
                       "acquire_exposure_time": 30,
                       "front_padding": 240,
-                      "filter_change_time": 0,
                       "fixed_overhead_per_exposure": 0.5,
-                      "default_mode": {
-                        "binning": 1,
-                        "readout": 25
-                      },
                       "configuration_types": [
                         "SPECTRUM",
                         "REPEAT_SPECTRUM",
@@ -889,12 +769,6 @@
                       "pixels_x": 1000,
                       "pixels_y": 1000,
                       "max_rois": 0,
-                      "mode_set": [
-                        {
-                          "binning": 1,
-                          "readout": 25
-                        }
-                      ],
                       "mode_types": [
                         {
                           "type": "readout",
@@ -962,7 +836,6 @@
                         }
                       ]
                     },
-                    "filters": "slit_6.0as,slit_1.6as,slit_2.0as,slit_1.2as",
                     "optical_element_groups": [
                       {
                         "type": "slits",
@@ -1436,10 +1309,6 @@
                       "code": "1M0-SCICAM-SBIG",
                       "name": "1M0-SCICAM-SBIG",
                       "allow_self_guiding": true,
-                      "default_mode": {
-                        "binning": 2,
-                        "readout": 14.5
-                      },
                       "configuration_types": [
                         "EXPOSE",
                         "REPEAT_EXPOSE",
@@ -1453,25 +1322,9 @@
                       "pixels_y": 1000,
                       "max_rois": 0,
                       "config_change_time": 0,
-                      "acquire_processing_time": 0,
                       "acquire_exposure_time": 0,
                       "front_padding": 90,
-                      "filter_change_time": 2,
                       "fixed_overhead_per_exposure": 1,
-                      "mode_set": [
-                        {
-                          "binning": 1,
-                          "readout": 35.0
-                        },
-                        {
-                          "binning": 2,
-                          "readout": 14.5
-                        },
-                        {
-                          "binning": 3,
-                          "readout": 11.5
-                        }
-                      ],
                       "mode_types": [
                         {
                           "type": "readout",
@@ -1532,7 +1385,6 @@
                         }
                       ]
                     },
-                    "filters": "air",
                     "optical_element_groups": [
                       {
                         "type": "filters",
