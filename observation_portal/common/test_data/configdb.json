@@ -40,10 +40,6 @@
                       "code": "1M0-SCICAM-SBIG",
                       "name": "1M0-SCICAM-SBIG",
                       "allow_self_guiding": true,
-                      "default_mode": {
-                        "binning": 2,
-                        "readout": 14.5
-                      },
                       "configuration_types": [
                         "EXPOSE",
                         "REPEAT_EXPOSE",
@@ -57,25 +53,9 @@
                       "pixels_y": 1000,
                       "max_rois": 1,
                       "config_change_time": 0,
-                      "acquire_processing_time": 0,
                       "acquire_exposure_time": 0,
                       "front_padding": 90,
-                      "filter_change_time": 2,
                       "fixed_overhead_per_exposure": 1,
-                      "mode_set": [
-                        {
-                          "binning": 1,
-                          "readout": 35.0
-                        },
-                        {
-                          "binning": 2,
-                          "readout": 14.5
-                        },
-                        {
-                          "binning": 3,
-                          "readout": 11.5
-                        }
-                      ],
                       "mode_types": [
                         {
                           "type": "readout",
@@ -84,22 +64,25 @@
                             {
                               "code": "1m0_sbig_1",
                               "overhead": 35.0,
-                              "params": {
-                                "binning": 1
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [1], "default": 1},
+                                "bin_y": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             },
                             {
                               "code": "1m0_sbig_2",
                               "overhead": 14.5,
-                              "params": {
-                                "binning": 2
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [2], "default": 2},
+                                "bin_y": {"type": "integer", "allowed": [2], "default": 2}
                               }
                             },
                             {
                               "code": "1m0_sbig_3",
                               "overhead": 11.5,
-                              "params": {
-                                "binning": 3
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [3], "default": 3},
+                                "bin_y": {"type": "integer", "allowed": [3], "default": 3}
                               }
                             }
                           ]
@@ -111,7 +94,7 @@
                             {
                               "code": "OFF",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ]
                         },
@@ -122,18 +105,17 @@
                             {
                               "code": "OFF",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             },
                             {
                               "code": "ON",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ]
                         }
                       ]
                     },
-                    "filters": "air",
                     "optical_element_groups": [
                       {
                         "type": "filters",
@@ -167,10 +149,6 @@
                       "code": "1M0-SCICAM-SBIG",
                       "name": "1M0-SCICAM-SBIG",
                       "allow_self_guiding": true,
-                      "default_mode": {
-                        "binning": 2,
-                        "readout": 14.5
-                      },
                       "configuration_types": [
                         "EXPOSE",
                         "REPEAT_EXPOSE",
@@ -184,25 +162,9 @@
                       "pixels_y": 1000,
                       "max_rois": 1,
                       "config_change_time": 0,
-                      "acquire_processing_time": 0,
                       "acquire_exposure_time": 0,
                       "front_padding": 90,
-                      "filter_change_time": 2,
                       "fixed_overhead_per_exposure": 1,
-                      "mode_set": [
-                        {
-                          "binning": 1,
-                          "readout": 35.0
-                        },
-                        {
-                          "binning": 2,
-                          "readout": 14.5
-                        },
-                        {
-                          "binning": 3,
-                          "readout": 11.5
-                        }
-                      ],
                       "mode_types": [
                         {
                           "type": "readout",
@@ -211,22 +173,25 @@
                             {
                               "code": "1m0_sbig_1",
                               "overhead": 35.0,
-                              "params": {
-                                "binning": 1
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [1], "default": 1},
+                                "bin_y": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             },
                             {
                               "code": "1m0_sbig_2",
                               "overhead": 14.5,
-                              "params": {
-                                "binning": 2
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [2], "default": 2},
+                                "bin_y": {"type": "integer", "allowed": [2], "default": 2}
                               }
                             },
                             {
                               "code": "1m0_sbig_3",
                               "overhead": 11.5,
-                              "params": {
-                                "binning": 3
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [3], "default": 3},
+                                "bin_y": {"type": "integer", "allowed": [3], "default": 3}
                               }
                             }
                           ]
@@ -238,7 +203,7 @@
                             {
                               "code": "OFF",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ]
                         },
@@ -249,18 +214,17 @@
                             {
                               "code": "OFF",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             },
                             {
                               "code": "ON",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ]
                         }
                       ]
                     },
-                    "filters": "air",
                     "optical_element_groups": [
                       {
                         "type": "filters",
@@ -294,10 +258,6 @@
                       "code": "1M0-SCICAM-SBIG",
                       "name": "1M0-SCICAM-SBIG",
                       "allow_self_guiding": true,
-                      "default_mode": {
-                        "binning": 2,
-                        "readout": 14.5
-                      },
                       "configuration_types": [
                         "EXPOSE",
                         "REPEAT_EXPOSE",
@@ -311,25 +271,9 @@
                       "pixels_y": 1000,
                       "max_rois": 1,
                       "config_change_time": 0,
-                      "acquire_processing_time": 0,
                       "acquire_exposure_time": 0,
                       "front_padding": 90,
-                      "filter_change_time": 2,
                       "fixed_overhead_per_exposure": 1,
-                      "mode_set": [
-                        {
-                          "binning": 1,
-                          "readout": 35.0
-                        },
-                        {
-                          "binning": 2,
-                          "readout": 14.5
-                        },
-                        {
-                          "binning": 3,
-                          "readout": 11.5
-                        }
-                      ],
                       "mode_types": [
                         {
                           "type": "readout",
@@ -338,22 +282,25 @@
                             {
                               "code": "1m0_sbig_1",
                               "overhead": 35.0,
-                              "params": {
-                                "binning": 1
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [1], "default": 1},
+                                "bin_y": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             },
                             {
                               "code": "1m0_sbig_2",
                               "overhead": 14.5,
-                              "params": {
-                                "binning": 2
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [2], "default": 2},
+                                "bin_y": {"type": "integer", "allowed": [2], "default": 2}
                               }
                             },
                             {
                               "code": "1m0_sbig_3",
                               "overhead": 11.5,
-                              "params": {
-                                "binning": 3
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [3], "default": 3},
+                                "bin_y": {"type": "integer", "allowed": [3], "default": 3}
                               }
                             }
                           ]
@@ -365,7 +312,7 @@
                             {
                               "code": "OFF",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ]
                         },
@@ -376,18 +323,17 @@
                             {
                               "code": "OFF",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             },
                             {
                               "code": "ON",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ]
                         }
                       ]
                     },
-                    "filters": "air",
                     "optical_element_groups": [
                       {
                         "type": "filters",
@@ -438,15 +384,9 @@
                       "name": "2M0-FLOYDS-SCICAM",
                       "allow_self_guiding": false,
                       "config_change_time": 30,
-                      "acquire_processing_time": 60,
                       "acquire_exposure_time": 30,
                       "front_padding": 240,
-                      "filter_change_time": 0,
                       "fixed_overhead_per_exposure": 0.5,
-                      "default_mode": {
-                        "binning": 1,
-                        "readout": 25
-                      },
                       "configuration_types": [
                         "SPECTRUM",
                         "REPEAT_SPECTRUM",
@@ -458,12 +398,6 @@
                       "pixels_x": 1000,
                       "pixels_y": 1000,
                       "max_rois": 0,
-                      "mode_set": [
-                        {
-                          "binning": 1,
-                          "readout": 25
-                        }
-                      ],
                       "mode_types": [
                         {
                           "type": "readout",
@@ -472,8 +406,9 @@
                             {
                               "code": "2m0_floyds_1",
                               "overhead": 25.0,
-                              "params": {
-                                "binning": 1
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [1], "default": 1},
+                                "bin_y": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             }
                           ]
@@ -485,15 +420,15 @@
                             {
                               "code": "WCS",
                               "overhead": 90.0,
-                              "params": {}
+                              "validation_schema": {}
                             },
                             {
                               "code": "BRIGHTEST",
                               "overhead": 90.0,
-                              "params": {
-                                "required_fields": [
-                                  "acquire_radius"
-                                ]
+                              "validation_schema": {
+                                "extra_params": {"type": "dict", "schema": {
+                                  "acquire_radius": {"type": "float", "min": 0, "max": 15, "required": true}
+                                }}
                               }
                             }
                           ]
@@ -505,7 +440,7 @@
                             {
                               "code": "ON",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ]
                         },
@@ -516,22 +451,21 @@
                             {
                               "code": "VFLOAT",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             },
                             {
                               "code": "SKY",
                               "overhead": 0.0,
-                              "params": {
-                                "required_fields": [
-                                  "rotator_angle"
-                                ]
+                              "validation_schema": {
+                                "extra_params": {"type": "dict", "schema": {
+                                  "rotator_angle": {"type": "float", "min": 0, "max": 360}
+                                }}
                               }
                             }
                           ]
                         }
                       ]
                     },
-                    "filters": "slit_6.0as,slit_1.6as,slit_2.0as,slit_1.2as",
                     "optical_element_groups": [
                       {
                         "type": "slits",
@@ -601,10 +535,6 @@
                       "code": "1M0-SCICAM-SBIG",
                       "name": "1M0-SCICAM-SBIG",
                       "allow_self_guiding": true,
-                      "default_mode": {
-                        "binning": 2,
-                        "readout": 14.5
-                      },
                       "configuration_types": [
                         "EXPOSE",
                         "REPEAT_EXPOSE",
@@ -618,25 +548,9 @@
                       "pixels_y": 1000,
                       "max_rois": 0,
                       "config_change_time": 0,
-                      "acquire_processing_time": 0,
                       "acquire_exposure_time": 0,
                       "front_padding": 90,
-                      "filter_change_time": 2,
                       "fixed_overhead_per_exposure": 1,
-                      "mode_set": [
-                        {
-                          "binning": 1,
-                          "readout": 35.0
-                        },
-                        {
-                          "binning": 2,
-                          "readout": 14.5
-                        },
-                        {
-                          "binning": 3,
-                          "readout": 11.5
-                        }
-                      ],
                       "mode_types": [
                         {
                           "type": "readout",
@@ -645,22 +559,25 @@
                             {
                               "code": "1m0_sbig_1",
                               "overhead": 35.0,
-                              "params": {
-                                "binning": 1
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [1], "default": 1},
+                                "bin_y": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             },
                             {
                               "code": "1m0_sbig_2",
                               "overhead": 14.5,
-                              "params": {
-                                "binning": 2
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [2], "default": 2},
+                                "bin_y": {"type": "integer", "allowed": [2], "default": 2}
                               }
                             },
                             {
                               "code": "1m0_sbig_3",
                               "overhead": 11.5,
-                              "params": {
-                                "binning": 3
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [3], "default": 3},
+                                "bin_y": {"type": "integer", "allowed": [3], "default": 3}
                               }
                             }
                           ]
@@ -672,7 +589,7 @@
                             {
                               "code": "OFF",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ]
                         },
@@ -683,18 +600,17 @@
                             {
                               "code": "OFF",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             },
                             {
                               "code": "ON",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ]
                         }
                       ]
                     },
-                    "filters": "air",
                     "optical_element_groups": [
                       {
                         "type": "filters",
@@ -728,10 +644,6 @@
                       "code": "1M0-NRES-SCICAM",
                       "name": "1M0-NRES-SCICAM",
                       "allow_self_guiding": false,
-                      "default_mode": {
-                        "binning": 2,
-                        "readout": 90.5
-                      },
                       "configuration_types": [
                         "NRES_SPECTRUM",
                         "REPEAT_NRES_SPECTRUM",
@@ -746,21 +658,9 @@
                       "pixels_y": 1000,
                       "max_rois": 0,
                       "config_change_time": 0,
-                      "acquire_processing_time": 90,
                       "acquire_exposure_time": 10,
                       "front_padding": 270,
-                      "filter_change_time": 2,
                       "fixed_overhead_per_exposure": 1,
-                      "mode_set": [
-                        {
-                          "binning": 1,
-                          "readout": 35.0
-                        },
-                        {
-                          "binning": 2,
-                          "readout": 90.5
-                        }
-                      ],
                       "mode_types": [
                         {
                           "type": "readout",
@@ -768,15 +668,17 @@
                             {
                               "code": "1m0_nres_1",
                               "overhead": 35.0,
-                              "params": {
-                                "binning": 1
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [1], "default": 1},
+                                "bin_y": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             },
                             {
                               "code": "1m0_nres_2",
                               "overhead": 90.5,
-                              "params": {
-                                "binning": 2
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [2], "default": 2},
+                                "bin_y": {"type": "integer", "allowed": [2], "default": 2}
                               }
                             }
                           ]
@@ -788,17 +690,17 @@
                             {
                               "code": "WCS",
                               "overhead": 400.0,
-                              "params": {}
+                              "validation_schema": {}
                             },
                             {
                               "code": "MYMODE",
                               "overhead": 400.0,
-                              "params": {
-                                "required_fields": [
-                                  "field1",
-                                  "field2",
-                                  "field3"
-                                ]
+                              "validation_schema": {
+                                "extra_params": {"type": "dict", "schema": {
+                                  "field1": {"type": "string", "required": true},
+                                  "field2": {"type": "string", "required": true},
+                                  "field3": {"type": "string", "required": true}
+                                }}
                               }
                             }
                           ]
@@ -810,13 +712,12 @@
                             {
                               "code": "ON",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ]
                         }
                       ]
                     },
-                    "filters": "air",
                     "optical_element_groups": []
                   },
                   "__str__": "tst.domb.1m0a.nres02-nres02"
@@ -854,15 +755,9 @@
                       "name": "2M0-FLOYDS-SCICAM",
                       "allow_self_guiding": false,
                       "config_change_time": 30,
-                      "acquire_processing_time": 60,
                       "acquire_exposure_time": 30,
                       "front_padding": 240,
-                      "filter_change_time": 0,
                       "fixed_overhead_per_exposure": 0.5,
-                      "default_mode": {
-                        "binning": 1,
-                        "readout": 25
-                      },
                       "configuration_types": [
                         "SPECTRUM",
                         "REPEAT_SPECTRUM",
@@ -874,12 +769,6 @@
                       "pixels_x": 1000,
                       "pixels_y": 1000,
                       "max_rois": 0,
-                      "mode_set": [
-                        {
-                          "binning": 1,
-                          "readout": 25
-                        }
-                      ],
                       "mode_types": [
                         {
                           "type": "readout",
@@ -887,8 +776,9 @@
                             {
                               "code": "2m0_floyds_1",
                               "overhead": 25.0,
-                              "params": {
-                                "binning": 1
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [1], "default": 1},
+                                "bin_y": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             }
                           ]
@@ -900,15 +790,15 @@
                             {
                               "code": "WCS",
                               "overhead": 90.0,
-                              "params": {}
+                              "validation_schema": {}
                             },
                             {
                               "code": "BRIGHTEST",
                               "overhead": 90.0,
-                              "params": {
-                                "required_fields": [
-                                  "acquire_radius"
-                                ]
+                              "validation_schema": {
+                                "extra_params": {"type": "dict", "schema": {
+                                  "acquire_radius": {"type": "float", "min": 0, "max": 15, "required": true}
+                                }}
                               }
                             }
                           ]
@@ -920,7 +810,7 @@
                             {
                               "code": "ON",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ]
                         },
@@ -931,22 +821,21 @@
                             {
                               "code": "VFLOAT",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             },
                             {
                               "code": "SKY",
                               "overhead": 0.0,
-                              "params": {
-                                "required_fields": [
-                                  "rotator_angle"
-                                ]
+                              "validation_schema": {
+                                "extra_params": {"type": "dict", "schema": {
+                                  "rotator_angle": {"type": "float", "min": 0, "max": 360}
+                                }}
                               }
                             }
                           ]
                         }
                       ]
                     },
-                    "filters": "slit_6.0as,slit_1.6as,slit_2.0as,slit_1.2as",
                     "optical_element_groups": [
                       {
                         "type": "slits",
@@ -1016,7 +905,7 @@
                               "name": "Acquire Off",
                               "overhead": 0.0,
                               "code": "OFF",
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ],
                           "default": "OFF"
@@ -1028,8 +917,9 @@
                               "name": "Muscat Slow Readout",
                               "overhead": 10.0,
                               "code": "MUSCAT_SLOW",
-                              "params": {
-                                "binning": 1
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [1], "default": 1},
+                                "bin_y": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             }
                           ],
@@ -1042,28 +932,28 @@
                               "name": "Muscat Synchronous Exposure Mode",
                               "overhead": 0.0,
                               "code": "SYNCHRONOUS",
-                              "params": {
-                                "required_fields": [
-                                  "exposure_time_g",
-                                  "exposure_time_r",
-                                  "exposure_time_i",
-                                  "exposure_time_z",
-                                  "exposure_mode"
-                                ]
+                              "validation_schema": {
+                                "extra_params": {"type": "dict", "schema": {
+                                  "exposure_time_g": {"type": "float", "min": 0, "required": true},
+                                  "exposure_time_r": {"type": "float", "min": 0, "required": true},
+                                  "exposure_time_i": {"type": "float", "min": 0, "required": true},
+                                  "exposure_time_z": {"type": "float", "min": 0, "required": true},
+                                  "exposure_mode": {"type": "string", "allowed": ["SYNCHRONOUS"], "required": true}
+                                }}
                               }
                             },
                             {
                               "name": "Muscat Asynchronous Exposure Mode",
                               "overhead": 0.0,
                               "code": "ASYNCHRONOUS",
-                              "params": {
-                                "required_fields": [
-                                  "exposure_time_g",
-                                  "exposure_time_r",
-                                  "exposure_time_i",
-                                  "exposure_time_z",
-                                  "exposure_mode"
-                                ]
+                              "validation_schema": {
+                                "extra_params": {"type": "dict", "schema": {
+                                  "exposure_time_g": {"type": "float", "min": 0, "required": true},
+                                  "exposure_time_r": {"type": "float", "min": 0, "required": true},
+                                  "exposure_time_i": {"type": "float", "min": 0, "required": true},
+                                  "exposure_time_z": {"type": "float", "min": 0, "required": true},
+                                  "exposure_mode": {"type": "string", "allowed": ["ASYNCHRONOUS"], "required": true}
+                                }}
                               }
                             }
                           ],
@@ -1076,7 +966,7 @@
                               "name": "On",
                               "overhead": 0.0,
                               "code": "ON",
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ],
                           "default": "ON"
@@ -1215,7 +1105,7 @@
                               "name": "Acquire Off",
                               "overhead": 0.0,
                               "code": "OFF",
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ],
                           "default": "OFF"
@@ -1227,8 +1117,9 @@
                               "name": "Muscat Slow Readout",
                               "overhead": 10.0,
                               "code": "MUSCAT_SLOW",
-                              "params": {
-                                "binning": 1
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [1], "default": 1},
+                                "bin_y": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             }
                           ],
@@ -1241,28 +1132,28 @@
                               "name": "Muscat Synchronous Exposure Mode",
                               "overhead": 0.0,
                               "code": "SYNCHRONOUS",
-                              "params": {
-                                "required_fields": [
-                                  "exposure_time_g",
-                                  "exposure_time_r",
-                                  "exposure_time_i",
-                                  "exposure_time_z",
-                                  "exposure_mode"
-                                ]
+                              "validation_schema": {
+                                "extra_params": {"type": "dict", "schema": {
+                                  "exposure_time_g": {"type": "float", "min": 0, "required": true},
+                                  "exposure_time_r": {"type": "float", "min": 0, "required": true},
+                                  "exposure_time_i": {"type": "float", "min": 0, "required": true},
+                                  "exposure_time_z": {"type": "float", "min": 0, "required": true},
+                                  "exposure_mode": {"type": "string", "allowed": ["SYNCHRONOUS"], "required": true}
+                                }}
                               }
                             },
                             {
                               "name": "Muscat Asynchronous Exposure Mode",
                               "overhead": 0.0,
                               "code": "ASYNCHRONOUS",
-                              "params": {
-                                "required_fields": [
-                                  "exposure_time_g",
-                                  "exposure_time_r",
-                                  "exposure_time_i",
-                                  "exposure_time_z",
-                                  "exposure_mode"
-                                ]
+                              "validation_schema": {
+                                "extra_params": {"type": "dict", "schema": {
+                                  "exposure_time_g": {"type": "float", "min": 0, "required": true},
+                                  "exposure_time_r": {"type": "float", "min": 0, "required": true},
+                                  "exposure_time_i": {"type": "float", "min": 0, "required": true},
+                                  "exposure_time_z": {"type": "float", "min": 0, "required": true},
+                                  "exposure_mode": {"type": "string", "allowed": ["ASYNCHRONOUS"], "required": true}
+                                }}
                               }
                             }
                           ],
@@ -1275,7 +1166,7 @@
                               "name": "On",
                               "overhead": 0.0,
                               "code": "ON",
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ],
                           "default": "ON"
@@ -1418,10 +1309,6 @@
                       "code": "1M0-SCICAM-SBIG",
                       "name": "1M0-SCICAM-SBIG",
                       "allow_self_guiding": true,
-                      "default_mode": {
-                        "binning": 2,
-                        "readout": 14.5
-                      },
                       "configuration_types": [
                         "EXPOSE",
                         "REPEAT_EXPOSE",
@@ -1435,25 +1322,9 @@
                       "pixels_y": 1000,
                       "max_rois": 0,
                       "config_change_time": 0,
-                      "acquire_processing_time": 0,
                       "acquire_exposure_time": 0,
                       "front_padding": 90,
-                      "filter_change_time": 2,
                       "fixed_overhead_per_exposure": 1,
-                      "mode_set": [
-                        {
-                          "binning": 1,
-                          "readout": 35.0
-                        },
-                        {
-                          "binning": 2,
-                          "readout": 14.5
-                        },
-                        {
-                          "binning": 3,
-                          "readout": 11.5
-                        }
-                      ],
                       "mode_types": [
                         {
                           "type": "readout",
@@ -1462,22 +1333,25 @@
                             {
                               "code": "1m0_sbig_1",
                               "overhead": 35.0,
-                              "params": {
-                                "binning": 1
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [1], "default": 1},
+                                "bin_y": {"type": "integer", "allowed": [1], "default": 1}
                               }
                             },
                             {
                               "code": "1m0_sbig_2",
                               "overhead": 14.5,
-                              "params": {
-                                "binning": 2
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [2], "default": 2},
+                                "bin_y": {"type": "integer", "allowed": [2], "default": 2}
                               }
                             },
                             {
                               "code": "1m0_sbig_3",
                               "overhead": 11.5,
-                              "params": {
-                                "binning": 3
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [3], "default": 3},
+                                "bin_y": {"type": "integer", "allowed": [3], "default": 3}
                               }
                             }
                           ]
@@ -1489,7 +1363,7 @@
                             {
                               "code": "OFF",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ]
                         },
@@ -1500,18 +1374,17 @@
                             {
                               "code": "OFF",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             },
                             {
                               "code": "ON",
                               "overhead": 0.0,
-                              "params": {}
+                              "validation_schema": {}
                             }
                           ]
                         }
                       ]
                     },
-                    "filters": "air",
                     "optical_element_groups": [
                       {
                         "type": "filters",

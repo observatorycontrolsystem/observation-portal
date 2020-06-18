@@ -15,7 +15,7 @@ django-dramatiq>=0.7,<0.8
 django-storages>=1.7,<1.8
 time_intervals<2.0
 numpy>=1.16,<1.17
-rise-set==0.4.12
+ocs-rise-set==0.5.1
 elasticsearch>=5,<6
 WeasyPrint>=0.47<0.48
 PyPDF2>=1.26,<1.27
@@ -25,6 +25,7 @@ redis==3.5.2
 django-redis-cache<2.1
 gunicorn[gevent]>=19,<20
 lcogt-logging==0.3.2
+cerberus>1.0,<2.0
 
 responses==0.10.6
 mixer==6.1.3
