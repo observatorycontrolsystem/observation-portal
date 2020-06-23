@@ -79,6 +79,7 @@
         isLoading: false,
         site: '',
         maxY: 1,
+        runningQuery: null,
         rawData: [],
         rawSiteData: [],
         siteNights: [],
@@ -177,6 +178,9 @@
         return nights;
       },
       fetchData: function() {
+        if (this.runningQuery){
+          this.runningQuery.abort();
+        }
         this.isLoading = true;
         this.rawData = [];
         this.rawSiteData = [];
@@ -184,7 +188,7 @@
         if (this.site) urlstring += ('&site=' + this.site);
         if (this.instrument) urlstring += ('&instrument=' + this.instrument);
         let that = this;
-        $.getJSON(urlstring, function(data) {
+        this.runningQuery = $.getJSON(urlstring, function(data) {
           that.rawData = data.pressure_data;
           that.rawSiteData = data.site_nights;
           that.maxY = that.maxPressureInGraph;
@@ -192,10 +196,17 @@
           that.data.datasets = that.toChartData;
         }).done(function() {
           that.loadingDataFailed = false;
-        }).fail(function() {
-          that.loadingDataFailed = true;
-        }).always(function() {
-          that.isLoading = false;
+        }).fail(function(res, textStatus) {
+          if (textStatus !== 'abort'){
+            that.loadingDataFailed = true;
+          }
+        }).always(function(res, textStatus) {
+          if (textStatus !== 'abort'){
+            that.isLoading = false;
+          }
+          else{
+            that.runningQuery = null;
+          }
         });
       },
       updateChart: function() {
