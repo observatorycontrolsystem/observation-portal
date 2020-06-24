@@ -196,6 +196,7 @@
           that.data.datasets = that.toChartData;
         }).done(function() {
           that.loadingDataFailed = false;
+          that.runningQuery = null;
         }).fail(function(res, textStatus) {
           if (textStatus !== 'abort'){
             that.loadingDataFailed = true;

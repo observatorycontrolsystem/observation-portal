@@ -111,6 +111,7 @@
           that.chart.update();
         }).done(function() {
           that.loadingDataFailed = false;
+          that.runningQuery = null;
         }).fail(function(res, textStatus) {
           if (textStatus !== 'abort'){
             that.loadingDataFailed = true;
