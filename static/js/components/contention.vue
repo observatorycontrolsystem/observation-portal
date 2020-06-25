@@ -55,6 +55,7 @@
       return {
         loadingDataFailed: false,
         isLoading: false,
+        runningQuery: null,
         instrument: '',
         rawData: [],
         data: {
@@ -98,19 +99,30 @@
     },
     watch: {
       instrument: function(instrument) {
+        if (this.runningQuery){
+          this.runningQuery.abort();
+        }
         this.rawData = [];
         this.isLoading = true;
         let that = this;
-        $.getJSON('/api/contention/' + instrument + '/', function(data) {
+        this.runningQuery = $.getJSON('/api/contention/' + instrument + '/', function(data) {
           that.rawData = data.contention_data;
           that.data.datasets = that.toChartData;
           that.chart.update();
         }).done(function() {
           that.loadingDataFailed = false;
-        }).fail(function() {
-          that.loadingDataFailed = true;
-        }).always(function() {
-          that.isLoading = false;
+          that.runningQuery = null;
+        }).fail(function(res, textStatus) {
+          if (textStatus !== 'abort'){
+            that.loadingDataFailed = true;
+          }
+        }).always(function(res, textStatus) {
+          if (textStatus !== 'abort'){
+            that.isLoading = false;
+          }
+          else{
+            that.runningQuery = null;
+          }
         });
       }
     },

@@ -74,6 +74,17 @@ class TestRequestIntervals(BaseSetupRequest):
 
         self.assertEqual(intervals, truth_intervals)
 
+    def test_request_intervals_for_staff_at_location(self):
+        request_dict = self.request.as_dict()
+        request_dict['location']['site'] = 'tst'
+        request_dict['location']['enclosure'] = 'domd'
+        request_dict['location']['telescope'] = '1m0a'
+        request_dict['configurations'][0]['instrument_type'] = '1M0-SCICAM-SBAG'
+        intervals = get_filtered_rise_set_intervals_by_site(request_dict, is_staff=False).get('tst', [])
+        self.assertEqual(intervals, [])
+        intervals = get_filtered_rise_set_intervals_by_site(request_dict, is_staff=True).get('tst', [])
+        self.assertNotEqual(intervals, [])
+
     @patch('observation_portal.common.downtimedb.DowntimeDB._get_downtime_data')
     def test_request_intervals_for_one_week_removes_downtime(self, downtime_data):
         downtime_data.return_value = [{'start': '2016-10-01T22:00:00Z',

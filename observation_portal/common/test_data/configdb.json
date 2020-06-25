@@ -1514,6 +1514,136 @@
               ]
             }
           ]
+        },
+        {
+          "code": "domd",
+          "telescope_set": [
+            {
+              "code": "1m0a",
+              "name": "1 Meter",
+              "lat": -32.3805542,
+              "long": 20.8100352,
+              "horizon": 15.0,
+              "ha_limit_pos": 4.6,
+              "ha_limit_neg": -4.6,
+              "zenith_blind_spot": 0.0,
+              "slew_rate": 0.0,
+              "minimum_slew_overhead": 2.0,
+              "maximum_slew_overhead": 2.0,
+              "instrument_change_overhead": 30.0,
+              "instrument_set": [
+                {
+                  "state": "MANUAL",
+                  "code": "xy01",
+                  "autoguider_camera": {
+                    "code": "ey01",
+                    "camera_type": {
+                      "code": "1M0-SCICAM-AG",
+                      "allow_self_guiding": true
+                    }
+                  },
+                  "science_camera": {
+                    "code": "xy01",
+                    "camera_type": {
+                      "code": "1M0-SCICAM-SBAG",
+                      "name": "1M0-SCICAM-SBAG",
+                      "allow_self_guiding": true,
+                      "configuration_types": [
+                        "EXPOSE",
+                        "REPEAT_EXPOSE",
+                        "BIAS",
+                        "DARK",
+                        "SCRIPT",
+                        "SKY_FLAT"
+                      ],
+                      "default_acceptability_threshold": 100,
+                      "pixels_x": 1000,
+                      "pixels_y": 1000,
+                      "max_rois": 0,
+                      "config_change_time": 0,
+                      "acquire_exposure_time": 0,
+                      "front_padding": 90,
+                      "fixed_overhead_per_exposure": 1,
+                      "mode_types": [
+                        {
+                          "type": "readout",
+                          "default": "1m0_sbag_2",
+                          "modes": [
+                            {
+                              "code": "1m0_sbag_1",
+                              "overhead": 35.0,
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [1], "default": 1},
+                                "bin_y": {"type": "integer", "allowed": [1], "default": 1}
+                              }
+                            },
+                            {
+                              "code": "1m0_sbag_2",
+                              "overhead": 14.5,
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [2], "default": 2},
+                                "bin_y": {"type": "integer", "allowed": [2], "default": 2}
+                              }
+                            },
+                            {
+                              "code": "1m0_sbag_3",
+                              "overhead": 11.5,
+                              "validation_schema": {
+                                "bin_x": {"type": "integer", "allowed": [3], "default": 3},
+                                "bin_y": {"type": "integer", "allowed": [3], "default": 3}
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "type": "acquisition",
+                          "default": "OFF",
+                          "modes": [
+                            {
+                              "code": "OFF",
+                              "overhead": 0.0,
+                              "validation_schema": {}
+                            }
+                          ]
+                        },
+                        {
+                          "type": "guiding",
+                          "default": "OFF",
+                          "modes": [
+                            {
+                              "code": "OFF",
+                              "overhead": 0.0,
+                              "validation_schema": {}
+                            },
+                            {
+                              "code": "ON",
+                              "overhead": 0.0,
+                              "validation_schema": {}
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    "optical_element_groups": [
+                      {
+                        "type": "filters",
+                        "element_change_overhead": 2,
+                        "optical_elements": [
+                          {
+                            "name": "Air",
+                            "code": "air",
+                            "schedulable": false
+                          }
+                        ],
+                        "default": "air"
+                      }
+                    ]
+                  },
+                  "__str__": "tst.domd.1m0a.xy01-xy01"
+                }
+              ]
+            }
+          ]
         }
       ]
     },
