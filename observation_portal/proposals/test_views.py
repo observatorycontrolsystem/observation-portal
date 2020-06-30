@@ -221,6 +221,16 @@ class TestProposalInvite(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, f'You cannot invite yourself ({self.pi_user.email}) to be a Co-Investigator')
 
+    def test_cannot_invite_user_that_is_already_member(self):
+        self.client.force_login(self.pi_user)
+        response = self.client.post(
+            reverse('proposals:invite', kwargs={'pk': self.proposal.id}),
+            data={'email': self.ci_user.email},
+            follow=True
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, f'User with email {self.ci_user.email} is already a member of this proposal')
+
 
 class TestProposalList(TestCase):
     def setUp(self):
