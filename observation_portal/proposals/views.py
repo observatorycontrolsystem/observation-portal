@@ -1,4 +1,7 @@
+from datetime import datetime
+
 from django.views import View
+from django.views.generic.base import RedirectView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -168,3 +171,15 @@ class SemesterAdminView(UserPassesTestMixin, DetailView):
         context = super().get_context_data(**kwargs)
         context['semesters'] = Semester.objects.all().order_by('-start')
         return context
+
+class CurrentSemesterRedirect(RedirectView):
+    permanent = False
+    pattern_name = 'proposals:semester-detail'
+
+    def get_redirect_url(self, *args, **kwargs):
+        now = datetime.utcnow()
+        semesters = Semester.objects.filter(start__lte=now, end__gte=now)
+        try:
+            return reverse(self.pattern_name, kwargs={'pk':semesters[0].id})
+        except IndexError:
+            return reverse('list')
