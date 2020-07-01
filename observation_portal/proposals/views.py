@@ -182,4 +182,4 @@ class CurrentSemesterRedirect(RedirectView):
         try:
             return reverse(self.pattern_name, kwargs={'pk':semesters[0].id})
         except IndexError:
-            return reverse('list')
+            return reverse('proposals:list')
