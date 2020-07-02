@@ -16,19 +16,25 @@ p {
   margin: 0 0 10px;
 }
 
-h1,h2,h3,h4,h5,h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: 'Heebo', sans-serif;
   line-height: 1.25em;
   padding: 0.5em 0;
-  color:#090a0f;
+  color: #090a0f;
 }
 
 a {
-	color: #009ec3;
-	text-decoration: none;
+  color: #009ec3;
+  text-decoration: none;
 }
+
 a:hover {
-	background-color: #ffcd05;
+  background-color: #ffcd05;
   text-decoration: none;
 }
 
@@ -37,26 +43,26 @@ a.navbar-brand:hover {
 }
 
 .navbar-dark .navbar-nav .nav-link {
-  color:#fff;
+  color: #fff;
 }
 
 .container.navbar-bg {
-  background-color: #0B3053;
+  background-color: #0b3053;
 }
 
 .container {
   background-color: #fff;
 }
 
-.fullheight{
-  min-height:calc(100vh - 200px);
+.fullheight {
+  min-height: calc(100vh - 200px);
 }
 
 #lco-name {
   font-family: 'Heebo', sans-serif;
   line-height: 1.1em;
-  font-size:1.25em;
-  color:#fff;
+  font-size: 1.25em;
+  color: #fff;
 }
 
 .grey {
@@ -84,6 +90,7 @@ a.navbar-brand:hover {
 
 .progress-bar {
   background-color: #009ec3;
+  font-family: sans-serif;
 }
 
 .nav-tabs > li > a {
@@ -93,7 +100,6 @@ a.navbar-brand:hover {
 .downPage .nav>li>a:hover {
   color: inherit;
 }
-
 
 .btn-xs {
   padding: 2px 4px;
@@ -129,7 +135,7 @@ a.navbar-brand:hover {
 }
 
 .thumbnail {
-  margin-bottom: 0px;
+  margin-bottom: 0;
 }
 
 .thumnail-small {
@@ -175,9 +181,9 @@ a.navbar-brand:hover {
 }
 
 .requestgroup {
-  border: 1px solid #EFF0EC;
+  border: 1px solid #eff0ec;
   min-height: 75px;
-  margin: 0px;
+  margin: 0;
 
 }
 
@@ -188,11 +194,11 @@ a.navbar-brand:hover {
 }
 
 .requestgroup-success {
-  background: linear-gradient(to right,#3c763d 0,#3c763d 10px,#fff 10px,#fff 100%) no-repeat;
+  background: linear-gradient(to right, #3c763d 0, #3c763d 10px, #fff 10px, #fff 100%) no-repeat;
 }
 
 .requestgroup-neutral {
-  background: linear-gradient(to right,#8a6d3b 0,#8a6d3b 10px,#fff 10px,#fff 100%) no-repeat;
+  background: linear-gradient(to right, #8a6d3b 0, #8a6d3b 10px, #fff 10px, #fff 100%) no-repeat;
 }
 
 .text-neutral {
@@ -200,11 +206,11 @@ a.navbar-brand:hover {
 }
 
 .requestgroup-danger {
-  background: linear-gradient(to right,#a94442 0,#a94442 10px,#fff 10px,#fff 100%) no-repeat;
+  background: linear-gradient(to right, #a94442 0, #a94442 10px, #fff 10px, #fff 100%) no-repeat;
 }
 
 .requestgroup-info {
-  background: linear-gradient(to right,#31708f 0,#31708f 10px,#fff 10px,#fff 100%) no-repeat;
+  background: linear-gradient(to right, #31708f 0, #31708f 10px, #fff 10px, #fff 100%) no-repeat;
 }
 
 .requestgroup-block > p {
@@ -212,7 +218,7 @@ a.navbar-brand:hover {
 }
 
 .requestgroup-block.border-right {
-  border-right: 1px solid #EFF0EC;
+  border-right: 1px solid #eff0ec;
 }
 
 .request-block {
@@ -235,6 +241,7 @@ a.navbar-brand:hover {
   margin-top: 15px;
   margin-bottom: 5px;
 }
+
 .request-additional {
   padding-top: 20px;
   font-size: 1.5em;
@@ -250,26 +257,26 @@ a.navbar-brand:hover {
 
 .child-requests {
   line-height: 0.9;
-  margin-bottom: 0px;
+  margin-bottom: 0;
 }
 
 .request-detail {
-  border-left: 1px solid #EFF0EC;
-  border-right: 1px solid #EFF0EC;
+  border-left: 1px solid #eff0ec;
+  border-right: 1px solid #eff0ec;
 }
 
 .request-show {
-  border: 1px solid #EFF0EC;
-  border-top: 0px solid #EFF0EC;
+  border: 1px solid #eff0ec;
+  border-top: 0 solid #eff0ec;
 }
 
 .request-show:hover{
-  background-color: #F5F5F5;
+  background-color: #f5f5f5;
   cursor: pointer;
 }
 
 .request-show p {
-  margin: 0px;
+  margin: 0;
 }
 
 .spacer {
@@ -281,7 +288,7 @@ a.navbar-brand:hover {
 }
 
 #tabs > ul {
-  border-bottom: 0px;
+  border-bottom: 0;
 }
 
 .duration {
@@ -304,10 +311,6 @@ a.navbar-brand:hover {
   background-color: #f9f9f9;
 }
 
-.progress-bar {
-  font-family: sans-serif;
-}
-
 .help-list > li {
   height: 30px;
 }
@@ -324,16 +327,16 @@ a.navbar-brand:hover {
   background-color: #009cc3;
 }
 
-.navbar-light .navbar-nav .nav-link{
+.navbar-light .navbar-nav .nav-link {
   color: #009ec3;
 }
 
-.card-column-two{
+.card-column-two {
   column-count: 2;
 }
 
 .no-top-border > tr > td {
-  border-top:none;
+  border-top: none;
 }
 
 .button-header {
@@ -341,25 +344,27 @@ a.navbar-brand:hover {
 }
 
 
- .btn-outline-secondary {
+.btn-outline-secondary {
   border-color: #bababa;
-  color: #000000;
+  color: #000;
 }
 
-@media screen and (min-width:1200px){
+@media screen and (min-width: 1200px) {
   .container {
     max-width: 1440px;
     padding: 0 70px;
   }
+
   .container.navbar-bg {
     padding: 0 20px;
   }
 }
 
-@media (max-width: 991.98px){
+@media (max-width: 991.98px) {
   #lco-name {
     display:none;
   }
+
   .navbar-brand img {
     width:50%;
   }
