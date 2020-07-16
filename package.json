@@ -19,7 +19,7 @@
     "core-js": "^2.6.5",
     "jquery": "^3.5.0",
     "jquery-file-download": "^1.4.6",
-    "lodash": "^4.17.13",
+    "lodash": "^4.17.19",
     "moment": "^2.22.1",
     "vis": "4.19.1",
     "vue": "^2.6.6",
