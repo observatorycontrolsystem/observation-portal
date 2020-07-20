@@ -114,6 +114,7 @@ class RequestGroup(models.Model):
     def as_dict(self):
         ret_dict = model_to_dict(self)
         ret_dict['created'] = self.created
+        ret_dict['modified'] = self.modified
         ret_dict['submitter'] = self.submitter.username
         ret_dict['proposal'] = self.proposal.id
         ret_dict['requests'] = [r.as_dict() for r in self.requests.all()]
