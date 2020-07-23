@@ -3,14 +3,6 @@ html {
   min-height: 100%;
 }
 
-body {
-  font-family: 'Libre Franklin', sans-serif;
-  font-size: 1.125em;
-  line-height: 1.42857143;
-  color: #333;
-  margin-bottom: 45px;
-  background-color: #090a0f;
-}
 
 p {
   margin: 0 0 10px;
@@ -42,26 +34,37 @@ a.navbar-brand:hover {
   background-color: rgba(0, 0, 0, 0);
 }
 
-.navbar-dark .navbar-nav .nav-link {
+.navbar-bg .navbar-nav .nav-link {
   color: #fff;
 }
 
-.container.navbar-bg {
+.navbar-bg {
   background-color: #0b3053;
 }
 
-.container {
-  background-color: #fff;
+.navbar-bg a{
+  color:#fff;
 }
 
-.fullheight {
-  min-height: calc(100vh - 200px);
+.navbar-bg a:hover{
+  color:#000000;
+}
+
+.navbar-bg a.dropdown-item {
+  color:black;
+}
+
+.navbar-bg a.dropdown-item:hover {
+  color:black;
+}
+
+.nav-row {
+  display: flex!important;
 }
 
 #lco-name {
   font-family: 'Heebo', sans-serif;
-  line-height: 1.1em;
-  font-size: 1.25em;
+  font-size: 1.5em;
   color: #fff;
 }
 
@@ -77,15 +80,6 @@ a.navbar-brand:hover {
 
 .nav > li > a:focus, .nav > li > a:hover {
   background-color: inherit;
-}
-
-.footer {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  /* Set the fixed height of the footer here */
-  height: 45px;
-  text-align: center;
 }
 
 .progress-bar {
@@ -173,6 +167,18 @@ a.navbar-brand:hover {
   line-height: 1.42857143;
   text-transform: none;
   font-size: 14px;
+}
+
+.btn.btn-primary {
+  background-color: #00adef;
+  border-color: #00adef;
+  color: white;
+}
+
+.btn.btn-danger {
+  background-color: #f04e23;
+  border-color: #f04e23;
+  color: white;
 }
 
 .intro {
@@ -366,5 +372,17 @@ a.navbar-brand:hover {
 
   .navbar-brand img {
     width: 50%;
+  }
+}
+
+@media screen and (max-width: 1215px) {
+  .navbar-brand img {
+    max-height: 2em;
+  }
+}
+
+@media screen and (min-width:768px) {
+  .container > .navbar-header {
+    height: 120px;
   }
 }
