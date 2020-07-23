@@ -186,16 +186,30 @@ class InstrumentsInformationView(APIView):
 
     def get(self, request):
         info = {}
-        is_staff = request.user.is_staff
-        for instrument_type in configdb.get_instrument_types({}, only_schedulable=(not is_staff)):
-            info[instrument_type] = {
-                'type': 'SPECTRA' if configdb.is_spectrograph(instrument_type) else 'IMAGE',
-                'class': configdb.get_instrument_type_telescope_class(instrument_type),
-                'name': configdb.get_instrument_type_full_name(instrument_type),
-                'optical_elements': configdb.get_optical_elements(instrument_type),
-                'modes': configdb.get_modes_by_type(instrument_type),
-                'default_acceptability_threshold': configdb.get_default_acceptability_threshold(instrument_type)
-            }
+        # Staff users by default should see all instruments, but can request only schedulable instruments.
+        # Non-staff users are only allowed access to schedulable instruments.
+        if request.user.is_staff:
+            only_schedulable = request.query_params.get('only_schedulable', False)
+        else:
+            only_schedulable = True
+
+        requested_instrument_type = request.query_params.get('instrument_type', '')
+        location = {
+            'site': request.query_params.get('site', ''),
+            'enclosure': request.query_params.get('enclosure', ''),
+            'telescope_class': request.query_params.get('telescope_class', ''),
+            'telescope': request.query_params.get('telescope', ''),
+        }
+        for instrument_type in configdb.get_instrument_types(location=location, only_schedulable=only_schedulable):
+            if not requested_instrument_type or requested_instrument_type.lower() == instrument_type.lower():
+                info[instrument_type] = {
+                    'type': 'SPECTRA' if configdb.is_spectrograph(instrument_type) else 'IMAGE',
+                    'class': configdb.get_instrument_type_telescope_class(instrument_type),
+                    'name': configdb.get_instrument_type_full_name(instrument_type),
+                    'optical_elements': configdb.get_optical_elements(instrument_type),
+                    'modes': configdb.get_modes_by_type(instrument_type),
+                    'default_acceptability_threshold': configdb.get_default_acceptability_threshold(instrument_type)
+                }
         return Response(info)
 
 

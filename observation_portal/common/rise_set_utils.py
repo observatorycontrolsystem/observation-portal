@@ -30,7 +30,7 @@ def get_largest_interval(intervals_by_site):
 
 
 # TODO: rewrite to handle multiple targets per request
-def get_rise_set_intervals_by_site(request: dict) -> dict:
+def get_rise_set_intervals_by_site(request: dict, only_schedulable: bool = False) -> dict:
     """Get rise_set intervals by site for a request
 
     Computes the intervals only if they do not already exist in cache.
@@ -41,7 +41,8 @@ def get_rise_set_intervals_by_site(request: dict) -> dict:
         rise_set intervals by site
     """
     site_details = configdb.get_sites_with_instrument_type_and_location(
-        instrument_type=request['configurations'][0]['instrument_type']
+        instrument_type=request['configurations'][0]['instrument_type'],
+        only_schedulable=only_schedulable
     )
     intervals_by_site = {}
     for site in site_details:
@@ -88,7 +89,7 @@ def get_filtered_rise_set_intervals_by_site(request_dict, site='', is_staff=Fals
     if not telescope_details:
         return intervals
 
-    intervals_by_site = get_rise_set_intervals_by_site(request_dict)
+    intervals_by_site = get_rise_set_intervals_by_site(request_dict, only_schedulable)
     intervalsets_by_telescope = intervals_by_site_to_intervalsets_by_telescope(
         intervals_by_site, telescope_details.keys()
     )
