@@ -416,3 +416,7 @@ class TestSemesterDetail(TestCase):
     def test_view_summary(self):
         response = self.client.get(reverse('proposals:semester-detail', kwargs={'pk': self.semester.id}))
         self.assertContains(response, self.proposal.title)
+
+    def test_current_redirect(self):
+        response = self.client.get(reverse('proposals:semester-current'))
+        self.assertEqual(response.status_code, 302)
