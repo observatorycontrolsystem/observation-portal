@@ -122,6 +122,9 @@ class InviteCreateView(LoginRequiredMixin, View):
             if email.lower() == request.user.email.lower():
                 messages.error(request, f'You cannot invite yourself ({email}) to be a Co-Investigator')
                 valid = False
+            if Membership.objects.filter(proposal=proposal, user__email__iexact=email).exists():
+                messages.error(request, f'User with email {email} is already a member of this proposal')
+                valid = False
         if valid:
             proposal.add_users(emails, Membership.CI)
             messages.success(request, _('Co Investigator(s) invited'))
