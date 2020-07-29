@@ -100,11 +100,11 @@
             <tbody>
                 {% regroup object.timeallocation_set.all by semester as timeallocations %}
                 {% for ta in timeallocations %}
-                    <tr class="bg-info">
+                    <tr class="blue-bg white">
                         <td colspan="4">{{ ta.grouper }}</td>
                     </tr>
                     {% for ta in ta.list %}
-                        <tr class="bg-grey">
+                        <tr class="grey-bg">
                             <td></td>
                             <td>{{ ta.instrument_type }}</td>
                             <td colspan="2"></td>
