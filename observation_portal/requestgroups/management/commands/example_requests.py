@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
 from django.db import transaction
+from django.utils import timezone
 
 from datetime import datetime, timedelta
 import logging
@@ -64,7 +65,9 @@ TARGET_LIST = [
         "name": "m1",
         "type": "ICRS",
         "ra": 83.63308,
-        "dec": 22.0145
+        "dec": 22.0145,
+        "epoch": 2000,
+        "parallax": 0.0
     },
     {
         "name": "m76",
@@ -73,7 +76,8 @@ TARGET_LIST = [
         "dec": 51.5754314258261,
         "proper_motion_ra": -0.254,
         "proper_motion_dec": -4.165,
-        "epoch": 2000
+        "epoch": 2000,
+        "parallax": 0.0
     },
     {
         "name": "m41",
@@ -120,20 +124,20 @@ class Command(BaseCommand):
                 # Just choose the midpoint of the first interval that fits the request
                 if interval_duration > duration:
                     telescope_details = configdb.get_telescopes_with_instrument_type_and_location(instrument_type, site)
-                    tel_code = telescope_details.keys()[0]
+                    tel_code = list(telescope_details.keys())[0]
                     observation_details = {
                         'site': site,
                         'enclosure': tel_code.split('.')[1],
                         'telescope': tel_code.split('.')[0],
-                        'start': interval[0] + timedelta(seconds=interval_duration / 2.0) - timedelta(seconds=duration / 2.0),
-                        'end': interval[0] + timedelta(seconds=interval_duration / 2.0) + timedelta(seconds=duration / 2.0)
+                        'start': interval[0] + interval_duration / 2.0 - duration / 2.0,
+                        'end': interval[0] + interval_duration / 2.0 + duration / 2.0
                     }
                     return observation_details
         return {}
 
-    def _visible_targets(self, windows):
+    def _visible_targets(self, instrument_type, windows):
         ''' Return a list of targets that are currently visible in the window '''
-        site_details = configdb.get_sites_with_instrument_type_and_location()
+        site_details = configdb.get_sites_with_instrument_type_and_location(instrument_type)
         visible_targets = []
         for target in TARGET_LIST:
             intervals_by_site = {}
@@ -161,10 +165,12 @@ class Command(BaseCommand):
         for request in request_group.requests.all():
             if request.state != 'CANCELED':
                 request_dict = request.as_dict()
-                intervals_by_site = get_rise_set_intervals_by_site(request_dict)
-                observation_details = self._observation_details(request.duration, instrument_type, intervals_by_site)
+                intervals_by_site = get_rise_set_intervals_by_site(request_dict, only_schedulable=True)
+                observation_details = self._get_observation_details(
+                    timedelta(seconds=request.duration), instrument_type, intervals_by_site
+                )
                 if observation_details:
-                    now = datetime.now()
+                    now = timezone.now()
                     if observation_details['end'] < now:
                         if request_group.state == 'WINDOW_EXPIRED':
                             observation_details['state'] = 'FAILED'
@@ -174,7 +180,7 @@ class Command(BaseCommand):
                             observation_details['state'] = 'COMPLETED'
                     else:
                         observation_details['state'] = 'PENDING'
-                    observation, _ = Observation.objects.create(
+                    observation = Observation.objects.create(
                         request=request,
                         **observation_details
                     )
@@ -184,7 +190,7 @@ class Command(BaseCommand):
                     ))[0]
                     for configuration in request.configurations.all():            
                         state = observation_details['state'] if observation_details['state'] != 'CANCELED' else 'PENDING'
-                        configuration_status, _ = ConfigurationStatus.objects.create(
+                        configuration_status = ConfigurationStatus.objects.create(
                             configuration=configuration,
                             observation=observation,
                             state=state,
@@ -209,11 +215,14 @@ class Command(BaseCommand):
 
     def _create_requestgroups(self, name_base, instrument_type, proposal, submitter, windows):
         ''' Create a set of requestgroups given the set of parameters '''
-        states = ['COMPLETED', 'WINDOW_EXPIRED', 'CANCELED']
-        if windows[0]['end'] > datetime.now():
+        states = ['CANCELED']
+        if windows[0]['end'] > timezone.now():
             states.append('PENDING')
-        observation_types = ['NORMAL', 'TIME_CRITICAL', 'RAPID_RESPONSE', 'DIRECT']
-        visible_targets = self._visible_targets(windows)
+        else:
+            states.append('COMPLETED')
+            states.append('WINDOW_EXPIRED')
+        observation_types = ['NORMAL', 'TIME_CRITICAL', 'RAPID_RESPONSE']
+        visible_targets = self._visible_targets(instrument_type, windows)
         instrument_defaults = self._instrument_defaults(instrument_type)
         binning = configdb.get_default_binning(instrument_type)
         counter = 0
@@ -221,7 +230,7 @@ class Command(BaseCommand):
             for observation_type in observation_types:
                 target = random.choice(visible_targets)
                 with transaction.atomic():
-                    rg, _ = RequestGroup.objects.create(
+                    rg = RequestGroup.objects.create(
                         submitter=submitter,
                         proposal=proposal,
                         state=state,
@@ -229,7 +238,7 @@ class Command(BaseCommand):
                         name=f'{name_base}-{counter}',
                         **base_requestgroup
                     )
-                    r, _ = Request.objects.create(
+                    r = Request.objects.create(
                         state=state,
                         request_group=rg
                     )
@@ -244,7 +253,7 @@ class Command(BaseCommand):
                             start=window['start'],
                             end=window['end']
                         )
-                    configuration, _ = Configuration.objects.create(
+                    configuration = Configuration.objects.create(
                         request=r,
                         instrument_type=instrument_type,
                         type='EXPOSE'
@@ -284,6 +293,7 @@ class Command(BaseCommand):
 
                     rg.refresh_from_db()
                     self._create_observations(instrument_type, rg)
+                    counter += 1
 
     def handle(self, *args, **options):
         try:
@@ -307,10 +317,15 @@ class Command(BaseCommand):
             instrument_type = time_allocation.instrument_type
             # Make a set of requests in the past, present, and future for each available instrument
             past_windows = [{
-                'start': (datetime.now() - timedelta(days=15)).isoformat(),
-                'end': (datetime.now() - timedelta(days=7)).isoformat()
+                'start': (timezone.now() - timedelta(days=15)),
+                'end': (timezone.now() - timedelta(days=7))
             }]
-            self._create_requestgroups('Past RequestGroup', instrument_type, proposal.id, user.username, past_windows)
+            self._create_requestgroups('Past RequestGroup', instrument_type, proposal, user, past_windows)
+            future_windows = [{
+                'start': timezone.now(),
+                'end': (timezone.now() + timedelta(days=7))
+            }]
+            self._create_requestgroups('Future RequestGroup', instrument_type, proposal, user, future_windows)
 
         logger.info(f"Created example requestgroups for proposal {options['proposal']} and submitter {options['submitter']}")
         sys.exit(0)

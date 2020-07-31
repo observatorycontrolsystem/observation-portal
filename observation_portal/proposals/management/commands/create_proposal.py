@@ -5,7 +5,8 @@ from datetime import datetime, timedelta
 import logging
 import sys
 
-from observation_portal.proposals.models import Proposal, Membership, TimeAllocation, Semester
+from observation_portal.proposals.models import (Proposal, Membership, TimeAllocation,
+                                                 Semester, ScienceCollaborationAllocation)
 from observation_portal.common.configdb import configdb
 
 logger = logging.getLogger()
@@ -37,7 +38,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         current_semester = None
         if options['time_allocation']:
-            instrument_types = configdb.get_instrument_types()
+            instrument_types = configdb.get_instrument_types(location={}, only_schedulable=True)
             try:
                 current_semester = Semester.current_semesters().first()
             except Exception as e:
@@ -51,18 +52,21 @@ class Command(BaseCommand):
             except Exception as e:
                 logger.error(f"Failed to get user with name {options['pi']}. Make sure the user account is created.")
                 sys.exit(1)
+        # Proposal requires an SCA to be assigned
+        sca, _ = ScienceCollaborationAllocation.objects.get_or_create(id='tst', name="Test SCA", admin=user)
 
-        proposal = Proposal.objects.create(
+        proposal, _ = Proposal.objects.get_or_create(
             id=options['id'],
-            tital=options['title'],
+            title=options['title'],
             active=options['active'],
             public=options['public'],
             non_science=options['non_science'],
             direct_submission=options['direct'],
-            tac_priority=options['priority']
+            tac_priority=options['priority'],
+            sca=sca
         )
         if user:
-            Membership.objects.create(proposal=proposal, user=user, role=Membership.PI)
+            Membership.objects.get_or_create(proposal=proposal, user=user, role=Membership.PI)
 
         if current_semester:
             for instrument in instrument_types:
