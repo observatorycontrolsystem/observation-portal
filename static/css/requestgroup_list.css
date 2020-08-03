@@ -7,11 +7,13 @@
 }
 
 .title {
-    font-size: 1.8em;
+    font-size: 1.6em;
 }
 
 .requestgroup p {
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
+    margin:0px;
+    font-size:90%;
 }
