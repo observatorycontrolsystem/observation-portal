@@ -26,7 +26,7 @@
     <div class="col-md-12">
       <div class="row">
         <div class="col-md-7">
-          <p class="title">Submitted Observation Requests</p>
+          <h3>Submitted Observation Requests</h3>
         </div>
         <div class="col-md-5 text-right">
           <li class="dropdown list-unstyled">
@@ -80,7 +80,7 @@
                   <label class="control-label" for="id_created_before"><i class="fa fa-arrow-left"></i> <i class="fa fa-calendar"></i> Submitted Before</label>
                   <input name="created_before" class="form-control form-control-sm" placeholder="Submitted Before" title="" id="id_created_before" type="date">
                 </div>
-                
+
                 {% bootstrap_label '<i class="fa fa-user"></i> Username Contains' label_for="id_user" %}
                 {% bootstrap_field filter.form.user show_label=False show_help=False size='small' %}
 
@@ -96,13 +96,13 @@
   </div>
   <div class="row">
     <div class="col-md-4">
-      <small>User Info</small>
+      <div class="small">User Info</div>
     </div>
     <div class="col-md-4">
-      <small>State Info</small>
+      <div class="small">State Info</div>
     </div>
     <div class="col-md-4">
-      <small class="pull-right"># Requests / Pending / Failed / Complete</small>
+      <div class="small pull-right"># Requests / Pending / Failed / Complete</div>
     </div>
   </div>
   <div class="row">
@@ -123,7 +123,7 @@
                 <p><i class="fa fa-fw fa-user"></i> {{ rg.submitter }}</p>
                 <p><i class="fa fa-fw fa-users"></i> <a href="{% url 'proposals:detail' pk=rg.proposal.id %}">{{ rg.proposal }}</a></p>
               </div>
-              <div class="col-6 requestgroup-block border-right">
+              <div class="col-6 requestgroup-block">
                 <p><span class="text-{{ rg.state|state_to_bs }}">
                   <i class="fa fa-fw fa-{{ rg.state|state_to_icon }}"></i>
                   {{ rg.state }}
@@ -137,28 +137,28 @@
           <div class="col-sm-1 hidden-xs request-block">
             <div class="row">
               <div class="col-12 request-count">
-                <p><center>{{ rg_count }}</center></p>
+                <div class="text-center align-middle">{{ rg_count }}</div>
               </div>
             </div>
           </div>
           <div class="col-sm-1 hidden-xs request-block">
             <div class="row">
               <div class="col-12 request-count">
-                <p><center class="text-neutral">{{ rg|request_state_count:'PENDING' }}</center></p>
+                <div class="text-center align-middle text-neutral">{{ rg|request_state_count:'PENDING' }}</div>
               </div>
             </div>
           </div>
           <div class="col-sm-1 hidden-xs request-block">
             <div class="row">
               <div class="col-12 request-count">
-                <p><center class="text-danger">{{ rg|request_state_count:'WINDOW_EXPIRED' }}</center></p>
+                <div class="text-center align-middle text-danger">{{ rg|request_state_count:'WINDOW_EXPIRED' }}</div>
               </div>
             </div>
           </div>
            <div class="col-sm-1 hidden-xs request-block">
             <div class="row">
               <div class="col-12 request-count">
-                <p><center class="text-success">{{ rg|request_state_count:'COMPLETED' }}</center></p>
+                <div class="text-center align-middle text-success">{{ rg|request_state_count:'COMPLETED' }}</div>
               </div>
             </div>
           </div>
