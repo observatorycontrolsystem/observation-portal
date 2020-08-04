@@ -55,7 +55,7 @@ class Command(BaseCommand):
         # Proposal requires an SCA to be assigned
         sca, _ = ScienceCollaborationAllocation.objects.get_or_create(id='tst', name="Test SCA", admin=user)
 
-        proposal, _ = Proposal.objects.get_or_create(
+        proposal, created = Proposal.objects.get_or_create(
             id=options['id'],
             title=options['title'],
             active=options['active'],
@@ -70,16 +70,21 @@ class Command(BaseCommand):
 
         if current_semester:
             for instrument in instrument_types:
-                TimeAllocation.objects.create(
+                TimeAllocation.objects.get_or_create(
                     semester=current_semester,
                     proposal=proposal,
                     instrument_type=instrument,
-                    std_allocation=100,
-                    rr_allocation=100,
-                    tc_allocation=100,
-                    ipp_limit=10,
-                    ipp_time_available=5
+                    defaults={
+                        'std_allocation': 100,
+                        'rr_allocation': 100,
+                        'tc_allocation': 100,
+                        'ipp_limit': 10,
+                        'ipp_time_available': 5
+                    }
                 )
-
-        logger.info(f"Created proposal with id {options['id']}.")
+                
+        if created:
+            logger.info(f"Created proposal with id {options['id']}.")
+        else:
+            logger.info(f"Proposal with id {options['id']} already exists.")
         sys.exit(0)
