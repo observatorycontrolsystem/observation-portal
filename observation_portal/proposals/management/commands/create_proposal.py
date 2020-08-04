@@ -16,7 +16,7 @@ class Command(BaseCommand):
     help = 'Creates a proposal using the given parameters, optionally creating time allocations and associating a PI.'
 
     def add_arguments(self, parser):
-        parser.add_argument('--id', default='Test Proposal', type=str,
+        parser.add_argument('--id', default='TestProposal', type=str,
                             help='Proposal Id')
         parser.add_argument('--active', dest='active', action='store_true',
                             help='The proposal should be considered active (available for submission)')
