@@ -2,7 +2,7 @@ from django.conf import settings
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import ConnectionError
 from datetime import timedelta
-from django.core.exceptions import ImproperlyConfgured
+from django.core.exceptions import ImproperlyConfigured
 from django.utils import timezone
 from copy import deepcopy
 from collections import OrderedDict
@@ -39,7 +39,7 @@ class TelescopeStates(object):
         try:
             self.es = Elasticsearch([settings.ELASTICSEARCH_URL])
             if not self.es.ping():
-                raise ImproperlyConfgured("ELASTICSEARCH_URL")
+                raise ImproperlyConfigured("ELASTICSEARCH_URL")
         except Exception:
             self.es = None
             logger.error('Could not connect to Elasticsearch host. Make sure ELASTICSEARCH_URL is set properly. For now, it will be ignored.')
