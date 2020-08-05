@@ -81,7 +81,7 @@ class Command(BaseCommand):
                         'ipp_time_available': 5
                     }
                 )
-                
+
         if created:
             logger.info(f"Created proposal with id {options['id']}.")
         else:
