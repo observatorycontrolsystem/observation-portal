@@ -14,7 +14,7 @@ logger = logging.getLogger()
 
 
 class Command(BaseCommand):
-    help = 'Creates user, proposal, and all structures needed for user to submit observations'
+    help = 'Creates user, profile, and auth token'
 
     def add_arguments(self, parser):
         parser.add_argument('-u', '--user', type=str, default='test_user',
