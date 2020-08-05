@@ -1,7 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
 
-from datetime import datetime, timedelta
 import logging
 import sys
 
@@ -41,7 +40,7 @@ class Command(BaseCommand):
             instrument_types = configdb.get_instrument_types(location={}, only_schedulable=True)
             try:
                 current_semester = Semester.current_semesters().first()
-            except Exception as e:
+            except Exception:
                 logger.error("You must have a current semester defined in the db to allocate time on a proposal.")
                 sys.exit(1)
 

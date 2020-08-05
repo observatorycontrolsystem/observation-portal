@@ -1,12 +1,9 @@
 from django.core.management.base import BaseCommand
-from django.utils import timezone
 from django.db.utils import IntegrityError
 from django.contrib.auth.models import User
 from rest_framework.authtoken.models import Token
 
-from datetime import datetime
 from observation_portal.accounts.models import Profile
-from observation_portal.proposals.models import Proposal, Semester, Membership, ScienceCollaborationAllocation
 
 import logging
 
@@ -33,6 +30,6 @@ class Command(BaseCommand):
         Profile.objects.get_or_create(user=user)
 
         # Need to set the api token to some expected value
-        token, created = Token.objects.get_or_create(user=user)
+        token, _ = Token.objects.get_or_create(user=user)
         token.delete()
         Token.objects.create(user=user, key=options['token'])

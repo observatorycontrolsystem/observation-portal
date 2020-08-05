@@ -3,10 +3,9 @@ from django.contrib.auth.models import User
 from django.db import transaction
 from django.utils import timezone
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 import logging
 import sys
-import copy
 import random
 
 from rise_set.angle import Angle
@@ -102,7 +101,7 @@ class Command(BaseCommand):
                             help='The username of the user submitting the example requests')
 
     def _instrument_defaults(self, instrument_type):
-        ''' Get a set of default values for optical elements and modes for an instrument '''
+        '''Get a set of default values for optical elements and modes for an instrument'''
         modes = configdb.get_modes_by_type(instrument_type)
         optical_elements = configdb.get_optical_elements(instrument_type)
         defaults = {
@@ -136,7 +135,7 @@ class Command(BaseCommand):
         return {}
 
     def _visible_targets(self, instrument_type, windows):
-        ''' Return a list of targets that are currently visible in the window '''
+        '''Return a list of targets that are currently visible in the window'''
         site_details = configdb.get_sites_with_instrument_type_and_location(instrument_type)
         visible_targets = []
         for target in TARGET_LIST:
@@ -161,7 +160,7 @@ class Command(BaseCommand):
         return visible_targets
 
     def _create_observations(self, instrument_type, request_group):
-        ''' Create an observation for the given requestgroup '''
+        '''Create an observation for the given requestgroup'''
         for request in request_group.requests.all():
             if request.state != 'CANCELED':
                 request_dict = request.as_dict()
@@ -214,7 +213,7 @@ class Command(BaseCommand):
                             )
 
     def _create_requestgroups(self, name_base, instrument_type, proposal, submitter, windows):
-        ''' Create a set of requestgroups given the set of parameters '''
+        '''Create a set of requestgroups given the set of parameters'''
         states = ['CANCELED']
         if windows[0]['end'] > timezone.now():
             states.append('PENDING')
