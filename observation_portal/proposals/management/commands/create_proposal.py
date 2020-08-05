@@ -48,7 +48,7 @@ class Command(BaseCommand):
         if options['pi']:
             try:
                 user = User.objects.get(username=options['pi'])
-            except Exception as e:
+            except Exception:
                 logger.error(f"Failed to get user with name {options['pi']}. Make sure the user account is created.")
                 sys.exit(1)
         # Proposal requires an SCA to be assigned
