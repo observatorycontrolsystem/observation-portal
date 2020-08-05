@@ -37,9 +37,9 @@ class TelescopeStates(object):
     def __init__(self, start, end, telescopes=None, sites=None, instrument_types=None, location_dict=None, only_schedulable=True):
         try:
             self.es = Elasticsearch([settings.ELASTICSEARCH_URL])
-        except LocationValueError:
+        except Exception:
             self.es = None
-            logger.error('Could not find Elasticsearch host. Make sure ELASTICSEARCH_URL is set properly. For now, it will be ignored.')
+            logger.error('Could not connect to Elasticsearch host. Make sure ELASTICSEARCH_URL is set properly. For now, it will be ignored.')
 
         self.instrument_types = instrument_types
         self.only_schedulable = only_schedulable
