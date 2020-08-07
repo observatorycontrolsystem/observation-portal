@@ -1,6 +1,6 @@
 from django.views.generic.base import TemplateView, View
 from django.urls import reverse, reverse_lazy
-from rest_framework.generics import RetrieveAPIView
+from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils.translation import ugettext as _
@@ -36,7 +36,7 @@ class UserUpdateView(LoginRequiredMixin, TemplateView):
             return super().render_to_response(context)
 
 
-class ProfileApiView(RetrieveAPIView):
+class ProfileApiView(RetrieveUpdateAPIView):
     serializer_class = UserSerializer
 
     def get_object(self):

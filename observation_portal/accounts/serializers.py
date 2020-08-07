@@ -16,13 +16,16 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     proposals = serializers.SerializerMethodField()
-    profile = ProfileSerializer()
+    profile = ProfileSerializer(required=False)
     available_instrument_types = serializers.SerializerMethodField()
     tokens = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ('username', 'email', 'profile', 'proposals', 'available_instrument_types', 'tokens')
+        fields = (
+            'username', 'first_name', 'last_name', 'email', 'is_staff', 'profile', 'proposals',
+            'available_instrument_types', 'tokens'
+        )
 
     def get_proposals(self, obj):
         return [
@@ -39,4 +42,26 @@ class UserSerializer(serializers.ModelSerializer):
         return list(instrument_types)
 
     def get_tokens(self, obj):
-        return {'archive': obj.profile.archive_bearer_token}
+        return {
+            'archive': obj.profile.archive_bearer_token,
+            'api_token': obj.profile.api_token.key
+        }
+
+    def validate_email(self, data):
+        if data and User.objects.filter(email=data).exclude(pk=self.instance.id).exists():
+            raise serializers.ValidationError('User with this email already exists')
+        return data
+
+    def update(self, instance, validated_data):
+        user_update_fields = ['email', 'username', 'last_name', 'first_name']
+        instance.username = validated_data.get('username', instance.username)
+        instance.email = validated_data.get('email', instance.email)
+        instance.last_name = validated_data.get('last_name', instance.last_name)
+        instance.first_name = validated_data.get('first_name', instance.first_name)
+        instance.save(update_fields=user_update_fields)
+
+        profile_data = validated_data.pop('profile', {})
+        if profile_data:
+            Profile.objects.filter(pk=instance.profile.pk).update(**profile_data)
+
+        return instance
