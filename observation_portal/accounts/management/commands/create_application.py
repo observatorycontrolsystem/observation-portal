@@ -20,6 +20,8 @@ class Command(BaseCommand):
                             help='Client_id to use with the Application')
         parser.add_argument('--client-secret', dest='client_secret', type=str,
                             help='Client_secret to use with the Application')
+        parser.add_argument('--redirect-uris', dest='redirect_uris', type=str,
+                            help='Comma separated list of Redirect URIs for the Application')
 
     def handle(self, *args, **options):
         try:
@@ -33,7 +35,7 @@ class Command(BaseCommand):
             defaults={
                 'user': user,
                 'client_type': Application.CLIENT_PUBLIC,
-                'redirect_uris': 'http://127.0.0.1:7000',
+                'redirect_uris': options['redirect_uris'],
                 'authorization_grant_type': Application.GRANT_PASSWORD,
                 'client_id': options['client_id'],
                 'client_secret': options['client_secret']
