@@ -10,7 +10,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         fields = (
             'education_user', 'notifications_enabled', 'notifications_on_authored_only',
             'simple_interface', 'view_authored_requests_only', 'staff_view', 'title',
-            'institution', 'api_quota'
+            'institution', 'api_quota', 'terms_accepted'
         )
 
 
