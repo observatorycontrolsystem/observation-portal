@@ -1,39 +1,14 @@
-from django.views.generic.base import TemplateView, View
+from django.views.generic.base import View
 from django.urls import reverse, reverse_lazy
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.utils.translation import ugettext as _
-from django.utils import timezone
 from django.shortcuts import redirect
 from django.contrib import messages
 from django.views.generic.edit import FormView
 
-from observation_portal.accounts.forms import UserForm, ProfileForm, AccountRemovalForm, AcceptTermsForm
+from observation_portal.accounts.forms import AccountRemovalForm
 from observation_portal.accounts.serializers import UserSerializer
-
-
-class UserUpdateView(LoginRequiredMixin, TemplateView):
-    template_name = 'auth/user_form.html'
-
-    def get(self, request):
-        context = self.get_context_data(
-            user_form=UserForm(instance=self.request.user),
-            profile_form=ProfileForm(instance=self.request.user.profile)
-        )
-        return super().render_to_response(context)
-
-    def post(self, request):
-        user_form = UserForm(request.POST, instance=request.user)
-        profile_form = ProfileForm(request.POST, instance=request.user.profile)
-        if user_form.is_valid() and profile_form.is_valid():
-            user_form.save()
-            profile_form.save()
-            messages.success(request, _('Profile successfully updated'))
-            return redirect('requestgroups:list')
-        else:
-            context = self.get_context_data(user_form=user_form, profile_form=profile_form)
-            return super().render_to_response(context)
 
 
 class ProfileApiView(RetrieveUpdateAPIView):
@@ -62,15 +37,4 @@ class AccountRemovalRequestView(LoginRequiredMixin, FormView):
     def form_valid(self, form):
         form.send_email(self.request.user)
         messages.success(self.request, 'Account removal request successfully submitted')
-        return super().form_valid(form)
-
-
-class AcceptTermsView(LoginRequiredMixin, FormView):
-    template_name = 'auth/accept_terms.html'
-    form_class = AcceptTermsForm
-    success_url = reverse_lazy('requestgroups:list')
-
-    def form_valid(self, form):
-        self.request.user.profile.terms_accepted = timezone.now()
-        self.request.user.profile.save()
         return super().form_valid(form)

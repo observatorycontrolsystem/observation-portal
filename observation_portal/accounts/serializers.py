@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
+from django.utils.translation import ugettext as _
 
 from observation_portal.accounts.models import Profile
 
@@ -9,12 +10,19 @@ class ProfileSerializer(serializers.ModelSerializer):
         model = Profile
         fields = (
             'education_user', 'notifications_enabled', 'notifications_on_authored_only',
-            'simple_interface', 'view_authored_requests_only', 'staff_view', 'title',
+            'simple_interface', 'view_authored_requests_only', 'title', 'staff_view',
             'institution', 'api_quota', 'terms_accepted'
         )
 
+    def validate_staff_view(self, data):
+        user = self.context.get('request').user
+        if not user or (user and user.is_authenticated and not user.is_staff):
+            raise serializers.ValidationError(_('Must be staff to set staff_view'))
+        return data
+
 
 class UserSerializer(serializers.ModelSerializer):
+    is_staff = serializers.BooleanField(read_only=True)
     proposals = serializers.SerializerMethodField()
     profile = ProfileSerializer(required=False)
     available_instrument_types = serializers.SerializerMethodField()
@@ -23,7 +31,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = (
-            'username', 'first_name', 'last_name', 'email', 'is_staff', 'profile', 'proposals',
+            'username', 'first_name', 'last_name', 'email', 'profile', 'is_staff', 'proposals',
             'available_instrument_types', 'tokens'
         )
 
@@ -49,7 +57,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     def validate_email(self, data):
         if data and User.objects.filter(email=data).exclude(pk=self.instance.id).exists():
-            raise serializers.ValidationError('User with this email already exists')
+            raise serializers.ValidationError(_('User with this email already exists'))
         return data
 
     def update(self, instance, validated_data):

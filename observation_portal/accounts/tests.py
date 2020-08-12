@@ -1,15 +1,20 @@
+from datetime import timedelta
+from unittest.mock import patch
+import copy
+
 from django.test import TestCase
+from rest_framework.test import APITestCase
 from django.utils import timezone
 from django.contrib.auth.models import User
 from django.core.management import call_command
-from datetime import timedelta
+from django.urls import reverse
 from mixer.backend.django import mixer
 from oauth2_provider.models import Application, AccessToken
-from unittest.mock import patch
 from rest_framework.authtoken.models import Token
 
+from observation_portal.accounts.test_utils import blend_user
 from observation_portal.accounts.models import Profile
-from observation_portal.proposals.models import Proposal
+from observation_portal.proposals.models import Proposal, Membership, TimeAllocation
 
 
 class TestArchiveBearerToken(TestCase):
@@ -73,3 +78,107 @@ class TestInitCredentialsCommand(TestCase):
 
         token = Token.objects.get(user=user)
         self.assertEqual(token.key, 'my_token')
+
+
+class TestProfileAPI(APITestCase):
+    def setUp(self):
+        super().setUp()
+        self.user = blend_user(profile_params={'notifications_enabled': True})
+        self.profile = self.user.profile
+        self.data = {
+            'first_name': self.user.first_name,
+            'last_name': self.user.last_name,
+            'email': self.user.email,
+            'username': self.user.username,
+            'profile': {
+                'institution': self.user.profile.institution,
+                'title': self.user.profile.title,
+                'notifications_enabled': self.user.profile.notifications_enabled,
+            }
+        }
+        self.client.force_login(self.user)
+
+    def test_get(self):
+        response = self.client.get(reverse('api:profile'))
+        self.assertEqual(response.json()['username'], self.user.username)
+
+    def test_unauthenticated_get(self):
+        self.client.logout()
+        response = self.client.get(reverse('api:profile'))
+        self.assertEqual(response.status_code, 403)
+
+    def test_update(self):
+        good_data = copy.deepcopy(self.data)
+        good_data['email'] = 'hi@lco.global'
+        response = self.client.patch(reverse('api:profile'), good_data)
+        self.assertEqual(response.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.email, 'hi@lco.global')
+
+    def test_unauthenticated_update(self):
+        self.client.logout()
+        good_data = copy.deepcopy(self.data)
+        original_email = good_data['email']
+        good_data['email'] = 'hi@lco.global'
+        response = self.client.patch(reverse('api:profile'), data=good_data)
+        self.assertEqual(response.status_code, 403)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.email, original_email)
+
+    def test_cannot_set_staff_view(self):
+        good_data = copy.deepcopy(self.data)
+        good_data['profile']['staff_view'] = True
+        response = self.client.patch(reverse('api:profile'), data=good_data)
+        self.assertEqual(response.status_code, 400)
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.profile.staff_view)
+
+    def test_cannot_set_is_staff(self):
+        good_data = copy.deepcopy(self.data)
+        good_data['is_staff'] = True
+        self.client.patch(reverse('api:profile'), data=good_data)
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.is_staff)
+
+    def test_staff_can_enable_staff_view(self):
+        self.user.is_staff = True
+        self.user.save()
+        good_data = copy.deepcopy(self.data)
+        good_data['profile']['staff_view'] = True
+        response = self.client.patch(reverse('api:profile'), data=good_data)
+        self.assertEqual(response.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.profile.staff_view)
+
+    def test_unique_email(self):
+        duplicate_email = 'first@example.com'
+        mixer.blend(User, email=duplicate_email)
+        bad_data = copy.deepcopy(self.data)
+        bad_data['email'] = duplicate_email
+        response = self.client.patch(reverse('api:profile'), data=bad_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('User with this email already exists', response.json()['email'][0])
+        self.user.refresh_from_db()
+        self.assertNotEqual(self.user.email, duplicate_email)
+
+    def test_available_instruments(self):
+        response = self.client.get(reverse('api:profile'))
+        self.assertFalse(response.json()['available_instrument_types'])
+
+        proposal = mixer.blend(Proposal, active=True)
+        mixer.blend(Membership, proposal=proposal, user=self.profile.user)
+        mixer.blend(TimeAllocation, proposal=proposal, telescope_class='1m0')
+
+        response = self.client.get(reverse('api:profile'))
+        self.assertGreater(len(response.json()['available_instrument_types']), 0)
+
+    def test_proposals(self):
+        response = self.client.get(reverse('api:profile'))
+        self.assertEqual(len(response.json()['proposals']), 0)
+
+        proposal = mixer.blend(Proposal, active=True)
+        mixer.blend(Membership, proposal=proposal, user=self.user)
+        response = self.client.get(reverse('api:profile'))
+
+        self.assertEqual(len(response.json()['proposals']), 1)
+        self.assertEqual(response.json()['proposals'][0]['id'], proposal.id)

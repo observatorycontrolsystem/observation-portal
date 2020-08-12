@@ -74,7 +74,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'observation_portal.common.middleware.AcceptTermsMiddlware',
     'observation_portal.common.middleware.RequestLogMiddleware',
 ]
 
