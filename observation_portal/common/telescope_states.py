@@ -42,7 +42,7 @@ class TelescopeStates(object):
             self.es = Elasticsearch([settings.ELASTICSEARCH_URL])
         except Exception:
             self.es = None
-            logger.error('Could not connect to Elasticsearch host. Make sure ELASTICSEARCH_URL is set properly. For now, it will be ignored.')
+            logger.exception('Could not connect to Elasticsearch host. Make sure ELASTICSEARCH_URL is set properly. For now, it will be ignored.')
 
         self.instrument_types = instrument_types
         self.only_schedulable = only_schedulable

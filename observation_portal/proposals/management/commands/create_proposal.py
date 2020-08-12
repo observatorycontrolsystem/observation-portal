@@ -37,7 +37,6 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         current_semester = None
         if options['time_allocation']:
-            instrument_types = configdb.get_instrument_types(location={}, only_schedulable=True)
             try:
                 current_semester = Semester.current_semesters().first()
             except Exception:
@@ -68,6 +67,7 @@ class Command(BaseCommand):
             Membership.objects.get_or_create(proposal=proposal, user=user, role=Membership.PI)
 
         if current_semester:
+            instrument_types = configdb.get_instrument_types(location={}, only_schedulable=True)
             for instrument in instrument_types:
                 TimeAllocation.objects.get_or_create(
                     semester=current_semester,

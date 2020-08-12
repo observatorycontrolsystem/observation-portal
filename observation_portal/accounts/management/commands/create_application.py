@@ -27,7 +27,7 @@ class Command(BaseCommand):
         try:
             user = User.objects.get(username=options['user'])
         except Exception:
-            logging.warning(f"user {options['user']} doesn not exist")
+            logging.warning(f"user {options['user']} does not exist")
             sys.exit(1)
 
         application, created = Application.objects.get_or_create(

@@ -18,18 +18,26 @@ class Command(BaseCommand):
                             help='Username of User account to create')
         parser.add_argument('-p', '--password', type=str, default='test_pass',
                             help='Password to use for web access on the user account')
+        parser.add_argument('-e', '--email', type=str, default='test_email@fake.test',
+                            help='Email to use for the user account')
         parser.add_argument('-t', '--token', type=str, default='123456789abcdefg',
                             help='API Token for the user')
+        parser.add_argument('--superuser', action='store_true',
+                            help='The user should be created as a super-user')
 
     def handle(self, *args, **options):
         try:
-            user = User.objects.create_superuser(options['user'], 'fake_email@fake.test', options['password'])
+            if options['superuser']:
+                user = User.objects.create_superuser(options['user'], options['email'], options['password'])
+            else:
+                user = User.objects.create_user(options['user'], options['email'], options['password'])
         except IntegrityError:
             user = User.objects.get(username=options['user'])
             logging.warning(f"user {options['user']} already exists")
         Profile.objects.get_or_create(user=user)
 
-        # Need to set the api token to some expected value
         token, _ = Token.objects.get_or_create(user=user)
-        token.delete()
-        Token.objects.create(user=user, key=options['token'])
+        if options['token']:
+            # Need to set the api token to some expected value
+            token.delete()
+            Token.objects.create(user=user, key=options['token'])
