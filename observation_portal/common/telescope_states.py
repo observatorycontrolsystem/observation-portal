@@ -1,12 +1,11 @@
 from django.conf import settings
 from elasticsearch import Elasticsearch
-from elasticsearch.exceptions import ConnectionError
+from elasticsearch import exceptions as es_exceptions
 from datetime import timedelta
 from django.core.exceptions import ImproperlyConfigured
 from django.utils import timezone
 from copy import deepcopy
 from collections import OrderedDict
-from urllib3.exceptions import LocationValueError
 import logging
 from dateutil.parser import parse
 
@@ -111,7 +110,7 @@ class TelescopeStates(object):
                     _source=['timestamp', 'telescope', 'observatory', 'site', 'value_string'],
                     sort=['site', 'observatory', 'telescope', 'timestamp']
                 )
-            except ConnectionError:
+            except es_exceptions.ConnectionError:
                 raise ElasticSearchException
 
             event_data.extend(data['hits']['hits'])

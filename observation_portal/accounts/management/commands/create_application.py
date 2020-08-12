@@ -30,7 +30,7 @@ class Command(BaseCommand):
             logging.warning(f"user {options['user']} does not exist")
             sys.exit(1)
 
-        application, created = Application.objects.get_or_create(
+        _, created = Application.objects.get_or_create(
             name=options['name'],
             defaults={
                 'user': user,
