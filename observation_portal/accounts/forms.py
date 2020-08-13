@@ -49,15 +49,3 @@ class CustomRegistrationForm(RegistrationFormTermsOfService, RegistrationFormUni
             proposal_invites[proposal_id].accept(new_user_instance)
 
         return new_user_instance
-
-
-class AccountRemovalForm(forms.Form):
-    reason = forms.CharField(widget=forms.Textarea)
-
-    def send_email(self, user):
-        message = 'User {0} would like their account removed.\nReason:\n {1}'.format(
-            user.email, self.cleaned_data['reason']
-        )
-        send_mail.send(
-           'Account removal request submitted', message, 'portal@lco.global', ['science-support@lco.global']
-        )

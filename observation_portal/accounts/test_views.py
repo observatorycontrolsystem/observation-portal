@@ -5,8 +5,6 @@ from django.contrib.auth.models import User
 from django.contrib import auth
 from mixer.backend.django import mixer
 from django.utils import timezone
-from django.core import mail
-from django_dramatiq.test import DramatiqTestCase
 
 from observation_portal.accounts.test_utils import blend_user
 from observation_portal.proposals.models import ProposalInvite, Membership, Proposal
@@ -158,16 +156,3 @@ class TestRegistration(TestCase):
         response = self.client.post(reverse('registration_register'), reg_data, follow=True)
         self.assertContains(response, 'at most 50 characters')
         self.assertFalse(User.objects.count())
-
-
-class TestAccountRemovalRequest(DramatiqTestCase):
-    def setUp(self):
-        self.user = blend_user()
-        self.client.force_login(self.user)
-
-    def test_request_sends_email(self):
-        form_data = {'reason': 'Because I hate Astronomy'}
-        response = self.client.post(reverse('account-removal'), form_data, follow=True)
-        self.assertContains(response, 'Account removal request successfully submitted')
-        self.assertEqual(len(mail.outbox), 1)
-        self.assertIn(form_data['reason'], str(mail.outbox[0].message()))

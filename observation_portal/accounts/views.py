@@ -1,15 +1,11 @@
-from django.urls import reverse_lazy
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib import messages
-from django.views.generic.edit import FormView
 
-from observation_portal.accounts.forms import AccountRemovalForm
-from observation_portal.accounts.serializers import UserSerializer
+from observation_portal.accounts.tasks import send_mail
+from observation_portal.accounts.serializers import UserSerializer, AccountRemovalSerializer
 
 
 class ProfileApiView(RetrieveUpdateAPIView):
@@ -34,12 +30,21 @@ class RevokeApiTokenApiView(APIView):
         return Response({'message': 'API token revoked.'})
 
 
-class AccountRemovalRequestView(LoginRequiredMixin, FormView):
-    template_name = 'auth/account_removal.html'
-    form_class = AccountRemovalForm
-    success_url = reverse_lazy('profile')
+class AccountRemovalRequestApiView(APIView):
+    """
+    View to request account removal.
+    """
+    permission_classes = [IsAuthenticated]
 
-    def form_valid(self, form):
-        form.send_email(self.request.user)
-        messages.success(self.request, 'Account removal request successfully submitted')
-        return super().form_valid(form)
+    def post(self, request):
+        serializer = AccountRemovalSerializer(data=request.data)
+        if serializer.is_valid():
+            message = 'User {0} would like their account removed.\nReason:\n {1}'.format(
+                request.user.email, serializer.validated_data['reason']
+            )
+            send_mail.send(
+                'Account removal request submitted', message, 'portal@lco.global', ['science-support@lco.global']
+            )
+            return Response({'message': 'Account removal request successfully submitted.'})
+        else:
+            return Response(serializer.errors, status=400)

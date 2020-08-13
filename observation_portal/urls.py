@@ -29,7 +29,7 @@ from observation_portal.requestgroups.viewsets import RequestGroupViewSet, Reque
 from observation_portal.requestgroups.views import TelescopeStatesView, TelescopeAvailabilityView, AirmassView
 from observation_portal.requestgroups.views import InstrumentsInformationView, ObservationPortalLastChangedView
 from observation_portal.requestgroups.views import ContentionView, PressureView
-from observation_portal.accounts.views import ProfileApiView, RevokeApiTokenApiView
+from observation_portal.accounts.views import ProfileApiView, RevokeApiTokenApiView, AccountRemovalRequestApiView
 from observation_portal.proposals.viewsets import ProposalViewSet, SemesterViewSet
 from observation_portal.observations.views import LastScheduledView
 from observation_portal.observations.viewsets import ObservationViewSet, ScheduleViewSet, ConfigurationStatusViewSet
@@ -57,6 +57,7 @@ api_urlpatterns = ([
     url(r'^telescope_availability/', TelescopeAvailabilityView.as_view(), name='telescope_availability'),
     url(r'profile/', ProfileApiView.as_view(), name='profile'),
     url(r'revoke_token/', RevokeApiTokenApiView.as_view(), name='revoke_api_token'),
+    url(r'account_removal_request/', AccountRemovalRequestApiView.as_view(), name='account_removal_request'),
     url(r'airmass/', AirmassView.as_view(), name='airmass'),
     url(r'instruments/', InstrumentsInformationView.as_view(), name='instruments_information'),
     url(r'contention/(?P<instrument_type>.+)/', ContentionView.as_view(), name='contention'),

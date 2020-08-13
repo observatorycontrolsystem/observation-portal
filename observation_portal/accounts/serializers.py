@@ -73,3 +73,7 @@ class UserSerializer(serializers.ModelSerializer):
             Profile.objects.filter(pk=instance.profile.pk).update(**profile_data)
 
         return instance
+
+
+class AccountRemovalSerializer(serializers.Serializer):
+    reason = serializers.CharField(max_length=1000)

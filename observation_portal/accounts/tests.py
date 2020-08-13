@@ -11,6 +11,8 @@ from django.urls import reverse
 from mixer.backend.django import mixer
 from oauth2_provider.models import Application, AccessToken
 from rest_framework.authtoken.models import Token
+from django.core import mail
+from django_dramatiq.test import DramatiqTestCase
 
 from observation_portal.accounts.test_utils import blend_user
 from observation_portal.accounts.models import Profile
@@ -84,9 +86,9 @@ class TestRevokeTokenAPI(APITestCase):
     def setUp(self) -> None:
         super(TestRevokeTokenAPI, self).setUp()
         self.user = blend_user()
+        self.client.force_login(self.user)
 
     def test_revoke_token(self):
-        self.client.force_login(self.user)
         initial_token = self.user.profile.api_token.key
         response = self.client.post(reverse('api:revoke_api_token'))
         self.assertContains(response, 'API token revoked', status_code=200)
@@ -94,11 +96,39 @@ class TestRevokeTokenAPI(APITestCase):
         self.assertNotEqual(initial_token, self.user.profile.api_token.key)
 
     def test_unauthenticated(self):
+        self.client.logout()
         initial_token = self.user.profile.api_token.key
         response = self.client.post(reverse('api:revoke_api_token'))
         self.assertEqual(response.status_code, 403)
         self.user.refresh_from_db()
         self.assertEqual(initial_token, self.user.profile.api_token.key)
+
+
+class TestAccountRemovalApiRequest(DramatiqTestCase):
+    def setUp(self):
+        super().setUp()
+        self.user = blend_user()
+        self.client.force_login(self.user)
+
+    def test_send_removal_request(self):
+        reason = 'I no longer enjoy astronomy.'
+        response = self.client.post(reverse('api:account_removal_request'), data={'reason': reason})
+        self.assertContains(response, 'Account removal request successfully submitted')
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(reason, str(mail.outbox[0].message()))
+
+    def test_unauthenticated(self):
+        self.client.logout()
+        response = self.client.post(reverse('api:account_removal_request'))
+        self.assertEqual(response.status_code, 403)
+
+    def test_empty_reason_supplied(self):
+        response = self.client.post(reverse('api:account_removal_request'), data={'reason': ''})
+        self.assertEqual(response.status_code, 400)
+
+    def test_no_reason_supplied(self):
+        response = self.client.post(reverse('api:account_removal_request'), data={})
+        self.assertEqual(response.status_code, 400)
 
 
 class TestProfileAPI(APITestCase):
