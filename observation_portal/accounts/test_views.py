@@ -1,7 +1,6 @@
 from datetime import datetime
 from django.test import TestCase
 from django.urls import reverse
-from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import User
 from django.contrib import auth
 from mixer.backend.django import mixer
@@ -159,23 +158,6 @@ class TestRegistration(TestCase):
         response = self.client.post(reverse('registration_register'), reg_data, follow=True)
         self.assertContains(response, 'at most 50 characters')
         self.assertFalse(User.objects.count())
-
-
-class TestToken(TestCase):
-    def setUp(self):
-        self.user = blend_user()
-        self.client.force_login(self.user)
-
-    def test_user_gets_api_token(self):
-        with self.assertRaises(Token.DoesNotExist):
-            Token.objects.get(user=self.user)
-        self.client.get(reverse('profile'))
-        self.assertTrue(Token.objects.get(user=self.user))
-
-    def test_user_can_revoke_token(self):
-        token_key = self.user.profile.api_token.key
-        self.client.post(reverse('revoke-api-token'))
-        self.assertNotEqual(token_key, self.user.profile.api_token.key)
 
 
 class TestAccountRemovalRequest(DramatiqTestCase):

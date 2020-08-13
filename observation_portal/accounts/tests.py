@@ -80,6 +80,27 @@ class TestInitCredentialsCommand(TestCase):
         self.assertEqual(token.key, 'my_token')
 
 
+class TestRevokeTokenAPI(APITestCase):
+    def setUp(self) -> None:
+        super(TestRevokeTokenAPI, self).setUp()
+        self.user = blend_user()
+
+    def test_revoke_token(self):
+        self.client.force_login(self.user)
+        initial_token = self.user.profile.api_token.key
+        response = self.client.post(reverse('api:revoke_api_token'))
+        self.assertContains(response, 'API token revoked', status_code=200)
+        self.user.refresh_from_db()
+        self.assertNotEqual(initial_token, self.user.profile.api_token.key)
+
+    def test_unauthenticated(self):
+        initial_token = self.user.profile.api_token.key
+        response = self.client.post(reverse('api:revoke_api_token'))
+        self.assertEqual(response.status_code, 403)
+        self.user.refresh_from_db()
+        self.assertEqual(initial_token, self.user.profile.api_token.key)
+
+
 class TestProfileAPI(APITestCase):
     def setUp(self):
         super().setUp()

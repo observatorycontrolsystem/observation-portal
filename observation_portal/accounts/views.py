@@ -1,9 +1,10 @@
-from django.views.generic.base import View
-from django.urls import reverse, reverse_lazy
+from django.urls import reverse_lazy
 from rest_framework.generics import RetrieveUpdateAPIView
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
+from rest_framework.views import APIView
+from rest_framework.response import Response
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import redirect
 from django.contrib import messages
 from django.views.generic.edit import FormView
 
@@ -21,12 +22,16 @@ class ProfileApiView(RetrieveUpdateAPIView):
             return None
 
 
-class RevokeAPITokenView(LoginRequiredMixin, View):
+class RevokeApiTokenApiView(APIView):
+    """
+    View to revoke an API token.
+    """
+    permission_classes = [IsAuthenticated]
+
     def post(self, request):
         request.user.auth_token.delete()
         Token.objects.create(user=request.user)
-        messages.success(request, 'API token revoked.')
-        return redirect(reverse('profile'))
+        return Response({'message': 'API token revoked.'})
 
 
 class AccountRemovalRequestView(LoginRequiredMixin, FormView):
