@@ -21,7 +21,7 @@ class Command(BaseCommand):
         parser.add_argument('-e', '--email', type=str, default='test_email@fake.test',
                             help='Email to use for the user account')
         parser.add_argument('-t', '--token', type=str, default='123456789abcdefg',
-                            help='API Token for the user')
+                            help='API Token for the user. Defaults to `123456789abcdefg`. Use empty string to have a random token generated.')
         parser.add_argument('--superuser', action='store_true',
                             help='The user should be created as a super-user')
 
