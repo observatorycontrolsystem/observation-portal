@@ -106,7 +106,6 @@ class TestRevokeTokenAPI(APITestCase):
 
 class TestAccountRemovalApiRequest(DramatiqTestCase):
     def setUp(self):
-        super().setUp()
         self.user = blend_user()
         self.client.force_login(self.user)
 
@@ -114,6 +113,8 @@ class TestAccountRemovalApiRequest(DramatiqTestCase):
         reason = 'I no longer enjoy astronomy.'
         response = self.client.post(reverse('api:account_removal_request'), data={'reason': reason})
         self.assertContains(response, 'Account removal request successfully submitted')
+        self.broker.join('default')
+        self.worker.join()
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn(reason, str(mail.outbox[0].message()))
 
