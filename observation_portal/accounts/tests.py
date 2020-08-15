@@ -234,3 +234,22 @@ class TestProfileAPI(APITestCase):
 
         self.assertEqual(len(response.json()['proposals']), 1)
         self.assertEqual(response.json()['proposals'][0]['id'], proposal.id)
+
+    def test_accept_terms(self):
+        original_terms_accepted = timezone.now() - timedelta(days=1)
+        self.user.profile.terms_accepted = original_terms_accepted
+        self.user.profile.save()
+        good_data = {'profile': {'accept_terms': True}}
+        response = self.client.patch(reverse('api:profile'), data=good_data)
+        self.assertEqual(response.status_code, 200)
+        self.user.profile.refresh_from_db()
+        self.assertGreater(self.user.profile.terms_accepted, original_terms_accepted)
+
+    def test_accept_terms_false(self):
+        original_terms_accepted = self.user.profile.terms_accepted
+        bad_data = {'profile': {'accept_terms': False}}
+        response = self.client.patch(reverse('api:profile'), data=bad_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('must be true', str(response.content))
+        self.user.profile.refresh_from_db()
+        self.assertEqual(self.user.profile.terms_accepted, original_terms_accepted)
