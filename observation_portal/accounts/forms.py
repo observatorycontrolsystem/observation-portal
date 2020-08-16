@@ -4,7 +4,6 @@ from registration.forms import RegistrationFormTermsOfService, RegistrationFormU
 
 from observation_portal.accounts.models import Profile
 from observation_portal.proposals.models import ProposalInvite
-from observation_portal.accounts.tasks import send_mail
 
 
 class CustomRegistrationForm(RegistrationFormTermsOfService, RegistrationFormUniqueEmail):

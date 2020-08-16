@@ -19,9 +19,7 @@ class ProfileApiView(RetrieveUpdateAPIView):
 
 
 class RevokeApiTokenApiView(APIView):
-    """
-    View to revoke an API token.
-    """
+    """View to revoke an API token."""
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -31,9 +29,7 @@ class RevokeApiTokenApiView(APIView):
 
 
 class AccountRemovalRequestApiView(APIView):
-    """
-    View to request account removal.
-    """
+    """View to request account removal."""
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
