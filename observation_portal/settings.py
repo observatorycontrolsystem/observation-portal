@@ -168,7 +168,6 @@ OAUTH2_PROVIDER = {
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_URLS_REGEX = r'^/(api|accounts)/.*$|^/o/.*'
 LOGIN_REDIRECT_URL = '/accounts/loggedinstate/'
-LOGOUT_REDIRECT_URL = '/accounts/loggedinstate/'
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.1/topics/i18n/

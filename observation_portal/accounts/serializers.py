@@ -20,8 +20,8 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     def validate_staff_view(self, staff_view):
         user = self.context.get('request').user
-        is_not_staff = user and user.is_authenticated and not user.is_staff
-        if staff_view and is_not_staff:
+        is_staff = user and user.is_authenticated and user.is_staff
+        if staff_view and not is_staff:
             raise serializers.ValidationError(_('Must be staff to set staff_view'))
         return staff_view
 

@@ -235,6 +235,12 @@ class TestProfileAPI(APITestCase):
         self.assertEqual(len(response.json()['proposals']), 1)
         self.assertEqual(response.json()['proposals'][0]['id'], proposal.id)
 
+    def test_user_gets_api_token(self):
+        with self.assertRaises(Token.DoesNotExist):
+            Token.objects.get(user=self.user)
+        self.client.get(reverse('api:profile'))
+        self.assertTrue(Token.objects.get(user=self.user))
+
     def test_accept_terms(self):
         original_terms_accepted = timezone.now() - timedelta(days=1)
         self.user.profile.terms_accepted = original_terms_accepted
