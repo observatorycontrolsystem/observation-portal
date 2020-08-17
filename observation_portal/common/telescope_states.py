@@ -1,12 +1,11 @@
 from django.conf import settings
 from elasticsearch import Elasticsearch
-from elasticsearch.exceptions import ConnectionError
+from elasticsearch import exceptions as es_exceptions
 from datetime import timedelta
+from django.core.exceptions import ImproperlyConfigured
 from django.utils import timezone
 from copy import deepcopy
 from collections import OrderedDict
-from urllib3.exceptions import LocationValueError
-from django.core.exceptions import ImproperlyConfigured
 import logging
 from dateutil.parser import parse
 
@@ -37,10 +36,12 @@ class TelescopeStates(object):
 
     def __init__(self, start, end, telescopes=None, sites=None, instrument_types=None, location_dict=None, only_schedulable=True):
         try:
+            if not settings.ELASTICSEARCH_URL:
+                raise ImproperlyConfigured("ELASTICSEARCH_URL")
             self.es = Elasticsearch([settings.ELASTICSEARCH_URL])
-        except LocationValueError:
-            logger.error('Could not find host. Make sure ELASTICSEARCH_URL is set.')
-            raise ImproperlyConfigured('ELASTICSEARCH_URL')
+        except Exception:
+            self.es = None
+            logger.exception('Could not connect to Elasticsearch host. Make sure ELASTICSEARCH_URL is set properly. For now, it will be ignored.')
 
         self.instrument_types = instrument_types
         self.only_schedulable = only_schedulable
@@ -65,61 +66,62 @@ class TelescopeStates(object):
         return available_telescopes
 
     def _get_es_data(self, sites, telescopes):
-        lower_query_time = min(self.start, timezone.now())
-        datum_query = {
-            "query": {
-                "bool": {
-                    "filter": [
-                        {
-                            "match": {
-                                "datumname": "Available For Scheduling Reason"
-                            }
-                        },
-                        {
-                            "range": {
-                                "timestamp": {
-                                    # Retrieve documents 1 day back to ensure you get at least one datum per telescope.
-                                    "gte": (lower_query_time - timedelta(days=1)).strftime(ES_STRING_FORMATTER),
-                                    "lte": self.end.strftime(ES_STRING_FORMATTER),
-                                    "format": "yyyy-MM-dd HH:mm:ss"
+        event_data = []
+        if self.es:
+            lower_query_time = min(self.start, timezone.now())
+            datum_query = {
+                "query": {
+                    "bool": {
+                        "filter": [
+                            {
+                                "match": {
+                                    "datumname": "Available For Scheduling Reason"
+                                }
+                            },
+                            {
+                                "range": {
+                                    "timestamp": {
+                                        # Retrieve documents 1 day back to ensure you get at least one datum per telescope.
+                                        "gte": (lower_query_time - timedelta(days=1)).strftime(ES_STRING_FORMATTER),
+                                        "lte": self.end.strftime(ES_STRING_FORMATTER),
+                                        "format": "yyyy-MM-dd HH:mm:ss"
+                                    }
+                                }
+                            },
+                            {
+                                "terms": {
+                                    "telescope": telescopes
+                                }
+                            },
+                            {
+                                "terms": {
+                                    "site": sites
                                 }
                             }
-                        },
-                        {
-                            "terms": {
-                                "telescope": telescopes
-                            }
-                        },
-                        {
-                            "terms": {
-                                "site": sites
-                            }
-                        }
-                    ]
+                        ]
+                    }
                 }
             }
-        }
-        event_data = []
-        query_size = 10000
+            query_size = 10000
 
-        try:
-            data = self.es.search(
-                index="mysql-telemetry-*", body=datum_query, size=query_size, scroll='1m',  # noqa
-                _source=['timestamp', 'telescope', 'observatory', 'site', 'value_string'],
-                sort=['site', 'observatory', 'telescope', 'timestamp']
-            )
-        except ConnectionError:
-            raise ElasticSearchException
+            try:
+                data = self.es.search(
+                    index="mysql-telemetry-*", body=datum_query, size=query_size, scroll='1m',  # noqa
+                    _source=['timestamp', 'telescope', 'observatory', 'site', 'value_string'],
+                    sort=['site', 'observatory', 'telescope', 'timestamp']
+                )
+            except es_exceptions.ConnectionError:
+                raise ElasticSearchException
 
-        event_data.extend(data['hits']['hits'])
-        total_events = data['hits']['total']
-        events_read = min(query_size, total_events)
-        scroll_id = data.get('_scroll_id', 0)
-        while events_read < total_events:
-            data = self.es.scroll(scroll_id=scroll_id, scroll='1m') # noqa
-            scroll_id = data.get('_scroll_id', 0)
             event_data.extend(data['hits']['hits'])
-            events_read += len(data['hits']['hits'])
+            total_events = data['hits']['total']
+            events_read = min(query_size, total_events)
+            scroll_id = data.get('_scroll_id', 0)
+            while events_read < total_events:
+                data = self.es.scroll(scroll_id=scroll_id, scroll='1m') # noqa
+                scroll_id = data.get('_scroll_id', 0)
+                event_data.extend(data['hits']['hits'])
+                events_read += len(data['hits']['hits'])
         return event_data
 
     def get(self):
