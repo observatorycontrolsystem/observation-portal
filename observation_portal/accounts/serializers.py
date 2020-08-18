@@ -1,13 +1,11 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from django.utils import timezone
 from django.utils.translation import ugettext as _
 
 from observation_portal.accounts.models import Profile
 
 
 class ProfileSerializer(serializers.ModelSerializer):
-    accept_terms = serializers.BooleanField(write_only=True, required=False)
     terms_accepted = serializers.DateTimeField(read_only=True)
 
     class Meta:
@@ -15,7 +13,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         fields = (
             'education_user', 'notifications_enabled', 'notifications_on_authored_only',
             'simple_interface', 'view_authored_requests_only', 'title', 'staff_view',
-            'institution', 'api_quota', 'terms_accepted', 'accept_terms'
+            'institution', 'api_quota', 'terms_accepted'
         )
 
     def validate_staff_view(self, staff_view):
@@ -24,11 +22,6 @@ class ProfileSerializer(serializers.ModelSerializer):
         if staff_view and not is_staff:
             raise serializers.ValidationError(_('Must be staff to set staff_view'))
         return staff_view
-
-    def validate_accept_terms(self, accept_terms):
-        if not accept_terms:
-            raise serializers.ValidationError(_('accept_terms must be true'))
-        return accept_terms
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -79,11 +72,6 @@ class UserSerializer(serializers.ModelSerializer):
         instance.save(update_fields=user_update_fields)
 
         profile_data = validated_data.pop('profile', {})
-
-        if 'accept_terms' in profile_data:
-            profile_data['terms_accepted'] = timezone.now()
-            del profile_data['accept_terms']
-
         if profile_data:
             Profile.objects.filter(pk=instance.profile.pk).update(**profile_data)
 

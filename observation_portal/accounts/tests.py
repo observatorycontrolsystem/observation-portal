@@ -132,6 +132,36 @@ class TestAccountRemovalApiRequest(DramatiqTestCase):
         self.assertEqual(response.status_code, 400)
 
 
+class TestAcceptTermsAPI(APITestCase):
+    def setUp(self) -> None:
+        super(TestAcceptTermsAPI, self).setUp()
+        self.user = blend_user()
+        self.client.force_login(self.user)
+
+    def test_accept_terms(self):
+        original_terms_accepted = timezone.now() - timedelta(days=1)
+        self.user.profile.terms_accepted = original_terms_accepted
+        self.user.profile.save()
+        response = self.client.post(reverse('api:accept_terms'))
+        self.assertEqual(response.status_code, 200)
+        self.user.profile.refresh_from_db()
+        self.assertGreater(self.user.profile.terms_accepted, original_terms_accepted)
+
+    def test_accept_terms_unauthenticated(self):
+        self.client.logout()
+        response = self.client.post(reverse('api:accept_terms'))
+        self.assertEqual(response.status_code, 403)
+
+    def test_accept_terms_user_with_no_profile(self):
+        user = mixer.blend(User)
+        with self.assertRaises(Profile.DoesNotExist):
+            _ = user.profile
+        response = self.client.post(reverse('api:accept_terms'))
+        self.assertEqual(response.status_code, 200)
+        user.refresh_from_db()
+        self.assertTrue(self.user.profile.terms_accepted)
+
+
 class TestProfileAPI(APITestCase):
     def setUp(self):
         super().setUp()
@@ -240,22 +270,3 @@ class TestProfileAPI(APITestCase):
             Token.objects.get(user=self.user)
         self.client.get(reverse('api:profile'))
         self.assertTrue(Token.objects.get(user=self.user))
-
-    def test_accept_terms(self):
-        original_terms_accepted = timezone.now() - timedelta(days=1)
-        self.user.profile.terms_accepted = original_terms_accepted
-        self.user.profile.save()
-        good_data = {'profile': {'accept_terms': True}}
-        response = self.client.patch(reverse('api:profile'), data=good_data)
-        self.assertEqual(response.status_code, 200)
-        self.user.profile.refresh_from_db()
-        self.assertGreater(self.user.profile.terms_accepted, original_terms_accepted)
-
-    def test_accept_terms_false(self):
-        original_terms_accepted = self.user.profile.terms_accepted
-        bad_data = {'profile': {'accept_terms': False}}
-        response = self.client.patch(reverse('api:profile'), data=bad_data)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn('must be true', str(response.content))
-        self.user.profile.refresh_from_db()
-        self.assertEqual(self.user.profile.terms_accepted, original_terms_accepted)

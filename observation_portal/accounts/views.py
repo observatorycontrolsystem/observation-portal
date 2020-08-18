@@ -1,9 +1,11 @@
+from django.utils import timezone
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
+from observation_portal.accounts.models import Profile
 from observation_portal.accounts.tasks import send_mail
 from observation_portal.accounts.serializers import UserSerializer, AccountRemovalSerializer
 
@@ -16,6 +18,21 @@ class ProfileApiView(RetrieveUpdateAPIView):
             return self.request.user
         else:
             return None
+
+
+class AcceptTermsApiView(APIView):
+    """View to accept terms."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            profile = request.user.profile
+        except Profile.DoesNotExist:
+            profile = Profile.objects.create(user=request.user, institution='', title='')
+
+        profile.terms_accepted = timezone.now()
+        profile.save()
+        return Response({'message': 'Terms accepted.'})
 
 
 class RevokeApiTokenApiView(APIView):
