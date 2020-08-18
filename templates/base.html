@@ -42,7 +42,6 @@
           <li class="dropdown nav-item">
               <a class="dropdown-toggle nav-link" id="userNavOptions" data-toggle="dropdown" href="#">{{ user.username }}</a>
               <div class="dropdown-menu" aria-labelledby="userNavOptions">
-                <a class="dropdown-item" href="{% url 'profile' %}">Profile</a>
                 <a class="dropdown-item" href="{% url 'auth_logout' %}">Logout</a>
               </div>
           </li>
@@ -53,7 +52,7 @@
       </div>
     </div>
     </nav>
-    <div class="container">
+    <div class="container content-container">
         <div class="row">
             <div class="col-md-12">
                 <div class="messages">

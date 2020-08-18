@@ -74,7 +74,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'observation_portal.common.middleware.AcceptTermsMiddlware',
     'observation_portal.common.middleware.RequestLogMiddleware',
 ]
 
@@ -167,9 +166,8 @@ OAUTH2_PROVIDER = {
 }
 
 CORS_ORIGIN_ALLOW_ALL = True
-CORS_URLS_REGEX = r'^/api/.*$|^/o/.*'
-LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/'
+CORS_URLS_REGEX = r'^/(api|accounts)/.*$|^/o/.*'
+LOGIN_REDIRECT_URL = '/accounts/loggedinstate/'
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.1/topics/i18n/
