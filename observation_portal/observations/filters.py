@@ -45,8 +45,8 @@ class ObservationFilter(mixins.CustomIsoDateTimeFilterMixin, django_filters.Filt
         label='Modified After (Inclusive)',
         widget=forms.TextInput(attrs={'class': 'input', 'type': 'date'})
     )
-    request_id = django_filters.CharFilter(field_name='request__id')
-    request_group_id = django_filters.CharFilter(field_name='request__request_group__id', label='Request Group ID')
+    request_id = django_filters.NumberFilter(field_name='request__id')
+    request_group_id = django_filters.NumberFilter(field_name='request__request_group__id', label='Request Group ID')
     state = django_filters.MultipleChoiceFilter(choices=Observation.STATE_CHOICES, field_name='state')
     observation_type = django_filters.MultipleChoiceFilter(
         choices=RequestGroup.OBSERVATION_TYPES,

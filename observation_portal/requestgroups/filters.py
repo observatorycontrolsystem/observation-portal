@@ -31,7 +31,7 @@ class RequestGroupFilter(django_filters.FilterSet):
             'modified': 'Last Update'
         }
     )
-    request_id = django_filters.CharFilter(field_name='requests__id')
+    request_id = django_filters.NumberFilter(field_name='requests__id')
 
     class Meta:
         model = RequestGroup
