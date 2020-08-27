@@ -31,12 +31,13 @@ class RequestGroupFilter(django_filters.FilterSet):
             'modified': 'Last Update'
         }
     )
+    request_id = django_filters.NumberFilter(field_name='requests__id')
 
     class Meta:
         model = RequestGroup
         fields = (
             'id', 'submitter', 'proposal', 'name', 'observation_type', 'operator', 'ipp_value',  'exclude_state',
-            'state', 'created_after', 'created_before', 'user', 'modified_after', 'modified_before'
+            'state', 'created_after', 'created_before', 'user', 'modified_after', 'modified_before', 'request_id'
         )
 
 
