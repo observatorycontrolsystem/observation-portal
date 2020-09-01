@@ -8,7 +8,8 @@
         <h3>{{ object }} <small>{{ object.title }}</small></h3>
         <p>{{ object.abstract }}</p>
         <h4>Total Observation Requests:
-            <a title="View requests" href="{% url 'requestgroups:list' %}?proposal={{ object.id }}">{{ object.requestgroup_set.all.count }}</a>
+            <!-- TODO: This was a link to the homepage with ?proposal={{ object.id }} tacked on -->
+            <a title="View requests" href="#">{{ object.requestgroup_set.all.count }}</a>
         </h4>
         <h4>
           Principal Investigator: {{ object.pi.first_name }} {{ object.pi.last_name }}
