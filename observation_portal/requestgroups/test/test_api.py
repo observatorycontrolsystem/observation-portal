@@ -2825,7 +2825,8 @@ class TestFiltering(APITestCase):
     def test_request_filtering_works(self):
         proposal = mixer.blend(Proposal, public=True)
         rg = mixer.blend(RequestGroup, name='filter on me', proposal=proposal, observation_type=RequestGroup.NORMAL)
-        mixer.blend(Request, state='PENDING', request_group=rg)
+        request = mixer.blend(Request, state='PENDING', request_group=rg)
+        create_simple_configuration(request=request)
         response = self.client.get(reverse('api:request_groups-list') + '?state=PENDING')
         self.assertEqual(response.json()['count'], 1)
         response = self.client.get(reverse('api:request_groups-list') + '?state=COMPLETED')
