@@ -19,10 +19,6 @@ class TestIndex(TestCase):
         self.user.set_password('sopassword')
         self.user.save()
 
-    def test_index_page(self):
-        response = self.client.get(reverse('requestgroups:list'))
-        self.assertContains(response, 'Observation Portal')
-
     def test_no_such_user(self):
         self.client.post(
             reverse('auth_login'),
