@@ -1,4 +1,3 @@
-from django.views.generic.detail import DetailView
 from django.core.cache import cache
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAdminUser
@@ -15,7 +14,6 @@ from observation_portal.common.telescope_states import (
     ElasticSearchException
 )
 from observation_portal.requestgroups.request_utils import get_airmasses_for_request_at_sites
-from observation_portal.requestgroups.models import RequestGroup, Request
 from observation_portal.requestgroups.serializers import RequestSerializer
 from observation_portal.requestgroups.contention import Contention, Pressure
 
@@ -34,39 +32,6 @@ def get_start_end_parameters(request, default_days_back):
         end = timezone.now()
     end = end.replace(tzinfo=timezone.utc)
     return start, end
-
-
-# TODO: Use this queryset for the requestgroups API endpoint
-def requestgroup_queryset(request):
-    if request.user.is_authenticated:
-        if request.user.profile.staff_view and request.user.is_staff:
-            requestgroups = RequestGroup.objects.all()
-        else:
-            requestgroups = RequestGroup.objects.filter(proposal__in=request.user.proposal_set.all())
-            if request.user.profile.view_authored_requests_only:
-                requestgroups = requestgroups.filter(submitter=request.user)
-    else:
-        requestgroups = RequestGroup.objects.filter(proposal__public=True)
-
-    return requestgroups
-
-
-class RequestDetailView(DetailView):
-    model = Request
-
-    # TODO: Use this queryset for the requests API endpoint
-    def get_queryset(self):
-        if self.request.user.is_authenticated:
-            if self.request.user.profile.staff_view and self.request.user.is_staff:
-                requests = Request.objects.all()
-            else:
-                requests = Request.objects.filter(request_group__proposal__in=self.request.user.proposal_set.all())
-                if self.request.user.profile.view_authored_requests_only:
-                    requests = requests.filter(request_group__submitter=self.request.user)
-        else:
-            requests = Request.objects.filter(request_group__proposal__public=True)
-
-        return requests
 
 
 class TelescopeStatesView(APIView):
