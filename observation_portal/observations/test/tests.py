@@ -1638,3 +1638,14 @@ class TestTimeAccountingCommand(TestObservationApiBase):
         self.assertIn('is different from existing', command_err.getvalue())
         self.time_allocation.refresh_from_db()
         self.assertEqual(self.time_allocation.std_time_used, 0)
+
+
+class TestGetObservationsFiltersApi(APITestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+    def test_get_observations_filters(self):
+        response = self.client.get(reverse('api:observations-filters'))
+        self.assertEqual(response.status_code, 200)
+        self.assertGreater(len(response.json()['choice_fields'][0]['options']), 0)
+        self.assertGreater(len(response.json()['fields']), 0)
