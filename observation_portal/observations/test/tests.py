@@ -1789,3 +1789,13 @@ class TestGetObservationsListAPIView(TestObservationApiBase):
         response = self.client.get(reverse('api:observations-list'))
         self.assertNotIn(self.first_private_proposal.id, str(response.content))
         self.assertNotIn(self.public_proposal.id, str(response.content))
+
+class TestGetObservationsFiltersApi(APITestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+    def test_get_observations_filters(self):
+        response = self.client.get(reverse('api:observations-filters'))
+        self.assertEqual(response.status_code, 200)
+        self.assertGreater(len(response.json()['choice_fields'][0]['options']), 0)
+        self.assertGreater(len(response.json()['fields']), 0)
