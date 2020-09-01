@@ -16,7 +16,6 @@ Including another URLconf
 from django.contrib import admin
 from django.conf.urls import url, include
 from django.urls import path
-from django.views.generic import TemplateView
 from rest_framework.routers import DefaultRouter
 from rest_framework.authtoken.views import obtain_auth_token
 from rest_framework import permissions
@@ -36,10 +35,8 @@ from observation_portal.proposals.viewsets import ProposalViewSet, SemesterViewS
 from observation_portal.observations.views import LastScheduledView
 from observation_portal.observations.viewsets import ObservationViewSet, ScheduleViewSet, ConfigurationStatusViewSet
 import observation_portal.sciapplications.urls as sciapplications_urls
-import observation_portal.requestgroups.urls as requestgroup_urls
 import observation_portal.proposals.urls as proposals_urls
 import observation_portal.accounts.urls as accounts_urls
-import observation_portal.observations.urls as observations_urls
 from observation_portal import settings
 
 router = DefaultRouter()
@@ -83,16 +80,12 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
-    url(r'^', include(requestgroup_urls)),
     url(r'^accounts/', include(accounts_urls)),
     url(r'^api/', include(api_urlpatterns)),
-    url(r'^tools/', TemplateView.as_view(template_name='tools.html'), name='tools'),
     url(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
     url(r'^proposals/', include(proposals_urls)),
-    url(r'^observations/', include(observations_urls)),
     url(r'^apply/', include(sciapplications_urls)),
     path('admin/', admin.site.urls),
-    url(r'^help/', TemplateView.as_view(template_name='help.html'), name='help'),
     url(r'^redoc/$', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 ]
 

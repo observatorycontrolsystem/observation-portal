@@ -429,15 +429,23 @@ class TestObservationApiBase(SetTimeMixin, APITestCase):
             end=datetime(2016, 12, 31, tzinfo=timezone.utc)
         )
         self.membership = mixer.blend(Membership, user=self.user, proposal=self.proposal)
-        self.window = mixer.blend(
+        self.requestgroup = self._generate_requestgroup()
+        self.window = self.requestgroup.requests.first().windows.first()
+        self.location = self.requestgroup.requests.first().location
+
+    def _generate_requestgroup(self, user=None, proposal=None):
+        user = user or self.user
+        proposal = proposal or self.proposal
+        window = mixer.blend(
             Window, start=datetime(2016, 9, 3, tzinfo=timezone.utc), end=datetime(2016, 9, 6, tzinfo=timezone.utc)
         )
-        self.location = mixer.blend(Location, telescope_class='1m0')
-        self.requestgroup = create_simple_requestgroup(
-            self.user, self.proposal, window=self.window, location=self.location, instrument_type='1M0-SCICAM-SBIG'
+        location = mixer.blend(Location, telescope_class='1m0')
+        requestgroup = create_simple_requestgroup(
+            user, proposal, window=window, location=location, instrument_type='1M0-SCICAM-SBIG'
         )
-        self.requestgroup.observation_type = RequestGroup.NORMAL
-        self.requestgroup.save()
+        requestgroup.observation_type = RequestGroup.NORMAL
+        requestgroup.save()
+        return requestgroup
 
     @staticmethod
     def _generate_observation_data(request_id, configuration_id_list, guide_camera_name='xx03',
@@ -1638,3 +1646,146 @@ class TestTimeAccountingCommand(TestObservationApiBase):
         self.assertIn('is different from existing', command_err.getvalue())
         self.time_allocation.refresh_from_db()
         self.assertEqual(self.time_allocation.std_time_used, 0)
+
+
+class TestGetObservationsDetailAPIView(APITestCase):
+    def setUp(self):
+        super().setUp()
+        self.user = blend_user()
+        self.proposal = mixer.blend(Proposal)
+        mixer.blend(Membership, proposal=self.proposal, user=self.user)
+        self.rg = create_simple_requestgroup(self.user, self.proposal)
+        self.observation = mixer.blend(Observation, request=self.rg.requests.first())
+
+        self.staff_user = blend_user(user_params={'is_staff': True, 'is_superuser': True}, profile_params={'staff_view': True})
+        self.staff_proposal = mixer.blend(Proposal)
+        mixer.blend(Membership, proposal=self.staff_proposal, user=self.staff_user)
+        self.staff_rg = create_simple_requestgroup(self.staff_user, self.staff_proposal)
+        self.staff_observation = mixer.blend(Observation, request=self.staff_rg.requests.first())
+
+        self.public_proposal = mixer.blend(Proposal, public=True)
+        mixer.blend(Membership, proposal=self.public_proposal, user=self.user)
+        self.public_requestgroup = create_simple_requestgroup(self.user, self.public_proposal)
+        self.public_observation = mixer.blend(Observation, request=self.public_requestgroup.requests.first())
+
+    def test_unauthenticated_user_sees_only_public_observation(self):
+        public_response = self.client.get(reverse('api:observations-detail', kwargs={'pk': self.public_observation.id}))
+        self.assertEqual(public_response.status_code, 200)
+        non_public_response = self.client.get(reverse('api:observations-detail', args=[self.observation.id]))
+        self.assertEqual(non_public_response.status_code, 404)
+
+    def test_authenticated_user_sees_their_observation_but_not_others(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('api:observations-detail', kwargs={'pk': self.observation.id}))
+        self.assertEqual(response.status_code, 200)
+        staff_response = self.client.get(reverse('api:observations-detail', kwargs={'pk': self.staff_observation.id}))
+        self.assertEqual(staff_response.status_code, 404)
+
+    def test_staff_user_with_staff_view_sees_others_observation(self):
+        self.client.force_login(self.staff_user)
+        response = self.client.get(reverse('api:observations-detail', kwargs={'pk': self.observation.id}))
+        self.assertEqual(response.status_code, 200)
+
+    def test_staff_user_without_staff_view_doesnt_see_others_observation(self):
+        self.staff_user.profile.staff_view = False
+        self.staff_user.profile.save()
+        response = self.client.get(reverse('api:observations-detail', kwargs={'pk': self.observation.id}))
+        self.assertEqual(response.status_code, 404)
+
+    def test_user_authored_only_enabled(self):
+        user = blend_user(profile_params={'view_authored_requests_only': True})
+        mixer.blend(Membership, proposal=self.public_proposal, user=user)
+        requestgroup = create_simple_requestgroup(user, self.public_proposal)
+        observation = mixer.blend(Observation, request=requestgroup.requests.first())
+        self.client.force_login(user)
+        response = self.client.get(reverse('api:observations-detail', kwargs={'pk': self.public_observation.id}))
+        self.assertEqual(response.status_code, 404)
+        response = self.client.get(reverse('api:observations-detail', kwargs={'pk': observation.id}))
+        self.assertEqual(response.status_code, 200)
+
+
+class TestGetObservationsListAPIView(TestObservationApiBase):
+    def setUp(self):
+        super().setUp()
+        self.non_staff_user = blend_user()
+        self.first_private_proposal = mixer.blend(Proposal, public=False)
+        mixer.blend(Membership, proposal=self.first_private_proposal, user=self.non_staff_user)
+        self.requestgroups = [
+            self._generate_requestgroup(self.non_staff_user, self.first_private_proposal) for _ in range(3)
+        ]
+        self.observations = [
+            self._generate_observation_data(
+                requestgroup.requests.first().id,
+                [requestgroup.requests.first().configurations.first().id]
+            ) for requestgroup in self.requestgroups
+        ]
+        for observation in self.observations:
+            self._create_observation(observation)
+
+        self.public_proposal = mixer.blend(Proposal, public=True)
+        mixer.blend(Membership, proposal=self.public_proposal, user=self.non_staff_user)
+        self.public_requestgroups = [
+            self._generate_requestgroup(self.non_staff_user, self.public_proposal) for _ in range(3)
+        ]
+        self.public_observations = [
+            self._generate_observation_data(
+                public_requestgroup.requests.first().id,
+                [public_requestgroup.requests.first().configurations.first().id]
+            ) for public_requestgroup in self.public_requestgroups
+        ]
+        for public_observation in self.public_observations:
+            self._create_observation(public_observation)
+
+        self.other_non_staff_user = blend_user()
+        self.second_private_proposal = mixer.blend(Proposal, public=False)
+        mixer.blend(Membership, proposal=self.second_private_proposal, user=self.other_non_staff_user)
+        self.other_requestgroups = [
+            self._generate_requestgroup(self.other_non_staff_user, self.second_private_proposal) for _ in range(3)
+        ]
+        self.other_observations = [
+            self._generate_observation_data(
+                other_requestgroup.requests.first().id,
+                [other_requestgroup.requests.first().configurations.first().id]
+            ) for other_requestgroup in self.other_requestgroups
+        ]
+        for other_observation in self.other_observations:
+            self._create_observation(other_observation)
+
+    def test_unauthenticated_user_only_sees_public_observations(self):
+        self.client.logout()
+        response = self.client.get(reverse('api:observations-list'))
+        self.assertIn(self.public_proposal.id, str(response.content))
+        self.assertNotIn(self.first_private_proposal.id, str(response.content))
+        self.assertNotIn(self.second_private_proposal.id, str(response.content))
+
+    def test_authenticated_user_sees_their_observations(self):
+        self.client.force_login(self.non_staff_user)
+        response = self.client.get(reverse('api:observations-list'))
+        self.assertIn(self.first_private_proposal.id, str(response.content))
+        self.assertIn(self.public_proposal.id, str(response.content))
+        self.assertNotIn(self.second_private_proposal.id, str(response.content))
+
+    def test_staff_user_with_staff_view_sees_everything(self):
+        staff_user = blend_user(user_params={'is_staff': True, 'is_superuser': True}, profile_params={'staff_view': True})
+        self.client.force_login(staff_user)
+        response = self.client.get(reverse('api:observations-list'))
+        self.assertIn(self.first_private_proposal.id, str(response.content))
+        self.assertIn(self.public_proposal.id, str(response.content))
+        self.assertIn(self.second_private_proposal.id, str(response.content))
+
+    def test_staff_user_without_staff_view_sees_only_their_observations(self):
+        self.non_staff_user.is_staff = True
+        self.non_staff_user.save()
+        self.client.force_login(self.non_staff_user)
+        response = self.client.get(reverse('api:observations-list'))
+        self.assertIn(self.first_private_proposal.id, str(response.content))
+        self.assertIn(self.public_proposal.id, str(response.content))
+        self.assertNotIn(self.second_private_proposal.id, str(response.content))
+
+    def test_user_with_authored_only(self):
+        user = blend_user(profile_params={'view_authored_requests_only': True})
+        mixer.blend(Membership, proposal=self.first_private_proposal, user=user)
+        self.client.force_login(user)
+        response = self.client.get(reverse('api:observations-list'))
+        self.assertNotIn(self.first_private_proposal.id, str(response.content))
+        self.assertNotIn(self.public_proposal.id, str(response.content))
