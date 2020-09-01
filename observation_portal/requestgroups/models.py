@@ -109,7 +109,7 @@ class RequestGroup(models.Model):
         return str(self.id)
 
     def get_absolute_url(self):
-        return reverse('requestgroups:detail', kwargs={'pk': self.pk})
+        return reverse('api:request_groups-detail', kwargs={'pk': self.pk})
 
     def as_dict(self):
         ret_dict = model_to_dict(self)
