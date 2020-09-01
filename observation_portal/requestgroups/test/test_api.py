@@ -2814,12 +2814,21 @@ class TestMaxIppRequestgroupApi(SetTimeMixin, APITestCase):
 
 
 class TestFiltering(APITestCase):
-    def test_filtering_works(self):
+    def test_requestgroup_filtering_works(self):
         proposal = mixer.blend(Proposal, public=True)
         mixer.blend(RequestGroup, name='filter on me', proposal=proposal, observation_type=RequestGroup.NORMAL)
         response = self.client.get(reverse('api:request_groups-list') + '?name=filter')
         self.assertEqual(response.json()['count'], 1)
         response = self.client.get(reverse('api:request_groups-list') + '?name=philbobaggins')
+        self.assertEqual(response.json()['count'], 0)
+
+    def test_request_filtering_works(self):
+        proposal = mixer.blend(Proposal, public=True)
+        rg = mixer.blend(RequestGroup, name='filter on me', proposal=proposal, observation_type=RequestGroup.NORMAL)
+        mixer.blend(Request, state='PENDING', request_group=rg)
+        response = self.client.get(reverse('api:request_groups-list') + '?state=PENDING')
+        self.assertEqual(response.json()['count'], 1)
+        response = self.client.get(reverse('api:request_groups-list') + '?state=COMPLETED')
         self.assertEqual(response.json()['count'], 0)
 
 
