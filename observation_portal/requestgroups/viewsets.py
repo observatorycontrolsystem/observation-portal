@@ -47,12 +47,13 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
         return super().get_throttles()
 
     def get_queryset(self):
-        if self.request.user.is_staff:
-            qs = RequestGroup.objects.all()
-        elif self.request.user.is_authenticated:
-            qs = RequestGroup.objects.filter(
-                proposal__in=self.request.user.proposal_set.all()
-            )
+        if self.request.user.is_authenticated:
+            if self.request.user.profile.staff_view and self.request.user.is_staff:
+                qs = RequestGroup.objects.all()
+            else:
+                qs = RequestGroup.objects.filter(proposal__in=self.request.user.proposal_set.all())
+                if self.request.user.profile.view_authored_requests_only:
+                    qs = qs.filter(submitter=self.request.user)
         else:
             qs = RequestGroup.objects.filter(proposal__in=Proposal.objects.filter(public=True))
         return qs.prefetch_related(
@@ -217,15 +218,15 @@ class RequestViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
     ordering_fields = ('id', 'state')
 
     def get_queryset(self):
-        if self.request.user.is_staff:
-            qs = Request.objects.all()
-        elif self.request.user.is_authenticated:
-            qs = Request.objects.filter(
-                request_group__proposal__in=self.request.user.proposal_set.all()
-            )
+        if self.request.user.is_authenticated:
+            if self.request.user.profile.staff_view and self.request.user.is_staff:
+                qs = Request.objects.all()
+            else:
+                qs = Request.objects.filter(request_group__proposal__in=self.request.user.proposal_set.all())
+                if self.request.user.profile.view_authored_requests_only:
+                    qs = qs.filter(request_group__submitter=self.request.user)
         else:
             qs = Request.objects.filter(request_group__proposal__in=Proposal.objects.filter(public=True))
-
         return qs.prefetch_related(
             'windows', 'configurations', 'location', 'configurations__instrument_configs', 'configurations__target',
             'configurations__acquisition_config', 'configurations__guiding_config', 'configurations__constraints',

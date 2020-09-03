@@ -1,14 +1,8 @@
-from django_filters.views import FilterView
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.generic.base import TemplateView
-from django.views.generic.detail import DetailView
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.cache import cache
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAdminUser
-from django.http import HttpResponseBadRequest, HttpResponseRedirect
+from django.http import HttpResponseBadRequest
 from django.utils import timezone
-from django.urls import reverse
 from dateutil.parser import parse
 from datetime import timedelta
 from rest_framework.views import APIView
@@ -20,9 +14,7 @@ from observation_portal.common.telescope_states import (
     ElasticSearchException
 )
 from observation_portal.requestgroups.request_utils import get_airmasses_for_request_at_sites
-from observation_portal.requestgroups.models import RequestGroup, Request
 from observation_portal.requestgroups.serializers import RequestSerializer
-from observation_portal.requestgroups.filters import RequestGroupFilter
 from observation_portal.requestgroups.contention import Contention, Pressure
 
 logger = logging.getLogger(__name__)
@@ -40,82 +32,6 @@ def get_start_end_parameters(request, default_days_back):
         end = timezone.now()
     end = end.replace(tzinfo=timezone.utc)
     return start, end
-
-
-def requestgroup_queryset(request):
-    if request.user.is_authenticated:
-        if request.user.profile.staff_view and request.user.is_staff:
-            requestgroups = RequestGroup.objects.all()
-        else:
-            requestgroups = RequestGroup.objects.filter(proposal__in=request.user.proposal_set.all())
-            if request.user.profile.view_authored_requests_only:
-                requestgroups = requestgroups.filter(submitter=request.user)
-    else:
-        requestgroups = RequestGroup.objects.filter(proposal__public=True)
-
-    return requestgroups
-
-
-class RequestGroupListView(FilterView):
-    filterset_class = RequestGroupFilter
-    template_name = 'requestgroups/requestgroup_list.html'
-    strict = False  # TODO remove when https://github.com/carltongibson/django-filter/issues/930 is fixed
-
-    def get_queryset(self):
-        return requestgroup_queryset(self.request)
-
-    def get_paginate_by(self, qs):
-        return self.request.GET.get('paginate_by', 20)
-
-
-class RequestGroupDetailView(DetailView):
-    model = RequestGroup
-
-    def get_queryset(self):
-        return requestgroup_queryset(self.request)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        requests = self.get_object().requests.all().order_by('id')
-        paginator = Paginator(requests, 25)
-        page = self.request.GET.get('page')
-        try:
-            requests = paginator.page(page)
-        except PageNotAnInteger:
-            requests = paginator.page(1)
-        except EmptyPage:
-            requests = paginator.page(paginator.num_pages)
-        context['requests'] = requests
-
-        return context
-
-    def render_to_response(self, context, **kwargs):
-        if self.get_object().requests.count() == 1:
-            request = self.get_object().requests.first()
-            return HttpResponseRedirect(reverse('requestgroups:request-detail', args=(request.id, )))
-        else:
-            return super().render_to_response(context, **kwargs)
-
-
-class RequestDetailView(DetailView):
-    model = Request
-
-    def get_queryset(self):
-        if self.request.user.is_authenticated:
-            if self.request.user.profile.staff_view and self.request.user.is_staff:
-                requests = Request.objects.all()
-            else:
-                requests = Request.objects.filter(request_group__proposal__in=self.request.user.proposal_set.all())
-                if self.request.user.profile.view_authored_requests_only:
-                    requests = requests.filter(request_group__submitter=self.request.user)
-        else:
-            requests = Request.objects.filter(request_group__proposal__public=True)
-
-        return requests
-
-
-class RequestCreateView(LoginRequiredMixin, TemplateView):
-    template_name = 'requestgroups/request_create.html'
 
 
 class TelescopeStatesView(APIView):
