@@ -739,34 +739,6 @@ class TestSciAppDetail(TestCase):
         self.assertTrue(HTML.write_pdf.called)
         self.assertEqual(response.status_code, 200)
 
-    def test_pdf_does_not_include_author_names(self):
-        PdfFileMerger.merge = MagicMock
-        HTML.write_pdf = MagicMock
-        app = mixer.blend(
-            ScienceApplication,
-            status=ScienceApplication.SUBMITTED,
-            submitter=self.user,
-            call=self.call
-        )
-        mixer.cycle(3).blend(CoInvestigator, science_application=app, last_name=mixer.RANDOM)
-        response = self.client.get(reverse('sciapplications:pdf', kwargs={'pk': app.id}))
-        self.assertNotContains(response, app.submitter.last_name)
-        for coi in app.coinvestigator_set.all():
-            self.assertNotContains(response, coi.last_name)
-
-    def test_detail_page_does_contain_author_names(self):
-        app = mixer.blend(
-            ScienceApplication,
-            status=ScienceApplication.SUBMITTED,
-            submitter=self.user,
-            call=self.call
-        )
-        mixer.cycle(3).blend(CoInvestigator, science_application=app, last_name=mixer.RANDOM)
-        response = self.client.get(reverse('sciapplications:detail', kwargs={'pk': app.id}))
-        self.assertContains(response, app.submitter.last_name)
-        for coi in app.coinvestigator_set.all():
-            self.assertContains(response, coi.last_name)
-
 
 class TestSciAppDelete(TestCase):
     def setUp(self):

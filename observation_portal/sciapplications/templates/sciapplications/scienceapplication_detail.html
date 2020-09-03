@@ -73,7 +73,6 @@
     <div class="page-break"></div>
     {% endif %}
 
-    {% if not pdf %}
     <h2>{% trans 'Principal Investigator' %}</h2>
     {% if object.pi %}
        <p>{{ object.pi_first_name|slice:':1' }}. {{ object.pi_last_name }} ({{ object.pi_institution }})</p>
@@ -91,7 +90,6 @@
         {% endfor %}
         </tbody>
       </table>
-    {% endif %}
     {% endif %}
 
     {% if object.pdf and not pdf %}
