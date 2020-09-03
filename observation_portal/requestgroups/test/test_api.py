@@ -11,6 +11,7 @@ import observation_portal.observations.signals.handlers  # noqa
 from observation_portal.requestgroups import serializers
 from observation_portal.requestgroups import views
 from observation_portal.common import state_changes
+from observation_portal.common.test_helpers import create_simple_configuration
 
 from observation_portal.requestgroups.contention import Pressure
 from observation_portal.accounts.test_utils import blend_user
@@ -112,12 +113,83 @@ class TestUserGetRequestApi(SetTimeMixin, APITestCase):
         result = self.client.get(reverse('api:request_groups-list'))
         self.assertContains(result, request_group.name)
 
-    def test_get_request_group_list_staff(self):
+    def test_get_request_group_list_is_staff_without_staff_view(self):
+        mixer.blend(RequestGroup, submitter=self.user, proposal=self.proposal, name="testgroup2",
+                    observation_type=RequestGroup.NORMAL)
+        self.client.force_login(self.staff_user)
+        result = self.client.get(reverse('api:request_groups-list'))
+        self.assertEqual(len(result.json()['results']), 0)
+
+    def test_get_request_group_list_staff_with_staff_view(self):
+        self.staff_user.profile.staff_view = True
+        self.staff_user.profile.save()
         request_group = mixer.blend(RequestGroup, submitter=self.user, proposal=self.proposal, name="testgroup2",
                                     observation_type=RequestGroup.NORMAL)
         self.client.force_login(self.staff_user)
         result = self.client.get(reverse('api:request_groups-list'))
         self.assertContains(result, request_group.name)
+
+    def test_requestgroup_list_view_authored_requests_only(self):
+        self.user.profile.view_authored_requests_only = True
+        self.user.profile.save()
+        request_group_authored = mixer.blend(
+            RequestGroup, submitter=self.user, proposal=self.proposal, name="testgroup1",
+            observation_type=RequestGroup.NORMAL
+        )
+        mixer.blend(Membership, user=self.other_user, proposal=self.proposal)
+        request_group_not_authored = mixer.blend(
+            RequestGroup, submitter=self.other_user, proposal=self.proposal, name="testgroup2",
+            observation_type=RequestGroup.NORMAL
+        )
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('api:request_groups-list'))
+        self.assertContains(response, request_group_authored.name)
+        self.assertNotContains(response, request_group_not_authored.name)
+
+    def test_requestgroup_detail_is_staff_without_staff_view(self):
+        request_group = mixer.blend(
+            RequestGroup, submitter=self.user, proposal=self.proposal, name="testgroup1",
+            observation_type=RequestGroup.NORMAL
+        )
+        self.client.force_login(self.staff_user)
+        response = self.client.get(reverse('api:request_groups-detail', args=(request_group.id,)))
+        self.assertEqual(response.status_code, 404)
+
+    def test_requestgroup_detail_is_staff_with_staff_view_enabled(self):
+        self.staff_user.profile.staff_view = True
+        self.staff_user.profile.save()
+        request_group = mixer.blend(
+            RequestGroup, submitter=self.user, proposal=self.proposal, name="testgroup1",
+            observation_type=RequestGroup.NORMAL
+        )
+        self.client.force_login(self.staff_user)
+        response = self.client.get(reverse('api:request_groups-detail', args=(request_group.id,)))
+        self.assertContains(response, request_group.name)
+
+    def test_get_request_group_detail_only_authored(self):
+        self.user.profile.view_authored_requests_only = True
+        self.user.profile.save()
+        authored_request_group = mixer.blend(
+            RequestGroup, proposal=self.proposal, name=mixer.RANDOM, submitter=self.user,
+            observation_type=RequestGroup.NORMAL
+        )
+        mixer.blend(Membership, user=self.other_user, proposal=self.proposal)
+        non_authored_request_group = mixer.blend(
+            RequestGroup, proposal=self.proposal, name=mixer.RANDOM, submitter=self.other_user,
+            observation_type=RequestGroup.NORMAL
+        )
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('api:request_groups-detail', args=(non_authored_request_group.id,)))
+        self.assertEqual(response.status_code, 404)
+        response = self.client.get(reverse('api:request_groups-detail', args=(authored_request_group.id,)))
+        self.assertContains(response, authored_request_group.name)
+
+    def test_requestgroups_list_dont_include_other_proposals(self):
+        self.client.force_login(self.user)
+        proposal = mixer.blend(Proposal)
+        other_rg = mixer.blend(RequestGroup, proposal=proposal, name=mixer.RANDOM, observation_type=RequestGroup.NORMAL)
+        response = self.client.get(reverse('api:request_groups-list'))
+        self.assertNotContains(response, other_rg.name)
 
     def test_get_request_group_detail_public(self):
         proposal = mixer.blend(Proposal, public=True)
@@ -2037,12 +2109,54 @@ class TestGetRequestApi(APITestCase):
         result = self.client.get(reverse('api:requests-detail', args=(request.id,)))
         self.assertEqual(result.status_code, 404)
 
-    def test_get_request_list_staff(self):
+    def test_get_request_detail_staff_no_staff_view(self):
+        request = mixer.blend(Request, request_group=self.request_group, observation_note='testobsnote2')
+        mixer.blend(Configuration, request=request, instrument_type='1M0-SCICAM-SBIG')
+        self.client.force_login(self.staff_user)
+        result = self.client.get(reverse('api:requests-detail', args=(request.id,)))
+        self.assertEqual(result.status_code, 404)
+
+    def test_get_request_detail_staff_with_staff_view(self):
+        self.staff_user.profile.staff_view = True
+        self.staff_user.profile.save()
         request = mixer.blend(Request, request_group=self.request_group, observation_note='testobsnote2')
         mixer.blend(Configuration, request=request, instrument_type='1M0-SCICAM-SBIG')
         self.client.force_login(self.staff_user)
         result = self.client.get(reverse('api:requests-detail', args=(request.id,)))
         self.assertEqual(result.json()['observation_note'], request.observation_note)
+
+    def test_request_detail_with_view_authored_requests_only(self):
+        self.user.profile.view_authored_requests_only = True
+        self.user.profile.save()
+        self.client.force_login(self.user)
+        non_authored_request_group = mixer.blend(
+            RequestGroup, proposal=self.proposal, name=mixer.RANDOM, submitter=self.staff_user,
+            observation_type=RequestGroup.NORMAL
+        )
+        non_authored_request = mixer.blend(Request, request_group=non_authored_request_group)
+        mixer.blend(Configuration, request=non_authored_request, instrument_type='1M0-SCICAM-SBIG')
+        authored_request = mixer.blend(Request, request_group=self.request_group, observation_note='testobsnote')
+        mixer.blend(Configuration, request=authored_request, instrument_type='1M0-SCICAM-SBIG')
+        response = self.client.get(reverse('api:requests-detail', args=(non_authored_request.id,)))
+        self.assertEqual(response.status_code, 404)
+        response = self.client.get(reverse('api:requests-detail', args=(authored_request.id,)))
+        self.assertContains(response, authored_request.id)
+
+    def test_get_request_list_staff_no_staff_view(self):
+        request = mixer.blend(Request, request_group=self.request_group, observation_note='testobsnote2')
+        mixer.blend(Configuration, request=request, instrument_type='1M0-SCICAM-SBIG')
+        self.client.force_login(self.staff_user)
+        result = self.client.get(reverse('api:requests-list'))
+        self.assertEqual(len(result.json()['results']), 0)
+
+    def test_get_request_list_staff_with_staff_view(self):
+        self.staff_user.profile.staff_view = True
+        self.staff_user.profile.save()
+        request = mixer.blend(Request, request_group=self.request_group, observation_note='testobsnote2')
+        create_simple_configuration(request=request)
+        self.client.force_login(self.staff_user)
+        result = self.client.get(reverse('api:requests-list'))
+        self.assertEqual(result.json()['results'][0]['observation_note'], request.observation_note)
 
     def test_get_request_detail_public(self):
         proposal = mixer.blend(Proposal, public=True)
@@ -2700,12 +2814,22 @@ class TestMaxIppRequestgroupApi(SetTimeMixin, APITestCase):
 
 
 class TestFiltering(APITestCase):
-    def test_filtering_works(self):
+    def test_requestgroup_filtering_works(self):
         proposal = mixer.blend(Proposal, public=True)
         mixer.blend(RequestGroup, name='filter on me', proposal=proposal, observation_type=RequestGroup.NORMAL)
         response = self.client.get(reverse('api:request_groups-list') + '?name=filter')
         self.assertEqual(response.json()['count'], 1)
         response = self.client.get(reverse('api:request_groups-list') + '?name=philbobaggins')
+        self.assertEqual(response.json()['count'], 0)
+
+    def test_request_filtering_works(self):
+        proposal = mixer.blend(Proposal, public=True)
+        rg = mixer.blend(RequestGroup, name='filter on me', proposal=proposal, observation_type=RequestGroup.NORMAL)
+        request = mixer.blend(Request, state='PENDING', request_group=rg)
+        create_simple_configuration(request=request)
+        response = self.client.get(reverse('api:request_groups-list') + '?state=PENDING')
+        self.assertEqual(response.json()['count'], 1)
+        response = self.client.get(reverse('api:request_groups-list') + '?state=COMPLETED')
         self.assertEqual(response.json()['count'], 0)
 
 
