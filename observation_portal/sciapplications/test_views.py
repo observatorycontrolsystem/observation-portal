@@ -10,6 +10,7 @@ from PyPDF2 import PdfFileMerger
 from weasyprint import HTML
 from unittest.mock import MagicMock, patch
 from django_dramatiq.test import DramatiqTestCase
+from os import urandom
 
 from observation_portal.proposals.models import Semester, ScienceCollaborationAllocation, CollaborationAllocation
 from observation_portal.accounts.models import Profile
@@ -430,7 +431,8 @@ class TestPostCreateSciApp(DramatiqTestCase):
 
     def test_pdf_has_too_many_pages(self):
         data = self.sci_data.copy()
-        data['pdf'] = SimpleUploadedFile('s.pdf', b'this is way way way too long')
+        pdf_data = urandom(1000)
+        data['pdf'] = SimpleUploadedFile('s.pdf', pdf_data)
         response = self.client.post(
             reverse('sciapplications:create', kwargs={'call': self.call.id}),
             data=data,
