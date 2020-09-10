@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from mixer.backend.django import mixer
 from django.utils import timezone
 
-from observation_portal.proposals.models import Membership, Proposal, ProposalInvite, ProposalNotification
+from observation_portal.proposals.models import Membership, Proposal, ProposalInvite
 from observation_portal.proposals.models import Semester, TimeAllocation, ScienceCollaborationAllocation
 from observation_portal.accounts.models import Profile
 from observation_portal.accounts.test_utils import blend_user
@@ -358,29 +358,6 @@ class TestMembershipDelete(TestCase):
         )
         self.assertEqual(response.status_code, 404)
         self.assertEqual(other_proposal.membership_set.count(), 1)
-
-
-class TestNotificationsEnabled(TestCase):
-    def setUp(self):
-        self.user = blend_user()
-        self.proposal = mixer.blend(Proposal)
-        mixer.blend(Membership, user=self.user, proposal=self.proposal)
-        self.client.force_login(self.user)
-
-    def test_user_can_enable_notifications(self):
-        self.client.post(
-            reverse('proposals:detail', kwargs={'pk': self.proposal.id}),
-            data={'notifications_enabled': True},
-        )
-        self.assertEqual(self.user.proposalnotification_set.count(), 1)
-
-    def test_user_can_disable_notifications(self):
-        ProposalNotification.objects.create(user=self.user, proposal=self.proposal)
-        self.client.post(
-            reverse('proposals:detail', kwargs={'pk': self.proposal.id}),
-            data={'notifications_enabled': False},
-        )
-        self.assertEqual(self.user.proposalnotification_set.count(), 0)
 
 
 class TestSemesterAdmin(TestCase):

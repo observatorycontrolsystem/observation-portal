@@ -1,12 +1,10 @@
 from rest_framework.test import APITestCase
 from mixer.backend.django import mixer
 from django.urls import reverse
-from django.contrib.auth.models import User
 from datetime import datetime
 from django.utils import timezone
 
-from observation_portal.proposals.models import Proposal, Membership, Semester
-from observation_portal.accounts.models import Profile
+from observation_portal.proposals.models import Proposal, Membership, Semester, ProposalNotification
 from observation_portal.accounts.test_utils import blend_user
 
 
@@ -66,6 +64,68 @@ class TestProposalApiDetail(APITestCase):
         self.client.force_login(admin_user)
         response = self.client.get(reverse('api:proposals-detail', kwargs={'pk': self.proposal.id}))
         self.assertContains(response, self.proposal.id)
+
+
+class TestNotificationsEnabled(APITestCase):
+    def setUp(self):
+        self.user = blend_user()
+        self.proposal = mixer.blend(Proposal)
+        mixer.blend(Membership, user=self.user, proposal=self.proposal)
+        self.client.force_login(self.user)
+
+    def test_user_can_enable_notifications(self):
+        self.assertEqual(self.user.proposalnotification_set.count(), 0)
+        self.client.post(
+            reverse('api:proposals-proposalnotifications', kwargs={'pk': self.proposal.id}),
+            data={'enabled': True},
+        )
+        self.assertEqual(self.user.proposalnotification_set.count(), 1)
+
+    def test_user_can_disable_notifications(self):
+        ProposalNotification.objects.create(user=self.user, proposal=self.proposal)
+        self.client.post(
+            reverse('api:proposals-proposalnotifications', kwargs={'pk': self.proposal.id}),
+            data={'enabled': False},
+        )
+        self.assertEqual(self.user.proposalnotification_set.count(), 0)
+
+    def test_unauthenticated_user_cannot_do_anything(self):
+        self.client.logout()
+        response = self.client.post(
+            reverse('api:proposals-proposalnotifications', kwargs={'pk': self.proposal.id}),
+            data={'enabled': False},
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_user_cannot_create_notification_on_other_proposal(self):
+        other_user = blend_user()
+        self.client.force_login(other_user)
+        self.assertEqual(other_user.proposalnotification_set.count(), 0)
+        response = self.client.post(
+            reverse('api:proposals-proposalnotifications', kwargs={'pk': self.proposal.id}),
+            data={'enabled': True},
+        )
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(other_user.proposalnotification_set.count(), 0)
+
+    def test_staff_user_can_enable_notification_on_any_proposal(self):
+        staff_user = blend_user(user_params={'is_staff': True})
+        self.client.force_login(staff_user)
+        self.assertEqual(staff_user.proposalnotification_set.count(), 0)
+        self.client.post(
+            reverse('api:proposals-proposalnotifications', kwargs={'pk': self.proposal.id}),
+            data={'enabled': True},
+        )
+        self.assertEqual(staff_user.proposalnotification_set.count(), 1)
+
+    def test_bad_data(self):
+        self.assertEqual(self.user.proposalnotification_set.count(), 0)
+        response = self.client.post(
+            reverse('api:proposals-proposalnotifications', kwargs={'pk': self.proposal.id}),
+            data={'enabled': 'sure'},
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(self.user.proposalnotification_set.count(), 0)
 
 
 class TestSemesterApi(APITestCase):

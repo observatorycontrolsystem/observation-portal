@@ -27,6 +27,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     is_staff = serializers.BooleanField(read_only=True)
     proposals = serializers.SerializerMethodField()
+    proposal_notifications = serializers.SerializerMethodField()
     profile = ProfileSerializer(required=False)
     available_instrument_types = serializers.SerializerMethodField()
     tokens = serializers.SerializerMethodField()
@@ -35,7 +36,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = (
             'username', 'first_name', 'last_name', 'email', 'profile', 'is_staff', 'proposals',
-            'available_instrument_types', 'tokens'
+            'available_instrument_types', 'tokens', 'proposal_notifications'
         )
 
     def get_proposals(self, obj):
@@ -43,6 +44,9 @@ class UserSerializer(serializers.ModelSerializer):
             {'id': proposal.id, 'title': proposal.title, 'current': proposal in obj.profile.current_proposals}
             for proposal in obj.proposal_set.all()
         ]
+
+    def get_proposal_notifications(self, obj):
+        return [pn.proposal.id for pn in obj.proposalnotification_set.all()]
 
     def get_available_instrument_types(self, obj):
         instrument_types = set()

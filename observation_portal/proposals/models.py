@@ -158,13 +158,7 @@ class Proposal(models.Model):
         proposal = model_to_dict(self, exclude=[])
         proposal['sca'] = self.sca.id
         proposal['timeallocation_set'] = [ta.as_dict() for ta in self.timeallocation_set.all()]
-        proposal['users'] = {
-            mem.user.username: {
-                'first_name': mem.user.first_name,
-                'last_name': mem.user.last_name,
-                'time_limit': mem.time_limit
-            } for mem in self.membership_set.all()
-        }
+        proposal['users'] = {mem.user.username: mem.as_dict() for mem in self.membership_set.all()}
         return proposal
 
 
@@ -228,6 +222,17 @@ class Membership(models.Model):
     @property
     def time_limit_hours(self):
         return self.time_limit / 3600
+
+    def as_dict(self):
+        return {
+            'username': self.user.username,
+            'first_name': self.user.first_name,
+            'last_name': self.user.last_name,
+            'email': self.user.email,
+            'role': self.role,
+            'time_limit': self.time_limit,
+            'time_used_by_user': self.user.profile.time_used_in_proposal(self.proposal)
+        }
 
 
 class ProposalInvite(models.Model):
