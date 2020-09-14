@@ -158,3 +158,110 @@ class TestSemesterApi(APITestCase):
     def test_semester_detail(self):
         response = self.client.get(reverse('api:semesters-detail', kwargs={'pk': self.semesters[0].id}))
         self.assertContains(response, self.semesters[0].id)
+
+
+class TestMembershipLimitApi(APITestCase):
+    def setUp(self):
+        self.proposal = mixer.blend(Proposal)
+        self.pi_user = blend_user()
+        self.ci_user_1 = blend_user()
+        self.ci_user_2 = blend_user()
+        Membership.objects.create(user=self.pi_user, proposal=self.proposal, role=Membership.PI, time_limit=0)
+        Membership.objects.create(user=self.ci_user_1, proposal=self.proposal, role=Membership.CI, time_limit=0)
+        Membership.objects.create(user=self.ci_user_2, proposal=self.proposal, role=Membership.CI, time_limit=0)
+
+    def test_set_single_limit(self):
+        self.client.force_login(self.pi_user)
+        membership_1 = self.ci_user_1.membership_set.first()
+        membership_2 = self.ci_user_2.membership_set.first()
+        response = self.client.post(
+            reverse('api:proposals-limit', kwargs={'pk': self.proposal.id}),
+            data={'time_limit_hours': 1, 'usernames': [self.ci_user_1.username]},
+        )
+        membership_1.refresh_from_db()
+        membership_2.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(membership_1.time_limit, 3600)
+        self.assertEqual(membership_2.time_limit, 0)
+
+    def test_cannot_set_limits_on_other_proposal(self):
+        self.client.force_login(self.pi_user)
+        other_user = blend_user()
+        other_proposal = mixer.blend(Proposal)
+        other_membership = Membership.objects.create(user=other_user, proposal=other_proposal, role=Membership.CI)
+        response = self.client.post(
+            reverse('api:proposals-limit', kwargs={'pk': other_proposal.id}),
+            data={'time_limit_hours': 300, 'usernames': [other_user.username]},
+        )
+        other_membership.refresh_from_db()
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(other_membership.time_limit, -1)
+
+    def test_set_many_limits(self):
+        self.client.force_login(self.pi_user)
+        ci_users = [blend_user() for _ in range(5)]
+        memberships = mixer.cycle(5).blend(
+            Membership, user=(c for c in ci_users), proposal=self.proposal, role=Membership.CI
+        )
+        response = self.client.post(
+            reverse('api:proposals-limit', kwargs={'pk': self.proposal.id}),
+            data={'time_limit_hours': 2, 'usernames': [ci.username for ci in ci_users]},
+        )
+        self.assertContains(response, 'Updated 5 CI time limits to 2.0 hours')
+        for membership in memberships:
+            membership.refresh_from_db()
+            self.assertEqual(membership.time_limit, 7200)
+
+    def test_set_bad_time_limit(self):
+        self.client.force_login(self.pi_user)
+        membership = self.ci_user_1.membership_set.first()
+        response = self.client.post(
+            reverse('api:proposals-limit', kwargs={'pk': self.proposal.id}),
+            data={'time_limit_hours': '', 'usernames': [self.ci_user_1.username]}
+        )
+        membership.refresh_from_db()
+        self.assertEqual(membership.time_limit, 0)
+        self.assertContains(response, 'time_limit_hours', status_code=400)
+
+    def test_set_bad_usernames(self):
+        self.client.force_login(self.pi_user)
+        response = self.client.post(
+            reverse('api:proposals-limit', kwargs={'pk': self.proposal.id}),
+            data={'time_limit_hours': 1, 'usernames': ''},
+        )
+        self.assertContains(response, 'usernames', status_code=400)
+
+    def test_username_does_not_exist(self):
+        self.client.force_login(self.pi_user)
+        response = self.client.post(
+            reverse('api:proposals-limit', kwargs={'pk': self.proposal.id}),
+            data={'time_limit_hours': 1, 'usernames': ['notauser']},
+        )
+        self.assertContains(response, 'Updated 0 CI time limits')
+        for membership in self.proposal.membership_set.all():
+            self.assertEqual(membership.time_limit, 0)
+
+    def test_ci_cannot_set_limit(self):
+        self.client.force_login(self.ci_user_1)
+        response = self.client.post(
+            reverse('api:proposals-limit', kwargs={'pk': self.proposal.id}),
+            data={'time_limit_hours': 1000, 'usernames': [self.ci_user_1.username]},
+        )
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(self.ci_user_1.membership_set.first().time_limit, 0)
+
+    def test_must_be_authenticated_to_set_limits(self):
+        response = self.client.post(
+            reverse('api:proposals-limit', kwargs={'pk': self.proposal.id}),
+            data={'time_limit_hours': 1, 'usernames': [self.ci_user_1.username]},
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_set_no_limit(self):
+        self.client.force_login(self.pi_user)
+        response = self.client.post(
+            reverse('api:proposals-limit', kwargs={'pk': self.proposal.id}),
+            data={'time_limit_hours': -1, 'usernames': [self.ci_user_1.username]},
+        )
+        self.assertContains(response, 'Updated 1 CI time limits')
+        self.assertEqual(self.ci_user_1.membership_set.first().time_limit, -3600)

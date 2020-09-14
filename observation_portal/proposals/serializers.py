@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from observation_portal.proposals.models import Proposal, TimeAllocation, Semester
+from observation_portal.proposals.models import Proposal, TimeAllocation, Semester, Membership
 
 
 class TimeAllocationSerializer(serializers.ModelSerializer):
@@ -30,3 +30,8 @@ class SemesterSerialzer(serializers.ModelSerializer):
 
 class ProposalNotificationSerializer(serializers.Serializer):
     enabled = serializers.BooleanField()
+
+
+class TimeLimitSerializer(serializers.Serializer):
+    time_limit_hours = serializers.FloatField()
+    usernames = serializers.ListField(child=serializers.CharField())
