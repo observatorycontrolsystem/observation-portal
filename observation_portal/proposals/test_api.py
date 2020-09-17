@@ -247,7 +247,7 @@ class TestMembershipLimitApi(APITestCase):
             reverse('api:proposals-limit', kwargs={'pk': self.proposal.id}),
             data={'time_limit_hours': 1000, 'usernames': [self.ci_user_1.username]},
         )
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 403)
         self.assertEqual(self.ci_user_1.membership_set.first().time_limit, 0)
 
     def test_must_be_authenticated_to_set_limits(self):
