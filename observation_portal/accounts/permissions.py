@@ -1,5 +1,7 @@
 from rest_framework.permissions import BasePermission, SAFE_METHODS
 
+from observation_portal.proposals.models import Membership
+
 
 class IsAdminOrReadOnly(BasePermission):
     """The request is either read-only, or the user is staff"""
@@ -19,5 +21,17 @@ class IsDirectUser(BasePermission):
         if request.user and request.user.is_authenticated:
             direct_proposals = request.user.proposal_set.filter(direct_submission=True)
             return len(direct_proposals) > 0
+        else:
+            return False
+
+
+class IsPrincipleInvestigator(BasePermission):
+    """The user is the principle investigator of the proposal"""
+    def has_permission(self, request, view):
+        return request.user and request.user.is_authenticated
+
+    def has_object_permission(self, request, view, obj):
+        if request.user and request.user.is_authenticated:
+            return request.user.membership_set.filter(proposal=obj, role=Membership.PI).exists()
         else:
             return False

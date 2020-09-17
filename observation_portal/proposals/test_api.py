@@ -4,7 +4,7 @@ from django.urls import reverse
 from datetime import datetime
 from django.utils import timezone
 
-from observation_portal.proposals.models import Proposal, Membership, Semester, ProposalNotification
+from observation_portal.proposals.models import Proposal, Membership, Semester, ProposalNotification, ProposalInvite
 from observation_portal.accounts.test_utils import blend_user
 
 
@@ -66,7 +66,7 @@ class TestProposalApiDetail(APITestCase):
         self.assertContains(response, self.proposal.id)
 
 
-class TestNotificationsEnabled(APITestCase):
+class TestUpdateProposalNotificationsApi(APITestCase):
     def setUp(self):
         self.user = blend_user()
         self.proposal = mixer.blend(Proposal)
@@ -265,3 +265,321 @@ class TestMembershipLimitApi(APITestCase):
         )
         self.assertContains(response, 'Updated 1 CI time limits')
         self.assertEqual(self.ci_user_1.membership_set.first().time_limit, -3600)
+
+
+class TestGetProposalInvitesApi(APITestCase):
+    def setUp(self) -> None:
+        self.proposal = mixer.blend(Proposal)
+        self.other_proposal = mixer.blend(Proposal)
+        self.pi_user = blend_user()
+        self.ci_user = blend_user()
+        Membership.objects.create(user=self.pi_user, proposal=self.proposal, role=Membership.PI)
+        Membership.objects.create(user=self.ci_user, proposal=self.proposal, role=Membership.CI)
+        self.proposal_invites = mixer.cycle(3).blend(ProposalInvite, proposal=self.proposal)
+        self.other_proposal_invites = mixer.cycle(3).blend(ProposalInvite, proposal=self.other_proposal)
+
+    def test_pi_get_proposal_invites(self):
+        self.client.force_login(self.pi_user)
+        response = self.client.get(reverse('api:proposals-invitations', kwargs={'pk': self.proposal.id}))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()), 3)
+        for invite in response.json():
+            self.assertEqual(invite['proposal'], self.proposal.id)
+
+    def test_ci_cannot_get_proposal_invites(self):
+        self.client.force_login(self.ci_user)
+        response = self.client.get(reverse('api:proposals-invitations', kwargs={'pk': self.proposal.id}))
+        self.assertEqual(response.status_code, 403)
+
+    def test_unauthenticated_user_not_allowed(self):
+        response = self.client.get(reverse('api:proposals-invitations', kwargs={'pk': 'someproposal'}))
+        self.assertEqual(response.status_code, 403)
+
+    def test_nonmember_cannot_get_invites(self):
+        self.client.force_login(blend_user())
+        response = self.client.get(reverse('api:proposals-invitations', kwargs={'pk': self.proposal.id}))
+        self.assertEqual(response.status_code, 404)
+
+
+class TestProposalInviteCreateApi(APITestCase):
+    def setUp(self):
+        self.proposal = mixer.blend(Proposal)
+        self.pi_user = blend_user()
+        self.ci_user = blend_user()
+        Membership.objects.create(user=self.pi_user, proposal=self.proposal, role=Membership.PI)
+        Membership.objects.create(user=self.ci_user, proposal=self.proposal, role=Membership.CI)
+
+    def test_unauthenticated_user_not_allowed(self):
+        response = self.client.post(reverse('api:proposals-invitations', kwargs={'pk': 'someproposal'}))
+        self.assertEqual(response.status_code, 403)
+
+    def test_pi_can_send_invite(self):
+        self.client.force_login(self.pi_user)
+        response = self.client.post(
+            reverse('api:proposals-invitations', kwargs={'pk': self.proposal.id}),
+            data={'emails': ['rick@getschwifty.com']}
+        )
+        self.assertTrue(ProposalInvite.objects.filter(email='rick@getschwifty.com', proposal=self.proposal).exists())
+        self.assertEqual(response.status_code, 200)
+
+    def test_pi_can_send_multiple_invites(self):
+        self.client.force_login(self.pi_user)
+        response = self.client.post(
+            reverse('api:proposals-invitations', kwargs={'pk': self.proposal.id}),
+            data={'emails': ['rick@getschwifty.com', 'morty@globbitygook.com']},
+        )
+        self.assertTrue(ProposalInvite.objects.filter(email='rick@getschwifty.com', proposal=self.proposal).exists())
+        self.assertTrue(ProposalInvite.objects.filter(email='morty@globbitygook.com', proposal=self.proposal).exists())
+        self.assertEqual(response.status_code, 200)
+
+    def test_cannot_invite_to_other_proposal(self):
+        self.client.force_login(blend_user())
+        response = self.client.post(
+            reverse('api:proposals-invitations', kwargs={'pk': self.proposal.id}),
+            data={'emails': ['nefarious@evil.com']},
+        )
+        self.assertEqual(response.status_code, 404)
+        self.assertFalse(ProposalInvite.objects.filter(email='nefarious@evil.com', proposal=self.proposal).exists())
+
+    def test_ci_cannot_send_invite(self):
+        self.client.force_login(self.ci_user)
+        response = self.client.post(
+            reverse('api:proposals-invitations', kwargs={'pk': self.proposal.id}),
+            data={'emails': ['nefarious@evil.com']},
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(ProposalInvite.objects.filter(email='nefarious@evil.com', proposal=self.proposal).exists())
+
+    def test_invalid_email(self):
+        self.client.force_login(self.pi_user)
+        response = self.client.post(
+            reverse('api:proposals-invitations', kwargs={'pk': self.proposal.id}),
+            data={'emails': ['notanemailaddress']},
+        )
+        self.assertFalse(ProposalInvite.objects.filter(email='notanemailaddress', proposal=self.proposal).exists())
+        self.assertContains(response, 'Enter a valid email address', status_code=400)
+
+    def test_pi_cannot_invite_themselves_as_coi(self):
+        self.client.force_login(self.pi_user)
+        response = self.client.post(
+            reverse('api:proposals-invitations', kwargs={'pk': self.proposal.id}),
+            data={'emails': [self.pi_user.email]},
+        )
+        self.assertFalse(ProposalInvite.objects.filter(email=self.pi_user.email, proposal=self.proposal).exists())
+        self.assertContains(
+            response, f'You cannot invite yourself ({self.pi_user.email}) to be a Co-Investigator', status_code=400
+        )
+
+    def test_cannot_invite_user_that_is_already_member(self):
+        self.client.force_login(self.pi_user)
+        response = self.client.post(
+            reverse('api:proposals-invitations', kwargs={'pk': self.proposal.id}),
+            data={'emails': [self.ci_user.email]},
+        )
+        self.assertFalse(ProposalInvite.objects.filter(email=self.ci_user.email, proposal=self.proposal).exists())
+        self.assertContains(
+            response, f'User with email {self.ci_user.email} is already a member of this proposal', status_code=400
+        )
+
+    def test_inviting_a_user_that_already_exists_creates_membership(self):
+        self.client.force_login(self.pi_user)
+        user = blend_user()
+        response = self.client.post(
+            reverse('api:proposals-invitations', kwargs={'pk': self.proposal.id}),
+            data={'emails': [user.email]},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(ProposalInvite.objects.filter(email=user.email, proposal=self.proposal).exists())
+        self.assertTrue(Membership.objects.filter(user=user, proposal=self.proposal, role=Membership.CI).exists())
+
+
+class TestDeleteProposalInviteApi(APITestCase):
+    def setUp(self):
+        self.pi_user = blend_user()
+        self.ci_user = blend_user()
+        proposal = mixer.blend(Proposal)
+        Membership.objects.create(user=self.pi_user, proposal=proposal, role=Membership.PI)
+        Membership.objects.create(user=self.ci_user, proposal=proposal, role=Membership.CI)
+        self.proposal_invite = ProposalInvite.objects.create(
+            proposal=proposal,
+            role=Membership.CI,
+            email='inviteme@example.com',
+            sent=timezone.now(),
+            used=None
+        )
+
+    def test_unauthenticated_user_not_allowed(self):
+        response = self.client.delete(
+            reverse('api:proposals-invitations', kwargs={'pk': 'someproposal'}),
+            data={'invitation_id': 12345}
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_pi_can_delete_invitation(self):
+        self.client.force_login(self.pi_user)
+        response = self.client.delete(
+            reverse('api:proposals-invitations', kwargs={'pk': self.proposal_invite.proposal.id}),
+            data={'invitation_id': self.proposal_invite.id}
+        )
+        self.assertContains(response, 'Deleted 1 invitation(s)')
+        self.assertFalse(ProposalInvite.objects.filter(pk=self.proposal_invite.id).exists())
+
+    def test_cannot_delete_invitation_that_has_been_used(self):
+        self.proposal_invite.used = timezone.now()
+        self.proposal_invite.save()
+        self.client.force_login(self.pi_user)
+        response = self.client.delete(
+            reverse('api:proposals-invitations', kwargs={'pk': self.proposal_invite.proposal.id}),
+            data={'invitation_id': self.proposal_invite.id}
+        )
+        self.assertContains(response, 'Deleted 0 invitation(s)')
+        self.assertTrue(ProposalInvite.objects.filter(pk=self.proposal_invite.id).exists())
+
+    def test_invitation_id_to_delete_must_belong_to_proposal(self):
+        proposal = mixer.blend(Proposal)
+        Membership.objects.create(user=self.pi_user, proposal=proposal, role=Membership.PI)
+        proposal_invite = ProposalInvite.objects.create(
+            proposal=proposal,
+            role=Membership.CI,
+            email='inviteme2@example.com',
+            sent=timezone.now(),
+            used=None
+        )
+        self.client.force_login(self.pi_user)
+        response = self.client.delete(
+            reverse('api:proposals-invitations', kwargs={'pk': self.proposal_invite.proposal.id}),
+            data={'invitation_id': proposal_invite.id}
+        )
+        self.assertContains(response, 'Deleted 0 invitation(s)')
+        self.assertTrue(ProposalInvite.objects.filter(pk=proposal_invite.id).exists())
+
+    def test_ci_cannot_delete_invitation(self):
+        self.client.force_login(self.ci_user)
+        response = self.client.delete(
+            reverse('api:proposals-invitations', kwargs={'pk': self.proposal_invite.proposal.id}),
+            data={'invitation_id': self.proposal_invite.id},
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(ProposalInvite.objects.filter(pk=self.proposal_invite.id).exists())
+
+    def test_nonmember_cannot_delete_invitation(self):
+        self.client.force_login(blend_user())
+        response = self.client.delete(
+            reverse('api:proposals-invitations', kwargs={'pk': self.proposal_invite.proposal.id}),
+            data={'invitation_id': self.proposal_invite.id},
+        )
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue(ProposalInvite.objects.filter(pk=self.proposal_invite.id).exists())
+
+    def test_must_provide_invitation_id(self):
+        self.client.force_login(self.pi_user)
+        response = self.client.delete(
+            reverse('api:proposals-invitations', kwargs={'pk': self.proposal_invite.proposal.id})
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertTrue(ProposalInvite.objects.filter(pk=self.proposal_invite.id).exists())
+
+
+class TestDeleteMembershipApi(APITestCase):
+    def setUp(self):
+        self.pi_user = blend_user()
+        self.ci_user = blend_user()
+        self.proposal = mixer.blend(Proposal)
+        self.pim = mixer.blend(Membership, user=self.pi_user, role=Membership.PI, proposal=self.proposal)
+        self.cim = mixer.blend(Membership, user=self.ci_user, role=Membership.CI, proposal=self.proposal)
+
+    def test_unauthenticated_user_not_allowed(self):
+        response = self.client.delete(
+            reverse('api:proposals-memberships', kwargs={'pk': 'someproposal'}),
+            data={'membership_id': 12345}
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_pi_can_delete_ci(self):
+        self.client.force_login(self.pi_user)
+        self.assertEqual(self.proposal.membership_set.count(), 2)
+        response = self.client.delete(
+            reverse('api:proposals-memberships', kwargs={'pk': self.proposal.id}),
+            data={'membership_id': self.cim.id},
+        )
+        self.assertContains(response, 'Deleted 1 membership(s)')
+        self.assertEqual(self.proposal.membership_set.count(), 1)
+        self.assertFalse(Membership.objects.filter(proposal=self.proposal, role=Membership.CI).exists())
+
+    def test_ci_cannot_delete_ci(self):
+        other_user = blend_user()
+        other_cim = mixer.blend(Membership, user=other_user, proposal=self.proposal, role=Membership.CI)
+        self.client.force_login(self.ci_user)
+        self.assertEqual(self.proposal.membership_set.count(), 3)
+        response = self.client.delete(
+            reverse('api:proposals-memberships', kwargs={'pk': self.proposal.id}),
+            data={'membership_id': other_cim.id},
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(self.proposal.membership_set.count(), 3)
+        self.assertTrue(Membership.objects.filter(proposal=self.proposal, role=Membership.CI, user=other_user).exists())
+
+    def test_nonmember_cannot_delete_membership(self):
+        self.client.force_login(blend_user())
+        self.assertEqual(self.proposal.membership_set.count(), 2)
+        response = self.client.delete(
+            reverse('api:proposals-memberships', kwargs={'pk': self.proposal.id}),
+            data={'membership_id': self.cim.id},
+        )
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(self.proposal.membership_set.count(), 2)
+
+    def test_pi_cannot_delete_ci_of_other_proposal(self):
+        other_proposal = mixer.blend(Proposal)
+        other_membership = mixer.blend(Membership, user=self.ci_user, proposal=other_proposal, role=Membership.CI)
+        self.client.force_login(self.pi_user)
+        self.assertEqual(other_proposal.membership_set.count(), 1)
+        response = self.client.delete(
+            reverse('api:proposals-memberships', kwargs={'pk': other_proposal.id}),
+            data={'membership_id': other_membership.id},
+        )
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(other_proposal.membership_set.count(), 1)
+
+    def test_membership_to_delete_must_belong_to_specified_proposal(self):
+        other_proposal = mixer.blend(Proposal)
+        other_membership = mixer.blend(Membership, user=self.ci_user, proposal=other_proposal, role=Membership.CI)
+        mixer.blend(Membership, user=self.pi_user, proposal=other_proposal, role=Membership.PI)
+        self.client.force_login(self.pi_user)
+        self.assertEqual(other_proposal.membership_set.count(), 2)
+        response = self.client.delete(
+            reverse('api:proposals-memberships', kwargs={'pk': self.proposal.id}),
+            data={'membership_id': other_membership.id},
+        )
+        self.assertContains(response, 'Deleted 0 membership(s)')
+        self.assertEqual(other_proposal.membership_set.count(), 2)
+
+    def test_must_provide_membership_id(self):
+        self.client.force_login(self.pi_user)
+        self.assertEqual(self.proposal.membership_set.count(), 2)
+        response = self.client.delete(
+            reverse('api:proposals-memberships', kwargs={'pk': self.proposal.id})
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(self.proposal.membership_set.count(), 2)
+
+    def test_pi_user_cannot_delete_themselves(self):
+        self.client.force_login(self.pi_user)
+        self.assertEqual(self.proposal.membership_set.count(), 2)
+        response = self.client.delete(
+            reverse('api:proposals-memberships', kwargs={'pk': self.proposal.id}),
+            data={'membership_id': self.pim.id},
+        )
+        self.assertContains(response, 'Deleted 0 membership(s)')
+        self.assertEqual(self.proposal.membership_set.count(), 2)
+
+    def test_pi_cannot_delete_another_pi_on_their_own_proposal(self):
+        second_pi_membership = mixer.blend(Membership, user=blend_user(), role=Membership.PI, proposal=self.proposal)
+        self.client.force_login(self.pi_user)
+        self.assertEqual(self.proposal.membership_set.count(), 3)
+        response = self.client.delete(
+            reverse('api:proposals-memberships', kwargs={'pk': self.proposal.id}),
+            data={'membership_id': second_pi_membership.id},
+        )
+        self.assertContains(response, 'Deleted 0 membership(s)')
+        self.assertEqual(self.proposal.membership_set.count(), 3)
