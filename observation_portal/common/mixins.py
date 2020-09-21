@@ -1,6 +1,7 @@
 from django_filters import fields, IsoDateTimeFilter
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.forms import DateTimeField
+from rest_framework.response import Response
 
 
 class ListAsDictMixin(object):
@@ -10,6 +11,12 @@ class ListAsDictMixin(object):
         page = self.paginate_queryset(queryset)
         json_models = [model.as_dict() for model in page]
         return self.get_paginated_response(json_models)
+
+
+class DetailAsDictMixin:
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        return Response(instance.as_dict())
 
 
 # from https://stackoverflow.com/questions/14666199/how-do-i-create-multiple-model-instances-with-django-rest-framework

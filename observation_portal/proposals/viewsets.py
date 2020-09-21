@@ -1,18 +1,18 @@
-from rest_framework import viewsets, filters
+from rest_framework import viewsets, filters, mixins
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils.translation import ugettext as _
 
-from observation_portal.common.mixins import ListAsDictMixin
-from observation_portal.proposals.filters import SemesterFilter, ProposalFilter
-from observation_portal.proposals.models import Proposal, Semester, ProposalNotification, Membership
+from observation_portal.accounts.permissions import IsPrincipleInvestigator
+from observation_portal.common.mixins import ListAsDictMixin, DetailAsDictMixin
+from observation_portal.proposals.filters import SemesterFilter, ProposalFilter, MembershipFilter, ProposalInviteFilter
+from observation_portal.proposals.models import Proposal, Semester, ProposalNotification, Membership, ProposalInvite
 from observation_portal.proposals.serializers import (
     ProposalSerializer, SemesterSerialzer, ProposalNotificationSerializer, TimeLimitSerializer,
-    ProposalInviteSerializer, ProposalInviteDeleteSerializer, MembershipDeleteSerializer
+    ProposalInviteSerializer, MembershipSerializer
 )
-from observation_portal.accounts.permissions import IsPrincipleInvestigator
 
 
 class ProposalViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
@@ -23,7 +23,7 @@ class ProposalViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
     ordering = ('-id',)
 
     def get_queryset(self):
-        if self.request.user.is_staff:
+        if self.request.user.is_staff and self.request.user.profile.staff_view:
             return Proposal.objects.all().prefetch_related(
                 'users', 'sca', 'membership_set', 'membership_set__user', 'timeallocation_set'
             )
@@ -33,7 +33,7 @@ class ProposalViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
             )
 
     @action(detail=True, methods=['post'])
-    def proposalnotifications(self, request, pk=None):
+    def notification(self, request, pk=None):
         proposal = self.get_object()
         serializer = ProposalNotificationSerializer(data=request.data)
         if serializer.is_valid():
@@ -46,39 +46,7 @@ class ProposalViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
             return Response({'errors': serializer.errors}, 400)
 
     @action(detail=True, methods=['post'], permission_classes=(IsPrincipleInvestigator,))
-    def limit(self, request, pk=None):
-        proposal = self.get_object()
-        serializer = TimeLimitSerializer(data=request.data)
-        if serializer.is_valid():
-            time_limit_hours = serializer.validated_data['time_limit_hours']
-            usernames = serializer.validated_data['usernames']
-            memberships_to_update = proposal.membership_set.filter(
-                role=Membership.CI, user__username__in=usernames
-            )
-            n_updated = memberships_to_update.update(time_limit=time_limit_hours * 3600)
-            return Response({'message': f'Updated {n_updated} CI time limits to {time_limit_hours} hours'})
-        else:
-            return Response({'errors': serializer.errors}, 400)
-
-    @action(detail=True, methods=['get'], permission_classes=(IsPrincipleInvestigator,))
-    def invitations(self, request, pk=None):
-        proposal = self.get_object()
-        serializer = ProposalInviteSerializer(proposal.proposalinvite_set.all(), many=True)
-        return Response(serializer.data)
-
-    @invitations.mapping.delete
-    def delete_invitation(self, request, pk=None):
-        proposal = self.get_object()
-        serializer = ProposalInviteDeleteSerializer(data=request.data)
-        if serializer.is_valid():
-            invitation_id = serializer.validated_data['invitation_id']
-            deleted = proposal.proposalinvite_set.filter(pk=invitation_id, used=None).delete()
-            return Response({'message': f'Deleted {deleted[0]} invitation(s)'})
-        else:
-            return Response({'errors': serializer.errors}, status=400)
-
-    @invitations.mapping.post
-    def send_invitation(self, request, pk=None):
+    def invite(self, request, pk=None):
         proposal = self.get_object()
         serializer = ProposalInviteSerializer(
             data=request.data,
@@ -90,17 +58,6 @@ class ProposalViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
         else:
             return Response(serializer.errors, status=400)
 
-    @action(detail=True, methods=['delete'], permission_classes=(IsPrincipleInvestigator,))
-    def memberships(self, request, pk=None):
-        proposal = self.get_object()
-        serializer = MembershipDeleteSerializer(data=request.data)
-        if serializer.is_valid():
-            membership_id = serializer.validated_data['membership_id']
-            deleted = proposal.membership_set.filter(pk=membership_id, role=Membership.CI).delete()
-            return Response({'message': f'Deleted {deleted[0]} membership(s)'})
-        else:
-            return Response({'errors': serializer.errors}, status=400)
-
 
 class SemesterViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = (AllowAny,)
@@ -109,3 +66,58 @@ class SemesterViewSet(viewsets.ReadOnlyModelViewSet):
     filter_class = SemesterFilter
     ordering = ('-start',)
     queryset = Semester.objects.all()
+
+    @action(detail=True, methods=['get'])
+    def proposals(self):
+        # proposals = self.get_queryset().
+        # If staff, add more info into response. If not staff, return a basic list of things
+
+        # For the public page:
+        # context['proposals'] = self.get_object().proposals.filter(active=True, non_science=False) \
+        #     .distinct().order_by('sca__name')
+
+        pass
+
+
+class MembershipViewSet(ListAsDictMixin, DetailAsDictMixin, mixins.DestroyModelMixin, viewsets.ReadOnlyModelViewSet):
+    permission_classes = (IsAuthenticated,)
+    http_method_names = ('get', 'head', 'options', 'post', 'delete')
+    filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
+    filter_class = MembershipFilter
+    serializer_class = MembershipSerializer
+
+    def get_queryset(self):
+        proposals = self.request.user.proposal_set.filter(membership__role=Membership.PI)
+        return Membership.objects.filter(proposal__in=proposals)
+
+    @action(detail=False, methods=['post'])
+    def limit(self, request, pk=None):
+        serializer = TimeLimitSerializer(data=request.data, context={'user': self.request.user})
+        if serializer.is_valid():
+            time_limit_hours = serializer.validated_data['time_limit_hours']
+            membership_ids = serializer.validated_data['membership_ids']
+            memberships_to_update = self.get_queryset().filter(role=Membership.CI, pk__in=membership_ids)
+            n_updated = memberships_to_update.update(time_limit=time_limit_hours * 3600)
+            return Response({'message': f'Updated {n_updated} CI time limits to {time_limit_hours} hours'})
+        else:
+            return Response({'errors': serializer.errors}, 400)
+
+    def perform_destroy(self, instance):
+        if instance.role == Membership.CI:
+            instance.delete()
+
+
+class ProposalInviteViewSet(mixins.DestroyModelMixin, viewsets.ReadOnlyModelViewSet):
+    permission_classes = (IsAuthenticated,)
+    http_method_names = ('get', 'head', 'options', 'delete')
+    filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
+    filter_class = ProposalInviteFilter
+    serializer_class = ProposalInviteSerializer
+
+    def get_queryset(self):
+        proposals = self.request.user.proposal_set.filter(membership__role=Membership.PI)
+        return ProposalInvite.objects.filter(proposal__in=proposals)
+
+    def perform_destroy(self, instance):
+        if instance.used is None:
+            instance.delete()

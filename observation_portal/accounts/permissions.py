@@ -1,4 +1,4 @@
-from rest_framework.permissions import BasePermission, SAFE_METHODS
+from rest_framework.permissions import BasePermission, SAFE_METHODS, IsAuthenticated
 
 from observation_portal.proposals.models import Membership
 
@@ -25,11 +25,8 @@ class IsDirectUser(BasePermission):
             return False
 
 
-class IsPrincipleInvestigator(BasePermission):
-    """The user is the principle investigator of the proposal"""
-    def has_permission(self, request, view):
-        return request.user and request.user.is_authenticated
-
+class IsPrincipleInvestigator(IsAuthenticated):
+    """The user is the principle investigator of the object"""
     def has_object_permission(self, request, view, obj):
         if request.user and request.user.is_authenticated:
             return request.user.membership_set.filter(proposal=obj, role=Membership.PI).exists()

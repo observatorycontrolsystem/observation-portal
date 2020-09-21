@@ -14,9 +14,13 @@ class ProposalSerializer(serializers.ModelSerializer):
     timeallocation_set = TimeAllocationSerializer(many=True)
     users = serializers.SerializerMethodField()
     pi = serializers.StringRelatedField()
+    requestgroup_count = serializers.SerializerMethodField()
 
     def get_users(self, obj):
         return {mem.user.username: mem.as_dict() for mem in obj.membership_set.all()}
+
+    def get_requestgroup_count(self, obj):
+        return obj.requestgroup_set.all().count()
 
     class Meta:
         model = Proposal
@@ -48,12 +52,10 @@ class ProposalInviteSerializer(serializers.ModelSerializer):
         return emails
 
 
-class ProposalInviteDeleteSerializer(serializers.Serializer):
-    invitation_id = serializers.IntegerField()
-
-
-class MembershipDeleteSerializer(serializers.Serializer):
-    membership_id = serializers.IntegerField()
+class MembershipSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Membership
+        fields = ('id', 'proposal', 'role', 'user', 'time_limit')
 
 
 class ProposalNotificationSerializer(serializers.Serializer):
@@ -62,4 +64,4 @@ class ProposalNotificationSerializer(serializers.Serializer):
 
 class TimeLimitSerializer(serializers.Serializer):
     time_limit_hours = serializers.FloatField()
-    usernames = serializers.ListField(child=serializers.CharField())
+    membership_ids = serializers.ListField(child=serializers.IntegerField())

@@ -230,6 +230,7 @@ class Membership(models.Model):
             'last_name': self.user.last_name,
             'email': self.user.email,
             'role': self.role,
+            'proposal': self.proposal.id,
             'time_limit': self.time_limit,
             'time_used_by_user': self.user.profile.time_used_in_proposal(self.proposal),
             'simple_interface': self.user.profile.simple_interface,
