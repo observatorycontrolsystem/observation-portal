@@ -1,29 +1,29 @@
 <template>
   <div>
     <b-table
-      id="my-table" 
-      striped 
-      hover 
+      id="my-table"
+      striped
+      hover
       :per-page="perPage"
       :current-page="currentPage"
-      :fields="fields" 
-      :items="items" 
+      :fields="fields"
+      :items="items"
       :show-empty="tableIsEmpty"
       empty-text="You have no draft observation requests"
     >
       <template slot="load" slot-scope="data" class="text-center">
-        <b-button 
-          variant="info" 
-          size="sm" 
+        <b-button
+          variant="primary" 
+          size="sm"
           @click="loadDraft(data.value)"
         >
           <i class="fa fa-download"></i>
         </b-button>
       </template>
       <template slot="delete" slot-scope="data">
-        <b-button 
-          variant="danger" 
-          size="sm" 
+        <b-button
+          variant="danger"
+          size="sm"
           @click="deleteDraft(data.value)"
         >
           <i class="fa fa-trash"></i>

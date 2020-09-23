@@ -10,16 +10,99 @@
         <h4>Total Observation Requests:
             <a title="View requests" href="{% url 'requestgroups:list' %}?proposal={{ object.id }}">{{ object.requestgroup_set.all.count }}</a>
         </h4>
+        <a href="https://archive.lco.global/?PROPID={{ object.id }}" target="_blank" class="btn btn-primary btn-lg">View Data on the LCO Science Archive</a>
         <h4>
           Principal Investigator: {{ object.pi.first_name }} {{ object.pi.last_name }}
           <a href="mailto:{{ object.pi.email }}">{{ object.pi.email }}</a>
         </h4>
-        {% if user == object.pi %}
+      </div>
+      <div class="col-md-4">
+            <strong>Email Notifications
+              <sup><a
+                data-toggle="tooltip"
+                data-placement="bottom"
+                title="You will recieve notifications whenever a
+                requested observation on this proposal is completed.
+                ">
+                ?</a></sup>
+            </strong>
+            <form method="POST" action="" class="form">
+                {% csrf_token %}
+                {% bootstrap_form form=notification_form %}
+                <button type="submit" class="btn btn-outline-secondary">Save</button>
+            </form>
+      </div>
+    </div>
+    {% if user == object.pi %}
+    <div class="row">
+      <hr/>
+      <div class="col-md-12">
         <h4>Co Investigators <small><i id="toggleci" class="fa fa-eye"></i></small></h4>
+      </div>
+      <div class="col-md-4">
+            <strong>Global Hour Limit<sup><a
+                    data-toggle="tooltip"
+                    data-placement="bottom"
+                    title="{% blocktrans %}
+                    Use this form to set an hour limit for every Co-I on the proposal.
+                    {% endblocktrans %}
+                    ">
+                    ?</a></sup>
+            </strong>
+            <form method="POST" action="{% url 'proposals:membership-global' pk=object.id %}" class="form-inline">
+              {% csrf_token %}
+              <div class="form-group mr-md-2">
+                <input name="time_limit" type="number" class="form-control" style="width: 90px" min="-1" step="0.01" placeholder="Hours"/>
+              </div>
+              <button type="submit" class="btn btn-outline-secondary remove-limit mr-md-2">Remove Limit</button>
+              <button type="submit" class="btn btn-outline-secondary">Set Global Limit</button>
+            </form>
+        </div>
+        <div class="col-md-4">
+            <strong>Invite Co-Investigators
+              <sup><a
+                      data-toggle="tooltip"
+                      data-placement="bottom"
+                      title="{% blocktrans %}
+                      Invite co-investigators by entering their email address below and
+                      pressing 'add'. If you would like to add multiple address at once, enter them below,
+                      comma separated. If the user is already registered with LCO, they will be added to
+                      this proposal. If not, they will be invited."
+                      {% endblocktrans %}>
+                ?</a></sup>
+            </strong>
+            <form method="POST" action="{% url 'proposals:invite' pk=object.id %}" class="form-inline">
+                {% csrf_token %}
+                <div class="form-group mr-md-2">
+                    <label class="sr-only" for="email">Invite a Co-Investigator</label>
+                    <input name="email" class="form-control" placeholder="Email Address(s)"/>
+                </div>
+                <button type="submit" class="btn btn-outline-secondary">Add</button>
+            </form>
+          </div>
+          <div class="col-md-4">
+            <dl>
+                <dt>{% trans 'Pending Invitations' %}</dt>
+                {% for invite in object.proposalinvite_set.all %}
+                {% if not invite.used %}
+                <dd><a href="mailto:{{ invite.email }}">{{ invite.email }}</a></dd>
+                <dd>Invited: {{ invite.sent }}</dd>
+                <dd><a href="{% url 'proposals:proposalinvite-delete' invite.id %}">Delete</a></dd>
+                {% endif %}
+                {% empty %}
+                <p>No pending invitations.</p>
+                {% endfor %}
+            </dl>
+        </div>
+    </div>
+    {% endif %}
+  <div class="row">
+    <div class="col-md-12">
+        {% if user == object.pi %}
         <div id="cilist">
           {% if members_are_paginated %}
           <form method="get" role="form" action="">
-            <div class="form-row">
+            <div class="form-row pt-4">
               <div class="col mb-0 mt-auto">{% bootstrap_field members_filter.form.first_name form_group_class="form-group mb-0 mt-auto" %}</div>
               <div class="col mb-0 mt-auto">{% bootstrap_field members_filter.form.last_name form_group_class="form-group mb-0 mt-auto" %}</div>
               <div class="col mb-0 mt-auto">{% bootstrap_field members_filter.form.username form_group_class="form-group mb-0 mt-auto" %}</div>
@@ -29,7 +112,8 @@
           </form>
           <br/>
           {% endif %}
-        <table class="table table-responsive">
+        <div class="table-responsive">
+        <table class="table">
           <thead>
             <tr><th>First Name</th><th>Last Name</th><th>UserId</th><th>Email</th><th>Hour Limit</th><th>Hours Requested</th>
               {% if object.public %}
@@ -76,6 +160,7 @@
           {% endfor %}
           </tbody>
         </table>
+        </div>
         {% if members_are_paginated %}
         <div class="row">
           <div class="col">
@@ -153,69 +238,6 @@
                 {% endfor %}
             </tbody>
         </table>
-    </div>
-    <div class="col-md-4">
-        <strong>Email Notifications</strong>
-        <div class="help-block">
-          You will recieve notifications whenever a requested observation on this proposal is completed.
-        </div>
-        <form method="POST" action="" class="form">
-            {% csrf_token %}
-            {% bootstrap_form form=notification_form %}
-            <button type="submit" class="btn btn-outline-secondary">Save</button>
-        </form>
-        <br/>
-        <dl>
-          <dt>Links</dt>
-          <dd><a href="https://archive.lco.global/?PROPID={{ object.id }}" target="_blank">View Data on the LCO Science Archive</a></dd>
-        </dl>
-        {% if user == object.pi %}
-        <strong>Global Hour Limit</strong>
-        <div class="help-block">
-          {% blocktrans %}
-          Use this form to set an hour limit for every Co-I on the proposal.
-          {% endblocktrans %}
-        </div>
-        <form method="POST" action="{% url 'proposals:membership-global' pk=object.id %}" class="form-inline">
-          {% csrf_token %}
-          <div class="form-group mr-md-2">
-            <input name="time_limit" type="number" class="form-control" style="width: 90px" min="-1" step="0.01" placeholder="Hours"/>
-          </div>
-          <button type="submit" class="btn btn-outline-secondary remove-limit mr-md-2">Remove Limit</button>
-          <button type="submit" class="btn btn-outline-secondary">Set Global Limit</button>
-        </form>
-        <br/>
-        <strong>Invite Co-Investigators</strong>
-        <div class="help-block">
-            {% blocktrans %}
-            Invite co-investigators by entering their email address below and
-            pressing "add". If you would like to add multiple address at once, enter them below,
-            comma separated. If the user is already registered with LCO, they will be added to
-            this proposal. If not, they will be invited.
-            {% endblocktrans %}
-        </div>
-        <form method="POST" action="{% url 'proposals:invite' pk=object.id %}" class="form-inline">
-            {% csrf_token %}
-            <div class="form-group mr-md-2">
-                <label class="sr-only" for="email">Invite a Co-Investigator</label>
-                <input name="email" class="form-control" placeholder="Email Address(s)"/>
-            </div>
-            <button type="submit" class="btn btn-outline-secondary">Add</button>
-        </form>
-        <br/>
-        <dl>
-            <dt>{% trans 'Pending Invitations' %}</dt>
-            {% for invite in object.proposalinvite_set.all %}
-            {% if not invite.used %}
-            <dd><a href="mailto:{{ invite.email }}">{{ invite.email }}</a></dd>
-            <dd>Invited: {{ invite.sent }}</dd>
-            <dd><a href="{% url 'proposals:proposalinvite-delete' invite.id %}">Delete</a></dd>
-            {% endif %}
-            {% empty %}
-            <p>No pending invitations.</p>
-            {% endfor %}
-        </dl>
-        {% endif %}
     </div>
 </div>
 {% endblock %}
