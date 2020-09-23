@@ -150,7 +150,7 @@ class TestSemesterApi(APITestCase):
     def setUp(self):
         self.semesters = mixer.cycle(3).blend(Semester, start=datetime(2016, 1, 1, tzinfo=timezone.utc),
                                               end=datetime(2016, 2, 1, tzinfo=timezone.utc))
-        self.proposal = mixer.blend(Proposal)
+        self.proposal = mixer.blend(Proposal, active=True, non_science=False)
         mixer.blend(Membership, proposal=self.proposal, user=blend_user(), role=Membership.PI)
         mixer.blend(TimeAllocation, semester=self.semesters[0], proposal=self.proposal)
 
@@ -195,6 +195,26 @@ class TestSemesterApi(APITestCase):
         self.client.force_login(blend_user())
         response = self.client.get(reverse('api:semesters-timeallocations', kwargs={'pk': self.semesters[0].id}))
         self.assertEqual(response.status_code, 403)
+
+    def test_get_semester_proposals(self):
+        response = self.client.get(reverse('api:semesters-proposals', kwargs={'pk': self.semesters[0].id}))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()), 1)
+        self.assertEqual(response.json()[0]['id'], self.proposal.id)
+
+    def test_get_semester_proposals_only_returns_active(self):
+        self.proposal.active = False
+        self.proposal.save()
+        response = self.client.get(reverse('api:semesters-proposals', kwargs={'pk': self.semesters[0].id}))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()), 0)
+
+    def test_get_semester_proposals_only_returns_science_proposals(self):
+        self.proposal.non_science = True
+        self.proposal.save()
+        response = self.client.get(reverse('api:semesters-proposals', kwargs={'pk': self.semesters[0].id}))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()), 0)
 
 
 class TestMembershipLimitApi(APITestCase):

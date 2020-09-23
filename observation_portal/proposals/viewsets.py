@@ -68,22 +68,41 @@ class SemesterViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Semester.objects.all()
 
     @action(detail=True, methods=['get'])
-    def proposals(self):
-        # proposals = self.get_queryset().
-        # If staff, add more info into response. If not staff, return a basic list of things
-
-        # For the public page:
-        # context['proposals'] = self.get_object().proposals.filter(active=True, non_science=False) \
-        #     .distinct().order_by('sca__name')
-
-        pass
+    def proposals(self, request, pk=None):
+        semester = self.get_object()
+        proposals = semester.proposals.filter(
+            active=True, non_science=False
+        ).prefetch_related(
+            'sca', 'membership_set', 'membership_set__user', 'membership_set__user__profile',
+            'semester_set', 'timeallocation_set'
+        ).distinct().order_by('sca__name')
+        results = []
+        for proposal in proposals:
+            pis = [
+                {
+                    'first_name': mem.user.first_name,
+                    'last_name': mem.user.last_name,
+                    'institution': mem.user.profile.institution
+                } for mem in proposal.membership_set.all() if mem.role == Membership.PI
+            ]
+            results.append({
+                'id': proposal.id,
+                'title': proposal.title,
+                'abstract': proposal.abstract,
+                'allocation': proposal.allocation(semester=semester),
+                'pis': pis,
+                'sca_id': proposal.sca.id,
+                'sca_name': proposal.sca.name,
+                'semesters': proposal.semester_set.distinct().values_list('id', flat=True)
+            })
+        return Response(results)
 
     @action(detail=True, methods=['get'], permission_classes=(IsAdminUser,))
     def timeallocations(self, request, pk=None):
-        results = []
         timeallocations = self.get_object().timeallocation_set.prefetch_related(
             'proposal', 'proposal__membership_set', 'proposal__membership_set__user'
         ).distinct()
+        results = []
         for timeallocation in timeallocations:
             memberships = timeallocation.proposal.membership_set
             timeallocation_dict = timeallocation.as_dict(exclude=['proposal', 'semester'])

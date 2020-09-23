@@ -99,8 +99,11 @@ class Proposal(models.Model):
 
     @cached_property
     def current_allocation(self):
+        return self.allocation(semester=self.current_semester)
+
+    def allocation(self, semester):
         allocs = {}
-        for ta in self.timeallocation_set.filter(semester=self.current_semester):
+        for ta in self.timeallocation_set.filter(semester=semester):
             allocs[ta.instrument_type.replace('-', '')] = {
                 'std': ta.std_allocation,
                 'std_used': ta.std_time_used,
