@@ -1,6 +1,6 @@
 from rest_framework import viewsets, filters, mixins
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils.translation import ugettext as _
@@ -77,6 +77,30 @@ class SemesterViewSet(viewsets.ReadOnlyModelViewSet):
         #     .distinct().order_by('sca__name')
 
         pass
+
+    @action(detail=True, methods=['get'], permission_classes=(IsAdminUser,))
+    def timeallocations(self, request, pk=None):
+        results = []
+        timeallocations = self.get_object().timeallocation_set.prefetch_related(
+            'proposal', 'proposal__membership_set', 'proposal__membership_set__user'
+        ).distinct()
+        for timeallocation in timeallocations:
+            memberships = timeallocation.proposal.membership_set
+            timeallocation_dict = timeallocation.as_dict(exclude=['proposal', 'semester'])
+            timeallocation_dict['proposal'] = {
+                'notes': timeallocation.proposal.notes,
+                'id': timeallocation.proposal.id,
+                'tac_priority': timeallocation.proposal.tac_priority,
+                'num_users': memberships.count(),
+                'pis': [
+                    {
+                        'first_name': mem.user.first_name,
+                        'last_name': mem.user.last_name
+                    } for mem in memberships.all() if mem.role == Membership.PI
+                ]
+            }
+            results.append(timeallocation_dict)
+        return Response(results)
 
 
 class MembershipViewSet(ListAsDictMixin, DetailAsDictMixin, mixins.DestroyModelMixin, viewsets.ReadOnlyModelViewSet):

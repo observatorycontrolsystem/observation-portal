@@ -184,8 +184,10 @@ class TimeAllocation(models.Model):
     def __str__(self):
         return 'Timeallocation for {0}-{1}'.format(self.proposal, self.semester)
 
-    def as_dict(self):
-        time_allocation = model_to_dict(self, exclude=[])
+    def as_dict(self, exclude=None):
+        if exclude is None:
+            exclude = []
+        time_allocation = model_to_dict(self, exclude=exclude)
         return time_allocation
 
 

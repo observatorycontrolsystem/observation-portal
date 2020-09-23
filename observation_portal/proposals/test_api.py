@@ -4,7 +4,9 @@ from django.urls import reverse
 from datetime import datetime, timedelta
 from django.utils import timezone
 
-from observation_portal.proposals.models import Proposal, Membership, Semester, ProposalNotification, ProposalInvite
+from observation_portal.proposals.models import (
+    Proposal, Membership, Semester, ProposalNotification, ProposalInvite, TimeAllocation
+)
 from observation_portal.accounts.test_utils import blend_user
 
 
@@ -148,6 +150,9 @@ class TestSemesterApi(APITestCase):
     def setUp(self):
         self.semesters = mixer.cycle(3).blend(Semester, start=datetime(2016, 1, 1, tzinfo=timezone.utc),
                                               end=datetime(2016, 2, 1, tzinfo=timezone.utc))
+        self.proposal = mixer.blend(Proposal)
+        mixer.blend(Membership, proposal=self.proposal, user=blend_user(), role=Membership.PI)
+        mixer.blend(TimeAllocation, semester=self.semesters[0], proposal=self.proposal)
 
     def test_semester_list(self):
         response = self.client.get(reverse('api:semesters-list'))
@@ -174,6 +179,22 @@ class TestSemesterApi(APITestCase):
     def test_semester_detail(self):
         response = self.client.get(reverse('api:semesters-detail', kwargs={'pk': self.semesters[0].id}))
         self.assertContains(response, self.semesters[0].id)
+
+    def test_staff_can_get_semester_timallocations(self):
+        self.client.force_login(blend_user(user_params={'is_staff': True}))
+        response = self.client.get(reverse('api:semesters-timeallocations', kwargs={'pk': self.semesters[0].id}))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()), 1)
+        self.assertEqual(response.json()[0]['proposal']['id'], self.proposal.id)
+
+    def test_unauthenticated_user_cannot_get_semester_timeallocations(self):
+        response = self.client.get(reverse('api:semesters-timeallocations', kwargs={'pk': self.semesters[0].id}))
+        self.assertEqual(response.status_code, 403)
+
+    def test_non_staff_user_cannot_get_semester_timeallocations(self):
+        self.client.force_login(blend_user())
+        response = self.client.get(reverse('api:semesters-timeallocations', kwargs={'pk': self.semesters[0].id}))
+        self.assertEqual(response.status_code, 403)
 
 
 class TestMembershipLimitApi(APITestCase):
