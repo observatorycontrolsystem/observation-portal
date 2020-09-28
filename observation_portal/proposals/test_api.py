@@ -64,6 +64,9 @@ class TestProposalApiDetail(APITestCase):
         self.client.force_login(self.user)
         response = self.client.get(reverse('api:proposals-detail', kwargs={'pk': self.proposal.id}))
         self.assertContains(response, self.proposal.id)
+        self.assertFalse('users' in response.json())
+        self.assertFalse('notes' in response.json())
+        self.assertTrue('pis' in response.json())
 
     def test_user_cannot_view_other_proposal(self):
         other_user = blend_user()
@@ -227,17 +230,17 @@ class TestMembershipLimitApi(APITestCase):
         Membership.objects.create(user=self.ci_user_1, proposal=self.proposal, role=Membership.CI, time_limit=0)
         Membership.objects.create(user=self.ci_user_2, proposal=self.proposal, role=Membership.CI, time_limit=0)
 
-    def test_set_single_limit(self):
+    def test_set_limit(self):
         self.client.force_login(self.pi_user)
         membership_1 = self.ci_user_1.membership_set.first()
         membership_2 = self.ci_user_2.membership_set.first()
         response = self.client.post(
-            reverse('api:memberships-limit'),
-            data={'time_limit_hours': 1, 'membership_ids': [membership_1.id]}
+            reverse('api:memberships-limit', kwargs={'pk': membership_1.id}),
+            data={'time_limit_hours': 1}
         )
         membership_1.refresh_from_db()
         membership_2.refresh_from_db()
-        self.assertContains(response, 'Updated 1 CI time limits')
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(membership_1.time_limit, 3600)
         self.assertEqual(membership_2.time_limit, 0)
 
@@ -245,85 +248,62 @@ class TestMembershipLimitApi(APITestCase):
         self.client.force_login(self.pi_user)
         other_user = blend_user()
         other_proposal = mixer.blend(Proposal)
-        other_membership = Membership.objects.create(user=other_user, proposal=other_proposal, role=Membership.CI)
+        other_membership = Membership.objects.create(
+            user=other_user, proposal=other_proposal, role=Membership.CI, time_limit=-1
+        )
         response = self.client.post(
-            reverse('api:memberships-limit'),
-            data={'time_limit_hours': 300, 'membership_ids': [other_membership.id]},
+            reverse('api:memberships-limit', kwargs={'pk': other_membership.id}),
+            data={'time_limit_hours': 300},
         )
         other_membership.refresh_from_db()
-        self.assertContains(response, 'Updated 0 CI time limits')
+        self.assertEqual(response.status_code, 404)
         self.assertEqual(other_membership.time_limit, -1)
-
-    def test_set_many_limits(self):
-        self.client.force_login(self.pi_user)
-        ci_users = [blend_user() for _ in range(5)]
-        memberships = mixer.cycle(5).blend(
-            Membership, user=(c for c in ci_users), proposal=self.proposal, role=Membership.CI
-        )
-        response = self.client.post(
-            reverse('api:memberships-limit'),
-            data={'time_limit_hours': 2, 'membership_ids': [mem.id for mem in memberships]},
-        )
-        self.assertContains(response, 'Updated 5 CI time limits to 2.0 hours')
-        for membership in memberships:
-            membership.refresh_from_db()
-            self.assertEqual(membership.time_limit, 7200)
 
     def test_set_bad_time_limit(self):
         self.client.force_login(self.pi_user)
         membership = self.ci_user_1.membership_set.first()
         response = self.client.post(
-            reverse('api:memberships-limit'),
-            data={'time_limit_hours': '', 'membership_ids': [membership.id]}
+            reverse('api:memberships-limit', kwargs={'pk': membership.id}),
+            data={'time_limit_hours': ''}
         )
         membership.refresh_from_db()
         self.assertEqual(membership.time_limit, 0)
         self.assertContains(response, 'time_limit_hours', status_code=400)
 
-    def test_set_bad_membership_ids(self):
-        self.client.force_login(self.pi_user)
-        response = self.client.post(
-            reverse('api:memberships-limit'),
-            data={'time_limit_hours': 1, 'membership_ids': ''},
-        )
-        self.assertContains(response, 'membership_ids', status_code=400)
-
     def test_membership_id_does_not_exist(self):
         self.client.force_login(self.pi_user)
         response = self.client.post(
-            reverse('api:memberships-limit'),
-            data={'time_limit_hours': 1, 'membership_ids': [12345678]},
+            reverse('api:memberships-limit', kwargs={'pk': 12345678}),
+            data={'time_limit_hours': 1},
         )
-        self.assertContains(response, 'Updated 0 CI time limits')
-        for membership in self.proposal.membership_set.all():
-            self.assertEqual(membership.time_limit, 0)
+        self.assertEqual(response.status_code, 404)
 
     def test_ci_cannot_set_limit(self):
         self.client.force_login(self.ci_user_1)
         membership = self.ci_user_1.membership_set.first()
         response = self.client.post(
-            reverse('api:memberships-limit'),
-            data={'time_limit_hours': 1000, 'membership_ids': [membership.id]},
+            reverse('api:memberships-limit', kwargs={'pk': membership.id}),
+            data={'time_limit_hours': 1000},
         )
         membership.refresh_from_db()
-        self.assertContains(response, 'Updated 0 CI time limits')
+        self.assertEqual(response.status_code, 403)
         self.assertEqual(membership.time_limit, 0)
 
     def test_nonmember_cannot_set_limit(self):
         self.client.force_login(blend_user())
         membership = self.ci_user_1.membership_set.first()
         response = self.client.post(
-            reverse('api:memberships-limit'),
-            data={'time_limit_hours': 5, 'membership_ids': [membership.id]},
+            reverse('api:memberships-limit', kwargs={'pk': membership.id}),
+            data={'time_limit_hours': 5},
         )
         membership.refresh_from_db()
-        self.assertContains(response, 'Updated 0 CI time limits')
+        self.assertEqual(response.status_code, 404)
         self.assertEqual(membership.time_limit, 0)
 
     def test_must_be_authenticated_to_set_limits(self):
         response = self.client.post(
-            reverse('api:memberships-limit'),
-            data={'time_limit_hours': 1, 'membership_ids': [self.ci_user_1.id]},
+            reverse('api:memberships-limit', kwargs={'pk': self.ci_user_1.id}),
+            data={'time_limit_hours': 1},
         )
         self.assertEqual(response.status_code, 403)
 
@@ -331,12 +311,107 @@ class TestMembershipLimitApi(APITestCase):
         self.client.force_login(self.pi_user)
         membership = self.ci_user_1.membership_set.first()
         response = self.client.post(
-            reverse('api:memberships-limit'),
-            data={'time_limit_hours': -1, 'membership_ids': [membership.id]},
+            reverse('api:memberships-limit', kwargs={'pk': membership.id}),
+            data={'time_limit_hours': -1},
         )
         membership.refresh_from_db()
-        self.assertContains(response, 'Updated 1 CI time limits')
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(membership.time_limit, -3600)
+
+    def test_cannot_set_the_limit_on_pi_membership(self):
+        self.client.force_login(self.pi_user)
+        membership = self.pi_user.membership_set.first()
+        response = self.client.post(
+            reverse('api:memberships-limit', kwargs={'pk': membership.id}),
+            data={'time_limit_hours': -1},
+        )
+        membership.refresh_from_db()
+        self.assertContains(response, 'You cannot set the limit on a PI membership', status_code=400)
+        self.assertEqual(membership.time_limit, 0)
+
+
+class TestGlobalMembershipLimitApi(APITestCase):
+    def setUp(self) -> None:
+        self.proposal = mixer.blend(Proposal)
+        self.pi_user = blend_user()
+        self.ci_user_1 = blend_user()
+        self.ci_user_2 = blend_user()
+        Membership.objects.create(user=self.pi_user, proposal=self.proposal, role=Membership.PI, time_limit=0)
+        Membership.objects.create(user=self.ci_user_1, proposal=self.proposal, role=Membership.CI, time_limit=0)
+        Membership.objects.create(user=self.ci_user_2, proposal=self.proposal, role=Membership.CI, time_limit=0)
+
+    def test_pi_can_set_globallimit(self):
+        self.client.force_login(self.pi_user)
+        response = self.client.post(
+            reverse('api:proposals-globallimit', kwargs={'pk': self.proposal.id}),
+            data={'time_limit_hours': 3}
+        )
+        self.assertContains(response, 'All CI time limits set')
+        self.assertEqual(Membership.objects.filter(role=Membership.PI).first().time_limit, 0)
+        for membership in Membership.objects.filter(role=Membership.CI):
+            self.assertEqual(membership.time_limit, 3 * 3600)
+
+    def test_pi_cannot_set_globallimit_on_other_proposal(self):
+        other_proposal = mixer.blend(Proposal)
+        other_user = blend_user()
+        other_membership = mixer.blend(Membership, user=other_user, proposal=other_proposal, role=Membership.CI)
+        self.client.force_login(self.pi_user)
+        response = self.client.post(
+            reverse('api:proposals-globallimit', kwargs={'pk': other_proposal.id}),
+            data={'time_limit_hours': 3}
+        )
+        other_membership.refresh_from_db()
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(other_membership.time_limit, -1)
+
+    def test_ci_cannot_set_globallimit(self):
+        self.client.force_login(self.ci_user_1)
+        response = self.client.post(
+            reverse('api:proposals-globallimit', kwargs={'pk': self.proposal.id}),
+            data={'time_limit_hours': 3}
+        )
+        self.assertEqual(response.status_code, 403)
+        for membership in Membership.objects.all():
+            self.assertEqual(membership.time_limit, 0)
+
+    def test_nonmember_cannot_set_globallimit(self):
+        self.client.force_login(blend_user())
+        response = self.client.post(
+            reverse('api:proposals-globallimit', kwargs={'pk': self.proposal.id}),
+            data={'time_limit_hours': 3}
+        )
+        self.assertEqual(response.status_code, 404)
+        for membership in Membership.objects.all():
+            self.assertEqual(membership.time_limit, 0)
+
+    def test_unauthenticated_cannot_set_global_limit(self):
+        response = self.client.post(
+            reverse('api:proposals-globallimit', kwargs={'pk': self.proposal.id}),
+            data={'time_limit_hours': 3}
+        )
+        self.assertEqual(response.status_code, 403)
+        for membership in Membership.objects.all():
+            self.assertEqual(membership.time_limit, 0)
+
+    def test_bad_time_limit(self):
+        self.client.force_login(self.pi_user)
+        response = self.client.post(
+            reverse('api:proposals-globallimit', kwargs={'pk': self.proposal.id}),
+            data={'time_limit_hours': None}
+        )
+        self.assertContains(response, 'time_limit_hours', status_code=400)
+        for membership in Membership.objects.all():
+            self.assertEqual(membership.time_limit, 0)
+
+    def test_set_no_globallimit(self):
+        self.client.force_login(self.pi_user)
+        response = self.client.post(
+            reverse('api:proposals-globallimit', kwargs={'pk': self.proposal.id}),
+            data={'time_limit_hours': -1}
+        )
+        self.assertEqual(response.status_code, 200)
+        for membership in Membership.objects.filter(role=Membership.CI):
+            self.assertEqual(membership.time_limit, -3600)
 
 
 class TestProposalInvitesListApi(APITestCase):
@@ -349,7 +424,7 @@ class TestProposalInvitesListApi(APITestCase):
         for proposal in [self.first_proposal, self.second_proposal]:
             Membership.objects.create(user=self.pi_user, proposal=proposal, role=Membership.PI)
             Membership.objects.create(user=self.ci_user, proposal=proposal, role=Membership.CI)
-            mixer.cycle(3).blend(ProposalInvite, proposal=proposal)
+            mixer.cycle(3).blend(ProposalInvite, proposal=proposal, used=None, sent=timezone.now())
         mixer.cycle(3).blend(ProposalInvite, proposal=self.third_proposal)
 
     def test_pi_can_see_proposal_invites(self):
@@ -367,6 +442,22 @@ class TestProposalInvitesListApi(APITestCase):
         self.assertEqual(len(response.json()['results']), 3)
         for invite in response.json()['results']:
             self.assertEqual(invite['proposal'], self.first_proposal.id)
+
+    def test_pi_can_filter_for_pending_invitations(self):
+        self.client.force_login(self.pi_user)
+        response = self.client.get(reverse('api:invitations-list') + '?pending=true')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()['results']), 6)
+        proposalinvite = self.first_proposal.proposalinvite_set.first()
+        proposalinvite.used = timezone.now()
+        proposalinvite.save()
+        response = self.client.get(reverse('api:invitations-list') + '?pending=true')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()['results']), 5)
+        response = self.client.get(reverse('api:invitations-list') + '?pending=false')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()['results']), 1)
+        self.assertEqual(response.json()['results'][0]['id'], proposalinvite.id)
 
     def test_unauthenticated_user_not_allowed(self):
         response = self.client.get(reverse('api:invitations-list'))
@@ -583,19 +674,21 @@ class TestProposalInviteDetailApi(APITestCase):
 class TestMembershipDetailApi(APITestCase):
     def setUp(self):
         self.pi_user = blend_user()
-        self.ci_user = blend_user()
+        self.ci_user_1 = blend_user()
+        self.ci_user_2 = blend_user()
         self.proposal = mixer.blend(Proposal)
         self.pim = mixer.blend(Membership, user=self.pi_user, role=Membership.PI, proposal=self.proposal)
-        self.cim = mixer.blend(Membership, user=self.ci_user, role=Membership.CI, proposal=self.proposal)
+        self.cim_1 = mixer.blend(Membership, user=self.ci_user_1, role=Membership.CI, proposal=self.proposal)
+        self.cim_2 = mixer.blend(Membership, user=self.ci_user_2, role=Membership.CI, proposal=self.proposal)
 
     def test_patch_not_allowed(self):
         self.client.force_login(self.pi_user)
-        response = self.client.patch(reverse('api:memberships-detail', kwargs={'pk': self.cim.id}))
+        response = self.client.patch(reverse('api:memberships-detail', kwargs={'pk': self.cim_1.id}))
         self.assertEqual(response.status_code, 405)
 
     def test_put_not_allowed(self):
         self.client.force_login(self.pi_user)
-        response = self.client.put(reverse('api:memberships-detail', kwargs={'pk': self.cim.id}))
+        response = self.client.put(reverse('api:memberships-detail', kwargs={'pk': self.cim_1.id}))
         self.assertEqual(response.status_code, 405)
 
     def test_unauthenticated_user_get_not_allowed(self):
@@ -606,52 +699,76 @@ class TestMembershipDetailApi(APITestCase):
         response = self.client.delete(reverse('api:memberships-detail', kwargs={'pk': 12345}))
         self.assertEqual(response.status_code, 403)
 
-    def test_pi_can_see_membership(self):
+    def test_pi_can_see_ci_membership(self):
         self.client.force_login(self.pi_user)
-        response = self.client.get(reverse('api:memberships-detail', kwargs={'pk': self.cim.id}))
+        response = self.client.get(reverse('api:memberships-detail', kwargs={'pk': self.cim_1.id}))
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()['id'], self.cim.id)
+        self.assertEqual(response.json()['id'], self.cim_1.id)
 
-    def test_ci_cannot_see_membership(self):
-        self.client.force_login(self.ci_user)
-        response = self.client.get(reverse('api:memberships-detail', kwargs={'pk': self.cim.id}))
+    def test_ci_can_see_own_membership(self):
+        self.client.force_login(self.ci_user_1)
+        response = self.client.get(reverse('api:memberships-detail', kwargs={'pk': self.cim_1.id}))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['id'], self.cim_1.id)
+
+    def test_ci_cannot_see_other_ci_membership(self):
+        self.client.force_login(self.ci_user_1)
+        response = self.client.get(reverse('api:memberships-detail', kwargs={'pk': self.cim_2.id}))
         self.assertEqual(response.status_code, 404)
 
     def test_nonmember_cannot_see_membership(self):
         self.client.force_login(blend_user())
-        response = self.client.get(reverse('api:memberships-detail', kwargs={'pk': self.cim.id}))
+        response = self.client.get(reverse('api:memberships-detail', kwargs={'pk': self.cim_1.id}))
         self.assertEqual(response.status_code, 404)
+
+    def test_staff_with_staff_view_can_see_membership(self):
+        self.client.force_login(blend_user(user_params={'is_staff': True}, profile_params={'staff_view': True}))
+        response = self.client.get(reverse('api:memberships-detail', kwargs={'pk': self.cim_1.id}))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['id'], self.cim_1.id)
 
     def test_pi_can_delete_ci(self):
         self.client.force_login(self.pi_user)
-        self.assertEqual(self.proposal.membership_set.count(), 2)
-        self.assertTrue(Membership.objects.filter(proposal=self.proposal, user=self.cim.user, role=Membership.CI).exists())
-        response = self.client.delete(reverse('api:memberships-detail', kwargs={'pk': self.cim.id}))
+        self.assertEqual(self.proposal.membership_set.count(), 3)
+        self.assertTrue(
+            Membership.objects.filter(proposal=self.proposal, user=self.cim_1.user, role=Membership.CI).exists()
+        )
+        response = self.client.delete(reverse('api:memberships-detail', kwargs={'pk': self.cim_1.id}))
         self.assertEqual(response.status_code, 204)
-        self.assertEqual(self.proposal.membership_set.count(), 1)
-        self.assertFalse(Membership.objects.filter(proposal=self.proposal, user=self.cim.user, role=Membership.CI).exists())
+        self.assertEqual(self.proposal.membership_set.count(), 2)
+        self.assertFalse(
+            Membership.objects.filter(proposal=self.proposal, user=self.cim_1.user, role=Membership.CI).exists()
+        )
 
-    def test_ci_cannot_delete_ci(self):
+    def test_ci_cannot_delete_other_ci(self):
         other_user = blend_user()
         other_cim = mixer.blend(Membership, user=other_user, proposal=self.proposal, role=Membership.CI)
-        self.client.force_login(self.ci_user)
-        self.assertEqual(self.proposal.membership_set.count(), 3)
+        self.client.force_login(self.ci_user_1)
+        self.assertEqual(self.proposal.membership_set.count(), 4)
         response = self.client.delete(reverse('api:memberships-detail', kwargs={'pk': other_cim.id}))
         self.assertEqual(response.status_code, 404)
-        self.assertEqual(self.proposal.membership_set.count(), 3)
+        self.assertEqual(self.proposal.membership_set.count(), 4)
         self.assertTrue(Membership.objects.filter(proposal=self.proposal, role=Membership.CI, user=other_user).exists())
+
+    def test_ci_cannot_delete_own_membership(self):
+        self.client.force_login(self.ci_user_1)
+        self.assertEqual(self.proposal.membership_set.count(), 3)
+        response = self.client.delete(reverse('api:memberships-detail', kwargs={'pk': self.cim_1.id}))
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(self.proposal.membership_set.count(), 3)
+        self.assertTrue(Membership.objects.filter(proposal=self.proposal, role=Membership.CI, user=self.ci_user_1).exists())
 
     def test_nonmember_cannot_delete_membership(self):
         self.client.force_login(blend_user())
-        self.assertEqual(self.proposal.membership_set.count(), 2)
-        response = self.client.delete(reverse('api:memberships-detail', kwargs={'pk': self.cim.id}))
+        self.assertEqual(self.proposal.membership_set.count(), 3)
+        response = self.client.delete(reverse('api:memberships-detail', kwargs={'pk': self.cim_1.id}))
         self.assertEqual(response.status_code, 404)
-        self.assertEqual(self.proposal.membership_set.count(), 2)
-        self.assertTrue(Membership.objects.filter(proposal=self.proposal, user=self.cim.user, role=Membership.CI).exists())
+        self.assertEqual(self.proposal.membership_set.count(), 3)
+        self.assertTrue(Membership.objects.filter(proposal=self.proposal, user=self.cim_1.user, role=Membership.CI).exists())
 
     def test_pi_cannot_delete_ci_of_other_proposal(self):
         other_proposal = mixer.blend(Proposal)
-        other_membership = mixer.blend(Membership, user=self.ci_user, proposal=other_proposal, role=Membership.CI)
+        other_membership = mixer.blend(Membership, user=self.ci_user_1, proposal=other_proposal, role=Membership.CI)
         self.client.force_login(self.pi_user)
         self.assertEqual(other_proposal.membership_set.count(), 1)
         response = self.client.delete(reverse('api:memberships-detail', kwargs={'pk': other_membership.id}))
@@ -660,18 +777,18 @@ class TestMembershipDetailApi(APITestCase):
 
     def test_pi_user_cannot_delete_themselves(self):
         self.client.force_login(self.pi_user)
-        self.assertEqual(self.proposal.membership_set.count(), 2)
+        self.assertEqual(self.proposal.membership_set.count(), 3)
         response = self.client.delete(reverse('api:memberships-detail', kwargs={'pk': self.pim.id}))
         self.assertEqual(response.status_code, 204)
-        self.assertEqual(self.proposal.membership_set.count(), 2)
+        self.assertEqual(self.proposal.membership_set.count(), 3)
 
     def test_pi_cannot_delete_another_pi_on_their_own_proposal(self):
         second_pi_membership = mixer.blend(Membership, user=blend_user(), role=Membership.PI, proposal=self.proposal)
         self.client.force_login(self.pi_user)
-        self.assertEqual(self.proposal.membership_set.count(), 3)
+        self.assertEqual(self.proposal.membership_set.count(), 4)
         response = self.client.delete(reverse('api:memberships-detail', kwargs={'pk': second_pi_membership.id}))
         self.assertEqual(response.status_code, 204)
-        self.assertEqual(self.proposal.membership_set.count(), 3)
+        self.assertEqual(self.proposal.membership_set.count(), 4)
 
 
 class TestMembershipListApi(APITestCase):
@@ -694,11 +811,15 @@ class TestMembershipListApi(APITestCase):
         response = self.client.get(reverse('api:memberships-list'))
         self.assertEqual(response.status_code, 403)
 
-    def test_ci_cannot_see_memberships(self):
+    def test_ci_can_see_own_memberships_and_pi_memberships(self):
+        for proposal in [self.first_proposal, self.second_proposal]:
+            mixer.blend(Membership, user=blend_user(), proposal=proposal, role=Membership.CI)
         self.client.force_login(self.ci_user)
         response = self.client.get(reverse('api:memberships-list'))
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.json()['results']), 0)
+        self.assertEqual(len(response.json()['results']), 4)
+        for membership in response.json()['results']:
+            self.assertTrue(membership['username'] in [self.pi_user.username, self.ci_user.username])
 
     def test_nonmember_cannot_see_memberships(self):
         self.client.force_login(blend_user())
@@ -706,15 +827,15 @@ class TestMembershipListApi(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json()['results']), 0)
 
-    def test_pi_can_see_memberships(self):
+    def test_pi_can_see_all_memberships_on_their_proposals(self):
         self.client.force_login(self.pi_user)
         response = self.client.get(reverse('api:memberships-list'))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json()['results']), 4)
         for membership in response.json()['results']:
-            self.assertTrue(membership['proposal'] in [self.first_proposal.id, self.second_proposal.id])
+            self.assertTrue(membership['username'] in [self.pi_user.username, self.ci_user.username])
 
-    def test_pi_can_filter_memberships_for_proposal(self):
+    def test_filter_memberships_for_proposal(self):
         self.client.force_login(self.pi_user)
         response = self.client.get(reverse('api:memberships-list') + '?proposal=' + self.first_proposal.id)
         self.assertEqual(response.status_code, 200)

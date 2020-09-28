@@ -64,4 +64,9 @@ class ProposalNotificationSerializer(serializers.Serializer):
 
 class TimeLimitSerializer(serializers.Serializer):
     time_limit_hours = serializers.FloatField()
-    membership_ids = serializers.ListField(child=serializers.IntegerField())
+
+    def validate(self, data):
+        membership = self.context.get('membership')
+        if membership and membership.role == Membership.PI:
+            raise serializers.ValidationError(_('You cannot set the limit on a PI membership'))
+        return data

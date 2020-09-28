@@ -158,10 +158,20 @@ class Proposal(models.Model):
         return self.id
 
     def as_dict(self):
-        proposal = model_to_dict(self, exclude=[])
+        proposal = model_to_dict(self, exclude=['notes', 'users'])
         proposal['sca'] = self.sca.id
+        proposal['pis'] = [
+            {
+                'first_name': mem.user.first_name,
+                'last_name': mem.user.last_name,
+                'username': mem.user.username,
+                'email': mem.user.email,
+                'institution': mem.user.profile.institution
+            } for mem in self.membership_set.all() if mem.role == Membership.PI
+        ]
+        proposal['requestgroup_count'] = self.requestgroup_set.all().count()
+        proposal['coi_count'] = self.membership_set.filter(role=Membership.CI).count()
         proposal['timeallocation_set'] = [ta.as_dict() for ta in self.timeallocation_set.all()]
-        proposal['users'] = {mem.user.username: mem.as_dict() for mem in self.membership_set.all()}
         return proposal
 
 

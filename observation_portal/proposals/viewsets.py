@@ -15,7 +15,7 @@ from observation_portal.proposals.serializers import (
 )
 
 
-class ProposalViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
+class ProposalViewSet(DetailAsDictMixin, ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
     permission_classes = (IsAuthenticated,)
     serializer_class = ProposalSerializer
     filter_class = ProposalFilter
@@ -57,6 +57,17 @@ class ProposalViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
             return Response({'message': _('Co Investigator(s) invited')})
         else:
             return Response(serializer.errors, status=400)
+
+    @action(detail=True, methods=['post'], permission_classes=(IsPrincipleInvestigator,))
+    def globallimit(self, request, pk=None):
+        proposal = self.get_object()
+        serializer = TimeLimitSerializer(data=request.data)
+        if serializer.is_valid():
+            time_limit_hours = serializer.validated_data['time_limit_hours']
+            proposal.membership_set.filter(role=Membership.CI).update(time_limit=time_limit_hours * 3600)
+            return Response({'message': f'All CI time limits set to {time_limit_hours} hours'})
+        else:
+            return Response({'errors': serializer.errors}, status=400)
 
 
 class SemesterViewSet(viewsets.ReadOnlyModelViewSet):
@@ -123,25 +134,46 @@ class SemesterViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class MembershipViewSet(ListAsDictMixin, DetailAsDictMixin, mixins.DestroyModelMixin, viewsets.ReadOnlyModelViewSet):
-    permission_classes = (IsAuthenticated,)
     http_method_names = ('get', 'head', 'options', 'post', 'delete')
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
     filter_class = MembershipFilter
     serializer_class = MembershipSerializer
 
     def get_queryset(self):
-        proposals = self.request.user.proposal_set.filter(membership__role=Membership.PI)
-        return Membership.objects.filter(proposal__in=proposals)
+        if self.request.user.is_staff and self.request.user.profile.staff_view:
+            return Membership.objects.all()
+        else:
+            users_memberships = self.request.user.membership_set.all()
+            pi_memberships_of_users_proposals = Membership.objects.filter(
+                proposal__in=self.request.user.proposal_set.all(), role=Membership.PI
+            )
+            memberships_where_user_is_pi = Membership.objects.filter(
+                proposal__in=self.request.user.proposal_set.filter(membership__role=Membership.PI)
+            )
+            all_memberships = users_memberships | memberships_where_user_is_pi | pi_memberships_of_users_proposals
+            return all_memberships.distinct()
 
-    @action(detail=False, methods=['post'])
+    def get_permissions(self):
+        pi_only_actions = ('destroy', 'limit')
+        if self.action in pi_only_actions:
+            permission_classes = [IsPrincipleInvestigator]
+        else:
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
+
+    @action(detail=True, methods=['post'])
     def limit(self, request, pk=None):
-        serializer = TimeLimitSerializer(data=request.data, context={'user': self.request.user})
+        membership = self.get_object()
+        serializer = TimeLimitSerializer(data=request.data, context={'membership': membership})
         if serializer.is_valid():
             time_limit_hours = serializer.validated_data['time_limit_hours']
-            membership_ids = serializer.validated_data['membership_ids']
-            memberships_to_update = self.get_queryset().filter(role=Membership.CI, pk__in=membership_ids)
-            n_updated = memberships_to_update.update(time_limit=time_limit_hours * 3600)
-            return Response({'message': f'Updated {n_updated} CI time limits to {time_limit_hours} hours'})
+            membership.time_limit = time_limit_hours * 3600
+            membership.save()
+            message = (
+                f'Time limit for {membership.user.first_name} {membership.user.last_name} set '
+                f'to {time_limit_hours} hours'
+            )
+            return Response({'message': message})
         else:
             return Response({'errors': serializer.errors}, 400)
 

@@ -12,7 +12,7 @@ class MembershipFilter(django_filters.FilterSet):
 
     class Meta:
         model = Membership
-        fields = ('first_name', 'last_name', 'username', 'email', 'proposal')
+        fields = ('first_name', 'last_name', 'username', 'email', 'proposal', 'role')
 
 
 class ProposalFilter(django_filters.FilterSet):
@@ -48,6 +48,14 @@ class SemesterFilter(django_filters.FilterSet):
 
 
 class ProposalInviteFilter(django_filters.FilterSet):
+    pending = django_filters.BooleanFilter(method='pending_invitations')
+
     class Meta:
         model = ProposalInvite
         fields = ['proposal']
+
+    def pending_invitations(self, queryset, name, value):
+        if value:
+            return queryset.filter(used=None)
+        else:
+            return queryset.exclude(used=None)

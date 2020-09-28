@@ -26,9 +26,13 @@ class IsDirectUser(BasePermission):
 
 
 class IsPrincipleInvestigator(IsAuthenticated):
-    """The user is the principle investigator of the object"""
+    """The user is the principle investigator of the associated object"""
     def has_object_permission(self, request, view, obj):
         if request.user and request.user.is_authenticated:
-            return request.user.membership_set.filter(proposal=obj, role=Membership.PI).exists()
+            if isinstance(obj, Membership):
+                proposal = obj.proposal
+            else:
+                proposal = obj
+            return request.user.membership_set.filter(proposal=proposal, role=Membership.PI).exists()
         else:
             return False
