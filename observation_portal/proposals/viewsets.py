@@ -190,8 +190,11 @@ class ProposalInviteViewSet(mixins.DestroyModelMixin, viewsets.ReadOnlyModelView
     serializer_class = ProposalInviteSerializer
 
     def get_queryset(self):
-        proposals = self.request.user.proposal_set.filter(membership__role=Membership.PI)
-        return ProposalInvite.objects.filter(proposal__in=proposals)
+        if self.request.user.is_staff and self.request.user.profile.staff_view:
+            return ProposalInvite.objects.all()
+        else:
+            proposals = self.request.user.proposal_set.filter(membership__role=Membership.PI)
+            return ProposalInvite.objects.filter(proposal__in=proposals)
 
     def perform_destroy(self, instance):
         if instance.used is None:

@@ -427,6 +427,12 @@ class TestProposalInvitesListApi(APITestCase):
             mixer.cycle(3).blend(ProposalInvite, proposal=proposal, used=None, sent=timezone.now())
         mixer.cycle(3).blend(ProposalInvite, proposal=self.third_proposal)
 
+    def test_staff_with_staff_view_can_see_all_proposal_invites(self):
+        self.client.force_login(blend_user(user_params={'is_staff': True}, profile_params={'staff_view': True}))
+        response = self.client.get(reverse('api:invitations-list'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()['results']), 9)
+
     def test_pi_can_see_proposal_invites(self):
         self.client.force_login(self.pi_user)
         response = self.client.get(reverse('api:invitations-list'))
