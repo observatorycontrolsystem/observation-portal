@@ -23,7 +23,7 @@ class ProposalFilter(django_filters.FilterSet):
 
     class Meta:
         model = Proposal
-        fields = ('active', 'semester', 'id', 'tac_rank', 'tac_priority', 'public', 'title', 'non_science')
+        fields = ('active', 'semester', 'id', 'tac_rank', 'tac_priority', 'public', 'title')
 
 
 class SemesterFilter(django_filters.FilterSet):

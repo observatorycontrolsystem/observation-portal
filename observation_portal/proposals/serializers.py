@@ -12,15 +12,7 @@ class TimeAllocationSerializer(serializers.ModelSerializer):
 
 class ProposalSerializer(serializers.ModelSerializer):
     timeallocation_set = TimeAllocationSerializer(many=True)
-    users = serializers.SerializerMethodField()
     pi = serializers.StringRelatedField()
-    requestgroup_count = serializers.SerializerMethodField()
-
-    def get_users(self, obj):
-        return {mem.user.username: mem.as_dict() for mem in obj.membership_set.all()}
-
-    def get_requestgroup_count(self, obj):
-        return obj.requestgroup_set.all().count()
 
     class Meta:
         model = Proposal

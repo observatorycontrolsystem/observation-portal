@@ -833,6 +833,12 @@ class TestMembershipListApi(APITestCase):
         for membership in response.json()['results']:
             self.assertTrue(membership['username'] in [self.pi_user.username, self.ci_user.username])
 
+    def test_staff_with_staff_view_can_see_all_memberships(self):
+        self.client.force_login(blend_user(user_params={'is_staff': True}, profile_params={'staff_view': True}))
+        response = self.client.get(reverse('api:memberships-list'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()['results']), 6)
+
     def test_nonmember_cannot_see_memberships(self):
         self.client.force_login(blend_user())
         response = self.client.get(reverse('api:memberships-list'))

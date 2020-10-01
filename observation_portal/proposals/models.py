@@ -169,7 +169,7 @@ class Proposal(models.Model):
                 'institution': mem.user.profile.institution
             } for mem in self.membership_set.all() if mem.role == Membership.PI
         ]
-        proposal['requestgroup_count'] = self.requestgroup_set.all().count()
+        proposal['requestgroup_count'] = self.requestgroup_set.count()
         proposal['coi_count'] = self.membership_set.filter(role=Membership.CI).count()
         proposal['timeallocation_set'] = [ta.as_dict() for ta in self.timeallocation_set.all()]
         return proposal

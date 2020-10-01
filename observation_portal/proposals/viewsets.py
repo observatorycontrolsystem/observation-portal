@@ -89,19 +89,18 @@ class SemesterViewSet(viewsets.ReadOnlyModelViewSet):
         ).distinct().order_by('sca__name')
         results = []
         for proposal in proposals:
-            pis = [
-                {
-                    'first_name': mem.user.first_name,
-                    'last_name': mem.user.last_name,
-                    'institution': mem.user.profile.institution
-                } for mem in proposal.membership_set.all() if mem.role == Membership.PI
-            ]
             results.append({
                 'id': proposal.id,
                 'title': proposal.title,
                 'abstract': proposal.abstract,
                 'allocation': proposal.allocation(semester=semester),
-                'pis': pis,
+                'pis': [
+                    {
+                        'first_name': mem.user.first_name,
+                        'last_name': mem.user.last_name,
+                        'institution': mem.user.profile.institution
+                    } for mem in proposal.membership_set.all() if mem.role == Membership.PI
+                ],
                 'sca_id': proposal.sca.id,
                 'sca_name': proposal.sca.name,
                 'semesters': proposal.semester_set.distinct().values_list('id', flat=True)
