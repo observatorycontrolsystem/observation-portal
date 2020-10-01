@@ -110,7 +110,7 @@ DATABASES = {
        'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
        'NAME': os.getenv('DB_NAME', 'observation_portal'),
        'USER': os.getenv('DB_USER', 'postgres'),
-       'PASSWORD': os.getenv('DB_PASSWORD', ''),
+       'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),
        'HOST': os.getenv('DB_HOST', '127.0.0.1'),
        'PORT': os.getenv('DB_PORT', '5432'),
        'OPTIONS': {
@@ -299,8 +299,10 @@ WEBPACK_LOADER = {
 TEST_RUNNER = 'observation_portal.test_runner.MyDiscoverRunner'
 
 try:
-    from local_settings import *  # noqa
-except ImportError:
+    from .local_settings import *  # noqa
+except ImportError as e:
+    print('Local settings error')
+    print(e)
     pass
 
 try:
