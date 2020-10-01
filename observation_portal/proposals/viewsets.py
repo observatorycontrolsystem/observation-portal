@@ -183,7 +183,6 @@ class MembershipViewSet(ListAsDictMixin, DetailAsDictMixin, mixins.DestroyModelM
 
 
 class ProposalInviteViewSet(mixins.DestroyModelMixin, viewsets.ReadOnlyModelViewSet):
-    permission_classes = (IsAuthenticated,)
     http_method_names = ('get', 'head', 'options', 'delete')
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
     filter_class = ProposalInviteFilter
@@ -195,6 +194,14 @@ class ProposalInviteViewSet(mixins.DestroyModelMixin, viewsets.ReadOnlyModelView
         else:
             proposals = self.request.user.proposal_set.filter(membership__role=Membership.PI)
             return ProposalInvite.objects.filter(proposal__in=proposals)
+
+    def get_permissions(self):
+        pi_only_actions = ('destroy', )
+        if self.action in pi_only_actions:
+            permission_classes = [IsPrincipleInvestigator]
+        else:
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
 
     def perform_destroy(self, instance):
         if instance.used is None:

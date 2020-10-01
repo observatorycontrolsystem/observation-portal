@@ -668,6 +668,12 @@ class TestProposalInviteDetailApi(APITestCase):
         self.assertEqual(response.status_code, 404)
         self.assertTrue(ProposalInvite.objects.filter(pk=self.proposal_invite.id).exists())
 
+    def test_staff_cannot_delete_invitation(self):
+        self.client.force_login(blend_user(user_params={'is_staff': True}, profile_params={'staff_view': True}))
+        response = self.client.delete(reverse('api:invitations-detail', kwargs={'pk': self.proposal_invite.id}))
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(ProposalInvite.objects.filter(pk=self.proposal_invite.id).exists())
+
     def test_invitation_that_has_been_used_will_not_be_deleted(self):
         self.proposal_invite.used = timezone.now()
         self.proposal_invite.save()

@@ -5,7 +5,6 @@ from django.db.utils import IntegrityError
 from django.urls import reverse
 from django.utils import timezone
 from mixer.backend.django import mixer
-from requests import HTTPError
 import datetime
 from django_dramatiq.test import DramatiqTestCase
 

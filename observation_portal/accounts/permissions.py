@@ -1,6 +1,6 @@
 from rest_framework.permissions import BasePermission, SAFE_METHODS, IsAuthenticated
 
-from observation_portal.proposals.models import Membership
+from observation_portal.proposals.models import Membership, ProposalInvite
 
 
 class IsAdminOrReadOnly(BasePermission):
@@ -30,6 +30,8 @@ class IsPrincipleInvestigator(IsAuthenticated):
     def has_object_permission(self, request, view, obj):
         if request.user and request.user.is_authenticated:
             if isinstance(obj, Membership):
+                proposal = obj.proposal
+            elif isinstance(obj, ProposalInvite):
                 proposal = obj.proposal
             else:
                 proposal = obj
