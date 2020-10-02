@@ -30,12 +30,12 @@
     </div>
     <div class="col-md-4">
 
-              <div class="btn-group-vertical btn-group-lg">
-                <a href="{% url 'requestgroups:create' %}" class="btn btn-outline-primary"><i class="fab fa-wpexplorer"></i> Submit Observation</a>
-                <a href="{% url 'proposals:list' %}?active=True" class="btn btn-outline-primary"><i class="fa fa-users fa-fw"></i> Manage Proposals</a>
-                <a href="{% url 'help' %}" class="btn btn-outline-primary"><i class="fas fa-info-circle"></i> Help</a>
-              </div>
-
+        <h4>Quick Navigation</h4>
+          <ul class="list-unstyled">
+            <li><a href="{% url 'requestgroups:create' %}"><i class="fab fa-wpexplorer"></i> Submit Observation</a></li>
+            <li><a href="{% url 'proposals:list' %}?active=True"><i class="fa fa-users fa-fw"></i> Manage Proposals</a></li>
+            <li><a href="{% url 'help' %}"><i class="fas fa-info-circle"></i> Help</a></li>
+          </ul>
         <h4 >Telescope availability history
           <sup class="blue"><a
                   data-toggle="tooltip"
