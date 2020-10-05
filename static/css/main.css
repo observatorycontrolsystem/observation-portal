@@ -17,13 +17,24 @@ h6 {
 }
 
 a {
-  color: #009ec3;
+  color: #00adef;
   text-decoration: none;
 }
 
-a:hover {
+a:hover,
+.navbar-bg .navbar-nav a.nav-link:hover,
+.btn.btn-primary:hover,
+.btn.btn-danger:hover,
+.btn.btn-outline-primary:hover  {
   background-color: #ffcd05;
   text-decoration: none;
+  color:#231f20;
+}
+
+.btn.btn-primary:hover,
+.btn.btn-danger:hover,
+.btn.btn-outline-primary:hover  {
+  border-color: #ffcd05;
 }
 
 a.navbar-brand:hover {
@@ -36,6 +47,7 @@ a.navbar-brand:hover {
 
 .navbar-bg .navbar-nav .nav-link {
   color: #fff;
+  font-size: 18px;
 }
 
 .navbar-bg {
@@ -166,13 +178,17 @@ a.navbar-brand:hover {
 .btn {
   line-height: 1.42857143;
   text-transform: none;
-  font-size: 14px;
 }
 
 .btn.btn-primary {
   background-color: #00adef;
   border-color: #00adef;
   color: white;
+}
+
+.btn.btn-outline-primary {
+  border-color: #00adef;
+  color: #00adef;
 }
 
 .btn.btn-danger {
@@ -193,8 +209,7 @@ a.navbar-brand:hover {
 }
 
 .requestgroup-title {
-  font-size: 1.2em;
-  font-weight: 900;
+  font-size: 1em;
   margin-left: 4px;
 }
 
@@ -325,15 +340,20 @@ a.navbar-brand:hover {
 }
 
 .pagination > li > a {
-  color: #009cc3;
+  color: #00adef;
 }
 
 .pagination > .active > a {
-  background-color: #009cc3;
+  background-color: #00adef;
 }
 
 .pagination > .active > a:hover {
-  background-color: #009cc3;
+  background-color: #00adef;
+}
+
+.page-item.active .page-link {
+  background-color: #00adef;
+  border-color: #00adef;
 }
 
 .navbar-light .navbar-nav .nav-link {
