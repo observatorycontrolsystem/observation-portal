@@ -301,8 +301,6 @@ TEST_RUNNER = 'observation_portal.test_runner.MyDiscoverRunner'
 try:
     from .local_settings import *  # noqa
 except ImportError as e:
-    print('Local settings error')
-    print(e)
     pass
 
 try:
