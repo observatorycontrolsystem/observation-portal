@@ -25,11 +25,11 @@ class ProposalViewSet(DetailAsDictMixin, ListAsDictMixin, viewsets.ReadOnlyModel
     def get_queryset(self):
         if self.request.user.is_staff and self.request.user.profile.staff_view:
             return Proposal.objects.all().prefetch_related(
-                'users', 'sca', 'membership_set', 'membership_set__user', 'timeallocation_set'
+                'sca', 'membership_set', 'membership_set__user', 'timeallocation_set'
             )
         else:
             return self.request.user.proposal_set.all().prefetch_related(
-                'users', 'sca', 'membership_set', 'membership_set__user', 'timeallocation_set'
+                'sca', 'membership_set', 'membership_set__user', 'timeallocation_set'
             )
 
     @action(detail=True, methods=['post'])
