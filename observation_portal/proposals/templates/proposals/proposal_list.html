@@ -20,9 +20,7 @@
         {% endif %}
     </div>
     <div class="col-md-3">
-        <h4>
-            <a href="{% url 'sciapplications:index' %}"><i class="fa fa-edit fa-fw"></i> Submit Proposal</a>
-        </h4>
+          <a href="{% url 'sciapplications:index' %}" class="btn btn-primary btn-lg"><i class="fa fa-edit fa-fw"></i> Submit Proposal</a>
         <p>
             There {{ calls|length|pluralize:"is,are" }} currently <a href="{% url 'sciapplications:index' %}">{{ calls|length }}</a> open call{{ calls|length|pluralize }} for proposals.
         </p>
