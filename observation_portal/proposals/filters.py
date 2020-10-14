@@ -1,7 +1,7 @@
 import django_filters
 from django.utils import timezone
 from dateutil.parser import parse
-from observation_portal.proposals.models import Semester, Proposal, Membership
+from observation_portal.proposals.models import Semester, Proposal, Membership, ProposalInvite
 
 
 class MembershipFilter(django_filters.FilterSet):
@@ -12,7 +12,7 @@ class MembershipFilter(django_filters.FilterSet):
 
     class Meta:
         model = Membership
-        fields = ('first_name', 'last_name', 'username', 'email')
+        fields = ('first_name', 'last_name', 'username', 'email', 'proposal', 'role')
 
 
 class ProposalFilter(django_filters.FilterSet):
@@ -45,3 +45,17 @@ class SemesterFilter(django_filters.FilterSet):
     class Meta:
         model = Semester
         fields = ['semester_contains', 'start', 'end', 'id']
+
+
+class ProposalInviteFilter(django_filters.FilterSet):
+    pending = django_filters.BooleanFilter(method='pending_invitations')
+
+    class Meta:
+        model = ProposalInvite
+        fields = ['proposal']
+
+    def pending_invitations(self, queryset, name, value):
+        if value:
+            return queryset.filter(used=None)
+        else:
+            return queryset.exclude(used=None)
