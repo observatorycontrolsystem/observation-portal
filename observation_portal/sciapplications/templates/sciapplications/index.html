@@ -4,30 +4,7 @@
 {% block content %}
 <div class="row">
     <div class="col-md-12">
-        <h1>Calls for Proposals</h1>
-        <p>
-            LCO's year is divided into two observing semesters, each 6 months long. Calls for proposals are issued each semester. Three types of proposals can be submitted through this LCO Observation Portal:
-        </p>
-        <ul>
-          <li><b>Standard proposals</b> are accepted each semester from astronomers affiliated with LCO and LCO's non-guaranteed-time partners:
-                 UCSB, U. Colorado, IAC, and IPAC at Caltech. Standard proposals should only be submitted through this portal from PIs affiliated with
-                 one of these institutions. Other Science Collaboration institutions allocate their shares of time according to their own TAC procedures
-                 and do not use this portal to collect proposals.</li>
-          <li><b>Key Project proposals</b> are accepted annually from astronomers affiliated with LCO's Science Collaboration partners
-                 (guaranteed and non-guaranteed-time). Key project proposals <b>should</b> be submitted through this portal.
-                 Key project proposals are reviewed by the <a href="https://lco.global/science/proposals/TAC/">LCO TAC</a>.</li>
-          <li><b>Director's Discretionary Time (DDT) proposals</b> are accepted at any time from astronomers affiliated with LCO's Science Collaboration institutions.
-                 DDT proposals <b>should</b> be submitted through this portal. DDT proposals are reviewed by LCO's director. </li>
-        </ul>
-        <p>
-            Please refer to the LCO website for more information on the <a href="https://lco.global/observatory/proposal/process/">time allocation process.</a>
-        </p>
-        <p>
-            If you are composing a proposal for the LCO network for the first time, we recommend that you consult our <a href="https://lco.global/observatory/proposal/guidelines/">guidelines for writing proposals,</a> as well as the <a href="https://lco.global/documents/450/GettingStartedontheLCONetwork.latest.pdf">"Getting Started" Guide.</a>
-            Information about the <a href="http://lcogt.net/observatory/telescopes">telescopes</a>, <a href="http://lcogt.net/observatory/instruments">instruments</a>,
-            <a href="http://lcogt.net/observatory/data">data handling and quality</a>, <a href="http://lcogt.net/observatory/scheduling">scheduling</a>
-            and other technical aspects of the network is available on the <a href="https://lco.global/observatory/">observatory capabilities</a> pages.
-        </p>
+        <h1>Active Calls for Proposals</h1>
 
         <table class="table">
             <thead>
@@ -41,7 +18,7 @@
                     <td>{{ call.semester }}</td>
                     <td>{{ call.eligibility_short }}</td>
                     <td>{% if call.proposal_type == 'DDT' %} N/A {% else %}{{ call.deadline }}{% endif %}</td>
-                    <td><a href="{% url 'sciapplications:create' call=call.id %}" class="btn btn-info">Apply</a></td>
+                    <td><a href="{% url 'sciapplications:create' call=call.id %}" class="btn btn-primary">Apply</a></td>
                 </tr>
                 {% endif %}
                 {% empty %}
@@ -49,6 +26,13 @@
                 {% endfor %}
             </tbody>
         </table>
+        <p>For information about submitting proposals, including definitions of terms and timescales, please see our web pages on <a href="https://lco.global/observatory/process/">Time Allocation Process</a>.</p>
+        <p>
+            If you are composing a proposal for the LCO network for the first time, we recommend that you consult our <a href="https://lco.global/observatory/proposal/guidelines/">guidelines for writing proposals,</a> as well as the <a href="https://lco.global/documents/713/GettingStartedontheLCONetwork.latest.pdf">"Getting Started" Guide.</a>
+            Information about the <a href="//lco.global/observatory/telescopes">telescopes</a>, <a href="//lco.global/observatory/instruments">instruments</a>,
+            <a href="//lco.global/observatory/data">data handling and quality</a>, <a href="//lco.global/observatory/scheduling">scheduling</a>
+            and other technical aspects of the network is available on the <a href="https://lco.global/observatory/">observatory capabilities</a> pages.
+        </p>
         {% if user.sciencecollaborationallocation %}
         <h1>{{ user.sciencecollaborationallocation.name }} Proposals</h1>
         <p>
@@ -76,7 +60,7 @@
                     <td>{{ time_requested|get_from_dict:alloc.telescope_name }}/{{ alloc.allocation }}</td>
                     {% endfor %}
                     <td>{{ call.deadline }}</td>
-                    <td><a href="{% url 'sciapplications:create' call=call.id %}" class="btn btn-info">Add Proposal</a></td>
+                    <td><a href="{% url 'sciapplications:create' call=call.id %}" class="btn btn-primary">Add Proposal</a></td>
                 </tr>
                 {% endif %}
                 {% empty %}
@@ -165,13 +149,6 @@
         </table>
         {% endif %}
         <h1>Your Proposals</h1>
-        <p>
-            Below is a list of your draft proposals and submitted proposals in LCO's database. Standard and Key Project proposals are reviewed by a
-            <a href="https://lco.global/science/proposals/TAC/">Time Allocation Committee (TAC)</a> whose members are selected from the astronomical community and
-            are not affiliated with LCO. Proposals recommended for scheduling by the TAC are awarded time by LCO's director.
-            PIs are notified of a standard proposal's acceptance approximately 3 weeks before the start of the semester.
-            Proposals for discretionary time are reviewed by LCO's director only. Notices of acceptance are issued as quickly as possible, but typically in less than one week.
-        </p>
         <h4>Draft Proposals</h4>
         <table class="table">
             <thead>
