@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static i18n %}
+{% load static i18n bootstrap4 %}
 {% load render_bundle from webpack_loader %}
 {% block title %}Home{% endblock %}
 {% block content %}
@@ -47,27 +47,31 @@
         <br>
         <h3>Telescope availability history</h3>
         <p>This chart shows the percent of operational science time for each telescope over the last 4 days. View the <a href="https://lco.global/observatory/status/">detailed operational status.</a></p>
+
         <div id="telescope_availability_chart"></div>
+        <p><small><a href="https://lco.global/observatory/status/">Detailed Observatory Status</a></small></p>
+
         {% if user.is_authenticated %}
-        <div class="row">
-            <div class="col-md-12">
-                <h3>Active Proposals</h3>
-                {% for proposal in user.profile.current_proposals %}
-                <p><a href="{% url 'proposals:detail' pk=proposal.id %}">{{ proposal }}</a>
-                <br/>
-                <small>{{ proposal.title }}</small>
-                </p>
-                {% empty %}
-                <p>{% trans 'You have no current proposals' %}</p>
-                <p>
-                    <a href="{% url 'sciapplications:index' %}">
-                    {% trans 'Submit a proposal' %}
-                    </a>
-                </p>
-                {% endfor %}
-            </div>
-        </div>
+
+        <h4>Active Proposals</h4>
+        {% for proposal in user.profile.current_proposals %}
+        <p><a href="{% url 'proposals:detail' pk=proposal.id %}">{{ proposal }}</a>
+        <br/>
+        <small>{{ proposal.title }}</small>
+        </p>
+        {% empty %}
+        <p>{% trans 'You have no current proposals' %}</p>
+        <p>
+            <a href="{% url 'sciapplications:index' %}">
+            {% trans 'Submit a proposal' %}
+            </a>
+        </p>
+        {% endfor %}
+
         {% endif %}
     </div>
 </div>
+<script type="text/javascript">
+    $('[data-toggle="tooltip"]').tooltip();
+</script>
 {% endblock %}

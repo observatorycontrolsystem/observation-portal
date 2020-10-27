@@ -79,7 +79,7 @@ class BaseProposalAppForm(ModelForm):
 
 
 class ScienceProposalAppForm(BaseProposalAppForm):
-    max_pages = 6
+    max_pages = 999
 
     class Meta:
         model = ScienceApplication
@@ -91,7 +91,7 @@ class ScienceProposalAppForm(BaseProposalAppForm):
 
 
 class DDTProposalAppForm(BaseProposalAppForm):
-    max_pages = 2
+    max_pages = 999
 
     class Meta:
         model = ScienceApplication
@@ -103,7 +103,7 @@ class DDTProposalAppForm(BaseProposalAppForm):
 
 
 class KeyProjectAppForm(BaseProposalAppForm):
-    max_pages = 14
+    max_pages = 999
 
     class Meta:
         model = ScienceApplication
@@ -115,7 +115,7 @@ class KeyProjectAppForm(BaseProposalAppForm):
 
 
 class SciCollabAppForm(BaseProposalAppForm):
-    max_pages = 6
+    max_pages = 999
 
     class Meta:
         model = ScienceApplication

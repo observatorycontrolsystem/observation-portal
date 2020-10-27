@@ -10,6 +10,7 @@ from PyPDF2 import PdfFileMerger
 from weasyprint import HTML
 from unittest.mock import MagicMock, patch
 from django_dramatiq.test import DramatiqTestCase
+from os import urandom
 
 from observation_portal.proposals.models import Semester, ScienceCollaborationAllocation, CollaborationAllocation
 from observation_portal.accounts.models import Profile
@@ -430,7 +431,8 @@ class TestPostCreateSciApp(DramatiqTestCase):
 
     def test_pdf_has_too_many_pages(self):
         data = self.sci_data.copy()
-        data['pdf'] = SimpleUploadedFile('s.pdf', b'this is way way way too long')
+        pdf_data = urandom(1000)
+        data['pdf'] = SimpleUploadedFile('s.pdf', pdf_data)
         response = self.client.post(
             reverse('sciapplications:create', kwargs={'call': self.call.id}),
             data=data,
@@ -738,6 +740,34 @@ class TestSciAppDetail(TestCase):
         self.assertTrue(PdfFileMerger.merge.called)
         self.assertTrue(HTML.write_pdf.called)
         self.assertEqual(response.status_code, 200)
+
+    def test_pdf_does_not_include_author_names(self):
+        PdfFileMerger.merge = MagicMock
+        HTML.write_pdf = MagicMock
+        app = mixer.blend(
+            ScienceApplication,
+            status=ScienceApplication.SUBMITTED,
+            submitter=self.user,
+            call=self.call
+        )
+        mixer.cycle(3).blend(CoInvestigator, science_application=app, last_name=mixer.RANDOM)
+        response = self.client.get(reverse('sciapplications:pdf', kwargs={'pk': app.id}))
+        self.assertNotContains(response, app.submitter.last_name)
+        for coi in app.coinvestigator_set.all():
+            self.assertNotContains(response, coi.last_name)
+
+    def test_detail_page_does_contain_author_names(self):
+        app = mixer.blend(
+            ScienceApplication,
+            status=ScienceApplication.SUBMITTED,
+            submitter=self.user,
+            call=self.call
+        )
+        mixer.cycle(3).blend(CoInvestigator, science_application=app, last_name=mixer.RANDOM)
+        response = self.client.get(reverse('sciapplications:detail', kwargs={'pk': app.id}))
+        self.assertContains(response, app.submitter.last_name)
+        for coi in app.coinvestigator_set.all():
+            self.assertContains(response, coi.last_name)
 
 
 class TestSciAppDelete(TestCase):
