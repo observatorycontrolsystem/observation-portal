@@ -34,7 +34,7 @@ from observation_portal.accounts.views import (
 from observation_portal.proposals.viewsets import (
     ProposalViewSet, SemesterViewSet, MembershipViewSet, ProposalInviteViewSet
 )
-from observation_portal.sciapplications.viewsets import CallViewSet
+from observation_portal.sciapplications.viewsets import CallViewSet, ScienceApplicationViewSet
 from observation_portal.observations.views import LastScheduledView
 from observation_portal.observations.viewsets import ObservationViewSet, ScheduleViewSet, ConfigurationStatusViewSet
 import observation_portal.sciapplications.urls as sciapplications_urls
@@ -50,6 +50,7 @@ router.register(r'semesters', SemesterViewSet, 'semesters')
 router.register(r'memberships', MembershipViewSet, 'memberships')
 router.register(r'invitations', ProposalInviteViewSet, 'invitations')
 router.register(r'calls', CallViewSet, 'calls')
+router.register(r'scienceapplications', ScienceApplicationViewSet, 'scienceapplications')
 router.register(r'observations', ObservationViewSet, 'observations')
 router.register(r'schedule', ScheduleViewSet, 'schedule')
 router.register(r'configurationstatus', ConfigurationStatusViewSet, 'configurationstatus')
