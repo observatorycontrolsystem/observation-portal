@@ -2000,7 +2000,8 @@ class TestMuscatValidationApi(SetTimeMixin, APITestCase):
         instrument_config = copy.deepcopy(bad_data['requests'][0]['configurations'][0]['instrument_configs'][0])
         bad_data['requests'][0]['configurations'][0]['instrument_configs'].append(instrument_config)
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertContains(response, 'Multiple instrument configs are not allowed for muscat', status_code=400)
+        expected_message = 'Multiple instrument configs are not allowed for the instrument 2M0-SCICAM-MUSCAT'
+        self.assertContains(response, expected_message, status_code=400)
 
 
 class TestGetRequestApi(APITestCase):
