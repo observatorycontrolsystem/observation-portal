@@ -198,23 +198,30 @@
       collapseMixin
     ],
     data: function() {
-      let currentGuideOption = 'ON';
-      if (this.configuration.guiding_config.mode == 'OFF'){
-        currentGuideOption = 'OFF';
-      } else if (this.configuration.guiding_config.optional){
-        currentGuideOption = 'OPTIONAL';
-      }
       return {
         show: true,
         acquireHistory: {
           mode: '',
           extra_params: {}
         },
-        selectedImagerGuidingOption: currentGuideOption,
-        imagerGuidingOptions: [
-          {value: 'OPTIONAL', text: 'Optional'},
-          {value: 'ON', text: 'On'},
-          {value: 'OFF', text: 'Off'}
+        selectedImagerGuidingOption: null,
+        defaultGuidingOptional: true,
+        /* The options that a user can choose from for guiding mode set two underlying fields in the
+        configuration's guiding_config - `mode` and `optional`. Guide options ON, OFF, and OPTIONAL will
+        always map to guiding_config fields as follows. */
+        guidingConfigMappings: [
+          {
+            option: 'OFF',
+            config: { mode: 'OFF', optional: false }
+          },
+          {
+            option: 'ON',
+            config: { mode: 'ON', optional: false }
+          },
+          {
+            option: 'OPTIONAL',
+            config: { mode: 'ON', optional: true }
+          }
         ]
       };
     },
@@ -264,23 +271,18 @@
         return options;
       },
       guideModeOptions: function() {
+        let options = [];
         if (this.selectedinstrument in this.available_instruments) {
-          let guideModes = [];
-          for (let gm in this.available_instruments[this.selectedinstrument].modes.guiding.modes) {
-            if (this.selectedinstrument != '2M0-SCICAM-MUSCAT') {
-              guideModes.push({
-                  text: this.available_instruments[this.selectedinstrument].modes.guiding.modes[gm].name,
-                  value: this.available_instruments[this.selectedinstrument].modes.guiding.modes[gm].code,
-              });
-            }
-            if (this.available_instruments[this.selectedinstrument].modes.guiding.modes[gm].code == 'ON'){
-              guideModes.push({text: 'Optional', value: 'OPTIONAL'})
-            }
+          let modes = this.available_instruments[this.selectedinstrument].modes.guiding.modes;
+          if (this.selectedinstrument === '2M0-SCICAM-MUSCAT') {
+            options = this.parseGuideModeOptions(modes, true, ['ON']);
+          } else if (this.datatype === 'SPECTRA') {
+            options = this.parseGuideModeOptions(modes, false, ['OFF']);
+          } else {
+            options = this.parseGuideModeOptions(modes, true, []);
           }
-          return guideModes;
-        } else {
-          return [];
         }
+        return options;
       },
       requiredAcquireModeFields: function() {
         for (let i in this.acquireModeOptions) {
@@ -292,6 +294,7 @@
       }
     },
     created: function() {
+      this.selectedImagerGuidingOption = this.getGuideOptionFromGuidingConfig(this.configuration.guiding_config);
       this.setupAcquireAndGuideFieldsForType(this.configuration.type);
     },
     methods: {
@@ -332,6 +335,88 @@
       instumentConfigurationUpdated: function() {
         console.log('instrumentconfigUpdated');
         this.update();
+      },
+      getGuidingConfigFromGuideOption: function(guidingOption) {
+        // Return the guiding_config fields that map to the provided guiding option
+        let guidingMode = guidingOption;
+        let guidingOptional = this.defaultGuidingOptional;
+        for (let guidingConfigMapping of this.guidingConfigMappings) {
+          if (guidingConfigMapping.option === guidingOption ) {
+            guidingMode = guidingConfigMapping.config.mode;
+            guidingOptional = guidingConfigMapping.config.optional;
+            break;
+          }
+        }
+        return { mode: guidingMode, optional: guidingOptional };
+      },
+      getGuideOptionFromGuidingConfig: function(guidingConfig) {
+        // Return the guiding option from the provided guiding_config
+        let guidingOption = guidingConfig.mode;
+        for (let guidingConfigMapping of this.guidingConfigMappings) {
+          if (guidingConfigMapping.config.mode === guidingConfig.mode && guidingConfigMapping.config.optional === guidingConfig.optional ) {
+            guidingOption = guidingConfigMapping.option;
+            break;
+          }
+        }
+        return guidingOption;
+      },
+      parseGuideModeOptions: function(modes, includeOptional, excludeModes) {
+        /* Return the guiding options that will be presented to the user.
+          `modes` - List of the instrument's guiding modes
+          `includeOptional` - Boolean indicating whether to include the "OPTIONAL" guiding option
+          `excludeModes` - List of guiding modes that should be excluded from the guiding options
+        */
+        let guideModeOptions = [];
+        for (let mode of modes) {
+          if (mode.code === 'ON' && includeOptional) {
+            guideModeOptions.push({
+              text: 'Optional',
+              value: 'OPTIONAL'
+            });
+          }
+          if (excludeModes.indexOf(mode.code) < 0) {
+            let guidingConfig = this.getGuidingConfigFromGuideOption(mode.code);
+            guideModeOptions.push({
+              text: guidingConfig.optional ? 'Optional ' + mode.name : mode.name,
+              value: mode.code
+            });
+          }
+        }
+        return guideModeOptions;
+      },
+      guideOptionExistsInCurrentGuideOptions: function(guideOption) {
+        // Return whether the provided guide option value is available in the current list of guideModeOptions.
+        let validOptions = _.filter(this.guideModeOptions, (option) => { return option.value === guideOption; });
+        return validOptions.length > 0 ? true : false;
+      },
+      getGuideOptionsUsingDefaultGuideMode: function() {
+        // Return a subset of the current guideModeOptions, including only those options that use the default guide mode.
+        let defaultGuideMode = _.get(this.available_instruments[this.selectedinstrument].modes.guiding, 'default');
+        let guideOptionsWithDefaultMode = [];
+        for (let guideOption of this.guideModeOptions) {
+          let guidingConfig = this.getGuidingConfigFromGuideOption(guideOption.value);
+          if (guidingConfig.mode === defaultGuideMode) {
+            guideOptionsWithDefaultMode.push(guideOption);
+          }
+        }
+        return guideOptionsWithDefaultMode;
+      },
+      getNewGuideOption: function(currentGuideOption) {
+        // Return the value of a new guide option. A new valid guide option should always be found,
+        // but if one is not found, return a reasonable fallback value.
+        const fallbackGuideMode = 'OFF';
+        let newGuideOption = fallbackGuideMode;
+        if (this.guideOptionExistsInCurrentGuideOptions(currentGuideOption)) {
+          newGuideOption = currentGuideOption;
+        } else {
+          let guideOptionsUsingDefaultGuideMode = this.getGuideOptionsUsingDefaultGuideMode();
+          if (guideOptionsUsingDefaultGuideMode.length > 0) {
+            newGuideOption = guideOptionsUsingDefaultGuideMode[0].value;
+          } else {
+            newGuideOption = _.get(this.guideModeOptions, [0, 'value'], fallbackGuideMode);
+          }
+        }
+        return newGuideOption;
       },
       acquisitionModeIsAvailable: function(acquisitionMode, acquisitionExtraParams) {
         // In order for a mode to be available, its code as well as any extra params must match
@@ -396,16 +481,9 @@
       setGuidingFields: function(guidingOption) {
         // Set the fields in the configuration's guiding_config based on the user's chosen 
         // guiding option.
-        if (guidingOption === 'OFF') {
-          this.configuration.guiding_config.optional = false;
-          this.configuration.guiding_config.mode = 'OFF';
-        } else if (guidingOption === 'ON') {
-          this.configuration.guiding_config.optional = false;
-          this.configuration.guiding_config.mode = 'ON';
-        } else {
-          this.configuration.guiding_config.optional = true;
-          this.configuration.guiding_config.mode = 'ON';
-        }
+        let guidingConfig = this.getGuidingConfigFromGuideOption(guidingOption);
+        this.configuration.guiding_config.optional = guidingConfig.optional;
+        this.configuration.guiding_config.mode = guidingConfig.mode;
         this.update();
       },
       setupAcquireAndGuideFieldsForType: function(configurationType) {
@@ -439,12 +517,20 @@
       selectedImagerGuidingOption: function(value) {
         this.setGuidingFields(value);
       },
+      guideModeOptions: function() {
+        // The selected guide mode for spectrographs is already updated elsewhere
+        if (this.datatype !== 'SPECTRA') {
+          let newGuideOption = this.getNewGuideOption(this.selectedImagerGuidingOption);
+          let selectedGuideOptionChanged = this.selectedImagerGuidingOption !== newGuideOption;
+          this.selectedImagerGuidingOption = newGuideOption;
+          if (!selectedGuideOptionChanged) {
+            // If the option did not change, the underlying fields may still have changed. Force an update.
+            this.setGuidingFields(this.selectedImagerGuidingOption);
+          }
+        }
+      },
       selectedinstrument: function(value) {
         if (this.configuration.instrument_type !== value) {
-          // Set the guide mode to OPTIONAL for muscat
-          if (value == '2M0-SCICAM-MUSCAT') {
-            this.selectedImagerGuidingOption = 'OPTIONAL';
-          }
           if (this.datatype === 'SPECTRA') {
             // Need to set up spectrograph here because the instrument might have changed
             // from NRES to FLOYDS, which have different aquire modes and configuration types
