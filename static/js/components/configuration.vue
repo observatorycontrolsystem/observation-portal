@@ -517,7 +517,7 @@
       selectedImagerGuidingOption: function(value) {
         this.setGuidingFields(value);
       },
-      guideModeOptions: function(value) {
+      guideModeOptions: function() {
         // The selected guide mode for spectrographs is already updated elsewhere
         if (this.datatype !== 'SPECTRA') {
           let newGuideOption = this.getNewGuideOption(this.selectedImagerGuidingOption);
