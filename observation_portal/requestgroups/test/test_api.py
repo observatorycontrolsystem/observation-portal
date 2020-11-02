@@ -1995,6 +1995,14 @@ class TestMuscatValidationApi(SetTimeMixin, APITestCase):
         self.assertIn('exposure_time_g error: min value is 0', str(response.content))
         self.assertIn('exposure_time_i error: min value is 0', str(response.content))
 
+    def test_do_not_allow_more_than_one_instrument_config(self):
+        bad_data = self.generic_payload.copy()
+        instrument_config = copy.deepcopy(bad_data['requests'][0]['configurations'][0]['instrument_configs'][0])
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'].append(instrument_config)
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        expected_message = 'Multiple instrument configs are not allowed for the instrument 2M0-SCICAM-MUSCAT'
+        self.assertContains(response, expected_message, status_code=400)
+
 
 class TestGetRequestApi(APITestCase):
     def setUp(self):
