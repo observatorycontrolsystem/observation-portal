@@ -11,6 +11,7 @@ from collections import namedtuple
 import logging
 
 from observation_portal.accounts.tasks import send_mail
+from observation_portal.common.configdb import configdb
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +52,17 @@ class ScienceCollaborationAllocation(models.Model):
                 if k in allocs:
                     allocs[k] += v
         return allocs
+
+    def as_dict(self):
+        return {
+            'name': self.name,
+            'id': self.id,
+            'allocations': [{
+                'telescope_name': alloc.telescope_name,
+                'allocation': alloc.allocation,
+                'raw_telescope_name': configdb.get_raw_telescope_name(alloc.telescope_name)
+            } for alloc in self.collaborationallocation_set.all()]
+        }
 
 
 class CollaborationAllocation(models.Model):
