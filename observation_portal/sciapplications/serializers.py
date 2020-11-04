@@ -9,7 +9,8 @@ class CallSerializer(serializers.ModelSerializer):
     class Meta:
         model = Call
         fields = (
-            'id', 'semester', 'proposal_type', 'proposal_type_display', 'eligibility_short', 'deadline', 'opens'
+            'id', 'semester', 'proposal_type', 'proposal_type_display', 'eligibility_short',
+            'deadline', 'opens'
         )
 
     def get_proposal_type_display(self, obj):
@@ -40,7 +41,7 @@ class ScienceApplicationSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'title', 'abstract', 'status', 'tac_rank', 'call', 'sca', 'submitted', 'pi',
             'pi_first_name', 'pi_last_name', 'pi_institution', 'submitter', 'timerequest_set',
-            'coinvestigator_set'
+            'coinvestigator_set', 'time_requested_by_telescope_name'
         )
 
     def get_sca(self, obj):
