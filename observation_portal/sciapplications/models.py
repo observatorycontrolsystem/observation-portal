@@ -59,6 +59,14 @@ class Call(models.Model):
     def open_calls(cls):
         return cls.objects.filter(opens__lte=timezone.now(), deadline__gte=timezone.now())
 
+    @property
+    def eligible_semesters(self):
+        # List of semesters for which this call can be used
+        if self.proposal_type == Call.KEY_PROPOSAL:
+            return [semester.id for semester in Semester.future_semesters()]
+        else:
+            return [self.semester.id]
+
     def __str__(self):
         return '{0} call for {1}'.format(self.get_proposal_type_display(), self.semester)
 

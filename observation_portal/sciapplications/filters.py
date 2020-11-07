@@ -10,11 +10,15 @@ class ScienceApplicationFilter(django_filters.FilterSet):
     exclude_status = django_filters.ChoiceFilter(
         choices=ScienceApplication.STATUS_CHOICES, exclude=True, field_name='status'
     )
-    proposal_type = django_filters.ChoiceFilter(choices=Call.PROPOSAL_TYPE_CHOICES, field_name='call__proposal_type')
+    proposal_type = django_filters.ChoiceFilter(
+        choices=Call.PROPOSAL_TYPE_CHOICES, field_name='call__proposal_type'
+    )
     exclude_proposal_type = django_filters.ChoiceFilter(
         choices=Call.PROPOSAL_TYPE_CHOICES, exclude=True, field_name='call__proposal_type'
     )
-    only_authored = django_filters.BooleanFilter(method='filter_only_authored')
+    only_authored = django_filters.BooleanFilter(
+        method='filter_only_authored'
+    )
 
     class Meta:
         model = ScienceApplication
