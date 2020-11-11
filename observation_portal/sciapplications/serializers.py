@@ -11,25 +11,29 @@ from observation_portal.sciapplications.models import ScienceApplication, Call, 
 class CallSerializer(serializers.ModelSerializer):
     proposal_type_display = serializers.SerializerMethodField()
     instruments = serializers.SerializerMethodField()
+    sca = serializers.SerializerMethodField()
 
     class Meta:
         model = Call
         fields = (
             'id', 'semester', 'eligible_semesters', 'proposal_type', 'proposal_type_display',
-            'eligibility_short', 'eligibility', 'deadline', 'instruments'
+            'eligibility_short', 'eligibility', 'deadline', 'instruments', 'sca'
         )
 
     def get_proposal_type_display(self, obj):
         return obj.get_proposal_type_display()
 
     def get_instruments(self, obj):
-        return [
-            {
-                'id': instrument.id,
-                'code': instrument.code,
-                'name': instrument.display
-            } for instrument in obj.instruments.all()
-        ]
+        return [instrument.as_dict() for instrument in obj.instruments.all()]
+
+    def get_sca(self, obj):
+        sca_dict = {}
+        if obj.proposal_type == Call.COLLAB_PROPOSAL:
+            sca = self.context['request'].user.sciencecollaborationallocation
+            sca_dict = sca.as_dict()
+            time_requested = sca.time_requested_for_semester(obj.semester, Call.COLLAB_PROPOSAL)
+            sca_dict['time_requested'] = time_requested
+        return sca_dict
 
 
 class CoInvestigatorSerializer(serializers.ModelSerializer):
@@ -45,18 +49,18 @@ class TimeRequestSerializer(serializers.ModelSerializer):
 
 
 class ScienceApplicationReadSerializer(serializers.ModelSerializer):
-    call = CallSerializer()
     coinvestigator_set = CoInvestigatorSerializer(many=True)
-    timerequest_set = TimeRequestSerializer(many=True)
+    timerequest_set = serializers.SerializerMethodField()
     sca = serializers.SerializerMethodField()
     submitter = serializers.SerializerMethodField()
+    call = serializers.SerializerMethodField()
 
     class Meta:
         model = ScienceApplication
         fields = (
             'id', 'title', 'abstract', 'status', 'tac_rank', 'call', 'sca', 'submitted', 'pi',
             'pi_first_name', 'pi_last_name', 'pi_institution', 'submitter', 'timerequest_set',
-            'coinvestigator_set', 'time_requested_by_telescope_name'
+            'coinvestigator_set'
         )
 
     def get_sca(self, obj):
@@ -71,6 +75,26 @@ class ScienceApplicationReadSerializer(serializers.ModelSerializer):
             'last_name': obj.submitter.last_name,
             'institution': obj.submitter.profile.institution
         }
+
+    def get_call(self, obj):
+        return {
+            'id': obj.call.id,
+            'semester': obj.call.semester.id,
+            'proposal_type': obj.call.proposal_type,
+            'proposal_type_display': obj.call.get_proposal_type_display(),
+            'deadline': obj.call.deadline
+        }
+
+    def get_timerequest_set(self, obj):
+        return [
+            {
+                'semester': tr.semester.id,
+                'std_time': tr.std_time,
+                'rr_time': tr.rr_time,
+                'tc_time': tr.tc_time,
+                'instrument': tr.instrument.as_dict()
+            } for tr in obj.timerequest_set.all()
+        ]
 
 
 def get_calls_queryset(request):
@@ -118,7 +142,7 @@ class ScienceApplicationCreateSerializer(serializers.ModelSerializer):
 
         pdf_file = PdfFileReader(pdf.file)
         if pdf_file.getNumPages() > max_pages:
-            raise serializers.ValidationError(_(f'PDF file cannot exceed {self.max_pages} pages'))
+            raise serializers.ValidationError(_(f'PDF file cannot exceed {max_pages} pages'))
 
         return pdf
 
@@ -128,6 +152,27 @@ class ScienceApplicationCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(_('Abstract is limited to 500 words.'))
         return abstract
 
+    def validate_coinvestigator_set(self, data):
+        if len(data) > 1000:
+            raise serializers.ValidationError(_('You are not allowed to set more than 1000 co-investigators.'))
+        return data
+
+    def validate_timerequest_set(self, data):
+        if len(data) > 1000:
+            raise serializers.ValidationError(_('You are not allowed to submmi more than 1000 time requests.'))
+        return data
+
+    @staticmethod
+    def get_required_fields_for_submission(call_proposal_type):
+        required_fields = ['call', 'status', 'title', 'pi', 'pi_first_name', 'pi_last_name', 'pi_institution']
+        if call_proposal_type == Call.DDT_PROPOSAL:
+            required_fields.extend(['pdf'])
+        elif call_proposal_type == Call.COLLAB_PROPOSAL:
+            required_fields.extend(['abstract', 'tac_rank'])
+        else:
+            required_fields.extend(['abstract', 'pdf'])
+        return required_fields
+
     def validate(self, data):
         status = data['status']
         call = data['call']
@@ -135,6 +180,7 @@ class ScienceApplicationCreateSerializer(serializers.ModelSerializer):
         tac_rank = data.get('tac_rank', 0)
 
         for timerequest in timerequest_set:
+            # TODO: Check that the instrument in each timerequest is one of the instruments in the call
             if timerequest['semester'].id not in call.eligible_semesters:
                 raise serializers.ValidationError(_(
                     f'The semesters set for the time requests of this application must be one '
@@ -147,21 +193,13 @@ class ScienceApplicationCreateSerializer(serializers.ModelSerializer):
             ))
 
         if status == ScienceApplication.SUBMITTED:
-            required_fields = ['call', 'status', 'title', 'pi', 'pi_first_name', 'pi_last_name', 'pi_institution']
-            if call.proposal_type == Call.DDT_PROPOSAL:
-                required_fields.extend(['pdf'])
-            elif call.proposal_type == Call.COLLAB_PROPOSAL:
-                required_fields.extend(['abstract', 'tac_rank'])
-            else:
-                required_fields.extend(['abstract', 'pdf'])
-
             missing_fields = {}
-            for field in required_fields:
+            for field in self.get_required_fields_for_submission(call.proposal_type):
                 if not data.get(field):
-                    missing_fields[field] = 'This field is required.'
+                    missing_fields[field] = _('This field is required.')
 
             if missing_fields:
-                raise serializers.ValidationError(_(missing_fields))
+                raise serializers.ValidationError(missing_fields)
 
         return data
 
@@ -183,7 +221,7 @@ class ScienceApplicationCreateSerializer(serializers.ModelSerializer):
         if validated_data['status'] == ScienceApplication.SUBMITTED:
             validated_data['submitted'] = timezone.now()
 
-        instance.update(**validated_data)
+        ScienceApplication.objects.filter(pk=instance.id).update(**validated_data)
 
         return instance
 

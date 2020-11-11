@@ -20,7 +20,7 @@ def raw_telescope_name(alloc_telescope_name):
 
 @register.simple_tag
 def time_requested_by_sca(sca, semester):
-    return sca.time_requested_for_semester(semester)
+    return sca.time_requested_for_semester(semester, 'COLAB')
 
 
 @register.simple_tag

@@ -312,21 +312,21 @@ class ConfigDB(object):
                 instrument_names.add(instrument['code'].lower())
         return instrument_names
 
-    def get_instrument_types_per_telescope_name(self, exclude_states=None) -> dict:
-        """Get a set of instrument types.
+    def get_telescope_name_by_instrument_types(self, exclude_states=None) -> dict:
+        """Get a mapping of instrument type to telescope name.
 
-        Instrument types are returned by telescope name (1 meter, 2 meter, etc...)
+        Telescope names the are returned are e.g. 1 meter, 2 meter, etc...
 
         Parameters:
             exclude_states: Instrument states to exclude
         Returns:
-            Instrument types separated by class
+            Instrument types mapped to telescope names
         """
-        telescope_instrument_names = defaultdict(set)
+        instrument_types_to_telescope_name = {}
         for instrument in self.get_instruments(exclude_states=exclude_states):
             tel_name = instrument['telescope_name']
-            telescope_instrument_names[tel_name].add(instrument['instrument_type']['code'].upper())
-        return telescope_instrument_names
+            instrument_types_to_telescope_name[instrument['instrument_type']['code'].upper()] = tel_name
+        return instrument_types_to_telescope_name
 
     def get_telescopes_per_instrument_type(self, instrument_type_code: str, only_schedulable: bool = False) -> set:
         """Get a set of telescope keys.

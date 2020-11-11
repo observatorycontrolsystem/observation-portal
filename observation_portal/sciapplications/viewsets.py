@@ -45,7 +45,10 @@ class ScienceApplicationViewSet(viewsets.ModelViewSet):
         if self.action == 'update':
             qs = qs.filter(status=ScienceApplication.DRAFT)
 
-        return qs
+        return qs.prefetch_related(
+            'call', 'call__semester', 'submitter', 'submitter__profile', 'submitter__sciencecollaborationallocation',
+            'timerequest_set', 'timerequest_set__instrument', 'coinvestigator_set',
+        )
 
     def get_serializer_class(self):
         if self.action in ['list', 'retrieve']:

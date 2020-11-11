@@ -3,7 +3,6 @@ from django.contrib.auth.models import User
 from django.utils.translation import ugettext as _
 
 from observation_portal.accounts.models import Profile
-from observation_portal.sciapplications.models import Call
 
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -29,7 +28,6 @@ class UserSerializer(serializers.ModelSerializer):
     is_staff = serializers.BooleanField(read_only=True)
     proposals = serializers.SerializerMethodField()
     proposal_notifications = serializers.SerializerMethodField()
-    sciencecollaborationallocation = serializers.SerializerMethodField()
     profile = ProfileSerializer(required=False)
     available_instrument_types = serializers.SerializerMethodField()
     tokens = serializers.SerializerMethodField()
@@ -38,7 +36,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = (
             'username', 'first_name', 'last_name', 'email', 'profile', 'is_staff', 'proposals',
-            'available_instrument_types', 'tokens', 'proposal_notifications', 'sciencecollaborationallocation'
+            'available_instrument_types', 'tokens', 'proposal_notifications'
         )
 
     def get_proposals(self, obj):
@@ -50,22 +48,10 @@ class UserSerializer(serializers.ModelSerializer):
     def get_proposal_notifications(self, obj):
         return [pn.proposal.id for pn in obj.proposalnotification_set.all()]
 
-    def get_sciencecollaborationallocation(self, obj):
-        sca = None
-        if hasattr(obj, 'sciencecollaborationallocation'):
-            sca = obj.sciencecollaborationallocation.as_dict()
-            open_calls = Call.open_calls().filter(proposal_type=Call.COLLAB_PROPOSAL)
-            time_requested = {}
-            for open_call in open_calls:
-                time_requested[open_call.semester.id] = obj.sciencecollaborationallocation.time_requested_for_semester(
-                    open_call.semester.id
-                )
-            sca['time_requested_for_open_calls'] = time_requested
-        return sca
-
     def get_available_instrument_types(self, obj):
         instrument_types = set()
-        for proposal in obj.proposal_set.filter(active=True):
+        active_proposals = [proposal for proposal in obj.proposal_set.all() if proposal.active]
+        for proposal in active_proposals:
             for timeallocation in proposal.timeallocation_set.all():
                 if timeallocation.instrument_type:
                     instrument_types.add(timeallocation.instrument_type)

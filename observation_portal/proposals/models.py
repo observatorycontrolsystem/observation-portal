@@ -10,6 +10,7 @@ from django.utils.html import strip_tags
 from collections import namedtuple
 import logging
 
+
 from observation_portal.accounts.tasks import send_mail
 from observation_portal.common.configdb import configdb
 
@@ -45,23 +46,20 @@ class ScienceCollaborationAllocation(models.Model):
     def __str__(self):
         return self.id
 
-    def time_requested_for_semester(self, semester):
+    def time_requested_for_semester(self, semester, proposal_type):
         allocs = {ca.telescope_name: 0 for ca in self.collaborationallocation_set.all()}
-        for sciapp in self.admin.scienceapplication_set.filter(call__semester=semester, call__proposal_type='COLAB'):
-            for k, v in sciapp.time_requested_by_telescope_name.items():
-                if k in allocs:
-                    allocs[k] += v
+        sciapp_filters = {'call__semester': semester, 'call__proposal_type': proposal_type}
+        for sciapp in self.admin.scienceapplication_set.filter(**sciapp_filters):
+            for telescope_name, time_requested in sciapp.time_requested_by_telescope_name.items():
+                if telescope_name in allocs:
+                    allocs[telescope_name] += time_requested
         return allocs
 
     def as_dict(self):
         return {
             'name': self.name,
             'id': self.id,
-            'allocations': [{
-                'telescope_name': alloc.telescope_name,
-                'allocation': alloc.allocation,
-                'raw_telescope_name': configdb.get_raw_telescope_name(alloc.telescope_name)
-            } for alloc in self.collaborationallocation_set.all()]
+            'collaborationallocation_set': [alloc.as_dict() for alloc in self.collaborationallocation_set.all()]
         }
 
 
@@ -72,6 +70,13 @@ class CollaborationAllocation(models.Model):
 
     def __str__(self):
         return f'CollaborationAllocation for {self.sca.id}-{self.telescope_name}'
+
+    def as_dict(self):
+        return {
+            'allocation': self.allocation,
+            'telescope_name': self.telescope_name,
+            'raw_telescope_name': configdb.get_raw_telescope_name(self.telescope_name)
+        }
 
 
 class Proposal(models.Model):
