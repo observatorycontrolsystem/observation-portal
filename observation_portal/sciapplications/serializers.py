@@ -43,14 +43,19 @@ class CoInvestigatorSerializer(serializers.ModelSerializer):
 
 
 class TimeRequestSerializer(serializers.ModelSerializer):
+    telescope_name = serializers.SerializerMethodField()
+
     class Meta:
         model = TimeRequest
-        fields = ('semester', 'std_time', 'rr_time', 'tc_time', 'instrument')
+        fields = ('semester', 'std_time', 'rr_time', 'tc_time', 'instrument', 'telescope_name')
+
+    def get_telescope_name(self, obj):
+        return obj.instrument.telescope_name
 
 
 class ScienceApplicationReadSerializer(serializers.ModelSerializer):
     coinvestigator_set = CoInvestigatorSerializer(many=True)
-    timerequest_set = serializers.SerializerMethodField()
+    timerequest_set = TimeRequestSerializer(many=True)
     sca = serializers.SerializerMethodField()
     submitter = serializers.SerializerMethodField()
     call = serializers.SerializerMethodField()
@@ -84,17 +89,6 @@ class ScienceApplicationReadSerializer(serializers.ModelSerializer):
             'proposal_type_display': obj.call.get_proposal_type_display(),
             'deadline': obj.call.deadline
         }
-
-    def get_timerequest_set(self, obj):
-        return [
-            {
-                'semester': tr.semester.id,
-                'std_time': tr.std_time,
-                'rr_time': tr.rr_time,
-                'tc_time': tr.tc_time,
-                'instrument': tr.instrument.as_dict()
-            } for tr in obj.timerequest_set.all()
-        ]
 
 
 def get_calls_queryset(request):
@@ -153,13 +147,19 @@ class ScienceApplicationCreateSerializer(serializers.ModelSerializer):
         return abstract
 
     def validate_coinvestigator_set(self, data):
-        if len(data) > 1000:
-            raise serializers.ValidationError(_('You are not allowed to set more than 1000 co-investigators.'))
+        max_coinvestigators = 1000
+        if len(data) > max_coinvestigators:
+            raise serializers.ValidationError(_(
+                f'You are not allowed to set more than {max_coinvestigators} co-investigators.'
+            ))
         return data
 
     def validate_timerequest_set(self, data):
-        if len(data) > 1000:
-            raise serializers.ValidationError(_('You are not allowed to submmi more than 1000 time requests.'))
+        max_timerequests = 1000
+        if len(data) > max_timerequests:
+            raise serializers.ValidationError(_(
+                f'You are not allowed to submit more than {max_timerequests} time requests.'
+            ))
         return data
 
     @staticmethod
@@ -180,11 +180,16 @@ class ScienceApplicationCreateSerializer(serializers.ModelSerializer):
         tac_rank = data.get('tac_rank', 0)
 
         for timerequest in timerequest_set:
-            # TODO: Check that the instrument in each timerequest is one of the instruments in the call
             if timerequest['semester'].id not in call.eligible_semesters:
                 raise serializers.ValidationError(_(
                     f'The semesters set for the time requests of this application must be one '
-                    f'of {", ".join(call.eligible_semesters)}'
+                    f'of [{", ".join(call.eligible_semesters)}]'
+                ))
+            call_instrument_ids = [instrument.id for instrument in call.instruments.all()]
+            if timerequest['instrument'].id not in call_instrument_ids:
+                raise serializers.ValidationError(_(
+                    f'The instrument IDs set for the time requests of this application must be one '
+                    f'of [{", ".join(call_instrument_ids)}]'
                 ))
 
         if tac_rank > 0 and call.proposal_type != Call.COLLAB_PROPOSAL:
