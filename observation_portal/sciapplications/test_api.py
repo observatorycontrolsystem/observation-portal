@@ -272,7 +272,7 @@ class TestGetScienceApplicationDetailAPI(APITestCase):
         mixer.blend(TimeRequest, science_application=app, instrument=instrument, std_time=8)
         response = self.client.get(reverse('api:scienceapplications-detail', kwargs={'pk': app.id}))
         self.assertEqual(response.json()['timerequest_set'][0]['std_time'], 8)
-        self.assertEqual(response.json()['timerequest_set'][0]['instrument']['telescope_name'], '1 meter')
+        self.assertEqual(response.json()['timerequest_set'][0]['telescope_name'], '1 meter')
 
 
 class TestListScienceApplicationAPI(APITestCase):
@@ -657,6 +657,7 @@ class TestPostUpdateSciApp(DramatiqTestCase):
             proposal_type=Call.SCI_PROPOSAL
         )
         self.instrument = mixer.blend(Instrument, call=self.call)
+        self.call.instruments.add(self.instrument)
         self.app = mixer.blend(
             ScienceApplication,
             status=ScienceApplication.DRAFT,
