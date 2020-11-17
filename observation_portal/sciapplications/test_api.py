@@ -655,7 +655,8 @@ class TestPostCreateSciApp(DramatiqTestCase):
     def test_cannot_submit_an_application_before_the_call_opens(self):
         future_call = mixer.blend(
             Call, opens=timezone.now() + timedelta(days=7),
-            closed=timezone.now() + timedelta(days=14), semester=self.semester
+            closed=timezone.now() + timedelta(days=14), semester=self.semester,
+            proposal_type=Call.SCI_PROPOSAL
         )
         data = self.sci_data.copy()
         data['call'] = future_call.id
@@ -665,7 +666,8 @@ class TestPostCreateSciApp(DramatiqTestCase):
     def test_cannot_submit_an_application_after_the_call_deadline(self):
         past_call = mixer.blend(
             Call, opens=timezone.now() - timedelta(days=14),
-            closed=timezone.now() - timedelta(days=7), semester=self.semester
+            closed=timezone.now() - timedelta(days=7), semester=self.semester,
+            proposal_type=Call.SCI_PROPOSAL
         )
         data = self.sci_data.copy()
         data['call'] = past_call.id
