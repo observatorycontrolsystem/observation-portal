@@ -13,7 +13,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         fields = (
             'education_user', 'notifications_enabled', 'notifications_on_authored_only',
             'simple_interface', 'view_authored_requests_only', 'title', 'staff_view',
-            'institution', 'api_quota', 'terms_accepted'
+            'institution', 'api_quota', 'terms_accepted', 'is_scicollab_admin'
         )
 
     def validate_staff_view(self, staff_view):

@@ -1,14 +1,11 @@
 from rest_framework import viewsets, filters
 from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.decorators import action
-from rest_framework.response import Response
 from django.template.loader import render_to_string
 
 from observation_portal.accounts.tasks import send_mail
 from observation_portal.sciapplications.serializers import (
-    ScienceApplicationCreateSerializer, ScienceApplicationReadSerializer, CallSerializer,
-    get_calls_queryset
+    ScienceApplicationCreateSerializer, ScienceApplicationReadSerializer, CallSerializer
 )
 from observation_portal.sciapplications.filters import ScienceApplicationFilter
 from observation_portal.sciapplications.models import ScienceApplication, Call
@@ -19,7 +16,10 @@ class CallViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = CallSerializer
 
     def get_queryset(self):
-        return get_calls_queryset(self.request)
+        if self.request.user.profile.is_scicollab_admin:
+            return Call.open_calls()
+        else:
+            return Call.open_calls().exclude(proposal_type=Call.COLLAB_PROPOSAL)
 
 
 class ScienceApplicationViewSet(viewsets.ModelViewSet):
@@ -51,14 +51,10 @@ class ScienceApplicationViewSet(viewsets.ModelViewSet):
         )
 
     def get_serializer_class(self):
-        if self.action in ['list', 'retrieve']:
-            return ScienceApplicationReadSerializer
-        else:
+        if self.action in ['update', 'create']:
             return ScienceApplicationCreateSerializer
-
-    @action(detail=True, methods=['get'])
-    def pdf(self):
-        return Response({'message': 'This will return a pdf'})
+        else:
+            return ScienceApplicationReadSerializer
 
     def perform_destroy(self, instance):
         if instance.status == ScienceApplication.DRAFT:

@@ -1,9 +1,10 @@
 import os
 
-from rest_framework import serializers
-from PyPDF2 import PdfFileReader
 from django.utils.translation import ugettext as _
 from django.utils import timezone
+from django.db import transaction
+from PyPDF2 import PdfFileReader
+from rest_framework import serializers
 
 from observation_portal.sciapplications.models import ScienceApplication, Call, TimeRequest, CoInvestigator
 
@@ -65,7 +66,7 @@ class ScienceApplicationReadSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'title', 'abstract', 'status', 'tac_rank', 'call', 'sca', 'submitted', 'pi',
             'pi_first_name', 'pi_last_name', 'pi_institution', 'submitter', 'timerequest_set',
-            'coinvestigator_set'
+            'coinvestigator_set', 'pdf'
         )
 
     def get_sca(self, obj):
@@ -91,32 +92,29 @@ class ScienceApplicationReadSerializer(serializers.ModelSerializer):
         }
 
 
-def get_calls_queryset(request):
-    if hasattr(request.user, 'sciencecollaborationallocation'):
-        return Call.open_calls()
-    else:
-        return Call.open_calls().exclude(proposal_type=Call.COLLAB_PROPOSAL)
-
-
-class OpenCallsPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
+class CallsPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
     def get_queryset(self):
-        return get_calls_queryset(self.context['request'])
+        if self.context['request'].user.profile.is_scicollab_admin:
+            return Call.objects.all()
+        else:
+            return Call.objects.exclude(proposal_type=Call.COLLAB_PROPOSAL)
 
 
 class ScienceApplicationCreateSerializer(serializers.ModelSerializer):
     title = serializers.CharField(required=True)
     status = serializers.CharField(required=True)
-    call = OpenCallsPrimaryKeyRelatedField(required=True)
+    call = CallsPrimaryKeyRelatedField(required=True)
     coinvestigator_set = CoInvestigatorSerializer(many=True, required=False)
     timerequest_set = TimeRequestSerializer(many=True, required=False)
     pdf = serializers.FileField(required=False)
+    clear_pdf = serializers.BooleanField(required=False, default=False, write_only=True)
 
     class Meta:
         model = ScienceApplication
         fields = (
             'id', 'title', 'abstract', 'status', 'tac_rank', 'call', 'pi',
             'pi_first_name', 'pi_last_name', 'pi_institution', 'timerequest_set',
-            'coinvestigator_set', 'pdf'
+            'coinvestigator_set', 'pdf', 'clear_pdf'
         )
 
     def validate_status(self, status):
@@ -126,6 +124,11 @@ class ScienceApplicationCreateSerializer(serializers.ModelSerializer):
         if status not in valid_statuses:
             raise serializers.ValidationError(_(f'Application status must be one of [{", ".join(valid_statuses)}]'))
         return status
+
+    def validate_call(self, call):
+        if not call.opens <= timezone.now() <= call.deadline:
+            raise serializers.ValidationError(_('The call is not open.'))
+        return call
 
     def validate_pdf(self, pdf):
         max_pages = 999
@@ -146,22 +149,6 @@ class ScienceApplicationCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(_('Abstract is limited to 500 words.'))
         return abstract
 
-    def validate_coinvestigator_set(self, data):
-        max_coinvestigators = 1000
-        if len(data) > max_coinvestigators:
-            raise serializers.ValidationError(_(
-                f'You are not allowed to set more than {max_coinvestigators} co-investigators.'
-            ))
-        return data
-
-    def validate_timerequest_set(self, data):
-        max_timerequests = 1000
-        if len(data) > max_timerequests:
-            raise serializers.ValidationError(_(
-                f'You are not allowed to submit more than {max_timerequests} time requests.'
-            ))
-        return data
-
     @staticmethod
     def get_required_fields_for_submission(call_proposal_type):
         required_fields = ['call', 'status', 'title', 'pi', 'pi_first_name', 'pi_last_name', 'pi_institution']
@@ -176,8 +163,16 @@ class ScienceApplicationCreateSerializer(serializers.ModelSerializer):
     def validate(self, data):
         status = data['status']
         call = data['call']
+        clear_pdf = data.get('clear_pdf', False)
+        pdf = data.get('pdf', None)
         timerequest_set = data.get('timerequest_set', [])
         tac_rank = data.get('tac_rank', 0)
+
+        if pdf is not None and clear_pdf:
+            raise serializers.ValidationError(_('Please either submit a new pdf or clear the existing pdf, not both.'))
+
+        if pdf is not None and call.proposal_type == Call.COLLAB_PROPOSAL:
+            raise serializers.ValidationError(_('Science collaboration proposals do not have pdfs.'))
 
         for timerequest in timerequest_set:
             if timerequest['semester'].id not in call.eligible_semesters:
@@ -189,7 +184,7 @@ class ScienceApplicationCreateSerializer(serializers.ModelSerializer):
             if timerequest['instrument'].id not in call_instrument_ids:
                 raise serializers.ValidationError(_(
                     f'The instrument IDs set for the time requests of this application must be one '
-                    f'of [{", ".join(call_instrument_ids)}]'
+                    f'of [{", ".join([str(i) for i in call_instrument_ids])}]'
                 ))
 
         if tac_rank > 0 and call.proposal_type != Call.COLLAB_PROPOSAL:
@@ -198,54 +193,66 @@ class ScienceApplicationCreateSerializer(serializers.ModelSerializer):
             ))
 
         if status == ScienceApplication.SUBMITTED:
+            if len(timerequest_set) < 1:
+                raise serializers.ValidationError(_(
+                    'You must provide at least one time request to submit an application'
+                ))
+
             missing_fields = {}
             for field in self.get_required_fields_for_submission(call.proposal_type):
-                if not data.get(field):
+                empty_values = [None, '']
+                if data.get(field) in empty_values:
                     missing_fields[field] = _('This field is required.')
 
             if missing_fields:
                 raise serializers.ValidationError(missing_fields)
 
+            data['submitted'] = timezone.now()
+
         return data
 
     def update(self, instance, validated_data):
         # TODO: Do this without needing to delete all existing time requests and coinvestigators
+        pdf = validated_data.pop('pdf', None)
+        clear_pdf = validated_data.pop('clear_pdf', False)
         timerequest_set = validated_data.pop('timerequest_set', [])
         coinvestigator_set = validated_data.pop('coinvestigator_set', [])
 
-        for timerequest in instance.timerequest_set.all():
-            timerequest.delete()
-        for coinvestigator in instance.coinvestigator_set.all():
-            coinvestigator.delete()
+        with transaction.atomic():
+            for field, value in validated_data.items():
+                setattr(instance, field, value)
 
-        for timerequest in timerequest_set:
-            TimeRequest.objects.create(**timerequest, science_application=instance)
-        for coinvestigator in coinvestigator_set:
-            CoInvestigator.objects.create(**coinvestigator, science_application=instance)
+            # The pdf may be set to `None` because a user does not want to change their previously
+            # uploaded pdf. Use `clear_pdf` to determine if the pdf should be cleared.
+            if pdf is not None:
+                instance.pdf = pdf
+            elif clear_pdf:
+                instance.pdf = None
 
-        if validated_data['status'] == ScienceApplication.SUBMITTED:
-            validated_data['submitted'] = timezone.now()
+            instance.save()
 
-        ScienceApplication.objects.filter(pk=instance.id).update(**validated_data)
+            for timerequest in instance.timerequest_set.all():
+                timerequest.delete()
+            for coinvestigator in instance.coinvestigator_set.all():
+                coinvestigator.delete()
+
+            for timerequest in timerequest_set:
+                TimeRequest.objects.create(**timerequest, science_application=instance)
+            for coinvestigator in coinvestigator_set:
+                CoInvestigator.objects.create(**coinvestigator, science_application=instance)
 
         return instance
 
     def create(self, validated_data):
+        validated_data.pop('clear_pdf', False)
         timerequest_set = validated_data.pop('timerequest_set', [])
         coinvestigator_set = validated_data.pop('coinvestigator_set', [])
-        # The pdf save path requires the sciapp instance id, so you must save the sciapp before saving the pdf.
-        pdf = validated_data.pop('pdf', None)
 
-        if validated_data['status'] == ScienceApplication.SUBMITTED:
-            validated_data['submitted'] = timezone.now()
-
-        sciapp = ScienceApplication.objects.create(**validated_data, submitter=self.context['request'].user)
-        sciapp.pdf = pdf
-        sciapp.save()
-
-        for timerequest in timerequest_set:
-            TimeRequest.objects.create(**timerequest, science_application=sciapp)
-        for coinvestigator in coinvestigator_set:
-            CoInvestigator.objects.create(**coinvestigator, science_application=sciapp)
+        with transaction.atomic():
+            sciapp = ScienceApplication.objects.create(**validated_data, submitter=self.context['request'].user)
+            for timerequest in timerequest_set:
+                TimeRequest.objects.create(**timerequest, science_application=sciapp)
+            for coinvestigator in coinvestigator_set:
+                CoInvestigator.objects.create(**coinvestigator, science_application=sciapp)
 
         return sciapp

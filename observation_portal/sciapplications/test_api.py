@@ -1,6 +1,7 @@
 from datetime import timedelta
-from os import urandom
+from os import urandom, path
 from unittest.mock import patch
+from random import randint
 
 from rest_framework.test import APITestCase
 from mixer.backend.django import mixer
@@ -10,11 +11,33 @@ from django.urls import reverse
 from django.utils import timezone
 from django_dramatiq.test import DramatiqTestCase
 from django.test.client import MULTIPART_CONTENT, BOUNDARY, encode_multipart
+from faker import Faker
 
 from observation_portal.sciapplications.models import ScienceApplication, Call, CoInvestigator, Instrument, TimeRequest
 from observation_portal.proposals.models import Semester, ScienceCollaborationAllocation, CollaborationAllocation
 from observation_portal.accounts.test_utils import blend_user
 from observation_portal.sciapplications.serializers import ScienceApplicationCreateSerializer
+
+fake = Faker()
+
+
+def generate_time_request_data(index, instrument, semester):
+    return {
+        f'timerequest_set[{index}]instrument': instrument.id,
+        f'timerequest_set[{index}]semester': semester.id,
+        f'timerequest_set[{index}]std_time': randint(0, 100),
+        f'timerequest_set[{index}]rr_time': randint(0, 100),
+        f'timerequest_set[{index}]tc_time': randint(0, 100)
+    }
+
+
+def generate_coinvestigator_data(index):
+    return {
+        f'coinvestigator_set[{index}]email': fake.email(),
+        f'coinvestigator_set[{index}]first_name': fake.first_name(),
+        f'coinvestigator_set[{index}]last_name': fake.last_name(),
+        f'coinvestigator_set[{index}]institution': fake.company()
+    }
 
 
 class MockPDFFileReader:
@@ -343,63 +366,63 @@ class TestPostCreateSciApp(DramatiqTestCase):
             Semester, start=timezone.now() + timedelta(days=1), end=timezone.now() + timedelta(days=365)
         )
         self.user = blend_user()
+        self.scicollab_admin = blend_user()
+        mixer.blend(ScienceCollaborationAllocation, admin=self.scicollab_admin)
         self.client.force_login(self.user)
         self.instrument = mixer.blend(Instrument)
-        self.call = mixer.blend(
+        self.closed_call = mixer.blend(
             Call, semester=self.semester,
+            opens=timezone.now() - timedelta(days=14),
+            deadline=timezone.now() - timedelta(days=7),
+            proposal_type=Call.SCI_PROPOSAL,
+            instruments=(self.instrument,)
+        )
+        self.sci_call = mixer.blend(
+            Call, semester=self.semester,
+            opens=timezone.now() - timedelta(days=7),
             deadline=timezone.now() + timedelta(days=7),
             proposal_type=Call.SCI_PROPOSAL,
             instruments=(self.instrument,)
         )
         self.key_call = mixer.blend(
             Call, semester=self.semester,
+            opens=timezone.now() - timedelta(days=7),
             deadline=timezone.now() + timedelta(days=7),
             proposal_type=Call.KEY_PROPOSAL,
             instruments=(self.instrument,)
         )
         self.ddt_call = mixer.blend(
             Call, semester=self.semester,
+            opens=timezone.now() - timedelta(days=7),
             deadline=timezone.now() + timedelta(days=7),
             proposal_type=Call.DDT_PROPOSAL,
             instruments=(self.instrument,)
         )
         self.collab_call = mixer.blend(
             Call, semester=self.semester,
+            opens=timezone.now() - timedelta(days=7),
             deadline=timezone.now() + timedelta(days=7),
             proposal_type=Call.COLLAB_PROPOSAL,
             instruments=(self.instrument,)
         )
         data = {
-            'call': self.call.id,
-            'status': 'SUBMITTED',
-            'title': 'Test Title',
-            'pi': 'test@example.com',
-            'pi_first_name': 'Joe',
-            'pi_last_name': 'Schmoe',
-            'pi_institution': 'Walmart',
+            'status': ScienceApplication.SUBMITTED,
+            'title': fake.text(max_nb_chars=50),
+            'pi': fake.email(),
+            'pi_first_name': fake.first_name(),
+            'pi_last_name': fake.last_name(),
+            'pi_institution': fake.company(),
             'pdf': SimpleUploadedFile('s.pdf', b'ab'),
-            'abstract': 'test abstract value',
+            'abstract': fake.text(),
             'tac_rank': 1
         }
-        timerequest_data = {
-            'timerequest_set[0]id': '',
-            'timerequest_set[0]instrument': self.instrument.id,
-            'timerequest_set[0]semester': self.semester.id,
-            'timerequest_set[0]std_time': 30,
-            'timerequest_set[0]rr_time': 1,
-            'timerequest_set[0]tc_time': 5,
-        }
-        ci_data = {
-            'coinvestigator_set[0]id': '',
-            'coinvestigator_set[0]email': 'bilbo@baggins.com',
-            'coinvestigator_set[0]first_name': 'Bilbo',
-            'coinvestigator_set[0]last_name': 'Baggins',
-            'coinvestigator_set[0]institution': 'lco',
-        }
+        timerequest_data = generate_time_request_data(0, self.instrument, self.semester)
+        ci_data = generate_coinvestigator_data(0)
         self.sci_data = {
             k: data[k] for k in data
             if k in ScienceApplicationCreateSerializer.get_required_fields_for_submission(Call.SCI_PROPOSAL)
         }
+        self.sci_data['call'] = self.sci_call.id
         self.sci_data.update(timerequest_data)
         self.sci_data.update(ci_data)
         self.key_data = {
@@ -416,6 +439,7 @@ class TestPostCreateSciApp(DramatiqTestCase):
         self.ddt_data['call'] = self.ddt_call.id
         self.ddt_data.update(timerequest_data)
         self.ddt_data.update(ci_data)
+
         self.collab_data = {
             k: data[k] for k in data
             if k in ScienceApplicationCreateSerializer.get_required_fields_for_submission(Call.COLLAB_PROPOSAL)
@@ -424,9 +448,14 @@ class TestPostCreateSciApp(DramatiqTestCase):
         self.collab_data.update(timerequest_data)
         self.collab_data.update(ci_data)
 
+    def test_must_be_authenticated(self):
+        self.client.logout()
+        good_data = self.sci_data.copy()
+        response = self.client.post(reverse('api:scienceapplications-list'), data=good_data)
+        self.assertEqual(response.status_code, 403)
+
     def test_post_sci_form(self):
         good_data = self.sci_data.copy()
-        good_data['call'] = self.call.id
         num_apps = self.user.scienceapplication_set.count()
         response = self.client.post(reverse('api:scienceapplications-list'), data=good_data)
         self.assertEqual(num_apps + 1, self.user.scienceapplication_set.count())
@@ -434,49 +463,40 @@ class TestPostCreateSciApp(DramatiqTestCase):
 
     def test_post_key_form(self):
         good_data = self.key_data.copy()
-        good_data['call'] = self.key_call.id
         num_apps = self.user.scienceapplication_set.count()
         response = self.client.post(reverse('api:scienceapplications-list'), data=good_data)
         self.assertEqual(num_apps + 1, self.user.scienceapplication_set.count())
         self.assertContains(response, self.key_data['title'], status_code=201)
 
     def test_post_key_form_multiple_semesters(self):
-        good_data = self.key_data.copy()
-        good_data['call'] = self.key_call.id
         other_semester = mixer.blend(
             Semester, start=timezone.now() + timedelta(days=20), end=timezone.now() + timedelta(days=60)
         )
-        good_data['timerequest_set[1]id'] = '',
-        good_data['timerequest_set[1]semester'] = other_semester.id
-        good_data['timerequest_set[1]instrument'] = self.instrument.id,
-        good_data['timerequest_set[1]std_time'] = 30,
-        good_data['timerequest_set[1]rr_time'] = 1,
-        good_data['timerequest_set[1]tc_time'] = 5,
+        good_data = {**self.key_data.copy(), **generate_time_request_data(1, self.instrument, other_semester)}
         response = self.client.post(reverse('api:scienceapplications-list'), data=good_data)
+        timerequests = self.user.scienceapplication_set.first().timerequest_set
         self.assertEqual(response.status_code, 201)
-        self.assertTrue(self.user.scienceapplication_set.first().timerequest_set.filter(semester=self.semester).exists())
-        self.assertTrue(self.user.scienceapplication_set.first().timerequest_set.filter(semester=other_semester).exists())
+        self.assertEqual(timerequests.count(), 2)
+        self.assertTrue(timerequests.filter(semester=self.semester).exists())
+        self.assertTrue(timerequests.filter(semester=other_semester).exists())
 
     def test_post_ddt_form(self):
         good_data = self.ddt_data.copy()
-        good_data['call'] = self.ddt_call.id
         num_apps = self.user.scienceapplication_set.count()
         response = self.client.post(reverse('api:scienceapplications-list'), data=good_data)
         self.assertEqual(num_apps + 1, self.user.scienceapplication_set.count())
         self.assertContains(response, self.ddt_data['title'], status_code=201)
 
     def test_post_collab_form(self):
+        self.client.force_login(self.scicollab_admin)
         good_data = self.collab_data.copy()
-        good_data['call'] = self.collab_call.id
-        mixer.blend(ScienceCollaborationAllocation, admin=self.user)
         num_apps = self.user.scienceapplication_set.count()
         response = self.client.post(reverse('api:scienceapplications-list'), data=good_data)
-        self.assertEqual(num_apps + 1, self.user.scienceapplication_set.count())
+        self.assertEqual(num_apps + 1, self.scicollab_admin.scienceapplication_set.count())
         self.assertContains(response, self.collab_data['title'], status_code=201)
 
     def test_normal_user_post_collab_form(self):
         bad_data = self.collab_data.copy()
-        bad_data['call'] = self.collab_call.id
         num_apps = self.user.scienceapplication_set.count()
         response = self.client.post(reverse('api:scienceapplications-list'), data=bad_data)
         self.assertEqual(num_apps, self.user.scienceapplication_set.count())
@@ -484,8 +504,7 @@ class TestPostCreateSciApp(DramatiqTestCase):
 
     def test_can_save_incomplete(self):
         data = self.sci_data.copy()
-        data['status'] = 'DRAFT'
-        data['call'] = self.call.id
+        data['status'] = ScienceApplication.DRAFT
         del data['abstract']
         response = self.client.post(reverse('api:scienceapplications-list'), data=data)
         self.assertEqual(self.user.scienceapplication_set.last().abstract, '')
@@ -495,44 +514,25 @@ class TestPostCreateSciApp(DramatiqTestCase):
     def test_cannot_submit_incomplete(self):
         data = self.sci_data.copy()
         del data['abstract']
-        data['call'] = self.call.id
         response = self.client.post(reverse('api:scienceapplications-list'), data=data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(self.user.scienceapplication_set.count(), 0)
         self.assertEqual(response.json().get('abstract', [''])[0], 'This field is required.')
 
     def test_multiple_time_requests(self):
-        data = self.sci_data.copy()
-        data['call'] = self.call.id
-        data.update({
-            'timerequest_set[1]id': '',
-            'timerequest_set[1]instrument': self.instrument.id,
-            'timerequest_set[1]semester': self.semester.id,
-            'timerequest_set[1]std_time': 20,
-            'timerequest_set[1]rr_time': 10,
-            'timerequest_set[1]tc_time': 5,
-        })
+        data = {**self.sci_data.copy(), **generate_time_request_data(1, self.instrument, self.semester)}
         response = self.client.post(reverse('api:scienceapplications-list'), data=data)
         self.assertEqual(self.user.scienceapplication_set.last().timerequest_set.count(), 2)
         self.assertEqual(response.status_code, 201)
 
     def test_multiple_coi(self):
-        data = self.sci_data.copy()
-        data['call'] = self.call.id
-        data.update({
-            'coinvestigator_set[1]id': '',
-            'coinvestigator_set[1]email': 'frodo@baggins.com',
-            'coinvestigator_set[1]first_name': 'Frodo',
-            'coinvestigator_set[1]last_name': 'Baggins',
-            'coinvestigator_set[1]institution': 'lco',
-        })
+        data = {**self.sci_data.copy(), **generate_coinvestigator_data(1)}
         response = self.client.post(reverse('api:scienceapplications-list'), data=data)
         self.assertEqual(self.user.scienceapplication_set.last().coinvestigator_set.count(), 2)
         self.assertEqual(response.status_code, 201)
 
     def test_can_post_own_email(self):
         data = self.sci_data.copy()
-        data['call'] = self.call.id
         data['pi'] = self.user.email
         response = self.client.post(reverse('api:scienceapplications-list'), data=data)
         self.assertEqual(self.user.scienceapplication_set.last().pi, self.user.email)
@@ -542,7 +542,6 @@ class TestPostCreateSciApp(DramatiqTestCase):
     def test_extra_pi_data_required(self):
         bad_data = self.sci_data.copy()
         del bad_data['pi_first_name']
-        bad_data['call'] = self.call.id
         response = self.client.post(reverse('api:scienceapplications-list'), data=bad_data)
         self.assertEqual(self.user.scienceapplication_set.count(), 0)
         self.assertEqual(response.json().get('pi_first_name', [''])[0], 'This field is required.')
@@ -550,8 +549,7 @@ class TestPostCreateSciApp(DramatiqTestCase):
 
     def test_can_leave_out_pi_in_draft(self):
         data = self.sci_data.copy()
-        data['status'] = 'DRAFT'
-        data['call'] = self.call.id
+        data['status'] = ScienceApplication.DRAFT
         del data['pi']
         del data['pi_first_name']
         del data['pi_last_name']
@@ -562,7 +560,6 @@ class TestPostCreateSciApp(DramatiqTestCase):
 
     def test_cannot_leave_out_pi_in_submission(self):
         data = self.sci_data.copy()
-        data['call'] = self.call.id
         del data['pi']
         del data['pi_first_name']
         del data['pi_last_name']
@@ -573,12 +570,10 @@ class TestPostCreateSciApp(DramatiqTestCase):
         self.assertEqual(response.json().get('pi_first_name', [''])[0], 'This field is required.')
         self.assertEqual(response.json().get('pi_last_name', [''])[0], 'This field is required.')
         self.assertEqual(response.json().get('pi_institution', [''])[0], 'This field is required.')
-
         self.assertEqual(response.status_code, 400)
 
-    def test_cannot_upload_silly_files(self):
+    def test_cannot_upload_files_that_arent_pdfs(self):
         data = self.sci_data.copy()
-        data['call'] = self.call.id
         data['pdf'] = SimpleUploadedFile('notpdf.png', b'apngfile')
         response = self.client.post(reverse('api:scienceapplications-list'), data=data)
         self.assertEqual(self.user.scienceapplication_set.count(), 0)
@@ -586,39 +581,39 @@ class TestPostCreateSciApp(DramatiqTestCase):
 
     def test_submitting_ddt_sends_notification_email(self):
         data = self.ddt_data.copy()
-        data['call'] = self.ddt_call.id
         response = self.client.post(reverse('api:scienceapplications-list'), data=data)
         self.assertEqual(response.status_code, 201)
-
-        self.broker.join("default")
+        self.broker.join('default')
         self.worker.join()
-
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn(data['title'], str(mail.outbox[0].message()))
         self.assertIn(self.user.email, mail.outbox[0].to)
 
     def test_draft_ddt_does_not_send_notification_email(self):
         data = self.ddt_data.copy()
-        data['call'] = self.ddt_call.id
         data['status'] = ScienceApplication.DRAFT
         response = self.client.post(reverse('api:scienceapplications-list'), data=data)
         self.assertEqual(response.status_code, 201)
-
-        self.broker.join("default")
+        self.broker.join('default')
         self.worker.join()
+        self.assertEqual(len(mail.outbox), 0)
 
+    def test_submitting_non_ddt_does_not_send_email(self):
+        data = self.sci_data.copy()
+        response = self.client.post(reverse('api:scienceapplications-list'), data=data)
+        self.assertEqual(response.status_code, 201)
+        self.broker.join('default')
+        self.worker.join()
         self.assertEqual(len(mail.outbox), 0)
 
     def test_submitting_sets_submitted_date(self):
         data = self.sci_data.copy()
-        data['call'] = self.call.id
         response = self.client.post(reverse('api:scienceapplications-list'), data=data)
         self.assertIsNotNone(self.user.scienceapplication_set.first().submitted)
         self.assertContains(response, self.sci_data['title'], status_code=201)
 
     def test_draft_does_not_set_submitted_date(self):
         data = self.sci_data.copy()
-        data['call'] = self.call.id
         data['status'] = ScienceApplication.DRAFT
         response = self.client.post(reverse('api:scienceapplications-list'), data=data)
         self.assertIsNone(self.user.scienceapplication_set.first().submitted)
@@ -626,21 +621,147 @@ class TestPostCreateSciApp(DramatiqTestCase):
 
     def test_pdf_has_too_many_pages(self):
         data = self.sci_data.copy()
-        data['call'] = self.call.id
         pdf_data = urandom(1000)
         data['pdf'] = SimpleUploadedFile('s.pdf', pdf_data)
         response = self.client.post(reverse('api:scienceapplications-list'), data=data)
         self.assertContains(response, 'PDF file cannot exceed', status_code=400)
 
     def test_cannot_set_noneligible_semester(self):
-        data = self.sci_data.copy()
-        data['call'] = self.call.id
         semester = mixer.blend(
             Semester, id='2000BC', start=timezone.now() + timedelta(days=20), end=timezone.now() + timedelta(days=60)
         )
-        data['timerequest_set[0]semester'] = semester.id
+        data = {**self.sci_data.copy(), **generate_time_request_data(0, self.instrument, semester)}
         response = self.client.post(reverse('api:scienceapplications-list'), data=data)
         self.assertEqual(response.status_code, 400)
+
+    def test_cannot_set_nonexistent_semester(self):
+        data = self.sci_data.copy()
+        data['timerequest_set[0]semester'] = 'idontexist'
+        response = self.client.post(reverse('api:scienceapplications-list'), data=data)
+        self.assertEqual(response.status_code, 400)
+
+    def test_cannot_set_an_instrument_that_is_not_part_of_the_call(self):
+        instrument = mixer.blend(Instrument)
+        data = {**self.sci_data.copy(), **generate_time_request_data(0, instrument, self.semester)}
+        response = self.client.post(reverse('api:scienceapplications-list'), data=data)
+        self.assertContains(response, 'The instrument IDs set for the time requests', status_code=400)
+
+    def test_cannot_set_an_instrument_that_does_not_exist(self):
+        data = self.sci_data.copy()
+        data['timerequest_set[0]instrument'] += 1
+        response = self.client.post(reverse('api:scienceapplications-list'), data=data)
+        self.assertContains(response, 'object does not exist', status_code=400)
+
+    def test_cannot_submit_an_application_before_the_call_opens(self):
+        future_call = mixer.blend(
+            Call, opens=timezone.now() + timedelta(days=7),
+            closed=timezone.now() + timedelta(days=14), semester=self.semester
+        )
+        data = self.sci_data.copy()
+        data['call'] = future_call.id
+        response = self.client.post(reverse('api:scienceapplications-list'), data=data)
+        self.assertContains(response, 'The call is not open', status_code=400)
+
+    def test_cannot_submit_an_application_after_the_call_deadline(self):
+        past_call = mixer.blend(
+            Call, opens=timezone.now() - timedelta(days=14),
+            closed=timezone.now() - timedelta(days=7), semester=self.semester
+        )
+        data = self.sci_data.copy()
+        data['call'] = past_call.id
+        response = self.client.post(reverse('api:scienceapplications-list'), data=data)
+        self.assertContains(response, 'The call is not open', status_code=400)
+
+    def test_cannot_submit_an_application_for_a_call_that_doesnt_exist(self):
+        data = self.sci_data.copy()
+        data['call'] = 1000000000
+        response = self.client.post(reverse('api:scienceapplications-list'), data=data)
+        self.assertContains(response, 'object does not exist', status_code=400)
+
+    def test_non_collab_application_cannot_set_tac_rank(self):
+        data = self.sci_data.copy()
+        data['tac_rank'] = 10
+        response = self.client.post(reverse('api:scienceapplications-list'), data=data)
+        self.assertContains(response, 'not allowed to set tac_rank', status_code=400)
+
+    def test_collab_application_can_set_tac_rank(self):
+        self.client.force_login(self.scicollab_admin)
+        data = self.collab_data.copy()
+        data['tac_rank'] = 10
+        response = self.client.post(reverse('api:scienceapplications-list'), data=data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()['tac_rank'], 10)
+
+    def test_collab_application_can_set_zero_tac_rank(self):
+        self.client.force_login(self.scicollab_admin)
+        data = self.collab_data.copy()
+        data['tac_rank'] = 0
+        response = self.client.post(reverse('api:scienceapplications-list'), data=data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()['tac_rank'], 0)
+
+    def test_collab_application_requires_tac_rank_and_abstract(self):
+        self.client.force_login(self.scicollab_admin)
+        data = self.collab_data.copy()
+        del data['tac_rank']
+        del data['abstract']
+        response = self.client.post(reverse('api:scienceapplications-list'), data=data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('This field is required.', response.json().get('tac_rank'))
+        self.assertIn('This field is required.', response.json().get('abstract'))
+
+    def test_ddt_application_requires_pdf(self):
+        data = self.ddt_data.copy()
+        del data['pdf']
+        response = self.client.post(reverse('api:scienceapplications-list'), data=data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('This field is required.', response.json().get('pdf'))
+
+    def test_sci_application_requires_pdf_and_abstract(self):
+        data = self.sci_data.copy()
+        del data['abstract']
+        del data['pdf']
+        response = self.client.post(reverse('api:scienceapplications-list'), data=data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('This field is required.', response.json().get('pdf'))
+        self.assertIn('This field is required.', response.json().get('abstract'))
+
+    def test_can_save_draft_with_no_timerequests(self):
+        data = {}
+        for key, value in self.sci_data.items():
+            if not key.startswith('timerequest'):
+                data[key] = value
+        data['status'] = ScienceApplication.DRAFT
+        response = self.client.post(reverse('api:scienceapplications-list'), data=data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(len(response.json()['timerequest_set']), 0)
+
+    def test_cannot_submit_application_with_no_timerequests(self):
+        data = {}
+        for key, value in self.sci_data.items():
+            if not key.startswith('timerequest'):
+                data[key] = value
+        response = self.client.post(reverse('api:scienceapplications-list'), data=data)
+        self.assertContains(response, 'You must provide at least one time request to submit', status_code=400)
+
+    def test_collab_applications_cannot_submit_a_pdf(self):
+        self.client.force_login(self.scicollab_admin)
+        data = self.collab_data.copy()
+        data['pdf'] = SimpleUploadedFile('s.pdf', b'ab')
+        response = self.client.post(reverse('api:scienceapplications-list'), data=data)
+        self.assertContains(response, 'collaboration proposals do not have pdfs', status_code=400)
+
+    def test_cannot_set_random_statuses(self):
+        data = self.sci_data.copy()
+        data['status'] = ScienceApplication.ACCEPTED
+        response = self.client.post(reverse('api:scienceapplications-list'), data=data)
+        self.assertContains(response, 'Application status must be one', status_code=400)
+
+    def test_number_of_words_in_abstract_is_limited(self):
+        data = self.sci_data.copy()
+        data['abstract'] = 'word ' * 600
+        response = self.client.post(reverse('api:scienceapplications-list'), data=data)
+        self.assertContains(response, 'Abstract is limited to', status_code=400)
 
 
 @patch('observation_portal.sciapplications.serializers.PdfFileReader', new=MockPDFFileReader)
@@ -651,65 +772,212 @@ class TestPostUpdateSciApp(DramatiqTestCase):
         )
         self.user = blend_user()
         self.client.force_login(self.user)
-        self.call = mixer.blend(
+        self.instrument = mixer.blend(Instrument)
+        self.sci_call = mixer.blend(
             Call, semester=self.semester,
             deadline=timezone.now() + timedelta(days=7),
-            proposal_type=Call.SCI_PROPOSAL
+            proposal_type=Call.SCI_PROPOSAL, instruments=(self.instrument, )
         )
-        self.instrument = mixer.blend(Instrument, call=self.call)
-        self.call.instruments.add(self.instrument)
-        self.app = mixer.blend(
+        self.ddt_call = mixer.blend(
+            Call, semester=self.semester,
+            deadline=timezone.now() + timedelta(days=7),
+            proposal_type=Call.DDT_PROPOSAL, instruments=(self.instrument, )
+        )
+        self.sci_app = mixer.blend(
             ScienceApplication,
             status=ScienceApplication.DRAFT,
             submitter=self.user,
-            call=self.call
+            call=self.sci_call
         )
-        tr = mixer.blend(TimeRequest, science_application=self.app)
-        coi = mixer.blend(CoInvestigator, science_application=self.app)
-        self.data = {
-            'call': self.call.id,
-            'title': 'updates',
-            'status': 'DRAFT',
-            'timerequest_set[0]id': tr.id,
-            'timerequest_set[0]instrument': self.instrument.id,
-            'timerequest_set[0]semester': self.semester.id,
-            'timerequest_set[0]std_time': tr.std_time,
-            'timerequest_set[0]rr_time': tr.rr_time,
-            'timerequest_set[0]tc_time': tr.tc_time,
-            'coinvestigator_set[0]id': coi.id,
-            'coinvestigator_set[0]email': coi.email,
-            'coinvestigator_set[0]first_name': coi.first_name,
-            'coinvestigator_set[0]last_name': coi.last_name,
-            'coinvestigator_set[0]institution': coi.institution
+        self.ddt_app = mixer.blend(
+            ScienceApplication,
+            status=ScienceApplication.DRAFT,
+            submitter=self.user,
+            call=self.ddt_call
+        )
+        data = {
+            'title': fake.text(max_nb_chars=50),
+            'status': ScienceApplication.DRAFT,
+            'pi': fake.email(),
+            'pi_first_name': fake.first_name(),
+            'pi_last_name': fake.last_name(),
+            'pi_institution': fake.company(),
+            'abstract': fake.text(),
+            'pdf': SimpleUploadedFile('sci.pdf', b'ab'),
+            **generate_coinvestigator_data(0),
+            **generate_time_request_data(0, self.instrument, self.semester)
         }
+        self.sci_data = {
+            'call': self.sci_call.id,
+            **data.copy()
+        }
+        self.ddt_data = {
+            'call': self.ddt_call.id,
+            **data.copy()
+        }
+
+    def test_must_be_authenticated(self):
+        self.client.logout()
+        response = self.client.put(
+            reverse('api:scienceapplications-detail', kwargs={'pk': self.sci_app.id}),
+            data=encode_multipart(BOUNDARY, self.sci_data), content_type=MULTIPART_CONTENT
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_cannot_update_non_draft(self):
+        self.sci_app.status = ScienceApplication.SUBMITTED
+        self.sci_app.save()
+        response = self.client.put(
+            reverse('api:scienceapplications-detail', kwargs={'pk': self.sci_app.id}),
+            data=encode_multipart(BOUNDARY, self.sci_data), content_type=MULTIPART_CONTENT
+        )
+        self.assertEqual(response.status_code, 404)
 
     def test_can_update_draft(self):
         response = self.client.put(
-            reverse('api:scienceapplications-detail', kwargs={'pk': self.app.id}),
-            data=encode_multipart(BOUNDARY, self.data),
-            content_type=MULTIPART_CONTENT
+            reverse('api:scienceapplications-detail', kwargs={'pk': self.sci_app.id}),
+            data=encode_multipart(BOUNDARY, self.sci_data), content_type=MULTIPART_CONTENT
         )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(ScienceApplication.objects.get(pk=self.app.id).title, self.data['title'])
-        self.assertIsNone(ScienceApplication.objects.get(pk=self.app.id).submitted)
+        self.assertEqual(ScienceApplication.objects.get(pk=self.sci_app.id).title, self.sci_data['title'])
+        self.assertIsNone(ScienceApplication.objects.get(pk=self.sci_app.id).submitted)
+        self.broker.join('default')
+        self.worker.join()
+        self.assertEqual(len(mail.outbox), 0)
 
     def test_can_submit_draft(self):
-        data = self.data.copy()
-        data_complete = {
-            'status': 'SUBMITTED',
-            'pi': 'test@example.com',
-            'pi_first_name': 'Joe',
-            'pi_last_name': 'Schmoe',
-            'pi_institution': 'Walmart',
-            'abstract': 'test abstract value',
-            'pdf': SimpleUploadedFile('sci.pdf', b'ab'),
-        }
-        data = {**data, **data_complete}
+        data = self.sci_data.copy()
+        data['status'] = ScienceApplication.SUBMITTED
         response = self.client.put(
-            reverse('api:scienceapplications-detail', kwargs={'pk': self.app.id}),
+            reverse('api:scienceapplications-detail', kwargs={'pk': self.sci_app.id}),
+            data=encode_multipart(BOUNDARY, data), content_type=MULTIPART_CONTENT
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(ScienceApplication.objects.get(pk=self.sci_app.id).title, data['title'])
+        self.assertTrue(ScienceApplication.objects.get(pk=self.sci_app.id).submitted)
+        self.broker.join('default')
+        self.worker.join()
+        # Non DDT applications do not send the email to the user saying their application with be considered
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_can_update_set_of_timerequests(self):
+        mixer.blend(TimeRequest, science_application=self.sci_app)
+        mixer.blend(TimeRequest, science_application=self.sci_app)
+        data = self.sci_data.copy()
+        response = self.client.put(
+            reverse('api:scienceapplications-detail', kwargs={'pk': self.sci_app.id}),
+            data=encode_multipart(BOUNDARY, data), content_type=MULTIPART_CONTENT
+        )
+        time_request = TimeRequest.objects.filter(science_application=self.sci_app).first()
+        self.assertEqual(TimeRequest.objects.filter(science_application=self.sci_app).count(), 1)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(time_request.std_time, data['timerequest_set[0]std_time'])
+        self.assertEqual(time_request.rr_time, data['timerequest_set[0]rr_time'])
+        self.assertEqual(time_request.tc_time, data['timerequest_set[0]tc_time'])
+
+    def test_can_update_set_of_coinvestigators(self):
+        mixer.blend(CoInvestigator, science_application=self.sci_app)
+        mixer.blend(CoInvestigator, science_application=self.sci_app)
+        mixer.blend(CoInvestigator, science_application=self.sci_app)
+        data = self.sci_data.copy()
+        response = self.client.put(
+            reverse('api:scienceapplications-detail', kwargs={'pk': self.sci_app.id}),
             data=encode_multipart(BOUNDARY, data),
             content_type=MULTIPART_CONTENT
         )
+        coinvestigator = CoInvestigator.objects.filter(science_application=self.sci_app).first()
+        self.assertEqual(CoInvestigator.objects.filter(science_application=self.sci_app).count(), 1)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(ScienceApplication.objects.get(pk=self.app.id).title, data['title'])
-        self.assertTrue(ScienceApplication.objects.get(pk=self.app.id).submitted)
+        self.assertEqual(coinvestigator.email, data['coinvestigator_set[0]email'])
+        self.assertEqual(coinvestigator.first_name, data['coinvestigator_set[0]first_name'])
+        self.assertEqual(coinvestigator.last_name, data['coinvestigator_set[0]last_name'])
+        self.assertEqual(coinvestigator.institution, data['coinvestigator_set[0]institution'])
+
+    def test_leaving_out_a_pdf_doesnt_update_the_uploaded_pdf(self):
+        uploaded_pdf = SimpleUploadedFile('app.pdf', b'123')
+        self.sci_app.pdf = uploaded_pdf
+        self.sci_app.save()
+        self.assertEqual(path.basename(self.sci_app.pdf.name), uploaded_pdf.name)
+        data = self.sci_data.copy()
+        del data['pdf']
+        data['title'] = 'Updated title'
+        response = self.client.put(
+            reverse('api:scienceapplications-detail', kwargs={'pk': self.sci_app.id}),
+            data=encode_multipart(BOUNDARY, data), content_type=MULTIPART_CONTENT
+        )
+        updated_sciapp = ScienceApplication.objects.get(pk=self.sci_app.id)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(path.basename(updated_sciapp.pdf.name), uploaded_pdf.name)
+        self.assertEqual(updated_sciapp.title, data['title'])
+
+    def test_setting_clear_pdf_clears_pdf(self):
+        self.sci_app.pdf = SimpleUploadedFile('sci.pdf', b'ab')
+        self.sci_app.save()
+        self.assertTrue(self.sci_app.pdf)
+        data = self.sci_data.copy()
+        data['title'] = 'Updated title'
+        del data['pdf']
+        data['clear_pdf'] = True
+        response = self.client.put(
+            reverse('api:scienceapplications-detail', kwargs={'pk': self.sci_app.id}),
+            data=encode_multipart(BOUNDARY, data), content_type=MULTIPART_CONTENT
+        )
+        updated_sciapp = ScienceApplication.objects.get(pk=self.sci_app.id)
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(updated_sciapp.pdf)
+        self.assertEqual(updated_sciapp.title, data['title'])
+
+    def test_cannot_set_both_pdf_and_clear_pdf(self):
+        data = self.sci_data.copy()
+        data['title'] = 'Updated title'
+        data['clear_pdf'] = True
+        response = self.client.put(
+            reverse('api:scienceapplications-detail', kwargs={'pk': self.sci_app.id}),
+            data=encode_multipart(BOUNDARY, data), content_type=MULTIPART_CONTENT
+        )
+        self.assertContains(response, 'Please either submit a new pdf or clear the existing pdf', status_code=400)
+
+    def test_setting_new_pdf_updates_pdf(self):
+        original_pdf = SimpleUploadedFile('first_upload.pdf', b'qwerty')
+        self.sci_app.pdf = original_pdf
+        self.sci_app.save()
+        self.assertEqual(path.basename(self.sci_app.pdf.name), original_pdf.name)
+        self.assertEqual(self.sci_app.pdf.size, original_pdf.size)
+        data = self.sci_data.copy()
+        data['title'] = 'Updated title'
+        response = self.client.put(
+            reverse('api:scienceapplications-detail', kwargs={'pk': self.sci_app.id}),
+            data=encode_multipart(BOUNDARY, data), content_type=MULTIPART_CONTENT
+        )
+        updated_sciapp = ScienceApplication.objects.get(pk=self.sci_app.id)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(path.basename(updated_sciapp.pdf.name), data['pdf'].name)
+        self.assertEqual(updated_sciapp.pdf.size, data['pdf'].size)
+        self.assertEqual(updated_sciapp.title, data['title'])
+
+    def test_draft_ddt_does_not_send_notification_email(self):
+        data = self.ddt_data.copy()
+        response = self.client.put(
+            reverse('api:scienceapplications-detail', kwargs={'pk': self.ddt_app.id}),
+            data=encode_multipart(BOUNDARY, data), content_type=MULTIPART_CONTENT
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(ScienceApplication.objects.get(id=self.ddt_app.id).submitted)
+        self.broker.join('default')
+        self.worker.join()
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_submitting_ddt_sends_email(self):
+        data = self.ddt_data.copy()
+        data['status'] = ScienceApplication.SUBMITTED
+        response = self.client.put(
+            reverse('api:scienceapplications-detail', kwargs={'pk': self.ddt_app.id}),
+            data=encode_multipart(BOUNDARY, data), content_type=MULTIPART_CONTENT
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(ScienceApplication.objects.get(id=self.ddt_app.id).submitted)
+        self.broker.join('default')
+        self.worker.join()
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(data['title'], str(mail.outbox[0].message()))
+        self.assertIn(self.user.email, mail.outbox[0].to)

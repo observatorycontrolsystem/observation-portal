@@ -73,5 +73,9 @@ class Profile(models.Model):
         allowed = 'unlimited'  # placeholder in case we ever reimplement a stricter throttle policy
         return {'used': used, 'allowed': allowed}
 
+    @property
+    def is_scicollab_admin(self):
+        return hasattr(self.user, 'sciencecollaborationallocation')
+
     def __str__(self):
         return '{0} {1} at {2}'.format(self.user, self.title, self.institution)
