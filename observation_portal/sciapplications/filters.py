@@ -1,4 +1,5 @@
 import django_filters
+from django.utils import timezone
 
 from observation_portal.sciapplications.models import ScienceApplication, Call
 
@@ -29,3 +30,16 @@ class ScienceApplicationFilter(django_filters.FilterSet):
             return queryset.filter(submitter=self.request.user)
         else:
             return queryset
+
+
+class CallFilter(django_filters.FilterSet):
+    only_open = django_filters.BooleanFilter(
+        method='filter_only_open'
+    )
+
+    class Meta:
+        model = Call
+        fields = ('only_open',)
+
+    def filter_only_open(self, queryset, name, value):
+        return queryset.filter(opens__lte=timezone.now(), deadline__gte=timezone.now())

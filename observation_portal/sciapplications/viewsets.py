@@ -7,19 +7,24 @@ from observation_portal.accounts.tasks import send_mail
 from observation_portal.sciapplications.serializers import (
     ScienceApplicationCreateSerializer, ScienceApplicationReadSerializer, CallSerializer
 )
-from observation_portal.sciapplications.filters import ScienceApplicationFilter
+from observation_portal.sciapplications.filters import ScienceApplicationFilter, CallFilter
 from observation_portal.sciapplications.models import ScienceApplication, Call
 
 
 class CallViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = (IsAuthenticated,)
+    filter_class = CallFilter
     serializer_class = CallSerializer
+    filter_backends = (
+        filters.OrderingFilter,
+        DjangoFilterBackend
+    )
 
     def get_queryset(self):
         if self.request.user.profile.is_scicollab_admin:
-            return Call.open_calls()
+            return Call.objects.all()
         else:
-            return Call.open_calls().exclude(proposal_type=Call.COLLAB_PROPOSAL)
+            return Call.objects.all().exclude(proposal_type=Call.COLLAB_PROPOSAL)
 
 
 class ScienceApplicationViewSet(viewsets.ModelViewSet):
