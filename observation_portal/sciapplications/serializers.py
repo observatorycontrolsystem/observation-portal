@@ -45,13 +45,24 @@ class CoInvestigatorSerializer(serializers.ModelSerializer):
 
 class TimeRequestSerializer(serializers.ModelSerializer):
     telescope_name = serializers.SerializerMethodField()
+    instrument_name = serializers.SerializerMethodField()
+    instrument_code = serializers.SerializerMethodField()
 
     class Meta:
         model = TimeRequest
-        fields = ('semester', 'std_time', 'rr_time', 'tc_time', 'instrument', 'telescope_name')
+        fields = (
+            'semester', 'std_time', 'rr_time', 'tc_time', 'instrument', 'telescope_name',
+            'instrument_name', 'instrument_code'
+        )
 
     def get_telescope_name(self, obj):
         return obj.instrument.telescope_name
+
+    def get_instrument_name(self, obj):
+        return obj.instrument.display
+
+    def get_instrument_code(self, obj):
+        return obj.instrument.code
 
 
 class ScienceApplicationReadSerializer(serializers.ModelSerializer):
