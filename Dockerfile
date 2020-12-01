@@ -13,4 +13,4 @@ RUN apt-get update \
 COPY observation_portal observation_portal/
 COPY templates templates/
 COPY manage.py test_settings.py ./
-RUN python manage.py collectstatic --noinput
+RUN mkdir static && python manage.py collectstatic --noinput
