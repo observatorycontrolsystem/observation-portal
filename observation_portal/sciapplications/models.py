@@ -1,4 +1,3 @@
-import io
 import smtplib
 from collections import defaultdict
 
@@ -8,9 +7,6 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 from django.template.loader import render_to_string
-from django.contrib.staticfiles import finders
-from weasyprint import HTML, CSS
-from PyPDF2 import PdfFileMerger
 from django.utils.functional import cached_property
 
 from observation_portal.common.configdb import configdb
@@ -162,7 +158,7 @@ class ScienceApplication(models.Model):
         return time_by_telescope_name
 
     def get_absolute_url(self):
-        return reverse('sciapplications:detail', args=(self.id,))
+        return reverse('api:scienceapplications-detail', args=(self.id,))
 
     def convert_to_proposal(self):
         if not self.timerequest_set.filter(approved=True).count():
@@ -201,26 +197,6 @@ class ScienceApplication(models.Model):
         self.status = ScienceApplication.PORTED
         self.save()
         return proposal
-
-    def generate_combined_pdf(self):
-        context = {
-            'object': self,
-            'pdf': True
-        }
-        with open(finders.find('css/print.css')) as f:
-            css = CSS(string=f.read())
-        html_string = render_to_string('sciapplications/scienceapplication_detail.html', context)
-        html = HTML(string=html_string)
-        fileobj = io.BytesIO()
-        html.write_pdf(fileobj, stylesheets=[css])
-        merger = PdfFileMerger()
-        merger.append(fileobj)
-        if self.pdf:
-            merger.append(self.pdf.file)
-        merger.write(fileobj)
-        pdf = fileobj.getvalue()
-        fileobj.close()
-        return pdf
 
     def send_approved_notification(self):
         subject = _('Your proposal at LCO.global has been approved')

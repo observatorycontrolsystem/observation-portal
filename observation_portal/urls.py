@@ -37,7 +37,6 @@ from observation_portal.proposals.viewsets import (
 from observation_portal.sciapplications.viewsets import CallViewSet, ScienceApplicationViewSet
 from observation_portal.observations.views import LastScheduledView
 from observation_portal.observations.viewsets import ObservationViewSet, ScheduleViewSet, ConfigurationStatusViewSet
-import observation_portal.sciapplications.urls as sciapplications_urls
 import observation_portal.accounts.urls as accounts_urls
 from observation_portal import settings
 
@@ -89,7 +88,6 @@ urlpatterns = [
     url(r'^accounts/', include(accounts_urls)),
     url(r'^api/', include(api_urlpatterns)),
     url(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
-    url(r'^apply/', include(sciapplications_urls)),
     path('admin/', admin.site.urls),
     url(r'^redoc/$', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 ]
