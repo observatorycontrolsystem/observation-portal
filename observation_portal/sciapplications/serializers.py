@@ -12,13 +12,13 @@ from observation_portal.sciapplications.models import ScienceApplication, Call, 
 class CallSerializer(serializers.ModelSerializer):
     proposal_type_display = serializers.SerializerMethodField()
     instruments = serializers.SerializerMethodField()
-    sca = serializers.SerializerMethodField()
+    time_requested = serializers.SerializerMethodField()
 
     class Meta:
         model = Call
         fields = (
             'id', 'semester', 'eligible_semesters', 'proposal_type', 'proposal_type_display',
-            'eligibility_short', 'eligibility', 'deadline', 'instruments', 'sca'
+            'eligibility_short', 'eligibility', 'deadline', 'instruments', 'time_requested'
         )
 
     def get_proposal_type_display(self, obj):
@@ -27,14 +27,12 @@ class CallSerializer(serializers.ModelSerializer):
     def get_instruments(self, obj):
         return [instrument.as_dict() for instrument in obj.instruments.all()]
 
-    def get_sca(self, obj):
-        sca_dict = {}
+    def get_time_requested(self, obj):
+        time_requested = None
         if obj.proposal_type == Call.COLLAB_PROPOSAL:
             sca = self.context['request'].user.sciencecollaborationallocation
-            sca_dict = sca.as_dict()
             time_requested = sca.time_requested_for_semester(obj.semester, Call.COLLAB_PROPOSAL)
-            sca_dict['time_requested'] = time_requested
-        return sca_dict
+        return time_requested
 
 
 class CoInvestigatorSerializer(serializers.ModelSerializer):
@@ -99,7 +97,8 @@ class ScienceApplicationReadSerializer(serializers.ModelSerializer):
             'semester': obj.call.semester.id,
             'proposal_type': obj.call.proposal_type,
             'proposal_type_display': obj.call.get_proposal_type_display(),
-            'deadline': obj.call.deadline
+            'deadline': obj.call.deadline,
+            'eligibility': obj.call.eligibility
         }
 
 

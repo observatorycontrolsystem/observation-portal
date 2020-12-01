@@ -7,14 +7,21 @@ from observation_portal.accounts.models import Profile
 
 class ProfileSerializer(serializers.ModelSerializer):
     terms_accepted = serializers.DateTimeField(read_only=True)
+    sciencecollaborationallocation = serializers.SerializerMethodField()
 
     class Meta:
         model = Profile
         fields = (
             'education_user', 'notifications_enabled', 'notifications_on_authored_only',
             'simple_interface', 'view_authored_requests_only', 'title', 'staff_view',
-            'institution', 'api_quota', 'terms_accepted', 'is_scicollab_admin'
+            'institution', 'api_quota', 'terms_accepted', 'sciencecollaborationallocation'
         )
+
+    def get_sciencecollaborationallocation(self, obj):
+        if obj.is_scicollab_admin:
+            return obj.user.sciencecollaborationallocation.as_dict()
+        else:
+            return None
 
     def validate_staff_view(self, staff_view):
         user = self.context.get('request').user

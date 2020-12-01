@@ -34,7 +34,9 @@ class Profile(models.Model):
             proposal=proposal, created__gte=proposal.current_semester.start, state__in=['PENDING', 'COMPLETED']
         ).prefetch_related('requests')
         return sum(
-            request.duration for request_group in requestgroups for request in request_group.requests.filter(state__in=['PENDING', 'COMPLETED'])
+            request.duration for request_group in requestgroups for request in request_group.requests.filter(
+                state__in=['PENDING', 'COMPLETED']
+            )
         )
 
     @property
