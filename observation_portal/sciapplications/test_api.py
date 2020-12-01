@@ -73,7 +73,7 @@ class TestCallAPI(APITestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_non_sca_admin_sees_open_non_collab_calls(self):
-        response = self.client.get(reverse('api:calls-list'))
+        response = self.client.get(reverse('api:calls-list') + '?only_open=true')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['count'], 1)
         self.assertEqual(response.json()['results'][0]['id'], self.open_call.id)
@@ -81,7 +81,7 @@ class TestCallAPI(APITestCase):
 
     def test_sca_admin_sees_all_open_calls(self):
         mixer.blend(ScienceCollaborationAllocation, admin=self.user)
-        response = self.client.get(reverse('api:calls-list'))
+        response = self.client.get(reverse('api:calls-list') + '?only_open=true')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['count'], 2)
         for result in response.json()['results']:
@@ -210,57 +210,6 @@ class TestGetScienceApplicationDetailAPI(APITestCase):
         response = self.client.get(reverse('api:scienceapplications-detail', kwargs={'pk': app.id}))
         self.assertContains(response, app.title)
 
-    # TODO: This needs to be done on the frontend if we are generating the combined pdf there
-    # def test_pdf_view(self):
-    #     # Just test the view here, actual pdf rendering is slow and loud
-    #     PdfFileMerger.merge = MagicMock
-    #     HTML.write_pdf = MagicMock
-    #     app = mixer.blend(
-    #         ScienceApplication,
-    #         status=ScienceApplication.DRAFT,
-    #         submitter=self.user,
-    #         call=self.call
-    #     )
-    #     response = self.client.get(reverse('sciapplications:pdf', kwargs={'pk': app.id}))
-    #     self.assertTrue(PdfFileMerger.merge.called)
-    #     self.assertTrue(HTML.write_pdf.called)
-    #     self.assertEqual(response.status_code, 200)
-
-    # TODO: This needs to be done on the frontend if we are generating the combined pdf there
-    # def test_staff_can_view_pdf(self):
-    #     PdfFileMerger.merge = MagicMock
-    #     HTML.write_pdf = MagicMock
-    #     staff_user = blend_user(user_params={'is_staff': True})
-    #     self.client.force_login(staff_user)
-    #     self.client.force_login(staff_user)
-    #     app = mixer.blend(
-    #         ScienceApplication,
-    #         status=ScienceApplication.DRAFT,
-    #         submitter=self.user,
-    #         call=self.call
-    #     )
-    #     response = self.client.get(reverse('sciapplications:pdf', kwargs={'pk': app.id}))
-    #     self.assertTrue(PdfFileMerger.merge.called)
-    #     self.assertTrue(HTML.write_pdf.called)
-    #     self.assertEqual(response.status_code, 200)
-
-    # TODO: This needs to be done on the frontend if we are generating the combined pdf there
-    # def test_pdf_does_not_include_author_names(self):
-    #     PdfFileMerger.merge = MagicMock
-    #     HTML.write_pdf = MagicMock
-    #     app = mixer.blend(
-    #         ScienceApplication,
-    #         status=ScienceApplication.SUBMITTED,
-    #         submitter=self.user,
-    #         call=self.call
-    #     )
-    #     mixer.cycle(3).blend(CoInvestigator, science_application=app, last_name=mixer.RANDOM)
-    #     response = self.client.get(reverse('sciapplications:pdf', kwargs={'pk': app.id}))
-    #     self.assertNotContains(response, app.submitter.last_name)
-    #     for coi in app.coinvestigator_set.all():
-    #         self.assertNotContains(response, coi.last_name)
-
-    # TODO - Test this in the frontend, but this also works as a check on the API endpoint
     def test_detail_does_contain_author_names(self):
         app = mixer.blend(
             ScienceApplication,
@@ -335,27 +284,6 @@ class TestListScienceApplicationAPI(APITestCase):
         response = self.client.get(reverse('api:scienceapplications-list'))
         self.assertContains(response, app.title)
         self.assertEqual(response.json()['count'], 1)
-
-    # TODO - Test this in the frontend
-    # def test_collab_admin_time_used(self):
-    #     call = mixer.blend(
-    #         Call, semester=self.semester,
-    #         deadline=timezone.now() + timedelta(days=7),
-    #         opens=timezone.now(),
-    #         proposal_type=Call.COLLAB_PROPOSAL,
-    #     )
-    #     sca = mixer.blend(ScienceCollaborationAllocation, admin=self.user)
-    #     ca = mixer.blend(CollaborationAllocation, sca=sca, telescope_name='1 meter', allocation=9)
-    #     app = mixer.blend(
-    #         ScienceApplication,
-    #         status=ScienceApplication.DRAFT,
-    #         submitter=self.user,
-    #         call=call
-    #     )
-    #     instrument = mixer.blend(Instrument, code='1M0-SCICAM-SBIG')
-    #     tr = mixer.blend(TimeRequest, science_application=app, instrument=instrument, std_time=8)
-    #     response = self.client.get(reverse('sciapplications:index'))
-    #     self.assertContains(response, '{0}/{1}'.format(tr.std_time, ca.allocation))
 
 
 @patch('observation_portal.sciapplications.serializers.PdfFileReader', new=MockPDFFileReader)
