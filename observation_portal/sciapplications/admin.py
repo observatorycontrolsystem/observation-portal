@@ -52,9 +52,8 @@ class ScienceApplicationAdmin(admin.ModelAdmin):
 
     def preview_link(self, obj):
         return format_html(
-            '<a href="{}">View PDF</a> <a href="{}">View on site</a>',
-            reverse('sciapplications:pdf', kwargs={'pk': obj.id}),
-            reverse('sciapplications:detail', kwargs={'pk': obj.id})
+            '<a href="{}">View on site</a>',
+            reverse('api:scienceapplications-detail', kwargs={'pk': obj.id})
         )
 
     def accept(self, request, queryset):
