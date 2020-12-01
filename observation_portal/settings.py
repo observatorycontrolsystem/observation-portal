@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'drf_yasg',
     'django_filters',
     'rest_framework.authtoken',
+    'bootstrap4',
     'oauth2_provider',
     'corsheaders',
     'django_extensions',
