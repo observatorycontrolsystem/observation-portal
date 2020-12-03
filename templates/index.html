@@ -36,18 +36,6 @@
             <li><a href="{% url 'proposals:list' %}?active=True"><i class="fa fa-users fa-fw"></i> Manage Proposals</a></li>
             <li><a href="{% url 'help' %}"><i class="fas fa-info-circle"></i> Help</a></li>
           </ul>
-        <h4 >Telescope availability history
-          <sup class="blue"><a
-                  data-toggle="tooltip"
-                  data-placement="bottom"
-                  title="{% blocktrans %}
-                  This chart shows the percent of operational
-                  science time for each telescope over the last 4 days."
-                  {% endblocktrans %}>
-            ?</a></sup>
-        </h4>
-        <div id="telescope_availability_chart"></div>
-        <p><small><a href="https://lco.global/observatory/status/">Detailed Observatory Status</a></small></p>
 
         {% if user.is_authenticated %}
 
