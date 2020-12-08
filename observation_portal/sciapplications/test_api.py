@@ -44,9 +44,6 @@ class MockPDFFileReader:
     def __init__(self, bytesio):
         self.content = bytesio.getvalue()
 
-    def getNumPages(self):
-        return len(self.content)
-
 
 class TestCallAPI(APITestCase):
     def setUp(self) -> None:
@@ -350,21 +347,21 @@ class TestPostCreateSciApp(DramatiqTestCase):
             k: data[k] for k in data
             if k in ScienceApplicationCreateSerializer.get_required_fields_for_submission(Call.SCI_PROPOSAL)
         }
-        self.sci_data['call'] = self.sci_call.id
+        self.sci_data['call_id'] = self.sci_call.id
         self.sci_data.update(timerequest_data)
         self.sci_data.update(ci_data)
         self.key_data = {
             k: data[k] for k in data
             if k in ScienceApplicationCreateSerializer.get_required_fields_for_submission(Call.KEY_PROPOSAL)
         }
-        self.key_data['call'] = self.key_call.id
+        self.key_data['call_id'] = self.key_call.id
         self.key_data.update(timerequest_data)
         self.key_data.update(ci_data)
         self.ddt_data = {
             k: data[k] for k in data
             if k in ScienceApplicationCreateSerializer.get_required_fields_for_submission(Call.DDT_PROPOSAL)
         }
-        self.ddt_data['call'] = self.ddt_call.id
+        self.ddt_data['call_id'] = self.ddt_call.id
         self.ddt_data.update(timerequest_data)
         self.ddt_data.update(ci_data)
 
@@ -372,7 +369,7 @@ class TestPostCreateSciApp(DramatiqTestCase):
             k: data[k] for k in data
             if k in ScienceApplicationCreateSerializer.get_required_fields_for_submission(Call.COLLAB_PROPOSAL)
         }
-        self.collab_data['call'] = self.collab_call.id
+        self.collab_data['call_id'] = self.collab_call.id
         self.collab_data.update(timerequest_data)
         self.collab_data.update(ci_data)
 
@@ -587,7 +584,7 @@ class TestPostCreateSciApp(DramatiqTestCase):
             proposal_type=Call.SCI_PROPOSAL
         )
         data = self.sci_data.copy()
-        data['call'] = future_call.id
+        data['call_id'] = future_call.id
         response = self.client.post(reverse('api:scienceapplications-list'), data=data)
         self.assertContains(response, 'The call is not open', status_code=400)
 
@@ -598,13 +595,13 @@ class TestPostCreateSciApp(DramatiqTestCase):
             proposal_type=Call.SCI_PROPOSAL
         )
         data = self.sci_data.copy()
-        data['call'] = past_call.id
+        data['call_id'] = past_call.id
         response = self.client.post(reverse('api:scienceapplications-list'), data=data)
         self.assertContains(response, 'The call is not open', status_code=400)
 
     def test_cannot_submit_an_application_for_a_call_that_doesnt_exist(self):
         data = self.sci_data.copy()
-        data['call'] = 1000000000
+        data['call_id'] = 1000000000
         response = self.client.post(reverse('api:scienceapplications-list'), data=data)
         self.assertContains(response, 'object does not exist', status_code=400)
 
@@ -738,11 +735,11 @@ class TestPostUpdateSciApp(DramatiqTestCase):
             **generate_time_request_data(0, self.instrument, self.semester)
         }
         self.sci_data = {
-            'call': self.sci_call.id,
+            'call_id': self.sci_call.id,
             **data.copy()
         }
         self.ddt_data = {
-            'call': self.ddt_call.id,
+            'call_id': self.ddt_call.id,
             **data.copy()
         }
 

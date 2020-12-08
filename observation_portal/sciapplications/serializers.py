@@ -4,6 +4,7 @@ from django.utils.translation import ugettext as _
 from django.utils import timezone
 from django.db import transaction
 from PyPDF2 import PdfFileReader
+from PyPDF2.utils import PdfReadError
 from rest_framework import serializers
 
 from observation_portal.sciapplications.models import ScienceApplication, Call, TimeRequest, CoInvestigator
@@ -63,20 +64,34 @@ class TimeRequestSerializer(serializers.ModelSerializer):
         return obj.instrument.code
 
 
-class ScienceApplicationReadSerializer(serializers.ModelSerializer):
-    coinvestigator_set = CoInvestigatorSerializer(many=True)
-    timerequest_set = TimeRequestSerializer(many=True)
+class CallsPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
+    def get_queryset(self):
+        if self.context['request'].user.profile.is_scicollab_admin:
+            return Call.objects.all()
+        else:
+            return Call.objects.exclude(proposal_type=Call.COLLAB_PROPOSAL)
+
+
+class ScienceApplicationSerializer(serializers.ModelSerializer):
+    title = serializers.CharField(required=True)
+    status = serializers.CharField(required=True)
+    call_id = CallsPrimaryKeyRelatedField(required=True, source='call', write_only=True)
+    coinvestigator_set = CoInvestigatorSerializer(many=True, required=False)
+    timerequest_set = TimeRequestSerializer(many=True, required=False)
+    pdf = serializers.FileField(required=False)
+    clear_pdf = serializers.BooleanField(required=False, default=False, write_only=True)
+    call = serializers.SerializerMethodField()
     sca = serializers.SerializerMethodField()
     submitter = serializers.SerializerMethodField()
-    call = serializers.SerializerMethodField()
 
     class Meta:
         model = ScienceApplication
         fields = (
-            'id', 'title', 'abstract', 'status', 'tac_rank', 'call', 'sca', 'submitted', 'pi',
-            'pi_first_name', 'pi_last_name', 'pi_institution', 'submitter', 'timerequest_set',
-            'coinvestigator_set', 'pdf'
+            'id', 'title', 'abstract', 'status', 'tac_rank', 'call', 'call_id', 'pi',
+            'pi_first_name', 'pi_last_name', 'pi_institution', 'timerequest_set',
+            'coinvestigator_set', 'pdf', 'clear_pdf', 'sca', 'submitter', 'submitted'
         )
+        read_only_fields = ('submitted', )
 
     def get_sca(self, obj):
         return {
@@ -101,32 +116,6 @@ class ScienceApplicationReadSerializer(serializers.ModelSerializer):
             'eligibility': obj.call.eligibility
         }
 
-
-class CallsPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
-    def get_queryset(self):
-        if self.context['request'].user.profile.is_scicollab_admin:
-            return Call.objects.all()
-        else:
-            return Call.objects.exclude(proposal_type=Call.COLLAB_PROPOSAL)
-
-
-class ScienceApplicationCreateSerializer(serializers.ModelSerializer):
-    title = serializers.CharField(required=True)
-    status = serializers.CharField(required=True)
-    call = CallsPrimaryKeyRelatedField(required=True)
-    coinvestigator_set = CoInvestigatorSerializer(many=True, required=False)
-    timerequest_set = TimeRequestSerializer(many=True, required=False)
-    pdf = serializers.FileField(required=False)
-    clear_pdf = serializers.BooleanField(required=False, default=False, write_only=True)
-
-    class Meta:
-        model = ScienceApplication
-        fields = (
-            'id', 'title', 'abstract', 'status', 'tac_rank', 'call', 'pi',
-            'pi_first_name', 'pi_last_name', 'pi_institution', 'timerequest_set',
-            'coinvestigator_set', 'pdf', 'clear_pdf'
-        )
-
     def validate_status(self, status):
         # Other application statuses are set via admin actions, these are the only valid ones
         # that can be set here.
@@ -135,21 +124,20 @@ class ScienceApplicationCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(_(f'Application status must be one of [{", ".join(valid_statuses)}]'))
         return status
 
-    def validate_call(self, call):
+    def validate_call_id(self, call):
         if not call.opens <= timezone.now() <= call.deadline:
             raise serializers.ValidationError(_('The call is not open.'))
         return call
 
     def validate_pdf(self, pdf):
-        max_pages = 999
-
         extension = os.path.splitext(pdf.name)[1]
         if extension not in ['.pdf', '.PDF']:
             raise serializers.ValidationError(_('We can only accept PDF files.'))
 
-        pdf_file = PdfFileReader(pdf.file)
-        if pdf_file.getNumPages() > max_pages:
-            raise serializers.ValidationError(_(f'PDF file cannot exceed {max_pages} pages'))
+        try:
+            PdfFileReader(pdf.file)
+        except PdfReadError:
+            raise serializers.ValidationError(_(f'Invalid PDF file.'))
 
         return pdf
 

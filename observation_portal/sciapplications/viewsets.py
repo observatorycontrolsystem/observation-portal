@@ -4,9 +4,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.template.loader import render_to_string
 
 from observation_portal.accounts.tasks import send_mail
-from observation_portal.sciapplications.serializers import (
-    ScienceApplicationCreateSerializer, ScienceApplicationReadSerializer, CallSerializer
-)
+from observation_portal.sciapplications.serializers import ScienceApplicationSerializer, CallSerializer
 from observation_portal.sciapplications.filters import ScienceApplicationFilter, CallFilter
 from observation_portal.sciapplications.models import ScienceApplication, Call
 
@@ -30,6 +28,7 @@ class CallViewSet(viewsets.ReadOnlyModelViewSet):
 class ScienceApplicationViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated, )
     filter_class = ScienceApplicationFilter
+    serializer_class = ScienceApplicationSerializer
     http_method_names = ('get', 'head', 'options', 'post', 'put', 'delete')
     filter_backends = (
         filters.OrderingFilter,
@@ -54,12 +53,6 @@ class ScienceApplicationViewSet(viewsets.ModelViewSet):
             'call', 'call__semester', 'submitter', 'submitter__profile', 'submitter__sciencecollaborationallocation',
             'timerequest_set', 'timerequest_set__instrument', 'coinvestigator_set',
         )
-
-    def get_serializer_class(self):
-        if self.action in ['update', 'create']:
-            return ScienceApplicationCreateSerializer
-        else:
-            return ScienceApplicationReadSerializer
 
     def perform_destroy(self, instance):
         if instance.status == ScienceApplication.DRAFT:
