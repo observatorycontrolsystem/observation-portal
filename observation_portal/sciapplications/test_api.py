@@ -544,13 +544,6 @@ class TestPostCreateSciApp(DramatiqTestCase):
         self.assertIsNone(self.user.scienceapplication_set.first().submitted)
         self.assertContains(response, self.sci_data['title'], status_code=201)
 
-    def test_pdf_has_too_many_pages(self):
-        data = self.sci_data.copy()
-        pdf_data = urandom(1000)
-        data['pdf'] = SimpleUploadedFile('s.pdf', pdf_data)
-        response = self.client.post(reverse('api:scienceapplications-list'), data=data)
-        self.assertContains(response, 'PDF file cannot exceed', status_code=400)
-
     def test_cannot_set_noneligible_semester(self):
         semester = mixer.blend(
             Semester, id='2000BC', start=timezone.now() + timedelta(days=20), end=timezone.now() + timedelta(days=60)
