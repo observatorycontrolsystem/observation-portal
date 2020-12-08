@@ -16,7 +16,7 @@ from faker import Faker
 from observation_portal.sciapplications.models import ScienceApplication, Call, CoInvestigator, Instrument, TimeRequest
 from observation_portal.proposals.models import Semester, ScienceCollaborationAllocation, CollaborationAllocation
 from observation_portal.accounts.test_utils import blend_user
-from observation_portal.sciapplications.serializers import ScienceApplicationCreateSerializer
+from observation_portal.sciapplications.serializers import ScienceApplicationSerializer
 
 fake = Faker()
 
@@ -345,21 +345,21 @@ class TestPostCreateSciApp(DramatiqTestCase):
         ci_data = generate_coinvestigator_data(0)
         self.sci_data = {
             k: data[k] for k in data
-            if k in ScienceApplicationCreateSerializer.get_required_fields_for_submission(Call.SCI_PROPOSAL)
+            if k in ScienceApplicationSerializer.get_required_fields_for_submission(Call.SCI_PROPOSAL)
         }
         self.sci_data['call_id'] = self.sci_call.id
         self.sci_data.update(timerequest_data)
         self.sci_data.update(ci_data)
         self.key_data = {
             k: data[k] for k in data
-            if k in ScienceApplicationCreateSerializer.get_required_fields_for_submission(Call.KEY_PROPOSAL)
+            if k in ScienceApplicationSerializer.get_required_fields_for_submission(Call.KEY_PROPOSAL)
         }
         self.key_data['call_id'] = self.key_call.id
         self.key_data.update(timerequest_data)
         self.key_data.update(ci_data)
         self.ddt_data = {
             k: data[k] for k in data
-            if k in ScienceApplicationCreateSerializer.get_required_fields_for_submission(Call.DDT_PROPOSAL)
+            if k in ScienceApplicationSerializer.get_required_fields_for_submission(Call.DDT_PROPOSAL)
         }
         self.ddt_data['call_id'] = self.ddt_call.id
         self.ddt_data.update(timerequest_data)
@@ -367,7 +367,7 @@ class TestPostCreateSciApp(DramatiqTestCase):
 
         self.collab_data = {
             k: data[k] for k in data
-            if k in ScienceApplicationCreateSerializer.get_required_fields_for_submission(Call.COLLAB_PROPOSAL)
+            if k in ScienceApplicationSerializer.get_required_fields_for_submission(Call.COLLAB_PROPOSAL)
         }
         self.collab_data['call_id'] = self.collab_call.id
         self.collab_data.update(timerequest_data)
