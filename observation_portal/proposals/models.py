@@ -10,7 +10,6 @@ from django.utils.html import strip_tags
 from collections import namedtuple
 import logging
 
-
 from observation_portal.accounts.tasks import send_mail
 from observation_portal.common.configdb import configdb
 

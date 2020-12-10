@@ -315,7 +315,7 @@ class ConfigDB(object):
     def get_telescope_name_by_instrument_types(self, exclude_states=None) -> dict:
         """Get a mapping of instrument type to telescope name.
 
-        Telescope names the are returned are e.g. 1 meter, 2 meter, etc...
+        Telescope names that are returned are e.g. 1 meter, 2 meter, etc...
 
         Parameters:
             exclude_states: Instrument states to exclude
