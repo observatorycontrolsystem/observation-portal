@@ -299,6 +299,11 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
         if len(data['instrument_configs']) > 1 and data['type'] in ['SCRIPT', 'SKY_FLAT']:
             raise serializers.ValidationError(_(f'Multiple instrument configs are not allowed for type {data["type"]}'))
 
+        if len(data['instrument_configs']) > 1 and instrument_type == '2M0-SCICAM-MUSCAT':
+            raise serializers.ValidationError(_(
+                'Multiple instrument configs are not allowed for the instrument 2M0-SCICAM-MUSCAT'
+            ))
+
         # Validate the guide mode
         guide_validation_helper = ModeValidationHelper('guiding', instrument_type, modes['guiding'])
 
