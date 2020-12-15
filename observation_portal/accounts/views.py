@@ -1,4 +1,5 @@
 from django.utils import timezone
+from django.contrib.auth.models import User
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
@@ -12,12 +13,13 @@ from observation_portal.accounts.serializers import UserSerializer, AccountRemov
 
 class ProfileApiView(RetrieveUpdateAPIView):
     serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_object(self):
-        if self.request.user.is_authenticated:
-            return self.request.user
-        else:
-            return None
+        qs = User.objects.filter(pk=self.request.user.pk).prefetch_related(
+            'profile', 'proposal_set', 'proposal_set__timeallocation_set', 'proposalnotification_set'
+        )
+        return qs.first()
 
 
 class AcceptTermsApiView(APIView):

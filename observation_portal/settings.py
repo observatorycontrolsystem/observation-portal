@@ -52,7 +52,6 @@ INSTALLED_APPS = [
     'django_filters',
     'rest_framework.authtoken',
     'bootstrap4',
-    'webpack_loader',
     'oauth2_provider',
     'corsheaders',
     'django_extensions',
@@ -286,18 +285,10 @@ DRAMATIQ_BROKER = {
     ]
 }
 
-WEBPACK_LOADER = {
-    'DEFAULT': {
-        'CACHE': not DEBUG,
-        'BUNDLE_DIR_NAME': os.path.join(BASE_DIR, 'static', 'bundles'),
-        'STATS_FILE': os.path.join(BASE_DIR, 'static', 'webpack-stats.json')
-    }
-}
-
 TEST_RUNNER = 'observation_portal.test_runner.MyDiscoverRunner'
 
 try:
-    from .local_settings import *  # noqa
+    from local_settings import *  # noqa
 except ImportError as e:
     pass
 

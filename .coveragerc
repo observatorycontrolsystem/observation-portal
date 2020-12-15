@@ -10,6 +10,3 @@ omit =
     *apps.py
     *task_scheduler.py
     *config.py
-    */userrequests/*
-    */blocks/*
-

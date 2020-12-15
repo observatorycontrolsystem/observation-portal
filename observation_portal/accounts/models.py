@@ -34,7 +34,9 @@ class Profile(models.Model):
             proposal=proposal, created__gte=proposal.current_semester.start, state__in=['PENDING', 'COMPLETED']
         ).prefetch_related('requests')
         return sum(
-            request.duration for request_group in requestgroups for request in request_group.requests.filter(state__in=['PENDING', 'COMPLETED'])
+            request.duration for request_group in requestgroups for request in request_group.requests.filter(
+                state__in=['PENDING', 'COMPLETED']
+            )
         )
 
     @property
@@ -72,6 +74,10 @@ class Profile(models.Model):
         used = len(hits) if hits else 0
         allowed = 'unlimited'  # placeholder in case we ever reimplement a stricter throttle policy
         return {'used': used, 'allowed': allowed}
+
+    @property
+    def is_scicollab_admin(self):
+        return hasattr(self.user, 'sciencecollaborationallocation')
 
     def __str__(self):
         return '{0} {1} at {2}'.format(self.user, self.title, self.institution)

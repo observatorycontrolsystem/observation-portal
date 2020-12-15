@@ -1,5 +1,5 @@
-import io
 import smtplib
+from collections import defaultdict
 
 from django.db import models
 from django.utils import timezone
@@ -7,15 +7,13 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 from django.template.loader import render_to_string
-from django.contrib.staticfiles import finders
-from weasyprint import HTML, CSS
-from PyPDF2 import PdfFileMerger
+from django.utils.functional import cached_property
 
+from observation_portal.common.configdb import configdb
 from observation_portal.accounts.tasks import send_mail
 from observation_portal.proposals.models import (
     Semester, TimeAllocation, Proposal, ScienceCollaborationAllocation, Membership
 )
-from observation_portal.common.configdb import configdb
 
 
 class NoTimeAllocatedError(Exception):
@@ -26,8 +24,21 @@ class Instrument(models.Model):
     code = models.CharField(max_length=50)
     display = models.CharField(max_length=50)
 
+    @cached_property
+    def telescope_name(self):
+        instrument_type_to_telescope_name = configdb.get_telescope_name_by_instrument_types(exclude_states=['DISABLED'])
+        return instrument_type_to_telescope_name.get(self.code.upper(), '')
+
     def __str__(self):
         return self.display
+
+    def as_dict(self):
+        return {
+            'id': self.id,
+            'code': self.code,
+            'name': self.display,
+            'telescope_name': self.telescope_name
+        }
 
 
 class Call(models.Model):
@@ -58,6 +69,14 @@ class Call(models.Model):
     @classmethod
     def open_calls(cls):
         return cls.objects.filter(opens__lte=timezone.now(), deadline__gte=timezone.now())
+
+    @property
+    def eligible_semesters(self):
+        # List of semesters for which time can be requested for this call
+        if self.proposal_type == Call.KEY_PROPOSAL:
+            return [semester.id for semester in Semester.future_semesters()]
+        else:
+            return [self.semester.id]
 
     def __str__(self):
         return '{0} call for {1}'.format(self.get_proposal_type_display(), self.semester)
@@ -133,18 +152,13 @@ class ScienceApplication(models.Model):
 
     @property
     def time_requested_by_telescope_name(self):
-        telescope_instrument_types = configdb.get_instrument_types_per_telescope_name(exclude_states=['DISABLED'])
-        time_requests = {}
-        for tel_name, instrument_types in telescope_instrument_types.items():
-            time_requests[tel_name] = sum(
-                sum([tr.std_time, tr.rr_time, tr.tc_time]) for tr in self.timerequest_set.filter(
-                    instrument__code__in=list(instrument_types)
-                )
-            )
-        return time_requests
+        time_by_telescope_name = defaultdict(int)
+        for timerequest in self.timerequest_set.all():
+            time_by_telescope_name[timerequest.instrument.telescope_name] += timerequest.total_requested_time
+        return time_by_telescope_name
 
     def get_absolute_url(self):
-        return reverse('sciapplications:detail', args=(self.id,))
+        return reverse('api:scienceapplications-detail', args=(self.id,))
 
     def convert_to_proposal(self):
         if not self.timerequest_set.filter(approved=True).count():
@@ -184,26 +198,6 @@ class ScienceApplication(models.Model):
         self.save()
         return proposal
 
-    def generate_combined_pdf(self):
-        context = {
-            'object': self,
-            'pdf': True
-        }
-        with open(finders.find('css/print.css')) as f:
-            css = CSS(string=f.read())
-        html_string = render_to_string('sciapplications/scienceapplication_detail.html', context)
-        html = HTML(string=html_string)
-        fileobj = io.BytesIO()
-        html.write_pdf(fileobj, stylesheets=[css])
-        merger = PdfFileMerger()
-        merger.append(fileobj)
-        if self.pdf:
-            merger.append(self.pdf.file)
-        merger.write(fileobj)
-        pdf = fileobj.getvalue()
-        fileobj.close()
-        return pdf
-
     def send_approved_notification(self):
         subject = _('Your proposal at LCO.global has been approved')
         message = render_to_string(
@@ -237,6 +231,10 @@ class TimeRequest(models.Model):
 
     class Meta:
         ordering = ('semester', 'instrument__display')
+
+    @property
+    def total_requested_time(self):
+        return sum([self.std_time, self.rr_time, self.tc_time])
 
     def __str__(self):
         return '{} {} TimeRequest'.format(self.science_application, self.instrument)
