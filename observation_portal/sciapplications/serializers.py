@@ -137,7 +137,7 @@ class ScienceApplicationSerializer(serializers.ModelSerializer):
         try:
             PdfFileReader(pdf.file)
         except PdfReadError:
-            raise serializers.ValidationError(_(f'Invalid PDF file.'))
+            raise serializers.ValidationError(_('Invalid PDF file.'))
 
         return pdf
 

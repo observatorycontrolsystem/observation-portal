@@ -1,5 +1,5 @@
 from datetime import timedelta
-from os import urandom, path
+from os import path
 from unittest.mock import patch
 from random import randint
 
@@ -25,9 +25,9 @@ def generate_time_request_data(index, instrument, semester):
     return {
         f'timerequest_set[{index}]instrument': instrument.id,
         f'timerequest_set[{index}]semester': semester.id,
-        f'timerequest_set[{index}]std_time': randint(0, 100),
-        f'timerequest_set[{index}]rr_time': randint(0, 100),
-        f'timerequest_set[{index}]tc_time': randint(0, 100)
+        f'timerequest_set[{index}]std_time': fake.random_int(min=0, max=100),
+        f'timerequest_set[{index}]rr_time': fake.random_int(min=0, max=100),
+        f'timerequest_set[{index}]tc_time': fake.random_int(min=0, max=100)
     }
 
 
