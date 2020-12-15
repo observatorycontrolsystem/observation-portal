@@ -1,7 +1,6 @@
 from datetime import timedelta
 from os import path
 from unittest.mock import patch
-from random import randint
 
 from rest_framework.test import APITestCase
 from mixer.backend.django import mixer
