@@ -199,8 +199,13 @@ class ScienceApplicationSerializer(serializers.ModelSerializer):
             missing_fields = {}
             for field in self.get_required_fields_for_submission(call.proposal_type):
                 empty_values = [None, '']
-                if data.get(field) in empty_values:
-                    missing_fields[field] = _('This field is required.')
+                field_is_empty = data.get(field) in empty_values
+                if field == 'pdf':
+                    if clear_pdf or field_is_empty and not getattr(self.instance, 'pdf', None):
+                        missing_fields[field] = _('A PDF is required for submission.')
+                else:
+                    if field_is_empty:
+                        missing_fields[field] = _('This field is required.')
 
             if missing_fields:
                 raise serializers.ValidationError(missing_fields)
