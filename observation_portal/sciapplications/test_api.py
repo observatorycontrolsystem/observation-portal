@@ -634,7 +634,7 @@ class TestPostCreateSciApp(DramatiqTestCase):
         del data['pdf']
         response = self.client.post(reverse('api:scienceapplications-list'), data=data)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('This field is required.', response.json().get('pdf'))
+        self.assertIn('A PDF is required for submission.', response.json().get('pdf'))
 
     def test_sci_application_requires_pdf_and_abstract(self):
         data = self.sci_data.copy()
@@ -642,7 +642,7 @@ class TestPostCreateSciApp(DramatiqTestCase):
         del data['pdf']
         response = self.client.post(reverse('api:scienceapplications-list'), data=data)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('This field is required.', response.json().get('pdf'))
+        self.assertIn('A PDF is required for submission.', response.json().get('pdf'))
         self.assertIn('This field is required.', response.json().get('abstract'))
 
     def test_can_save_draft_with_no_timerequests(self):

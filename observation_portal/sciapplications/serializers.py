@@ -201,7 +201,12 @@ class ScienceApplicationSerializer(serializers.ModelSerializer):
                 empty_values = [None, '']
                 field_is_empty = data.get(field) in empty_values
                 if field == 'pdf':
-                    if clear_pdf or field_is_empty and not getattr(self.instance, 'pdf', None):
+                    if clear_pdf:
+                        missing_fields['clear_pdf'] = _(
+                            'A PDF is required for submission. If you want to clear the uploaded PDF, please '
+                            'either upload a different PDF or save the application as a draft.'
+                        )
+                    elif field_is_empty and not getattr(self.instance, 'pdf', None):
                         missing_fields[field] = _('A PDF is required for submission.')
                 else:
                     if field_is_empty:
