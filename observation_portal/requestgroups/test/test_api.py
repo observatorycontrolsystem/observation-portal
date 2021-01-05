@@ -1303,6 +1303,20 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         extra_params = response.json()['requests'][0]['configurations'][0]['extra_params']
         self.assertEqual(extra_params['test_value'], 1.15)
 
+    def test_extra_param_set_to_none_ok(self):
+        good_data = self.generic_payload.copy()
+        good_data['requests'][0]['configurations'][0]['extra_params'] = {'test_value': None}
+        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()['requests'][0]['configurations'][0]['extra_params']['test_value'], None)
+
+    def test_extra_param_set_to_string_ok(self):
+        good_data = self.generic_payload.copy()
+        good_data['requests'][0]['configurations'][0]['extra_params'] = {'test_value': ''}
+        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()['requests'][0]['configurations'][0]['extra_params']['test_value'], '')
+
     def test_must_have_exposure_time(self):
         bad_data = self.generic_payload.copy()
         del bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['exposure_time']
