@@ -634,7 +634,7 @@ class TestPostCreateSciApp(DramatiqTestCase):
         del data['pdf']
         response = self.client.post(reverse('api:scienceapplications-list'), data=data)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('This field is required.', response.json().get('pdf'))
+        self.assertIn('A PDF is required for submission.', response.json().get('pdf'))
 
     def test_sci_application_requires_pdf_and_abstract(self):
         data = self.sci_data.copy()
@@ -642,7 +642,7 @@ class TestPostCreateSciApp(DramatiqTestCase):
         del data['pdf']
         response = self.client.post(reverse('api:scienceapplications-list'), data=data)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('This field is required.', response.json().get('pdf'))
+        self.assertIn('A PDF is required for submission.', response.json().get('pdf'))
         self.assertIn('This field is required.', response.json().get('abstract'))
 
     def test_can_save_draft_with_no_timerequests(self):
@@ -811,6 +811,44 @@ class TestPostUpdateSciApp(DramatiqTestCase):
         self.assertEqual(coinvestigator.first_name, data['coinvestigator_set[0]first_name'])
         self.assertEqual(coinvestigator.last_name, data['coinvestigator_set[0]last_name'])
         self.assertEqual(coinvestigator.institution, data['coinvestigator_set[0]institution'])
+
+    def test_submit_draft_that_has_pdf_saved_does_not_need_user_to_pass_in_pdf_field(self):
+        data = self.sci_data.copy()
+        uploaded_pdf = data['pdf']
+        self.sci_app.pdf = uploaded_pdf
+        self.sci_app.save()
+        del data['pdf']
+        data['status'] = ScienceApplication.SUBMITTED
+        response = self.client.put(
+            reverse('api:scienceapplications-detail', kwargs={'pk': self.sci_app.id}),
+            data=encode_multipart(BOUNDARY, data), content_type=MULTIPART_CONTENT
+        )
+        submitted_sciapp = ScienceApplication.objects.get(pk=self.sci_app.id)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(path.basename(submitted_sciapp.pdf.name), uploaded_pdf.name)
+
+    def test_submitting_app_without_pdf_when_a_pdf_is_required_fails(self):
+        data = self.sci_data.copy()
+        data['status'] = ScienceApplication.SUBMITTED
+        del data['pdf']
+        response = self.client.put(
+            reverse('api:scienceapplications-detail', kwargs={'pk': self.sci_app.id}),
+            data=encode_multipart(BOUNDARY, data), content_type=MULTIPART_CONTENT
+        )
+        self.assertContains(response, 'A PDF is required for submission', status_code=400)
+
+    def test_clearing_pdf_when_pdf_is_required_on_submission_fails(self):
+        data = self.sci_data.copy()
+        self.sci_app.pdf = data['pdf']
+        self.sci_app.save()
+        del data['pdf']
+        data['clear_pdf'] = True
+        data['status'] = ScienceApplication.SUBMITTED
+        response = self.client.put(
+            reverse('api:scienceapplications-detail', kwargs={'pk': self.sci_app.id}),
+            data=encode_multipart(BOUNDARY, data), content_type=MULTIPART_CONTENT
+        )
+        self.assertContains(response, 'A PDF is required for submission', status_code=400)
 
     def test_leaving_out_a_pdf_doesnt_update_the_uploaded_pdf(self):
         uploaded_pdf = SimpleUploadedFile('app.pdf', b'123')

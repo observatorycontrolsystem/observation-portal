@@ -165,7 +165,7 @@ OAUTH2_PROVIDER = {
 }
 
 CORS_ORIGIN_ALLOW_ALL = True
-CORS_URLS_REGEX = r'^/(api|accounts)/.*$|^/o/.*'
+CORS_URLS_REGEX = r'^/(api|accounts|media)/.*$|^/o/.*'
 LOGIN_REDIRECT_URL = '/accounts/loggedinstate/'
 
 # Internationalization
@@ -187,13 +187,13 @@ DATETIME_FORMAT = 'Y-m-d H:i:s'
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
 AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_BUCKET_NAME', 'observation-portal-test-bucket')
-AWS_REGION = os.getenv('AWS_REGION', 'us-west-2')
+AWS_S3_REGION_NAME = os.getenv('AWS_REGION', 'us-west-2')
 AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID', None)
 AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY', None)
-AWS_S3_CUSTOM_DOMAIN = 's3-us-west-2.amazonaws.com/{}'.format(AWS_STORAGE_BUCKET_NAME)
 AWS_IS_GZIPPED = True
 AWS_LOCATION = os.getenv('MEDIAFILES_DIR', 'media')
 AWS_DEFAULT_ACL = None
+AWS_S3_SIGNATURE_VERSION = 's3v4'
 
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 STATIC_URL = '/static/'
@@ -201,7 +201,7 @@ STATIC_ROOT = '/static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 STATICFILES_STORAGE = os.getenv('STATIC_STORAGE', 'django.contrib.staticfiles.storage.StaticFilesStorage')
 MEDIAFILES_DIR = os.getenv('MEDIAFILES_DIR', 'media')
-MEDIA_URL = "https://{}/{}/".format(AWS_S3_CUSTOM_DOMAIN, MEDIAFILES_DIR) if AWS_ACCESS_KEY_ID else '/media/'
+MEDIA_URL = '' if AWS_ACCESS_KEY_ID else '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 DEFAULT_FILE_STORAGE = os.getenv('MEDIA_STORAGE', 'django.core.files.storage.FileSystemStorage')
 
