@@ -48,15 +48,16 @@ class CustomIsoDateTimeFilterMixin(object):
                 f.field_class = CustomIsoDateTimeField
         return filters
 
+
 class ExtraParamsFormatter(object):
-    ''' This should be mixed in with Serializers that have extra_params JSON fields, to ensure the float values are
+    """ This should be mixed in with Serializers that have extra_params JSON fields, to ensure the float values are
         stored as float values in the db instead of as strings
-    '''
+    """
     def to_internal_value(self, data):
         data = super().to_internal_value(data)
         for field, value in data.get('extra_params', {}).items():
             try:
                 data['extra_params'][field] = float(value)
-            except ValueError:
+            except (ValueError, TypeError):
                 pass
         return data

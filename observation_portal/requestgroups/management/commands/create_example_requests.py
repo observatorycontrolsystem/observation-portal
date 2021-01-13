@@ -65,6 +65,8 @@ TARGET_LIST = [
         "type": "ICRS",
         "ra": 83.63308,
         "dec": 22.0145,
+        "proper_motion_ra": 0,
+        "proper_motion_dec": 0,
         "epoch": 2000,
         "parallax": 0.0
     },
