@@ -68,6 +68,19 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
     def get_queryset(self):
         return observations_queryset(self.request).prefetch_related('request__windows', 'request__location').distinct()
 
+    @action(detail=False, methods=['get'])
+    def filters(self, request):
+        obs_filter_options = {'fields': [], 'choice_fields': []}
+        for filter_name, filter_field in self.filter_class.get_filters().items():
+            if hasattr(filter_field.field, 'choices'):
+                obs_filter_options['choice_fields'].append({
+                    'name': filter_name,
+                    'options': list(filter_field.field.choices)
+                })
+            else:
+                obs_filter_options['fields'].append(filter_name)
+        return Response(obs_filter_options, status=200)
+
     @action(detail=False, methods=['post'])
     def cancel(self, request):
         """

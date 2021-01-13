@@ -61,6 +61,8 @@ class TestSciAppAdmin(DramatiqTestCase):
             data={'action': 'port', '_selected_action': [str(app.pk) for app in self.apps]},
             follow=True
         )
+        self.broker.join('default')
+        self.worker.join()
         self.assertEqual(len(mail.outbox), 3)
         for app in self.apps:
             self.assertEqual(ScienceApplication.objects.get(pk=app.id).status, ScienceApplication.PORTED)
@@ -73,6 +75,8 @@ class TestSciAppAdmin(DramatiqTestCase):
             data={'action': 'port', '_selected_action': [str(app.pk) for app in self.apps]},
             follow=True
         )
+        self.broker.join('default')
+        self.worker.join()
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(ScienceApplication.objects.get(pk=app_id_to_port).proposal.pi.email, self.user.email)
         self.assertEqual([ScienceApplication.objects.get(pk=app_id_to_port).proposal.pi.email], mail.outbox[0].to)
@@ -89,6 +93,8 @@ class TestSciAppAdmin(DramatiqTestCase):
             data={'action': 'port', '_selected_action': [str(app.pk) for app in self.apps]},
             follow=True
         )
+        self.broker.join('default')
+        self.worker.join()
         # If the PI is registered but is not the submitter, they will receive two emails- one telling them
         # their proposal has been approved, and another telling them them that they have been added to that proposal
         # and can begin submitting requests. The approval email is second.
@@ -112,6 +118,8 @@ class TestSciAppAdmin(DramatiqTestCase):
             data={'action': 'port', '_selected_action': [str(app.pk) for app in self.apps]},
             follow=True
         )
+        self.broker.join('default')
+        self.worker.join()
         # If the PI is not registered, then 2 emails will be sent out- one inviting them to register an account, and
         # one letting them know their proposal has been approved. The accepted email is sent second.
         self.assertEqual(len(mail.outbox), 2)
@@ -129,6 +137,8 @@ class TestSciAppAdmin(DramatiqTestCase):
             data={'action': 'port', '_selected_action': [str(app.pk) for app in self.apps]},
             follow=True
         )
+        self.broker.join('default')
+        self.worker.join()
         self.assertFalse(Proposal.objects.exists())
         self.assertEqual(len(mail.outbox), 0)
         for app in self.apps:
@@ -142,6 +152,8 @@ class TestSciAppAdmin(DramatiqTestCase):
             data={'action': 'port', '_selected_action': [str(app.pk) for app in self.apps]},
             follow=True
         )
+        self.broker.join('default')
+        self.worker.join()
         for app in self.apps:
             self.assertEqual(ScienceApplication.objects.get(pk=app.id).status, ScienceApplication.ACCEPTED)
         self.assertContains(response, 'no approved Time Allocations')
@@ -154,6 +166,8 @@ class TestSciAppAdmin(DramatiqTestCase):
             data={'action': 'port', '_selected_action': [str(app.pk) for app in self.apps]},
             follow=True
         )
+        self.broker.join('default')
+        self.worker.join()
         self.assertContains(response, 'A proposal named LCO{}-000 already exists.'.format(self.semester))
         # One application out of the bunch was successfully ported, so only one email was sent
         self.assertEqual(len(mail.outbox), 1)

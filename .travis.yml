@@ -6,11 +6,8 @@ python:
 - '3.8'
 env:
   global:
-  - NODE_VERSION='10'
   - DOCKER_USERNAME='ocstravisci'
   - secure: sF7S6zVg0WDg3N3K73zfL9/qMi/a13MH6QRBE4bcOgLWDsYTM26o9NCSjt7h6Gn6NlVHEBSEoqdE0ELcigQA34HogEd5PXEYh9VWy68acfPYPP6+5AQBFcS4qwNff7N7jXZzb7nSXysr/VVnf15fhWYTiRZXskSaDy9g3BcO+Ye6QlwAzRMNwkLS8BSWRV9qauSJoG4TnnphYAb0L16Qz44NESUEdSwwabZ0PvyXPwRZ5fRsA679wiAU1sSMx5+TJCuVEhE4V7zH+3lr4vp2GE0kAwl4UeXS90w6k81czB8yz9NXWNwAiqn/eiDuqeLuph7S9Wc2Zf0JElyyi4VmMcHL4F0H9wWonJ+WisB68wuAdifhNC/yqYm2oWQGB1vIybSteDWNhBjGAf8b5JpxeIZlDLRixYErAhiAm5s44jgiOz8s1qWtpBF1ctVojeT5jB/YMtdsa0gIMqrlqvL6oGqFHe4n14/rxWNf8Yr5slfrf3+IPcW2aKVHZA1WMKS2+HcfbBxvdKBRTX+RgxV25bTKjwhCiww2A0kaaNZSYwFx4s/3atW6ejX8bVkJLEEecbePBwwMnYVicXT92/p8CETVE+TFWWMWobOz0PgfSQkCI+EkLdwz2u1a5lCRHRn47LlvEsk+kMK3XwWljDfCqBQqXmVu/+2BmNd6wOhvkAs=
-before_install:
-- nvm install $NODE_VERSION
 addons:
   postgresql: '9.6'
   apt:
@@ -24,8 +21,6 @@ before_script:
 install:
 - pip install -U coverage coveralls
 - pip install -r requirements.txt
-- npm install
-- npm run build
 script: coverage run manage.py test --settings=test_settings
 after_success: coveralls
 before_deploy:

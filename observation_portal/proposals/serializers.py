@@ -1,6 +1,7 @@
 from rest_framework import serializers
+from django.utils.translation import ugettext as _
 
-from observation_portal.proposals.models import Proposal, TimeAllocation, Semester
+from observation_portal.proposals.models import Proposal, TimeAllocation, Semester, ProposalInvite, Membership
 
 
 class TimeAllocationSerializer(serializers.ModelSerializer):
@@ -11,17 +12,7 @@ class TimeAllocationSerializer(serializers.ModelSerializer):
 
 class ProposalSerializer(serializers.ModelSerializer):
     timeallocation_set = TimeAllocationSerializer(many=True)
-    users = serializers.SerializerMethodField()
     pi = serializers.StringRelatedField()
-
-    def get_users(self, obj):
-        return {
-            mem.user.username: {
-                'first_name': mem.user.first_name,
-                'last_name': mem.user.last_name,
-                'time_limit': mem.time_limit
-            } for mem in obj.membership_set.all()
-        }
 
     class Meta:
         model = Proposal
@@ -32,3 +23,42 @@ class SemesterSerialzer(serializers.ModelSerializer):
     class Meta:
         model = Semester
         fields = ('id', 'start', 'end')
+
+
+class ProposalInviteSerializer(serializers.ModelSerializer):
+    emails = serializers.ListField(child=serializers.EmailField(), write_only=True)
+
+    class Meta:
+        model = ProposalInvite
+        fields = ('id', 'role', 'email', 'sent', 'used', 'proposal', 'emails')
+        read_only_fields = ('role', 'email', 'proposal')
+
+    def validate_emails(self, emails):
+        user = self.context.get('user')
+        proposal = self.context.get('proposal')
+        for email in emails:
+            if email.lower() == user.email.lower():
+                raise serializers.ValidationError(_(f'You cannot invite yourself ({email}) to be a Co-Investigator'))
+            if Membership.objects.filter(proposal=proposal, user__email__iexact=email).exists():
+                raise serializers.ValidationError(_(f'User with email {email} is already a member of this proposal'))
+        return emails
+
+
+class MembershipSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Membership
+        fields = ('id', 'proposal', 'role', 'user', 'time_limit')
+
+
+class ProposalNotificationSerializer(serializers.Serializer):
+    enabled = serializers.BooleanField()
+
+
+class TimeLimitSerializer(serializers.Serializer):
+    time_limit_hours = serializers.FloatField()
+
+    def validate(self, data):
+        membership = self.context.get('membership')
+        if membership and membership.role == Membership.PI:
+            raise serializers.ValidationError(_('You cannot set the limit on a PI membership'))
+        return data

@@ -297,7 +297,8 @@ class ObservationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Observation
-        fields = ('site', 'enclosure', 'telescope', 'start', 'end', 'priority', 'configuration_statuses', 'request')
+        fields = ('site', 'enclosure', 'telescope', 'start', 'end', 'priority', 'configuration_statuses', 'request', 'state', 'modified', 'created')
+        read_only_fields = ('state', 'modified', 'created')
 
     def validate(self, data):
         user = self.context['request'].user

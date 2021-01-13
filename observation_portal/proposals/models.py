@@ -11,6 +11,7 @@ from collections import namedtuple
 import logging
 
 from observation_portal.accounts.tasks import send_mail
+from observation_portal.common.configdb import configdb
 
 logger = logging.getLogger(__name__)
 
@@ -44,13 +45,21 @@ class ScienceCollaborationAllocation(models.Model):
     def __str__(self):
         return self.id
 
-    def time_requested_for_semester(self, semester):
+    def time_requested_for_semester(self, semester, proposal_type):
         allocs = {ca.telescope_name: 0 for ca in self.collaborationallocation_set.all()}
-        for sciapp in self.admin.scienceapplication_set.filter(call__semester=semester, call__proposal_type='COLAB'):
-            for k, v in sciapp.time_requested_by_telescope_name.items():
-                if k in allocs:
-                    allocs[k] += v
+        sciapp_filters = {'call__semester': semester, 'call__proposal_type': proposal_type}
+        for sciapp in self.admin.scienceapplication_set.filter(**sciapp_filters):
+            for telescope_name, time_requested in sciapp.time_requested_by_telescope_name.items():
+                if telescope_name in allocs:
+                    allocs[telescope_name] += time_requested
         return allocs
+
+    def as_dict(self):
+        return {
+            'name': self.name,
+            'id': self.id,
+            'collaborationallocation_set': [alloc.as_dict() for alloc in self.collaborationallocation_set.all()]
+        }
 
 
 class CollaborationAllocation(models.Model):
@@ -60,6 +69,13 @@ class CollaborationAllocation(models.Model):
 
     def __str__(self):
         return f'CollaborationAllocation for {self.sca.id}-{self.telescope_name}'
+
+    def as_dict(self):
+        return {
+            'allocation': self.allocation,
+            'telescope_name': self.telescope_name,
+            'raw_telescope_name': configdb.get_raw_telescope_name(self.telescope_name)
+        }
 
 
 class Proposal(models.Model):
@@ -99,8 +115,11 @@ class Proposal(models.Model):
 
     @cached_property
     def current_allocation(self):
+        return self.allocation(semester=self.current_semester)
+
+    def allocation(self, semester):
         allocs = {}
-        for ta in self.timeallocation_set.filter(semester=self.current_semester):
+        for ta in self.timeallocation_set.filter(semester=semester):
             allocs[ta.instrument_type.replace('-', '')] = {
                 'std': ta.std_allocation,
                 'std_used': ta.std_time_used,
@@ -155,16 +174,20 @@ class Proposal(models.Model):
         return self.id
 
     def as_dict(self):
-        proposal = model_to_dict(self, exclude=[])
+        proposal = model_to_dict(self, exclude=['notes', 'users'])
         proposal['sca'] = self.sca.id
-        proposal['timeallocation_set'] = [ta.as_dict() for ta in self.timeallocation_set.all()]
-        proposal['users'] = {
-            mem.user.username: {
+        proposal['pis'] = [
+            {
                 'first_name': mem.user.first_name,
                 'last_name': mem.user.last_name,
-                'time_limit': mem.time_limit
-            } for mem in self.membership_set.all()
-        }
+                'username': mem.user.username,
+                'email': mem.user.email,
+                'institution': mem.user.profile.institution
+            } for mem in self.membership_set.all() if mem.role == Membership.PI
+        ]
+        proposal['requestgroup_count'] = self.requestgroup_set.count()
+        proposal['coi_count'] = self.membership_set.filter(role=Membership.CI).count()
+        proposal['timeallocation_set'] = [ta.as_dict() for ta in self.timeallocation_set.all()]
         return proposal
 
 
@@ -190,8 +213,10 @@ class TimeAllocation(models.Model):
     def __str__(self):
         return 'Timeallocation for {0}-{1}'.format(self.proposal, self.semester)
 
-    def as_dict(self):
-        time_allocation = model_to_dict(self, exclude=[])
+    def as_dict(self, exclude=None):
+        if exclude is None:
+            exclude = []
+        time_allocation = model_to_dict(self, exclude=exclude)
         return time_allocation
 
 
@@ -228,6 +253,20 @@ class Membership(models.Model):
     @property
     def time_limit_hours(self):
         return self.time_limit / 3600
+
+    def as_dict(self):
+        return {
+            'username': self.user.username,
+            'first_name': self.user.first_name,
+            'last_name': self.user.last_name,
+            'email': self.user.email,
+            'role': self.role,
+            'proposal': self.proposal.id,
+            'time_limit': self.time_limit,
+            'time_used_by_user': self.user.profile.time_used_in_proposal(self.proposal),
+            'simple_interface': self.user.profile.simple_interface,
+            'id': self.id
+        }
 
 
 class ProposalInvite(models.Model):
