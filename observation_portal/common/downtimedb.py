@@ -25,7 +25,7 @@ class DowntimeDB(object):
         :return: list of dictionaries of downtime periods in time order (default)
         '''
         try:
-            r = requests.get(settings.DOWNTIMEDB_URL)
+            r = requests.get(settings.DOWNTIMEDB_URL + 'api/')
             r.raise_for_status()
         except (requests.exceptions.RequestException, requests.exceptions.HTTPError) as e:
             msg = "{}: {}".format(e.__class__.__name__, DOWNTIMEDB_ERROR_MSG)
@@ -39,7 +39,7 @@ class DowntimeDB(object):
         '''
         downtime_intervals = {}
         for interval in raw_downtime_intervals:
-            resource = '.'.join([interval['telescope'], interval['observatory'], interval['site']])
+            resource = '.'.join([interval['telescope'], interval['enclosure'], interval['site']])
             if resource not in downtime_intervals:
                 downtime_intervals[resource] = []
             start = datetime.strptime(interval['start'], DOWNTIME_DATE_FORMAT).replace(tzinfo=timezone.utc)
