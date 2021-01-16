@@ -106,7 +106,7 @@ class TestStateChanges(SetTimeMixin, TestCase):
 
     def test_observation_state_not_attempted_if_all_config_status_not_attempted(self):
         observation = self.requestgroup.requests.first().observation_set.first()
-        for i, cs in enumerate(observation.configuration_statuses.all()):
+        for cs in observation.configuration_statuses.all():
             cs.state = 'NOT_ATTEMPTED'
             cs.save()
         observation.refresh_from_db()
