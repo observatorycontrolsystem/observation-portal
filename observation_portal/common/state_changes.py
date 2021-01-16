@@ -25,7 +25,7 @@ REQUEST_STATE_MAP = {
 
 TERMINAL_REQUEST_STATES = ['COMPLETED', 'CANCELED', 'WINDOW_EXPIRED']
 
-TERMINAL_OBSERVATION_STATES = ['CANCELED', 'ABORTED', 'FAILED', 'COMPLETED']
+TERMINAL_OBSERVATION_STATES = ['CANCELED', 'ABORTED', 'FAILED', 'COMPLETED', 'NOT_ATTEMPTED']
 
 
 class InvalidStateChange(Exception):
@@ -111,7 +111,7 @@ def update_observation_state(observation):
         with transaction.atomic():
             Observation.objects.filter(pk=observation.id).update(state=observation_state, modified=timezone.now())
 
-    if observation_state in ['FAILED', 'ABORTED']:
+    if observation_state in ['FAILED', 'ABORTED', 'NOT_ATTEMPTED']:
         # If the observation has failed, trigger a reschedule
         cache.set('observation_portal_last_change_time', timezone.now(), None)
 
@@ -120,8 +120,15 @@ def get_observation_state(configuration_statuses):
     states = [config_status.state for config_status in configuration_statuses]
     if all([state == 'PENDING' for state in states]):
         return 'PENDING'
+    elif all([state == 'NOT_ATTEMPTED' for state in states]):
+        return 'NOT_ATTEMPTED'
+    # This check is needed to keep the observation PENDING while waiting for all config_status to get updated
+    elif all([state == 'PENDING' or state == 'NOT_ATTEMPTED' for state in states]):
+        return 'PENDING'
     elif all([state == 'PENDING' or state == 'ATTEMPTED' for state in states]):
         return 'IN_PROGRESS'
+    elif any([state == 'NOT_ATTEMPTED' for state in states]):
+        return 'FAILED'
     elif any([state == 'FAILED' for state in states]):
         return 'FAILED'
     elif any([state == 'ABORTED' for state in states]):

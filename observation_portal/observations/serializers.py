@@ -25,7 +25,7 @@ class SummarySerializer(serializers.ModelSerializer):
 
 
 class ConfigurationStatusSerializer(serializers.ModelSerializer):
-    TERMINAL_STATES = ['COMPLETED', 'ABORTED', 'FAILED']
+    TERMINAL_STATES = ['COMPLETED', 'ABORTED', 'FAILED', 'NOT_ATTEMPTED']
     summary = SummarySerializer(required=False)
     instrument_name = serializers.CharField(required=False)
     guide_camera_name = serializers.CharField(required=False)

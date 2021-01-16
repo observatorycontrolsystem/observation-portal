@@ -15,6 +15,7 @@ class Observation(models.Model):
     STATE_CHOICES = (
         ('PENDING', 'PENDING'),
         ('IN_PROGRESS', 'IN_PROGRESS'),
+        ('NOT_ATTEMPTED', 'NOT_ATTEMPTED'),
         ('COMPLETED', 'COMPLETED'),
         ('CANCELED', 'CANCELED'),
         ('ABORTED', 'ABORTED'),
@@ -164,6 +165,7 @@ class ConfigurationStatus(models.Model):
     STATE_CHOICES = (
         ('PENDING', 'PENDING'),
         ('ATTEMPTED', 'ATTEMPTED'),
+        ('NOT_ATTEMPTED', 'NOT_ATTEMPTED'),
         ('COMPLETED', 'COMPLETED'),
         ('FAILED', 'FAILED')
     )

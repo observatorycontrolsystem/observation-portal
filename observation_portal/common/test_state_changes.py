@@ -72,6 +72,51 @@ class TestStateChanges(SetTimeMixin, TestCase):
             request.refresh_from_db()
             self.assertEqual(request.state, 'PENDING')
 
+    def test_observation_state_pending_if_all_config_status_pending_and_not_attempted(self):
+        observation = self.requestgroup.requests.first().observation_set.first()
+        for i, cs in enumerate(observation.configuration_statuses.all()):
+            if (i % 2) == 1:
+                cs.state = 'NOT_ATTEMPTED'
+            else:
+                cs.state = 'PENDING'
+            cs.save()
+        observation.refresh_from_db()
+        self.requestgroup.refresh_from_db()
+        self.assertEqual(observation.state, 'PENDING')
+        self.assertEqual(self.requestgroup.state, 'PENDING')
+        for request in self.requestgroup.requests.all():
+            request.refresh_from_db()
+            self.assertEqual(request.state, 'PENDING')
+
+    def test_observation_state_failed_if_any_config_status_not_attempted_and_not_pending(self):
+        observation = self.requestgroup.requests.first().observation_set.first()
+        for i, cs in enumerate(observation.configuration_statuses.all()):
+            if (i % 2) == 1:
+                cs.state = 'NOT_ATTEMPTED'
+            else:
+                cs.state = 'ATTEMPTED'
+            cs.save()
+        observation.refresh_from_db()
+        self.requestgroup.refresh_from_db()
+        self.assertEqual(observation.state, 'FAILED')
+        self.assertEqual(self.requestgroup.state, 'PENDING')
+        for request in self.requestgroup.requests.all():
+            request.refresh_from_db()
+            self.assertEqual(request.state, 'PENDING')
+
+    def test_observation_state_not_attempted_if_all_config_status_not_attempted(self):
+        observation = self.requestgroup.requests.first().observation_set.first()
+        for i, cs in enumerate(observation.configuration_statuses.all()):
+            cs.state = 'NOT_ATTEMPTED'
+            cs.save()
+        observation.refresh_from_db()
+        self.requestgroup.refresh_from_db()
+        self.assertEqual(observation.state, 'NOT_ATTEMPTED')
+        self.assertEqual(self.requestgroup.state, 'PENDING')
+        for request in self.requestgroup.requests.all():
+            request.refresh_from_db()
+            self.assertEqual(request.state, 'PENDING')
+
     def test_observation_state_complete_if_all_config_statuses_complete(self):
         observation = self.requestgroup.requests.first().observation_set.first()
         for cs in observation.configuration_statuses.all():
