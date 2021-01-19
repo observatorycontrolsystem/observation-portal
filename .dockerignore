@@ -9,6 +9,7 @@ media/
 .tox/
 .git/
 .venv/
+.env/
 **/*.swp
 **/*.pyc
 **/__pycache__

@@ -13,6 +13,15 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 import os
 from lcogt_logging import LCOGTFormatter
 
+
+def get_list_from_env(variable, default=None):
+    value_as_list = []
+    value = os.getenv(variable, default)
+    if value:
+        value_as_list = value.strip(', ').replace(' ', '').split(',')
+    return value_as_list
+
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -166,6 +175,7 @@ OAUTH2_PROVIDER = {
 
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_URLS_REGEX = r'^/(api|accounts|media)/.*$|^/o/.*'
+CSRF_TRUSTED_ORIGINS = get_list_from_env('CSRF_TRUSTED_ORIGINS')
 LOGIN_REDIRECT_URL = '/accounts/loggedinstate/'
 
 # Internationalization
