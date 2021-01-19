@@ -29,7 +29,7 @@ Optional prerequisites can be skipped for reduced functionality.
 | ---------------------- | ----------------------- | ------------------------------------------------------------------- | ------------------------------------------------------- |
 | General                | `DEBUG`                 | Whether the application should run using Django's debug mode        | `False`                                                 |
 |                        | `SECRET_KEY`            | The secret key used for sessions                                    | _`random characters`_                                   |
-|                        | `CSRF_TRUSTED_ORIGINS`  | List of trusted origins allowed for CSRF                            | `None`
+|                        | `CSRF_TRUSTED_ORIGINS`  | Comma separated list of trusted origins allowed for CSRF            | `None`
 | Database               | `DB_NAME`               | The name of the database                                            | `observation_portal`                                    |
 |                        | `DB_USER`               | The database user                                                   | `postgres`                                              |
 |                        | `DB_PASSWORD`           | The database password                                               | _`Empty string`_                                        |
