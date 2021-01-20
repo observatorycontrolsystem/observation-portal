@@ -187,8 +187,10 @@ class InstrumentConfigSerializer(ExtraParamsFormatter, serializers.ModelSerializ
                 'Currently only square binnings are supported. Please submit with bin_x == bin_y'
             ))
 
+        # TODO: These checks on extra_params will either go in a subclassed serializer or in cerberus validation schema
+        extra_params = data.get('extra_params', {})
         extra_param_max_exp_time = 0
-        for field, value in data.get('extra_params', {}).items():
+        for field, value in extra_params.items():
             try:
                 if 'exposure_time' in field and float(value) > extra_param_max_exp_time:
                     extra_param_max_exp_time = float(value)
@@ -196,6 +198,12 @@ class InstrumentConfigSerializer(ExtraParamsFormatter, serializers.ModelSerializ
                 pass
         if extra_param_max_exp_time > 0:
             data['exposure_time'] = extra_param_max_exp_time
+
+        if 'defocus' in extra_params:
+            try:
+                float(extra_params['defocus'])
+            except (ValueError, TypeError):
+                raise serializers.ValidationError(_('Defocus must be a number'))
 
         return data
 
