@@ -1410,6 +1410,34 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('exposure_time', str(response.content))
 
+    def test_bad_defocus_values_must_not_be_submitted(self):
+        bad_data = self.generic_payload.copy()
+        bad_values = ['2mm', '']
+        for bad_value in bad_values:
+            with self.subTest(bad_value=bad_value):
+                bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params'] = {
+                    'defocus': bad_value
+                }
+                response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+                self.assertEqual(response.status_code, 400)
+                self.assertIn('Defocus', str(response.content))
+
+    def test_defocus_as_a_number_successfully_submits(self):
+        good_data = self.generic_payload.copy()
+        good_values = [2, '2']
+        expected_submitted_defocus = 2
+        for good_value in good_values:
+            with self.subTest(good_value=good_value):
+                good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params'] = {
+                    'defocus': good_value
+                }
+                r = self.client.post(reverse('api:request_groups-list'), data=good_data)
+                self.assertEqual(r.status_code, 201)
+                self.assertEqual(
+                    r.json()['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params']['defocus'],
+                    expected_submitted_defocus
+                )
+
     def test_default_guide_mode_for_spectrograph(self):
         good_data = self.generic_payload.copy()
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
