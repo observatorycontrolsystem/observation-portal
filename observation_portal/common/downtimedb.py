@@ -25,7 +25,7 @@ class DowntimeDB(object):
         :return: list of dictionaries of downtime periods in time order (default)
         '''
         try:
-            r = requests.get(settings.DOWNTIMEDB_URL + 'api/')
+            r = requests.get(settings.DOWNTIMEDB_URL + 'api/?limit=10000')
             r.raise_for_status()
         except (requests.exceptions.RequestException, requests.exceptions.HTTPError) as e:
             msg = "{}: {}".format(e.__class__.__name__, DOWNTIMEDB_ERROR_MSG)
