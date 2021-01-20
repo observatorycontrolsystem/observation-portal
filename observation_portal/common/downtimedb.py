@@ -31,7 +31,7 @@ class DowntimeDB(object):
             msg = "{}: {}".format(e.__class__.__name__, DOWNTIMEDB_ERROR_MSG)
             raise DowntimeDBException(msg)
 
-        return r.json()
+        return r.json()['results']
 
     @staticmethod
     def _order_downtime_by_resource(raw_downtime_intervals):
