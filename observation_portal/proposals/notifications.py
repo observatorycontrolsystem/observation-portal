@@ -1,6 +1,7 @@
 from django.template.loader import render_to_string
 
 from observation_portal.accounts.tasks import send_mass_mail
+from django.conf import settings
 
 
 def users_to_notify(requestgroup):
@@ -17,7 +18,10 @@ def requestgroup_notifications(requestgroup):
     if requestgroup.state == 'COMPLETED':
         message = render_to_string(
             'proposals/requestgroupcomplete.txt',
-            {'requestgroup': requestgroup}
+            {
+                'requestgroup': requestgroup,
+                'download_url': settings.REQUESTGROUP_DATA_DOWNLOAD_URL.format(requestgroup_id=requestgroup.id)
+            }
         )
         email_messages = []
         for user in users_to_notify(requestgroup):

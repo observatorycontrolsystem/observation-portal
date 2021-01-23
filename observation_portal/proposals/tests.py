@@ -89,15 +89,27 @@ class TestProposalNotifications(DramatiqTestCase):
 
     def test_all_proposal_notification(self):
         mixer.blend(Profile, user=self.user, notifications_enabled=True)
-        self.requestgroup.state = 'COMPLETED'
-        self.requestgroup.save()
+        download_urls = ['http://download_data/?requestgroup={requestgroup_id}', 'http://download_data/', '']
+        for download_url in download_urls:
+            download_url_is_in_email = download_url != ''
+            complete_download_url = download_url.format(requestgroup_id=self.requestgroup.id)
+            with self.subTest(download_url=download_url):
+                with self.settings(REQUESTGROUP_DATA_DOWNLOAD_URL=download_url):
+                    mail.outbox = []
+                    self.requestgroup.state = 'COMPLETED'
+                    self.requestgroup.save()
 
-        self.broker.join("default")
-        self.worker.join()
+                    self.broker.join("default")
+                    self.worker.join()
 
-        self.assertEqual(len(mail.outbox), 1)
-        self.assertIn(self.requestgroup.name, str(mail.outbox[0].message()))
-        self.assertEqual(mail.outbox[0].to, [self.user.email])
+                    self.assertEqual(len(mail.outbox), 1)
+                    self.assertIn(self.requestgroup.name, str(mail.outbox[0].message()))
+                    if download_url_is_in_email:
+                        self.assertIn('Data may be downloaded here', str(mail.outbox[0].message()))
+                        self.assertIn(complete_download_url, str(mail.outbox[0].message()))
+                    else:
+                        self.assertNotIn('Data may be downloaded here', str(mail.outbox[0].message()))
+                    self.assertEqual(mail.outbox[0].to, [self.user.email])
 
     def test_single_proposal_notification(self):
         mixer.blend(Profile, user=self.user, notifications_enabled=False)
