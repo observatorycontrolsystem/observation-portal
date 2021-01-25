@@ -32,7 +32,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -U coverage 'numpy>=1.16,<1.17'
+        pip install -U coverage coveralls 'numpy>=1.16,<1.17'
         pip install -r requirements.txt
     - name: Run tests
       run: |
@@ -43,8 +43,10 @@ jobs:
         DB_NAME: observation_portal_test
         DB_HOST: localhost
         DB_PORT: 5432
-    - name: Coveralls
+    - name: Generate coveralls report
+      run: coveralls --output=coverage.json
+    - name: Send report to coveralls
       uses: coverallsapp/github-action@v1.1.2
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
-        path-to-lcov: .coverage
+        path-to-lcov: coverage.json
