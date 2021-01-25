@@ -1,6 +1,6 @@
 name: Run Tests
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
   build:
@@ -8,13 +8,9 @@ jobs:
     strategy:
       matrix:
         python-version: [3.6, 3.7, 3.8, 3.9]
-    # Service containers to run with `runner-job`
     services:
-      # Label used to access the service container
       postgres:
-        # Docker Hub image
         image: postgres
-        # Provide the password for postgres
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -26,7 +22,6 @@ jobs:
           --health-timeout 5s
           --health-retries 5
         ports:
-          # Maps tcp port 5432 on service container to the host
           - 5432:5432
     steps:
     - uses: actions/checkout@v2
@@ -52,3 +47,4 @@ jobs:
       uses: coverallsapp/github-action@v1.1.2
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
+        path-to-lcov: .coverage
