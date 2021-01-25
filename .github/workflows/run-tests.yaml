@@ -45,6 +45,6 @@ jobs:
         DB_PORT: 5432
     - name: Coveralls report
       run: |
-        coveralls
+        coveralls --service=github
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
