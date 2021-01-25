@@ -14,7 +14,6 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: observation_portal_test
         # Set health checks to wait until postgres has started
         options: >-
           --health-cmd pg_isready
@@ -36,11 +35,10 @@ jobs:
         pip install -r requirements.txt
     - name: Run tests
       run: |
-        coverage run manage.py test --settings=test_settings --parallel
+        coverage run manage.py test --settings=test_settings
       env:
         DB_USER: postgres
         DB_PASS: postgres
-        DB_NAME: observation_portal_test
         DB_HOST: localhost
         DB_PORT: 5432
     - name: Coveralls report
