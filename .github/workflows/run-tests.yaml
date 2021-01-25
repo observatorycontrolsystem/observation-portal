@@ -43,10 +43,8 @@ jobs:
         DB_NAME: observation_portal_test
         DB_HOST: localhost
         DB_PORT: 5432
-    - name: Generate coveralls report
-      run: coveralls --output=coverage.json
-    - name: Send report to coveralls
-      uses: coverallsapp/github-action@v1.1.2
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        path-to-lcov: coverage.json
+    - name: Coveralls report
+      run: |
+        coveralls
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
