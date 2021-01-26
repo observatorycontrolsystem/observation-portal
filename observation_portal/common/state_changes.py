@@ -1,29 +1,34 @@
-from django.utils import timezone
+import logging
+from collections import defaultdict
+from math import floor, isclose
+
+from django.conf import settings
+from django.core.cache import cache
 from django.db import transaction
 from django.db.models import F
+from django.utils import timezone
 from django.utils.translation import ugettext as _
-from django.core.cache import cache
 
-from observation_portal.proposals.models import TimeAllocation, TimeAllocationKey
-from observation_portal.requestgroups.request_utils import exposure_completion_percentage
-from observation_portal.requestgroups.models import RequestGroup, Request
 from observation_portal.observations.models import Observation
-from observation_portal.proposals.notifications import requestgroup_notifications
-
-from collections import defaultdict
-import logging
-from math import isclose, floor
+from observation_portal.proposals.models import (TimeAllocation,
+                                                 TimeAllocationKey)
+from observation_portal.proposals.notifications import \
+    requestgroup_notifications
+from observation_portal.requestgroups.models import Request, RequestGroup
+from observation_portal.requestgroups.request_utils import \
+    exposure_completion_percentage
 
 logger = logging.getLogger(__name__)
 
 REQUEST_STATE_MAP = {
-    'COMPLETED': ['PENDING', 'WINDOW_EXPIRED', 'CANCELED'],
+    'COMPLETED': ['PENDING', 'WINDOW_EXPIRED', 'CANCELED', 'RETRY_LIMIT'],
     'WINDOW_EXPIRED': ['PENDING'],
     'CANCELED': ['PENDING'],
+    'RETRY_LIMIT': ['PENDING'],
     'PENDING': []
 }
 
-TERMINAL_REQUEST_STATES = ['COMPLETED', 'CANCELED', 'WINDOW_EXPIRED']
+TERMINAL_REQUEST_STATES = ['COMPLETED', 'CANCELED', 'WINDOW_EXPIRED', 'RETRY_LIMIT']
 
 TERMINAL_OBSERVATION_STATES = ['CANCELED', 'ABORTED', 'FAILED', 'COMPLETED', 'NOT_ATTEMPTED']
 
@@ -87,7 +92,7 @@ def on_request_state_change(old_request_state, new_request):
                             f'Request {new_request} switched from WINDOW_EXPIRED to COMPLETED but did not have enough '
                             f'ipp_time to debit: {repr(tae)}'
                         ))
-        if new_request.state == 'CANCELED' or new_request.state == 'WINDOW_EXPIRED':
+        if new_request.state in ['CANCELED', 'WINDOW_EXPIRED', 'RETRY_LIMIT']:
             ipp_value = new_request.request_group.ipp_value
             if ipp_value >= 1.0:
                 modify_ipp_time_from_requests(ipp_value, [new_request], 'credit')
@@ -225,15 +230,21 @@ def modify_ipp_time_from_requests(ipp_val, requests_list, modification='debit'):
         logger.warning(_(f'Problem {modification}ing ipp time for request {request.id}: {repr(e)}'))
 
 
-def get_request_state_from_configuration_statuses(request_state, acceptability_threshold, configuration_statuses):
+def get_request_state_from_configuration_statuses(old_request_state, request, configuration_statuses):
     """Determine request state from all the configuration statuses associated with one of the request's observations"""
+    acceptability_threshold = request.acceptability_threshold
     observation_state = get_observation_state(configuration_statuses)
     completion_percent = exposure_completion_percentage(configuration_statuses)
     if isclose(acceptability_threshold, completion_percent) or \
             completion_percent >= acceptability_threshold or \
             observation_state == 'COMPLETED':
         return 'COMPLETED'
-    return request_state
+    # If a nonzero MAX_RETRIES_PER_REQUEST is set and the observation failed, check that condition
+    if settings.MAX_RETRIES_PER_REQUEST and observation_state == 'FAILED':
+        failed_observations_count = request.observation_set.filter(state='FAILED').count()
+        if failed_observations_count >= settings.MAX_RETRIES_PER_REQUEST:
+            return 'RETRY_LIMIT'
+    return old_request_state
 
 
 def update_request_state(request, configuration_statuses, request_group_expired):
@@ -246,7 +257,7 @@ def update_request_state(request, configuration_statuses, request_group_expired)
         return state_changed
 
     new_request_state = get_request_state_from_configuration_statuses(
-        old_state, request.acceptability_threshold, configuration_statuses
+        old_state, request, configuration_statuses
     )
 
     # If the state is not a terminal state and the request group has expired, mark the request as expired
@@ -273,9 +284,9 @@ def aggregate_request_states(request_group):
     """Aggregate the state of the request group from all of its child request states"""
     request_states = [request.state for request in Request.objects.filter(request_group=request_group)]
     # Set the priority ordering - assume AND by default
-    state_priority = ['WINDOW_EXPIRED', 'PENDING', 'COMPLETED', 'CANCELED']
+    state_priority = ['WINDOW_EXPIRED', 'PENDING', 'COMPLETED', 'RETRY_LIMIT', 'CANCELED']
     if request_group.operator == 'MANY':
-        state_priority = ['PENDING', 'COMPLETED', 'WINDOW_EXPIRED', 'CANCELED']
+        state_priority = ['PENDING', 'COMPLETED', 'WINDOW_EXPIRED', 'RETRY_LIMIT', 'CANCELED']
 
     for state in state_priority:
         if state in request_states:

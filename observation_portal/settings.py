@@ -229,6 +229,7 @@ CONFIGDB_URL = os.getenv('CONFIGDB_URL', 'http://localhost')
 DOWNTIMEDB_URL = os.getenv('DOWNTIMEDB_URL', 'http://localhost')
 
 REQUESTGROUP_DATA_DOWNLOAD_URL = os.getenv('REQUESTGROUP_DATA_DOWNLOAD_URL', '')
+MAX_RETRIES_PER_REQUEST = os.getenv('MAX_RETRIES_PER_REQUEST', 0)  # 0 means unlimited / no max
 
 REST_FRAMEWORK = {
     'TEST_REQUEST_DEFAULT_FORMAT': 'json',
