@@ -5,8 +5,6 @@ on:
   push:
     branches:
       - '**'
-  # Run this workflow on pull requests
-  pull_request:
   # Run this workflow when a tag or branch is created
   create:
 
@@ -15,8 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # TODO: Add other python versions back in when done debugging the workflow [3.6, 3.7, 3.8, 3.9]
-        python-version: [3.6]
+        python-version: [3.6, 3.7, 3.8, 3.9]
     services:
       postgres:
         image: postgres
