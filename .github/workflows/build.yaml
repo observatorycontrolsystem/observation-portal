@@ -29,7 +29,8 @@ jobs:
         ports:
           - 5432:5432
     steps:
-    - uses: actions/checkout@v2
+    - name: Check out repository
+      uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
@@ -40,16 +41,14 @@ jobs:
         pip install -U coverage coveralls 'numpy>=1.16,<1.17'
         pip install -r requirements.txt
     - name: Run tests
-      run: |
-        coverage run manage.py test --settings=test_settings
+      run: coverage run manage.py test --settings=test_settings
       env:
         DB_USER: postgres
         DB_PASS: postgres
         DB_HOST: localhost
         DB_PORT: 5432
-    - name: Coveralls report
-      run: |
-        coveralls --service=github
+    - name: Generate and send coveralls report
+      run: coveralls --service=github
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -63,7 +62,7 @@ jobs:
       DOCKER_REPOSITORY: observatorycontrolsystem/observation-portal
       DOCKER_IMAGE_TAG: ${{ github.event.ref }}
     steps:
-      - name: Check out the repo
+      - name: Check out repository
         uses: actions/checkout@v2
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
