@@ -46,3 +46,15 @@ jobs:
         coveralls --service=github
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Print info
+      run: |
+        ls
+        echo "end of running tests"
+  build_and_publish_image:
+    needs: run_tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print info
+        run: |
+          ls
+          echo "In next job"
