@@ -13,6 +13,7 @@ on:
       - '**'
 
 jobs:
+
   run_tests:
     runs-on: ubuntu-latest
     strategy:
@@ -56,6 +57,7 @@ jobs:
         coveralls --service=github
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   build_and_publish_image:
     # Only run this job if the run_tests job has succeeded, and if
     # this workflow was triggered by the creation of a new tag
@@ -73,5 +75,5 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-          repository: ${{ DOCKER_REPOSITORY }}
+          repository: ${{ env.DOCKER_REPOSITORY }}
           tag_with_ref: true
