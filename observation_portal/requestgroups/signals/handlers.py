@@ -31,5 +31,5 @@ def cb_requestgroup_send_notifications(sender, instance, *args, **kwargs):
     requestgroup_notifications(instance)
 
 @receiver(post_save, sender=Request)
-def cb_requestgroup_send_notifications(sender, instance, *args, **kwargs):
+def cb_request_send_notifications(sender, instance, *args, **kwargs):
     request_notifications(instance)
