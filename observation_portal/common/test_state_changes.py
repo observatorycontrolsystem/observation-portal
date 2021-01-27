@@ -402,7 +402,7 @@ class TestStateFromConfigurationStatuses(SetTimeMixin, DramatiqTestCase):
         # requestgroup state is not completed, no email sent
         self.assertEqual(len(mail.outbox), 0)
 
-    @override_settings(MAX_RETRIES_PER_REQUEST=2)
+    @override_settings(REQUEST_DETAIL_URL='test_url/{request_id}', MAX_RETRIES_PER_REQUEST=2)
     def test_max_observations_failed_request_retry_limit(self):
         # First observation will be marked as failed
         observation = dmixer.blend(
@@ -439,6 +439,11 @@ class TestStateFromConfigurationStatuses(SetTimeMixin, DramatiqTestCase):
             initial_state, self.request, observation2.configuration_statuses.all()
         )
         self.assertEqual(request_state, 'RETRY_LIMIT')
+        # Test that an email is sent out for the Request
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(str(self.request.id), str(mail.outbox[0].subject))
+        self.assertIn(f"Request url: test_url/{self.request.id}", str(mail.outbox[0].message()))
+        self.assertEqual(mail.outbox[0].to, [self.user.email])
 
     def test_ongoinging_configuration_statuses_in_use_initial(self):
         observation = dmixer.blend(

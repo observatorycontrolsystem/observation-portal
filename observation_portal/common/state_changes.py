@@ -13,7 +13,7 @@ from observation_portal.observations.models import Observation
 from observation_portal.proposals.models import (TimeAllocation,
                                                  TimeAllocationKey)
 from observation_portal.proposals.notifications import \
-    requestgroup_notifications
+    requestgroup_notifications, request_notifications
 from observation_portal.requestgroups.models import Request, RequestGroup
 from observation_portal.requestgroups.request_utils import \
     exposure_completion_percentage
@@ -275,7 +275,9 @@ def update_request_state(request, configuration_statuses, request_group_expired)
             state_changed = True
 
     if state_changed:
-        on_request_state_change(old_state, Request.objects.get(pk=request.id))
+        updated_request = Request.objects.get(pk=request.id)
+        on_request_state_change(old_state, updated_request)
+        request_notifications(updated_request)
 
     return state_changed
 

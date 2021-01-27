@@ -3,7 +3,7 @@ from django.db.models.signals import pre_save, post_save
 
 from observation_portal.requestgroups.models import RequestGroup, Request
 from observation_portal.common.state_changes import on_request_state_change, on_requestgroup_state_change
-from observation_portal.proposals.notifications import requestgroup_notifications
+from observation_portal.proposals.notifications import requestgroup_notifications, request_notifications
 
 
 @receiver(pre_save, sender=RequestGroup)
@@ -29,3 +29,7 @@ def cb_request_pre_save(sender, instance, *args, **kwargs):
 @receiver(post_save, sender=RequestGroup)
 def cb_requestgroup_send_notifications(sender, instance, *args, **kwargs):
     requestgroup_notifications(instance)
+
+@receiver(post_save, sender=Request)
+def cb_requestgroup_send_notifications(sender, instance, *args, **kwargs):
+    request_notifications(instance)
