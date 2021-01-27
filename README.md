@@ -1,6 +1,6 @@
 # Observation Portal
 
-[![Build Status](https://travis-ci.com/observatorycontrolsystem/observation-portal.svg?branch=master)](https://travis-ci.com/observatorycontrolsystem/observation-portal)
+![Build](https://github.com/observatorycontrolsystem/observation-portal/workflows/Build/badge.svg)
 [![Coverage Status](https://coveralls.io/repos/github/observatorycontrolsystem/observation-portal/badge.svg?branch=master)](https://coveralls.io/github/observatorycontrolsystem/observation-portal?branch=master)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/9846cee7c4904cae8864525101030169)](https://www.codacy.com/gh/observatorycontrolsystem/observation-portal?utm_source=github.com&utm_medium=referral&utm_content=observatorycontrolsystem/observation-portal&utm_campaign=Badge_Grade)
 
