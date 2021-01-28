@@ -13,11 +13,11 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='request',
             name='state',
-            field=models.CharField(choices=[('PENDING', 'PENDING'), ('COMPLETED', 'COMPLETED'), ('WINDOW_EXPIRED', 'WINDOW_EXPIRED'), ('RETRY_LIMIT', 'RETRY_LIMIT'), ('CANCELED', 'CANCELED')], default='PENDING', help_text='Current state of this Request', max_length=40),
+            field=models.CharField(choices=[('PENDING', 'PENDING'), ('COMPLETED', 'COMPLETED'), ('WINDOW_EXPIRED', 'WINDOW_EXPIRED'), ('FAILURE_LIMIT_REACHED', 'FAILURE_LIMIT_REACHED'), ('CANCELED', 'CANCELED')], default='PENDING', help_text='Current state of this Request', max_length=40),
         ),
         migrations.AlterField(
             model_name='requestgroup',
             name='state',
-            field=models.CharField(choices=[('PENDING', 'PENDING'), ('COMPLETED', 'COMPLETED'), ('WINDOW_EXPIRED', 'WINDOW_EXPIRED'), ('RETRY_LIMIT', 'RETRY_LIMIT'), ('CANCELED', 'CANCELED')], default='PENDING', help_text='Current state of this RequestGroup', max_length=40),
+            field=models.CharField(choices=[('PENDING', 'PENDING'), ('COMPLETED', 'COMPLETED'), ('WINDOW_EXPIRED', 'WINDOW_EXPIRED'), ('FAILURE_LIMIT_REACHED', 'FAILURE_LIMIT_REACHED'), ('CANCELED', 'CANCELED')], default='PENDING', help_text='Current state of this RequestGroup', max_length=40),
         ),
     ]

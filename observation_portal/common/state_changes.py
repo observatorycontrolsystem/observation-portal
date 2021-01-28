@@ -21,14 +21,14 @@ from observation_portal.requestgroups.request_utils import \
 logger = logging.getLogger(__name__)
 
 REQUEST_STATE_MAP = {
-    'COMPLETED': ['PENDING', 'WINDOW_EXPIRED', 'CANCELED', 'RETRY_LIMIT'],
+    'COMPLETED': ['PENDING', 'WINDOW_EXPIRED', 'CANCELED', 'FAILURE_LIMIT_REACHED'],
     'WINDOW_EXPIRED': ['PENDING'],
     'CANCELED': ['PENDING'],
-    'RETRY_LIMIT': ['PENDING'],
+    'FAILURE_LIMIT_REACHED': ['PENDING'],
     'PENDING': []
 }
 
-TERMINAL_REQUEST_STATES = ['COMPLETED', 'CANCELED', 'WINDOW_EXPIRED', 'RETRY_LIMIT']
+TERMINAL_REQUEST_STATES = ['COMPLETED', 'CANCELED', 'WINDOW_EXPIRED', 'FAILURE_LIMIT_REACHED']
 
 TERMINAL_OBSERVATION_STATES = ['CANCELED', 'ABORTED', 'FAILED', 'COMPLETED', 'NOT_ATTEMPTED']
 
@@ -92,7 +92,7 @@ def on_request_state_change(old_request_state, new_request):
                             f'Request {new_request} switched from WINDOW_EXPIRED to COMPLETED but did not have enough '
                             f'ipp_time to debit: {repr(tae)}'
                         ))
-        if new_request.state in ['CANCELED', 'WINDOW_EXPIRED', 'RETRY_LIMIT']:
+        if new_request.state in ['CANCELED', 'WINDOW_EXPIRED', 'FAILURE_LIMIT_REACHED']:
             ipp_value = new_request.request_group.ipp_value
             if ipp_value >= 1.0:
                 modify_ipp_time_from_requests(ipp_value, [new_request], 'credit')
@@ -239,11 +239,11 @@ def get_request_state_from_configuration_statuses(old_request_state, request, co
             completion_percent >= acceptability_threshold or \
             observation_state == 'COMPLETED':
         return 'COMPLETED'
-    # If a nonzero MAX_RETRIES_PER_REQUEST is set and the observation failed, check that condition
-    if settings.MAX_RETRIES_PER_REQUEST and observation_state == 'FAILED':
+    # If a nonzero MAX_FAILURES_PER_REQUEST is set and the observation failed, check that condition
+    if settings.MAX_FAILURES_PER_REQUEST and observation_state == 'FAILED':
         failed_observations_count = request.observation_set.filter(state='FAILED').count()
-        if failed_observations_count >= settings.MAX_RETRIES_PER_REQUEST:
-            return 'RETRY_LIMIT'
+        if failed_observations_count >= settings.MAX_FAILURES_PER_REQUEST:
+            return 'FAILURE_LIMIT_REACHED'
     return old_request_state
 
 
@@ -286,9 +286,9 @@ def aggregate_request_states(request_group):
     """Aggregate the state of the request group from all of its child request states"""
     request_states = [request.state for request in Request.objects.filter(request_group=request_group)]
     # Set the priority ordering - assume AND by default
-    state_priority = ['WINDOW_EXPIRED', 'PENDING', 'COMPLETED', 'RETRY_LIMIT', 'CANCELED']
+    state_priority = ['WINDOW_EXPIRED', 'PENDING', 'COMPLETED', 'FAILURE_LIMIT_REACHED', 'CANCELED']
     if request_group.operator == 'MANY':
-        state_priority = ['PENDING', 'COMPLETED', 'WINDOW_EXPIRED', 'RETRY_LIMIT', 'CANCELED']
+        state_priority = ['PENDING', 'COMPLETED', 'WINDOW_EXPIRED', 'FAILURE_LIMIT_REACHED', 'CANCELED']
 
     for state in state_priority:
         if state in request_states:

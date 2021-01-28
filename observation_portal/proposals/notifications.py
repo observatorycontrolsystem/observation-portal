@@ -15,19 +15,19 @@ def users_to_notify(requestgroup):
 
 
 def request_notifications(request):
-    if request.state == 'RETRY_LIMIT':
+    if request.state == 'FAILURE_LIMIT_REACHED':
         message = render_to_string(
-            'proposals/requestretrylimit.txt',
+            'proposals/requestfailurelimit.txt',
             {
                 'request': request,
                 'detail_url': settings.REQUEST_DETAIL_URL.format(request_id=request.id),
-                'max_retries': settings.MAX_RETRIES_PER_REQUEST
+                'max_failure_limit': settings.MAX_FAILURES_PER_REQUEST
             }
         )
         email_messages = []
         for user in users_to_notify(request.request_group):
             email_tuple = (
-                f'Request #{request.id} has failed {settings.MAX_RETRIES_PER_REQUEST} times and will not be rescheduled',
+                f'Request #{request.id} has failed {settings.MAX_FAILURES_PER_REQUEST} times and will not be rescheduled',
                 message,
                 'portal@lco.global',
                 [user.email]
