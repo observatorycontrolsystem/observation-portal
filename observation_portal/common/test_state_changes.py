@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from mixer.backend.django import mixer as dmixer
 from django.utils import timezone
 from datetime import timedelta
@@ -357,6 +357,8 @@ class TestStateFromConfigurationStatuses(SetTimeMixin, DramatiqTestCase):
             user=self.user, proposal=self.proposal, instrument_type='1M0-SCICAM-SBIG', window=self.window
         )
         self.request = self.requestgroup.requests.first()
+        self.request.acceptability_threshold = 100
+        self.request.save()
         create_simple_configuration(request=self.request, instrument_type='1M0-SCICAM-SBIG')
         create_simple_configuration(request=self.request, instrument_type='1M0-SCICAM-SBIG')
         create_simple_configuration(request=self.request, instrument_type='1M0-SCICAM-SBIG')
@@ -378,7 +380,7 @@ class TestStateFromConfigurationStatuses(SetTimeMixin, DramatiqTestCase):
                 inst_config.save()
             dmixer.blend(Summary, configuration_status=cs, time_completed=1000)
         request_state = get_request_state_from_configuration_statuses(
-            self.request.state, 100, observation.configuration_statuses.all()
+            self.request.state, self.request, observation.configuration_statuses.all()
         )
         self.assertEqual(request_state, 'COMPLETED')
 
@@ -394,11 +396,57 @@ class TestStateFromConfigurationStatuses(SetTimeMixin, DramatiqTestCase):
             dmixer.blend(Summary, configuration_status=cs, time_completed=0)
         initial_state = 'INITIAL'
         request_state = get_request_state_from_configuration_statuses(
-            initial_state, 100, observation.configuration_statuses.all()
+            initial_state, self.request, observation.configuration_statuses.all()
         )
         self.assertEqual(request_state, initial_state)
         # requestgroup state is not completed, no email sent
         self.assertEqual(len(mail.outbox), 0)
+
+    @override_settings(REQUEST_DETAIL_URL='test_url/{request_id}', MAX_FAILURES_PER_REQUEST=2)
+    def test_max_observations_failed_request_retry_limit(self):
+        # First observation will be marked as failed
+        observation = dmixer.blend(
+            Observation, request=self.request, start=self.now - timedelta(minutes=30),
+            end=self.now + timedelta(minutes=20), state='PENDING'
+        )
+        for configuration in self.request.configurations.all():
+            cs = dmixer.blend(
+                ConfigurationStatus, observation=observation, configuration=configuration, state='FAILED'
+            )
+            dmixer.blend(Summary, configuration_status=cs, time_completed=0)
+        observation.refresh_from_db()
+        self.assertEqual(observation.state, 'FAILED')
+        initial_state = 'INITIAL'
+        # But request is still in its initial state
+        request_state = get_request_state_from_configuration_statuses(
+            initial_state, self.request, observation.configuration_statuses.all()
+        )
+        self.assertEqual(request_state, initial_state)
+        # Second observation failing will trigger FAILURE_LIMIT_REACHED of 2
+        observation2 = dmixer.blend(
+            Observation, request=self.request, start=self.now - timedelta(minutes=30),
+            end=self.now + timedelta(minutes=20), state='PENDING'
+        )
+        for configuration in self.request.configurations.all():
+            cs = dmixer.blend(
+                ConfigurationStatus, observation=observation2, configuration=configuration, state='FAILED'
+            )
+            dmixer.blend(Summary, configuration_status=cs, time_completed=0)
+        observation2.refresh_from_db()
+        self.assertEqual(observation2.state, 'FAILED')
+        # so request should enter the FAILURE_LIMIT_REACHED state since it has failed 2 times
+        request_state = get_request_state_from_configuration_statuses(
+            initial_state, self.request, observation2.configuration_statuses.all()
+        )
+        self.assertEqual(request_state, 'FAILURE_LIMIT_REACHED')
+        # Test that an email is sent out for the Request
+        self.broker.join("default")
+        self.worker.join()
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(str(self.request.id), str(mail.outbox[0].subject))
+        self.assertIn(f"Request url: test_url/{self.request.id}", str(mail.outbox[0].message()))
+        self.assertEqual(mail.outbox[0].to, [self.user.email])
 
     def test_ongoinging_configuration_statuses_in_use_initial(self):
         observation = dmixer.blend(
@@ -418,13 +466,16 @@ class TestStateFromConfigurationStatuses(SetTimeMixin, DramatiqTestCase):
         dmixer.blend(Summary, configuration_status=completed_cs, time_completed=0)
         initial_state = 'INITIAL'
         request_state = get_request_state_from_configuration_statuses(
-            initial_state, 100, observation.configuration_statuses.all()
+            initial_state, self.request, observation.configuration_statuses.all()
         )
         self.assertEqual(request_state, initial_state)
         # requestgroup state is not completed, no email sent
         self.assertEqual(len(mail.outbox), 0)
 
     def test_configuration_statuses_failed_but_threshold_complete(self):
+        self.request.acceptability_threshold = 90
+        self.request.save()
+
         observation = dmixer.blend(
             Observation, request=self.request, start=self.now - timedelta(minutes=30),
             end=self.now + timedelta(minutes=30)
@@ -438,7 +489,7 @@ class TestStateFromConfigurationStatuses(SetTimeMixin, DramatiqTestCase):
             dmixer.blend(Summary, configuration_status=cs, time_completed=900)
         initial_state = 'INITIAL'
         request_state = get_request_state_from_configuration_statuses(
-            initial_state, 90, observation.configuration_statuses.all()
+            initial_state, self.request, observation.configuration_statuses.all()
         )
         self.assertEqual(request_state, 'COMPLETED')
         # The requestgroup state changed to complete, so an email should be sent
@@ -449,6 +500,9 @@ class TestStateFromConfigurationStatuses(SetTimeMixin, DramatiqTestCase):
         self.assertEqual(mail.outbox[0].to, [self.user.email])
 
     def test_configuration_statuses_failed_but_threshold_complete_multi(self):
+        self.request.acceptability_threshold = 95
+        self.request.save()
+
         observation = dmixer.blend(
             Observation, request=self.request, start=self.now - timedelta(minutes=30),
             end=self.now + timedelta(minutes=30)
@@ -472,10 +526,12 @@ class TestStateFromConfigurationStatuses(SetTimeMixin, DramatiqTestCase):
         dmixer.blend(Summary, configuration_status=completed_cs, time_completed=1000)
         initial_state = 'INITIAL'
         request_state = get_request_state_from_configuration_statuses(
-            initial_state, 95, observation.configuration_statuses.all()
+            initial_state, self.request, observation.configuration_statuses.all()
         )
         self.assertEqual(request_state, 'COMPLETED')
         # The requestgroup state changed to complete, so an email should be sent
+        self.broker.join("default")
+        self.worker.join()
         self.requestgroup.refresh_from_db()
         self.assertEqual(self.requestgroup.state, 'COMPLETED')
         self.assertEqual(len(mail.outbox), 1)
@@ -534,6 +590,62 @@ class TestRequestState(SetTimeMixin, TestCase):
             self.request.refresh_from_db()
             self.assertTrue(state_changed)
             self.assertEqual(self.request.state, 'COMPLETED')
+
+    @override_settings(MAX_FAILURES_PER_REQUEST=1)
+    def test_request_state_completed_from_retry_limit_possible(self):
+        # Start with a pending request and observation
+        self.request.state = 'PENDING'
+        self.request.save()
+        observation = dmixer.blend(Observation, request=self.request, state='PENDING')
+        for configuration in self.request.configurations.all():
+            cs = dmixer.blend(
+                ConfigurationStatus, observation=observation, configuration=configuration, state='FAILED'
+            )
+            dmixer.blend(Summary, configuration_status=cs, time_completed=0)
+        # Fail the observation, which puts the request in FAILURE_LIMIT_REACHED since the limit is 1
+        observation.refresh_from_db()
+        self.assertEqual(observation.state, 'FAILED')
+        self.request.refresh_from_db()
+        self.assertEqual(self.request.state, 'FAILURE_LIMIT_REACHED')
+        # Now add a completed observation and see that request can change status to COMPLETED
+        observation2 = dmixer.blend(Observation, request=self.request, state='PENDING')
+        for configuration in self.request.configurations.all():
+            cs = dmixer.blend(
+                ConfigurationStatus, observation=observation2, configuration=configuration, state='COMPLETED'
+            )
+            dmixer.blend(Summary, configuration_status=cs, time_completed=100)
+        observation2.refresh_from_db()
+        self.assertEqual(observation2.state, 'COMPLETED')
+        self.request.refresh_from_db()
+        self.assertEqual(self.request.state, 'COMPLETED')
+
+    @override_settings(MAX_FAILURES_PER_REQUEST=1)
+    def test_request_state_cant_enter_retry_limit_from_completed(self):
+        # Start with a pending request and observation
+        self.request.state = 'PENDING'
+        self.request.save()
+        observation = dmixer.blend(Observation, request=self.request, state='PENDING')
+        for configuration in self.request.configurations.all():
+            cs = dmixer.blend(
+                ConfigurationStatus, observation=observation, configuration=configuration, state='COMPLETED'
+            )
+            dmixer.blend(Summary, configuration_status=cs, time_completed=100)
+        # completed the observation, which puts the request in COMPLETED state
+        observation.refresh_from_db()
+        self.assertEqual(observation.state, 'COMPLETED')
+        self.request.refresh_from_db()
+        self.assertEqual(self.request.state, 'COMPLETED')
+        # Now add a failed observation and see that request will not change to FAILURE_LIMIT_REACHED
+        observation2 = dmixer.blend(Observation, request=self.request, state='PENDING')
+        for configuration in self.request.configurations.all():
+            cs = dmixer.blend(
+                ConfigurationStatus, observation=observation2, configuration=configuration, state='FAILED'
+            )
+            dmixer.blend(Summary, configuration_status=cs, time_completed=0)
+        observation2.refresh_from_db()
+        self.assertEqual(observation2.state, 'FAILED')
+        self.request.refresh_from_db()
+        self.assertEqual(self.request.state, 'COMPLETED')
 
     def test_request_state_initial_state_expired(self):
         with disconnect_signal(post_save, cb_configurationstatus_post_save, ConfigurationStatus):
@@ -840,12 +952,26 @@ class TestAggregateRequestStates(TestCase):
         aggregate_state = aggregate_request_states(rg)
         self.assertEqual(aggregate_state, 'COMPLETED')
 
+    def test_many_retry_limit_and_canceled(self):
+        request_states = ['CANCELED', 'FAILURE_LIMIT_REACHED', 'CANCELED']
+        rg = dmixer.blend(RequestGroup, operator='MANY', observation_type=RequestGroup.NORMAL)
+        dmixer.cycle(3).blend(Request, state=(state for state in request_states), request_group=rg)
+        aggregate_state = aggregate_request_states(rg)
+        self.assertEqual(aggregate_state, 'FAILURE_LIMIT_REACHED')
+
     def test_many_all_canceled(self):
         request_states = ['CANCELED', 'CANCELED', 'CANCELED']
         rg = dmixer.blend(RequestGroup, operator='MANY', observation_type=RequestGroup.NORMAL)
         dmixer.cycle(3).blend(Request, state=(state for state in request_states), request_group=rg)
         aggregate_state = aggregate_request_states(rg)
         self.assertEqual(aggregate_state, 'CANCELED')
+
+    def test_many_all_retry_limit(self):
+        request_states = ['FAILURE_LIMIT_REACHED', 'FAILURE_LIMIT_REACHED', 'FAILURE_LIMIT_REACHED']
+        rg = dmixer.blend(RequestGroup, operator='MANY', observation_type=RequestGroup.NORMAL)
+        dmixer.cycle(3).blend(Request, state=(state for state in request_states), request_group=rg)
+        aggregate_state = aggregate_request_states(rg)
+        self.assertEqual(aggregate_state, 'FAILURE_LIMIT_REACHED')
 
     def test_many_all_expired(self):
         request_states = ['WINDOW_EXPIRED', 'WINDOW_EXPIRED', 'WINDOW_EXPIRED']

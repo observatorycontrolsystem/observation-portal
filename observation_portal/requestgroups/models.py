@@ -36,6 +36,7 @@ class RequestGroup(models.Model):
         ('PENDING', 'PENDING'),
         ('COMPLETED', 'COMPLETED'),
         ('WINDOW_EXPIRED', 'WINDOW_EXPIRED'),
+        ('FAILURE_LIMIT_REACHED', 'FAILURE_LIMIT_REACHED'),
         ('CANCELED', 'CANCELED'),
     )
 
@@ -151,6 +152,7 @@ class Request(models.Model):
         ('PENDING', 'PENDING'),
         ('COMPLETED', 'COMPLETED'),
         ('WINDOW_EXPIRED', 'WINDOW_EXPIRED'),
+        ('FAILURE_LIMIT_REACHED', 'FAILURE_LIMIT_REACHED'),
         ('CANCELED', 'CANCELED'),
     )
 
