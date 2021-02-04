@@ -1,6 +1,7 @@
 from math import cos, radians
 from collections import defaultdict
 from datetime import datetime, timedelta
+import json
 
 from time_intervals.intervals import Intervals
 from rise_set.astrometry import (
@@ -55,21 +56,31 @@ def get_rise_set_intervals_by_site(request: dict, only_schedulable: bool = False
             # There is no cached rise_set intervals for this request and site, so recalculate it now
             intervals_by_site[site] = []
             rise_set_site = get_rise_set_site(site_details[site])
-            rise_set_target = get_rise_set_target(request['configurations'][0]['target'])
+            unique_targets_constraints = set([json.dumps((configuration['target'], configuration['constraints'])) for configuration in request['configurations']])
+
             for window in request['windows']:
                 visibility = get_rise_set_visibility(rise_set_site, window['start'], window['end'], site_details[site])
-                try:
-                    intervals_by_site[site].extend(
-                        visibility.get_observable_intervals(
+                target_intervals = Intervals()
+                for target_constraints in unique_targets_constraints:
+                    (target, constraints) = json.loads(target_constraints)
+                    rise_set_target = get_rise_set_target(target)
+                    try:
+                        rs_interval = visibility.get_observable_intervals(
                             rise_set_target,
-                            airmass=request['configurations'][0]['constraints']['max_airmass'],
+                            airmass=constraints['max_airmass'],
                             moon_distance=Angle(
-                                degrees=request['configurations'][0]['constraints']['min_lunar_distance']
+                                degrees=constraints['min_lunar_distance']
                             )
                         )
-                    )
-                except MovingViolation:
-                    pass
+                        # We only want times when all targets are visible to keep things simple
+                        if target_intervals.is_empty():
+                            target_intervals = Intervals(rs_interval)
+                        else:
+                            target_intervals = Intervals(rs_interval).intersect([target_intervals])
+                    except MovingViolation:
+                        pass
+                intervals_by_site[site].extend(target_intervals.toTupleList())
+
             if request.get('id'):
                 cache.set(cache_key, intervals_by_site[site], 86400 * 30)  # cache for 30 days
     return intervals_by_site

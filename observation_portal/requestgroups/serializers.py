@@ -798,7 +798,7 @@ class RequestGroupSerializer(serializers.ModelSerializer):
 
                     # For non-DIRECT observations, only allow a single target
                     # TODO: Remove this check once we support multiple targets/constraints
-                    if config['target'] != target:
+                    if 'SOAR' not in config['instrument_type'].upper() and config['target'] != target:
                         raise serializers.ValidationError(_(
                             'Currently only a single target per Request is supported. This restriction will be lifted '
                             'in the future.'
