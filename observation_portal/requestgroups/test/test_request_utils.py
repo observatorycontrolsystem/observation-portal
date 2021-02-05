@@ -324,7 +324,7 @@ class TestMultipleTargetRequestIntervals(BaseSetupRequest):
         # )
         # mixer.blend(Constraints, configuration=self.configuration2)
 
-    def test_request_intervals_for_one_week(self):
+    def test_request_intervals_for_multiple_targets_intersected(self):
         request_dict = self.request.as_dict()
         intervals = get_filtered_rise_set_intervals_by_site(request_dict).get('tst', [])
         truth_intervals = [
@@ -371,6 +371,30 @@ class TestMultipleTargetRequestIntervals(BaseSetupRequest):
         intervals3 = get_filtered_rise_set_intervals_by_site(request_dict3).get('tst', [])
         truth_intervals_combined = Intervals(truth_intervals).intersect([Intervals(truth_intervals2)]).toTupleList()
         self.assertEqual(intervals3, truth_intervals_combined)
+
+    def test_airmass_for_multiple_targets_averaged(self):
+        request_dict = self.request.as_dict()
+        airmasses = get_airmasses_for_request_at_sites(request_dict)
+
+        # now create get the intervals for a request with the second target
+        configuration2 = deepcopy(request_dict['configurations'][0])
+        configuration2['target']['ra'] = 85.0  # change the RA so the target has different visibility
+        request_dict2 = deepcopy(request_dict)
+        request_dict2['configurations'][0] = configuration2
+        airmasses2 = get_airmasses_for_request_at_sites(request_dict2)
+
+        # now get the intervals for both targets combined in the request and verify they are intersected
+        request_dict3 = deepcopy(request_dict)
+        request_dict3['configurations'].append(configuration2)
+        airmasses_combined = get_airmasses_for_request_at_sites(request_dict3)
+
+        # The first few intervals should at least match up in time, so compare those
+        for i in range(4):
+            self.assertNotEqual(airmasses['airmass_data']['tst']['airmasses'][i], airmasses2['airmass_data']['tst']['airmasses'][i])
+            average_airmass = (airmasses['airmass_data']['tst']['airmasses'][i] +  airmasses2['airmass_data']['tst']['airmasses'][i]) / 2.0
+            self.assertEqual(average_airmass, airmasses_combined['airmass_data']['tst']['airmasses'][i])
+        average_airmass_limit = (airmasses['airmass_limit'] + airmasses2['airmass_limit']) / 2.0
+        self.assertEqual(average_airmass_limit, airmasses_combined['airmass_limit'])
 
 
 class TestRequestAirmass(BaseSetupRequest):
