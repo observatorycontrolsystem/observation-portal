@@ -579,7 +579,7 @@ class RequestSerializer(serializers.ModelSerializer):
         # Set the relative priority of molecules in order
         for i, configuration in enumerate(value):
             configuration['priority'] = i + 1
-            if configuration['constraints'] != constraints:
+            if 'SOAR' not in configuration['instrument_type'].upper() and configuration['constraints'] != constraints:
                 raise serializers.ValidationError(_(
                     'Currently only a single constraints per Request is supported. This restriction will be '
                     'lifted in the future.'

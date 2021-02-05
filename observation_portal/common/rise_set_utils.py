@@ -30,7 +30,6 @@ def get_largest_interval(intervals_by_site):
     return largest_interval
 
 
-# TODO: rewrite to handle multiple targets per request
 def get_rise_set_intervals_by_site(request: dict, only_schedulable: bool = False) -> dict:
     """Get rise_set intervals by site for a request
 
