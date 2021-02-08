@@ -354,6 +354,25 @@ class TestMultipleTargetRequestIntervals(BaseSetupRequest):
         truth_intervals_combined = Intervals(truth_intervals).intersect([Intervals(truth_intervals2)]).toTupleList()
         self.assertEqual(intervals3, truth_intervals_combined)
 
+    def test_request_intervals_for_multiple_targets_empty_if_one_is_empty(self):
+        request_dict = self.request.as_dict()
+        
+        # now create get the intervals for a request with the second target that isn't visible
+        configuration2 = deepcopy(request_dict['configurations'][0])
+        configuration2['target']['dec'] = 70.0  # change the DEC so the target isn't visible
+        request_dict2 = deepcopy(request_dict)
+        request_dict2['configurations'][0] = configuration2
+        intervals = get_filtered_rise_set_intervals_by_site(request_dict2).get('tst', [])
+        truth_intervals = [
+        ]
+        self.assertEqual(intervals, truth_intervals)
+
+        # now get the intervals for both targets combined in the request and verify they are intersected and empty
+        request_dict3 = deepcopy(request_dict)
+        request_dict3['configurations'].append(configuration2)
+        intervals3 = get_filtered_rise_set_intervals_by_site(request_dict3).get('tst', [])
+        self.assertEqual(intervals3, [])
+
     def test_airmass_for_multiple_targets_averaged(self):
         request_dict = self.request.as_dict()
         airmasses = get_airmasses_for_request_at_sites(request_dict)

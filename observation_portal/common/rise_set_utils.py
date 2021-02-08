@@ -60,6 +60,7 @@ def get_rise_set_intervals_by_site(request: dict, only_schedulable: bool = False
             for window in request['windows']:
                 visibility = get_rise_set_visibility(rise_set_site, window['start'], window['end'], site_details[site])
                 target_intervals = Intervals()
+                first_target = True
                 for target_constraints in unique_targets_constraints:
                     (target, constraints) = json.loads(target_constraints)
                     rise_set_target = get_rise_set_target(target)
@@ -72,7 +73,8 @@ def get_rise_set_intervals_by_site(request: dict, only_schedulable: bool = False
                             )
                         )
                         # We only want times when all targets are visible to keep things simple
-                        if target_intervals.is_empty():
+                        if first_target:
+                            first_target = False
                             target_intervals = Intervals(rs_interval)
                         else:
                             target_intervals = Intervals(rs_interval).intersect([target_intervals])
