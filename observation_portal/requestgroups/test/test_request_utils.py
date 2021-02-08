@@ -306,24 +306,6 @@ class TestRequestIntervals(BaseSetupRequest):
 
 
 class TestMultipleTargetRequestIntervals(BaseSetupRequest):
-    def setUp(self):
-        super().setUp()
-        # Set up a second configuration with a different Target
-        # self.configuration2 = mixer.blend(
-        #     Configuration, request=self.request, instrument_type='1M0-SCICAM-SBIG', type='EXPOSE'
-        # )
-        # self.instrument_config = mixer.blend(
-        #     InstrumentConfig, configuration=self.configuration2, exposure_time=600, exposure_count=2,
-        #     optical_elements={'filter': 'blah'}, bin_x=2, bin_y=2
-        # )
-        # self.acquisition_config = mixer.blend(AcquisitionConfig, configuration=self.configuration2)
-        # self.guiding_config = mixer.blend(GuidingConfig, configuration=self.configuration2)
-        # mixer.blend(
-        #     Target, configuration=self.configuration2, type='ICRS', ra=82, dec=-33, proper_motion_ra=0.0,
-        #     proper_motion_dec=0.0
-        # )
-        # mixer.blend(Constraints, configuration=self.configuration2)
-
     def test_request_intervals_for_multiple_targets_intersected(self):
         request_dict = self.request.as_dict()
         intervals = get_filtered_rise_set_intervals_by_site(request_dict).get('tst', [])
