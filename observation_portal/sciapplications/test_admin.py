@@ -13,13 +13,13 @@ from observation_portal.sciapplications.models import ScienceApplication, Call, 
 def order_mail_invite_then_approval(mailbox):
     ordered_mailbox = []
     # First look for any proposal invite emails and add them
-    for mail in mailbox:
-        if 'You have been added' in mail.subject:
-            ordered_mailbox.append(mail)
+    for item in mailbox:
+        if 'You have been added' in item.subject:
+            ordered_mailbox.append(item)
     # Then look for an proposal approval emails and add them
-    for mail in mailbox:
-        if 'has been approved' in mail.subject:
-            ordered_mailbox.append(mail)
+    for item in mailbox:
+        if 'has been approved' in item.subject:
+            ordered_mailbox.append(item)
 
     return ordered_mailbox
 

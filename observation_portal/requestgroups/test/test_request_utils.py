@@ -356,7 +356,7 @@ class TestMultipleTargetRequestIntervals(BaseSetupRequest):
 
     def test_request_intervals_for_multiple_targets_empty_if_one_is_empty(self):
         request_dict = self.request.as_dict()
-        
+
         # now create get the intervals for a request with the second target that isn't visible
         configuration2 = deepcopy(request_dict['configurations'][0])
         configuration2['target']['dec'] = 70.0  # change the DEC so the target isn't visible
