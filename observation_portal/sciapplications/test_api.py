@@ -294,40 +294,41 @@ class TestPostCreateSciApp(DramatiqTestCase):
         mixer.blend(ScienceCollaborationAllocation, admin=self.scicollab_admin)
         self.client.force_login(self.user)
         self.instrument = mixer.blend(Instrument)
+        self.other_instrument = mixer.blend(Instrument)
         self.closed_call = mixer.blend(
             Call, semester=self.semester,
             opens=timezone.now() - timedelta(days=14),
             deadline=timezone.now() - timedelta(days=7),
             proposal_type=Call.SCI_PROPOSAL,
-            instruments=(self.instrument,)
+            instruments=(self.instrument, self.other_instrument)
         )
         self.sci_call = mixer.blend(
             Call, semester=self.semester,
             opens=timezone.now() - timedelta(days=7),
             deadline=timezone.now() + timedelta(days=7),
             proposal_type=Call.SCI_PROPOSAL,
-            instruments=(self.instrument,)
+            instruments=(self.instrument, self.other_instrument)
         )
         self.key_call = mixer.blend(
             Call, semester=self.semester,
             opens=timezone.now() - timedelta(days=7),
             deadline=timezone.now() + timedelta(days=7),
             proposal_type=Call.KEY_PROPOSAL,
-            instruments=(self.instrument,)
+            instruments=(self.instrument, self.other_instrument)
         )
         self.ddt_call = mixer.blend(
             Call, semester=self.semester,
             opens=timezone.now() - timedelta(days=7),
             deadline=timezone.now() + timedelta(days=7),
             proposal_type=Call.DDT_PROPOSAL,
-            instruments=(self.instrument,)
+            instruments=(self.instrument, self.other_instrument)
         )
         self.collab_call = mixer.blend(
             Call, semester=self.semester,
             opens=timezone.now() - timedelta(days=7),
             deadline=timezone.now() + timedelta(days=7),
             proposal_type=Call.COLLAB_PROPOSAL,
-            instruments=(self.instrument,)
+            instruments=(self.instrument, self.other_instrument)
         )
         data = {
             'status': ScienceApplication.SUBMITTED,
@@ -444,10 +445,20 @@ class TestPostCreateSciApp(DramatiqTestCase):
         self.assertEqual(response.json().get('abstract', [''])[0], 'This field is required.')
 
     def test_multiple_time_requests(self):
+        # Add another time request
+        data = {**self.sci_data.copy(), **generate_time_request_data(1, self.other_instrument, self.semester)}
+        response = self.client.post(reverse('api:scienceapplications-list'), data=data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(self.user.scienceapplication_set.last().timerequest_set.count(), 2)
+
+    def test_cannot_create_duplicate_time_requests(self):
+        # Add a duplicate time request
         data = {**self.sci_data.copy(), **generate_time_request_data(1, self.instrument, self.semester)}
         response = self.client.post(reverse('api:scienceapplications-list'), data=data)
-        self.assertEqual(self.user.scienceapplication_set.last().timerequest_set.count(), 2)
-        self.assertEqual(response.status_code, 201)
+        self.assertContains(
+            response, 'more than one time request for the same semester and instrument', status_code=400
+        )
+        self.assertEqual(self.user.scienceapplication_set.count(), 0)
 
     def test_multiple_coi(self):
         data = {**self.sci_data.copy(), **generate_coinvestigator_data(1)}
