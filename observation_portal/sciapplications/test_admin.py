@@ -159,6 +159,30 @@ class TestSciAppAdmin(DramatiqTestCase):
         self.assertContains(response, 'no approved Time Allocations')
         self.assertEqual(len(mail.outbox), 0)
 
+    def test_port_duplicate_time_requests(self):
+        semester = mixer.blend(Semester)
+        instrument = mixer.blend(Instrument)
+        # Prepare the sciapp for porting
+        sciapp = ScienceApplication.objects.first()
+        sciapp.status = ScienceApplication.ACCEPTED
+        sciapp.tac_rank = 0
+        sciapp.save()
+        # Create duplicate time requests for the sciapp
+        mixer.blend(TimeRequest, science_application=sciapp, instrument=instrument, semester=semester, approved=True)
+        mixer.blend(TimeRequest, science_application=sciapp, instrument=instrument, semester=semester, approved=True)
+        response = self.client.post(
+            reverse('admin:sciapplications_scienceapplication_changelist'),
+            data={'action': 'port', '_selected_action': [str(sciapp.pk)]},
+            follow=True
+        )
+        self.broker.join('default')
+        self.worker.join()
+        sciapp.refresh_from_db()
+        self.assertEqual(sciapp.status, ScienceApplication.ACCEPTED)
+        self.assertContains(response, 'has more than one approved time request')
+        # The application was not ported, so no email was sent
+        self.assertEqual(len(mail.outbox), 0)
+
     def test_port_duplicate_tac_rank(self):
         ScienceApplication.objects.update(status=ScienceApplication.ACCEPTED, tac_rank=0)
         response = self.client.post(
