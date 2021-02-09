@@ -1355,6 +1355,11 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
             std_allocation=100.0, std_time_used=0.0, rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
             ipp_time_available=5.0
         )
+        self.time_allocation_soar = mixer.blend(
+            TimeAllocation, proposal=self.proposal, semester=semester, instrument_type='1M0-SCICAM-SOAR',
+            std_allocation=100.0, std_time_used=0.0, rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
+            ipp_time_available=5.0
+        )
         mixer.blend(Membership, user=self.user, proposal=self.proposal)
         self.generic_payload = copy.deepcopy(generic_payload)
         self.generic_payload['proposal'] = self.proposal.id
@@ -2014,6 +2019,16 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('Currently only a single target', str(response.content))
 
+    def test_multiple_targets_soar_accepted(self):
+        good_data = self.generic_payload.copy()
+        good_data['requests'][0]['configurations'][0]['instrument_type'] = '1M0-SCICAM-SOAR'
+        good_data['requests'][0]['configurations'].append(
+            copy.deepcopy(good_data['requests'][0]['configurations'][0])
+        )
+        good_data['requests'][0]['configurations'][1]['target']['ra'] = 35.1
+        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
+        self.assertEqual(response.status_code, 201)
+
     def test_multiple_constraints_currently_rejected(self):
         bad_data = self.generic_payload.copy()
         bad_data['requests'][0]['configurations'].append(
@@ -2024,6 +2039,15 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('Currently only a single constraints', str(response.content))
 
+    def test_multiple_constraints_soar_accepted(self):
+        good_data = self.generic_payload.copy()
+        good_data['requests'][0]['configurations'][0]['instrument_type'] = '1M0-SCICAM-SOAR'
+        good_data['requests'][0]['configurations'].append(
+            copy.deepcopy(good_data['requests'][0]['configurations'][0])
+        )
+        good_data['requests'][0]['configurations'][1]['constraints']['max_airmass'] = 1.99
+        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
+        self.assertEqual(response.status_code, 201)
 
 class TestMuscatValidationApi(SetTimeMixin, APITestCase):
     def setUp(self):
