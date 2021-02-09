@@ -2,6 +2,7 @@ from datetime import timedelta
 from rise_set.angle import Angle
 from rise_set.astrometry import calculate_airmass_at_times
 import requests
+import json
 
 from observation_portal.common.configdb import configdb, ConfigDB
 from observation_portal.common.telescope_states import TelescopeStates, filter_telescope_states_by_intervals
@@ -82,8 +83,9 @@ def date_range_from_interval(start_time, end_time, dt=timedelta(minutes=15)):
 
 
 def get_airmasses_for_request_at_sites(request_dict, is_staff=False):
-    # TODO: Change to work with multiple instrument types and multiple constraints and multiple targets
-    data = {'airmass_data': {}}
+    data = {
+        'airmass_data': {},
+    }
     instrument_type = request_dict['configurations'][0]['instrument_type']
     constraints = request_dict['configurations'][0]['constraints']
     target = request_dict['configurations'][0]['target']
@@ -111,12 +113,29 @@ def get_airmasses_for_request_at_sites(request_dict, is_staff=False):
 
             if len(night_times) > 0:
                 if site_id not in data:
-                    data['airmass_data'][site_id] = {}
-                data['airmass_data'][site_id]['times'] = [time.strftime('%Y-%m-%dT%H:%M') for time in night_times]
-                data['airmass_data'][site_id]['airmasses'] = calculate_airmass_at_times(
-                    night_times, rs_target, site_lat, site_lon, site_alt
-                )
-                data['airmass_limit'] = constraints['max_airmass']
+                    data['airmass_data'][site_id] = {
+                        'times': [time.strftime('%Y-%m-%dT%H:%M') for time in night_times],
+                    }
+
+                # Need to average airmass values for set of unique targets in request
+                unique_targets_constraints = set([json.dumps((configuration['target'], configuration['constraints'])) for configuration in request_dict['configurations']])
+                unique_count = len(unique_targets_constraints)
+                max_airmass = 0.0
+                for target_constraints in unique_targets_constraints:
+                    (target, constraints) = json.loads(target_constraints)
+                    rs_target = get_rise_set_target(target)
+                    airmasses = calculate_airmass_at_times(
+                        night_times, rs_target, site_lat, site_lon, site_alt
+                    )
+                    if 'airmasses' in data['airmass_data'][site_id]:
+                        for index, airmass_value in enumerate(airmasses):
+                            data['airmass_data'][site_id]['airmasses'][index] += airmass_value
+                    else:
+                        data['airmass_data'][site_id]['airmasses'] = airmasses
+                    max_airmass += constraints['max_airmass']
+                # Now we need to divide out the number of unique constraints/targets
+                data['airmass_limit'] = max_airmass / unique_count
+                data['airmass_data'][site_id]['airmasses'] = [val / unique_count for val in data['airmass_data'][site_id]['airmasses']]
 
     return data
 

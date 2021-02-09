@@ -579,7 +579,7 @@ class RequestSerializer(serializers.ModelSerializer):
         # Set the relative priority of molecules in order
         for i, configuration in enumerate(value):
             configuration['priority'] = i + 1
-            if configuration['constraints'] != constraints:
+            if 'SOAR' not in configuration['instrument_type'].upper() and configuration['constraints'] != constraints:
                 raise serializers.ValidationError(_(
                     'Currently only a single constraints per Request is supported. This restriction will be '
                     'lifted in the future.'
@@ -798,7 +798,7 @@ class RequestGroupSerializer(serializers.ModelSerializer):
 
                     # For non-DIRECT observations, only allow a single target
                     # TODO: Remove this check once we support multiple targets/constraints
-                    if config['target'] != target:
+                    if 'SOAR' not in config['instrument_type'].upper() and config['target'] != target:
                         raise serializers.ValidationError(_(
                             'Currently only a single target per Request is supported. This restriction will be lifted '
                             'in the future.'
