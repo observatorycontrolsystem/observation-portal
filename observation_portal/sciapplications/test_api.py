@@ -576,7 +576,7 @@ class TestPostCreateSciApp(DramatiqTestCase):
 
     def test_cannot_set_an_instrument_that_does_not_exist(self):
         data = self.sci_data.copy()
-        data['timerequest_set[0]instrument'] += 1
+        data['timerequest_set[0]instrument'] += 10
         response = self.client.post(reverse('api:scienceapplications-list'), data=data)
         self.assertContains(response, 'object does not exist', status_code=400)
 

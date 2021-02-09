@@ -73,7 +73,8 @@ class ScienceApplicationAdmin(admin.ModelAdmin):
             if Proposal.objects.filter(id=app.proposal_code).exists():
                 self.message_user(
                     request,
-                    'A proposal named {} already exists. Check your tac rank?'.format(app.proposal_code),
+                    f'A proposal named {app.proposal_code} already exists. Check your tac rank for application '
+                    f'"{app.title}"?',
                     level='ERROR'
                 )
             else:
