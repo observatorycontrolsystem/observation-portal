@@ -2466,6 +2466,11 @@ class TestSchedulableRequestsApi(SetTimeMixin, APITestCase):
             rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
             ipp_time_available=5.0
         )
+        self.time_allocation_2m0 = mixer.blend(
+            TimeAllocation, proposal=self.proposal, semester=semester, std_allocation=100.0, std_time_used=0.0,
+            rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0, ipp_time_available=5.0,
+            instrument_type='2M0-FLOYDS-SCICAM'
+        )
 
         # Add a few requests within the current semester
         self.rgs = mixer.cycle(10).blend(RequestGroup, proposal=self.proposal, submitter=self.user,
@@ -2505,6 +2510,47 @@ class TestSchedulableRequestsApi(SetTimeMixin, APITestCase):
         tracking_numbers = [rg.id for rg in self.rgs]
         for rg in response.json():
             self.assertIn(rg['id'], tracking_numbers)
+
+    def test_get_requests_for_telescope_class(self, modify_mock):
+        # First add some 2m0 requests to the bunch
+        rgs_2m0 = mixer.cycle(3).blend(RequestGroup, proposal=self.proposal, submitter=self.user,
+                                        observation_type='NORMAL', operator='SINGLE', state='PENDING')
+        start = datetime(2016, 10, 1, tzinfo=timezone.utc)
+        end = datetime(2016, 11, 1, tzinfo=timezone.utc)
+        for rg in rgs_2m0:
+            req = mixer.blend(Request, request_group=rg, state='PENDING')
+            mixer.blend(Window, request=req, start=start, end=end)
+            start += timedelta(days=2)
+            end += timedelta(days=2)
+            conf = mixer.blend(Configuration, request=req, type='SPECTRUM', instrument_type='2M0-FLOYDS-SCICAM')
+            mixer.blend(InstrumentConfig, configuration=conf,  exposure_time=60, exposure_count=10,
+                        optical_elements={'slit': 'slit_6.0as'}, bin_x=1, bin_y=1)
+            mixer.blend(AcquisitionConfig, configuration=conf, )
+            mixer.blend(GuidingConfig, configuration=conf, )
+            mixer.blend(Target, configuration=conf, type='ICRS', dec=20, ra=34.4)
+            mixer.blend(Location, request=req, telescope_class='2m0')
+            mixer.blend(Constraints, configuration=conf, max_airmass=2.0, min_lunar_distance=30.0)
+        # Now get the requests filtered by each telescope_class and ensure its filtered properly
+        rg_ids_numbers_1m0 = [rg.id for rg in self.rgs]        
+        rg_ids_numbers_2m0 = [rg.id for rg in rgs_2m0]
+        response_1m0 = self.client.get(reverse('api:request_groups-schedulable-requests') + '?telescope_class=1m0')
+        self.assertEqual(response_1m0.status_code, 200)
+        self.assertEqual(len(response_1m0.json()), 10)
+        for rg in response_1m0.json():
+            self.assertIn(rg['id'], rg_ids_numbers_1m0)
+
+        response_2m0 = self.client.get(reverse('api:request_groups-schedulable-requests') + '?telescope_class=2m0')
+        self.assertEqual(response_2m0.status_code, 200)
+        self.assertEqual(len(response_2m0.json()), 3)
+        for rg in response_2m0.json():
+            self.assertIn(rg['id'], rg_ids_numbers_2m0)
+        # And getting requests without specifying telescope_class gets all of them still
+        response_no_filter = self.client.get(reverse('api:request_groups-schedulable-requests'))
+        self.assertEqual(response_no_filter.status_code, 200)
+        self.assertEqual(len(response_no_filter.json()), 13)
+        combined_rg_ids = rg_ids_numbers_1m0 + rg_ids_numbers_2m0
+        for rg in response_no_filter.json():
+            self.assertIn(rg['id'], combined_rg_ids)
 
     def test_dont_get_requests_in_terminal_states(self, modify_mock):
         tracking_numbers = []
