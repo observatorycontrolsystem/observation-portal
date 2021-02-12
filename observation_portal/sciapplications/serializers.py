@@ -185,6 +185,13 @@ class ScienceApplicationSerializer(serializers.ModelSerializer):
                     f'of [{", ".join([str(i) for i in call_instrument_ids])}]'
                 ))
 
+        unique_time_requests = set([f'{tr["instrument"]}-{tr["semester"]}' for tr in timerequest_set])
+        if len(unique_time_requests) != len(timerequest_set):
+            raise serializers.ValidationError(_(
+                'You cannot create more than one time request for the same semester and instrument. Please '
+                'consolidate your time requests.'
+            ))
+
         if tac_rank > 0 and call.proposal_type != Call.COLLAB_PROPOSAL:
             raise serializers.ValidationError(_(
                 f'{call.get_proposal_type_display()} applications are not allowed to set tac_rank'

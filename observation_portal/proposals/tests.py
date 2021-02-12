@@ -59,6 +59,22 @@ class TestProposal(DramatiqTestCase):
         self.assertIn(proposal, user.proposal_set.all())
         self.assertEqual(len(mail.outbox), 0)
 
+    def test_cannot_create_duplicate_time_allocations(self):
+        proposal = mixer.blend(Proposal)
+        semester = mixer.blend(Semester)
+        instrument_type = 'instrument_a'
+        TimeAllocation.objects.create(proposal=proposal, semester=semester, instrument_type=instrument_type)
+        with self.assertRaises(IntegrityError):
+            TimeAllocation.objects.create(proposal=proposal, semester=semester, instrument_type=instrument_type)
+
+    def test_can_create_many_timeallocations_that_arent_duplicates(self):
+        expected_timeallocations_count = 2
+        proposal = mixer.blend(Proposal)
+        semester = mixer.blend(Semester)
+        for i in range(expected_timeallocations_count):
+            TimeAllocation.objects.create(proposal=proposal, semester=semester, instrument_type=f'instrument_{i}')
+        self.assertEqual(TimeAllocation.objects.count(), expected_timeallocations_count)
+
 
 class TestProposalInvitation(DramatiqTestCase):
     def test_send_invitation(self):
