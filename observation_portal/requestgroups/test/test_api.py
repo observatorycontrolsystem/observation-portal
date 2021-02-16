@@ -1412,7 +1412,7 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
 
     def test_bad_defocus_values_must_not_be_submitted(self):
         bad_data = self.generic_payload.copy()
-        bad_values = ['2mm', '']
+        bad_values = ['2mm', '', 5.1, -2]
         for bad_value in bad_values:
             with self.subTest(bad_value=bad_value):
                 bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params'] = {
@@ -1420,7 +1420,7 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
                 }
                 response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
                 self.assertEqual(response.status_code, 400)
-                self.assertIn('Defocus', str(response.content))
+                self.assertIn('defocus', str(response.content))
 
     def test_defocus_as_a_number_successfully_submits(self):
         good_data = self.generic_payload.copy()

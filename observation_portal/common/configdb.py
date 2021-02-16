@@ -399,6 +399,20 @@ class ConfigDB(object):
                             return {mode_type: mode_group}
         return {}
 
+    def get_instrument_type_by_code(self, instrument_type_code: str) -> dict:
+        """Get an instrument type by its code.
+
+        Parameters:
+            instrument_type_code: Instrument type code
+        Returns:
+            intrument type dict
+        """
+        for instrument in self.get_instruments():
+            if instrument_type_code.upper() == instrument['instrument_type']['code'].upper():
+                return instrument['instrument_type']
+
+        raise ConfigDBException(f'No instrument type found for instrument type code {instrument_type_code}')
+
     def get_mode_with_code(self, instrument_type, code, mode_type=''):
         modes_by_type = self.get_modes_by_type(instrument_type, mode_type)
         for _, mode_group in modes_by_type.items():

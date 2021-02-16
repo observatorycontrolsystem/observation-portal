@@ -44,8 +44,41 @@ def cerberus_validation_error_to_str(validation_errors: dict) -> str:
     return error_str
 
 
-class ModeValidationHelper:
+# TODO: Unify these two ValidationHelpers
+class InstrumentTypeValidationHelper:
+    """
+    Class to validate config based on InstrumentType in ConfigDB
+    """
+    def __init__(self, instrument_type: str):
+        self.instrument_type = instrument_type
 
+    def validate(self, config_dict: dict, is_extra_param=False) -> dict:
+        """
+        Using the validation_schema within the instrument type, validate the configuration
+        :param config_dict: Configuration dictionary
+        :param is_extra_param: Whether we are validating an extra_param or a top-level parameter
+        :return: Validated configuration
+        :raises: ValidationError if config is invalid
+        """
+        instrument_type_dict = configdb.get_instrument_type_by_code(self.instrument_type)
+        validation_schema = instrument_type_dict.get('validation_schema', {})
+        validator = Validator(validation_schema)
+        validator.allow_unknown = True
+
+        if is_extra_param:
+            validated_config_dict = config_dict.copy()
+            validated_config_dict['extra_params'] = validator.validated(config_dict['extra_params'])
+        else:
+            validated_config_dict = validator.validated(config_dict)
+        if validator.errors:
+            raise serializers.ValidationError(_(
+                f'Invalid configuration: {cerberus_validation_error_to_str(validator.errors)}'
+            ))
+
+        return validated_config_dict
+
+
+class ModeValidationHelper:
     """Class used to validate GenericModes of different types defined in ConfigDB"""
     def __init__(self, mode_type, instrument_type, modes_group, mode_key='mode', is_extra_param_mode=False):
         self._mode_type = mode_type.lower()
@@ -198,12 +231,6 @@ class InstrumentConfigSerializer(ExtraParamsFormatter, serializers.ModelSerializ
                 pass
         if extra_param_max_exp_time > 0:
             data['exposure_time'] = extra_param_max_exp_time
-
-        if 'defocus' in extra_params:
-            try:
-                float(extra_params['defocus'])
-            except (ValueError, TypeError):
-                raise serializers.ValidationError(_('Defocus must be a number'))
 
         return data
 
@@ -358,6 +385,11 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
                     raise serializers.ValidationError(_(str(cdbe)))
             readout_validation_helper = ModeValidationHelper('readout', instrument_type, modes['readout'])
             instrument_config = readout_validation_helper.validate(instrument_config)
+
+            if instrument_config.get('extra_params'):
+                validator = InstrumentTypeValidationHelper(instrument_type)
+                instrument_config = validator.validate(instrument_config, is_extra_param=True)
+
             data['instrument_configs'][i] = instrument_config
 
             # Validate the rotator modes
