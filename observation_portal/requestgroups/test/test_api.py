@@ -3109,24 +3109,6 @@ class TestValidationHelper(TestCase):
                                     'exposure_time_z': 120,
                                     'exposure_mode': 'SYNCHRONOUS'}
 
-    def test_validation_helper_validate_good_config(self):
-        instrument_config = self.instrument_config.copy()
-        validation_schema = self.mock_instrument_type['validation_schema']
-        validator, validated_config = ValidationHelper.validate_config(instrument_config, validation_schema)
-
-        self.assertFalse(validator.errors)
-        self.assertEqual(validated_config, instrument_config)
-
-    def test_validation_helper_validate_bad_config(self):
-        instrument_config = self.instrument_config.copy()
-        instrument_config['extra_params'] = {'defocus': -7}
-        validation_schema = self.mock_instrument_type['validation_schema']
-        validator, validated_config = ValidationHelper.validate_config(instrument_config, validation_schema)
-
-        self.assertTrue(validator.errors)
-        self.assertIn('defocus', str(validator.errors))
-        self.assertIsNotNone(validated_config)
-
     @patch('observation_portal.requestgroups.serializers.configdb.get_instrument_type_by_code')
     def test_validate_instrument_config_and_extra_params_good_config(self, mock_instrument_type):
         instrument_config = self.instrument_config.copy()

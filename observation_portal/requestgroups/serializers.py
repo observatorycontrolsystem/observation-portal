@@ -43,8 +43,7 @@ class ValidationHelper(ABC):
     def validate(self, config_dict: dict) -> dict:
         pass
 
-    @staticmethod
-    def validate_config(config_dict: dict, validation_schema: dict) -> (Validator, dict):
+    def _validate_config(self, config_dict: dict, validation_schema: dict) -> (Validator, dict):
         """
         Perform validation on a configuration using Cerberus validation schema
         :param config_dict: Dictionary containing a configuration
@@ -57,8 +56,7 @@ class ValidationHelper(ABC):
 
         return validator, validated_config_dict
 
-    @staticmethod
-    def cerberus_validation_error_to_str(validation_errors: dict) -> str:
+    def _cerberus_validation_error_to_str(self, validation_errors: dict) -> str:
         """
         Unpack and format Cerberus validation errors as a string
         :param validation_errors: Errors from validator (validator.errors)
@@ -67,7 +65,7 @@ class ValidationHelper(ABC):
         error_str = ''
         for field, value in validation_errors.items():
             if (isinstance(value, list) and len(value) == 1 and isinstance(value[0], dict)):
-                error_str += f'{field}{{{ValidationHelper.cerberus_validation_error_to_str(value[0])}}}'
+                error_str += f'{field}{{{self._cerberus_validation_error_to_str(value[0])}}}'
             else:
                 error_str += f'{field} error: {", ".join(value)}, '
 
@@ -89,10 +87,10 @@ class InstrumentTypeValidationHelper(ValidationHelper):
         """
         instrument_type_dict = configdb.get_instrument_type_by_code(self.instrument_type)
         validation_schema = instrument_type_dict.get('validation_schema', {})
-        validator, validated_config_dict = self.validate_config(config_dict, validation_schema)
+        validator, validated_config_dict = self._validate_config(config_dict, validation_schema)
         if validator.errors:
             raise serializers.ValidationError(_(
-                f'Invalid configuration: {self.cerberus_validation_error_to_str(validator.errors)}'
+                f'Invalid configuration: {self._cerberus_validation_error_to_str(validator.errors)}'
             ))
 
         return validated_config_dict
@@ -146,10 +144,10 @@ class ModeValidationHelper(ValidationHelper):
         config_dict = self._set_mode_in_config_dict(mode_value, config_dict)
         mode = configdb.get_mode_with_code(self._instrument_type, mode_value, self._mode_type)
         validation_schema = mode.get('validation_schema', {})
-        validator, validated_config_dict = self.validate_config(config_dict, validation_schema)
+        validator, validated_config_dict = self._validate_config(config_dict, validation_schema)
         if validator.errors:
             raise serializers.ValidationError(_(
-                f'{self._mode_type.capitalize()} mode {mode_value} requirements are not met: {self.cerberus_validation_error_to_str(validator.errors)}'
+                f'{self._mode_type.capitalize()} mode {mode_value} requirements are not met: {self._cerberus_validation_error_to_str(validator.errors)}'
             ))
         return validated_config_dict
 
