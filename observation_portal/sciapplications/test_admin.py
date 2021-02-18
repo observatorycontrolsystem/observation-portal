@@ -10,6 +10,20 @@ from observation_portal.proposals.models import Semester, Proposal
 from observation_portal.sciapplications.models import ScienceApplication, Call, Instrument, TimeRequest
 
 
+def order_mail_invite_then_approval(mailbox):
+    ordered_mailbox = []
+    # First look for any proposal invite emails and add them
+    for item in mailbox:
+        if 'You have been added' in item.subject:
+            ordered_mailbox.append(item)
+    # Then look for an proposal approval emails and add them
+    for item in mailbox:
+        if 'has been approved' in item.subject:
+            ordered_mailbox.append(item)
+
+    return ordered_mailbox
+
+
 class TestSciAppAdmin(DramatiqTestCase):
     def setUp(self):
         self.semester = mixer.blend(Semester)
@@ -100,13 +114,14 @@ class TestSciAppAdmin(DramatiqTestCase):
         # and can begin submitting requests. The approval email is second.
         self.assertEqual(len(mail.outbox), 2)
         self.assertEqual(ScienceApplication.objects.get(pk=app_id_to_port).proposal.pi.email, other_user.email)
+        ordered_mailbox = order_mail_invite_then_approval(mail.outbox)
         # Added to proposal email
-        self.assertEqual([other_user.email], mail.outbox[0].to)
-        self.assertIn('You have been added to', str(mail.outbox[0].message()))
+        self.assertEqual([other_user.email], ordered_mailbox[0].to)
+        self.assertIn('You have been added to', str(ordered_mailbox[0].message()))
         # Proposal approved email
-        self.assertEqual([other_user.email], mail.outbox[1].to)
-        self.assertIn(ScienceApplication.objects.get(pk=app_id_to_port).proposal.id, str(mail.outbox[1].message()))
-        self.assertIn(ScienceApplication.objects.get(pk=app_id_to_port).call.semester.id, str(mail.outbox[1].message()))
+        self.assertEqual([other_user.email], ordered_mailbox[1].to)
+        self.assertIn(ScienceApplication.objects.get(pk=app_id_to_port).proposal.id, str(ordered_mailbox[1].message()))
+        self.assertIn(ScienceApplication.objects.get(pk=app_id_to_port).call.semester.id, str(ordered_mailbox[1].message()))
 
     def test_email_pi_on_successful_port_when_pi_is_not_registered(self):
         non_registered_email = 'somenonexistantuser@email.com'
@@ -123,13 +138,14 @@ class TestSciAppAdmin(DramatiqTestCase):
         # If the PI is not registered, then 2 emails will be sent out- one inviting them to register an account, and
         # one letting them know their proposal has been approved. The accepted email is sent second.
         self.assertEqual(len(mail.outbox), 2)
+        ordered_mailbox = order_mail_invite_then_approval(mail.outbox)
         # Proposal invitation email
-        self.assertEqual([non_registered_email], mail.outbox[0].to)
-        self.assertIn('Please use the following link to register your account', str(mail.outbox[0].message()))
+        self.assertEqual([non_registered_email], ordered_mailbox[0].to)
+        self.assertIn('Please use the following link to register your account', str(ordered_mailbox[0].message()))
         # Proposal approved email
-        self.assertEqual([non_registered_email], mail.outbox[1].to)
-        self.assertIn(ScienceApplication.objects.get(pk=app_id_to_port).proposal.id, str(mail.outbox[1].message()))
-        self.assertIn(ScienceApplication.objects.get(pk=app_id_to_port).call.semester.id, str(mail.outbox[1].message()))
+        self.assertEqual([non_registered_email], ordered_mailbox[1].to)
+        self.assertIn(ScienceApplication.objects.get(pk=app_id_to_port).proposal.id, str(ordered_mailbox[1].message()))
+        self.assertIn(ScienceApplication.objects.get(pk=app_id_to_port).call.semester.id, str(ordered_mailbox[1].message()))
 
     def test_port_not_accepted(self):
         self.client.post(
@@ -157,6 +173,30 @@ class TestSciAppAdmin(DramatiqTestCase):
         for app in self.apps:
             self.assertEqual(ScienceApplication.objects.get(pk=app.id).status, ScienceApplication.ACCEPTED)
         self.assertContains(response, 'no approved Time Allocations')
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_port_duplicate_time_requests(self):
+        semester = mixer.blend(Semester)
+        instrument = mixer.blend(Instrument)
+        # Prepare the sciapp for porting
+        sciapp = ScienceApplication.objects.first()
+        sciapp.status = ScienceApplication.ACCEPTED
+        sciapp.tac_rank = 0
+        sciapp.save()
+        # Create duplicate time requests for the sciapp
+        mixer.blend(TimeRequest, science_application=sciapp, instrument=instrument, semester=semester, approved=True)
+        mixer.blend(TimeRequest, science_application=sciapp, instrument=instrument, semester=semester, approved=True)
+        response = self.client.post(
+            reverse('admin:sciapplications_scienceapplication_changelist'),
+            data={'action': 'port', '_selected_action': [str(sciapp.pk)]},
+            follow=True
+        )
+        self.broker.join('default')
+        self.worker.join()
+        sciapp.refresh_from_db()
+        self.assertEqual(sciapp.status, ScienceApplication.ACCEPTED)
+        self.assertContains(response, 'has more than one approved time request')
+        # The application was not ported, so no email was sent
         self.assertEqual(len(mail.outbox), 0)
 
     def test_port_duplicate_tac_rank(self):

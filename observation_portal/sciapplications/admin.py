@@ -4,7 +4,10 @@ from django.utils.html import format_html
 from django.urls import reverse
 
 
-from .models import Instrument, Call, ScienceApplication, TimeRequest, CoInvestigator, NoTimeAllocatedError
+from .models import (
+    Instrument, Call, ScienceApplication, TimeRequest, CoInvestigator,
+    NoTimeAllocatedError, MultipleTimesAllocatedError
+)
 from observation_portal.proposals.models import Proposal
 
 
@@ -70,7 +73,8 @@ class ScienceApplicationAdmin(admin.ModelAdmin):
             if Proposal.objects.filter(id=app.proposal_code).exists():
                 self.message_user(
                     request,
-                    'A proposal named {} already exists. Check your tac rank?'.format(app.proposal_code),
+                    f'A proposal named {app.proposal_code} already exists. Check your tac rank for application '
+                    f'"{app.title}"?',
                     level='ERROR'
                 )
             else:
@@ -78,16 +82,24 @@ class ScienceApplicationAdmin(admin.ModelAdmin):
                     app.convert_to_proposal()
                 except NoTimeAllocatedError:
                     self.message_user(
-                        request, 'Application {} has no approved Time Allocations'.format(app.title), level='ERROR'
+                        request, f'Application {app.title} has no approved Time Allocations', level='ERROR'
                     )
                     return
-                self.message_user(request, 'Proposal {} successfully created.'.format(app.proposal))
+                except MultipleTimesAllocatedError:
+                    self.message_user(
+                        request,
+                        f'Application {app.title} has more than one approved time request with same semester and '
+                        f'instrument',
+                        level='ERROR'
+                    )
+                    return
+                self.message_user(request, f'Proposal {app.proposal} successfully created.')
 
                 notification_sent = app.send_approved_notification()
                 if not notification_sent:
                     self.message_user(
                         request,
-                        'Email notifying PI of approval of proposal {} failed to send'.format(app.proposal),
+                        f'Email notifying PI of approval of proposal {app.proposal} failed to send',
                         level='ERROR'
                     )
                     return

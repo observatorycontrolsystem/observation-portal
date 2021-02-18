@@ -20,6 +20,10 @@ class NoTimeAllocatedError(Exception):
     pass
 
 
+class MultipleTimesAllocatedError(Exception):
+    pass
+
+
 class Instrument(models.Model):
     code = models.CharField(max_length=50)
     display = models.CharField(max_length=50)
@@ -161,8 +165,13 @@ class ScienceApplication(models.Model):
         return reverse('api:scienceapplications-detail', args=(self.id,))
 
     def convert_to_proposal(self):
-        if not self.timerequest_set.filter(approved=True).count():
+        approved_time_requests = self.timerequest_set.filter(approved=True)
+        if not approved_time_requests.count():
             raise NoTimeAllocatedError
+
+        unique_time_requests = set([f'{tr.semester.id}-{tr.instrument.code}' for tr in approved_time_requests])
+        if approved_time_requests.count() != len(unique_time_requests):
+            raise MultipleTimesAllocatedError
 
         proposal = Proposal.objects.create(
             id=self.proposal_code,

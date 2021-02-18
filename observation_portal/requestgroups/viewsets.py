@@ -77,6 +77,7 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
         current_semester = Semester.current_semesters().first()
         start = parse(request.query_params.get('start', str(current_semester.start))).replace(tzinfo=timezone.utc)
         end = parse(request.query_params.get('end', str(current_semester.end))).replace(tzinfo=timezone.utc)
+        telescope_class = request.query_params.get('telescope_class')
         # Schedulable requests are not in a terminal state, are part of an active proposal,
         # and have a window within this semester
         instrument_config_query = InstrumentConfig.objects.prefetch_related('rois')
@@ -100,6 +101,8 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
             Prefetch('proposal', queryset=Proposal.objects.only('id').all()),
             Prefetch('submitter', queryset=User.objects.only('username', 'is_staff').all())
         ).distinct()
+        if telescope_class:
+            queryset = queryset.filter(requests__location__telescope_class__iexact=telescope_class)
 
         # queryset now contains all the schedulable URs and their associated requests and data
         # Check that each request time available in its proposal still

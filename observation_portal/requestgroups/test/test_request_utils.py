@@ -2,7 +2,10 @@ from django.utils import timezone
 from django.test import TestCase
 from mixer.backend.django import mixer
 from datetime import datetime
+from copy import deepcopy
 from unittest.mock import patch
+
+from time_intervals.intervals import Intervals
 
 from observation_portal.requestgroups.request_utils import (get_airmasses_for_request_at_sites, get_telescope_states_for_request,
                                                             get_filtered_rise_set_intervals_by_site)
@@ -300,6 +303,99 @@ class TestRequestIntervals(BaseSetupRequest):
                             datetime(2016, 10, 8, 0, 0, tzinfo=timezone.utc))]
 
         self.assertEqual(intervals, truth_intervals)
+
+
+class TestMultipleTargetRequestIntervals(BaseSetupRequest):
+    def test_request_intervals_for_multiple_targets_intersected(self):
+        request_dict = self.request.as_dict()
+        intervals = get_filtered_rise_set_intervals_by_site(request_dict).get('tst', [])
+        truth_intervals = [
+            (datetime(2016, 10, 1, 0, 0, tzinfo=timezone.utc),
+            datetime(2016, 10, 1, 3, 20, 31, 366820, tzinfo=timezone.utc)),
+            (datetime(2016, 10, 1, 19, 13, 14, 944205, tzinfo=timezone.utc),
+            datetime(2016, 10, 2, 3, 19, 9, 181040, tzinfo=timezone.utc)),
+            (datetime(2016, 10, 2, 19, 9, 19, 241762, tzinfo=timezone.utc),
+            datetime(2016, 10, 3, 3, 17, 47, 117329, tzinfo=timezone.utc)),
+            (datetime(2016, 10, 3, 19, 5, 23, 539011, tzinfo=timezone.utc),
+            datetime(2016, 10, 4, 3, 16, 25, 202612, tzinfo=timezone.utc)),
+            (datetime(2016, 10, 4, 19, 1, 27, 835928, tzinfo=timezone.utc),
+            datetime(2016, 10, 5, 3, 15, 3, 464340, tzinfo=timezone.utc)),
+            (datetime(2016, 10, 5, 18, 57, 32, 132481, tzinfo=timezone.utc),
+            datetime(2016, 10, 6, 3, 12, 5, 895932, tzinfo=timezone.utc)),
+            (datetime(2016, 10, 6, 18, 53, 36, 428629, tzinfo=timezone.utc),
+            datetime(2016, 10, 7, 3, 8, 10, 183626, tzinfo=timezone.utc)),
+            (datetime(2016, 10, 7, 18, 49, 40, 724307, tzinfo=timezone.utc),
+            datetime(2016, 10, 8, 0, 0, tzinfo=timezone.utc))
+        ]
+
+        self.assertEqual(intervals, truth_intervals)
+        # now create get the intervals for a request with the second target
+        configuration2 = deepcopy(request_dict['configurations'][0])
+        configuration2['target']['ra'] = 85.0  # change the RA so the target has different visibility
+        request_dict2 = deepcopy(request_dict)
+        request_dict2['configurations'][0] = configuration2
+        intervals2 = get_filtered_rise_set_intervals_by_site(request_dict2).get('tst', [])
+        truth_intervals2 = [
+            (datetime(2016, 10, 1, 0, 0, tzinfo=timezone.utc), datetime(2016, 10, 1, 3, 20, 31, 366820, tzinfo=timezone.utc)),
+            (datetime(2016, 10, 1, 23, 24, 4, 392218, tzinfo=timezone.utc), datetime(2016, 10, 2, 3, 19, 9, 181040, tzinfo=timezone.utc)),
+            (datetime(2016, 10, 2, 23, 20, 8, 717423, tzinfo=timezone.utc), datetime(2016, 10, 3, 3, 17, 47, 117329, tzinfo=timezone.utc)),
+            (datetime(2016, 10, 3, 23, 16, 13, 42308, tzinfo=timezone.utc), datetime(2016, 10, 4, 3, 16, 25, 202612, tzinfo=timezone.utc)),
+            (datetime(2016, 10, 4, 23, 12, 17, 366627, tzinfo=timezone.utc), datetime(2016, 10, 5, 3, 15, 3, 464340, tzinfo=timezone.utc)),
+            (datetime(2016, 10, 5, 23, 8, 21, 690204, tzinfo=timezone.utc), datetime(2016, 10, 6, 3, 13, 41, 930536, tzinfo=timezone.utc)),
+            (datetime(2016, 10, 6, 23, 4, 26, 12943, tzinfo=timezone.utc), datetime(2016, 10, 7, 3, 12, 20, 629833, tzinfo=timezone.utc)),
+            (datetime(2016, 10, 7, 23, 0, 30, 334810, tzinfo=timezone.utc), datetime(2016, 10, 8, 0, 0, tzinfo=timezone.utc)),
+        ]
+        self.assertEqual(intervals2, truth_intervals2)
+
+        # now get the intervals for both targets combined in the request and verify they are intersected
+        request_dict3 = deepcopy(request_dict)
+        request_dict3['configurations'].append(configuration2)
+        intervals3 = get_filtered_rise_set_intervals_by_site(request_dict3).get('tst', [])
+        truth_intervals_combined = Intervals(truth_intervals).intersect([Intervals(truth_intervals2)]).toTupleList()
+        self.assertEqual(intervals3, truth_intervals_combined)
+
+    def test_request_intervals_for_multiple_targets_empty_if_one_is_empty(self):
+        request_dict = self.request.as_dict()
+
+        # now create get the intervals for a request with the second target that isn't visible
+        configuration2 = deepcopy(request_dict['configurations'][0])
+        configuration2['target']['dec'] = 70.0  # change the DEC so the target isn't visible
+        request_dict2 = deepcopy(request_dict)
+        request_dict2['configurations'][0] = configuration2
+        intervals = get_filtered_rise_set_intervals_by_site(request_dict2).get('tst', [])
+        truth_intervals = [
+        ]
+        self.assertEqual(intervals, truth_intervals)
+
+        # now get the intervals for both targets combined in the request and verify they are intersected and empty
+        request_dict3 = deepcopy(request_dict)
+        request_dict3['configurations'].append(configuration2)
+        intervals3 = get_filtered_rise_set_intervals_by_site(request_dict3).get('tst', [])
+        self.assertEqual(intervals3, [])
+
+    def test_airmass_for_multiple_targets_averaged(self):
+        request_dict = self.request.as_dict()
+        airmasses = get_airmasses_for_request_at_sites(request_dict)
+
+        # now create get the intervals for a request with the second target
+        configuration2 = deepcopy(request_dict['configurations'][0])
+        configuration2['target']['ra'] = 85.0  # change the RA so the target has different visibility
+        request_dict2 = deepcopy(request_dict)
+        request_dict2['configurations'][0] = configuration2
+        airmasses2 = get_airmasses_for_request_at_sites(request_dict2)
+
+        # now get the intervals for both targets combined in the request and verify they are intersected
+        request_dict3 = deepcopy(request_dict)
+        request_dict3['configurations'].append(configuration2)
+        airmasses_combined = get_airmasses_for_request_at_sites(request_dict3)
+
+        # The first few intervals should at least match up in time, so compare those
+        for i in range(4):
+            self.assertNotEqual(airmasses['airmass_data']['tst']['airmasses'][i], airmasses2['airmass_data']['tst']['airmasses'][i])
+            average_airmass = (airmasses['airmass_data']['tst']['airmasses'][i] +  airmasses2['airmass_data']['tst']['airmasses'][i]) / 2.0
+            self.assertEqual(average_airmass, airmasses_combined['airmass_data']['tst']['airmasses'][i])
+        average_airmass_limit = (airmasses['airmass_limit'] + airmasses2['airmass_limit']) / 2.0
+        self.assertEqual(average_airmass_limit, airmasses_combined['airmass_limit'])
 
 
 class TestRequestAirmass(BaseSetupRequest):

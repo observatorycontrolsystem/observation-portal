@@ -209,6 +209,12 @@ class TimeAllocation(models.Model):
 
     class Meta:
         ordering = ('-semester__id',)
+        constraints = [
+            models.UniqueConstraint(
+                fields=['semester', 'proposal', 'instrument_type'],
+                name='unique_proposal_timeallocation'
+            )
+        ]
 
     def __str__(self):
         return 'Timeallocation for {0}-{1}'.format(self.proposal, self.semester)
