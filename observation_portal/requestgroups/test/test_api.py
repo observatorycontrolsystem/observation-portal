@@ -4,6 +4,7 @@ from observation_portal.requestgroups.models import (RequestGroup, Request, Draf
 from observation_portal.proposals.models import Proposal, Membership, TimeAllocation, Semester
 from observation_portal.observations.models import Observation, ConfigurationStatus
 from observation_portal.common.test_helpers import SetTimeMixin, create_simple_requestgroup
+from observation_portal.requestgroups.serializers import ValidationHelper, InstrumentTypeValidationHelper, ModeValidationHelper
 import observation_portal.requestgroups.signals.handlers  # noqa
 
 # imports for cache based tests
@@ -12,6 +13,7 @@ from observation_portal.requestgroups import serializers
 from observation_portal.requestgroups import views
 from observation_portal.common import state_changes
 from observation_portal.common.test_helpers import create_simple_configuration
+from observation_portal.common.configdb import configdb
 
 from observation_portal.requestgroups.contention import Pressure
 from observation_portal.accounts.test_utils import blend_user
@@ -20,6 +22,8 @@ from django.urls import reverse
 from django.core import cache
 from dateutil.parser import parse as datetime_parser
 from rest_framework.test import APITestCase
+from rest_framework.exceptions import ValidationError
+from django.test import TestCase
 from mixer.backend.django import mixer
 from django.utils import timezone
 from datetime import datetime, timedelta
@@ -3085,3 +3089,119 @@ class TestLastChanged(SetTimeMixin, APITestCase):
         last_change = response.json()['last_change_time']
         self.assertAlmostEqual(datetime_parser(last_change), timezone.now() - timedelta(days=7),
                                delta=timedelta(minutes=1))
+
+
+class TestValidationHelper(TestCase):
+    def setUp(self) -> None:
+        self.mock_instrument_type = {'code': '1M0-SCICAM-SBIG',
+                                     'validation_schema': {'extra_params': {'type': 'dict',
+                                                                            'schema': {'defocus': {'type': 'float', 'min': -5.0, 'max': 5.0}}},
+                                                           'exposure_time': {'type': 'integer', 'min': 0}}}
+
+        self.generic_payload = copy.deepcopy(generic_payload)
+        self.request_instrument_type = self.generic_payload['requests'][0]['configurations'][0]['instrument_type']
+        self.instrument_config = self.generic_payload['requests'][0]['configurations'][0]['instrument_configs'][0]
+        self.guiding_config = self.generic_payload['requests'][0]['configurations'][0]['guiding_config']
+        self.acquisition_config = self.generic_payload['requests'][0]['configurations'][0]['acquisition_config']
+        self.muscat_extra_params = {'exposure_time_g': 60,
+                                    'exposure_time_r': 90,
+                                    'exposure_time_i': 60,
+                                    'exposure_time_z': 120,
+                                    'exposure_mode': 'SYNCHRONOUS'}
+
+    def test_validation_helper_validate_good_config(self):
+        instrument_config = self.instrument_config.copy()
+        validation_schema = self.mock_instrument_type['validation_schema']
+        validator, validated_config = ValidationHelper.validate_config(instrument_config, validation_schema)
+
+        self.assertFalse(validator.errors)
+        self.assertEqual(validated_config, instrument_config)
+
+    def test_validation_helper_validate_bad_config(self):
+        instrument_config = self.instrument_config.copy()
+        instrument_config['extra_params'] = {'defocus': -7}
+        validation_schema = self.mock_instrument_type['validation_schema']
+        validator, validated_config = ValidationHelper.validate_config(instrument_config, validation_schema)
+
+        self.assertTrue(validator.errors)
+        self.assertIn('defocus', str(validator.errors))
+        self.assertIsNotNone(validated_config)
+
+    @patch('observation_portal.requestgroups.serializers.configdb.get_instrument_type_by_code')
+    def test_validate_instrument_config_and_extra_params_good_config(self, mock_instrument_type):
+        instrument_config = self.instrument_config.copy()
+        mock_instrument_type.return_value = self.mock_instrument_type
+        instrument_config['extra_params'] = {'defocus': 2.0}
+
+        validation_helper = InstrumentTypeValidationHelper(self.request_instrument_type)
+        validated_config = validation_helper.validate(instrument_config)
+
+        self.assertEqual(instrument_config, validated_config)
+
+    @patch('observation_portal.requestgroups.serializers.configdb.get_instrument_type_by_code')
+    def test_validate_instrument_config_and_extra_params_bad_config(self, mock_instrument_type):
+        instrument_config = self.instrument_config.copy()
+        mock_instrument_type.return_value = self.mock_instrument_type
+        instrument_config['extra_params'] = {'defocus': 2.0}
+        instrument_config['exposure_time'] = -20
+
+        validation_helper = InstrumentTypeValidationHelper(self.request_instrument_type)
+        with self.assertRaises(ValidationError) as e:
+            validation_helper.validate(instrument_config)
+        self.assertIn('exposure_time', str(e.exception))
+
+    def test_validate_mode_config_filled_in_when_missing(self):
+        guiding_config = {}
+        modes = configdb.get_modes_by_type(self.request_instrument_type)
+        validation_helper = ModeValidationHelper('guiding', self.request_instrument_type, modes['guiding'])
+
+        validated_config = validation_helper.validate(guiding_config)
+        self.assertEqual(validated_config['mode'], 'OFF')
+
+    def test_validate_mode_config_good_config(self):
+        instrument_config = self.instrument_config.copy()
+        instrument_config['mode'] = "1m0_sbig_1"
+        modes = configdb.get_modes_by_type(self.request_instrument_type)
+
+        validation_helper = ModeValidationHelper('readout', self.request_instrument_type, modes['readout'])
+        validated_config = validation_helper.validate(instrument_config)
+
+        self.assertEqual(validated_config, instrument_config)
+
+    def test_validate_mode_config_bad_config(self):
+        instrument_config = self.instrument_config.copy()
+        instrument_config['mode'] = "1m0_sbig_2"
+        instrument_config['bin_x'] = 1
+        instrument_config['bin_y'] = 2
+        modes = configdb.get_modes_by_type(self.request_instrument_type)
+
+        validation_helper = ModeValidationHelper('readout', self.request_instrument_type, modes['readout'])
+        with self.assertRaises(ValidationError) as e:
+            validation_helper.validate(instrument_config)
+        self.assertIn('bin_x', str(e.exception))
+
+    def test_validate_extra_param_mode_good_config(self):
+        instrument_config = self.instrument_config.copy()
+        instrument_type = "2M0-SCICAM-MUSCAT"
+        instrument_config['instrument_type'] = instrument_type
+        instrument_config['extra_params'] = self.muscat_extra_params
+        modes = configdb.get_modes_by_type(instrument_type)
+
+        validation_helper = ModeValidationHelper('exposure', instrument_type, modes['exposure'], is_extra_param_mode=True)
+        validated_instrument_config = validation_helper.validate(instrument_config)
+
+        self.assertEqual(instrument_config, validated_instrument_config)
+
+    def test_validate_extra_param_mode_bad_config(self):
+        instrument_config = self.instrument_config.copy()
+        instrument_type = "2M0-SCICAM-MUSCAT"
+        instrument_config['instrument_type'] = instrument_type
+        instrument_config['extra_params'] = self.muscat_extra_params.copy()
+        del instrument_config['extra_params']['exposure_mode']
+        modes = configdb.get_modes_by_type(instrument_type)
+
+        validation_helper = ModeValidationHelper('exposure', instrument_type, modes['exposure'], is_extra_param_mode=True)
+
+        with self.assertRaises(ValidationError) as e:
+            validation_helper.validate(instrument_config)
+        self.assertIn('exposure_mode', str(e.exception))
