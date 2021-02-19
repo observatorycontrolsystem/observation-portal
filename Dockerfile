@@ -9,6 +9,6 @@ RUN apt-get update \
   && pip install 'numpy>=1.16,<1.17'
 
 COPY . .
-RUN pip install -r requirements.txt
+RUN pip install .[test]
 
 RUN mkdir static && python manage.py collectstatic --noinput

@@ -6,8 +6,8 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name='observation-portal',
-    description='The Observatory Control System (OCS) Observation Portal modules',
+    name='django-ocs-observation-portal',
+    description='The Observatory Control System (OCS) Observation Portal django apps',
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://observatorycontrolsystem.github.io',
@@ -25,8 +25,7 @@ setup(
     ],
     keywords=['observations', 'astronomy', 'astrophysics', 'cosmology', 'science', 'ocs', 'observatory'],
     packages=find_packages(),
-    version=0.1,
-    use_scm_version=False,
+    use_scm_version=True,
     setup_requires=['setuptools_scm', 'wheel', 'numpy>=1.16,<1.17'],
     install_requires=[
         'apscheduler>=3.6,<3.7',
