@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 
 class ValidationHelper(ABC):
-    """Base class for validating configurations"""
+    """Base class for validating documents"""
     @abstractmethod
     def __init__(self):
         pass
@@ -43,16 +43,16 @@ class ValidationHelper(ABC):
     def validate(self, config_dict: dict) -> dict:
         pass
 
-    def _validate_config(self, config_dict: dict, validation_schema: dict) -> (Validator, dict):
+    def _validate_document(self, document: dict, validation_schema: dict) -> (Validator, dict):
         """
-        Perform validation on a configuration using Cerberus validation schema
-        :param config_dict: Dictionary containing a configuration
+        Perform validation on a document using Cerberus validation schema
+        :param document: Document to be validated
         :param validation_schema: Cerberus validation schema
-        :return: Tuple of validator and a validated configuration dictionary
+        :return: Tuple of validator and a validated document
         """
         validator = Validator(validation_schema)
         validator.allow_unknown = True
-        validated_config_dict = validator.validated(config_dict) or config_dict.copy()
+        validated_config_dict = validator.validated(document) or document.copy()
 
         return validator, validated_config_dict
 
@@ -87,7 +87,7 @@ class InstrumentTypeValidationHelper(ValidationHelper):
         """
         instrument_type_dict = configdb.get_instrument_type_by_code(self.instrument_type)
         validation_schema = instrument_type_dict.get('validation_schema', {})
-        validator, validated_config_dict = self._validate_config(config_dict, validation_schema)
+        validator, validated_config_dict = self._validate_document(config_dict, validation_schema)
         if validator.errors:
             raise serializers.ValidationError(_(
                 f'Invalid configuration: {self._cerberus_validation_error_to_str(validator.errors)}'
@@ -144,7 +144,7 @@ class ModeValidationHelper(ValidationHelper):
         config_dict = self._set_mode_in_config_dict(mode_value, config_dict)
         mode = configdb.get_mode_with_code(self._instrument_type, mode_value, self._mode_type)
         validation_schema = mode.get('validation_schema', {})
-        validator, validated_config_dict = self._validate_config(config_dict, validation_schema)
+        validator, validated_config_dict = self._validate_document(config_dict, validation_schema)
         if validator.errors:
             raise serializers.ValidationError(_(
                 f'{self._mode_type.capitalize()} mode {mode_value} requirements are not met: {self._cerberus_validation_error_to_str(validator.errors)}'
@@ -402,8 +402,8 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
             readout_validation_helper = ModeValidationHelper('readout', instrument_type, modes['readout'])
             instrument_config = readout_validation_helper.validate(instrument_config)
 
-            validator = InstrumentTypeValidationHelper(instrument_type)
-            instrument_config = validator.validate(instrument_config)
+            instrument_type_validation_helper = InstrumentTypeValidationHelper(instrument_type)
+            instrument_config = instrument_type_validation_helper.validate(instrument_config)
 
             data['instrument_configs'][i] = instrument_config
 
