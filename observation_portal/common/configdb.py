@@ -607,7 +607,7 @@ class ConfigDB(object):
     @staticmethod
     def is_spectrograph(instrument_type):
         return instrument_type.upper() in ['2M0-FLOYDS-SCICAM', '0M8-NRES-SCICAM', '1M0-NRES-SCICAM',
-                                           '1M0-NRES-COMMISSIONING', 'SOAR_GHTS_REDCAM']
+                                           '1M0-NRES-COMMISSIONING', 'SOAR_GHTS_REDCAM', 'SOAR_GHTS_BLUECAM']
 
     @staticmethod
     def is_nres(instrument_type):
