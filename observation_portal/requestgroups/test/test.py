@@ -471,8 +471,6 @@ class TestValidationHelper(TestCase):
         self.generic_payload = copy.deepcopy(generic_payload)
         self.request_instrument_type = self.generic_payload['requests'][0]['configurations'][0]['instrument_type']
         self.instrument_config = self.generic_payload['requests'][0]['configurations'][0]['instrument_configs'][0]
-        self.guiding_config = self.generic_payload['requests'][0]['configurations'][0]['guiding_config']
-        self.acquisition_config = self.generic_payload['requests'][0]['configurations'][0]['acquisition_config']
         self.muscat_extra_params = {'exposure_time_g': 60,
                                     'exposure_time_r': 90,
                                     'exposure_time_i': 60,
