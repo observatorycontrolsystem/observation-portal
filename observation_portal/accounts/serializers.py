@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.utils.translation import ugettext as _
+from django.utils.module_loading import import_string
+from django.conf import settings
 
 from observation_portal.accounts.models import Profile
 
@@ -35,7 +37,7 @@ class UserSerializer(serializers.ModelSerializer):
     is_staff = serializers.BooleanField(read_only=True)
     proposals = serializers.SerializerMethodField()
     proposal_notifications = serializers.SerializerMethodField()
-    profile = ProfileSerializer(required=False)
+    profile = import_string(settings.SERIALIZERS['accounts']['Profile'])(required=False)
     available_instrument_types = serializers.SerializerMethodField()
     tokens = serializers.SerializerMethodField()
 

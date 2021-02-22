@@ -3,6 +3,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAdminUser
 from django.http import HttpResponseBadRequest
 from django.utils import timezone
+from django.utils.module_loading import import_string
+from django.conf import settings
 from dateutil.parser import parse
 from datetime import timedelta
 from rest_framework.views import APIView
@@ -14,7 +16,6 @@ from observation_portal.common.telescope_states import (
     ElasticSearchException
 )
 from observation_portal.requestgroups.request_utils import get_airmasses_for_request_at_sites
-from observation_portal.requestgroups.serializers import RequestSerializer
 from observation_portal.requestgroups.contention import Contention, Pressure
 
 logger = logging.getLogger(__name__)
@@ -88,7 +89,7 @@ class AirmassView(APIView):
     permission_classes = (AllowAny,)
 
     def post(self, request):
-        serializer = RequestSerializer(data=request.data)
+        serializer = import_string(settings.SERIALIZERS['requestgroups']['Request'])(data=request.data)
         if serializer.is_valid():
             return Response(get_airmasses_for_request_at_sites(
                 serializer.validated_data, is_staff=request.user.is_staff

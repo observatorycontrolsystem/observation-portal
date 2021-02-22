@@ -10,6 +10,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.cache import cache
 from django.db import transaction
 from django.utils import timezone
+from django.utils.module_loading import import_string
+from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
 
 from observation_portal.proposals.models import TimeAllocation, Membership
@@ -170,7 +172,7 @@ class RegionOfInterestSerializer(serializers.ModelSerializer):
 
 class InstrumentConfigSerializer(ExtraParamsFormatter, serializers.ModelSerializer):
     exposure_time = serializers.FloatField(required=False, allow_null=True)
-    rois = RegionOfInterestSerializer(many=True, required=False)
+    rois = import_string(settings.SERIALIZERS['requestgroups']['RegionOfInterest'])(many=True, required=False)
 
     class Meta:
         model = InstrumentConfig
@@ -259,11 +261,11 @@ class TargetSerializer(ExtraParamsFormatter, serializers.ModelSerializer):
 
 class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer):
     fill_window = serializers.BooleanField(required=False, write_only=True)
-    constraints = ConstraintsSerializer()
-    instrument_configs = InstrumentConfigSerializer(many=True)
-    acquisition_config = AcquisitionConfigSerializer()
-    guiding_config = GuidingConfigSerializer()
-    target = TargetSerializer()
+    constraints = import_string(settings.SERIALIZERS['requestgroups']['Constraints'])()
+    instrument_configs = import_string(settings.SERIALIZERS['requestgroups']['InstrumentConfig'])(many=True)
+    acquisition_config = import_string(settings.SERIALIZERS['requestgroups']['AcquisitionConfig'])()
+    guiding_config = import_string(settings.SERIALIZERS['requestgroups']['GuidingConfig'])()
+    target = import_string(settings.SERIALIZERS['requestgroups']['Target'])()
 
     class Meta:
         model = Configuration
@@ -554,10 +556,10 @@ class WindowSerializer(serializers.ModelSerializer):
 
 
 class RequestSerializer(serializers.ModelSerializer):
-    location = LocationSerializer()
-    configurations = ConfigurationSerializer(many=True)
-    windows = WindowSerializer(many=True)
-    cadence = CadenceSerializer(required=False, write_only=True)
+    location = import_string(settings.SERIALIZERS['requestgroups']['Location'])()
+    configurations = import_string(settings.SERIALIZERS['requestgroups']['Configuration'])(many=True)
+    windows = import_string(settings.SERIALIZERS['requestgroups']['Window'])(many=True)
+    cadence = import_string(settings.SERIALIZERS['requestgroups']['Cadence'])(required=False, write_only=True)
     duration = serializers.ReadOnlyField()
 
     class Meta:
@@ -675,8 +677,8 @@ class RequestSerializer(serializers.ModelSerializer):
 
 
 class CadenceRequestSerializer(RequestSerializer):
-    cadence = CadenceSerializer()
-    windows = WindowSerializer(required=False, many=True)
+    cadence = import_string(settings.SERIALIZERS['requestgroups']['Cadence'])()
+    windows = import_string(settings.SERIALIZERS['requestgroups']['Window'])(required=False, many=True)
 
     def validate_cadence(self, value):
         return value
@@ -689,7 +691,7 @@ class CadenceRequestSerializer(RequestSerializer):
 
 
 class RequestGroupSerializer(serializers.ModelSerializer):
-    requests = RequestSerializer(many=True)
+    requests = import_string(settings.SERIALIZERS['requestgroups']['Request'])(many=True)
     submitter = serializers.StringRelatedField(default=serializers.CurrentUserDefault(), read_only=True)
     submitter_id = serializers.CharField(write_only=True, required=False)
 

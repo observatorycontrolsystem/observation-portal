@@ -283,6 +283,54 @@ LOGGING = {
     }
 }
 
+## Serializer setup - used to allow overriding of serializers
+SERIALIZERS = {
+    'observations': {
+        'Summary': os.getenv('OBSERVATIONS_SUMMARY_SERIALIZER', 'observation_portal.observations.serializers.SummarySerializer'),
+        'ConfigurationStatus': os.getenv('OBSERVATIONS_CONFIGURATIONSTATUS_SERIALIZER', 'observation_portal.observations.serializers.ConfigurationStatusSerializer'),
+        'Target': os.getenv('OBSERVATIONS_TARGET_SERIALIZER', 'observation_portal.observations.serializers.ObservationTargetSerializer'),
+        'Configuration': os.getenv('OBSERVATIONS_CONFIGURATION_SERIALIZER', 'observation_portal.observations.serializers.ObservationConfigurationSerializer'),
+        'Request': os.getenv('OBSERVATIONS_REQUEST_SERIALIZER', 'observation_portal.observations.serializers.ObserveRequestSerializer'),
+        'RequestGroup': os.getenv('OBSERVATIONS_REQUESTGROUP_SERIALIZER', 'observation_portal.observations.serializers.ObserveRequestGroupSerializer'),
+        'Schedule': os.getenv('OBSERVATIONS_SCHEDULE_SERIALIZER', 'observation_portal.observations.serializers.ScheduleSerializer'),
+        'Observation': os.getenv('OBSERVATIONS_OBSERVATION_SERIALIZER', 'observation_portal.observations.serializers.ObservationSerializer'),
+        'Cancel': os.getenv('OBSERVATIONS_CANCEL_SERIALIZER', 'observation_portal.observations.serializers.CancelObservationsSerializer'),
+    },
+    'requestgroups': {
+        'Cadence': os.getenv('REQUESTGROUPS_CADENCE_SERIALIZER', 'observation_portal.requestgroups.serializers.CadenceSerializer'),
+        'CadenceRequest': os.getenv('REQUESTGROUPS_CADENCEREQUEST_SERIALIZER', 'observation_portal.requestgroups.serializers.CadenceRequestSerializer'),
+        'Constraints': os.getenv('REQUESTGROUPS_CONSTRAINTS_SERIALIZER', 'observation_portal.requestgroups.serializers.ConstraintsSerializer'),
+        'RegionOfInterest': os.getenv('REQUESTGROUPS_REGIONOFINTEREST_SERIALIZER', 'observation_portal.requestgroups.serializers.RegionOfInterestSerializer'),
+        'InstrumentConfig': os.getenv('REQUESTGROUPS_INSTRUMENTCONFIG_SERIALIZER', 'observation_portal.requestgroups.serializers.InstrumentConfigSerializer'),
+        'AcquisitionConfig': os.getenv('REQUESTGROUPS_ACQUISITIONCONFIG_SERIALIZER', 'observation_portal.requestgroups.serializers.AcquisitionConfigSerializer'),
+        'GuidingConfig': os.getenv('REQUESTGROUPS_GUIDINGCONFIG_SERIALIZER', 'observation_portal.requestgroups.serializers.GuidingConfigSerializer'),
+        'Target': os.getenv('REQUESTGROUPS_TARGET_SERIALIZER', 'observation_portal.requestgroups.serializers.TargetSerializer'),
+        'Configuration': os.getenv('REQUESTGROUPS_CONFIGURATION_SERIALIZER', 'observation_portal.requestgroups.serializers.ConfigurationSerializer'),
+        'Location': os.getenv('REQUESTGROUPS_LOCATION_SERIALIZER', 'observation_portal.requestgroups.serializers.LocationSerializer'),
+        'Window': os.getenv('REQUESTGROUPS_WINDOW_SERIALIZER', 'observation_portal.requestgroups.serializers.WindowSerializer'),
+        'Request': os.getenv('REQUESTGROUPS_REQUEST_SERIALIZER', 'observation_portal.requestgroups.serializers.RequestSerializer'),
+        'RequestGroup': os.getenv('REQUESTGROUPS_REQUESTGROUP_SERIALIZER', 'observation_portal.requestgroups.serializers.RequestGroupSerializer'),
+        'DraftRequestGroup': os.getenv('REQUESTGROUPS_DRAFTREQUESTGROUP_SERIALIZER', 'observation_portal.requestgroups.serializers.DraftRequestGroupSerializer'),
+    },
+    'proposals': {
+        'Proposal': os.getenv('PROPOSALS_PROPOSAL_SERIALIZER', 'observation_portal.proposals.serializers.ProposalSerializer'),
+        'ProposalInvite': os.getenv('PROPOSALS_PROPOSALINVITE_SERIALIZER', 'observation_portal.proposals.serializers.ProposalInviteSerializer'),
+        'Semester': os.getenv('PROPOSALS_SEMESTER_SERIALIZER', 'observation_portal.proposals.serializers.SemesterSerialzer'),
+        'Membership': os.getenv('PROPOSALS_MEMBERSHIP_SERIALIZER', 'observation_portal.proposals.serializers.MembershipSerializer'),
+        'ProposalNotification': os.getenv('PROPOSALS_PROPOSALNOTIFICATION_SERIALIZER', 'observation_portal.proposals.serializers.ProposalNotificationSerializer'),
+        'TimeLimit': os.getenv('PROPOSALS_TIMELIMIT_SERIALIZER', 'observation_portal.proposals.serializers.TimeLimitSerializer'),
+    },
+    'accounts': {
+        'Profile': os.getenv('ACCOUNTS_PROFILE_SERIALIZER', 'observation_portal.accounts.serializers.ProfileSerializer'),
+        'User': os.getenv('ACCOUNTS_USER_SERIALIZER', 'observation_portal.accounts.serializers.UserSerializer'),
+        'AccountRemoval': os.getenv('ACCOUNTS_ACCOUNTREMOVAL_SERIALIZER', 'observation_portal.accounts.serializers.AccountRemovalSerializer'),
+    },
+    'sciapplications': {
+        'Call': os.getenv('SCIAPPLICATIONS_CALL_SERIALIZER', 'observation_portal.sciapplications.serializers.CallSerializer'),
+        'ScienceApplication': os.getenv('SCIAPPLICATIONS_SCIENCEAPPLICATION_SERIALIZER', 'observation_portal.sciapplications.serializers.ScienceApplicationSerializer'),
+    }
+}
+
 DRAMATIQ_BROKER = {
     "BROKER": "dramatiq.brokers.redis.RedisBroker",
     "OPTIONS": {
