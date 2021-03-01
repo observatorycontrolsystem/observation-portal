@@ -220,12 +220,16 @@ class RegionOfInterestSerializer(serializers.ModelSerializer):
 
 
 class InstrumentConfigSerializer(ExtraParamsFormatter, serializers.ModelSerializer):
-    exposure_time = serializers.FloatField(required=False, allow_null=True)
     rois = import_string(settings.SERIALIZERS['requestgroups']['RegionOfInterest'])(many=True, required=False)
 
     class Meta:
         model = InstrumentConfig
         exclude = InstrumentConfig.SERIALIZER_EXCLUDE
+
+    def validate_exposure_time(self, value):
+        if isnan(value):
+            raise serializers.ValidationError(_('NaN is not a valid exposure time.'))
+        return value
 
     def validate(self, data):
         if 'bin_x' in data and not 'bin_y' in data:
@@ -237,18 +241,6 @@ class InstrumentConfigSerializer(ExtraParamsFormatter, serializers.ModelSerializ
             raise serializers.ValidationError(_(
                 'Currently only square binnings are supported. Please submit with bin_x == bin_y'
             ))
-
-        # TODO: These checks on extra_params will either go in a subclassed serializer or in cerberus validation schema
-        extra_params = data.get('extra_params', {})
-        extra_param_max_exp_time = 0
-        for field, value in extra_params.items():
-            try:
-                if 'exposure_time' in field and float(value) > extra_param_max_exp_time:
-                    extra_param_max_exp_time = float(value)
-            except ValueError:
-                pass
-        if extra_param_max_exp_time > 0:
-            data['exposure_time'] = extra_param_max_exp_time
 
         return data
 
@@ -324,8 +316,6 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
         return data
 
     def validate_instrument_configs(self, value):
-        if len(set([instrument_config.get('rotator_mode', '') for instrument_config in value])) > 1:
-            raise serializers.ValidationError(_('Rotator modes within the same configuration must be the same'))
         if len(value) < 1:
             raise serializers.ValidationError(_('A configuration must have at least one instrument configuration'))
         return value
@@ -343,37 +333,24 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
             )
         return value
 
+    def configuration_types_with_acquisition_off(self):
+        return ['LAMP_FLAT', 'ARC', 'AUTO_FOCUS', 'BIAS', 'DARK', 'SCRIPT']
+
+    def configuration_types_without_optical_elements(self):
+        return ['BIAS', 'DARK', 'SCRIPT']
+
     def validate(self, data):
         # TODO: Validate the guiding optical elements on the guiding instrument types
         instrument_type = data['instrument_type']
         modes = configdb.get_modes_by_type(instrument_type)
         guiding_config = data['guiding_config']
 
-        if len(data['instrument_configs']) > 1 and data['type'] in ['SCRIPT', 'SKY_FLAT']:
-            raise serializers.ValidationError(_(f'Multiple instrument configs are not allowed for type {data["type"]}'))
-
-        if len(data['instrument_configs']) > 1 and instrument_type == '2M0-SCICAM-MUSCAT':
-            raise serializers.ValidationError(_(
-                'Multiple instrument configs are not allowed for the instrument 2M0-SCICAM-MUSCAT'
-            ))
-
         # Validate the guide mode
         guide_validation_helper = ModeValidationHelper('guiding', instrument_type, modes['guiding'])
-
         guiding_config = guide_validation_helper.validate(guiding_config)
-        if not guiding_config.get('mode'):
-            # Guiding modes have an implicit default of OFF (we could just put this in all relevent validation_schema)
-            guiding_config['mode'] = GuidingConfig.OFF
         data['guiding_config'] = guiding_config
 
-        if configdb.is_spectrograph(instrument_type) and data['type'] not in ['LAMP_FLAT', 'ARC', 'NRES_BIAS', 'NRES_DARK']:
-            if 'optional' in guiding_config and guiding_config['optional']:
-                raise serializers.ValidationError(_(
-                    "Guiding cannot be optional on spectrograph instruments for types that are not ARC or LAMP_FLAT."
-                ))
-            guiding_config['optional'] = False
-
-        if data['type'] in ['LAMP_FLAT', 'ARC', 'AUTO_FOCUS', 'NRES_BIAS', 'NRES_DARK', 'BIAS', 'DARK', 'SCRIPT']:
+        if data['type'] in self.configuration_types_with_acquisition_off():
             # These types of observations should only ever be set to guiding mode OFF, but the acquisition modes for
             # spectrographs won't necessarily have that mode. Force OFF here.
             data['acquisition_config']['mode'] = AcquisitionConfig.OFF
@@ -432,7 +409,7 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
 
             # Also check that any optical element group in configdb is specified in the request unless we are a BIAS or
             # DARK or SCRIPT type observation
-            observation_types_without_oe = ['BIAS', 'DARK', 'SCRIPT']
+            observation_types_without_oe = self.configuration_types_without_optical_elements()
             if data['type'].upper() not in observation_types_without_oe:
                 for oe_type in available_optical_elements.keys():
                     singular_type = oe_type[:-1] if oe_type.endswith('s') else oe_type
@@ -481,15 +458,6 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
                 instrument_config = exposure_mode_validation_helper.validate(instrument_config)
                 data['instrument_configs'][i] = instrument_config
 
-            # This applies the exposure_time requirement only to non-muscat instruments.
-            # I wish I could figure out a better way to do this, but it needs info about the instrument_type which is a level up.
-            if instrument_type.upper() != '2M0-SCICAM-MUSCAT':
-                if instrument_config.get('exposure_time', None) is None:
-                    raise serializers.ValidationError({'instrument_configs': [{'exposure_time': [_('This value cannot be null.')]}]})
-                if isnan(instrument_config.get('exposure_time')):
-                    raise serializers.ValidationError({'instrument_configs': [{'exposure_time': [_('A valid number is required.')]}]})
-                if instrument_config['exposure_time'] < 0:
-                    raise serializers.ValidationError({'instrument_configs': [{'exposure_time': [_('This value cannot be negative.')]}]})
 
         if data['type'] == 'SCRIPT':
             if (
@@ -624,15 +592,10 @@ class RequestSerializer(serializers.ModelSerializer):
         if [config.get('fill_window', False) for config in value].count(True) > 1:
             raise serializers.ValidationError(_('Only one configuration can have `fill_window` set'))
 
-        constraints = value[0]['constraints']
         # Set the relative priority of molecules in order
         for i, configuration in enumerate(value):
             configuration['priority'] = i + 1
-            if 'SOAR' not in configuration['instrument_type'].upper() and configuration['constraints'] != constraints:
-                raise serializers.ValidationError(_(
-                    'Currently only a single constraints per Request is supported. This restriction will be '
-                    'lifted in the future.'
-                ))
+
         return value
 
     def validate_windows(self, value):
@@ -839,19 +802,11 @@ class RequestGroupSerializer(serializers.ModelSerializer):
             return data
         else:
             for request in data['requests']:
-                target = request['configurations'][0]['target']
                 for config in request['configurations']:
-                    # for non-DIRECT observations, don't allow HOUR_ANGLE targets
+                    # for non-DIRECT observations, don't allow HOUR_ANGLE targets (they're not supported in rise-set yet)
                     if config['target']['type'] == 'HOUR_ANGLE':
                         raise serializers.ValidationError(_('HOUR_ANGLE Target type not supported in scheduled observations'))
 
-                    # For non-DIRECT observations, only allow a single target
-                    # TODO: Remove this check once we support multiple targets/constraints
-                    if 'SOAR' not in config['instrument_type'].upper() and config['target'] != target:
-                        raise serializers.ValidationError(_(
-                            'Currently only a single target per Request is supported. This restriction will be lifted '
-                            'in the future.'
-                        ))
         try:
             total_duration_dict = get_total_duration_dict(data)
             for tak, duration in total_duration_dict.items():

@@ -1446,62 +1446,6 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
                     expected_submitted_defocus
                 )
 
-    def test_default_guide_mode_for_spectrograph(self):
-        good_data = self.generic_payload.copy()
-        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
-        self.assertEqual(response.status_code, 201)
-        configuration = response.json()['requests'][0]['configurations'][0]
-        # check that without spectral instrument, these defaults are different
-        self.assertTrue(configuration['guiding_config']['optional'])
-        self.assertEqual(configuration['guiding_config']['mode'], 'OFF')
-        self.assertNotIn('slit', configuration['instrument_configs'][0]['optical_elements'])
-
-        good_data['requests'][0]['location']['telescope_class'] = '2m0'
-        good_data['requests'][0]['configurations'][0]['instrument_type'] = '2M0-FLOYDS-SCICAM'
-        del good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
-        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['slit'] = 'slit_6.0as'
-        good_data['requests'][0]['configurations'][0]['type'] = 'SPECTRUM'
-        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
-        self.assertEqual(response.status_code, 201)
-        configuration = response.json()['requests'][0]['configurations'][0]
-        # now with spectral instrument, defaults have changed
-        self.assertEqual(configuration['guiding_config']['mode'], 'ON')
-        self.assertFalse(configuration['guiding_config']['optional'])
-        self.assertEqual(configuration['instrument_configs'][0]['optical_elements']['slit'], 'slit_6.0as')
-
-    def test_guide_mode_off_not_allowed_for_nres_spectrum(self):
-        bad_data = self.generic_payload.copy()
-        bad_data['requests'][0]['configurations'][0]['instrument_type'] = '1M0-NRES-SCICAM'
-        bad_data['requests'][0]['configurations'][0]['type'] = 'NRES_SPECTRUM'
-        bad_data['requests'][0]['configurations'][0]['guiding_config']['mode'] = 'OFF'
-
-        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn('Guiding mode OFF is not available for instrument type', str(response.content))
-
-    def test_guide_optional_not_allowed_for_spectrum(self):
-        bad_data = self.generic_payload.copy()
-        bad_data['requests'][0]['location']['telescope_class'] = '2m0'
-        bad_data['requests'][0]['configurations'][0]['instrument_type'] = '2M0-FLOYDS-SCICAM'
-        bad_data['requests'][0]['configurations'][0]['type'] = 'SPECTRUM'
-        bad_data['requests'][0]['configurations'][0]['guiding_config']['optional'] = True
-
-        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn('Guiding cannot be optional on spectrograph instruments', str(response.content))
-
-    def test_guide_optional_allowed_for_arc(self):
-        good_data = self.generic_payload.copy()
-        good_data['requests'][0]['location']['telescope_class'] = '2m0'
-        good_data['requests'][0]['configurations'][0]['instrument_type'] = '2M0-FLOYDS-SCICAM'
-        good_data['requests'][0]['configurations'][0]['type'] = 'ARC'
-        good_data['requests'][0]['configurations'][0]['guiding_config']['optional'] = True
-        del good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
-        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['slit'] = 'slit_1.6as'
-
-        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
-        self.assertEqual(response.status_code, 201)
-
     def test_guiding_mode_not_available(self):
         bad_data = self.generic_payload.copy()
         bad_data['requests'][0]['configurations'][0]['guiding_config']['mode'] = 'I_DONT_EXIST'
@@ -1854,27 +1798,7 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         self.assertEqual(rg['requests'][0]['configurations'][0]['repeat_duration'], 430.0)
         self.assertEqual(response.status_code, 201)
 
-    def test_multiple_instrument_configs_with_different_rotator_modes_fails(self):
-        bad_data = self.generic_payload.copy()
-        bad_data['requests'][0]['configurations'][0]['instrument_configs'].append(
-            self.extra_configuration['instrument_configs'][0].copy()
-        )
-        bad_data['requests'][0]['configurations'][0]['instrument_type'] = '2M0-FLOYDS-SCICAM'
-        bad_data['requests'][0]['location']['telescope_class'] = '2m0'
-        bad_data['requests'][0]['configurations'][0]['type'] = 'SPECTRUM'
-        del bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
-        del bad_data['requests'][0]['configurations'][0]['instrument_configs'][1]['optical_elements']['filter']
-        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['slit'] = 'slit_1.6as'
-        bad_data['requests'][0]['configurations'][0]['instrument_configs'][1]['optical_elements']['slit'] = 'slit_1.6as'
-        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['rotator_mode'] = 'SKY'
-        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params'] = {}
-        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params']['rotator_angle'] = '1'
-        bad_data['requests'][0]['configurations'][0]['instrument_configs'][1]['rotator_mode'] = 'VFLOAT'
-        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn('within the same configuration must be the same', str(response.content))
-
-    def test_multiple_instrument_configs_with_same_rotator_modes_succeeds(self):
+    def test_multiple_instrument_configs_with_different_rotator_modes_succeeds(self):
         good_data = self.generic_payload.copy()
         good_data['requests'][0]['configurations'][0]['instrument_configs'].append(
             self.extra_configuration['instrument_configs'][0].copy()
@@ -1886,32 +1810,21 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         del good_data['requests'][0]['configurations'][0]['instrument_configs'][1]['optical_elements']['filter']
         good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['slit'] = 'slit_1.6as'
         good_data['requests'][0]['configurations'][0]['instrument_configs'][1]['optical_elements']['slit'] = 'slit_1.6as'
-        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['rotator_mode'] = 'VFLOAT'
+        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['rotator_mode'] = 'SKY'
+        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params'] = {}
+        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params']['rotator_angle'] = '1'
         good_data['requests'][0]['configurations'][0]['instrument_configs'][1]['rotator_mode'] = 'VFLOAT'
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
         self.assertEqual(response.status_code, 201)
 
-    def test_script_type_not_allowed_for_multiple_instrument_configs(self):
-        bad_data = self.generic_payload.copy()
-        bad_data['requests'][0]['configurations'][0]['instrument_configs'].append(
-            self.extra_configuration['instrument_configs'][0].copy()
+    def test_multiple_targets_accepted(self):
+        good_data = self.generic_payload.copy()
+        good_data['requests'][0]['configurations'].append(
+            copy.deepcopy(good_data['requests'][0]['configurations'][0])
         )
-        bad_data['requests'][0]['configurations'][0]['type'] = 'SCRIPT'
-        bad_data['requests'][0]['configurations'][0]['extra_params'] = {}
-        bad_data['requests'][0]['configurations'][0]['extra_params']['script_name'] = 'my_cool_thing'
-        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn('are not allowed for type SCRIPT', str(response.content))
-
-    def test_skyflat_not_allowed_for_multiple_instrument_configs(self):
-        bad_data = self.generic_payload.copy()
-        bad_data['requests'][0]['configurations'][0]['instrument_configs'].append(
-            self.extra_configuration['instrument_configs'][0].copy()
-        )
-        bad_data['requests'][0]['configurations'][0]['type'] = 'SKY_FLAT'
-        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn('are not allowed for type SKY_FLAT', str(response.content))
+        good_data['requests'][0]['configurations'][1]['target']['ra'] = 35.1
+        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
+        self.assertEqual(response.status_code, 201)
 
     def test_configuration_type_matches_instrument(self):
         bad_data = self.generic_payload.copy()
@@ -2012,137 +1925,14 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
         self.assertEqual(response.status_code, 201)
 
-    def test_multiple_targets_currently_rejected(self):
-        bad_data = self.generic_payload.copy()
-        bad_data['requests'][0]['configurations'].append(
-            copy.deepcopy(bad_data['requests'][0]['configurations'][0])
-        )
-        bad_data['requests'][0]['configurations'][1]['target']['ra'] = 35.1
-        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn('Currently only a single target', str(response.content))
-
-    def test_multiple_targets_soar_accepted(self):
+    def test_multiple_constraints_accepted(self):
         good_data = self.generic_payload.copy()
-        good_data['requests'][0]['configurations'][0]['instrument_type'] = '1M0-SCICAM-SOAR'
-        good_data['requests'][0]['configurations'].append(
-            copy.deepcopy(good_data['requests'][0]['configurations'][0])
-        )
-        good_data['requests'][0]['configurations'][1]['target']['ra'] = 35.1
-        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
-        self.assertEqual(response.status_code, 201)
-
-    def test_multiple_constraints_currently_rejected(self):
-        bad_data = self.generic_payload.copy()
-        bad_data['requests'][0]['configurations'].append(
-            copy.deepcopy(bad_data['requests'][0]['configurations'][0])
-        )
-        bad_data['requests'][0]['configurations'][1]['constraints']['max_airmass'] = 1.99
-        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn('Currently only a single constraints', str(response.content))
-
-    def test_multiple_constraints_soar_accepted(self):
-        good_data = self.generic_payload.copy()
-        good_data['requests'][0]['configurations'][0]['instrument_type'] = '1M0-SCICAM-SOAR'
         good_data['requests'][0]['configurations'].append(
             copy.deepcopy(good_data['requests'][0]['configurations'][0])
         )
         good_data['requests'][0]['configurations'][1]['constraints']['max_airmass'] = 1.99
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
         self.assertEqual(response.status_code, 201)
-
-class TestMuscatValidationApi(SetTimeMixin, APITestCase):
-    def setUp(self):
-        super().setUp()
-        self.proposal = mixer.blend(Proposal)
-        self.user = blend_user()
-        self.client.force_login(self.user)
-
-        semester = mixer.blend(
-            Semester, id='2016B', start=datetime(2016, 9, 1, tzinfo=timezone.utc),
-            end=datetime(2016, 12, 31, tzinfo=timezone.utc)
-        )
-        self.time_allocation_1m0_sbig = mixer.blend(
-            TimeAllocation, proposal=self.proposal, semester=semester, instrument_type='2M0-SCICAM-MUSCAT',
-            std_allocation=100.0, std_time_used=0.0, rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
-            ipp_time_available=5.0
-        )
-        mixer.blend(Membership, user=self.user, proposal=self.proposal)
-        self.generic_payload = copy.deepcopy(generic_payload)
-        self.generic_payload['proposal'] = self.proposal.id
-        self.generic_payload['requests'][0]['configurations'][0]['instrument_type'] = '2M0-SCICAM-MUSCAT'
-        self.generic_payload['requests'][0]['location']['telescope_class'] = '2m0'
-        del self.generic_payload['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
-        self.generic_payload['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params'] = {
-            'exposure_time_g': 33.0,
-            'exposure_time_r': 29.0,
-            'exposure_time_i': 27.5,
-            'exposure_time_z': 25.8,
-            'exposure_mode': 'SYNCHRONOUS'
-        }
-        self.generic_payload['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements'] = {
-            'diffuser_g_position': "in",
-            'diffuser_r_position': "out",
-            'diffuser_i_position': "out",
-            'diffuser_z_position': "out",
-        }
-
-    def test_accepts_good_muscat_request(self):
-        good_data = self.generic_payload.copy()
-        max_exposure_time = good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params']['exposure_time_g']
-        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
-        self.assertEqual(response.status_code, 201)
-        inst_config = response.json()['requests'][0]['configurations'][0]['instrument_configs'][0]
-        # check that the exposure_time field was set to the max of the extra params exposure times
-        self.assertEqual(inst_config['exposure_time'], max_exposure_time)
-
-    def test_sets_default_muscat_exposure_mode(self):
-        good_data = self.generic_payload.copy()
-        del good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params']['exposure_mode']
-        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
-        self.assertEqual(response.status_code, 201)
-        inst_config = response.json()['requests'][0]['configurations'][0]['instrument_configs'][0]
-        # check that the exposure_mode field is set to the default of SYNCHRONOUS
-        self.assertEqual(inst_config['extra_params']['exposure_mode'], 'SYNCHRONOUS')
-
-    def test_muscat_requires_extra_params_exposure_times_set(self):
-        bad_data = self.generic_payload.copy()
-        del bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params']['exposure_time_g']
-        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn('exposure_time_g', str(response.content))
-
-    def test_muscat_rejects_bad_exposure_mode(self):
-        bad_data = self.generic_payload.copy()
-        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params']['exposure_mode'] = "Invalid"
-        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn('Exposure mode Invalid', str(response.content))
-
-    def test_muscat_extra_param_exposure_time_must_be_number(self):
-        bad_data = self.generic_payload.copy()
-        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params']['exposure_time_g'] = 'NotANumber'
-        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn('exposure_time_g error: must be of float type', str(response.content))
-
-    def test_muscat_extra_param_exposure_time_must_be_positive(self):
-        bad_data = self.generic_payload.copy()
-        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params']['exposure_time_g'] = -33.2
-        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params']['exposure_time_i'] = -33.2
-        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn('exposure_time_g error: min value is 0', str(response.content))
-        self.assertIn('exposure_time_i error: min value is 0', str(response.content))
-
-    def test_do_not_allow_more_than_one_instrument_config(self):
-        bad_data = self.generic_payload.copy()
-        instrument_config = copy.deepcopy(bad_data['requests'][0]['configurations'][0]['instrument_configs'][0])
-        bad_data['requests'][0]['configurations'][0]['instrument_configs'].append(instrument_config)
-        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        expected_message = 'Multiple instrument configs are not allowed for the instrument 2M0-SCICAM-MUSCAT'
-        self.assertContains(response, expected_message, status_code=400)
 
 
 class TestGetRequestApi(APITestCase):
