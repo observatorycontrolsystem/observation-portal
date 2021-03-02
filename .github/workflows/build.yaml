@@ -41,7 +41,7 @@ jobs:
         pip install -U coverage coveralls 'numpy>=1.16,<1.17'
         pip install .[test]
     - name: Run tests
-      run: coverage run manage.py test --settings=test_settings
+      run: coverage run manage.py test --settings=observation_portal.test_settings
       env:
         DB_USER: postgres
         DB_PASS: postgres

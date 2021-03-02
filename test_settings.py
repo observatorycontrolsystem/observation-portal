@@ -4,7 +4,7 @@ import logging
 # Settings specific to running tests. Using sqlite will run tests 100% in memory.
 # https://docs.djangoproject.com/en/dev/internals/contributing/writing-code/unit-tests/#using-another-settings-module
 # This file should be automatically used during tests, but you can manually specify as well:
-# ./manage.py --settings=valhalla.test_settings
+# ./manage.py --settings=observation_portal.test_settings
 
 logging.disable(logging.CRITICAL)
 PASSWORD_HASHERS = (
