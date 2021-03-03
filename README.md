@@ -122,7 +122,7 @@ After creating the database, migrations must be applied to set up the tables in 
 
 ### **Run the tests**
 
-    (env) python manage.py test --settings=test_settings
+    (env) python manage.py test --settings=observation_portal.test_settings
 
 ### **Run the portal**
 
