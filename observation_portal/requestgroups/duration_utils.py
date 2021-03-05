@@ -1,6 +1,7 @@
 from django.utils.translation import ugettext as _
 from math import ceil, floor
 from django.utils import timezone
+from django.conf import settings
 import logging
 
 from observation_portal.proposals.models import TimeAllocationKey, Proposal, Semester
@@ -11,11 +12,7 @@ from observation_portal.common.rise_set_utils import (get_filtered_rise_set_inte
 logger = logging.getLogger(__name__)
 
 
-PER_CONFIGURATION_GAP = 5.0             # in-between configuration gap - shared for all instruments
-PER_CONFIGURATION_STARTUP_TIME = 11.0   # per-configuration startup time, which encompasses initial pointing
-OVERHEAD_ALLOWANCE = 1.1           # amount of leeway in a proposals timeallocation before rejecting that request
-MAX_IPP_LIMIT = 2.0                # the maximum allowed value of ipp
-MIN_IPP_LIMIT = 0.5                # the minimum allowed value of ipp
+PER_CONFIGURATION_STARTUP_TIME = 16.0   # per-configuration startup time, which encompasses initial pointing
 semesters = None
 
 
@@ -61,7 +58,7 @@ def get_configuration_duration(configuration_dict):
         conf_duration['duration'] = configuration_dict['repeat_duration']
     else:
         conf_duration['duration'] = sum([icd['duration'] for icd in instrumentconf_durations])
-    conf_duration['duration'] += (PER_CONFIGURATION_GAP + PER_CONFIGURATION_STARTUP_TIME)
+    conf_duration['duration'] += (PER_CONFIGURATION_STARTUP_TIME)
     return conf_duration
 
 
@@ -73,7 +70,7 @@ def get_request_duration_dict(request_dict, is_staff=False):
         req_info['configurations'] = conf_durations
         rise_set_intervals = get_filtered_rise_set_intervals_by_site(req, is_staff=is_staff)
         req_info['largest_interval'] = get_largest_interval(rise_set_intervals).total_seconds()
-        req_info['largest_interval'] -= (PER_CONFIGURATION_STARTUP_TIME + PER_CONFIGURATION_GAP)
+        req_info['largest_interval'] -= (PER_CONFIGURATION_STARTUP_TIME)
         req_durations['requests'].append(req_info)
     req_durations['duration'] = sum([req['duration'] for req in req_durations['requests']])
 
@@ -90,7 +87,7 @@ def get_max_ipp_for_requestgroup(requestgroup_dict):
         )
         duration_hours = duration / 3600.0
         ipp_available = time_allocation.ipp_time_available
-        max_ipp_allowable = min((ipp_available / duration_hours) + 1.0, MAX_IPP_LIMIT)
+        max_ipp_allowable = min((ipp_available / duration_hours) + 1.0, settings.MAX_IPP_VALUE)
         truncated_max_ipp_allowable = floor(max_ipp_allowable * 1000.0) / 1000.0
         if tak.semester not in ipp_dict:
             ipp_dict[tak.semester] = {}
@@ -99,7 +96,7 @@ def get_max_ipp_for_requestgroup(requestgroup_dict):
             'ipp_limit': time_allocation.ipp_limit,
             'request_duration': duration_hours,
             'max_allowable_ipp_value': truncated_max_ipp_allowable,
-            'min_allowable_ipp_value': MIN_IPP_LIMIT
+            'min_allowable_ipp_value': settings.MIN_IPP_VALUE
         }
     return ipp_dict
 

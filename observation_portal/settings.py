@@ -44,6 +44,11 @@ ADMINS = [
 SITE_ID = 1
 ACCOUNT_ACTIVATION_DAYS = 7
 
+## Email template and project constants
+ORGANIZATION_NAME = os.getenv('ORGANIZATION_NAME', '')
+ORGANIZATION_EMAIL = os.getenv('ORGANIZATION_EMAIL', '')
+OBSERVATION_PORTAL_BASE_URL = os.getenv('OBSERVATION_PORTAL_BASE_URL', 'http://localhost')
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -221,8 +226,8 @@ EMAIL_HOST = os.getenv('EMAIL_HOST', 'localhost')
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 EMAIL_PORT = os.getenv('EMAIL_PORT', 587)
-DEFAULT_FROM_EMAIL = 'Webmaster <portal@lco.global>'
-SERVER_EMAIL = DEFAULT_FROM_EMAIL
+DEFAULT_FROM_EMAIL = ORGANIZATION_EMAIL
+SERVER_EMAIL = ORGANIZATION_EMAIL
 
 ELASTICSEARCH_URL = os.getenv('ELASTICSEARCH_URL', 'http://localhost')
 CONFIGDB_URL = os.getenv('CONFIGDB_URL', 'http://localhost')
@@ -248,9 +253,9 @@ REST_FRAMEWORK = {
         'rest_framework.throttling.ScopedRateThrottle',
     ),
     'DEFAULT_THROTTLE_RATES': {
-        'requestgroups.cancel': '2000/day',
-        'requestgroups.create': '5000/day',
-        'requestgroups.validate': '20000/day'
+        'requestgroups.cancel': os.getenv('REQUESTGROUPS_CANCEL_DEFAULT_THROTTLE', '2000/day'),
+        'requestgroups.create': os.getenv('REQUESTGROUPS_CREATE_DEFAULT_THROTTLE', '5000/day'),
+        'requestgroups.validate': os.getenv('REQUESTGROUPS_VALIDATE_DEFAULT_THROTTLE', '20000/day')
     }
 }
 
@@ -283,6 +288,10 @@ LOGGING = {
     }
 }
 
+## Duration constants for calculating overheads
+MAX_IPP_VALUE = os.getenv('MAX_IPP_VALUE', 2.0)  # the maximum allowed value of ipp
+MIN_IPP_VALUE = os.getenv('MIN_IPP_VALUE', 0.5)  # the minimum allowed value of ipp
+PROPOSAL_TIME_OVERUSE_ALLOWANCE = os.getenv('PROPOSAL_TIME_OVERUSE_ALLOWANCE', 1.1)  # amount of leeway in a proposals timeallocation before rejecting that request
 ## Serializer setup - used to allow overriding of serializers
 SERIALIZERS = {
     'observations': {

@@ -19,6 +19,7 @@ from observation_portal.accounts.test_utils import blend_user
 
 from django.urls import reverse
 from django.core import cache
+from django.conf import settings
 from dateutil.parser import parse as datetime_parser
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ValidationError
@@ -2887,7 +2888,6 @@ class TestMaxIppRequestgroupApi(SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_get_max_ipp_max_ipp_returned(self):
-        from observation_portal.requestgroups.duration_utils import MAX_IPP_LIMIT, MIN_IPP_LIMIT
         good_data = self.generic_payload.copy()
         response = self.client.post(reverse('api:request_groups-max-allowable-ipp'), good_data)
         self.assertEqual(response.status_code, 200)
@@ -2895,10 +2895,10 @@ class TestMaxIppRequestgroupApi(SetTimeMixin, APITestCase):
         ipp_dict = response.json()
         self.assertIn(self.semester.id, ipp_dict)
         self.assertEqual(
-            MAX_IPP_LIMIT, ipp_dict[self.semester.id]['1M0-SCICAM-SBIG']['max_allowable_ipp_value']
+            settings.MAX_IPP_VALUE, ipp_dict[self.semester.id]['1M0-SCICAM-SBIG']['max_allowable_ipp_value']
         )
         self.assertEqual(
-            MIN_IPP_LIMIT, ipp_dict[self.semester.id]['1M0-SCICAM-SBIG']['min_allowable_ipp_value']
+            settings.MIN_IPP_VALUE, ipp_dict[self.semester.id]['1M0-SCICAM-SBIG']['min_allowable_ipp_value']
         )
 
     def test_get_max_ipp_reduced_max_ipp(self):

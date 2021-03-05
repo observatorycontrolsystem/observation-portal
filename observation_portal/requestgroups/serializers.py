@@ -26,7 +26,7 @@ from observation_portal.requestgroups.target_helpers import TARGET_TYPE_HELPER_M
 from observation_portal.common.mixins import ExtraParamsFormatter
 from observation_portal.common.configdb import configdb, ConfigDB, ConfigDBException
 from observation_portal.requestgroups.duration_utils import (
-    get_request_duration, get_request_duration_sum, get_total_duration_dict, OVERHEAD_ALLOWANCE,
+    get_request_duration, get_request_duration_sum, get_total_duration_dict,
     get_instrument_configuration_duration, get_semester_in
 )
 from datetime import timedelta
@@ -813,6 +813,11 @@ class RequestGroupSerializer(serializers.ModelSerializer):
                 _('You do not belong to the proposal you are trying to submit')
             )
 
+        # Validate that the ipp_value is within the min/max range
+        if 'ipp_value' in data:
+            if data['ipp_value'] < settings.MIN_IPP_VALUE or data['ipp_value'] >  settings.MAX_IPP_VALUE:
+                raise serializers.ValidationError(_(f'requestgroups ipp_value must be >= {settings.MIN_IPP_VALUE}, <= {settings.MAX_IPP_VALUE}'))
+
         # validation on the operator matching the number of requests
         if data['operator'] == 'SINGLE':
             if len(data['requests']) > 1:
@@ -890,7 +895,7 @@ class RequestGroupSerializer(serializers.ModelSerializer):
                         _("Proposal {} does not have any {} time left allocated in semester {} on {} instruments").format(
                             data['proposal'], data['observation_type'], tak.semester, tak.instrument_type)
                     )
-                elif time_available * OVERHEAD_ALLOWANCE < (duration / 3600.0):
+                elif time_available * settings.PROPOSAL_TIME_OVERUSE_ALLOWANCE < (duration / 3600.0):
                     raise serializers.ValidationError(
                         _("Proposal {} does not have enough {} time allocated in semester {}").format(
                             data['proposal'], data['observation_type'], tak.semester)

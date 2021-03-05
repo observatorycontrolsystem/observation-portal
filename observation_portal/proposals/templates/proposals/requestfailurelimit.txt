@@ -10,4 +10,4 @@ Request url: {{ detail_url }}
 
 Thank you,
 
-Lco.global
+{{ organization_name }}

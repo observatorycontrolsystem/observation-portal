@@ -8,6 +8,7 @@ from django.urls import reverse
 from django.utils.translation import ugettext as _
 from django.template.loader import render_to_string
 from django.utils.functional import cached_property
+from django.conf import settings
 
 from observation_portal.common.configdb import configdb
 from observation_portal.accounts.tasks import send_mail
@@ -208,13 +209,15 @@ class ScienceApplication(models.Model):
         return proposal
 
     def send_approved_notification(self):
-        subject = _('Your proposal at LCO.global has been approved')
+        subject = _(f'Your proposal at {settings.ORGANIZATION_NAME} has been approved')
         message = render_to_string(
             'sciapplications/approved.txt',
             {
                 'proposal': self.proposal,
                 'semester': self.call.semester,
                 'semester_already_started': self.call.semester.start < timezone.now(),
+                'organization_name': settings.ORGANIZATION_NAME,
+                'observation_portal_base_url': settings.OBSERVATION_PORTAL_BASE_URL
             }
         )
         # Find the email to send the notification to. The proposal will have been created at this point, but the pi on
@@ -223,7 +226,7 @@ class ScienceApplication(models.Model):
         pi_email = self.proposal.pi.email if self.proposal.pi else self.pi
         email_sent = True
         try:
-            send_mail.send(subject, message, 'portal@lco.global', [pi_email])
+            send_mail.send(subject, message, settings.ORGANIZATION_EMAIL, [pi_email])
         except smtplib.SMTPException:
             email_sent = False
         return email_sent
