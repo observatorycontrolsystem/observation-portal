@@ -157,7 +157,7 @@ class Proposal(models.Model):
 
     def send_time_allocation_reminder(self):
         if self.pi:
-            subject = _('Your LCO Time Allocation Summary')
+            subject = _(f'Your {settings.ORGANIZATION_NAME} Time Allocation Summary')
             message = render_to_string(
                 'proposals/timeallocationreminder.html',
                 {
@@ -167,7 +167,7 @@ class Proposal(models.Model):
             )
             plain_message = strip_tags(message)
 
-            send_mail.send(subject, plain_message, 'science-support@lco.global', [self.pi.email], html_message=message)
+            send_mail.send(subject, plain_message, settings.ORGANIZATION_EMAIL, [self.pi.email], html_message=message)
         else:
             logger.warn('Proposal {} does not have a PI!'.format(self))
 

@@ -59,7 +59,7 @@ class AccountRemovalRequestApiView(APIView):
                 request.user.email, serializer.validated_data['reason']
             )
             send_mail.send(
-                'Account removal request submitted', message, 'portal@lco.global', ['science-support@lco.global']
+                'Account removal request submitted', message, settings.ORGANIZATION_EMAIL, [settings.ORGANIZATION_SUPPORT_EMAIL]
             )
             return Response({'message': 'Account removal request successfully submitted.'})
         else:

@@ -35,19 +35,22 @@ SECRET_KEY = os.getenv('SECRET_KEY', '2xou30pi2va&ed@n2l79n807k%@szj1+^uj&)y09_w
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', False)
 
-ALLOWED_HOSTS = ['observation-portal-dev.lco.global', '*']
-
-ADMINS = [
-    ('Softies', 'softies@lco.global')
-]
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')  # Comma delimited list of django allowed hosts
 
 SITE_ID = 1
 ACCOUNT_ACTIVATION_DAYS = 7
 
 ## Email template and project constants
-ORGANIZATION_NAME = os.getenv('ORGANIZATION_NAME', '')
-ORGANIZATION_EMAIL = os.getenv('ORGANIZATION_EMAIL', '')
+ORGANIZATION_NAME = os.getenv('ORGANIZATION_NAME', '')  # Base organization name, used in email titles/signatures
+ORGANIZATION_EMAIL = os.getenv('ORGANIZATION_EMAIL', '')  # Base organization from email for the obs portal for outgoing emails
+ORGANIZATION_DDT_EMAIL = os.getenv('ORGANIZATION_DDT_EMAIL', '')  # Organization email to receive alerts when ddt proposals are submitted
+ORGANIZATION_SUPPORT_EMAIL = os.getenv('ORGANIZATION_SUPPORT_EMAIL', '')  # Organization email to receive account removal email requests
+ORGANIZATION_ADMIN_EMAIL = os.getenv('ORGANIZATION_ADMIN_EMAIL', '')  # Admin email address to receive 500 error emails
 OBSERVATION_PORTAL_BASE_URL = os.getenv('OBSERVATION_PORTAL_BASE_URL', 'http://localhost')
+
+ADMINS = [
+    ('Admins', ORGANIZATION_ADMIN_EMAIL)
+]
 
 # Application definition
 
@@ -233,8 +236,9 @@ ELASTICSEARCH_URL = os.getenv('ELASTICSEARCH_URL', 'http://localhost')
 CONFIGDB_URL = os.getenv('CONFIGDB_URL', 'http://localhost')
 DOWNTIMEDB_URL = os.getenv('DOWNTIMEDB_URL', 'http://localhost')
 
-REQUESTGROUP_DATA_DOWNLOAD_URL = os.getenv('REQUESTGROUP_DATA_DOWNLOAD_URL', '')
-REQUEST_DETAIL_URL = os.getenv('REQUEST_DETAIL_URL', '')
+REQUESTGROUP_DATA_DOWNLOAD_URL = os.getenv('REQUESTGROUP_DATA_DOWNLOAD_URL', '')  # use {requestgroup_id} to have it substituted in
+REQUEST_DETAIL_URL = os.getenv('REQUEST_DETAIL_URL', '')  # use {request_id} to have it substituted in
+SCIENCE_APPLICATION_DETAIL_URL = os.getenv('SCIENCE_APPLICATION_DETAIL_URL', '')  # use {scicapp_id} to have it substituted in
 MAX_FAILURES_PER_REQUEST = int(os.getenv('MAX_FAILURES_PER_REQUEST', 0))  # 0 means unlimited / no max
 
 REST_FRAMEWORK = {

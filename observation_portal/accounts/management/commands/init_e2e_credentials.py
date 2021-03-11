@@ -31,7 +31,7 @@ class Command(BaseCommand):
         Semester.objects.get_or_create(id="Semester1", start=datetime(2000, 1, 1, tzinfo=timezone.utc),
                                        end=datetime(2100, 1, 1, tzinfo=timezone.utc))
         try:
-            user = User.objects.create_superuser(user_str, 'fake_email@lco.global', 'password')
+            user = User.objects.create_superuser(user_str, 'fake_email@gmail.com', 'password')
         except IntegrityError:
             user = User.objects.get(username=user_str)
             logging.warning(f"user {user_str} already exists")

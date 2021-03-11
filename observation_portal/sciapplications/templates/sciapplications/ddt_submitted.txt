@@ -8,7 +8,7 @@ You will be contacted in due course once we have reached a decision.
 
 You may view your proposal here:
 
-{{ observation_portal_base_url }}{{ ddt.get_absolute_url }}
+{{ detail_url }}
 
 Warm Regards,
 {{ organization_name }}

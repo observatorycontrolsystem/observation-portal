@@ -13,9 +13,15 @@ PASSWORD_HASHERS = (
 DEBUG = False
 TEMPLATE_DEBUG = False
 
-ELASTICSEARCH_URL = os.getenv('ELASTICSEARCH_URL', 'http://elasticsearchdevfake.lco.gtn')
-CONFIGDB_URL = os.getenv('CONFIGDB_URL', 'http://configdbfake.lco.gtn')
-DOWNTIMEDB_URL = os.getenv('DOWNTIMEDB_URL', 'http://downtimedbfake.lco.gtn')
+ORGANIZATION_NAME = 'Test Org'
+ORGANIZATION_EMAIL = 'test@gmail.com'
+ORGANIZATION_DDT_EMAIL = 'test@gmail.com'
+ORGANIZATION_SUPPORT_EMAIL = 'test@gmail.com'
+ORGANIZATION_ADMIN_EMAIL = 'test@gmail.com'
+
+ELASTICSEARCH_URL = os.getenv('ELASTICSEARCH_URL', 'http://elasticsearchdevfake')
+CONFIGDB_URL = os.getenv('CONFIGDB_URL', 'http://configdbfake')
+DOWNTIMEDB_URL = os.getenv('DOWNTIMEDB_URL', 'http://downtimedbfake')
 
 CACHES = {
     'default': {
