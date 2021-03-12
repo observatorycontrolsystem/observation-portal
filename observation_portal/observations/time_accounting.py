@@ -52,11 +52,11 @@ def configuration_time_used(summary, observation_type):
     configuration_time += summary.end - summary.start
 
     if observation_type == RequestGroup.RAPID_RESPONSE:
-        base_duration = timedelta(
-            seconds=get_configuration_duration(summary.configuration_status.configuration.as_dict())['duration']
-        )
         request_overheads = configdb.get_request_overheads(summary.configuration_status.configuration.instrument_type)
-        base_duration += timedelta(seconds=(request_overheads['front_padding'] / len(summary.configuration_status.observation.request.configurations.all())))
+        base_duration = timedelta(
+            seconds=get_configuration_duration(summary.configuration_status.configuration.as_dict(), request_overheads)['duration']
+        )
+        base_duration += timedelta(seconds=(request_overheads['observation_front_padding'] / len(summary.configuration_status.observation.request.configurations.all())))
         configuration_time = min(configuration_time, base_duration)
 
     return configuration_time

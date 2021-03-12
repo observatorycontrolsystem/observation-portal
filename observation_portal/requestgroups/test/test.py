@@ -245,7 +245,7 @@ class TestRequestDuration(SetTimeMixin, TestCase):
         self.configuration_repeat_expose.request = self.request
         self.configuration_repeat_expose.save()
 
-        configuration_duration = self.configuration_repeat_expose.repeat_duration + PER_CONFIGURATION_STARTUP_TIME
+        configuration_duration = self.configuration_repeat_expose.repeat_duration
         self.assertEqual(configuration_duration, self.configuration_repeat_expose.duration)
 
         mixer.blend(
@@ -282,7 +282,7 @@ class TestRequestDuration(SetTimeMixin, TestCase):
         num_filter_changes = 2
         duration = self.request.duration
 
-        self.assertEqual(duration, math.ceil(exp_1_duration + exp_2_duration + repeat_config_duration + self.sbig_front_padding + num_configurations*(
+        self.assertEqual(duration, math.ceil(exp_1_duration + exp_2_duration + (repeat_config_duration - PER_CONFIGURATION_STARTUP_TIME) + self.sbig_front_padding + num_configurations*(
             PER_CONFIGURATION_STARTUP_TIME + self.minimum_slew_time) + num_filter_changes*self.sbig_filter_optical_element_change_overhead))
 
     def test_ccd_multiple_configuration_request_duration(self):
@@ -351,7 +351,7 @@ class TestRequestDuration(SetTimeMixin, TestCase):
         exp_time = 1800
         exp_count = 1
 
-        self.assertEqual(duration, math.ceil(exp_count*(exp_time + self.floyds_readout_time1 + self.floyds_fixed_overhead_per_exposure) + self.floyds_front_padding + self.floyds_config_change_time + self.floyds_acquire_processing_time + self.floyds_acquire_exposure_time + PER_CONFIGURATION_STARTUP_TIME + self.minimum_slew_time))
+        self.assertEqual(duration, math.ceil(exp_count*(exp_time + self.floyds_readout_time1 + self.floyds_fixed_overhead_per_exposure) + self.floyds_front_padding + self.floyds_acquire_processing_time + self.floyds_acquire_exposure_time + PER_CONFIGURATION_STARTUP_TIME + self.minimum_slew_time))
 
     def test_floyds_uses_supplied_acquisition_config_exposure_time(self):
         self.configuration_spectrum.request = self.request
@@ -391,7 +391,7 @@ class TestRequestDuration(SetTimeMixin, TestCase):
         exp_count = 1
         num_spectrum_configurations = 2
 
-        self.assertEqual(duration, math.ceil(exp_count*num_spectrum_configurations*(exp_time + self.floyds_readout_time1 + self.floyds_fixed_overhead_per_exposure) + self.floyds_front_padding + self.floyds_config_change_time + num_spectrum_configurations*(self.floyds_acquire_processing_time + PER_CONFIGURATION_STARTUP_TIME + self.minimum_slew_time + self.floyds_acquire_exposure_time)))
+        self.assertEqual(duration, math.ceil(exp_count*num_spectrum_configurations*(exp_time + self.floyds_readout_time1 + self.floyds_fixed_overhead_per_exposure) + self.floyds_front_padding + num_spectrum_configurations*(self.floyds_acquire_processing_time + PER_CONFIGURATION_STARTUP_TIME + self.minimum_slew_time + self.floyds_acquire_exposure_time)))
 
     def test_floyds_single_configuration_duration(self):
         duration = self.configuration_spectrum.duration
@@ -426,7 +426,7 @@ class TestRequestDuration(SetTimeMixin, TestCase):
 
         num_configurations = 3
 
-        self.assertEqual(duration, math.ceil(exp_s_duration + exp_a_duration + exp_l_duration + self.floyds_front_padding + self.floyds_acquire_processing_time + self.floyds_acquire_exposure_time + num_configurations*(self.floyds_config_change_time + PER_CONFIGURATION_STARTUP_TIME + self.minimum_slew_time)))
+        self.assertEqual(duration, math.ceil(exp_s_duration + exp_a_duration + exp_l_duration + self.floyds_front_padding + self.floyds_acquire_processing_time + self.floyds_acquire_exposure_time + (num_configurations-1)*self.floyds_config_change_time + num_configurations*(PER_CONFIGURATION_STARTUP_TIME + self.minimum_slew_time)))
 
     def test_floyds_multiple_configuration_duration(self):
         duration = self.configuration_lampflat.duration

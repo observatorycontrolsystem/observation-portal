@@ -325,10 +325,10 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
         request_context = self.context.get('request')
         if request_context:
             is_staff = request_context.user.is_staff
-        if value and value not in configdb.get_instrument_types({}, only_schedulable=(not is_staff)):
+        if value and value not in configdb.get_instrument_type_codes({}, only_schedulable=(not is_staff)):
             raise serializers.ValidationError(
                 _('Invalid instrument type {}. Valid instruments may include: {}').format(
-                    value, ', '.join(configdb.get_instrument_types({}, only_schedulable=(not is_staff)))
+                    value, ', '.join(configdb.get_instrument_type_codes({}, only_schedulable=(not is_staff)))
                 )
             )
         return value
@@ -493,7 +493,8 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
                 ))
 
         # Validate the configuration type is available for the instrument requested
-        if data['type'] not in configdb.get_configuration_types(instrument_type):
+        configuration_types = configdb.get_configuration_types(instrument_type)
+        if data['type'] not in configuration_types.keys():
             raise serializers.ValidationError(_(
                 f'configuration type {data["type"]} is not valid for instrument type {instrument_type}'
             ))
@@ -623,7 +624,7 @@ class RequestSerializer(serializers.ModelSerializer):
         # TODO: Check if ALL instruments are available at a resource defined by location
         if 'location' in data:
             # Check if the location is fully specified, and if not then use only schedulable instruments
-            valid_instruments = configdb.get_instrument_types(data.get('location', {}),
+            valid_instruments = configdb.get_instrument_type_codes(data.get('location', {}),
                                                               only_schedulable=only_schedulable)
             for configuration in data['configurations']:
                 if configuration['instrument_type'] not in valid_instruments:

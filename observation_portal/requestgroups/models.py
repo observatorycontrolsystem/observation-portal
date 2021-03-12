@@ -411,7 +411,8 @@ class Configuration(models.Model):
 
     @cached_property
     def duration(self):
-        return get_configuration_duration(self.as_dict())['duration']
+        request_overheads = configdb.get_request_overheads(self.instrument_type)
+        return get_configuration_duration(self.as_dict(), request_overheads)['duration']
 
 
 class Target(models.Model):
