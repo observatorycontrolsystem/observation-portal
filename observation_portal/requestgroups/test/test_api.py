@@ -1453,6 +1453,18 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertIn('Guiding mode I_DONT_EXIST is not available', str(response.content))
 
+    def test_guiding_mode_not_schedulable(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['instrument_type'] = '1M0-NRES-SCICAM'
+        bad_data['requests'][0]['configurations'][0]['type'] = 'NRES_SPECTRUM'
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements'] = {}
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['mode'] = '1m0_nres_1'
+        del bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_x']
+        del bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_y']
+        bad_data['requests'][0]['configurations'][0]['guiding_config']['mode'] = 'NRES_SPECIAL'
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertIn('Guiding mode NRES_SPECIAL is not available', str(response.content))
+
     def test_readout_mode_many_options(self):
         bad_data = self.generic_payload.copy()
         bad_data['requests'][0]['configurations'][0]['instrument_type'] = '1M0-NRES-SCICAM'

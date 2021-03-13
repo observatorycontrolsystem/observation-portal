@@ -141,8 +141,7 @@ class ModeValidationHelper(ValidationHelper):
             mode_value = self.get_default_mode()
             if not mode_value:
                 return config_dict
-        if not self.mode_exists(mode_value):
-            return config_dict
+        self.mode_exists_and_is_schedulable(mode_value)
         config_dict = self._set_mode_in_config_dict(mode_value, config_dict)
         mode = configdb.get_mode_with_code(self._instrument_type, mode_value, self._mode_type)
         validation_schema = mode.get('validation_schema', {})
@@ -153,13 +152,15 @@ class ModeValidationHelper(ValidationHelper):
             ))
         return validated_config_dict
 
-    def mode_exists(self, mode_value: str) -> bool:
+    def mode_exists_and_is_schedulable(self, mode_value: str) -> bool:
         if self._modes_group and mode_value:
-            if not mode_value.lower() in [m['code'].lower() for m in self._modes_group['modes']]:
-                raise serializers.ValidationError(_(
-                    f'{self._mode_type.capitalize()} mode {mode_value} is not available for '
-                    f'instrument type {self._instrument_type}'
-                ))
+            for mode in self._modes_group['modes']:
+                if mode['code'].lower() == mode_value.lower() and mode['schedulable']:
+                    return True
+            raise serializers.ValidationError(_(
+                f'{self._mode_type.capitalize()} mode {mode_value} is not available for '
+                f'instrument type {self._instrument_type}'
+            ))
         return True
 
     def get_default_mode(self) -> str:
