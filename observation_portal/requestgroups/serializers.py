@@ -498,6 +498,10 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
             raise serializers.ValidationError(_(
                 f'configuration type {data["type"]} is not valid for instrument type {instrument_type}'
             ))
+        elif not configuration_types[data['type'].upper()]['schedulable']:
+            raise serializers.ValidationError(_(
+                f'configuration type {data["type"]} is not schedulable for instrument type {instrument_type}'
+            ))
 
         return data
 

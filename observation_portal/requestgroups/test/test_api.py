@@ -1842,6 +1842,13 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         self.assertIn('configuration type EXPOSE is not valid for instrument type 2M0-FLOYDS-SCICAM', str(response.content))
         self.assertEqual(response.status_code, 400)
 
+    def test_configuration_type_is_schedulable(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['type'] = 'BIAS'
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertIn('configuration type BIAS is not schedulable for instrument type 1M0-SCICAM-SBIG', str(response.content))
+        self.assertEqual(response.status_code, 400)
+
     def test_acquisition_config_exposure_time_limits(self):
         bad_data = self.generic_payload.copy()
         bad_data['requests'][0]['configurations'][0]['acquisition_config']['exposure_time'] = -1
