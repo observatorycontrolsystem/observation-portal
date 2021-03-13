@@ -261,7 +261,12 @@ class ConfigDB(object):
                             instruments.append(instrument)
         return instruments
 
-    def get_instrument_types(self):
+    def get_instrument_types(self) -> dict:
+        """Get all instrument types on the network.
+
+        Returns:
+            Dictionary of instrument type code to instrument type data
+        """
         instrument_types = {}
         for instrument in self.get_instruments():
             if instrument['instrument_type']['code'].upper() not in instrument_types:
@@ -354,7 +359,14 @@ class ConfigDB(object):
                 instrument_telescopes.add(instrument['telescope_key'])
         return instrument_telescopes
 
-    def get_configuration_types(self, instrument_type_code):
+    def get_configuration_types(self, instrument_type_code: str) -> dict:
+        """Get the available configuration types for an instrument_type.
+
+        Parameters:
+            instrument_type_code: Instrument type for which to get the configuration types
+        Returns:
+             Dictionary of configuration type code to configuration type data
+        """
         configuration_types = {}
         instrument_types = self.get_instrument_types()
         if instrument_type_code.upper() in instrument_types:
@@ -496,19 +508,19 @@ class ConfigDB(object):
                     'y': instrument['science_cameras'][0]['camera_type']['pixels_y']
                 }
 
-    def get_instrument_type_category(self, instrument_type_code):
+    def get_instrument_type_category(self, instrument_type_code: str) -> str:
         instrument_types = self.get_instrument_types()
         if instrument_type_code.upper() in instrument_types:
             return instrument_types[instrument_type_code.upper()]['instrument_category']
         return 'None'
 
-    def get_instrument_type_full_name(self, instrument_type_code):
+    def get_instrument_type_full_name(self, instrument_type_code: str) -> str:
         instrument_types = self.get_instrument_types()
         if instrument_type_code.upper() in instrument_types:
             return instrument_types[instrument_type_code.upper()]['name']
         return instrument_type_code
 
-    def get_instrument_type_telescope_class(self, instrument_type_code):
+    def get_instrument_type_telescope_class(self, instrument_type_code: str) -> str:
         for instrument in self.get_instruments():
             if instrument_type_code.upper() == instrument['instrument_type']['code'].upper():
                 return instrument['__str__'].split('.')[2][0:3]
