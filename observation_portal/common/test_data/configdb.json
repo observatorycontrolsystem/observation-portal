@@ -44,36 +44,48 @@
                           "name": "Expose",
                           "code": "EXPOSE",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
                           "schedulable": true
                       },
                       {
                           "name": "Repeat Expose",
                           "code": "REPEAT_EXPOSE",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
                           "schedulable": true
                       },
                       {
                           "name": "Sky Flat",
                           "code": "SKY_FLAT",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
                           "schedulable": true
                       },
                       {
                           "name": "Script",
                           "code": "SCRIPT",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
                           "schedulable": true
                       },
                       {
                           "name": "Bias",
                           "code": "BIAS",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
                           "schedulable": false
                       },
                       {
                           "name": "Dark",
                           "code": "DARK",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
                           "schedulable": false
                       }
                     ],
@@ -195,36 +207,48 @@
                           "name": "Expose",
                           "code": "EXPOSE",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
                           "schedulable": true
                       },
                       {
                           "name": "Repeat Expose",
                           "code": "REPEAT_EXPOSE",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
                           "schedulable": true
                       },
                       {
                           "name": "Sky Flat",
                           "code": "SKY_FLAT",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
                           "schedulable": true
                       },
                       {
                           "name": "Script",
                           "code": "SCRIPT",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
                           "schedulable": true
                       },
                       {
                           "name": "Bias",
                           "code": "BIAS",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
                           "schedulable": false
                       },
                       {
                           "name": "Dark",
                           "code": "DARK",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
                           "schedulable": false
                       }
                     ],
@@ -346,36 +370,48 @@
                           "name": "Expose",
                           "code": "EXPOSE",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
                           "schedulable": true
                       },
                       {
                           "name": "Repeat Expose",
                           "code": "REPEAT_EXPOSE",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
                           "schedulable": true
                       },
                       {
                           "name": "Sky Flat",
                           "code": "SKY_FLAT",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
                           "schedulable": true
                       },
                       {
                           "name": "Script",
                           "code": "SCRIPT",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
                           "schedulable": true
                       },
                       {
                           "name": "Bias",
                           "code": "BIAS",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
                           "schedulable": false
                       },
                       {
                           "name": "Dark",
                           "code": "DARK",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
                           "schedulable": false
                       }
                     ],
@@ -517,30 +553,40 @@
                           "name": "Spectrum",
                           "code": "SPECTRUM",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
                           "schedulable": true
                       },
                       {
                           "name": "Repeat Spectrum",
                           "code": "REPEAT_SPECTRUM",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
                           "schedulable": true
                       },
                       {
                           "name": "Lamp Flat",
                           "code": "LAMP_FLAT",
                           "config_change_overhead": 30.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": true,
                           "schedulable": true
                       },
                       {
                           "name": "Script",
                           "code": "SCRIPT",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
                           "schedulable": true
                       },
                       {
                           "name": "Arc",
                           "code": "ARC",
                           "config_change_overhead": 30.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": true,
                           "schedulable": true
                       }
                     ],
@@ -702,36 +748,48 @@
                           "name": "Expose",
                           "code": "EXPOSE",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
                           "schedulable": true
                       },
                       {
                           "name": "Repeat Expose",
                           "code": "REPEAT_EXPOSE",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
                           "schedulable": true
                       },
                       {
                           "name": "Sky Flat",
                           "code": "SKY_FLAT",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
                           "schedulable": true
                       },
                       {
                           "name": "Script",
                           "code": "SCRIPT",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
                           "schedulable": true
                       },
                       {
                           "name": "Bias",
                           "code": "BIAS",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
                           "schedulable": false
                       },
                       {
                           "name": "Dark",
                           "code": "DARK",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
                           "schedulable": false
                       }
                     ],
@@ -853,42 +911,56 @@
                           "name": "NRES Spectrum",
                           "code": "NRES_SPECTRUM",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
                           "schedulable": true
                       },
                       {
                           "name": "NRES Repeat Spectrum",
                           "code": "NRES_REPEAT_SPECTRUM",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
                           "schedulable": true
                       },
                       {
                         "name": "NRES Expose",
                         "code": "NRES_EXPOSE",
                         "config_change_overhead": 0.0,
+                        "requires_optical_elements": true,
+                        "force_acquisition_off": false,
                         "schedulable": true
                       },
                       {
                         "name": "NRES Test",
                         "code": "NRES_TEST",
                         "config_change_overhead": 0.0,
+                        "requires_optical_elements": true,
+                        "force_acquisition_off": false,
                         "schedulable": true
                       },
                       {
                           "name": "Lamp Flat",
                           "code": "LAMP_FLAT",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": true,
                           "schedulable": true
                       },
                       {
                           "name": "Script",
                           "code": "SCRIPT",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
                           "schedulable": true
                       },
                       {
                           "name": "Arc",
                           "code": "ARC",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": true,
                           "schedulable": true
                       }
                     ],
@@ -1019,30 +1091,40 @@
                           "name": "Spectrum",
                           "code": "SPECTRUM",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
                           "schedulable": true
                       },
                       {
                           "name": "Repeat Spectrum",
                           "code": "REPEAT_SPECTRUM",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
                           "schedulable": true
                       },
                       {
                           "name": "Lamp Flat",
                           "code": "LAMP_FLAT",
                           "config_change_overhead": 30.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": true,
                           "schedulable": true
                       },
                       {
                           "name": "Script",
                           "code": "SCRIPT",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
                           "schedulable": true
                       },
                       {
                           "name": "Arc",
                           "code": "ARC",
                           "config_change_overhead": 30.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": true,
                           "schedulable": true
                       }
                     ],
@@ -1263,54 +1345,72 @@
                           "name": "Expose",
                           "code": "EXPOSE",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
                           "schedulable": true
                       },
                       {
                           "name": "Repeat Expose",
                           "code": "REPEAT_EXPOSE",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
                           "schedulable": true
                       },
                       {
                           "name": "Sky Flat",
                           "code": "SKY_FLAT",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
                           "schedulable": true
                       },
                       {
                           "name": "Script",
                           "code": "SCRIPT",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
                           "schedulable": true
                       },
                       {
                           "name": "Bias",
                           "code": "BIAS",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
                           "schedulable": false
                       },
                       {
                           "name": "Dark",
                           "code": "DARK",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
                           "schedulable": false
                       },
                       {
                         "name": "Standard",
                         "code": "STANDARD",
                         "config_change_overhead": 0.0,
+                        "requires_optical_elements": true,
+                        "force_acquisition_off": false,
                         "schedulable": true
                       },
                       {
                         "name": "Auto Focus",
                         "code": "AUTO_FOCUS",
                         "config_change_overhead": 0.0,
+                        "requires_optical_elements": true,
+                        "force_acquisition_off": true,
                         "schedulable": false
                       },
                       {
                         "name": "Engineering",
                         "code": "ENGINEERING",
                         "config_change_overhead": 0.0,
+                        "requires_optical_elements": true,
+                        "force_acquisition_off": false,
                         "schedulable": false
                       }
                     ]
@@ -1535,36 +1635,48 @@
                           "name": "Expose",
                           "code": "EXPOSE",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
                           "schedulable": true
                       },
                       {
                           "name": "Repeat Expose",
                           "code": "REPEAT_EXPOSE",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
                           "schedulable": true
                       },
                       {
                           "name": "Sky Flat",
                           "code": "SKY_FLAT",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
                           "schedulable": true
                       },
                       {
                           "name": "Script",
                           "code": "SCRIPT",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
                           "schedulable": true
                       },
                       {
                           "name": "Bias",
                           "code": "BIAS",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
                           "schedulable": false
                       },
                       {
                           "name": "Dark",
                           "code": "DARK",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
                           "schedulable": false
                       }
                     ],
@@ -1686,36 +1798,48 @@
                           "name": "Expose",
                           "code": "EXPOSE",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
                           "schedulable": true
                       },
                       {
                           "name": "Repeat Expose",
                           "code": "REPEAT_EXPOSE",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
                           "schedulable": true
                       },
                       {
                           "name": "Sky Flat",
                           "code": "SKY_FLAT",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
                           "schedulable": true
                       },
                       {
                           "name": "Script",
                           "code": "SCRIPT",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
                           "schedulable": true
                       },
                       {
                           "name": "Bias",
                           "code": "BIAS",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
                           "schedulable": false
                       },
                       {
                           "name": "Dark",
                           "code": "DARK",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
                           "schedulable": false
                       }
                     ],
@@ -1858,36 +1982,48 @@
                           "name": "Expose",
                           "code": "EXPOSE",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
                           "schedulable": true
                       },
                       {
                           "name": "Repeat Expose",
                           "code": "REPEAT_EXPOSE",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
                           "schedulable": true
                       },
                       {
                           "name": "Sky Flat",
                           "code": "SKY_FLAT",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
                           "schedulable": true
                       },
                       {
                           "name": "Script",
                           "code": "SCRIPT",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
                           "schedulable": true
                       },
                       {
                           "name": "Bias",
                           "code": "BIAS",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
                           "schedulable": false
                       },
                       {
                           "name": "Dark",
                           "code": "DARK",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
                           "schedulable": false
                       }
                     ],
@@ -2030,36 +2166,48 @@
                           "name": "Expose",
                           "code": "EXPOSE",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
                           "schedulable": true
                       },
                       {
                           "name": "Repeat Expose",
                           "code": "REPEAT_EXPOSE",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
                           "schedulable": true
                       },
                       {
                           "name": "Sky Flat",
                           "code": "SKY_FLAT",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
                           "schedulable": true
                       },
                       {
                           "name": "Script",
                           "code": "SCRIPT",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
                           "schedulable": true
                       },
                       {
                           "name": "Bias",
                           "code": "BIAS",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
                           "schedulable": false
                       },
                       {
                           "name": "Dark",
                           "code": "DARK",
                           "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
                           "schedulable": false
                       }
                     ],

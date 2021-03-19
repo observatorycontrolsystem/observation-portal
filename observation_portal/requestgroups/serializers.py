@@ -334,15 +334,11 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
             )
         return value
 
-    def configuration_types_with_acquisition_off(self):
-        return ['LAMP_FLAT', 'ARC', 'AUTO_FOCUS', 'BIAS', 'DARK', 'SCRIPT']
-
-    def configuration_types_without_optical_elements(self):
-        return ['BIAS', 'DARK', 'SCRIPT']
-
     def validate(self, data):
         # TODO: Validate the guiding optical elements on the guiding instrument types
         instrument_type = data['instrument_type']
+        configuration_types = configdb.get_configuration_types(instrument_type)
+        data['type'] = data['type'].upper()
         modes = configdb.get_modes_by_type(instrument_type)
         guiding_config = data['guiding_config']
 
@@ -351,7 +347,17 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
         guiding_config = guide_validation_helper.validate(guiding_config)
         data['guiding_config'] = guiding_config
 
-        if data['type'] in self.configuration_types_with_acquisition_off():
+        # Validate the configuration type is available for the instrument requested
+        if data['type'] not in configuration_types.keys():
+            raise serializers.ValidationError(_(
+                f'configuration type {data["type"]} is not valid for instrument type {instrument_type}'
+            ))
+        elif not configuration_types[data['type']]['schedulable']:
+            raise serializers.ValidationError(_(
+                f'configuration type {data["type"]} is not schedulable for instrument type {instrument_type}'
+            ))
+
+        if configuration_types[data['type']]['force_acquisition_off']:
             # These types of observations should only ever be set to guiding mode OFF, but the acquisition modes for
             # spectrographs won't necessarily have that mode. Force OFF here.
             data['acquisition_config']['mode'] = AcquisitionConfig.OFF
@@ -408,10 +414,9 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
                 else:
                     instrument_config['optical_elements'][oe_type] = available_elements[value.lower()]
 
-            # Also check that any optical element group in configdb is specified in the request unless we are a BIAS or
-            # DARK or SCRIPT type observation
-            observation_types_without_oe = self.configuration_types_without_optical_elements()
-            if data['type'].upper() not in observation_types_without_oe:
+            # Also check that any optical element group in configdb is specified in the request unless this configuration type does 
+            # not require optical elements to be set. This will typically be the case for certain configuration types, like BIAS or DARK.
+            if configuration_types[data['type']]['requires_optical_elements']:
                 for oe_type in available_optical_elements.keys():
                     singular_type = oe_type[:-1] if oe_type.endswith('s') else oe_type
                     if singular_type not in instrument_config.get('optical_elements', {}):
@@ -492,17 +497,6 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
                 raise serializers.ValidationError(_(
                     'You may only specify a repeat_duration for REPEAT_* type configurations.'
                 ))
-
-        # Validate the configuration type is available for the instrument requested
-        configuration_types = configdb.get_configuration_types(instrument_type)
-        if data['type'] not in configuration_types.keys():
-            raise serializers.ValidationError(_(
-                f'configuration type {data["type"]} is not valid for instrument type {instrument_type}'
-            ))
-        elif not configuration_types[data['type'].upper()]['schedulable']:
-            raise serializers.ValidationError(_(
-                f'configuration type {data["type"]} is not schedulable for instrument type {instrument_type}'
-            ))
 
         return data
 
