@@ -14,10 +14,10 @@ DEBUG = False
 TEMPLATE_DEBUG = False
 
 ORGANIZATION_NAME = 'Test Org'
-ORGANIZATION_EMAIL = 'test@gmail.com'
-ORGANIZATION_DDT_EMAIL = 'test@gmail.com'
-ORGANIZATION_SUPPORT_EMAIL = 'test@gmail.com'
-ORGANIZATION_ADMIN_EMAIL = 'test@gmail.com'
+ORGANIZATION_EMAIL = 'test@example.com'
+ORGANIZATION_DDT_EMAIL = 'test@example.com'
+ORGANIZATION_SUPPORT_EMAIL = 'test@example.com'
+ORGANIZATION_ADMIN_EMAIL = 'test@example.com'
 
 ELASTICSEARCH_URL = os.getenv('ELASTICSEARCH_URL', 'http://elasticsearchdevfake')
 CONFIGDB_URL = os.getenv('CONFIGDB_URL', 'http://configdbfake')

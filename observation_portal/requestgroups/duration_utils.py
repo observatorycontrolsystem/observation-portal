@@ -58,7 +58,7 @@ def get_configuration_duration(configuration_dict):
         conf_duration['duration'] = configuration_dict['repeat_duration']
     else:
         conf_duration['duration'] = sum([icd['duration'] for icd in instrumentconf_durations])
-    conf_duration['duration'] += (PER_CONFIGURATION_STARTUP_TIME)
+    conf_duration['duration'] += PER_CONFIGURATION_STARTUP_TIME
     return conf_duration
 
 
@@ -70,7 +70,7 @@ def get_request_duration_dict(request_dict, is_staff=False):
         req_info['configurations'] = conf_durations
         rise_set_intervals = get_filtered_rise_set_intervals_by_site(req, is_staff=is_staff)
         req_info['largest_interval'] = get_largest_interval(rise_set_intervals).total_seconds()
-        req_info['largest_interval'] -= (PER_CONFIGURATION_STARTUP_TIME)
+        req_info['largest_interval'] -= PER_CONFIGURATION_STARTUP_TIME
         req_durations['requests'].append(req_info)
     req_durations['duration'] = sum([req['duration'] for req in req_durations['requests']])
 
