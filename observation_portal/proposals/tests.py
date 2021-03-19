@@ -19,8 +19,8 @@ from observation_portal.requestgroups.signals import handlers  # DO NOT DELETE, 
 class TestProposal(DramatiqTestCase):
     def test_add_existing_user(self):
         proposal = mixer.blend(Proposal)
-        user = mixer.blend(User, email='email1@gmail.com')
-        emails = ['email1@gmail.com']
+        user = mixer.blend(User, email='email1@example.com')
+        emails = ['email1@example.com']
         proposal.add_users(emails, Membership.CI)
 
         self.broker.join("default")
@@ -33,10 +33,10 @@ class TestProposal(DramatiqTestCase):
 
     def test_add_nonexisting_user(self):
         proposal = mixer.blend(Proposal)
-        emails = ['email1@gmail.com']
+        emails = ['email1@example.com']
         proposal.add_users(emails, Membership.CI)
         self.assertFalse(proposal.users.count())
-        self.assertTrue(ProposalInvite.objects.filter(email='email1@gmail.com').exists())
+        self.assertTrue(ProposalInvite.objects.filter(email='email1@example.com').exists())
 
     def test_add_nonexisting_user_twice(self):
         proposal = mixer.blend(Proposal)

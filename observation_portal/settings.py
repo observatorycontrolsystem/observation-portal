@@ -35,7 +35,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', '2xou30pi2va&ed@n2l79n807k%@szj1+^uj&)y09_w
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', False)
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')  # Comma delimited list of django allowed hosts
+ALLOWED_HOSTS = get_list_from_env('ALLOWED_HOSTS', '*')  # Comma delimited list of django allowed hosts
 
 SITE_ID = 1
 ACCOUNT_ACTIVATION_DAYS = 7
@@ -228,7 +228,7 @@ EMAIL_USE_TLS = True
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'localhost')
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
-EMAIL_PORT = os.getenv('EMAIL_PORT', 587)
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
 DEFAULT_FROM_EMAIL = ORGANIZATION_EMAIL
 SERVER_EMAIL = ORGANIZATION_EMAIL
 
@@ -293,9 +293,9 @@ LOGGING = {
 }
 
 ## Duration constants for calculating overheads
-MAX_IPP_VALUE = os.getenv('MAX_IPP_VALUE', 2.0)  # the maximum allowed value of ipp
-MIN_IPP_VALUE = os.getenv('MIN_IPP_VALUE', 0.5)  # the minimum allowed value of ipp
-PROPOSAL_TIME_OVERUSE_ALLOWANCE = os.getenv('PROPOSAL_TIME_OVERUSE_ALLOWANCE', 1.1)  # amount of leeway in a proposals timeallocation before rejecting that request
+MAX_IPP_VALUE = float(os.getenv('MAX_IPP_VALUE', 2.0))  # the maximum allowed value of ipp
+MIN_IPP_VALUE = float(os.getenv('MIN_IPP_VALUE', 0.5))  # the minimum allowed value of ipp
+PROPOSAL_TIME_OVERUSE_ALLOWANCE = float(os.getenv('PROPOSAL_TIME_OVERUSE_ALLOWANCE', 1.1))  # amount of leeway in a proposals timeallocation before rejecting that request
 ## Serializer setup - used to allow overriding of serializers
 SERIALIZERS = {
     'observations': {

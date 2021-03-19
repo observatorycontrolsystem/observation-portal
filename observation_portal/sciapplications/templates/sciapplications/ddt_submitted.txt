@@ -11,4 +11,4 @@ You may view your proposal here:
 {{ detail_url }}
 
 Warm Regards,
-{{ organization_name }}
+{{ organization_name }} Director

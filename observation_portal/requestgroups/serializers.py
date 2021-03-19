@@ -784,7 +784,7 @@ class RequestGroupSerializer(serializers.ModelSerializer):
 
         # Validate that the ipp_value is within the min/max range
         if 'ipp_value' in data:
-            if data['ipp_value'] < settings.MIN_IPP_VALUE or data['ipp_value'] >  settings.MAX_IPP_VALUE:
+            if data['ipp_value'] < settings.MIN_IPP_VALUE or data['ipp_value'] > settings.MAX_IPP_VALUE:
                 raise serializers.ValidationError(_(f'requestgroups ipp_value must be >= {settings.MIN_IPP_VALUE}, <= {settings.MAX_IPP_VALUE}'))
 
         # validation on the operator matching the number of requests
