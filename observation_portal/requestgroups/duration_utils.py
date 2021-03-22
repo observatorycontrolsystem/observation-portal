@@ -45,7 +45,7 @@ def get_instrument_configuration_duration(instrument_config_dict, instrument_nam
     return instrument_config_dict['exposure_count'] * duration_per_exposure
 
 
-def get_configuration_duration(configuration_dict):
+def get_configuration_duration(configuration_dict, request_overheads):
     conf_duration = {}
     instrumentconf_durations = [{
         'duration': get_instrument_configuration_duration(
@@ -58,7 +58,7 @@ def get_configuration_duration(configuration_dict):
         conf_duration['duration'] = configuration_dict['repeat_duration']
     else:
         conf_duration['duration'] = sum([icd['duration'] for icd in instrumentconf_durations])
-    conf_duration['duration'] += PER_CONFIGURATION_STARTUP_TIME
+        conf_duration['duration'] += request_overheads['config_front_padding']
     return conf_duration
 
 
@@ -66,11 +66,13 @@ def get_request_duration_dict(request_dict, is_staff=False):
     req_durations = {'requests': []}
     for req in request_dict:
         req_info = {'duration': get_request_duration(req)}
-        conf_durations = [get_configuration_duration(conf) for conf in req['configurations']]
+        conf_durations = []
+        for conf in req['configurations']:
+            request_overheads = configdb.get_request_overheads(conf['instrument_type'])
+            conf_durations.append(get_configuration_duration(conf, request_overheads))
         req_info['configurations'] = conf_durations
         rise_set_intervals = get_filtered_rise_set_intervals_by_site(req, is_staff=is_staff)
         req_info['largest_interval'] = get_largest_interval(rise_set_intervals).total_seconds()
-        req_info['largest_interval'] -= PER_CONFIGURATION_STARTUP_TIME
         req_durations['requests'].append(req_info)
     req_durations['duration'] = sum([req['duration'] for req in req_durations['requests']])
 
@@ -146,9 +148,10 @@ def get_complete_configurations_duration(configurations_list, start_time, priori
     previous_target = {}
     duration = 0
     for configuration_dict in configurations_list:
+        configuration_types = configdb.get_configuration_types(configuration_dict['instrument_type'])
         if configuration_dict['priority'] > priority_after:
-            duration += get_configuration_duration(configuration_dict)['duration']
             request_overheads = configdb.get_request_overheads(configuration_dict['instrument_type'])
+            duration += get_configuration_duration(configuration_dict, request_overheads)['duration']
             # Add the instrument change time if the instrument has changed
             if previous_instrument != configuration_dict['instrument_type']:
                 duration += request_overheads['instrument_change_overhead']
@@ -194,10 +197,10 @@ def get_complete_configurations_duration(configurations_list, start_time, priori
                 if configuration_dict['guiding_config']['mode'] in request_overheads['guiding_overheads']:
                     duration += request_overheads['guiding_overheads'][configuration_dict['guiding_config']['mode']]
 
-            # TODO: find out if we need to have a configuration type change time for spectrographs?
-            if configdb.is_spectrograph(configuration_dict['instrument_type']):
-                if previous_conf_type != configuration_dict['type']:
-                    duration += request_overheads['config_change_overhead']
+            # Certain Configuration Types for certain Instrument Types will have a non-zero config_change_overhead.
+            # For instance, this could account for Lamp startup times when first switching to an ARC or LAMP_FLAT configuration.
+            if previous_conf_type != configuration_dict['type']:
+                duration += configuration_types[configuration_dict['type']]['config_change_overhead']
             previous_conf_type = configuration_dict['type']
         else:
             previous_conf_type = configuration_dict['type']
@@ -223,7 +226,7 @@ def get_request_duration(request_dict):
         configurations = request_dict['configurations']
     duration += get_complete_configurations_duration(configurations, start_time)
     request_overheads = configdb.get_request_overheads(request_dict['configurations'][0]['instrument_type'])
-    duration += request_overheads['front_padding']
+    duration += request_overheads['observation_front_padding']
     duration = ceil(duration)
 
     return duration

@@ -67,7 +67,7 @@ def create_simple_requestgroup(user, proposal, state='PENDING', request=None, wi
         location.save()
 
     if not configuration:
-        configuration = mixer.blend(Configuration, request=request, priority=1)
+        configuration = mixer.blend(Configuration, request=request, type='EXPOSE', instrument_type='1M0-SCICAM-SBIG', priority=1)
     else:
         configuration.request = request
         configuration.save()
@@ -95,7 +95,7 @@ def create_simple_many_requestgroup(user, proposal, n_requests, state='PENDING')
 
 
 def create_simple_configuration(request, instrument_type='1M0-SCICAM-SBIG', instrument_config=None, priority=1):
-    configuration = mixer.blend(Configuration, request=request, instrument_type=instrument_type, priority=priority)
+    configuration = mixer.blend(Configuration, request=request, type='EXPOSE', instrument_type=instrument_type, priority=priority)
     fill_in_configuration_structures(configuration, instrument_config=instrument_config)
     return configuration
 

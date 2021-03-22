@@ -67,7 +67,7 @@ class Command(BaseCommand):
             Membership.objects.get_or_create(proposal=proposal, user=user, role=Membership.PI)
 
         if current_semester:
-            instrument_types = configdb.get_instrument_types(location={}, only_schedulable=True)
+            instrument_types = configdb.get_instrument_type_codes(location={}, only_schedulable=True)
             for instrument in instrument_types:
                 TimeAllocation.objects.get_or_create(
                     semester=current_semester,

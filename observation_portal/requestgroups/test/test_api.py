@@ -1453,6 +1453,18 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertIn('Guiding mode I_DONT_EXIST is not available', str(response.content))
 
+    def test_guiding_mode_not_schedulable(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['instrument_type'] = '1M0-NRES-SCICAM'
+        bad_data['requests'][0]['configurations'][0]['type'] = 'NRES_SPECTRUM'
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements'] = {}
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['mode'] = '1m0_nres_1'
+        del bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_x']
+        del bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_y']
+        bad_data['requests'][0]['configurations'][0]['guiding_config']['mode'] = 'NRES_SPECIAL'
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertIn('Guiding mode NRES_SPECIAL is not available', str(response.content))
+
     def test_readout_mode_many_options(self):
         bad_data = self.generic_payload.copy()
         bad_data['requests'][0]['configurations'][0]['instrument_type'] = '1M0-NRES-SCICAM'
@@ -1796,7 +1808,7 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         rg = response.json()
         self.assertGreater(rg['requests'][0]['configurations'][0]['repeat_duration'],
                            initial_repeat_duration)
-        self.assertEqual(rg['requests'][0]['configurations'][0]['repeat_duration'], 430.0)
+        self.assertEqual(rg['requests'][0]['configurations'][0]['repeat_duration'], 446.0)
         self.assertEqual(response.status_code, 201)
 
     def test_multiple_instrument_configs_with_different_rotator_modes_succeeds(self):
@@ -1840,6 +1852,13 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['slit'] = 'slit_1.6as'
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertIn('configuration type EXPOSE is not valid for instrument type 2M0-FLOYDS-SCICAM', str(response.content))
+        self.assertEqual(response.status_code, 400)
+
+    def test_configuration_type_not_schedulable(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['type'] = 'BIAS'
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertIn('configuration type BIAS is not schedulable for instrument type 1M0-SCICAM-SBIG', str(response.content))
         self.assertEqual(response.status_code, 400)
 
     def test_acquisition_config_exposure_time_limits(self):
@@ -1950,7 +1969,7 @@ class TestGetRequestApi(APITestCase):
         request = mixer.blend(Request, request_group=self.request_group, observation_note='testobsnote')
         mixer.blend(Location, request=request)
         mixer.blend(Window, request=request)
-        config = mixer.blend(Configuration, request=request, instrument_type='1M0-SCICAM-SBIG')
+        config = mixer.blend(Configuration, request=request, type='EXPOSE', instrument_type='1M0-SCICAM-SBIG')
         mixer.blend(Constraints, configuration=config)
         mixer.blend(InstrumentConfig, configuration=config)
         mixer.blend(AcquisitionConfig, configuration=config)
@@ -1967,7 +1986,7 @@ class TestGetRequestApi(APITestCase):
 
     def test_get_request_detail_authenticated(self):
         request = mixer.blend(Request, request_group=self.request_group, observation_note='testobsnote')
-        mixer.blend(Configuration, request=request, instrument_type='1M0-SCICAM-SBIG')
+        mixer.blend(Configuration, request=request, type='EXPOSE', instrument_type='1M0-SCICAM-SBIG')
         self.client.force_login(self.user)
         result = self.client.get(reverse('api:requests-detail', args=(request.id,)))
         self.assertEqual(result.json()['observation_note'], request.observation_note)
@@ -1979,7 +1998,7 @@ class TestGetRequestApi(APITestCase):
 
     def test_get_request_detail_staff_no_staff_view(self):
         request = mixer.blend(Request, request_group=self.request_group, observation_note='testobsnote2')
-        mixer.blend(Configuration, request=request, instrument_type='1M0-SCICAM-SBIG')
+        mixer.blend(Configuration, request=request, type='EXPOSE', instrument_type='1M0-SCICAM-SBIG')
         self.client.force_login(self.staff_user)
         result = self.client.get(reverse('api:requests-detail', args=(request.id,)))
         self.assertEqual(result.status_code, 404)
@@ -1988,7 +2007,7 @@ class TestGetRequestApi(APITestCase):
         self.staff_user.profile.staff_view = True
         self.staff_user.profile.save()
         request = mixer.blend(Request, request_group=self.request_group, observation_note='testobsnote2')
-        mixer.blend(Configuration, request=request, instrument_type='1M0-SCICAM-SBIG')
+        mixer.blend(Configuration, request=request, type='EXPOSE', instrument_type='1M0-SCICAM-SBIG')
         self.client.force_login(self.staff_user)
         result = self.client.get(reverse('api:requests-detail', args=(request.id,)))
         self.assertEqual(result.json()['observation_note'], request.observation_note)
@@ -2002,9 +2021,9 @@ class TestGetRequestApi(APITestCase):
             observation_type=RequestGroup.NORMAL
         )
         non_authored_request = mixer.blend(Request, request_group=non_authored_request_group)
-        mixer.blend(Configuration, request=non_authored_request, instrument_type='1M0-SCICAM-SBIG')
+        mixer.blend(Configuration, request=non_authored_request, type='EXPOSE', instrument_type='1M0-SCICAM-SBIG')
         authored_request = mixer.blend(Request, request_group=self.request_group, observation_note='testobsnote')
-        mixer.blend(Configuration, request=authored_request, instrument_type='1M0-SCICAM-SBIG')
+        mixer.blend(Configuration, request=authored_request, type='EXPOSE', instrument_type='1M0-SCICAM-SBIG')
         response = self.client.get(reverse('api:requests-detail', args=(non_authored_request.id,)))
         self.assertEqual(response.status_code, 404)
         response = self.client.get(reverse('api:requests-detail', args=(authored_request.id,)))
@@ -2012,7 +2031,7 @@ class TestGetRequestApi(APITestCase):
 
     def test_get_request_list_staff_no_staff_view(self):
         request = mixer.blend(Request, request_group=self.request_group, observation_note='testobsnote2')
-        mixer.blend(Configuration, request=request, instrument_type='1M0-SCICAM-SBIG')
+        mixer.blend(Configuration, request=request, type='EXPOSE', instrument_type='1M0-SCICAM-SBIG')
         self.client.force_login(self.staff_user)
         result = self.client.get(reverse('api:requests-list'))
         self.assertEqual(len(result.json()['results']), 0)
@@ -2031,7 +2050,7 @@ class TestGetRequestApi(APITestCase):
         self.request_group.proposal = proposal
         self.request_group.save()
         request = mixer.blend(Request, request_group=self.request_group, observation_note='testobsnote2')
-        mixer.blend(Configuration, request=request, instrument_='1M0-SCICAM-SBIG')
+        mixer.blend(Configuration, request=request, type='EXPOSE', instrument_='1M0-SCICAM-SBIG')
         self.client.logout()
         result = self.client.get(reverse('api:requests-detail', args=(request.id,)))
         self.assertEqual(result.json()['observation_note'], request.observation_note)
@@ -2194,7 +2213,7 @@ class TestCancelRequestGroupApi(SetTimeMixin, APITestCase):
                                    observation_type=RequestGroup.NORMAL)
         requests = mixer.cycle(3).blend(Request, state='PENDING', request_group=requestgroup)
         for request in requests:
-            mixer.blend(Configuration, request=request, instrument_type='1M0-SCICAM-SBIG')
+            mixer.blend(Configuration, request=request, type='EXPOSE', instrument_type='1M0-SCICAM-SBIG')
 
         response = self.client.post(reverse('api:request_groups-cancel', kwargs={'pk': requestgroup.id}))
         self.assertEqual(response.status_code, 200)
@@ -2206,11 +2225,11 @@ class TestCancelRequestGroupApi(SetTimeMixin, APITestCase):
         requestgroup = mixer.blend(RequestGroup, state='PENDING', proposal=self.proposal,
                                    observation_type=RequestGroup.NORMAL)
         pending_r = mixer.blend(Request, state='PENDING', request_group=requestgroup)
-        mixer.blend(Configuration, request=pending_r, instrument_type='1M0-SCICAM-SBIG')
+        mixer.blend(Configuration, request=pending_r, type='EXPOSE', instrument_type='1M0-SCICAM-SBIG')
         completed_r = mixer.blend(Request, state='COMPLETED', request_group=requestgroup)
-        mixer.blend(Configuration, request=completed_r, instrument_type='1M0-SCICAM-SBIG')
+        mixer.blend(Configuration, request=completed_r, type='EXPOSE', instrument_type='1M0-SCICAM-SBIG')
         we_r = mixer.blend(Request, state='WINDOW_EXPIRED', request_group=requestgroup)
-        mixer.blend(Configuration, request=we_r, instrument_type='1M0-SCICAM-SBIG')
+        mixer.blend(Configuration, request=we_r, type='EXPOSE', instrument_type='1M0-SCICAM-SBIG')
         response = self.client.post(reverse('api:request_groups-cancel', kwargs={'pk': requestgroup.id}))
 
         self.assertEqual(response.status_code, 200)
@@ -2402,7 +2421,7 @@ class TestContention(APITestCase):
             Window, start=timezone.now(), end=timezone.now() + timedelta(days=30), request=request
         )
         mixer.blend(Location, request=request)
-        conf = mixer.blend(Configuration, instrument_type='1M0-SCICAM-SBIG', request=request)
+        conf = mixer.blend(Configuration, type='EXPOSE', instrument_type='1M0-SCICAM-SBIG', request=request)
         mixer.blend(Target, ra=15.0, type='ICRS', configuration=conf)
         mixer.blend(InstrumentConfig, configuration=conf)
         mixer.blend(AcquisitionConfig, configuration=conf)
@@ -2446,7 +2465,7 @@ class TestPressure(APITestCase):
             mixer.blend(
                 Window, start=timezone.now(), end=timezone.now() + timedelta(hours=i), request=request
             )
-            conf = mixer.blend(Configuration, instrument_type='1M0-SCICAM-SBIG', request=request)
+            conf = mixer.blend(Configuration, type='EXPOSE', instrument_type='1M0-SCICAM-SBIG', request=request)
             mixer.blend(
                 Target, ra=random.randint(0, 360), dec=random.randint(-180, 180),
                 proper_motion_ra=0.0, proper_motion_dec=0.0, type='ICRS', configuration=conf
@@ -2561,7 +2580,7 @@ class TestPressure(APITestCase):
         request = mixer.blend(Request, request_group=requestgroup, state='PENDING', duration=70*60)  # Request duration is 70 minutes.
         mixer.blend(Window, request=request)
         mixer.blend(Location, request=request, site='tst')
-        conf = mixer.blend(Configuration, request=request)
+        conf = mixer.blend(Configuration, request=request, type='EXPOSE', instrument_type='1M0-SCICAM-SBIG')
         mixer.blend(InstrumentConfig, configuration=conf)
         mixer.blend(AcquisitionConfig, configuration=conf)
         mixer.blend(GuidingConfig, configuration=conf)
@@ -2624,7 +2643,7 @@ class TestPressure(APITestCase):
         request = mixer.blend(Request, request_group=requestgroup, state='PENDING', duration=120*60)  # 2 hour duration.
         mixer.blend(Window, request=request)
         mixer.blend(Location, request=request, site='tst')
-        conf = mixer.blend(Configuration, request=request, instrument_type='1M0-SCICAM-SBIG')
+        conf = mixer.blend(Configuration, request=request, type='EXPOSE', instrument_type='1M0-SCICAM-SBIG')
         mixer.blend(InstrumentConfig, configuration=conf)
         mixer.blend(AcquisitionConfig, configuration=conf)
         mixer.blend(GuidingConfig, configuration=conf)
