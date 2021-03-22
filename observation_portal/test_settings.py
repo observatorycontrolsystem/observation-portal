@@ -1,5 +1,6 @@
 from observation_portal.settings import *  # noqa
 import logging
+import os
 
 # Settings specific to running tests. Using sqlite will run tests 100% in memory.
 # https://docs.djangoproject.com/en/dev/internals/contributing/writing-code/unit-tests/#using-another-settings-module

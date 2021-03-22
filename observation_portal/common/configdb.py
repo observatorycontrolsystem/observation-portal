@@ -367,7 +367,6 @@ class ConfigDB(object):
         Returns:
              Dictionary of configuration type code to configuration type data
         """
-        configuration_types = {}
         instrument_types = self.get_instrument_types()
         if instrument_type_code.upper() in instrument_types:
             return {config_type['code']: config_type for config_type in instrument_types[instrument_type_code.upper()]['configuration_types']}

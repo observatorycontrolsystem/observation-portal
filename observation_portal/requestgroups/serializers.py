@@ -414,7 +414,7 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
                 else:
                     instrument_config['optical_elements'][oe_type] = available_elements[value.lower()]
 
-            # Also check that any optical element group in configdb is specified in the request unless this configuration type does 
+            # Also check that any optical element group in configdb is specified in the request unless this configuration type does
             # not require optical elements to be set. This will typically be the case for certain configuration types, like BIAS or DARK.
             if configuration_types[data['type']]['requires_optical_elements']:
                 for oe_type in available_optical_elements.keys():

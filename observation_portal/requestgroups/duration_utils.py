@@ -214,10 +214,6 @@ def get_complete_configurations_duration(configurations_list, start_time, priori
 def get_request_duration(request_dict):
     # calculate the total time needed by the request, based on its instrument and exposures
     duration = 0
-    previous_instrument = ''
-    previous_target = {}
-    previous_conf_type = ''
-    previous_optical_elements = {}
     start_time = (min([window['start'] for window in request_dict['windows']])
                   if 'windows' in request_dict and request_dict['windows'] else timezone.now())
     try:
