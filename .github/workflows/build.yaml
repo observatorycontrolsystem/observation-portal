@@ -79,9 +79,9 @@ jobs:
       
 
   build_and_publish_image:
-    # Only run this job if the run_tests job has succeeded, and if
-    # this workflow was triggered by the creation of a new tag
-    needs: run_tests
+    # Only run this job if the run_tests job has succeeded, the new version was pushed to pypi,
+    # and if this workflow was triggered by the creation of a new tag
+    needs: [run_tests, publish_to_pypi]
     if: github.event_name == 'create' && github.event.ref_type == 'tag' && github.event.repository.fork == false
     runs-on: ubuntu-latest
     env:
