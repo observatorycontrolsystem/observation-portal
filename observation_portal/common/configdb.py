@@ -160,7 +160,7 @@ class ConfigDB(object):
         configuration_types = set()
         for instrument in self.get_instruments():
             for config_type in instrument['instrument_type']['configuration_types']:
-                configuration_types.add(config_type.upper())
+                configuration_types.add(config_type['code'].upper())
         return [(config_type, config_type) for config_type in configuration_types]
 
     def get_raw_telescope_name(self, telescope_name):
@@ -261,6 +261,19 @@ class ConfigDB(object):
                             instruments.append(instrument)
         return instruments
 
+    def get_instrument_types(self) -> dict:
+        """Get all instrument types on the network.
+
+        Returns:
+            Dictionary of instrument type code to instrument type data
+        """
+        instrument_types = {}
+        for instrument in self.get_instruments():
+            if instrument['instrument_type']['code'].upper() not in instrument_types:
+                instrument_types[instrument['instrument_type']['code'].upper()] = instrument['instrument_type']
+
+        return instrument_types
+
     def get_instrument_types_per_telescope(self, location: dict = None, only_schedulable: bool = False) -> dict:
         """Get a set of available instrument types per telescope.
 
@@ -346,12 +359,19 @@ class ConfigDB(object):
                 instrument_telescopes.add(instrument['telescope_key'])
         return instrument_telescopes
 
-    def get_configuration_types(self, instrument_type_code):
-        configuration_types = set()
-        for instrument in self.get_instruments():
-            if instrument_type_code.upper() == instrument['instrument_type']['code'].upper():
-                configuration_types.update(instrument['instrument_type']['configuration_types'])
-        return configuration_types
+    def get_configuration_types(self, instrument_type_code: str) -> dict:
+        """Get the available configuration types for an instrument_type.
+
+        Parameters:
+            instrument_type_code: Instrument type for which to get the configuration types
+        Returns:
+             Dictionary of configuration type code to configuration type data
+        """
+        configuration_types = {}
+        instrument_types = self.get_instrument_types()
+        if instrument_type_code.upper() in instrument_types:
+            return {config_type['code']: config_type for config_type in instrument_types[instrument_type_code.upper()]['configuration_types']}
+        return {}
 
     def get_optical_elements(self, instrument_type_code: str) -> dict:
         """Get the available optical elements.
@@ -488,19 +508,25 @@ class ConfigDB(object):
                     'y': instrument['science_cameras'][0]['camera_type']['pixels_y']
                 }
 
-    def get_instrument_type_full_name(self, instrument_type_code):
-        for instrument in self.get_instruments():
-            if instrument_type_code.upper() == instrument['instrument_type']['code'].upper():
-                return instrument['instrument_type']['name']
+    def get_instrument_type_category(self, instrument_type_code: str) -> str:
+        instrument_types = self.get_instrument_types()
+        if instrument_type_code.upper() in instrument_types:
+            return instrument_types[instrument_type_code.upper()]['instrument_category']
+        return 'None'
+
+    def get_instrument_type_full_name(self, instrument_type_code: str) -> str:
+        instrument_types = self.get_instrument_types()
+        if instrument_type_code.upper() in instrument_types:
+            return instrument_types[instrument_type_code.upper()]['name']
         return instrument_type_code
 
-    def get_instrument_type_telescope_class(self, instrument_type_code):
+    def get_instrument_type_telescope_class(self, instrument_type_code: str) -> str:
         for instrument in self.get_instruments():
             if instrument_type_code.upper() == instrument['instrument_type']['code'].upper():
                 return instrument['__str__'].split('.')[2][0:3]
         return instrument_type_code[0:3]
 
-    def get_instrument_types(self, location: dict, only_schedulable: bool = False) -> set:
+    def get_instrument_type_codes(self, location: dict, only_schedulable: bool = False) -> set:
         """Get the available instrument_types.
 
         Parameters:
@@ -589,7 +615,6 @@ class ConfigDB(object):
                                 'slew_rate': telescope['slew_rate'],
                                 'minimum_slew_overhead': telescope['minimum_slew_overhead'],
                                 'maximum_slew_overhead': telescope.get('maximum_slew_overhead', 0.0),
-                                'config_change_overhead': instrument_type['config_change_time'],
                                 'default_acquisition_exposure_time': instrument_type['acquire_exposure_time'],
                                 'acquisition_overheads': {
                                     am['code']: am['overhead']
@@ -599,23 +624,11 @@ class ConfigDB(object):
                                     gm['code']: gm['overhead']
                                     for gm in modes_by_type['guiding']['modes']
                                 } if 'guiding' in modes_by_type else {},
-                                'front_padding': instrument_type['front_padding'],
+                                'observation_front_padding': instrument_type['observation_front_padding'],
+                                'config_front_padding': instrument_type['config_front_padding'],
                                 'optical_element_change_overheads': oe_overheads_by_type
                             }
         raise ConfigDBException(f'Instruments of type {instrument_type_code} not found in configdb.')
-
-    @staticmethod
-    def is_spectrograph(instrument_type):
-        return instrument_type.upper() in ['2M0-FLOYDS-SCICAM', '0M8-NRES-SCICAM', '1M0-NRES-SCICAM',
-                                           '1M0-NRES-COMMISSIONING', 'SOAR_GHTS_REDCAM', 'SOAR_GHTS_BLUECAM']
-
-    @staticmethod
-    def is_nres(instrument_type):
-        return 'NRES' in instrument_type.upper()
-
-    @staticmethod
-    def is_floyds(instrument_type):
-        return 'FLOYDS' in instrument_type.upper()
 
     @staticmethod
     def is_active(instrument: dict) -> bool:

@@ -21,7 +21,8 @@ def request_notifications(request):
             {
                 'request': request,
                 'detail_url': settings.REQUEST_DETAIL_URL.format(request_id=request.id),
-                'max_failure_limit': settings.MAX_FAILURES_PER_REQUEST
+                'max_failure_limit': settings.MAX_FAILURES_PER_REQUEST,
+                'organization_name': settings.ORGANIZATION_NAME
             }
         )
         email_messages = []
@@ -29,7 +30,7 @@ def request_notifications(request):
             email_tuple = (
                 f'Request #{request.id} has failed {settings.MAX_FAILURES_PER_REQUEST} times and will not be rescheduled',
                 message,
-                'portal@lco.global',
+                settings.ORGANIZATION_EMAIL,
                 [user.email]
             )
             email_messages.append(email_tuple)
@@ -43,7 +44,8 @@ def requestgroup_notifications(requestgroup):
             'proposals/requestgroupcomplete.txt',
             {
                 'requestgroup': requestgroup,
-                'download_url': settings.REQUESTGROUP_DATA_DOWNLOAD_URL.format(requestgroup_id=requestgroup.id)
+                'download_url': settings.REQUESTGROUP_DATA_DOWNLOAD_URL.format(requestgroup_id=requestgroup.id),
+                'organization_name': settings.ORGANIZATION_NAME
             }
         )
         email_messages = []
@@ -51,7 +53,7 @@ def requestgroup_notifications(requestgroup):
             email_tuple = (
                 'Request {} has completed'.format(requestgroup.name),
                 message,
-                'portal@lco.global',
+                settings.ORGANIZATION_EMAIL,
                 [user.email]
             )
             email_messages.append(email_tuple)

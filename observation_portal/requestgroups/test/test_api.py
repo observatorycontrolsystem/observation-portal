@@ -19,6 +19,7 @@ from observation_portal.accounts.test_utils import blend_user
 
 from django.urls import reverse
 from django.core import cache
+from django.conf import settings
 from dateutil.parser import parse as datetime_parser
 from rest_framework.test import APITestCase
 from rest_framework.exceptions import ValidationError
@@ -1446,67 +1447,23 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
                     expected_submitted_defocus
                 )
 
-    def test_default_guide_mode_for_spectrograph(self):
-        good_data = self.generic_payload.copy()
-        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
-        self.assertEqual(response.status_code, 201)
-        configuration = response.json()['requests'][0]['configurations'][0]
-        # check that without spectral instrument, these defaults are different
-        self.assertTrue(configuration['guiding_config']['optional'])
-        self.assertEqual(configuration['guiding_config']['mode'], 'OFF')
-        self.assertNotIn('slit', configuration['instrument_configs'][0]['optical_elements'])
-
-        good_data['requests'][0]['location']['telescope_class'] = '2m0'
-        good_data['requests'][0]['configurations'][0]['instrument_type'] = '2M0-FLOYDS-SCICAM'
-        del good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
-        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['slit'] = 'slit_6.0as'
-        good_data['requests'][0]['configurations'][0]['type'] = 'SPECTRUM'
-        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
-        self.assertEqual(response.status_code, 201)
-        configuration = response.json()['requests'][0]['configurations'][0]
-        # now with spectral instrument, defaults have changed
-        self.assertEqual(configuration['guiding_config']['mode'], 'ON')
-        self.assertFalse(configuration['guiding_config']['optional'])
-        self.assertEqual(configuration['instrument_configs'][0]['optical_elements']['slit'], 'slit_6.0as')
-
-    def test_guide_mode_off_not_allowed_for_nres_spectrum(self):
-        bad_data = self.generic_payload.copy()
-        bad_data['requests'][0]['configurations'][0]['instrument_type'] = '1M0-NRES-SCICAM'
-        bad_data['requests'][0]['configurations'][0]['type'] = 'NRES_SPECTRUM'
-        bad_data['requests'][0]['configurations'][0]['guiding_config']['mode'] = 'OFF'
-
-        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn('Guiding mode OFF is not available for instrument type', str(response.content))
-
-    def test_guide_optional_not_allowed_for_spectrum(self):
-        bad_data = self.generic_payload.copy()
-        bad_data['requests'][0]['location']['telescope_class'] = '2m0'
-        bad_data['requests'][0]['configurations'][0]['instrument_type'] = '2M0-FLOYDS-SCICAM'
-        bad_data['requests'][0]['configurations'][0]['type'] = 'SPECTRUM'
-        bad_data['requests'][0]['configurations'][0]['guiding_config']['optional'] = True
-
-        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn('Guiding cannot be optional on spectrograph instruments', str(response.content))
-
-    def test_guide_optional_allowed_for_arc(self):
-        good_data = self.generic_payload.copy()
-        good_data['requests'][0]['location']['telescope_class'] = '2m0'
-        good_data['requests'][0]['configurations'][0]['instrument_type'] = '2M0-FLOYDS-SCICAM'
-        good_data['requests'][0]['configurations'][0]['type'] = 'ARC'
-        good_data['requests'][0]['configurations'][0]['guiding_config']['optional'] = True
-        del good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
-        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['slit'] = 'slit_1.6as'
-
-        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
-        self.assertEqual(response.status_code, 201)
-
     def test_guiding_mode_not_available(self):
         bad_data = self.generic_payload.copy()
         bad_data['requests'][0]['configurations'][0]['guiding_config']['mode'] = 'I_DONT_EXIST'
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertIn('Guiding mode I_DONT_EXIST is not available', str(response.content))
+
+    def test_guiding_mode_not_schedulable(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['instrument_type'] = '1M0-NRES-SCICAM'
+        bad_data['requests'][0]['configurations'][0]['type'] = 'NRES_SPECTRUM'
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements'] = {}
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['mode'] = '1m0_nres_1'
+        del bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_x']
+        del bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_y']
+        bad_data['requests'][0]['configurations'][0]['guiding_config']['mode'] = 'NRES_SPECIAL'
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertIn('Guiding mode NRES_SPECIAL is not available', str(response.content))
 
     def test_readout_mode_many_options(self):
         bad_data = self.generic_payload.copy()
@@ -1851,30 +1808,10 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         rg = response.json()
         self.assertGreater(rg['requests'][0]['configurations'][0]['repeat_duration'],
                            initial_repeat_duration)
-        self.assertEqual(rg['requests'][0]['configurations'][0]['repeat_duration'], 430.0)
+        self.assertEqual(rg['requests'][0]['configurations'][0]['repeat_duration'], 446.0)
         self.assertEqual(response.status_code, 201)
 
-    def test_multiple_instrument_configs_with_different_rotator_modes_fails(self):
-        bad_data = self.generic_payload.copy()
-        bad_data['requests'][0]['configurations'][0]['instrument_configs'].append(
-            self.extra_configuration['instrument_configs'][0].copy()
-        )
-        bad_data['requests'][0]['configurations'][0]['instrument_type'] = '2M0-FLOYDS-SCICAM'
-        bad_data['requests'][0]['location']['telescope_class'] = '2m0'
-        bad_data['requests'][0]['configurations'][0]['type'] = 'SPECTRUM'
-        del bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
-        del bad_data['requests'][0]['configurations'][0]['instrument_configs'][1]['optical_elements']['filter']
-        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['slit'] = 'slit_1.6as'
-        bad_data['requests'][0]['configurations'][0]['instrument_configs'][1]['optical_elements']['slit'] = 'slit_1.6as'
-        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['rotator_mode'] = 'SKY'
-        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params'] = {}
-        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params']['rotator_angle'] = '1'
-        bad_data['requests'][0]['configurations'][0]['instrument_configs'][1]['rotator_mode'] = 'VFLOAT'
-        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn('within the same configuration must be the same', str(response.content))
-
-    def test_multiple_instrument_configs_with_same_rotator_modes_succeeds(self):
+    def test_multiple_instrument_configs_with_different_rotator_modes_succeeds(self):
         good_data = self.generic_payload.copy()
         good_data['requests'][0]['configurations'][0]['instrument_configs'].append(
             self.extra_configuration['instrument_configs'][0].copy()
@@ -1886,32 +1823,21 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         del good_data['requests'][0]['configurations'][0]['instrument_configs'][1]['optical_elements']['filter']
         good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['slit'] = 'slit_1.6as'
         good_data['requests'][0]['configurations'][0]['instrument_configs'][1]['optical_elements']['slit'] = 'slit_1.6as'
-        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['rotator_mode'] = 'VFLOAT'
+        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['rotator_mode'] = 'SKY'
+        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params'] = {}
+        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params']['rotator_angle'] = '1'
         good_data['requests'][0]['configurations'][0]['instrument_configs'][1]['rotator_mode'] = 'VFLOAT'
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
         self.assertEqual(response.status_code, 201)
 
-    def test_script_type_not_allowed_for_multiple_instrument_configs(self):
-        bad_data = self.generic_payload.copy()
-        bad_data['requests'][0]['configurations'][0]['instrument_configs'].append(
-            self.extra_configuration['instrument_configs'][0].copy()
+    def test_multiple_targets_accepted(self):
+        good_data = self.generic_payload.copy()
+        good_data['requests'][0]['configurations'].append(
+            copy.deepcopy(good_data['requests'][0]['configurations'][0])
         )
-        bad_data['requests'][0]['configurations'][0]['type'] = 'SCRIPT'
-        bad_data['requests'][0]['configurations'][0]['extra_params'] = {}
-        bad_data['requests'][0]['configurations'][0]['extra_params']['script_name'] = 'my_cool_thing'
-        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn('are not allowed for type SCRIPT', str(response.content))
-
-    def test_skyflat_not_allowed_for_multiple_instrument_configs(self):
-        bad_data = self.generic_payload.copy()
-        bad_data['requests'][0]['configurations'][0]['instrument_configs'].append(
-            self.extra_configuration['instrument_configs'][0].copy()
-        )
-        bad_data['requests'][0]['configurations'][0]['type'] = 'SKY_FLAT'
-        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn('are not allowed for type SKY_FLAT', str(response.content))
+        good_data['requests'][0]['configurations'][1]['target']['ra'] = 35.1
+        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
+        self.assertEqual(response.status_code, 201)
 
     def test_configuration_type_matches_instrument(self):
         bad_data = self.generic_payload.copy()
@@ -1926,6 +1852,13 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['slit'] = 'slit_1.6as'
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertIn('configuration type EXPOSE is not valid for instrument type 2M0-FLOYDS-SCICAM', str(response.content))
+        self.assertEqual(response.status_code, 400)
+
+    def test_configuration_type_not_schedulable(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'][0]['configurations'][0]['type'] = 'BIAS'
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertIn('configuration type BIAS is not schedulable for instrument type 1M0-SCICAM-SBIG', str(response.content))
         self.assertEqual(response.status_code, 400)
 
     def test_acquisition_config_exposure_time_limits(self):
@@ -2012,137 +1945,14 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
         self.assertEqual(response.status_code, 201)
 
-    def test_multiple_targets_currently_rejected(self):
-        bad_data = self.generic_payload.copy()
-        bad_data['requests'][0]['configurations'].append(
-            copy.deepcopy(bad_data['requests'][0]['configurations'][0])
-        )
-        bad_data['requests'][0]['configurations'][1]['target']['ra'] = 35.1
-        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn('Currently only a single target', str(response.content))
-
-    def test_multiple_targets_soar_accepted(self):
+    def test_multiple_constraints_accepted(self):
         good_data = self.generic_payload.copy()
-        good_data['requests'][0]['configurations'][0]['instrument_type'] = '1M0-SCICAM-SOAR'
-        good_data['requests'][0]['configurations'].append(
-            copy.deepcopy(good_data['requests'][0]['configurations'][0])
-        )
-        good_data['requests'][0]['configurations'][1]['target']['ra'] = 35.1
-        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
-        self.assertEqual(response.status_code, 201)
-
-    def test_multiple_constraints_currently_rejected(self):
-        bad_data = self.generic_payload.copy()
-        bad_data['requests'][0]['configurations'].append(
-            copy.deepcopy(bad_data['requests'][0]['configurations'][0])
-        )
-        bad_data['requests'][0]['configurations'][1]['constraints']['max_airmass'] = 1.99
-        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn('Currently only a single constraints', str(response.content))
-
-    def test_multiple_constraints_soar_accepted(self):
-        good_data = self.generic_payload.copy()
-        good_data['requests'][0]['configurations'][0]['instrument_type'] = '1M0-SCICAM-SOAR'
         good_data['requests'][0]['configurations'].append(
             copy.deepcopy(good_data['requests'][0]['configurations'][0])
         )
         good_data['requests'][0]['configurations'][1]['constraints']['max_airmass'] = 1.99
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
         self.assertEqual(response.status_code, 201)
-
-class TestMuscatValidationApi(SetTimeMixin, APITestCase):
-    def setUp(self):
-        super().setUp()
-        self.proposal = mixer.blend(Proposal)
-        self.user = blend_user()
-        self.client.force_login(self.user)
-
-        semester = mixer.blend(
-            Semester, id='2016B', start=datetime(2016, 9, 1, tzinfo=timezone.utc),
-            end=datetime(2016, 12, 31, tzinfo=timezone.utc)
-        )
-        self.time_allocation_1m0_sbig = mixer.blend(
-            TimeAllocation, proposal=self.proposal, semester=semester, instrument_type='2M0-SCICAM-MUSCAT',
-            std_allocation=100.0, std_time_used=0.0, rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
-            ipp_time_available=5.0
-        )
-        mixer.blend(Membership, user=self.user, proposal=self.proposal)
-        self.generic_payload = copy.deepcopy(generic_payload)
-        self.generic_payload['proposal'] = self.proposal.id
-        self.generic_payload['requests'][0]['configurations'][0]['instrument_type'] = '2M0-SCICAM-MUSCAT'
-        self.generic_payload['requests'][0]['location']['telescope_class'] = '2m0'
-        del self.generic_payload['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
-        self.generic_payload['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params'] = {
-            'exposure_time_g': 33.0,
-            'exposure_time_r': 29.0,
-            'exposure_time_i': 27.5,
-            'exposure_time_z': 25.8,
-            'exposure_mode': 'SYNCHRONOUS'
-        }
-        self.generic_payload['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements'] = {
-            'diffuser_g_position': "in",
-            'diffuser_r_position': "out",
-            'diffuser_i_position': "out",
-            'diffuser_z_position': "out",
-        }
-
-    def test_accepts_good_muscat_request(self):
-        good_data = self.generic_payload.copy()
-        max_exposure_time = good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params']['exposure_time_g']
-        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
-        self.assertEqual(response.status_code, 201)
-        inst_config = response.json()['requests'][0]['configurations'][0]['instrument_configs'][0]
-        # check that the exposure_time field was set to the max of the extra params exposure times
-        self.assertEqual(inst_config['exposure_time'], max_exposure_time)
-
-    def test_sets_default_muscat_exposure_mode(self):
-        good_data = self.generic_payload.copy()
-        del good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params']['exposure_mode']
-        response = self.client.post(reverse('api:request_groups-list'), data=good_data)
-        self.assertEqual(response.status_code, 201)
-        inst_config = response.json()['requests'][0]['configurations'][0]['instrument_configs'][0]
-        # check that the exposure_mode field is set to the default of SYNCHRONOUS
-        self.assertEqual(inst_config['extra_params']['exposure_mode'], 'SYNCHRONOUS')
-
-    def test_muscat_requires_extra_params_exposure_times_set(self):
-        bad_data = self.generic_payload.copy()
-        del bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params']['exposure_time_g']
-        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn('exposure_time_g', str(response.content))
-
-    def test_muscat_rejects_bad_exposure_mode(self):
-        bad_data = self.generic_payload.copy()
-        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params']['exposure_mode'] = "Invalid"
-        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn('Exposure mode Invalid', str(response.content))
-
-    def test_muscat_extra_param_exposure_time_must_be_number(self):
-        bad_data = self.generic_payload.copy()
-        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params']['exposure_time_g'] = 'NotANumber'
-        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn('exposure_time_g error: must be of float type', str(response.content))
-
-    def test_muscat_extra_param_exposure_time_must_be_positive(self):
-        bad_data = self.generic_payload.copy()
-        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params']['exposure_time_g'] = -33.2
-        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params']['exposure_time_i'] = -33.2
-        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn('exposure_time_g error: min value is 0', str(response.content))
-        self.assertIn('exposure_time_i error: min value is 0', str(response.content))
-
-    def test_do_not_allow_more_than_one_instrument_config(self):
-        bad_data = self.generic_payload.copy()
-        instrument_config = copy.deepcopy(bad_data['requests'][0]['configurations'][0]['instrument_configs'][0])
-        bad_data['requests'][0]['configurations'][0]['instrument_configs'].append(instrument_config)
-        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        expected_message = 'Multiple instrument configs are not allowed for the instrument 2M0-SCICAM-MUSCAT'
-        self.assertContains(response, expected_message, status_code=400)
 
 
 class TestGetRequestApi(APITestCase):
@@ -2159,7 +1969,7 @@ class TestGetRequestApi(APITestCase):
         request = mixer.blend(Request, request_group=self.request_group, observation_note='testobsnote')
         mixer.blend(Location, request=request)
         mixer.blend(Window, request=request)
-        config = mixer.blend(Configuration, request=request, instrument_type='1M0-SCICAM-SBIG')
+        config = mixer.blend(Configuration, request=request, type='EXPOSE', instrument_type='1M0-SCICAM-SBIG')
         mixer.blend(Constraints, configuration=config)
         mixer.blend(InstrumentConfig, configuration=config)
         mixer.blend(AcquisitionConfig, configuration=config)
@@ -2176,7 +1986,7 @@ class TestGetRequestApi(APITestCase):
 
     def test_get_request_detail_authenticated(self):
         request = mixer.blend(Request, request_group=self.request_group, observation_note='testobsnote')
-        mixer.blend(Configuration, request=request, instrument_type='1M0-SCICAM-SBIG')
+        mixer.blend(Configuration, request=request, type='EXPOSE', instrument_type='1M0-SCICAM-SBIG')
         self.client.force_login(self.user)
         result = self.client.get(reverse('api:requests-detail', args=(request.id,)))
         self.assertEqual(result.json()['observation_note'], request.observation_note)
@@ -2188,7 +1998,7 @@ class TestGetRequestApi(APITestCase):
 
     def test_get_request_detail_staff_no_staff_view(self):
         request = mixer.blend(Request, request_group=self.request_group, observation_note='testobsnote2')
-        mixer.blend(Configuration, request=request, instrument_type='1M0-SCICAM-SBIG')
+        mixer.blend(Configuration, request=request, type='EXPOSE', instrument_type='1M0-SCICAM-SBIG')
         self.client.force_login(self.staff_user)
         result = self.client.get(reverse('api:requests-detail', args=(request.id,)))
         self.assertEqual(result.status_code, 404)
@@ -2197,7 +2007,7 @@ class TestGetRequestApi(APITestCase):
         self.staff_user.profile.staff_view = True
         self.staff_user.profile.save()
         request = mixer.blend(Request, request_group=self.request_group, observation_note='testobsnote2')
-        mixer.blend(Configuration, request=request, instrument_type='1M0-SCICAM-SBIG')
+        mixer.blend(Configuration, request=request, type='EXPOSE', instrument_type='1M0-SCICAM-SBIG')
         self.client.force_login(self.staff_user)
         result = self.client.get(reverse('api:requests-detail', args=(request.id,)))
         self.assertEqual(result.json()['observation_note'], request.observation_note)
@@ -2211,9 +2021,9 @@ class TestGetRequestApi(APITestCase):
             observation_type=RequestGroup.NORMAL
         )
         non_authored_request = mixer.blend(Request, request_group=non_authored_request_group)
-        mixer.blend(Configuration, request=non_authored_request, instrument_type='1M0-SCICAM-SBIG')
+        mixer.blend(Configuration, request=non_authored_request, type='EXPOSE', instrument_type='1M0-SCICAM-SBIG')
         authored_request = mixer.blend(Request, request_group=self.request_group, observation_note='testobsnote')
-        mixer.blend(Configuration, request=authored_request, instrument_type='1M0-SCICAM-SBIG')
+        mixer.blend(Configuration, request=authored_request, type='EXPOSE', instrument_type='1M0-SCICAM-SBIG')
         response = self.client.get(reverse('api:requests-detail', args=(non_authored_request.id,)))
         self.assertEqual(response.status_code, 404)
         response = self.client.get(reverse('api:requests-detail', args=(authored_request.id,)))
@@ -2221,7 +2031,7 @@ class TestGetRequestApi(APITestCase):
 
     def test_get_request_list_staff_no_staff_view(self):
         request = mixer.blend(Request, request_group=self.request_group, observation_note='testobsnote2')
-        mixer.blend(Configuration, request=request, instrument_type='1M0-SCICAM-SBIG')
+        mixer.blend(Configuration, request=request, type='EXPOSE', instrument_type='1M0-SCICAM-SBIG')
         self.client.force_login(self.staff_user)
         result = self.client.get(reverse('api:requests-list'))
         self.assertEqual(len(result.json()['results']), 0)
@@ -2240,7 +2050,7 @@ class TestGetRequestApi(APITestCase):
         self.request_group.proposal = proposal
         self.request_group.save()
         request = mixer.blend(Request, request_group=self.request_group, observation_note='testobsnote2')
-        mixer.blend(Configuration, request=request, instrument_='1M0-SCICAM-SBIG')
+        mixer.blend(Configuration, request=request, type='EXPOSE', instrument_='1M0-SCICAM-SBIG')
         self.client.logout()
         result = self.client.get(reverse('api:requests-detail', args=(request.id,)))
         self.assertEqual(result.json()['observation_note'], request.observation_note)
@@ -2403,7 +2213,7 @@ class TestCancelRequestGroupApi(SetTimeMixin, APITestCase):
                                    observation_type=RequestGroup.NORMAL)
         requests = mixer.cycle(3).blend(Request, state='PENDING', request_group=requestgroup)
         for request in requests:
-            mixer.blend(Configuration, request=request, instrument_type='1M0-SCICAM-SBIG')
+            mixer.blend(Configuration, request=request, type='EXPOSE', instrument_type='1M0-SCICAM-SBIG')
 
         response = self.client.post(reverse('api:request_groups-cancel', kwargs={'pk': requestgroup.id}))
         self.assertEqual(response.status_code, 200)
@@ -2415,11 +2225,11 @@ class TestCancelRequestGroupApi(SetTimeMixin, APITestCase):
         requestgroup = mixer.blend(RequestGroup, state='PENDING', proposal=self.proposal,
                                    observation_type=RequestGroup.NORMAL)
         pending_r = mixer.blend(Request, state='PENDING', request_group=requestgroup)
-        mixer.blend(Configuration, request=pending_r, instrument_type='1M0-SCICAM-SBIG')
+        mixer.blend(Configuration, request=pending_r, type='EXPOSE', instrument_type='1M0-SCICAM-SBIG')
         completed_r = mixer.blend(Request, state='COMPLETED', request_group=requestgroup)
-        mixer.blend(Configuration, request=completed_r, instrument_type='1M0-SCICAM-SBIG')
+        mixer.blend(Configuration, request=completed_r, type='EXPOSE', instrument_type='1M0-SCICAM-SBIG')
         we_r = mixer.blend(Request, state='WINDOW_EXPIRED', request_group=requestgroup)
-        mixer.blend(Configuration, request=we_r, instrument_type='1M0-SCICAM-SBIG')
+        mixer.blend(Configuration, request=we_r, type='EXPOSE', instrument_type='1M0-SCICAM-SBIG')
         response = self.client.post(reverse('api:request_groups-cancel', kwargs={'pk': requestgroup.id}))
 
         self.assertEqual(response.status_code, 200)
@@ -2611,7 +2421,7 @@ class TestContention(APITestCase):
             Window, start=timezone.now(), end=timezone.now() + timedelta(days=30), request=request
         )
         mixer.blend(Location, request=request)
-        conf = mixer.blend(Configuration, instrument_type='1M0-SCICAM-SBIG', request=request)
+        conf = mixer.blend(Configuration, type='EXPOSE', instrument_type='1M0-SCICAM-SBIG', request=request)
         mixer.blend(Target, ra=15.0, type='ICRS', configuration=conf)
         mixer.blend(InstrumentConfig, configuration=conf)
         mixer.blend(AcquisitionConfig, configuration=conf)
@@ -2655,7 +2465,7 @@ class TestPressure(APITestCase):
             mixer.blend(
                 Window, start=timezone.now(), end=timezone.now() + timedelta(hours=i), request=request
             )
-            conf = mixer.blend(Configuration, instrument_type='1M0-SCICAM-SBIG', request=request)
+            conf = mixer.blend(Configuration, type='EXPOSE', instrument_type='1M0-SCICAM-SBIG', request=request)
             mixer.blend(
                 Target, ra=random.randint(0, 360), dec=random.randint(-180, 180),
                 proper_motion_ra=0.0, proper_motion_dec=0.0, type='ICRS', configuration=conf
@@ -2770,7 +2580,7 @@ class TestPressure(APITestCase):
         request = mixer.blend(Request, request_group=requestgroup, state='PENDING', duration=70*60)  # Request duration is 70 minutes.
         mixer.blend(Window, request=request)
         mixer.blend(Location, request=request, site='tst')
-        conf = mixer.blend(Configuration, request=request)
+        conf = mixer.blend(Configuration, request=request, type='EXPOSE', instrument_type='1M0-SCICAM-SBIG')
         mixer.blend(InstrumentConfig, configuration=conf)
         mixer.blend(AcquisitionConfig, configuration=conf)
         mixer.blend(GuidingConfig, configuration=conf)
@@ -2833,7 +2643,7 @@ class TestPressure(APITestCase):
         request = mixer.blend(Request, request_group=requestgroup, state='PENDING', duration=120*60)  # 2 hour duration.
         mixer.blend(Window, request=request)
         mixer.blend(Location, request=request, site='tst')
-        conf = mixer.blend(Configuration, request=request, instrument_type='1M0-SCICAM-SBIG')
+        conf = mixer.blend(Configuration, request=request, type='EXPOSE', instrument_type='1M0-SCICAM-SBIG')
         mixer.blend(InstrumentConfig, configuration=conf)
         mixer.blend(AcquisitionConfig, configuration=conf)
         mixer.blend(GuidingConfig, configuration=conf)
@@ -2887,7 +2697,6 @@ class TestMaxIppRequestgroupApi(SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_get_max_ipp_max_ipp_returned(self):
-        from observation_portal.requestgroups.duration_utils import MAX_IPP_LIMIT, MIN_IPP_LIMIT
         good_data = self.generic_payload.copy()
         response = self.client.post(reverse('api:request_groups-max-allowable-ipp'), good_data)
         self.assertEqual(response.status_code, 200)
@@ -2895,10 +2704,10 @@ class TestMaxIppRequestgroupApi(SetTimeMixin, APITestCase):
         ipp_dict = response.json()
         self.assertIn(self.semester.id, ipp_dict)
         self.assertEqual(
-            MAX_IPP_LIMIT, ipp_dict[self.semester.id]['1M0-SCICAM-SBIG']['max_allowable_ipp_value']
+            settings.MAX_IPP_VALUE, ipp_dict[self.semester.id]['1M0-SCICAM-SBIG']['max_allowable_ipp_value']
         )
         self.assertEqual(
-            MIN_IPP_LIMIT, ipp_dict[self.semester.id]['1M0-SCICAM-SBIG']['min_allowable_ipp_value']
+            settings.MIN_IPP_VALUE, ipp_dict[self.semester.id]['1M0-SCICAM-SBIG']['min_allowable_ipp_value']
         )
 
     def test_get_max_ipp_reduced_max_ipp(self):

@@ -57,11 +57,11 @@ class TestSciAppToProposal(TestCase):
 
     def test_create_proposal_with_existant_cois(self):
         app = mixer.blend(ScienceApplication, submitter=self.user, pi='')
-        coi1 = mixer.blend(User, email='1@lcogt.net')
-        coi2 = mixer.blend(User, email='2@lcogt.net')
-        mixer.blend(CoInvestigator, email='1@lcogt.net', science_application=app)
-        mixer.blend(CoInvestigator, email='2@lcogt.net', science_application=app)
-        mixer.blend(CoInvestigator, email='3@lcogt.net', science_application=app)
+        coi1 = mixer.blend(User, email='1@example.com')
+        coi2 = mixer.blend(User, email='2@example.com')
+        mixer.blend(CoInvestigator, email='1@example.com', science_application=app)
+        mixer.blend(CoInvestigator, email='2@example.com', science_application=app)
+        mixer.blend(CoInvestigator, email='3@example.com', science_application=app)
         tr = mixer.blend(TimeRequest, approved=True, science_application=app)
         proposal = app.convert_to_proposal()
         self.assertEqual(app.proposal, proposal)

@@ -18,7 +18,7 @@ from observation_portal.requestgroups.models import (RequestGroup, Request, Draf
 from observation_portal.requestgroups.filters import RequestGroupFilter, RequestFilter
 from observation_portal.requestgroups.cadence import expand_cadence_request
 from observation_portal.requestgroups.duration_utils import (
-    get_request_duration_dict, get_max_ipp_for_requestgroup, OVERHEAD_ALLOWANCE
+    get_request_duration_dict, get_max_ipp_for_requestgroup
 )
 from observation_portal.common.state_changes import InvalidStateChange, TERMINAL_REQUEST_STATES
 from observation_portal.requestgroups.request_utils import (
@@ -132,7 +132,7 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
                         request_group.observation_type)
                     )
                     continue
-                if time_left * OVERHEAD_ALLOWANCE >= (duration / 3600.0):
+                if time_left * settings.PROPOSAL_TIME_OVERUSE_ALLOWANCE >= (duration / 3600.0):
                     request_group_dict = request_group.as_dict()
                     request_group_dict['is_staff'] = request_group.submitter.is_staff
                     request_group_data.append(request_group_dict)

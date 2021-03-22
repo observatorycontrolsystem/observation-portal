@@ -7,6 +7,7 @@ from django.utils.translation import ugettext as _
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.html import strip_tags
+from django.conf import settings
 from collections import namedtuple
 import logging
 
@@ -156,7 +157,7 @@ class Proposal(models.Model):
 
     def send_time_allocation_reminder(self):
         if self.pi:
-            subject = _('Your LCO Time Allocation Summary')
+            subject = _(f'Your {settings.ORGANIZATION_NAME} Time Allocation Summary')
             message = render_to_string(
                 'proposals/timeallocationreminder.html',
                 {
@@ -166,7 +167,7 @@ class Proposal(models.Model):
             )
             plain_message = strip_tags(message)
 
-            send_mail.send(subject, plain_message, 'science-support@lco.global', [self.pi.email], html_message=message)
+            send_mail.send(subject, plain_message, settings.ORGANIZATION_EMAIL, [self.pi.email], html_message=message)
         else:
             logger.warn('Proposal {} does not have a PI!'.format(self))
 
@@ -243,15 +244,17 @@ class Membership(models.Model):
         unique_together = ('user', 'proposal')
 
     def send_notification(self):
-        subject = _('You have been added to a proposal at LCO.global')
+        subject = _(f'You have been added to a proposal at {settings.ORGANIZATION_NAME}')
         message = render_to_string(
             'proposals/added.txt',
             {
                 'proposal': self.proposal,
                 'user': self.user,
+                'organization_name': settings.ORGANIZATION_NAME,
+                'observation_portal_base_url': settings.OBSERVATION_PORTAL_BASE_URL
             }
         )
-        send_mail.send(subject, message, 'portal@lco.global', [self.user.email])
+        send_mail.send(subject, message, settings.ORGANIZATION_EMAIL, [self.user.email])
 
     def __str__(self):
         return '{0} {1} of {2}'.format(self.user, self.role, self.proposal)
@@ -295,16 +298,18 @@ class ProposalInvite(models.Model):
         self.save()
 
     def send_invitation(self):
-        subject = _('You have been added to a proposal at LCO.global')
+        subject = _(f'You have been added to a proposal at {settings.ORGANIZATION_NAME}')
         message = render_to_string(
             'proposals/invitation.txt',
             {
                 'proposal': self.proposal,
-                'url': reverse('registration_register')
+                'url': reverse('registration_register'),
+                'organization_name': settings.ORGANIZATION_NAME,
+                'observation_portal_base_url': settings.OBSERVATION_PORTAL_BASE_URL
             }
         )
 
-        send_mail.send(subject, message, 'portal@lco.global', [self.email])
+        send_mail.send(subject, message, settings.ORGANIZATION_EMAIL, [self.email])
         self.sent = timezone.now()
         self.save()
 

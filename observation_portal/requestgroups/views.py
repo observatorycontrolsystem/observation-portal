@@ -117,10 +117,10 @@ class InstrumentsInformationView(APIView):
             'telescope_class': request.query_params.get('telescope_class', ''),
             'telescope': request.query_params.get('telescope', ''),
         }
-        for instrument_type in configdb.get_instrument_types(location=location, only_schedulable=only_schedulable):
+        for instrument_type in configdb.get_instrument_type_codes(location=location, only_schedulable=only_schedulable):
             if not requested_instrument_type or requested_instrument_type.lower() == instrument_type.lower():
                 info[instrument_type] = {
-                    'type': 'SPECTRA' if configdb.is_spectrograph(instrument_type) else 'IMAGE',
+                    'type': configdb.get_instrument_type_category(instrument_type),
                     'class': configdb.get_instrument_type_telescope_class(instrument_type),
                     'name': configdb.get_instrument_type_full_name(instrument_type),
                     'optical_elements': configdb.get_optical_elements(instrument_type),

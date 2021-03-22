@@ -77,7 +77,7 @@ schema_view = get_schema_view(
       default_version='v1',
       description="Test description",
       terms_of_service="https://lco.global/policies/terms/",
-      contact=openapi.Contact(email="science-support@lco.global"),
+      contact=openapi.Contact(email="ocs@lco.global"),
       license=openapi.License(name="GPL 3.0 License"),
    ),
    public=True,
