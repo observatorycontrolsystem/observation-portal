@@ -37,19 +37,62 @@
                   "instrument_type": {
                     "code": "1M0-SCICAM-SBIG",
                     "name": "1M0-SCICAM-SBIG",
+                    "instrument_category": "IMAGE",
                     "allow_self_guiding": true,
                     "configuration_types": [
-                      "EXPOSE",
-                      "REPEAT_EXPOSE",
-                      "BIAS",
-                      "DARK",
-                      "SCRIPT",
-                      "SKY_FLAT"
+                      {
+                          "name": "Expose",
+                          "code": "EXPOSE",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Repeat Expose",
+                          "code": "REPEAT_EXPOSE",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Sky Flat",
+                          "code": "SKY_FLAT",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Script",
+                          "code": "SCRIPT",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Bias",
+                          "code": "BIAS",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      },
+                      {
+                          "name": "Dark",
+                          "code": "DARK",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      }
                     ],
                     "default_acceptability_threshold": 90,
-                    "config_change_time": 0,
+                    "config_front_padding": 16.0,
                     "acquire_exposure_time": 0,
-                    "front_padding": 90,
+                    "observation_front_padding": 90,
                     "fixed_overhead_per_exposure": 1,
                     "mode_types": [
                       {
@@ -59,6 +102,7 @@
                           {
                             "code": "1m0_sbig_1",
                             "overhead": 35.0,
+                            "schedulable": true,
                             "validation_schema": {
                               "bin_x": {"type": "integer", "allowed": [1], "default": 1},
                               "bin_y": {"type": "integer", "allowed": [1], "default": 1}
@@ -67,6 +111,7 @@
                           {
                             "code": "1m0_sbig_2",
                             "overhead": 14.5,
+                            "schedulable": true,
                             "validation_schema": {
                               "bin_x": {"type": "integer", "allowed": [2], "default": 2},
                               "bin_y": {"type": "integer", "allowed": [2], "default": 2}
@@ -75,6 +120,7 @@
                           {
                             "code": "1m0_sbig_3",
                             "overhead": 11.5,
+                            "schedulable": true,
                             "validation_schema": {
                               "bin_x": {"type": "integer", "allowed": [3], "default": 3},
                               "bin_y": {"type": "integer", "allowed": [3], "default": 3}
@@ -89,6 +135,7 @@
                           {
                             "code": "OFF",
                             "overhead": 0.0,
+                            "schedulable": true,
                             "validation_schema": {}
                           }
                         ]
@@ -100,11 +147,13 @@
                           {
                             "code": "OFF",
                             "overhead": 0.0,
+                            "schedulable": true,
                             "validation_schema": {}
                           },
                           {
                             "code": "ON",
                             "overhead": 0.0,
+                            "schedulable": true,
                             "validation_schema": {}
                           }
                         ]
@@ -151,19 +200,62 @@
                   "instrument_type": {
                     "code": "1M0-SCICAM-SBIG",
                     "name": "1M0-SCICAM-SBIG",
+                    "instrument_category": "IMAGE",
                     "allow_self_guiding": true,
                     "configuration_types": [
-                      "EXPOSE",
-                      "REPEAT_EXPOSE",
-                      "BIAS",
-                      "DARK",
-                      "SCRIPT",
-                      "SKY_FLAT"
+                      {
+                          "name": "Expose",
+                          "code": "EXPOSE",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Repeat Expose",
+                          "code": "REPEAT_EXPOSE",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Sky Flat",
+                          "code": "SKY_FLAT",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Script",
+                          "code": "SCRIPT",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Bias",
+                          "code": "BIAS",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      },
+                      {
+                          "name": "Dark",
+                          "code": "DARK",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      }
                     ],
                     "default_acceptability_threshold": 90,
-                    "config_change_time": 0,
+                    "config_front_padding": 16.0,
                     "acquire_exposure_time": 0,
-                    "front_padding": 90,
+                    "observation_front_padding": 90,
                     "fixed_overhead_per_exposure": 1,
                     "mode_types": [
                       {
@@ -173,6 +265,7 @@
                           {
                             "code": "1m0_sbig_1",
                             "overhead": 35.0,
+                            "schedulable": true,
                             "validation_schema": {
                               "bin_x": {"type": "integer", "allowed": [1], "default": 1},
                               "bin_y": {"type": "integer", "allowed": [1], "default": 1}
@@ -181,6 +274,7 @@
                           {
                             "code": "1m0_sbig_2",
                             "overhead": 14.5,
+                            "schedulable": true,
                             "validation_schema": {
                               "bin_x": {"type": "integer", "allowed": [2], "default": 2},
                               "bin_y": {"type": "integer", "allowed": [2], "default": 2}
@@ -189,6 +283,7 @@
                           {
                             "code": "1m0_sbig_3",
                             "overhead": 11.5,
+                            "schedulable": true,
                             "validation_schema": {
                               "bin_x": {"type": "integer", "allowed": [3], "default": 3},
                               "bin_y": {"type": "integer", "allowed": [3], "default": 3}
@@ -203,6 +298,7 @@
                           {
                             "code": "OFF",
                             "overhead": 0.0,
+                            "schedulable": true,
                             "validation_schema": {}
                           }
                         ]
@@ -214,11 +310,13 @@
                           {
                             "code": "OFF",
                             "overhead": 0.0,
+                            "schedulable": true,
                             "validation_schema": {}
                           },
                           {
                             "code": "ON",
                             "overhead": 0.0,
+                            "schedulable": true,
                             "validation_schema": {}
                           }
                         ]
@@ -265,19 +363,62 @@
                   "instrument_type": {
                     "code": "1M0-SCICAM-SBIG",
                     "name": "1M0-SCICAM-SBIG",
+                    "instrument_category": "IMAGE",
                     "allow_self_guiding": true,
                     "configuration_types": [
-                      "EXPOSE",
-                      "REPEAT_EXPOSE",
-                      "BIAS",
-                      "DARK",
-                      "SCRIPT",
-                      "SKY_FLAT"
+                      {
+                          "name": "Expose",
+                          "code": "EXPOSE",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Repeat Expose",
+                          "code": "REPEAT_EXPOSE",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Sky Flat",
+                          "code": "SKY_FLAT",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Script",
+                          "code": "SCRIPT",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Bias",
+                          "code": "BIAS",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      },
+                      {
+                          "name": "Dark",
+                          "code": "DARK",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      }
                     ],
                     "default_acceptability_threshold": 90,
-                    "config_change_time": 0,
+                    "config_front_padding": 16.0,
                     "acquire_exposure_time": 0,
-                    "front_padding": 90,
+                    "observation_front_padding": 90,
                     "fixed_overhead_per_exposure": 1,
                     "mode_types": [
                       {
@@ -287,6 +428,7 @@
                           {
                             "code": "1m0_sbig_1",
                             "overhead": 35.0,
+                            "schedulable": true,
                             "validation_schema": {
                               "bin_x": {"type": "integer", "allowed": [1], "default": 1},
                               "bin_y": {"type": "integer", "allowed": [1], "default": 1}
@@ -295,6 +437,7 @@
                           {
                             "code": "1m0_sbig_2",
                             "overhead": 14.5,
+                            "schedulable": true,
                             "validation_schema": {
                               "bin_x": {"type": "integer", "allowed": [2], "default": 2},
                               "bin_y": {"type": "integer", "allowed": [2], "default": 2}
@@ -303,6 +446,7 @@
                           {
                             "code": "1m0_sbig_3",
                             "overhead": 11.5,
+                            "schedulable": true,
                             "validation_schema": {
                               "bin_x": {"type": "integer", "allowed": [3], "default": 3},
                               "bin_y": {"type": "integer", "allowed": [3], "default": 3}
@@ -317,6 +461,7 @@
                           {
                             "code": "OFF",
                             "overhead": 0.0,
+                            "schedulable": true,
                             "validation_schema": {}
                           }
                         ]
@@ -328,11 +473,13 @@
                           {
                             "code": "OFF",
                             "overhead": 0.0,
+                            "schedulable": true,
                             "validation_schema": {}
                           },
                           {
                             "code": "ON",
                             "overhead": 0.0,
+                            "schedulable": true,
                             "validation_schema": {}
                           }
                         ]
@@ -395,17 +542,53 @@
                   "instrument_type": {
                     "code": "2M0-FLOYDS-SCICAM",
                     "name": "2M0-FLOYDS-SCICAM",
+                    "instrument_category": "SPECTRA",
                     "allow_self_guiding": false,
-                    "config_change_time": 30,
+                    "config_front_padding": 16.0,
                     "acquire_exposure_time": 30,
-                    "front_padding": 240,
+                    "observation_front_padding": 240,
                     "fixed_overhead_per_exposure": 0.5,
                     "configuration_types": [
-                      "SPECTRUM",
-                      "REPEAT_SPECTRUM",
-                      "LAMP_FLAT",
-                      "ARC",
-                      "SCRIPT"
+                      {
+                          "name": "Spectrum",
+                          "code": "SPECTRUM",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Repeat Spectrum",
+                          "code": "REPEAT_SPECTRUM",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Lamp Flat",
+                          "code": "LAMP_FLAT",
+                          "config_change_overhead": 30.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": true,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Script",
+                          "code": "SCRIPT",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Arc",
+                          "code": "ARC",
+                          "config_change_overhead": 30.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": true,
+                          "schedulable": true
+                      }
                     ],
                     "default_acceptability_threshold": 100,
                     "mode_types": [
@@ -416,6 +599,7 @@
                           {
                             "code": "2m0_floyds_1",
                             "overhead": 25.0,
+                            "schedulable": true,
                             "validation_schema": {
                               "bin_x": {"type": "integer", "allowed": [1], "default": 1},
                               "bin_y": {"type": "integer", "allowed": [1], "default": 1}
@@ -430,11 +614,13 @@
                           {
                             "code": "WCS",
                             "overhead": 90.0,
+                            "schedulable": true,
                             "validation_schema": {}
                           },
                           {
                             "code": "BRIGHTEST",
                             "overhead": 90.0,
+                            "schedulable": true,
                             "validation_schema": {
                               "extra_params": {"type": "dict", "schema": {
                                 "acquire_radius": {"type": "float", "min": 0, "max": 15, "required": true}
@@ -450,6 +636,7 @@
                           {
                             "code": "ON",
                             "overhead": 0.0,
+                            "schedulable": true,
                             "validation_schema": {}
                           }
                         ]
@@ -461,11 +648,13 @@
                           {
                             "code": "VFLOAT",
                             "overhead": 0.0,
+                            "schedulable": true,
                             "validation_schema": {}
                           },
                           {
                             "code": "SKY",
                             "overhead": 0.0,
+                            "schedulable": true,
                             "validation_schema": {
                               "extra_params": {"type": "dict", "schema": {
                                 "rotator_angle": {"type": "float", "min": 0, "max": 360}
@@ -552,19 +741,62 @@
                   "instrument_type": {
                     "code": "1M0-SCICAM-SBIG",
                     "name": "1M0-SCICAM-SBIG",
+                    "instrument_category": "IMAGE",
                     "allow_self_guiding": true,
                     "configuration_types": [
-                      "EXPOSE",
-                      "REPEAT_EXPOSE",
-                      "BIAS",
-                      "DARK",
-                      "SCRIPT",
-                      "SKY_FLAT"
+                      {
+                          "name": "Expose",
+                          "code": "EXPOSE",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Repeat Expose",
+                          "code": "REPEAT_EXPOSE",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Sky Flat",
+                          "code": "SKY_FLAT",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Script",
+                          "code": "SCRIPT",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Bias",
+                          "code": "BIAS",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      },
+                      {
+                          "name": "Dark",
+                          "code": "DARK",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      }
                     ],
                     "default_acceptability_threshold": 100,
-                    "config_change_time": 0,
+                    "config_front_padding": 16.0,
                     "acquire_exposure_time": 0,
-                    "front_padding": 90,
+                    "observation_front_padding": 90,
                     "fixed_overhead_per_exposure": 1,
                     "mode_types": [
                       {
@@ -574,6 +806,7 @@
                           {
                             "code": "1m0_sbig_1",
                             "overhead": 35.0,
+                            "schedulable": true,
                             "validation_schema": {
                               "bin_x": {"type": "integer", "allowed": [1], "default": 1},
                               "bin_y": {"type": "integer", "allowed": [1], "default": 1}
@@ -582,6 +815,7 @@
                           {
                             "code": "1m0_sbig_2",
                             "overhead": 14.5,
+                            "schedulable": true,
                             "validation_schema": {
                               "bin_x": {"type": "integer", "allowed": [2], "default": 2},
                               "bin_y": {"type": "integer", "allowed": [2], "default": 2}
@@ -590,6 +824,7 @@
                           {
                             "code": "1m0_sbig_3",
                             "overhead": 11.5,
+                            "schedulable": true,
                             "validation_schema": {
                               "bin_x": {"type": "integer", "allowed": [3], "default": 3},
                               "bin_y": {"type": "integer", "allowed": [3], "default": 3}
@@ -604,6 +839,7 @@
                           {
                             "code": "OFF",
                             "overhead": 0.0,
+                            "schedulable": true,
                             "validation_schema": {}
                           }
                         ]
@@ -615,11 +851,13 @@
                           {
                             "code": "OFF",
                             "overhead": 0.0,
+                            "schedulable": true,
                             "validation_schema": {}
                           },
                           {
                             "code": "ON",
                             "overhead": 0.0,
+                            "schedulable": true,
                             "validation_schema": {}
                           }
                         ]
@@ -666,20 +904,70 @@
                   "instrument_type": {
                     "code": "1M0-NRES-SCICAM",
                     "name": "1M0-NRES-SCICAM",
+                    "instrument_category": "SPECTRA",
                     "allow_self_guiding": false,
                     "configuration_types": [
-                      "NRES_SPECTRUM",
-                      "REPEAT_NRES_SPECTRUM",
-                      "NRES_EXPOSE",
-                      "NRES_TEST",
-                      "LAMP_FLAT",
-                      "ARC",
-                      "SCRIPT"
+                      {
+                          "name": "NRES Spectrum",
+                          "code": "NRES_SPECTRUM",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "NRES Repeat Spectrum",
+                          "code": "NRES_REPEAT_SPECTRUM",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                        "name": "NRES Expose",
+                        "code": "NRES_EXPOSE",
+                        "config_change_overhead": 0.0,
+                        "requires_optical_elements": true,
+                        "force_acquisition_off": false,
+                        "schedulable": true
+                      },
+                      {
+                        "name": "NRES Test",
+                        "code": "NRES_TEST",
+                        "config_change_overhead": 0.0,
+                        "requires_optical_elements": true,
+                        "force_acquisition_off": false,
+                        "schedulable": true
+                      },
+                      {
+                          "name": "Lamp Flat",
+                          "code": "LAMP_FLAT",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": true,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Script",
+                          "code": "SCRIPT",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Arc",
+                          "code": "ARC",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": true,
+                          "schedulable": true
+                      }
                     ],
                     "default_acceptability_threshold": 100,
-                    "config_change_time": 0,
+                    "config_front_padding": 16.0,
                     "acquire_exposure_time": 10,
-                    "front_padding": 270,
+                    "observation_front_padding": 270,
                     "fixed_overhead_per_exposure": 1,
                     "mode_types": [
                       {
@@ -688,6 +976,7 @@
                           {
                             "code": "1m0_nres_1",
                             "overhead": 35.0,
+                            "schedulable": true,
                             "validation_schema": {
                               "bin_x": {"type": "integer", "allowed": [1], "default": 1},
                               "bin_y": {"type": "integer", "allowed": [1], "default": 1}
@@ -696,6 +985,7 @@
                           {
                             "code": "1m0_nres_2",
                             "overhead": 90.5,
+                            "schedulable": true,
                             "validation_schema": {
                               "bin_x": {"type": "integer", "allowed": [2], "default": 2},
                               "bin_y": {"type": "integer", "allowed": [2], "default": 2}
@@ -710,11 +1000,13 @@
                           {
                             "code": "WCS",
                             "overhead": 400.0,
+                            "schedulable": true,
                             "validation_schema": {}
                           },
                           {
                             "code": "MYMODE",
                             "overhead": 400.0,
+                            "schedulable": true,
                             "validation_schema": {
                               "extra_params": {"type": "dict", "schema": {
                                 "field1": {"type": "string", "required": true},
@@ -732,6 +1024,13 @@
                           {
                             "code": "ON",
                             "overhead": 0.0,
+                            "schedulable": true,
+                            "validation_schema": {}
+                          },
+                          {
+                            "code": "NRES_SPECIAL",
+                            "overhead": 90.0,
+                            "schedulable": false,
                             "validation_schema": {}
                           }
                         ]
@@ -781,17 +1080,53 @@
                   "instrument_type": {
                     "code": "2M0-FLOYDS-SCICAM",
                     "name": "2M0-FLOYDS-SCICAM",
+                    "instrument_category": "SPECTRA",
                     "allow_self_guiding": false,
-                    "config_change_time": 30,
+                    "config_front_padding": 16.0,
                     "acquire_exposure_time": 30,
-                    "front_padding": 240,
+                    "observation_front_padding": 240,
                     "fixed_overhead_per_exposure": 0.5,
                     "configuration_types": [
-                      "SPECTRUM",
-                      "REPEAT_SPECTRUM",
-                      "LAMP_FLAT",
-                      "ARC",
-                      "SCRIPT"
+                      {
+                          "name": "Spectrum",
+                          "code": "SPECTRUM",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Repeat Spectrum",
+                          "code": "REPEAT_SPECTRUM",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Lamp Flat",
+                          "code": "LAMP_FLAT",
+                          "config_change_overhead": 30.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": true,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Script",
+                          "code": "SCRIPT",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Arc",
+                          "code": "ARC",
+                          "config_change_overhead": 30.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": true,
+                          "schedulable": true
+                      }
                     ],
                     "default_acceptability_threshold": 100,
                     "mode_types": [
@@ -801,6 +1136,7 @@
                           {
                             "code": "2m0_floyds_1",
                             "overhead": 25.0,
+                            "schedulable": true,
                             "validation_schema": {
                               "bin_x": {"type": "integer", "allowed": [1], "default": 1},
                               "bin_y": {"type": "integer", "allowed": [1], "default": 1}
@@ -815,11 +1151,13 @@
                           {
                             "code": "WCS",
                             "overhead": 90.0,
+                            "schedulable": true,
                             "validation_schema": {}
                           },
                           {
                             "code": "BRIGHTEST",
                             "overhead": 90.0,
+                            "schedulable": true,
                             "validation_schema": {
                               "extra_params": {"type": "dict", "schema": {
                                 "acquire_radius": {"type": "float", "min": 0, "max": 15, "required": true}
@@ -835,6 +1173,7 @@
                           {
                             "code": "ON",
                             "overhead": 0.0,
+                            "schedulable": true,
                             "validation_schema": {}
                           }
                         ]
@@ -846,11 +1185,13 @@
                           {
                             "code": "VFLOAT",
                             "overhead": 0.0,
+                            "schedulable": true,
                             "validation_schema": {}
                           },
                           {
                             "code": "SKY",
                             "overhead": 0.0,
+                            "schedulable": true,
                             "validation_schema": {
                               "extra_params": {"type": "dict", "schema": {
                                 "rotator_angle": {"type": "float", "min": 0, "max": 360}
@@ -907,12 +1248,13 @@
                   "code": "mc03",
                   "state": "SCHEDULABLE",
                   "instrument_type": {
-                    "name": "2.0 meter Muscat",
                     "code": "2M0-SCICAM-MUSCAT",
+                    "name": "2.0 meter Muscat",
+                    "instrument_category": "IMAGE",
                     "fixed_overhead_per_exposure": 1.0,
-                    "front_padding": 90.0,
+                    "observation_front_padding": 90.0,
                     "filter_change_time": 0.0,
-                    "config_change_time": 0.0,
+                    "config_front_padding": 16.0,
                     "acquire_exposure_time": 0.0,
                     "acquire_processing_time": 0.0,
                     "mode_types": [
@@ -922,6 +1264,7 @@
                           {
                             "name": "Acquire Off",
                             "overhead": 0.0,
+                            "schedulable": true,
                             "code": "OFF",
                             "validation_schema": {}
                           }
@@ -934,6 +1277,7 @@
                           {
                             "name": "Muscat Slow Readout",
                             "overhead": 10.0,
+                            "schedulable": true,
                             "code": "MUSCAT_SLOW",
                             "validation_schema": {
                               "bin_x": {"type": "integer", "allowed": [1], "default": 1},
@@ -949,6 +1293,7 @@
                           {
                             "name": "Muscat Synchronous Exposure Mode",
                             "overhead": 0.0,
+                            "schedulable": true,
                             "code": "SYNCHRONOUS",
                             "validation_schema": {
                               "extra_params": {"type": "dict", "schema": {
@@ -963,6 +1308,7 @@
                           {
                             "name": "Muscat Asynchronous Exposure Mode",
                             "overhead": 0.0,
+                            "schedulable": true,
                             "code": "ASYNCHRONOUS",
                             "validation_schema": {
                               "extra_params": {"type": "dict", "schema": {
@@ -983,6 +1329,7 @@
                           {
                             "name": "On",
                             "overhead": 0.0,
+                            "schedulable": true,
                             "code": "ON",
                             "validation_schema": {}
                           }
@@ -994,15 +1341,78 @@
                     "default_acceptability_threshold": 90.0,
                     "allow_self_guiding": true,
                     "configuration_types": [
-                      "EXPOSE",
-                      "REPEAT_EXPOSE",
-                      "BIAS",
-                      "DARK",
-                      "STANDARD",
-                      "SCRIPT",
-                      "AUTO_FOCUS",
-                      "SKY_FLAT",
-                      "ENGINEERING"
+                      {
+                          "name": "Expose",
+                          "code": "EXPOSE",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Repeat Expose",
+                          "code": "REPEAT_EXPOSE",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Sky Flat",
+                          "code": "SKY_FLAT",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Script",
+                          "code": "SCRIPT",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Bias",
+                          "code": "BIAS",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      },
+                      {
+                          "name": "Dark",
+                          "code": "DARK",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      },
+                      {
+                        "name": "Standard",
+                        "code": "STANDARD",
+                        "config_change_overhead": 0.0,
+                        "requires_optical_elements": true,
+                        "force_acquisition_off": false,
+                        "schedulable": true
+                      },
+                      {
+                        "name": "Auto Focus",
+                        "code": "AUTO_FOCUS",
+                        "config_change_overhead": 0.0,
+                        "requires_optical_elements": true,
+                        "force_acquisition_off": true,
+                        "schedulable": false
+                      },
+                      {
+                        "name": "Engineering",
+                        "code": "ENGINEERING",
+                        "config_change_overhead": 0.0,
+                        "requires_optical_elements": true,
+                        "force_acquisition_off": false,
+                        "schedulable": false
+                      }
                     ]
                   },
                   "science_cameras": [
@@ -1218,19 +1628,62 @@
                   "instrument_type": {
                     "code": "1M0-SCICAM-SBIG",
                     "name": "1M0-SCICAM-SBIG",
+                    "instrument_category": "IMAGE",
                     "allow_self_guiding": true,
                     "configuration_types": [
-                      "EXPOSE",
-                      "REPEAT_EXPOSE",
-                      "BIAS",
-                      "DARK",
-                      "SCRIPT",
-                      "SKY_FLAT"
+                      {
+                          "name": "Expose",
+                          "code": "EXPOSE",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Repeat Expose",
+                          "code": "REPEAT_EXPOSE",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Sky Flat",
+                          "code": "SKY_FLAT",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Script",
+                          "code": "SCRIPT",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Bias",
+                          "code": "BIAS",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      },
+                      {
+                          "name": "Dark",
+                          "code": "DARK",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      }
                     ],
                     "default_acceptability_threshold": 100,
-                    "config_change_time": 0,
+                    "config_front_padding": 16.0,
                     "acquire_exposure_time": 0,
-                    "front_padding": 90,
+                    "observation_front_padding": 90,
                     "fixed_overhead_per_exposure": 1,
                     "mode_types": [
                       {
@@ -1240,6 +1693,7 @@
                           {
                             "code": "1m0_sbig_1",
                             "overhead": 35.0,
+                            "schedulable": true,
                             "validation_schema": {
                               "bin_x": {"type": "integer", "allowed": [1], "default": 1},
                               "bin_y": {"type": "integer", "allowed": [1], "default": 1}
@@ -1248,6 +1702,7 @@
                           {
                             "code": "1m0_sbig_2",
                             "overhead": 14.5,
+                            "schedulable": true,
                             "validation_schema": {
                               "bin_x": {"type": "integer", "allowed": [2], "default": 2},
                               "bin_y": {"type": "integer", "allowed": [2], "default": 2}
@@ -1256,6 +1711,7 @@
                           {
                             "code": "1m0_sbig_3",
                             "overhead": 11.5,
+                            "schedulable": true,
                             "validation_schema": {
                               "bin_x": {"type": "integer", "allowed": [3], "default": 3},
                               "bin_y": {"type": "integer", "allowed": [3], "default": 3}
@@ -1270,6 +1726,7 @@
                           {
                             "code": "OFF",
                             "overhead": 0.0,
+                            "schedulable": true,
                             "validation_schema": {}
                           }
                         ]
@@ -1281,11 +1738,13 @@
                           {
                             "code": "OFF",
                             "overhead": 0.0,
+                            "schedulable": true,
                             "validation_schema": {}
                           },
                           {
                             "code": "ON",
                             "overhead": 0.0,
+                            "schedulable": true,
                             "validation_schema": {}
                           }
                         ]
@@ -1332,19 +1791,62 @@
                   "instrument_type": {
                     "code": "1M0-SCICAM-SBXX",
                     "name": "1M0-SCICAM-SBXX",
+                    "instrument_category": "IMAGE",
                     "allow_self_guiding": true,
                     "configuration_types": [
-                      "EXPOSE",
-                      "REPEAT_EXPOSE",
-                      "BIAS",
-                      "DARK",
-                      "SCRIPT",
-                      "SKY_FLAT"
+                      {
+                          "name": "Expose",
+                          "code": "EXPOSE",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Repeat Expose",
+                          "code": "REPEAT_EXPOSE",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Sky Flat",
+                          "code": "SKY_FLAT",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Script",
+                          "code": "SCRIPT",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Bias",
+                          "code": "BIAS",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      },
+                      {
+                          "name": "Dark",
+                          "code": "DARK",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      }
                     ],
                     "default_acceptability_threshold": 100,
-                    "config_change_time": 0,
+                    "config_front_padding": 16.0,
                     "acquire_exposure_time": 0,
-                    "front_padding": 90,
+                    "observation_front_padding": 90,
                     "fixed_overhead_per_exposure": 1,
                     "mode_types": [
                       {
@@ -1354,6 +1856,7 @@
                           {
                             "code": "1m0_sbig_1",
                             "overhead": 35.0,
+                            "schedulable": true,
                             "validation_schema": {
                               "bin_x": {"type": "integer", "allowed": [1], "default": 1},
                               "bin_y": {"type": "integer", "allowed": [1], "default": 1}
@@ -1362,6 +1865,7 @@
                           {
                             "code": "1m0_sbig_2",
                             "overhead": 14.5,
+                            "schedulable": true,
                             "validation_schema": {
                               "bin_x": {"type": "integer", "allowed": [2], "default": 2},
                               "bin_y": {"type": "integer", "allowed": [2], "default": 2}
@@ -1370,6 +1874,7 @@
                           {
                             "code": "1m0_sbig_3",
                             "overhead": 11.5,
+                            "schedulable": true,
                             "validation_schema": {
                               "bin_x": {"type": "integer", "allowed": [3], "default": 3},
                               "bin_y": {"type": "integer", "allowed": [3], "default": 3}
@@ -1384,6 +1889,7 @@
                           {
                             "code": "OFF",
                             "overhead": 0.0,
+                            "schedulable": true,
                             "validation_schema": {}
                           }
                         ]
@@ -1395,11 +1901,13 @@
                           {
                             "code": "OFF",
                             "overhead": 0.0,
+                            "schedulable": true,
                             "validation_schema": {}
                           },
                           {
                             "code": "ON",
                             "overhead": 0.0,
+                            "schedulable": true,
                             "validation_schema": {}
                           }
                         ]
@@ -1467,19 +1975,62 @@
                   "instrument_type": {
                     "code": "1M0-SCICAM-SBAG",
                     "name": "1M0-SCICAM-SBAG",
+                    "instrument_category": "IMAGE",
                     "allow_self_guiding": true,
                     "configuration_types": [
-                      "EXPOSE",
-                      "REPEAT_EXPOSE",
-                      "BIAS",
-                      "DARK",
-                      "SCRIPT",
-                      "SKY_FLAT"
+                      {
+                          "name": "Expose",
+                          "code": "EXPOSE",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Repeat Expose",
+                          "code": "REPEAT_EXPOSE",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Sky Flat",
+                          "code": "SKY_FLAT",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Script",
+                          "code": "SCRIPT",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Bias",
+                          "code": "BIAS",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      },
+                      {
+                          "name": "Dark",
+                          "code": "DARK",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      }
                     ],
                     "default_acceptability_threshold": 100,
-                    "config_change_time": 0,
+                    "config_front_padding": 16.0,
                     "acquire_exposure_time": 0,
-                    "front_padding": 90,
+                    "observation_front_padding": 90,
                     "fixed_overhead_per_exposure": 1,
                     "mode_types": [
                       {
@@ -1489,6 +2040,7 @@
                           {
                             "code": "1m0_sbag_1",
                             "overhead": 35.0,
+                            "schedulable": true,
                             "validation_schema": {
                               "bin_x": {"type": "integer", "allowed": [1], "default": 1},
                               "bin_y": {"type": "integer", "allowed": [1], "default": 1}
@@ -1497,6 +2049,7 @@
                           {
                             "code": "1m0_sbag_2",
                             "overhead": 14.5,
+                            "schedulable": true,
                             "validation_schema": {
                               "bin_x": {"type": "integer", "allowed": [2], "default": 2},
                               "bin_y": {"type": "integer", "allowed": [2], "default": 2}
@@ -1505,6 +2058,7 @@
                           {
                             "code": "1m0_sbag_3",
                             "overhead": 11.5,
+                            "schedulable": true,
                             "validation_schema": {
                               "bin_x": {"type": "integer", "allowed": [3], "default": 3},
                               "bin_y": {"type": "integer", "allowed": [3], "default": 3}
@@ -1519,6 +2073,7 @@
                           {
                             "code": "OFF",
                             "overhead": 0.0,
+                            "schedulable": true,
                             "validation_schema": {}
                           }
                         ]
@@ -1530,11 +2085,13 @@
                           {
                             "code": "OFF",
                             "overhead": 0.0,
+                            "schedulable": true,
                             "validation_schema": {}
                           },
                           {
                             "code": "ON",
                             "overhead": 0.0,
+                            "schedulable": true,
                             "validation_schema": {}
                           }
                         ]
@@ -1602,19 +2159,62 @@
                   "instrument_type": {
                     "code": "1M0-SCICAM-SOAR",
                     "name": "1M0-SCICAM-SOAR",
+                    "instrument_category": "IMAGE",
                     "allow_self_guiding": true,
                     "configuration_types": [
-                      "EXPOSE",
-                      "REPEAT_EXPOSE",
-                      "BIAS",
-                      "DARK",
-                      "SCRIPT",
-                      "SKY_FLAT"
+                      {
+                          "name": "Expose",
+                          "code": "EXPOSE",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Repeat Expose",
+                          "code": "REPEAT_EXPOSE",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Sky Flat",
+                          "code": "SKY_FLAT",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Script",
+                          "code": "SCRIPT",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Bias",
+                          "code": "BIAS",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      },
+                      {
+                          "name": "Dark",
+                          "code": "DARK",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      }
                     ],
                     "default_acceptability_threshold": 100,
-                    "config_change_time": 0,
+                    "config_front_padding": 16.0,
                     "acquire_exposure_time": 0,
-                    "front_padding": 90,
+                    "observation_front_padding": 90,
                     "fixed_overhead_per_exposure": 1,
                     "mode_types": [
                       {
@@ -1624,6 +2224,7 @@
                           {
                             "code": "1m0_soar_1",
                             "overhead": 35.0,
+                            "schedulable": true,
                             "validation_schema": {
                               "bin_x": {"type": "integer", "allowed": [1], "default": 1},
                               "bin_y": {"type": "integer", "allowed": [1], "default": 1}
@@ -1632,6 +2233,7 @@
                           {
                             "code": "1m0_soar_2",
                             "overhead": 14.5,
+                            "schedulable": true,
                             "validation_schema": {
                               "bin_x": {"type": "integer", "allowed": [2], "default": 2},
                               "bin_y": {"type": "integer", "allowed": [2], "default": 2}
@@ -1640,6 +2242,7 @@
                           {
                             "code": "1m0_soar_3",
                             "overhead": 11.5,
+                            "schedulable": true,
                             "validation_schema": {
                               "bin_x": {"type": "integer", "allowed": [3], "default": 3},
                               "bin_y": {"type": "integer", "allowed": [3], "default": 3}
@@ -1654,6 +2257,7 @@
                           {
                             "code": "OFF",
                             "overhead": 0.0,
+                            "schedulable": true,
                             "validation_schema": {}
                           }
                         ]
@@ -1665,11 +2269,13 @@
                           {
                             "code": "OFF",
                             "overhead": 0.0,
+                            "schedulable": true,
                             "validation_schema": {}
                           },
                           {
                             "code": "ON",
                             "overhead": 0.0,
+                            "schedulable": true,
                             "validation_schema": {}
                           }
                         ]

@@ -19,8 +19,8 @@ from observation_portal.requestgroups.signals import handlers  # DO NOT DELETE, 
 class TestProposal(DramatiqTestCase):
     def test_add_existing_user(self):
         proposal = mixer.blend(Proposal)
-        user = mixer.blend(User, email='email1@lcogt.net')
-        emails = ['email1@lcogt.net']
+        user = mixer.blend(User, email='email1@example.com')
+        emails = ['email1@example.com']
         proposal.add_users(emails, Membership.CI)
 
         self.broker.join("default")
@@ -33,10 +33,10 @@ class TestProposal(DramatiqTestCase):
 
     def test_add_nonexisting_user(self):
         proposal = mixer.blend(Proposal)
-        emails = ['email1@lcogt.net']
+        emails = ['email1@example.com']
         proposal.add_users(emails, Membership.CI)
         self.assertFalse(proposal.users.count())
-        self.assertTrue(ProposalInvite.objects.filter(email='email1@lcogt.net').exists())
+        self.assertTrue(ProposalInvite.objects.filter(email='email1@example.com').exists())
 
     def test_add_nonexisting_user_twice(self):
         proposal = mixer.blend(Proposal)
@@ -247,7 +247,7 @@ class TestProposalUserLimits(TestCase):
 
     def test_time_used_for_user(self):
         self.assertEqual(self.user.profile.time_used_in_proposal(self.proposal), 0)
-        configuration = mixer.blend(Configuration, instrument_type='1M0-SCICAM-SBIG')
+        configuration = mixer.blend(Configuration, type='EXPOSE', instrument_type='1M0-SCICAM-SBIG')
         instrument_config = mixer.blend(InstrumentConfig, configuration=configuration, exposure_time=30)
         create_simple_requestgroup(self.user, self.proposal, configuration=configuration,
                                    instrument_config=instrument_config)

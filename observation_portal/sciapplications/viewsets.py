@@ -72,10 +72,13 @@ def send_email_if_ddt_submission(science_application):
     is_submitted = science_application.status == ScienceApplication.SUBMITTED
     is_ddt = science_application.call.proposal_type == Call.DDT_PROPOSAL
     if is_submitted and is_ddt:
-        message = render_to_string('sciapplications/ddt_submitted.txt', {'ddt': science_application})
+        message = render_to_string('sciapplications/ddt_submitted.txt', {
+            'ddt': science_application,
+            'detail_url': settings.SCIENCE_APPLICATION_DETAIL_URL.format(sciapp_id=science_application.id)
+        })
         send_mail.send(
-            'LCO Director\'s Discretionary Time Submission',
+            f'{settings.ORGANIZATION_NAME} Director\'s Discretionary Time Submission',
             message,
-            'portal@lco.global',
-            [science_application.submitter.email, 'ddt@lco.global']
+            settings.ORGANIZATION_EMAIL,
+            [science_application.submitter.email, settings.ORGANIZATION_DDT_EMAIL]
         )

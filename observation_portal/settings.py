@@ -35,14 +35,22 @@ SECRET_KEY = os.getenv('SECRET_KEY', '2xou30pi2va&ed@n2l79n807k%@szj1+^uj&)y09_w
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', False)
 
-ALLOWED_HOSTS = ['observation-portal-dev.lco.global', '*']
-
-ADMINS = [
-    ('Softies', 'softies@lco.global')
-]
+ALLOWED_HOSTS = get_list_from_env('ALLOWED_HOSTS', '*')  # Comma delimited list of django allowed hosts
 
 SITE_ID = 1
 ACCOUNT_ACTIVATION_DAYS = 7
+
+## Email template and project constants
+ORGANIZATION_NAME = os.getenv('ORGANIZATION_NAME', '')  # Base organization name, used in email titles/signatures
+ORGANIZATION_EMAIL = os.getenv('ORGANIZATION_EMAIL', '')  # Base organization from email for the obs portal for outgoing emails
+ORGANIZATION_DDT_EMAIL = os.getenv('ORGANIZATION_DDT_EMAIL', '')  # Organization email to receive alerts when ddt proposals are submitted
+ORGANIZATION_SUPPORT_EMAIL = os.getenv('ORGANIZATION_SUPPORT_EMAIL', '')  # Organization email to receive account removal email requests
+ORGANIZATION_ADMIN_EMAIL = os.getenv('ORGANIZATION_ADMIN_EMAIL', '')  # Admin email address to receive 500 error emails
+OBSERVATION_PORTAL_BASE_URL = os.getenv('OBSERVATION_PORTAL_BASE_URL', 'http://localhost')
+
+ADMINS = [
+    ('Admins', ORGANIZATION_ADMIN_EMAIL)
+]
 
 # Application definition
 
@@ -220,16 +228,17 @@ EMAIL_USE_TLS = True
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'localhost')
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
-EMAIL_PORT = os.getenv('EMAIL_PORT', 587)
-DEFAULT_FROM_EMAIL = 'Webmaster <portal@lco.global>'
-SERVER_EMAIL = DEFAULT_FROM_EMAIL
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
+DEFAULT_FROM_EMAIL = ORGANIZATION_EMAIL
+SERVER_EMAIL = ORGANIZATION_EMAIL
 
 ELASTICSEARCH_URL = os.getenv('ELASTICSEARCH_URL', 'http://localhost')
 CONFIGDB_URL = os.getenv('CONFIGDB_URL', 'http://localhost')
 DOWNTIMEDB_URL = os.getenv('DOWNTIMEDB_URL', 'http://localhost')
 
-REQUESTGROUP_DATA_DOWNLOAD_URL = os.getenv('REQUESTGROUP_DATA_DOWNLOAD_URL', '')
-REQUEST_DETAIL_URL = os.getenv('REQUEST_DETAIL_URL', '')
+REQUESTGROUP_DATA_DOWNLOAD_URL = os.getenv('REQUESTGROUP_DATA_DOWNLOAD_URL', '')  # use {requestgroup_id} to have it substituted in
+REQUEST_DETAIL_URL = os.getenv('REQUEST_DETAIL_URL', '')  # use {request_id} to have it substituted in
+SCIENCE_APPLICATION_DETAIL_URL = os.getenv('SCIENCE_APPLICATION_DETAIL_URL', '')  # use {scicapp_id} to have it substituted in
 MAX_FAILURES_PER_REQUEST = int(os.getenv('MAX_FAILURES_PER_REQUEST', 0))  # 0 means unlimited / no max
 
 REST_FRAMEWORK = {
@@ -248,9 +257,9 @@ REST_FRAMEWORK = {
         'rest_framework.throttling.ScopedRateThrottle',
     ),
     'DEFAULT_THROTTLE_RATES': {
-        'requestgroups.cancel': '2000/day',
-        'requestgroups.create': '5000/day',
-        'requestgroups.validate': '20000/day'
+        'requestgroups.cancel': os.getenv('REQUESTGROUPS_CANCEL_DEFAULT_THROTTLE', '2000/day'),
+        'requestgroups.create': os.getenv('REQUESTGROUPS_CREATE_DEFAULT_THROTTLE', '5000/day'),
+        'requestgroups.validate': os.getenv('REQUESTGROUPS_VALIDATE_DEFAULT_THROTTLE', '20000/day')
     }
 }
 
@@ -283,6 +292,10 @@ LOGGING = {
     }
 }
 
+## Duration constants for calculating overheads
+MAX_IPP_VALUE = float(os.getenv('MAX_IPP_VALUE', 2.0))  # the maximum allowed value of ipp
+MIN_IPP_VALUE = float(os.getenv('MIN_IPP_VALUE', 0.5))  # the minimum allowed value of ipp
+PROPOSAL_TIME_OVERUSE_ALLOWANCE = float(os.getenv('PROPOSAL_TIME_OVERUSE_ALLOWANCE', 1.1))  # amount of leeway in a proposals timeallocation before rejecting that request
 ## Serializer setup - used to allow overriding of serializers
 SERIALIZERS = {
     'observations': {

@@ -1,11 +1,11 @@
 Hello {{ user.first_name }} {{ user.last_name }},
 
-You have been added to the {{ proposal.title }} proposal at LCO.global.
+You have been added to the {{ proposal.title }} proposal at {{ organization_name }}.
 
 You may begin scheduling observations under this proposal immediately.
 
-https://observe.lco.global
+{{ observation_portal_base_url }}
 
 Thank you,
 
-LCO.global
+{{ organization_name }}

@@ -5,8 +5,8 @@ Your proposal, {{ proposal.title }}, has been approved for the {{ semester.id }}
 
 The project code is {{ proposal.id }}.
 
-https://observe.lco.global
+{{ observation_portal_base_url }}
 
 Thank you,
 
-LCO.global
+{{ organization_name }}

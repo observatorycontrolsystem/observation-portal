@@ -191,17 +191,17 @@ class TestProfileAPI(APITestCase):
 
     def test_update(self):
         good_data = copy.deepcopy(self.data)
-        good_data['email'] = 'hi@lco.global'
+        good_data['email'] = 'hi@example.com'
         response = self.client.patch(reverse('api:profile'), good_data)
         self.assertEqual(response.status_code, 200)
         self.user.refresh_from_db()
-        self.assertEqual(self.user.email, 'hi@lco.global')
+        self.assertEqual(self.user.email, 'hi@example.com')
 
     def test_unauthenticated_update(self):
         self.client.logout()
         good_data = copy.deepcopy(self.data)
         original_email = good_data['email']
-        good_data['email'] = 'hi@lco.global'
+        good_data['email'] = 'hi@example.com'
         response = self.client.patch(reverse('api:profile'), data=good_data)
         self.assertEqual(response.status_code, 403)
         self.user.refresh_from_db()

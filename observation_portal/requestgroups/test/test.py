@@ -14,7 +14,7 @@ from observation_portal.requestgroups.models import (
 from observation_portal.proposals.models import Proposal, TimeAllocation, Semester
 from observation_portal.common.configdb import ConfigDBException, configdb
 from observation_portal.common.test_helpers import SetTimeMixin
-from observation_portal.requestgroups.duration_utils import PER_CONFIGURATION_STARTUP_TIME, PER_CONFIGURATION_GAP
+from observation_portal.requestgroups.duration_utils import PER_CONFIGURATION_STARTUP_TIME
 from observation_portal.requestgroups.serializers import InstrumentTypeValidationHelper, ModeValidationHelper
 from observation_portal.requestgroups.test.test_api import generic_payload
 
@@ -188,7 +188,7 @@ class TestRequestDuration(SetTimeMixin, TestCase):
         exp_count = self.instrument_config_expose.exposure_count
         exp_time = self.instrument_config_expose.exposure_time
 
-        self.assertEqual(duration, math.ceil(exp_count*(exp_time + self.sbig_readout_time2 + self.sbig_fixed_overhead_per_exposure) + self.sbig_front_padding + self.sbig_filter_optical_element_change_overhead + PER_CONFIGURATION_GAP + PER_CONFIGURATION_STARTUP_TIME + self.instrument_change_overhead_1m + self.minimum_slew_time))
+        self.assertEqual(duration, math.ceil(exp_count*(exp_time + self.sbig_readout_time2 + self.sbig_fixed_overhead_per_exposure) + self.sbig_front_padding + self.sbig_filter_optical_element_change_overhead + PER_CONFIGURATION_STARTUP_TIME + self.instrument_change_overhead_1m + self.minimum_slew_time))
 
     def test_ccd_single_configuration_unsupported_binning_duration(self):
         default_binning = mixer.blend(
@@ -212,7 +212,7 @@ class TestRequestDuration(SetTimeMixin, TestCase):
         exp_time = self.instrument_config_expose.exposure_time
         exp_count = self.instrument_config_expose.exposure_count
 
-        self.assertEqual(duration, (exp_count*(exp_time + self.sbig_readout_time2 + self.sbig_fixed_overhead_per_exposure) + PER_CONFIGURATION_GAP + PER_CONFIGURATION_STARTUP_TIME))
+        self.assertEqual(duration, (exp_count*(exp_time + self.sbig_readout_time2 + self.sbig_fixed_overhead_per_exposure) + PER_CONFIGURATION_STARTUP_TIME))
 
     def test_ccd_multiple_instrument_configuration_request_duration(self):
         self.configuration_expose.request = self.request
@@ -239,13 +239,13 @@ class TestRequestDuration(SetTimeMixin, TestCase):
 
         num_filter_changes = 2
 
-        self.assertEqual(duration, math.ceil(exp_1_duration + exp_2_duration + exp_3_duration + self.sbig_front_padding + num_filter_changes*self.sbig_filter_optical_element_change_overhead + (PER_CONFIGURATION_GAP + PER_CONFIGURATION_STARTUP_TIME + self.minimum_slew_time)))
+        self.assertEqual(duration, math.ceil(exp_1_duration + exp_2_duration + exp_3_duration + self.sbig_front_padding + num_filter_changes*self.sbig_filter_optical_element_change_overhead + (PER_CONFIGURATION_STARTUP_TIME + self.minimum_slew_time)))
 
     def test_single_repeat_configuration_duration(self):
         self.configuration_repeat_expose.request = self.request
         self.configuration_repeat_expose.save()
 
-        configuration_duration = self.configuration_repeat_expose.repeat_duration + PER_CONFIGURATION_GAP + PER_CONFIGURATION_STARTUP_TIME
+        configuration_duration = self.configuration_repeat_expose.repeat_duration
         self.assertEqual(configuration_duration, self.configuration_repeat_expose.duration)
 
         mixer.blend(
@@ -282,8 +282,8 @@ class TestRequestDuration(SetTimeMixin, TestCase):
         num_filter_changes = 2
         duration = self.request.duration
 
-        self.assertEqual(duration, math.ceil(exp_1_duration + exp_2_duration + repeat_config_duration + self.sbig_front_padding + num_configurations*(
-            PER_CONFIGURATION_GAP + PER_CONFIGURATION_STARTUP_TIME + self.minimum_slew_time) + num_filter_changes*self.sbig_filter_optical_element_change_overhead))
+        self.assertEqual(duration, math.ceil(exp_1_duration + exp_2_duration + (repeat_config_duration - PER_CONFIGURATION_STARTUP_TIME) + self.sbig_front_padding + num_configurations*(
+            PER_CONFIGURATION_STARTUP_TIME + self.minimum_slew_time) + num_filter_changes*self.sbig_filter_optical_element_change_overhead))
 
     def test_ccd_multiple_configuration_request_duration(self):
         self.instrument_config_expose_1.configuration = self.configuration_expose
@@ -313,7 +313,7 @@ class TestRequestDuration(SetTimeMixin, TestCase):
         num_configurations = 3
         num_filter_changes = 2
 
-        self.assertEqual(duration, math.ceil(exp_1_duration + exp_2_duration + exp_3_duration + self.sbig_front_padding + num_configurations*(PER_CONFIGURATION_GAP + PER_CONFIGURATION_STARTUP_TIME + self.minimum_slew_time) + num_filter_changes*self.sbig_filter_optical_element_change_overhead))
+        self.assertEqual(duration, math.ceil(exp_1_duration + exp_2_duration + exp_3_duration + self.sbig_front_padding + num_configurations*(PER_CONFIGURATION_STARTUP_TIME + self.minimum_slew_time) + num_filter_changes*self.sbig_filter_optical_element_change_overhead))
 
     def test_ccd_multiple_configuration_duration(self):
         self.instrument_config_expose_1.configuration = self.configuration_expose
@@ -338,7 +338,7 @@ class TestRequestDuration(SetTimeMixin, TestCase):
         exp_3_duration = exp_count3 * (exp_time3 + self.sbig_readout_time2 + self.sbig_fixed_overhead_per_exposure)
         num_configurations = 3
 
-        self.assertEqual(duration, (exp_1_duration + exp_2_duration + exp_3_duration + num_configurations*(PER_CONFIGURATION_GAP + PER_CONFIGURATION_STARTUP_TIME)))
+        self.assertEqual(duration, (exp_1_duration + exp_2_duration + exp_3_duration + num_configurations*(PER_CONFIGURATION_STARTUP_TIME)))
 
     def test_floyds_single_configuration_request_duration_with_acquire_on(self):
         self.configuration_spectrum.request = self.request
@@ -351,7 +351,7 @@ class TestRequestDuration(SetTimeMixin, TestCase):
         exp_time = 1800
         exp_count = 1
 
-        self.assertEqual(duration, math.ceil(exp_count*(exp_time + self.floyds_readout_time1 + self.floyds_fixed_overhead_per_exposure) + self.floyds_front_padding + self.floyds_config_change_time + self.floyds_acquire_processing_time + self.floyds_acquire_exposure_time + PER_CONFIGURATION_GAP + PER_CONFIGURATION_STARTUP_TIME + self.minimum_slew_time))
+        self.assertEqual(duration, math.ceil(exp_count*(exp_time + self.floyds_readout_time1 + self.floyds_fixed_overhead_per_exposure) + self.floyds_front_padding + self.floyds_acquire_processing_time + self.floyds_acquire_exposure_time + PER_CONFIGURATION_STARTUP_TIME + self.minimum_slew_time))
 
     def test_floyds_uses_supplied_acquisition_config_exposure_time(self):
         self.configuration_spectrum.request = self.request
@@ -391,7 +391,7 @@ class TestRequestDuration(SetTimeMixin, TestCase):
         exp_count = 1
         num_spectrum_configurations = 2
 
-        self.assertEqual(duration, math.ceil(exp_count*num_spectrum_configurations*(exp_time + self.floyds_readout_time1 + self.floyds_fixed_overhead_per_exposure) + self.floyds_front_padding + self.floyds_config_change_time + num_spectrum_configurations*(self.floyds_acquire_processing_time + PER_CONFIGURATION_GAP + PER_CONFIGURATION_STARTUP_TIME + self.minimum_slew_time + self.floyds_acquire_exposure_time)))
+        self.assertEqual(duration, math.ceil(exp_count*num_spectrum_configurations*(exp_time + self.floyds_readout_time1 + self.floyds_fixed_overhead_per_exposure) + self.floyds_front_padding + num_spectrum_configurations*(self.floyds_acquire_processing_time + PER_CONFIGURATION_STARTUP_TIME + self.minimum_slew_time + self.floyds_acquire_exposure_time)))
 
     def test_floyds_single_configuration_duration(self):
         duration = self.configuration_spectrum.duration
@@ -399,7 +399,7 @@ class TestRequestDuration(SetTimeMixin, TestCase):
         exp_time = self.instrument_config_spectrum.exposure_time
         exp_count = self.instrument_config_spectrum.exposure_count
 
-        self.assertEqual(duration, (exp_count*(exp_time + self.floyds_readout_time1 + self.floyds_fixed_overhead_per_exposure) + PER_CONFIGURATION_GAP + PER_CONFIGURATION_STARTUP_TIME))
+        self.assertEqual(duration, (exp_count*(exp_time + self.floyds_readout_time1 + self.floyds_fixed_overhead_per_exposure) + PER_CONFIGURATION_STARTUP_TIME))
 
     def test_floyds_multiple_configuration_request_duration_with_acquire_on(self):
         self.configuration_lampflat.request = self.request
@@ -426,7 +426,7 @@ class TestRequestDuration(SetTimeMixin, TestCase):
 
         num_configurations = 3
 
-        self.assertEqual(duration, math.ceil(exp_s_duration + exp_a_duration + exp_l_duration + self.floyds_front_padding + self.floyds_acquire_processing_time + self.floyds_acquire_exposure_time + num_configurations*(self.floyds_config_change_time + PER_CONFIGURATION_GAP + PER_CONFIGURATION_STARTUP_TIME + self.minimum_slew_time)))
+        self.assertEqual(duration, math.ceil(exp_s_duration + exp_a_duration + exp_l_duration + self.floyds_front_padding + self.floyds_acquire_processing_time + self.floyds_acquire_exposure_time + (num_configurations-1)*self.floyds_config_change_time + num_configurations*(PER_CONFIGURATION_STARTUP_TIME + self.minimum_slew_time)))
 
     def test_floyds_multiple_configuration_duration(self):
         duration = self.configuration_lampflat.duration
@@ -446,7 +446,7 @@ class TestRequestDuration(SetTimeMixin, TestCase):
 
         num_configurations = 3
 
-        self.assertEqual(duration, (exp_s_duration + exp_a_duration + exp_l_duration + num_configurations*(PER_CONFIGURATION_GAP + PER_CONFIGURATION_STARTUP_TIME)))
+        self.assertEqual(duration, (exp_s_duration + exp_a_duration + exp_l_duration + num_configurations*(PER_CONFIGURATION_STARTUP_TIME)))
 
     def test_get_duration_from_non_existent_camera(self):
         self.configuration_expose.instrument_type = 'FAKE-CAMERA'

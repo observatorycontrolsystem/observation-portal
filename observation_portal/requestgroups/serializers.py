@@ -26,7 +26,7 @@ from observation_portal.requestgroups.target_helpers import TARGET_TYPE_HELPER_M
 from observation_portal.common.mixins import ExtraParamsFormatter
 from observation_portal.common.configdb import configdb, ConfigDB, ConfigDBException
 from observation_portal.requestgroups.duration_utils import (
-    get_request_duration, get_request_duration_sum, get_total_duration_dict, OVERHEAD_ALLOWANCE,
+    get_request_duration, get_request_duration_sum, get_total_duration_dict,
     get_instrument_configuration_duration, get_semester_in
 )
 from datetime import timedelta
@@ -141,8 +141,7 @@ class ModeValidationHelper(ValidationHelper):
             mode_value = self.get_default_mode()
             if not mode_value:
                 return config_dict
-        if not self.mode_exists(mode_value):
-            return config_dict
+        self.mode_exists_and_is_schedulable(mode_value)
         config_dict = self._set_mode_in_config_dict(mode_value, config_dict)
         mode = configdb.get_mode_with_code(self._instrument_type, mode_value, self._mode_type)
         validation_schema = mode.get('validation_schema', {})
@@ -153,13 +152,15 @@ class ModeValidationHelper(ValidationHelper):
             ))
         return validated_config_dict
 
-    def mode_exists(self, mode_value: str) -> bool:
+    def mode_exists_and_is_schedulable(self, mode_value: str) -> bool:
         if self._modes_group and mode_value:
-            if not mode_value.lower() in [m['code'].lower() for m in self._modes_group['modes']]:
-                raise serializers.ValidationError(_(
-                    f'{self._mode_type.capitalize()} mode {mode_value} is not available for '
-                    f'instrument type {self._instrument_type}'
-                ))
+            for mode in self._modes_group['modes']:
+                if mode['code'].lower() == mode_value.lower() and mode['schedulable']:
+                    return True
+            raise serializers.ValidationError(_(
+                f'{self._mode_type.capitalize()} mode {mode_value} is not available for '
+                f'instrument type {self._instrument_type}'
+            ))
         return True
 
     def get_default_mode(self) -> str:
@@ -325,23 +326,19 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
         request_context = self.context.get('request')
         if request_context:
             is_staff = request_context.user.is_staff
-        if value and value not in configdb.get_instrument_types({}, only_schedulable=(not is_staff)):
+        if value and value not in configdb.get_instrument_type_codes({}, only_schedulable=(not is_staff)):
             raise serializers.ValidationError(
                 _('Invalid instrument type {}. Valid instruments may include: {}').format(
-                    value, ', '.join(configdb.get_instrument_types({}, only_schedulable=(not is_staff)))
+                    value, ', '.join(configdb.get_instrument_type_codes({}, only_schedulable=(not is_staff)))
                 )
             )
         return value
 
-    def configuration_types_with_acquisition_off(self):
-        return ['LAMP_FLAT', 'ARC', 'AUTO_FOCUS', 'BIAS', 'DARK', 'SCRIPT']
-
-    def configuration_types_without_optical_elements(self):
-        return ['BIAS', 'DARK', 'SCRIPT']
-
     def validate(self, data):
         # TODO: Validate the guiding optical elements on the guiding instrument types
         instrument_type = data['instrument_type']
+        configuration_types = configdb.get_configuration_types(instrument_type)
+        data['type'] = data['type'].upper()
         modes = configdb.get_modes_by_type(instrument_type)
         guiding_config = data['guiding_config']
 
@@ -350,7 +347,17 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
         guiding_config = guide_validation_helper.validate(guiding_config)
         data['guiding_config'] = guiding_config
 
-        if data['type'] in self.configuration_types_with_acquisition_off():
+        # Validate the configuration type is available for the instrument requested
+        if data['type'] not in configuration_types.keys():
+            raise serializers.ValidationError(_(
+                f'configuration type {data["type"]} is not valid for instrument type {instrument_type}'
+            ))
+        elif not configuration_types[data['type']]['schedulable']:
+            raise serializers.ValidationError(_(
+                f'configuration type {data["type"]} is not schedulable for instrument type {instrument_type}'
+            ))
+
+        if configuration_types[data['type']]['force_acquisition_off']:
             # These types of observations should only ever be set to guiding mode OFF, but the acquisition modes for
             # spectrographs won't necessarily have that mode. Force OFF here.
             data['acquisition_config']['mode'] = AcquisitionConfig.OFF
@@ -407,10 +414,9 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
                 else:
                     instrument_config['optical_elements'][oe_type] = available_elements[value.lower()]
 
-            # Also check that any optical element group in configdb is specified in the request unless we are a BIAS or
-            # DARK or SCRIPT type observation
-            observation_types_without_oe = self.configuration_types_without_optical_elements()
-            if data['type'].upper() not in observation_types_without_oe:
+            # Also check that any optical element group in configdb is specified in the request unless this configuration type does 
+            # not require optical elements to be set. This will typically be the case for certain configuration types, like BIAS or DARK.
+            if configuration_types[data['type']]['requires_optical_elements']:
                 for oe_type in available_optical_elements.keys():
                     singular_type = oe_type[:-1] if oe_type.endswith('s') else oe_type
                     if singular_type not in instrument_config.get('optical_elements', {}):
@@ -491,12 +497,6 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
                 raise serializers.ValidationError(_(
                     'You may only specify a repeat_duration for REPEAT_* type configurations.'
                 ))
-
-        # Validate the configuration type is available for the instrument requested
-        if data['type'] not in configdb.get_configuration_types(instrument_type):
-            raise serializers.ValidationError(_(
-                f'configuration type {data["type"]} is not valid for instrument type {instrument_type}'
-            ))
 
         return data
 
@@ -623,7 +623,7 @@ class RequestSerializer(serializers.ModelSerializer):
         # TODO: Check if ALL instruments are available at a resource defined by location
         if 'location' in data:
             # Check if the location is fully specified, and if not then use only schedulable instruments
-            valid_instruments = configdb.get_instrument_types(data.get('location', {}),
+            valid_instruments = configdb.get_instrument_type_codes(data.get('location', {}),
                                                               only_schedulable=only_schedulable)
             for configuration in data['configurations']:
                 if configuration['instrument_type'] not in valid_instruments:
@@ -776,6 +776,11 @@ class RequestGroupSerializer(serializers.ModelSerializer):
                 _('You do not belong to the proposal you are trying to submit')
             )
 
+        # Validate that the ipp_value is within the min/max range
+        if 'ipp_value' in data:
+            if data['ipp_value'] < settings.MIN_IPP_VALUE or data['ipp_value'] > settings.MAX_IPP_VALUE:
+                raise serializers.ValidationError(_(f'requestgroups ipp_value must be >= {settings.MIN_IPP_VALUE}, <= {settings.MAX_IPP_VALUE}'))
+
         # validation on the operator matching the number of requests
         if data['operator'] == 'SINGLE':
             if len(data['requests']) > 1:
@@ -845,7 +850,7 @@ class RequestGroupSerializer(serializers.ModelSerializer):
                         _("Proposal {} does not have any {} time left allocated in semester {} on {} instruments").format(
                             data['proposal'], data['observation_type'], tak.semester, tak.instrument_type)
                     )
-                elif time_available * OVERHEAD_ALLOWANCE < (duration / 3600.0):
+                elif time_available * settings.PROPOSAL_TIME_OVERUSE_ALLOWANCE < (duration / 3600.0):
                     raise serializers.ValidationError(
                         _("Proposal {} does not have enough {} time allocated in semester {}").format(
                             data['proposal'], data['observation_type'], tak.semester)
