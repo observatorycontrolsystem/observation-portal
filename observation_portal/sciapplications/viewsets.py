@@ -2,9 +2,10 @@ from rest_framework import viewsets, filters
 from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 from django.template.loader import render_to_string
+from django.conf import settings
+from django.utils.module_loading import import_string
 
 from observation_portal.accounts.tasks import send_mail
-from observation_portal.sciapplications.serializers import ScienceApplicationSerializer, CallSerializer
 from observation_portal.sciapplications.filters import ScienceApplicationFilter, CallFilter
 from observation_portal.sciapplications.models import ScienceApplication, Call
 
@@ -12,7 +13,7 @@ from observation_portal.sciapplications.models import ScienceApplication, Call
 class CallViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = (IsAuthenticated,)
     filter_class = CallFilter
-    serializer_class = CallSerializer
+    serializer_class = import_string(settings.SERIALIZERS['sciapplications']['Call'])
     filter_backends = (
         filters.OrderingFilter,
         DjangoFilterBackend
@@ -28,7 +29,7 @@ class CallViewSet(viewsets.ReadOnlyModelViewSet):
 class ScienceApplicationViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated, )
     filter_class = ScienceApplicationFilter
-    serializer_class = ScienceApplicationSerializer
+    serializer_class = import_string(settings.SERIALIZERS['sciapplications']['ScienceApplication'])
     http_method_names = ('get', 'head', 'options', 'post', 'put', 'delete')
     filter_backends = (
         filters.OrderingFilter,
@@ -71,10 +72,13 @@ def send_email_if_ddt_submission(science_application):
     is_submitted = science_application.status == ScienceApplication.SUBMITTED
     is_ddt = science_application.call.proposal_type == Call.DDT_PROPOSAL
     if is_submitted and is_ddt:
-        message = render_to_string('sciapplications/ddt_submitted.txt', {'ddt': science_application})
+        message = render_to_string('sciapplications/ddt_submitted.txt', {
+            'ddt': science_application,
+            'detail_url': settings.SCIENCE_APPLICATION_DETAIL_URL.format(sciapp_id=science_application.id)
+        })
         send_mail.send(
-            'LCO Director\'s Discretionary Time Submission',
+            f'{settings.ORGANIZATION_NAME} Director\'s Discretionary Time Submission',
             message,
-            'portal@lco.global',
-            [science_application.submitter.email, 'ddt@lco.global']
+            settings.ORGANIZATION_EMAIL,
+            [science_application.submitter.email, settings.ORGANIZATION_DDT_EMAIL]
         )

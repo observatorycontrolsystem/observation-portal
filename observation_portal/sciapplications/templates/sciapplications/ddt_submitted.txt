@@ -8,8 +8,7 @@ You will be contacted in due course once we have reached a decision.
 
 You may view your proposal here:
 
-https://observe.lco.global{{ ddt.get_absolute_url }}
+{{ detail_url }}
 
 Warm Regards,
-Lisa Storrie-Lombardi
-Director, LCO
+{{ organization_name }} Director

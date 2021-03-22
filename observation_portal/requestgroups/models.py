@@ -79,7 +79,7 @@ class RequestGroup(models.Model):
                   'and MANY if you have more than one.'
     )
     ipp_value = models.FloatField(
-        validators=[MinValueValidator(0.5), MaxValueValidator(2.0)],
+        validators=[MinValueValidator(0.0)],
         help_text='A multiplier to the base priority of the Proposal for this RequestGroup and all child Requests. '
                   'A value > 1.0 will raise the priority and debit the Proposal ipp_time_available upon submission. '
                   'If a Request does not complete, the time debited for that Request is returned. A value < 1.0 will '
@@ -411,7 +411,8 @@ class Configuration(models.Model):
 
     @cached_property
     def duration(self):
-        return get_configuration_duration(self.as_dict())['duration']
+        request_overheads = configdb.get_request_overheads(self.instrument_type)
+        return get_configuration_duration(self.as_dict(), request_overheads)['duration']
 
 
 class Target(models.Model):

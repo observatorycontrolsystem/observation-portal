@@ -3,11 +3,11 @@ from django.utils import timezone
 from django.core.cache import cache
 from django.db import transaction
 from django.utils.translation import ugettext as _
+from django.utils.module_loading import import_string
+from django.conf import settings
 
 from observation_portal.common.configdb import configdb
 from observation_portal.observations.models import Observation, ConfigurationStatus, Summary
-from observation_portal.requestgroups.serializers import (RequestSerializer, RequestGroupSerializer,
-                                                          ConfigurationSerializer, TargetSerializer)
 from observation_portal.requestgroups.models import RequestGroup, AcquisitionConfig, GuidingConfig, Target
 from observation_portal.proposals.models import Proposal
 
@@ -26,7 +26,7 @@ class SummarySerializer(serializers.ModelSerializer):
 
 class ConfigurationStatusSerializer(serializers.ModelSerializer):
     TERMINAL_STATES = ['COMPLETED', 'ABORTED', 'FAILED', 'NOT_ATTEMPTED']
-    summary = SummarySerializer(required=False)
+    summary = import_string(settings.SERIALIZERS['observations']['Summary'])(required=False)
     instrument_name = serializers.CharField(required=False)
     guide_camera_name = serializers.CharField(required=False)
     end = serializers.DateTimeField(required=False)
@@ -57,7 +57,7 @@ class ConfigurationStatusSerializer(serializers.ModelSerializer):
             instance.save(update_fields=update_fields)
 
         if 'summary' in validated_data:
-            summary_serializer = SummarySerializer(data=validated_data['summary'])
+            summary_serializer = import_string(settings.SERIALIZERS['observations']['Summary'])(data=validated_data['summary'])
             if summary_serializer.is_valid(raise_exception=True):
                 summary = validated_data.get('summary')
                 Summary.objects.update_or_create(
@@ -89,10 +89,10 @@ class ObservationTargetSerializer(serializers.ModelSerializer):
         return {k: v for k, v in data.items() if v is not None}
 
 
-class ObservationConfigurationSerializer(ConfigurationSerializer):
+class ObservationConfigurationSerializer(import_string(settings.SERIALIZERS['requestgroups']['Configuration'])):
     instrument_name = serializers.CharField(required=False, write_only=True)
     guide_camera_name = serializers.CharField(required=False, write_only=True)
-    target = ObservationTargetSerializer()
+    target = import_string(settings.SERIALIZERS['observations']['Target'])()
 
     def validate_instrument_type(self, value):
         # Check with ALL instrument type instead of just schedulable ones
@@ -106,14 +106,14 @@ class ObservationConfigurationSerializer(ConfigurationSerializer):
         # validated_data = super().validate(data)
         validated_data = data
         if validated_data['type'] not in ['BIAS', 'DARK', 'SKY_FLAT', 'NRES_BIAS', 'NRES_DARK']:
-            target_serializer = TargetSerializer(data=validated_data['target'])
+            target_serializer = import_string(settings.SERIALIZERS['requestgroups']['Target'])(data=validated_data['target'])
             if not target_serializer.is_valid():
                 raise serializers.ValidationError(target_serializer.errors)
         return validated_data
 
 
-class ObserveRequestSerializer(RequestSerializer):
-    configurations = ObservationConfigurationSerializer(many=True)
+class ObserveRequestSerializer(import_string(settings.SERIALIZERS['requestgroups']['Request'])):
+    configurations = import_string(settings.SERIALIZERS['observations']['Configuration'])(many=True)
     windows = None
     location = None
 
@@ -127,8 +127,8 @@ class ObserveRequestSerializer(RequestSerializer):
         return data
 
 
-class ObserveRequestGroupSerializer(RequestGroupSerializer):
-    request = ObserveRequestSerializer()
+class ObserveRequestGroupSerializer(import_string(settings.SERIALIZERS['requestgroups']['RequestGroup'])):
+    request = import_string(settings.SERIALIZERS['observations']['Request'])()
     requests = None
 
     def validate(self, data):
@@ -140,8 +140,8 @@ class ObserveRequestGroupSerializer(RequestGroupSerializer):
 
 class ScheduleSerializer(serializers.ModelSerializer):
     """ Used to validate direct-submitted observations """
-    configuration_statuses = ConfigurationStatusSerializer(many=True, read_only=True)
-    request = ObserveRequestSerializer()
+    configuration_statuses = import_string(settings.SERIALIZERS['observations']['ConfigurationStatus'])(many=True, read_only=True)
+    request = import_string(settings.SERIALIZERS['observations']['Request'])()
     proposal = serializers.CharField(write_only=True)
     name = serializers.CharField(write_only=True)
     site = serializers.ChoiceField(choices=configdb.get_site_tuples())
@@ -253,7 +253,7 @@ class ScheduleSerializer(serializers.ModelSerializer):
             del configuration['guide_camera_name']
 
         with transaction.atomic():
-            rgs = ObserveRequestGroupSerializer(data=validated_data, context=self.context)
+            rgs = import_string(settings.SERIALIZERS['observations']['RequestGroup'])(data=validated_data, context=self.context)
             rgs.is_valid(True)
             rg = rgs.save()
 
@@ -293,7 +293,7 @@ class ScheduleSerializer(serializers.ModelSerializer):
 
 
 class ObservationSerializer(serializers.ModelSerializer):
-    configuration_statuses = ConfigurationStatusSerializer(many=True)
+    configuration_statuses = import_string(settings.SERIALIZERS['observations']['ConfigurationStatus'])(many=True)
 
     class Meta:
         model = Observation

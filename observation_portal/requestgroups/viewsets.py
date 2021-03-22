@@ -9,16 +9,16 @@ from django.db.models import Prefetch
 from django_filters.rest_framework import DjangoFilterBackend
 from dateutil.parser import parse
 from django.contrib.auth.models import User
+from django.utils.module_loading import import_string
+from django.conf import settings
 
 from observation_portal.proposals.models import Proposal, Semester, TimeAllocation
 from observation_portal.requestgroups.models import (RequestGroup, Request, DraftRequestGroup, InstrumentConfig,
                                                      Configuration)
 from observation_portal.requestgroups.filters import RequestGroupFilter, RequestFilter
 from observation_portal.requestgroups.cadence import expand_cadence_request
-from observation_portal.requestgroups.serializers import RequestSerializer, RequestGroupSerializer
-from observation_portal.requestgroups.serializers import DraftRequestGroupSerializer, CadenceRequestSerializer
 from observation_portal.requestgroups.duration_utils import (
-    get_request_duration_dict, get_max_ipp_for_requestgroup, OVERHEAD_ALLOWANCE
+    get_request_duration_dict, get_max_ipp_for_requestgroup
 )
 from observation_portal.common.state_changes import InvalidStateChange, TERMINAL_REQUEST_STATES
 from observation_portal.requestgroups.request_utils import (
@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
     permission_classes = (IsAuthenticatedOrReadOnly,)
     http_method_names = ['get', 'post', 'head', 'options']
-    serializer_class = RequestGroupSerializer
+    serializer_class = import_string(settings.SERIALIZERS['requestgroups']['RequestGroup'])
     filter_class = RequestGroupFilter
     filter_backends = (
         filters.OrderingFilter,
@@ -132,7 +132,7 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
                         request_group.observation_type)
                     )
                     continue
-                if time_left * OVERHEAD_ALLOWANCE >= (duration / 3600.0):
+                if time_left * settings.PROPOSAL_TIME_OVERUSE_ALLOWANCE >= (duration / 3600.0):
                     request_group_dict = request_group.as_dict()
                     request_group_dict['is_staff'] = request_group.submitter.is_staff
                     request_group_data.append(request_group_dict)
@@ -153,11 +153,11 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
             request_group.save()
         except InvalidStateChange as exc:
             return Response({'errors': [str(exc)]}, status=400)
-        return Response(RequestGroupSerializer(request_group).data)
+        return Response(import_string(settings.SERIALIZERS['requestgroups']['RequestGroup'])(request_group).data)
 
     @list_route(methods=['post'])
     def validate(self, request):
-        serializer = RequestGroupSerializer(data=request.data, context={'request': request})
+        serializer = import_string(settings.SERIALIZERS['requestgroups']['RequestGroup'])(data=request.data, context={'request': request})
         req_durations = {}
         if serializer.is_valid():
             req_durations = get_request_duration_dict(serializer.validated_data['requests'], request.user.is_staff)
@@ -172,7 +172,7 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
     def max_allowable_ipp(self, request):
         # change requested ipp to 1 because we want it to always pass the serializers ipp check
         request.data['ipp_value'] = 1.0
-        serializer = RequestGroupSerializer(data=request.data, context={'request': request})
+        serializer = import_string(settings.SERIALIZERS['requestgroups']['RequestGroup'])(data=request.data, context={'request': request})
         if serializer.is_valid():
             ipp_dict = get_max_ipp_for_requestgroup(serializer.validated_data)
             return Response(ipp_dict)
@@ -184,7 +184,7 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
         expanded_requests = []
         for req in request.data.get('requests', []):
             if isinstance(req, dict) and req.get('cadence'):
-                cadence_request_serializer = CadenceRequestSerializer(data=req)
+                cadence_request_serializer = import_string(settings.SERIALIZERS['requestgroups']['CadenceRequest'])(data=req)
                 if cadence_request_serializer.is_valid():
                     expanded_requests.extend(expand_cadence_request(cadence_request_serializer.validated_data,
                                                                     request.user.is_staff))
@@ -203,7 +203,7 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
 
         if len(ret_data['requests']) > 1:
             ret_data['operator'] = 'MANY'
-        request_group_serializer = RequestGroupSerializer(data=ret_data, context={'request': request})
+        request_group_serializer = import_string(settings.SERIALIZERS['requestgroups']['RequestGroup'])(data=ret_data, context={'request': request})
         if not request_group_serializer.is_valid():
             return Response(request_group_serializer.errors, status=400)
         return Response(ret_data)
@@ -211,7 +211,7 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
 
 class RequestViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
     permission_classes = (IsAuthenticatedOrReadOnly,)
-    serializer_class = RequestSerializer
+    serializer_class = import_string(settings.SERIALIZERS['requestgroups']['Request'])
     filter_class = RequestFilter
     filter_backends = (
         filters.OrderingFilter,
@@ -255,7 +255,7 @@ class RequestViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
 
 
 class DraftRequestGroupViewSet(viewsets.ModelViewSet):
-    serializer_class = DraftRequestGroupSerializer
+    serializer_class = import_string(settings.SERIALIZERS['requestgroups']['DraftRequestGroup'])
     ordering = ('-modified',)
 
     def perform_create(self, serializer):
