@@ -4,20 +4,18 @@ from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils.translation import ugettext as _
+from django.utils.module_loading import import_string
+from django.conf import settings
 
 from observation_portal.accounts.permissions import IsPrincipleInvestigator
 from observation_portal.common.mixins import ListAsDictMixin, DetailAsDictMixin
 from observation_portal.proposals.filters import SemesterFilter, ProposalFilter, MembershipFilter, ProposalInviteFilter
 from observation_portal.proposals.models import Proposal, Semester, ProposalNotification, Membership, ProposalInvite
-from observation_portal.proposals.serializers import (
-    ProposalSerializer, SemesterSerialzer, ProposalNotificationSerializer, TimeLimitSerializer,
-    ProposalInviteSerializer, MembershipSerializer
-)
 
 
 class ProposalViewSet(DetailAsDictMixin, ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
     permission_classes = (IsAuthenticated,)
-    serializer_class = ProposalSerializer
+    serializer_class = import_string(settings.SERIALIZERS['proposals']['Proposal'])
     filter_class = ProposalFilter
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
     ordering = ('-id',)
@@ -35,7 +33,7 @@ class ProposalViewSet(DetailAsDictMixin, ListAsDictMixin, viewsets.ReadOnlyModel
     @action(detail=True, methods=['post'])
     def notification(self, request, pk=None):
         proposal = self.get_object()
-        serializer = ProposalNotificationSerializer(data=request.data)
+        serializer = import_string(settings.SERIALIZERS['proposals']['ProposalNotification'])(data=request.data)
         if serializer.is_valid():
             if serializer.validated_data['enabled']:
                 ProposalNotification.objects.get_or_create(user=request.user, proposal=proposal)
@@ -48,7 +46,7 @@ class ProposalViewSet(DetailAsDictMixin, ListAsDictMixin, viewsets.ReadOnlyModel
     @action(detail=True, methods=['post'], permission_classes=(IsPrincipleInvestigator,))
     def invite(self, request, pk=None):
         proposal = self.get_object()
-        serializer = ProposalInviteSerializer(
+        serializer = import_string(settings.SERIALIZERS['proposals']['ProposalInvite'])(
             data=request.data,
             context={'user': self.request.user, 'proposal': proposal}
         )
@@ -61,7 +59,7 @@ class ProposalViewSet(DetailAsDictMixin, ListAsDictMixin, viewsets.ReadOnlyModel
     @action(detail=True, methods=['post'], permission_classes=(IsPrincipleInvestigator,))
     def globallimit(self, request, pk=None):
         proposal = self.get_object()
-        serializer = TimeLimitSerializer(data=request.data)
+        serializer = import_string(settings.SERIALIZERS['proposals']['TimeLimit'])(data=request.data)
         if serializer.is_valid():
             time_limit_hours = serializer.validated_data['time_limit_hours']
             proposal.membership_set.filter(role=Membership.CI).update(time_limit=time_limit_hours * 3600)
@@ -72,7 +70,7 @@ class ProposalViewSet(DetailAsDictMixin, ListAsDictMixin, viewsets.ReadOnlyModel
 
 class SemesterViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = (AllowAny,)
-    serializer_class = SemesterSerialzer
+    serializer_class = import_string(settings.SERIALIZERS['proposals']['Semester'])
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
     filter_class = SemesterFilter
     ordering = ('-start',)
@@ -136,7 +134,7 @@ class MembershipViewSet(ListAsDictMixin, DetailAsDictMixin, mixins.DestroyModelM
     http_method_names = ('get', 'head', 'options', 'post', 'delete')
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
     filter_class = MembershipFilter
-    serializer_class = MembershipSerializer
+    serializer_class = import_string(settings.SERIALIZERS['proposals']['Membership'])
 
     def get_queryset(self):
         if self.request.user.is_staff and self.request.user.profile.staff_view:
@@ -163,7 +161,7 @@ class MembershipViewSet(ListAsDictMixin, DetailAsDictMixin, mixins.DestroyModelM
     @action(detail=True, methods=['post'])
     def limit(self, request, pk=None):
         membership = self.get_object()
-        serializer = TimeLimitSerializer(data=request.data, context={'membership': membership})
+        serializer = import_string(settings.SERIALIZERS['proposals']['TimeLimit'])(data=request.data, context={'membership': membership})
         if serializer.is_valid():
             time_limit_hours = serializer.validated_data['time_limit_hours']
             membership.time_limit = time_limit_hours * 3600
@@ -185,7 +183,7 @@ class ProposalInviteViewSet(mixins.DestroyModelMixin, viewsets.ReadOnlyModelView
     http_method_names = ('get', 'head', 'options', 'delete')
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
     filter_class = ProposalInviteFilter
-    serializer_class = ProposalInviteSerializer
+    serializer_class = import_string(settings.SERIALIZERS['proposals']['ProposalInvite'])
 
     def get_queryset(self):
         if self.request.user.is_staff and self.request.user.profile.staff_view:

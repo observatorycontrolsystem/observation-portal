@@ -7,4 +7,4 @@ Data may be downloaded here:
 {% endif %}
 Thank you,
 
-Lco.global
+{{ organization_name }}

@@ -1,10 +1,11 @@
 from observation_portal.settings import *  # noqa
 import logging
+import os
 
 # Settings specific to running tests. Using sqlite will run tests 100% in memory.
 # https://docs.djangoproject.com/en/dev/internals/contributing/writing-code/unit-tests/#using-another-settings-module
 # This file should be automatically used during tests, but you can manually specify as well:
-# ./manage.py --settings=valhalla.test_settings
+# ./manage.py --settings=observation_portal.test_settings
 
 logging.disable(logging.CRITICAL)
 PASSWORD_HASHERS = (
@@ -13,9 +14,15 @@ PASSWORD_HASHERS = (
 DEBUG = False
 TEMPLATE_DEBUG = False
 
-ELASTICSEARCH_URL = os.getenv('ELASTICSEARCH_URL', 'http://elasticsearchdevfake.lco.gtn')
-CONFIGDB_URL = os.getenv('CONFIGDB_URL', 'http://configdbfake.lco.gtn')
-DOWNTIMEDB_URL = os.getenv('DOWNTIMEDB_URL', 'http://downtimedbfake.lco.gtn')
+ORGANIZATION_NAME = 'Test Org'
+ORGANIZATION_EMAIL = 'test@example.com'
+ORGANIZATION_DDT_EMAIL = 'test@example.com'
+ORGANIZATION_SUPPORT_EMAIL = 'test@example.com'
+ORGANIZATION_ADMIN_EMAIL = 'test@example.com'
+
+ELASTICSEARCH_URL = os.getenv('ELASTICSEARCH_URL', 'http://elasticsearchdevfake')
+CONFIGDB_URL = os.getenv('CONFIGDB_URL', 'http://configdbfake')
+DOWNTIMEDB_URL = os.getenv('DOWNTIMEDB_URL', 'http://downtimedbfake')
 
 CACHES = {
     'default': {

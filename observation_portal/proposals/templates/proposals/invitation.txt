@@ -1,13 +1,13 @@
 Hello,
 
-You have been invited to join the {{ proposal }} proposal at LCO.global.
+You have been invited to join the {{ proposal }} proposal at {{ organization_name }}.
 
 Please use the following link to register your account:
 
-https://observe.lco.global{{ url }}
+{{ observation_portal_base_url }}{{ url }}
 
 You will be automatically assigned to the proposal once you have signed in.
 
 Thank you,
 
-LCO.global
+{{ organization_name }}

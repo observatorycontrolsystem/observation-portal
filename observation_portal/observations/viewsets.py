@@ -5,12 +5,12 @@ from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
 from django.core.cache import cache
 from django.utils import timezone
+from django.utils.module_loading import import_string
+from django.conf import settings
 from django_filters.rest_framework import DjangoFilterBackend
 
 from observation_portal.requestgroups.models import RequestGroup
 from observation_portal.observations.models import Observation, ConfigurationStatus
-from observation_portal.observations.serializers import (ObservationSerializer, ConfigurationStatusSerializer,
-                                                         ScheduleSerializer, CancelObservationsSerializer)
 from observation_portal.observations.filters import ObservationFilter, ConfigurationStatusFilter
 from observation_portal.common.mixins import ListAsDictMixin, CreateListModelMixin
 from observation_portal.accounts.permissions import IsAdminOrReadOnly, IsDirectUser
@@ -39,7 +39,7 @@ def observations_queryset(request):
 class ScheduleViewSet(ListAsDictMixin, CreateListModelMixin, viewsets.ModelViewSet):
     permission_classes = (IsAdminOrReadOnly | IsDirectUser,)
     http_method_names = ['get', 'post', 'head', 'options']
-    serializer_class = ScheduleSerializer
+    serializer_class = import_string(settings.SERIALIZERS['observations']['Schedule'])
     filter_class = ObservationFilter
     filter_backends = (
         filters.OrderingFilter,
@@ -58,7 +58,7 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
     permission_classes = (IsAdminOrReadOnly | IsDirectUser,)
     http_method_names = ['get', 'post', 'head', 'options', 'patch']
     filter_class = ObservationFilter
-    serializer_class = ObservationSerializer
+    serializer_class = import_string(settings.SERIALIZERS['observations']['Observation'])
     filter_backends = (
         filters.OrderingFilter,
         DjangoFilterBackend
@@ -90,7 +90,7 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
         :param request:
         :return:
         """
-        cancel_serializer = CancelObservationsSerializer(data=request.data)
+        cancel_serializer = import_string(settings.SERIALIZERS['observations']['Cancel'])(data=request.data)
         if cancel_serializer.is_valid():
             observations = self.get_queryset()
             if 'ids' in cancel_serializer.data:
@@ -160,7 +160,7 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
 class ConfigurationStatusViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAdminUser,)
     http_method_names = ['get', 'patch']
-    serializer_class = ConfigurationStatusSerializer
+    serializer_class = import_string(settings.SERIALIZERS['observations']['ConfigurationStatus'])
     filter_class = ConfigurationStatusFilter
     filter_backends = (
         filters.OrderingFilter,

@@ -9,27 +9,6 @@ from observation_portal.common.telescope_states import TelescopeStates, filter_t
 from observation_portal.common.rise_set_utils import get_rise_set_target, get_filtered_rise_set_intervals_by_site
 from observation_portal.requestgroups.target_helpers import TARGET_TYPE_HELPER_MAP
 
-# TODO: Use configuration types from configdb
-
-MOLECULE_TYPE_DISPLAY = {
-    'EXPOSE': 'Imaging',
-    'REPEAT_EXPOSE': 'Repeat Imaging',
-    'SKY_FLAT': 'Sky Flat',
-    'STANDARD': 'Standard',
-    'ARC': 'Arc',
-    'LAMP_FLAT': 'Lamp Flat',
-    'SPECTRUM': 'Spectrum',
-    'REPEAT_SPECTRUM': 'Repeat Spectrum',
-    'AUTO_FOCUS': 'Auto Focus',
-    'TRIPLE': 'Triple',
-    'NRES_TEST': 'NRES Test',
-    'NRES_SPECTRUM': 'NRES Spectrum',
-    'REPEAT_NRES_SPECTRUM': 'Repeat NRES Spectrum',
-    'NRES_EXPOSE': 'NRES Expose',
-    'ENGINEERING': 'Engineering',
-    'SCRIPT': 'Script'
-}
-
 
 def get_telescope_states_for_request(request_dict, is_staff=False):
     # TODO: update to support multiple instruments in a list

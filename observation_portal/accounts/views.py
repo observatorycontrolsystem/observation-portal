@@ -1,5 +1,7 @@
 from django.utils import timezone
 from django.contrib.auth.models import User
+from django.utils.module_loading import import_string
+from django.conf import settings
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
@@ -8,11 +10,10 @@ from rest_framework.response import Response
 
 from observation_portal.accounts.models import Profile
 from observation_portal.accounts.tasks import send_mail
-from observation_portal.accounts.serializers import UserSerializer, AccountRemovalSerializer
 
 
 class ProfileApiView(RetrieveUpdateAPIView):
-    serializer_class = UserSerializer
+    serializer_class = import_string(settings.SERIALIZERS['accounts']['User'])
     permission_classes = [IsAuthenticated]
 
     def get_object(self):
@@ -52,13 +53,13 @@ class AccountRemovalRequestApiView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        serializer = AccountRemovalSerializer(data=request.data)
+        serializer = import_string(settings.SERIALIZERS['accounts']['AccountRemoval'])(data=request.data)
         if serializer.is_valid():
             message = 'User {0} would like their account removed.\nReason:\n {1}'.format(
                 request.user.email, serializer.validated_data['reason']
             )
             send_mail.send(
-                'Account removal request submitted', message, 'portal@lco.global', ['science-support@lco.global']
+                'Account removal request submitted', message, settings.ORGANIZATION_EMAIL, [settings.ORGANIZATION_SUPPORT_EMAIL]
             )
             return Response({'message': 'Account removal request successfully submitted.'})
         else:
