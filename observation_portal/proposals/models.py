@@ -162,7 +162,8 @@ class Proposal(models.Model):
                 'proposals/timeallocationreminder.html',
                 {
                     'proposal': self,
-                    'allocations': self.timeallocation_set.filter(semester=self.current_semester)
+                    'allocations': self.timeallocation_set.filter(semester=self.current_semester),
+                    'organization_name': settings.ORGANIZATION_NAME
                 }
             )
             plain_message = strip_tags(message)
