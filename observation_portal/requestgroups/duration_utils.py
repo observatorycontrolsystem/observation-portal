@@ -200,7 +200,7 @@ def get_complete_configurations_duration(configurations_list, start_time, priori
             # Certain Configuration Types for certain Instrument Types will have a non-zero config_change_overhead.
             # For instance, this could account for Lamp startup times when first switching to an ARC or LAMP_FLAT configuration.
             if previous_conf_type != configuration_dict['type']:
-                duration += configuration_types[configuration_dict['type']]['config_change_overhead']
+                duration += configuration_types.get(configuration_dict['type'], {}).get('config_change_overhead', 0.0)
             previous_conf_type = configuration_dict['type']
         else:
             previous_conf_type = configuration_dict['type']

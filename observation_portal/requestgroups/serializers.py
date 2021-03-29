@@ -221,7 +221,6 @@ class RegionOfInterestSerializer(serializers.ModelSerializer):
 
 
 class InstrumentConfigSerializer(ExtraParamsFormatter, serializers.ModelSerializer):
-    exposure_time = serializers.FloatField(required=False, allow_null=True)
     rois = import_string(settings.SERIALIZERS['requestgroups']['RegionOfInterest'])(many=True, required=False)
 
     class Meta:
@@ -330,11 +329,6 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
             )
         return value
 
-    def instrument_type_requires_exp_time(self, instrument_type):
-        # for use in overriding the serializer to require exposure time to be set in certain
-        # instrument types. Default is to require it set for all instrument types.
-        return True
-
     def validate(self, data):
         # TODO: Validate the guiding optical elements on the guiding instrument types
         instrument_type = data['instrument_type']
@@ -353,12 +347,12 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
             raise serializers.ValidationError(_(
                 f'configuration type {data["type"]} is not valid for instrument type {instrument_type}'
             ))
-        elif not configuration_types[data['type']]['schedulable']:
+        elif not configuration_types.get(data['type'], {}).get('schedulable', False):
             raise serializers.ValidationError(_(
                 f'configuration type {data["type"]} is not schedulable for instrument type {instrument_type}'
             ))
 
-        if configuration_types[data['type']]['force_acquisition_off']:
+        if configuration_types.get(data['type'], {}).get('force_acquisition_off', False):
             # These types of observations should only ever be set to guiding mode OFF, but the acquisition modes for
             # spectrographs won't necessarily have that mode. Force OFF here.
             data['acquisition_config']['mode'] = AcquisitionConfig.OFF
@@ -417,7 +411,7 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
 
             # Also check that any optical element group in configdb is specified in the request unless this configuration type does
             # not require optical elements to be set. This will typically be the case for certain configuration types, like BIAS or DARK.
-            if configuration_types[data['type']]['requires_optical_elements']:
+            if configuration_types.get(data['type'], {}).get('requires_optical_elements', True):
                 for oe_type in available_optical_elements.keys():
                     singular_type = oe_type[:-1] if oe_type.endswith('s') else oe_type
                     if singular_type not in instrument_config.get('optical_elements', {}):
@@ -464,14 +458,6 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
                 )
                 instrument_config = exposure_mode_validation_helper.validate(instrument_config)
                 data['instrument_configs'][i] = instrument_config
-
-            if self.instrument_type_requires_exp_time(instrument_type):
-                if instrument_config.get('exposure_time', None) is None:
-                    raise serializers.ValidationError({'instrument_configs': [{'exposure_time': [_('This value cannot be null.')]}]})
-                if isnan(instrument_config.get('exposure_time')):
-                    raise serializers.ValidationError({'instrument_configs': [{'exposure_time': [_('A valid number is required.')]}]})
-                if instrument_config['exposure_time'] < 0:
-                    raise serializers.ValidationError({'instrument_configs': [{'exposure_time': [_('This value cannot be negative.')]}]})
 
         if data['type'] == 'SCRIPT':
             if (
