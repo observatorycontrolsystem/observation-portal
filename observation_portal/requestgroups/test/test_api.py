@@ -1412,13 +1412,6 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('exposure_time', str(response.content))
 
-    def test_must_have_non_nan_exposure_time(self):
-        bad_data = self.generic_payload.copy()
-        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['exposure_time'] = 'nan'
-        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn('exposure_time', str(response.content))
-
     def test_bad_defocus_values_must_not_be_submitted(self):
         bad_data = self.generic_payload.copy()
         bad_values = ['2mm', '', 5.1, -6.5]
