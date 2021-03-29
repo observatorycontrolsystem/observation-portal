@@ -227,11 +227,6 @@ class InstrumentConfigSerializer(ExtraParamsFormatter, serializers.ModelSerializ
         model = InstrumentConfig
         exclude = InstrumentConfig.SERIALIZER_EXCLUDE
 
-    def validate_exposure_time(self, value):
-        if isnan(value):
-            raise serializers.ValidationError(_('NaN is not a valid exposure time.'))
-        return value
-
     def validate(self, data):
         if 'bin_x' in data and not 'bin_y' in data:
             data['bin_y'] = data['bin_x']
@@ -352,12 +347,12 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
             raise serializers.ValidationError(_(
                 f'configuration type {data["type"]} is not valid for instrument type {instrument_type}'
             ))
-        elif not configuration_types[data['type']]['schedulable']:
+        elif not configuration_types.get(data['type'], {}).get('schedulable', False):
             raise serializers.ValidationError(_(
                 f'configuration type {data["type"]} is not schedulable for instrument type {instrument_type}'
             ))
 
-        if configuration_types[data['type']]['force_acquisition_off']:
+        if configuration_types.get(data['type'], {}).get('force_acquisition_off', False):
             # These types of observations should only ever be set to guiding mode OFF, but the acquisition modes for
             # spectrographs won't necessarily have that mode. Force OFF here.
             data['acquisition_config']['mode'] = AcquisitionConfig.OFF
@@ -416,7 +411,7 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
 
             # Also check that any optical element group in configdb is specified in the request unless this configuration type does
             # not require optical elements to be set. This will typically be the case for certain configuration types, like BIAS or DARK.
-            if configuration_types[data['type']]['requires_optical_elements']:
+            if configuration_types.get(data['type'], {}).get('requires_optical_elements', True):
                 for oe_type in available_optical_elements.keys():
                     singular_type = oe_type[:-1] if oe_type.endswith('s') else oe_type
                     if singular_type not in instrument_config.get('optical_elements', {}):
@@ -463,7 +458,6 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
                 )
                 instrument_config = exposure_mode_validation_helper.validate(instrument_config)
                 data['instrument_configs'][i] = instrument_config
-
 
         if data['type'] == 'SCRIPT':
             if (
