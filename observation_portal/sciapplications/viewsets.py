@@ -74,7 +74,8 @@ def send_email_if_ddt_submission(science_application):
     if is_submitted and is_ddt:
         message = render_to_string('sciapplications/ddt_submitted.txt', {
             'ddt': science_application,
-            'detail_url': settings.SCIENCE_APPLICATION_DETAIL_URL.format(sciapp_id=science_application.id)
+            'detail_url': settings.SCIENCE_APPLICATION_DETAIL_URL.format(sciapp_id=science_application.id),
+            'organization_name': settings.ORGANIZATION_NAME
         })
         send_mail.send(
             f'{settings.ORGANIZATION_NAME} Director\'s Discretionary Time Submission',
