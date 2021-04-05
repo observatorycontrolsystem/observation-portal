@@ -6,9 +6,9 @@ class RequestGroupFilter(django_filters.FilterSet):
     created_after = django_filters.DateTimeFilter(field_name='created', lookup_expr='gte', label='Submitted after')
     created_before = django_filters.DateTimeFilter(field_name='created', lookup_expr='lte', label='Submitted before')
     name = django_filters.CharFilter(field_name='name', lookup_expr='icontains', label='Name contains')
-    state = django_filters.ChoiceFilter(choices=RequestGroup.STATE_CHOICES)
+    state = django_filters.MultipleChoiceFilter(choices=RequestGroup.STATE_CHOICES)
     user = django_filters.CharFilter(field_name='submitter__username', lookup_expr='icontains', label='Username contains')
-    exclude_state = django_filters.ChoiceFilter(field_name='state', choices=RequestGroup.STATE_CHOICES, label='Exclude State', exclude=True)
+    exclude_state = django_filters.MultipleChoiceFilter(field_name='state', choices=RequestGroup.STATE_CHOICES, label='Exclude State', exclude=True)
     # TODO: Fill in telescope_class choices from configdb
     # telescope_class = django_filters.ChoiceFilter(
     #     choices=Location.TELESCOPE_CLASSES, field_name='requests__location__telescope_class', distinct=True,
