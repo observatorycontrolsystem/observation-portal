@@ -2339,13 +2339,13 @@ class TestSchedulableRequestsApi(SetTimeMixin, APITestCase):
         # Now get the requests filtered by each telescope_class and ensure its filtered properly
         rg_ids_numbers_1m0 = [rg.id for rg in self.rgs]        
         rg_ids_numbers_2m0 = [rg.id for rg in rgs_2m0]
-        response_1m0 = self.client.get(reverse('api:request_groups-schedulable-requests') + '?telescope_classes=1m0')
+        response_1m0 = self.client.get(reverse('api:request_groups-schedulable-requests') + '?telescope_class=1m0')
         self.assertEqual(response_1m0.status_code, 200)
         self.assertEqual(len(response_1m0.json()), 10)
         for rg in response_1m0.json():
             self.assertIn(rg['id'], rg_ids_numbers_1m0)
 
-        response_2m0 = self.client.get(reverse('api:request_groups-schedulable-requests') + '?telescope_classes=2m0')
+        response_2m0 = self.client.get(reverse('api:request_groups-schedulable-requests') + '?telescope_class=2m0')
         self.assertEqual(response_2m0.status_code, 200)
         self.assertEqual(len(response_2m0.json()), 3)
         for rg in response_2m0.json():
@@ -2359,7 +2359,7 @@ class TestSchedulableRequestsApi(SetTimeMixin, APITestCase):
             self.assertIn(rg['id'], combined_rg_ids)
 
         # Specify both telescope classes and ensure multi-select works as well
-        response_both_filter = self.client.get(reverse('api:request_groups-schedulable-requests') + '?telescope_classes=2m0,1m0')
+        response_both_filter = self.client.get(reverse('api:request_groups-schedulable-requests') + '?telescope_class=2m0&telescope_class=1m0')
         self.assertEqual(response_both_filter.status_code, 200)
         self.assertEqual(len(response_both_filter.json()), 13)
         for rg in response_both_filter.json():

@@ -77,9 +77,7 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
         current_semester = Semester.current_semesters().first()
         start = parse(request.query_params.get('start', str(current_semester.start))).replace(tzinfo=timezone.utc)
         end = parse(request.query_params.get('end', str(current_semester.end))).replace(tzinfo=timezone.utc)
-        telescope_classes = request.query_params.get('telescope_classes')
-        if telescope_classes:
-            telescope_classes = telescope_classes.split(',')
+        telescope_classes = request.query_params.getlist('telescope_class')
         # Schedulable requests are not in a terminal state, are part of an active proposal,
         # and have a window within this semester
         instrument_config_query = InstrumentConfig.objects.prefetch_related('rois')
