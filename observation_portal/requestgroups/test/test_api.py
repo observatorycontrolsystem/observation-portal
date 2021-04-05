@@ -2358,6 +2358,13 @@ class TestSchedulableRequestsApi(SetTimeMixin, APITestCase):
         for rg in response_no_filter.json():
             self.assertIn(rg['id'], combined_rg_ids)
 
+        # Specify both telescope classes and ensure multi-select works as well
+        response_both_filter = self.client.get(reverse('api:request_groups-schedulable-requests') + '?telescope_class=2m0&telescope_class=1m0')
+        self.assertEqual(response_both_filter.status_code, 200)
+        self.assertEqual(len(response_both_filter.json()), 13)
+        for rg in response_both_filter.json():
+            self.assertIn(rg['id'], combined_rg_ids)
+
     def test_dont_get_requests_in_terminal_states(self, modify_mock):
         tracking_numbers = []
         # Set half the user requests to complete
