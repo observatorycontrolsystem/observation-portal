@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from django.contrib import admin
 
-from observation_portal.proposals.forms import TimeAllocationForm, CollaborationAllocationForm
+from observation_portal.proposals.forms import TimeAllocationForm, TimeAllocationFormSet, CollaborationAllocationForm
 
 from observation_portal.proposals.models import (
     Semester,
@@ -41,6 +41,7 @@ class ScienceCollaborationAllocationAdmin(admin.ModelAdmin):
 class TimeAllocationAdminInline(admin.TabularInline):
     model = TimeAllocation
     form = TimeAllocationForm
+    formset = TimeAllocationFormSet
     extra = 0
 
 
