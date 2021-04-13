@@ -52,7 +52,7 @@ class DowntimeDB(object):
 
         for resource in downtime_intervals:
             for instrument_type, intervals in downtime_intervals[resource].items():
-                downtime_intervals[resource][instrument_type] = Intervals(downtime_intervals[resource][instrument_type])
+                downtime_intervals[resource][instrument_type] = Intervals(intervals)
 
         return downtime_intervals
 
