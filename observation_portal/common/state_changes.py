@@ -75,7 +75,9 @@ def on_configuration_status_state_change(instance):
 def on_request_state_change(old_request_state, new_request):
     if old_request_state == new_request.state:
         return
-    cache.set('observation_portal_last_change_time', timezone.now(), None)
+    telescope_class = new_request.location.telescope_class
+    cache.set(f"observation_portal_last_change_time_{telescope_class}", timezone.now(), None)
+    cache.set('observation_portal_last_change_time_all', timezone.now(), None)
     valid_request_state_change(old_request_state, new_request.state, new_request)
     # Must be a valid transition, so do ipp time accounting here if it is a normal type observation
     if new_request.request_group.observation_type == RequestGroup.NORMAL:
@@ -118,7 +120,9 @@ def update_observation_state(observation):
 
     if observation_state in ['FAILED', 'ABORTED', 'NOT_ATTEMPTED']:
         # If the observation has failed, trigger a reschedule
-        cache.set('observation_portal_last_change_time', timezone.now(), None)
+        telescope_class = observation.request.location.telescope_class
+        cache.set(f"observation_portal_last_change_time_{telescope_class}", timezone.now(), None)
+        cache.set('observation_portal_last_change_time_all', timezone.now(), None)
 
 
 def get_observation_state(configuration_statuses):

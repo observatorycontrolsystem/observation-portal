@@ -161,5 +161,7 @@ class ObservationPortalLastChangedView(APIView):
     permission_classes = (IsAdminUser,)
 
     def get(self, request):
-        last_change_time = cache.get('observation_portal_last_change_time', timezone.now() - timedelta(days=7))
+        telescope_class = request.GET.get('telescope_class', 'all')
+        last_change_time = cache.get(f"observation_portal_last_change_time_{telescope_class}", timezone.now() - timedelta(days=7))
+
         return Response({'last_change_time': last_change_time})

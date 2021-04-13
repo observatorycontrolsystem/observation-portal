@@ -1238,7 +1238,8 @@ class TestUpdateObservationApi(TestObservationApiBase):
         cancel_obs_2 = self._create_clone_observation(observation, datetime(2016, 9, 2, 23, 42, 0), datetime(2016, 9, 2, 23, 55, 34))
         extra_obs_1 = self._create_clone_observation(observation, datetime(2016, 9, 2, 23, 55, 35), datetime(2016, 9, 3, 0, 14, 21))
         rr_obs_1 = self._create_clone_observation(observation, datetime(2016, 9, 2, 23, 40, 0), datetime(2016, 9, 2, 23, 41, 59))
-        rr_requestgroup = create_simple_requestgroup(self.user, self.proposal, window=self.window, location=self.location)
+        location = mixer.blend(Location, telescope_class='1m0')
+        rr_requestgroup = create_simple_requestgroup(self.user, self.proposal, window=self.window, location=location)
         rr_requestgroup.observation_type = RequestGroup.RAPID_RESPONSE
         rr_requestgroup.save()
         rr_obs_1.request = rr_requestgroup.requests.first()

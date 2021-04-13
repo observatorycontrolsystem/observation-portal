@@ -102,7 +102,9 @@ class Observation(models.Model):
                     f"updated end time for observation {self.id} to {self.end}. "
                     f"Canceled {num_canceled} overlapping observations."
                 )
-            cache.set('observation_portal_last_change_time', timezone.now(), None)
+            telescope_class = self.request.location.telescope_class
+            cache.set("observation_portal_last_change_time_{telescope_class}", timezone.now(), None)
+            cache.set('observation_portal_last_change_time_all', timezone.now(), None)
         return self
 
     @staticmethod
