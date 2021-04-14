@@ -2857,11 +2857,14 @@ class TestLastChanged(SetTimeMixin, APITestCase):
         last_change_1m0 = datetime_parser(response.json()['last_change_time'])
         response = self.client.get(reverse('api:last_changed') + '?telescope_class=2m0')
         last_change_2m0 = datetime_parser(response.json()['last_change_time'])
+        response = self.client.get(reverse('api:last_changed') + '?telescope_class=2m0&telescope_class=1m0')
+        last_change_both = datetime_parser(response.json()['last_change_time'])
         response = self.client.get(reverse('api:last_changed'))
         last_change = datetime_parser(response.json()['last_change_time'])
 
         self.assertGreater(last_change_2m0, last_change_1m0)
         self.assertEqual(last_change_2m0, last_change)
+        self.assertEqual(last_change_both, last_change)
 
     def test_last_change_date_is_not_updated_when_request_is_mixed(self):
         create_simple_requestgroup(
