@@ -712,7 +712,7 @@ class RequestGroupSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         request_data = validated_data.pop('requests')
-
+        now = timezone.now()
         with transaction.atomic():
             request_group = RequestGroup.objects.create(**validated_data)
 
@@ -750,7 +750,7 @@ class RequestGroupSerializer(serializers.ModelSerializer):
                         for roi_data in rois_data:
                             RegionOfInterest.objects.create(instrument_config=instrument_config, **roi_data)
                 telescope_class = location_data.get('telescope_class')
-                cache.set(f"observation_portal_last_change_time_{telescope_class}", timezone.now(), None)
+                cache.set(f"observation_portal_last_change_time_{telescope_class}", now, None)
 
         if validated_data['observation_type'] == RequestGroup.NORMAL:
             debit_ipp_time(request_group)
@@ -760,7 +760,7 @@ class RequestGroupSerializer(serializers.ModelSerializer):
             'tracking_num': request_group.id,
             'name': request_group.name
         }})
-        cache.set('observation_portal_last_change_time_all', timezone.now(), None)
+        cache.set('observation_portal_last_change_time_all', now, None)
 
         return request_group
 
