@@ -9,11 +9,12 @@ import datetime
 from django_dramatiq.test import DramatiqTestCase
 
 from observation_portal.proposals.models import ProposalInvite, Proposal, Membership, ProposalNotification, TimeAllocation, Semester
-from observation_portal.requestgroups.models import RequestGroup, Configuration, InstrumentConfig
+from observation_portal.requestgroups.models import RequestGroup, Configuration, InstrumentConfig, Window
 from observation_portal.accounts.models import Profile
 from observation_portal.common.test_helpers import create_simple_requestgroup
 from observation_portal.proposals.tasks import time_allocation_reminder
 from observation_portal.requestgroups.signals import handlers  # DO NOT DELETE, needed to active signals
+from observation_portal.proposals.forms import TimeAllocationForm
 
 
 class TestProposal(DramatiqTestCase):
@@ -286,6 +287,20 @@ class TestProposalAdmin(TestCase):
         self.admin_user = User.objects.create_superuser('admin', 'admin@example.com', 'password')
         self.client.force_login(self.admin_user)
         self.proposals = mixer.cycle(3).blend(Proposal, active=False)
+        self.proposal = self.proposals[0]
+        now = timezone.now()
+        self.user = mixer.blend(User)
+        self.current_semester = mixer.blend(
+            Semester, start=now, end=now + datetime.timedelta(days=30))
+        self.time_allocation = mixer.blend(TimeAllocation, proposal=self.proposal, semester=self.current_semester, instrument_type='1M0-SCICAM-SBIG')
+        mixer.blend(Membership, user=self.user, proposal=self.proposal, role=Membership.PI)
+        self.future_semester = mixer.blend(
+            Semester, start=now + datetime.timedelta(days=60), end=now + datetime.timedelta(days=90))
+        window = mixer.blend(Window, start=now + datetime.timedelta(hours=10), end=now + datetime.timedelta(hours=12))
+        configuration = mixer.blend(Configuration, type='EXPOSE', instrument_type='1M0-SCICAM-SBIG')
+        instrument_config = mixer.blend(InstrumentConfig, configuration=configuration, exposure_time=30)
+        create_simple_requestgroup(self.user, self.proposal, configuration=configuration,
+                                   instrument_config=instrument_config, window=window)
 
     def test_activate_selected(self):
         self.client.post(
@@ -295,3 +310,15 @@ class TestProposalAdmin(TestCase):
         )
         for proposal in self.proposals:
             self.assertEqual(Proposal.objects.get(pk=proposal.id).active, True)
+
+    def test_clean_time_allocation(self):
+        ta_dict = self.time_allocation.as_dict()
+        taf = TimeAllocationForm(data=ta_dict, instance=self.time_allocation)
+        self.assertTrue(taf.is_valid())
+
+        # Now attempt to change the semester and see it fail
+        # ta_dict2 = self.time_allocation.as_dict()
+        # ta_dict2['semester'] = self.future_semester.id
+        # taf2 = TimeAllocationForm(data=ta_dict2, instance=self.time_allocation)
+        # self.assertFalse(taf2.is_valid())
+        # self.assertIn("Cannot change TimeAllocation", taf2.non_field_errors()[0])
