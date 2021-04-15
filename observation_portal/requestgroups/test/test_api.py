@@ -2831,14 +2831,16 @@ class TestLastChanged(SetTimeMixin, APITestCase):
         self.assertAlmostEqual(datetime_parser(last_change), timezone.now(), delta=timedelta(minutes=1))
 
     def test_last_change_date_telescope_class_is_updated_when_request_is_submitted(self):
+        before_request = timezone.now()
         last_change_cached = self.locmem_cache.get('observation_portal_last_change_time_1m0')
         self.assertIsNone(last_change_cached)
         rg = self.generic_payload.copy()
+        self.mock_now.return_value = datetime(2016, 9, 1, 0, 2, tzinfo=timezone.utc)
         response = self.client.post(reverse('api:request_groups-list'), data=self.generic_payload)
 
         response = self.client.get(reverse('api:last_changed') + '?telescope_class=1m0')
         last_change = response.json()['last_change_time']
-        self.assertAlmostEqual(datetime_parser(last_change), timezone.now(), delta=timedelta(minutes=1))
+        self.assertGreater(datetime_parser(last_change), before_request)
 
     def test_last_change_date_multiple_telescope_classes(self):
         rg_1m0 = self.generic_payload.copy()
