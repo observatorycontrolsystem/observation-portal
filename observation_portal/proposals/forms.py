@@ -36,7 +36,9 @@ class TimeAllocationForm(forms.ModelForm):
         semester_changed = cleaned_data.get('semester') != self.instance.semester
         if instrument_type_changed or semester_changed:
             # instrument_type has changed. We should block this if the old instrument_type was in use
-            requestgroups = RequestGroup.objects.filter(proposal=self.instance.proposal)
+            requestgroups = RequestGroup.objects.filter(proposal=self.instance.proposal).prefetch_related(
+                'requests', 'requests__windows', 'requests__configurations'
+            )
             for requestgroup in requestgroups:
                 for request in requestgroup.requests.all():
                     if (request.time_allocation_key.instrument_type == self.instance.instrument_type and
@@ -51,7 +53,9 @@ class TimeAllocationFormSet(forms.models.BaseInlineFormSet):
             if not form.is_valid():
                 return
             if form.cleaned_data and form.cleaned_data.get('DELETE'):
-                requestgroups = RequestGroup.objects.filter(proposal=form.cleaned_data.get('proposal'))
+                requestgroups = RequestGroup.objects.filter(proposal=form.cleaned_data.get('proposal')).prefetch_related(
+                    'requests', 'requests__windows', 'requests__configurations'
+                )
                 for requestgroup in requestgroups:
                     for request in requestgroup.requests.all():
                         if (request.time_allocation_key.instrument_type == form.cleaned_data.get('instrument_type') and
