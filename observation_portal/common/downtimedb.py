@@ -34,35 +34,39 @@ class DowntimeDB(object):
         return r.json()['results']
 
     @staticmethod
-    def _order_downtime_by_resource(raw_downtime_intervals):
-        ''' Puts the raw downtime interval sets into a dictionary by resource
+    def _order_downtime_by_resource_and_instrument_type(raw_downtime_intervals):
+        ''' Puts the raw downtime interval sets into a dictionary by resource and then by instrument_type or "all"
         '''
         downtime_intervals = {}
         for interval in raw_downtime_intervals:
             resource = '.'.join([interval['telescope'], interval['enclosure'], interval['site']])
             if resource not in downtime_intervals:
-                downtime_intervals[resource] = []
+                downtime_intervals[resource] = {}
+            instrument_type = interval['instrument_type'] if interval['instrument_type'] else 'all'
+            if instrument_type not in downtime_intervals[resource]:
+                downtime_intervals[resource][instrument_type] = []
             start = datetime.strptime(interval['start'], DOWNTIME_DATE_FORMAT).replace(tzinfo=timezone.utc)
             end = datetime.strptime(interval['end'], DOWNTIME_DATE_FORMAT).replace(tzinfo=timezone.utc)
-            downtime_intervals[resource].append({'type': 'start', 'time': start})
-            downtime_intervals[resource].append({'type': 'end', 'time': end})
+            downtime_intervals[resource][instrument_type].append({'type': 'start', 'time': start})
+            downtime_intervals[resource][instrument_type].append({'type': 'end', 'time': end})
 
         for resource in downtime_intervals:
-            downtime_intervals[resource] = Intervals(downtime_intervals[resource])
+            for instrument_type, intervals in downtime_intervals[resource].items():
+                downtime_intervals[resource][instrument_type] = Intervals(intervals)
 
         return downtime_intervals
 
     @staticmethod
     def get_downtime_intervals():
-        ''' Returns dictionary of IntervalSets of downtime intervals per telescope resource. Caches the data and will
-            attempt to update the cache every 15 minutes, but fallback on using previous downtime list otherwise.
+        ''' Returns dictionary of IntervalSets of downtime intervals per telescope resource and per instrument_type or "all".
+            Caches the data and will attempt to update the cache every 15 minutes, but fallback on using previous downtime list otherwise.
         '''
         downtime_intervals = caches['locmem'].get('downtime_intervals', [])
         if not downtime_intervals:
             # If the cache has expired, attempt to update the downtime intervals
             try:
                 data = DowntimeDB._get_downtime_data()
-                downtime_intervals = DowntimeDB._order_downtime_by_resource(data)
+                downtime_intervals = DowntimeDB._order_downtime_by_resource_and_instrument_type(data)
                 caches['locmem'].set('downtime_intervals', downtime_intervals, 900)
                 caches['locmem'].set('downtime_intervals.no_expire', downtime_intervals)
             except DowntimeDBException as e:

@@ -105,7 +105,7 @@ def get_filtered_rise_set_intervals_by_site(request_dict, site='', is_staff=Fals
     intervalsets_by_telescope = intervals_by_site_to_intervalsets_by_telescope(
         intervals_by_site, telescope_details.keys()
     )
-    filtered_intervalsets_by_telescope = filter_out_downtime_from_intervalsets(intervalsets_by_telescope)
+    filtered_intervalsets_by_telescope = filter_out_downtime_from_intervalsets(intervalsets_by_telescope, request_dict['configurations'][0]['instrument_type'])
     filtered_intervals_by_site = intervalsets_by_telescope_to_intervals_by_site(filtered_intervalsets_by_telescope)
     return filtered_intervals_by_site
 
@@ -148,23 +148,25 @@ def intervals_by_site_to_intervalsets_by_telescope(intervals_by_site: dict, tele
     return intervalsets_by_telescope
 
 
-def filter_out_downtime_from_intervalsets(intervalsets_by_telescope: dict) -> dict:
+def filter_out_downtime_from_intervalsets(intervalsets_by_telescope: dict, instrument_type: str) -> dict:
     """Remove downtime intervals.
 
     Parameters:
         intervalsets_by_telescope: rise_set intervals by telescope
+        instrument_type: The configuration's instrument_type (for downtime filtering by instrument_type)
     Returns:
         rise_set intervals by telescope with downtimes filtered out
     """
     downtime_intervals = DowntimeDB.get_downtime_intervals()
     filtered_intervalsets_by_telescope = {}
     for telescope in intervalsets_by_telescope.keys():
-        if telescope not in downtime_intervals:
-            filtered_intervalsets_by_telescope[telescope] = intervalsets_by_telescope[telescope]
-        else:
-            filtered_intervalsets_by_telescope[telescope] = intervalsets_by_telescope[telescope].subtract(
-                downtime_intervals[telescope]
-            )
+        filtered_intervalsets_by_telescope[telescope] = intervalsets_by_telescope[telescope]
+        if telescope in downtime_intervals:
+            for instrument_type_code, intervals in downtime_intervals[telescope].items():
+                if instrument_type_code == 'all' or instrument_type_code.upper() == instrument_type.upper():
+                    filtered_intervalsets_by_telescope[telescope] = filtered_intervalsets_by_telescope[telescope].subtract(
+                        intervals
+                    )
     return filtered_intervalsets_by_telescope
 
 
