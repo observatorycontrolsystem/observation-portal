@@ -18,7 +18,7 @@ from observation_portal.common.test_helpers import (
 from observation_portal.proposals.models import Proposal, Membership
 from observation_portal.accounts.models import Profile
 from observation_portal.observations.models import Observation, ConfigurationStatus, Summary
-from observation_portal.requestgroups.models import Request, RequestGroup, Window
+from observation_portal.requestgroups.models import Request, RequestGroup, Window, Location
 from observation_portal.common.state_changes import (
     get_request_state_from_configuration_statuses,
     update_request_state, aggregate_request_states,
@@ -988,6 +988,7 @@ class TestExpireRequests(TestCase):
 
     def test_request_is_set_to_expired(self, ipp_mock):
         request = dmixer.blend(Request, state='PENDING', request_group=self.request_group)
+        dmixer.blend(Location, request=request, telescope_class='1m0')
         dmixer.blend(
             Window, start=timezone.now() - timedelta(days=2), end=timezone.now() - timedelta(days=1), request=request
         )
