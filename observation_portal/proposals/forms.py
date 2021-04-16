@@ -40,10 +40,11 @@ class TimeAllocationForm(forms.ModelForm):
                 'requests', 'requests__windows', 'requests__configurations'
             )
             for requestgroup in requestgroups:
-                for request in requestgroup.requests.all():
-                    if (request.time_allocation_key.instrument_type == self.instance.instrument_type and
-                            request.time_allocation_key.semester == self.instance.semester.id):
-                        raise forms.ValidationError("Cannot change TimeAllocation's instrument_type/semester when it is in use")
+                if requestgroup.observation_type != RequestGroup.DIRECT:
+                    for request in requestgroup.requests.all():
+                        if (request.time_allocation_key.instrument_type == self.instance.instrument_type and
+                                request.time_allocation_key.semester == self.instance.semester.id):
+                            raise forms.ValidationError("Cannot change TimeAllocation's instrument_type/semester when it is in use")
 
 
 class TimeAllocationFormSet(forms.models.BaseInlineFormSet):
@@ -57,7 +58,8 @@ class TimeAllocationFormSet(forms.models.BaseInlineFormSet):
                     'requests', 'requests__windows', 'requests__configurations'
                 )
                 for requestgroup in requestgroups:
-                    for request in requestgroup.requests.all():
-                        if (request.time_allocation_key.instrument_type == form.cleaned_data.get('instrument_type') and
-                                request.time_allocation_key.semester == form.cleaned_data.get('semester').id):
-                            raise forms.ValidationError('Cannot delete TimeAllocation when it is in use')
+                    if requestgroup.observation_type != RequestGroup.DIRECT:
+                        for request in requestgroup.requests.all():
+                            if (request.time_allocation_key.instrument_type == form.cleaned_data.get('instrument_type') and
+                                    request.time_allocation_key.semester == form.cleaned_data.get('semester').id):
+                                raise forms.ValidationError('Cannot delete TimeAllocation when it is in use')
