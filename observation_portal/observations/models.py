@@ -103,7 +103,7 @@ class Observation(models.Model):
                     f"Canceled {num_canceled} overlapping observations."
                 )
             telescope_class = self.request.location.telescope_class
-            cache.set("observation_portal_last_change_time_{telescope_class}", timezone.now(), None)
+            cache.set(f"observation_portal_last_change_time_{telescope_class}", timezone.now(), None)
             cache.set('observation_portal_last_change_time_all', timezone.now(), None)
         return self
 
