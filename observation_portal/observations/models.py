@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.core.cache import cache
 from datetime import timedelta
 
-from observation_portal.requestgroups.models import Request, RequestGroup, Configuration
+from observation_portal.requestgroups.models import Request, RequestGroup, Configuration, Location
 import logging
 
 logger = logging.getLogger()
@@ -102,8 +102,11 @@ class Observation(models.Model):
                     f"updated end time for observation {self.id} to {self.end}. "
                     f"Canceled {num_canceled} overlapping observations."
                 )
-            telescope_class = self.request.location.telescope_class
-            cache.set(f"observation_portal_last_change_time_{telescope_class}", timezone.now(), None)
+            try:
+                telescope_class = self.request.location.telescope_class
+                cache.set(f"observation_portal_last_change_time_{telescope_class}", timezone.now(), None)
+            except Location.DoesNotExist:
+                pass
             cache.set('observation_portal_last_change_time_all', timezone.now(), None)
         return self
 

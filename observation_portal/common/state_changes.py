@@ -14,7 +14,7 @@ from observation_portal.proposals.models import (TimeAllocation,
                                                  TimeAllocationKey)
 from observation_portal.proposals.notifications import \
     requestgroup_notifications, request_notifications
-from observation_portal.requestgroups.models import Request, RequestGroup
+from observation_portal.requestgroups.models import Request, RequestGroup, Location
 from observation_portal.requestgroups.request_utils import \
     exposure_completion_percentage
 
@@ -75,9 +75,12 @@ def on_configuration_status_state_change(instance):
 def on_request_state_change(old_request_state, new_request):
     if old_request_state == new_request.state:
         return
-    telescope_class = new_request.location.telescope_class
     now = timezone.now()
-    cache.set(f"observation_portal_last_change_time_{telescope_class}", now, None)
+    try:
+        telescope_class = new_request.location.telescope_class
+        cache.set(f"observation_portal_last_change_time_{telescope_class}", now, None)
+    except Location.DoesNotExist:
+        pass
     cache.set('observation_portal_last_change_time_all', now, None)
     valid_request_state_change(old_request_state, new_request.state, new_request)
     # Must be a valid transition, so do ipp time accounting here if it is a normal type observation
@@ -122,8 +125,11 @@ def update_observation_state(observation):
 
     if observation_state in ['FAILED', 'ABORTED', 'NOT_ATTEMPTED']:
         # If the observation has failed, trigger a reschedule
-        telescope_class = observation.request.location.telescope_class
-        cache.set(f"observation_portal_last_change_time_{telescope_class}", now, None)
+        try:
+            telescope_class = observation.request.location.telescope_class
+            cache.set(f"observation_portal_last_change_time_{telescope_class}", now, None)
+        except Location.DoesNotExist:
+            pass
         cache.set('observation_portal_last_change_time_all', now, None)
 
 

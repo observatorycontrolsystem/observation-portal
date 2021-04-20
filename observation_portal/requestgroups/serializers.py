@@ -750,7 +750,8 @@ class RequestGroupSerializer(serializers.ModelSerializer):
                         for roi_data in rois_data:
                             RegionOfInterest.objects.create(instrument_config=instrument_config, **roi_data)
                 telescope_class = location_data.get('telescope_class')
-                cache.set(f"observation_portal_last_change_time_{telescope_class}", now, None)
+                if telescope_class:
+                    cache.set(f"observation_portal_last_change_time_{telescope_class}", now, None)
 
         if validated_data['observation_type'] == RequestGroup.NORMAL:
             debit_ipp_time(request_group)
