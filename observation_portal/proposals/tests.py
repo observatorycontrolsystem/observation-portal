@@ -10,6 +10,7 @@ from django_dramatiq.test import DramatiqTestCase
 
 from observation_portal.proposals.models import ProposalInvite, Proposal, Membership, ProposalNotification, TimeAllocation, Semester
 from observation_portal.requestgroups.models import RequestGroup, Configuration, InstrumentConfig, Window
+from observation_portal.requestgroups import duration_utils
 from observation_portal.accounts.models import Profile
 from observation_portal.common.test_helpers import create_simple_requestgroup
 from observation_portal.proposals.tasks import time_allocation_reminder
@@ -317,8 +318,9 @@ class TestProposalAdmin(TestCase):
         self.assertTrue(taf.is_valid())
 
         # Now attempt to change the semester and see it fail
-        # ta_dict2 = self.time_allocation.as_dict()
-        # ta_dict2['semester'] = self.future_semester.id
-        # taf2 = TimeAllocationForm(data=ta_dict2, instance=self.time_allocation)
-        # self.assertFalse(taf2.is_valid())
-        # self.assertIn("Cannot change TimeAllocation", taf2.non_field_errors()[0])
+        ta_dict2 = self.time_allocation.as_dict()
+        ta_dict2['semester'] = self.future_semester.id
+        taf2 = TimeAllocationForm(data=ta_dict2, instance=self.time_allocation)
+        self.assertFalse(taf2.is_valid())
+        self.assertIn("Cannot change TimeAllocation", taf2.non_field_errors()[0])
+        duration_utils.semesters = None  # Clear the global semester variable that seems to be bad after this test
