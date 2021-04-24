@@ -163,7 +163,10 @@ class ScienceApplication(models.Model):
         return time_by_telescope_name
 
     def get_absolute_url(self):
-        return reverse('api:scienceapplications-detail', args=(self.id,))
+        if settings.SCIENCE_APPLICATION_DETAIL_URL:
+            return settings.SCIENCE_APPLICATION_DETAIL_URL.format(sciapp_id=self.id)
+        else:
+            return reverse('api:scienceapplications-detail', args=(self.id,))
 
     def convert_to_proposal(self):
         approved_time_requests = self.timerequest_set.filter(approved=True)

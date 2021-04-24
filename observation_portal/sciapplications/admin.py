@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from django.contrib import admin
-from django.utils.html import format_html
+from django.utils.html import format_html_join
 from django.urls import reverse
-
+from django.conf import settings
 
 from .models import (
     Instrument, Call, ScienceApplication, TimeRequest, CoInvestigator,
@@ -54,9 +54,14 @@ class ScienceApplicationAdmin(admin.ModelAdmin):
     search_fields = ['title', 'abstract', 'submitter__first_name', 'submitter__last_name', 'submitter__username']
 
     def preview_link(self, obj):
-        return format_html(
-            '<a href="{}">View on site</a>',
-            reverse('api:scienceapplications-detail', kwargs={'pk': obj.id})
+        urls = [{'text': 'View in API', 'url': reverse('api:scienceapplications-detail', args=(obj.id,))}]
+        if settings.SCIENCE_APPLICATION_DETAIL_URL:
+            urls.append(
+                {'text': 'View on site', 'url': settings.SCIENCE_APPLICATION_DETAIL_URL.format(sciapp_id=obj.id)}
+            )
+        return format_html_join(
+            ' ', '<a href="{}">{}</a>',
+            ((url['url'], url['text']) for url in urls)
         )
 
     def accept(self, request, queryset):

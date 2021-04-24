@@ -1,8 +1,9 @@
+from datetime import timedelta
+
 from django.core import mail
 from django.urls import reverse
 from django.contrib.auth.models import User
 from django.utils import timezone
-from datetime import timedelta
 from mixer.backend.django import mixer
 from django_dramatiq.test import DramatiqTestCase
 
@@ -211,3 +212,19 @@ class TestSciAppAdmin(DramatiqTestCase):
         self.assertContains(response, 'A proposal named LCO{}-000 already exists.'.format(self.semester))
         # One application out of the bunch was successfully ported, so only one email was sent
         self.assertEqual(len(mail.outbox), 1)
+
+    def test_preview_link_only_api_link(self):
+        with self.settings(SCIENCE_APPLICATION_DETAIL_URL=''):
+            response = self.client.get(
+                reverse('admin:sciapplications_scienceapplication_changelist')
+            )
+            self.assertContains(response, 'View in API')
+            self.assertNotContains(response, 'View on Site')
+
+    def test_preview_link_on_site_link_included(self):
+        with self.settings(SCIENCE_APPLICATION_DETAIL_URL='http://localhost'):
+            response = self.client.get(
+                reverse('admin:sciapplications_scienceapplication_changelist')
+            )
+            self.assertContains(response, 'View in API')
+            self.assertContains(response, 'View on site')
