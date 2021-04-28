@@ -1,0 +1,13 @@
+version: 2
+updates:
+- package-ecosystem: pip
+  directory: "/"
+  schedule:
+    interval: weekly
+  open-pull-requests-limit: 3
+  ignore:
+  - dependency-name: django-oauth-toolkit
+    versions:
+    - 1.3.2
+    - 1.4.0
+  rebase-strategy: disabled
