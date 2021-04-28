@@ -1,7 +1,8 @@
 import logging
 
 from rest_framework import viewsets, filters
-from rest_framework.decorators import action, list_route
+from rest_framework.schemas.openapi import AutoSchema
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAdminUser
 from django.utils import timezone
@@ -32,6 +33,7 @@ logger = logging.getLogger(__name__)
 class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
     permission_classes = (IsAuthenticatedOrReadOnly,)
     http_method_names = ['get', 'post', 'head', 'options']
+    schema=AutoSchema(tags=['RequestGroups'])
     serializer_class = import_string(settings.SERIALIZERS['requestgroups']['RequestGroup'])
     filter_class = RequestGroupFilter
     filter_backends = (
@@ -155,7 +157,7 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
             return Response({'errors': [str(exc)]}, status=400)
         return Response(import_string(settings.SERIALIZERS['requestgroups']['RequestGroup'])(request_group).data)
 
-    @list_route(methods=['post'])
+    @action(detail=False, methods=['post'])
     def validate(self, request):
         serializer = import_string(settings.SERIALIZERS['requestgroups']['RequestGroup'])(data=request.data, context={'request': request})
         req_durations = {}
@@ -211,6 +213,7 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
 
 class RequestViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
     permission_classes = (IsAuthenticatedOrReadOnly,)
+    schema=AutoSchema(tags=['Requests'])
     serializer_class = import_string(settings.SERIALIZERS['requestgroups']['Request'])
     filter_class = RequestFilter
     filter_backends = (
@@ -255,6 +258,7 @@ class RequestViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
 
 
 class DraftRequestGroupViewSet(viewsets.ModelViewSet):
+    schema=AutoSchema(tags=['RequestGroups'])
     serializer_class = import_string(settings.SERIALIZERS['requestgroups']['DraftRequestGroup'])
     ordering = ('-modified',)
 

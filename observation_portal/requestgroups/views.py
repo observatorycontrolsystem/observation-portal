@@ -1,5 +1,6 @@
 from django.core.cache import cache
 from rest_framework.response import Response
+from rest_framework.schemas.openapi import AutoSchema
 from rest_framework.permissions import AllowAny, IsAdminUser
 from django.http import HttpResponseBadRequest
 from django.utils import timezone
@@ -40,6 +41,7 @@ class TelescopeStatesView(APIView):
     Retrieves the telescope states for all telescopes between the start and end times
     """
     permission_classes = (AllowAny,)
+    schema=AutoSchema(tags=['Utility'])
 
     def get(self, request):
         try:
@@ -59,6 +61,7 @@ class TelescopeAvailabilityView(APIView):
     Retrieves the nightly percent availability of each telescope between the start and end times
     """
     permission_classes = (AllowAny,)
+    schema=AutoSchema(tags=['Utility'])
 
     def get(self, request):
         try:
@@ -87,6 +90,7 @@ class AirmassView(APIView):
     Gets the airmasses for the request at available sites
     """
     permission_classes = (AllowAny,)
+    schema=AutoSchema(tags=['Requests'])
 
     def post(self, request):
         serializer = import_string(settings.SERIALIZERS['requestgroups']['Request'])(data=request.data)
@@ -100,6 +104,7 @@ class AirmassView(APIView):
 
 class InstrumentsInformationView(APIView):
     permission_classes = (AllowAny,)
+    schema=AutoSchema(tags=['Utility'])
 
     def get(self, request):
         info = {}
@@ -132,6 +137,7 @@ class InstrumentsInformationView(APIView):
 
 class ContentionView(APIView):
     permission_classes = (AllowAny,)
+    schema=AutoSchema(tags=['Utility'])
 
     def get(self, request, instrument_type):
         if request.user.is_staff:
@@ -143,6 +149,7 @@ class ContentionView(APIView):
 
 class PressureView(APIView):
     permission_classes = (AllowAny,)
+    schema=AutoSchema(tags=['Utility'])
 
     def get(self, request):
         instrument_type = request.GET.get('instrument')
@@ -159,6 +166,7 @@ class ObservationPortalLastChangedView(APIView):
         Returns the datetime of the last status of requests change or new requests addition
     '''
     permission_classes = (IsAdminUser,)
+    schema=AutoSchema(tags=['RequestGroups'])
 
     def get(self, request):
         telescope_classes = request.GET.getlist('telescope_class', ['all'])

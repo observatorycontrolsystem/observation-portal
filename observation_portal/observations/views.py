@@ -2,6 +2,7 @@ from datetime import timedelta
 
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAdminUser
+from rest_framework.schemas.openapi import AutoSchema
 from django.core.cache import cache
 from django.utils import timezone
 from rest_framework.response import Response
@@ -18,6 +19,7 @@ class LastScheduledView(APIView):
         not really care if the only change was removing things from it's schedule.
     """
     permission_classes = (IsAdminUser,)
+    schema=AutoSchema(tags=['Observations'])
 
     def get(self, request):
         site = request.query_params.get('site')

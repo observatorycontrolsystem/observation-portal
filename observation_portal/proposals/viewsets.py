@@ -2,6 +2,7 @@ from rest_framework import viewsets, filters, mixins
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework.decorators import action
+from rest_framework.schemas.openapi import AutoSchema
 from rest_framework.response import Response
 from django.utils.translation import ugettext as _
 from django.utils.module_loading import import_string
@@ -15,6 +16,7 @@ from observation_portal.proposals.models import Proposal, Semester, ProposalNoti
 
 class ProposalViewSet(DetailAsDictMixin, ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
     permission_classes = (IsAuthenticated,)
+    schema=AutoSchema(tags=['Proposals'])
     serializer_class = import_string(settings.SERIALIZERS['proposals']['Proposal'])
     filter_class = ProposalFilter
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
@@ -70,6 +72,7 @@ class ProposalViewSet(DetailAsDictMixin, ListAsDictMixin, viewsets.ReadOnlyModel
 
 class SemesterViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = (AllowAny,)
+    schema=AutoSchema(tags=['Proposals'])
     serializer_class = import_string(settings.SERIALIZERS['proposals']['Semester'])
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
     filter_class = SemesterFilter
@@ -132,6 +135,7 @@ class SemesterViewSet(viewsets.ReadOnlyModelViewSet):
 
 class MembershipViewSet(ListAsDictMixin, DetailAsDictMixin, mixins.DestroyModelMixin, viewsets.ReadOnlyModelViewSet):
     http_method_names = ('get', 'head', 'options', 'post', 'delete')
+    schema=AutoSchema(tags=['Proposals'])
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
     filter_class = MembershipFilter
     serializer_class = import_string(settings.SERIALIZERS['proposals']['Membership'])
@@ -181,6 +185,7 @@ class MembershipViewSet(ListAsDictMixin, DetailAsDictMixin, mixins.DestroyModelM
 
 class ProposalInviteViewSet(mixins.DestroyModelMixin, viewsets.ReadOnlyModelViewSet):
     http_method_names = ('get', 'head', 'options', 'delete')
+    schema=AutoSchema(tags=['Proposals'])
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
     filter_class = ProposalInviteFilter
     serializer_class = import_string(settings.SERIALIZERS['proposals']['ProposalInvite'])

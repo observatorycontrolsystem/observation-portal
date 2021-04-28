@@ -6,6 +6,7 @@ from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
+from rest_framework.schemas.openapi import AutoSchema
 from rest_framework.response import Response
 
 from observation_portal.accounts.models import Profile
@@ -13,6 +14,7 @@ from observation_portal.accounts.tasks import send_mail
 
 
 class ProfileApiView(RetrieveUpdateAPIView):
+    schema=AutoSchema(tags=['Accounts'])
     serializer_class = import_string(settings.SERIALIZERS['accounts']['User'])
     permission_classes = [IsAuthenticated]
 
@@ -26,6 +28,7 @@ class ProfileApiView(RetrieveUpdateAPIView):
 class AcceptTermsApiView(APIView):
     """View to accept terms."""
     permission_classes = [IsAuthenticated]
+    schema=AutoSchema(tags=['Accounts'])
 
     def post(self, request):
         try:
@@ -41,6 +44,7 @@ class AcceptTermsApiView(APIView):
 class RevokeApiTokenApiView(APIView):
     """View to revoke an API token."""
     permission_classes = [IsAuthenticated]
+    schema=AutoSchema(tags=['Accounts'])
 
     def post(self, request):
         request.user.auth_token.delete()
@@ -51,6 +55,7 @@ class RevokeApiTokenApiView(APIView):
 class AccountRemovalRequestApiView(APIView):
     """View to request account removal."""
     permission_classes = [IsAuthenticated]
+    schema=AutoSchema(tags=['Accounts'])
 
     def post(self, request):
         serializer = import_string(settings.SERIALIZERS['accounts']['AccountRemoval'])(data=request.data)

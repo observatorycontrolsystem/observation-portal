@@ -29,7 +29,8 @@ class RequestGroupFilter(django_filters.FilterSet):
         field_labels={
             'requests__windows__end': 'End of window',
             'modified': 'Last Update'
-        }
+        },
+        label='RequestGroup ordering'
     )
     request_id = django_filters.NumberFilter(field_name='requests__id')
 
