@@ -2,6 +2,7 @@ from django.utils.translation import ugettext as _
 from math import ceil, floor
 from django.utils import timezone
 from django.conf import settings
+from django.core.cache import caches
 import logging
 
 from observation_portal.proposals.models import TimeAllocationKey, Proposal, Semester
@@ -13,13 +14,13 @@ logger = logging.getLogger(__name__)
 
 
 PER_CONFIGURATION_STARTUP_TIME = 16.0   # per-configuration startup time, which encompasses initial pointing
-semesters = None
 
 
 def get_semesters():
-    global semesters
+    semesters = caches['locmem'].get('semesters')
     if not semesters:
         semesters = list(Semester.objects.all().order_by('-start'))
+        caches['locmem'].set('semesters', semesters, 60)
     return semesters
 
 
