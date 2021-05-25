@@ -50,12 +50,10 @@ generic_payload = {
             'instrument_configs': [{
                 'exposure_time': 100,
                 'exposure_count': 1,
-                'mode': '',
-                'bin_x': 1,
-                'bin_y': 1,
                 'optical_elements': {
                     'filter': 'air'
-                }
+                },
+                'extra_params': {}
             }],
             'guiding_config': {
                 'extra_params': {}
@@ -1452,8 +1450,6 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         bad_data['requests'][0]['configurations'][0]['type'] = 'NRES_SPECTRUM'
         bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements'] = {}
         bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['mode'] = '1m0_nres_1'
-        del bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_x']
-        del bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_y']
         bad_data['requests'][0]['configurations'][0]['guiding_config']['mode'] = 'NRES_SPECIAL'
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertIn('Guiding mode NRES_SPECIAL is not available', str(response.content))
@@ -1464,8 +1460,6 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         bad_data['requests'][0]['configurations'][0]['type'] = 'NRES_SPECTRUM'
         bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements'] = {}
         bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['mode'] = ''
-        del bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_x']
-        del bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_y']
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertIn('Must set a readout mode, choose from', str(response.content))
 
@@ -1480,7 +1474,6 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         good_data['requests'][0]['configurations'][0]['type'] = 'SPECTRUM'
         good_data['requests'][0]['configurations'][0]['instrument_type'] = '2M0-FLOYDS-SCICAM'
         good_data['requests'][0]['location']['telescope_class'] = '2m0'
-        del good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['mode']
         del good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
         good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['slit'] = 'slit_1.6as'
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
@@ -1576,6 +1569,7 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
     def test_slit_not_necessary_for_nres(self):
         good_data = self.generic_payload.copy()
         del good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
+        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['mode'] = '1m0_nres_1'
         good_data['requests'][0]['configurations'][0]['instrument_type'] = '1M0-NRES-SCICAM'
         good_data['requests'][0]['configurations'][0]['type'] = 'NRES_SPECTRUM'
         good_data['requests'][0]['configurations'][0]['guiding_config']['mode'] = 'ON'
@@ -1593,6 +1587,7 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
     def test_nres_parameters_passthrough(self):
         good_data = self.generic_payload.copy()
         del good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
+        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['mode'] = '1m0_nres_1'
         good_data['requests'][0]['configurations'][0]['instrument_type'] = '1M0-NRES-SCICAM'
         good_data['requests'][0]['configurations'][0]['type'] = 'NRES_SPECTRUM'
         good_data['requests'][0]['configurations'][0]['guiding_config']['mode'] = 'ON'
@@ -1627,67 +1622,31 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         self.assertIn('optical element slit_really_small of type slit is not available', str(response.content))
         self.assertEqual(response.status_code, 400)
 
-    def test_invalid_binning_for_instrument(self):
-        bad_data = self.generic_payload.copy()
-        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_x'] = 5
-        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_y'] = 5
-        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertIn('No readout mode found with binning 5', str(response.content))
-        self.assertEqual(response.status_code, 400)
-
     def test_invalid_binning_for_instrument_for_mode(self):
         bad_data = self.generic_payload.copy()
         bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['mode'] = '1m0_sbig_2'
-        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_x'] = 5
-        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_y'] = 5
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params']['bin_x'] = 5
+        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params']['bin_y'] = 5
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertIn('Readout mode 1m0_sbig_2 requirements are not met: bin_x error: unallowed value 5, bin_y error: unallowed value 5', str(response.content))
+        self.assertIn('Readout mode 1m0_sbig_2 requirements are not met: extra_params{bin_x error: unallowed value 5, bin_y error: unallowed value 5}', str(response.content))
         self.assertEqual(response.status_code, 400)
 
     def test_readout_mode_sets_default_binning(self):
         bad_data = self.generic_payload.copy()
         bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['mode'] = '1m0_sbig_2'
-        del bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_x']
-        del bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_y']
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertEqual(response.status_code, 201)
         rg = response.json()
-        self.assertEqual(rg['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_x'], 2)
-        self.assertEqual(rg['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_y'], 2)
+        self.assertEqual(rg['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params']['bin_x'], 2)
+        self.assertEqual(rg['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params']['bin_y'], 2)
 
     def test_default_binning_for_instrument(self):
         good_data = self.generic_payload.copy()
-        del good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_x']
-        del good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_y']
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
         self.assertEqual(response.status_code, 201)
         configuration = response.json()['requests'][0]['configurations'][0]
-        self.assertEqual(configuration['instrument_configs'][0]['bin_x'], 2)
-        self.assertEqual(configuration['instrument_configs'][0]['bin_y'], 2)
-
-    def test_different_x_and_y_binnings_rejected(self):
-        bad_data = self.generic_payload.copy()
-        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_x'] = 1
-        bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_y'] = 2
-        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn('Currently only square binnings are supported. Please submit with bin_x == bin_y', str(response.content))
-
-    def test_binx_set_if_only_biny_is_input(self):
-        data = self.generic_payload.copy()
-        del data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_x']
-        response = self.client.post(reverse('api:request_groups-list'), data=data)
-        self.assertEqual(response.status_code, 201)
-        instrument_configuration = response.json()['requests'][0]['configurations'][0]['instrument_configs'][0]
-        self.assertEqual(instrument_configuration['bin_x'], instrument_configuration['bin_y'])
-
-    def test_biny_set_if_only_binx_is_input(self):
-        data = self.generic_payload.copy()
-        del data['requests'][0]['configurations'][0]['instrument_configs'][0]['bin_y']
-        response = self.client.post(reverse('api:request_groups-list'), data=data)
-        self.assertEqual(response.status_code, 201)
-        instrument_configuration = response.json()['requests'][0]['configurations'][0]['instrument_configs'][0]
-        self.assertEqual(instrument_configuration['bin_x'], instrument_configuration['bin_y'])
+        self.assertEqual(configuration['instrument_configs'][0]['extra_params']['bin_x'], 2)
+        self.assertEqual(configuration['instrument_configs'][0]['extra_params']['bin_y'], 2)
 
     def test_request_invalid_instrument_type(self):
         bad_data = self.generic_payload.copy()
@@ -2154,10 +2113,9 @@ class TestAirmassApi(SetTimeMixin, APITestCase):
                 'instrument_type': '1M0-SCICAM-SBIG',
                 'instrument_configs': [
                     {
+                        'mode': '1m0_sbig_1',
                         'exposure_time': 100,
                         'exposure_count': 1,
-                        'bin_x': 1,
-                        'bin_y': 1,
                         'optical_elements': {'filter': 'air'}
                      }
                 ],
@@ -2295,7 +2253,7 @@ class TestSchedulableRequestsApi(SetTimeMixin, APITestCase):
                 end += timedelta(days=2)
                 conf = mixer.blend(Configuration, request=req, type='EXPOSE', instrument_type='1M0-SCICAM-SBIG')
                 mixer.blend(InstrumentConfig, configuration=conf,  exposure_time=60, exposure_count=10,
-                            optical_elements={'filter': 'air'}, bin_x=1, bin_y=1)
+                            optical_elements={'filter': 'air'}, mode='1m0_sbig_1', extra_params={'bin_x': 1, 'bin_y': 1})
                 mixer.blend(AcquisitionConfig, configuration=conf, )
                 mixer.blend(GuidingConfig, configuration=conf, )
                 mixer.blend(Target, configuration=conf, type='ICRS', dec=20, ra=34.4)
@@ -2334,7 +2292,7 @@ class TestSchedulableRequestsApi(SetTimeMixin, APITestCase):
             end += timedelta(days=2)
             conf = mixer.blend(Configuration, request=req, type='SPECTRUM', instrument_type='2M0-FLOYDS-SCICAM')
             mixer.blend(InstrumentConfig, configuration=conf,  exposure_time=60, exposure_count=10,
-                        optical_elements={'slit': 'slit_6.0as'}, bin_x=1, bin_y=1)
+                        optical_elements={'slit': 'slit_6.0as'}, mode='2m0_floyds_1', extra_params={'bin_x': 1, 'bin_y': 1})
             mixer.blend(AcquisitionConfig, configuration=conf, )
             mixer.blend(GuidingConfig, configuration=conf, )
             mixer.blend(Target, configuration=conf, type='ICRS', dec=20, ra=34.4)
@@ -2716,6 +2674,7 @@ class TestMaxIppRequestgroupApi(SetTimeMixin, APITestCase):
 
     def test_get_max_ipp_reduced_max_ipp(self):
         good_data = self.generic_payload.copy()
+        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['mode'] = '1m0_sbig_1'
         good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['exposure_time'] = 90.0 * 60.0  # 90 minute exposure (1.0 ipp available)
         response = self.client.post(reverse('api:request_groups-max-allowable-ipp'), good_data)
         self.assertEqual(response.status_code, 200)
@@ -2726,6 +2685,7 @@ class TestMaxIppRequestgroupApi(SetTimeMixin, APITestCase):
 
     def test_get_max_ipp_rounds_down(self):
         good_data = self.generic_payload.copy()
+        good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['mode'] = '1m0_sbig_1'
         good_data['requests'][0]['configurations'][0]['instrument_configs'][0]['exposure_time'] = 90.0 * 60.0  # 90 minute exposure (1.0 ipp available)
         self.time_allocation_1m0_sbig.ipp_time_available = 1.33
         self.time_allocation_1m0_sbig.save()

@@ -449,7 +449,7 @@ class ConfigDB(object):
                 reverse=True
             )  # Start with the default
             for mode in modes:
-                if mode['validation_schema'].get('bin_x', {}).get('default', -1) == binning:
+                if mode['validation_schema'].get('extra_params', {}).get('bin_x', {}).get('default', -1) == binning:
                     return mode
 
         raise ConfigDBException(f'No readout mode found with binning {binning} for instrument type {instrument_type}')
@@ -468,8 +468,8 @@ class ConfigDB(object):
         available_binnings = set()
         readout_modes = self.get_modes_by_type(instrument_type, 'readout')
         for mode in readout_modes['readout']['modes'] if 'readout' in readout_modes else []:
-            if 'bin_x' in mode['validation_schema'] and 'default' in mode['validation_schema']['bin_x']:
-                available_binnings.add(mode['validation_schema']['bin_x']['default'])
+            if 'bin_x' in mode['validation_schema'].get('extra_params', {}).get('bin_x', {}).get('default'):
+                available_binnings.add(mode['validation_schema']['extra_params']['bin_x']['default'])
         return available_binnings
 
     def get_default_binning(self, instrument_type: str) -> Union[None, int]:
@@ -482,9 +482,8 @@ class ConfigDB(object):
         """
         readout_modes = self.get_modes_by_type(instrument_type, 'readout')
         for mode in readout_modes['readout']['modes'] if 'readout' in readout_modes else []:
-            if (readout_modes['readout']['default'] == mode['code'] and 'bin_x' in mode['validation_schema']
-                and 'default' in mode['validation_schema']['bin_x']):
-                return mode['validation_schema']['bin_x']['default']
+            if (readout_modes['readout']['default'] == mode['code'] and mode['validation_schema'].get('extra_params', {}).get('bin_x', {}).get('default')):
+                return mode['validation_schema']['extra_params']['bin_x']['default']
         return None
 
     def get_default_acceptability_threshold(self, instrument_type_code):
@@ -563,7 +562,7 @@ class ConfigDB(object):
                     return True
         return False
 
-    def get_exposure_overhead(self, instrument_type_code, binning, readout_mode=''):
+    def get_exposure_overhead(self, instrument_type_code, readout_mode):
         # using the instrument type code, build an instrument with the correct configdb parameters
         for instrument in self.get_instruments():
             if instrument['instrument_type']['code'].upper() == instrument_type_code.upper():
@@ -575,11 +574,9 @@ class ConfigDB(object):
             for mode in modes_by_type['readout']['modes']:
                 if mode['code'] == modes_by_type['readout'].get('default'):
                     default_mode = mode
-                if readout_mode and readout_mode.lower() != mode['code'].lower():
-                    continue
-                if mode['validation_schema'].get('bin_x', {}).get('default', -1) == binning:
+                if readout_mode and readout_mode.lower() == mode['code'].lower():
                     return mode['overhead'] + instrument_type['fixed_overhead_per_exposure']
-            # if the binning is not found, return the default binning (Added to support legacy 2x2 Sinistro obs)
+            # if the named readout mode is not found, return the default mode's overhead (Added to support legacy 2x2 Sinistro obs)
             return default_mode['overhead'] + instrument_type['fixed_overhead_per_exposure']
 
         raise ConfigDBException(f'Instruments of type {instrument_type_code} not found in configdb.')

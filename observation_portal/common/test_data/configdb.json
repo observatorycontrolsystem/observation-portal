@@ -104,8 +104,7 @@
                             "overhead": 35.0,
                             "schedulable": true,
                             "validation_schema": {
-                              "bin_x": {"type": "integer", "allowed": [1], "default": 1},
-                              "bin_y": {"type": "integer", "allowed": [1], "default": 1}
+                              "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [1], "default": 1}, "bin_y": {"type": "integer", "allowed": [1], "default": 1}}, "default": {}, "required": true}
                             }
                           },
                           {
@@ -113,8 +112,7 @@
                             "overhead": 14.5,
                             "schedulable": true,
                             "validation_schema": {
-                              "bin_x": {"type": "integer", "allowed": [2], "default": 2},
-                              "bin_y": {"type": "integer", "allowed": [2], "default": 2}
+                              "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [2], "default": 2}, "bin_y": {"type": "integer", "allowed": [2], "default": 2}}, "default": {}, "required": true}
                             }
                           },
                           {
@@ -122,8 +120,7 @@
                             "overhead": 11.5,
                             "schedulable": true,
                             "validation_schema": {
-                              "bin_x": {"type": "integer", "allowed": [3], "default": 3},
-                              "bin_y": {"type": "integer", "allowed": [3], "default": 3}
+                              "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [3], "default": 3}, "bin_y": {"type": "integer", "allowed": [3], "default": 3}}, "default": {}, "required": true}
                             }
                           }
                         ]
@@ -267,8 +264,7 @@
                             "overhead": 35.0,
                             "schedulable": true,
                             "validation_schema": {
-                              "bin_x": {"type": "integer", "allowed": [1], "default": 1},
-                              "bin_y": {"type": "integer", "allowed": [1], "default": 1}
+                              "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [1], "default": 1}, "bin_y": {"type": "integer", "allowed": [1], "default": 1}}, "default": {}, "required": true}
                             }
                           },
                           {
@@ -276,8 +272,7 @@
                             "overhead": 14.5,
                             "schedulable": true,
                             "validation_schema": {
-                              "bin_x": {"type": "integer", "allowed": [2], "default": 2},
-                              "bin_y": {"type": "integer", "allowed": [2], "default": 2}
+                              "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [2], "default": 2}, "bin_y": {"type": "integer", "allowed": [2], "default": 2}}, "default": {}, "required": true}
                             }
                           },
                           {
@@ -285,8 +280,7 @@
                             "overhead": 11.5,
                             "schedulable": true,
                             "validation_schema": {
-                              "bin_x": {"type": "integer", "allowed": [3], "default": 3},
-                              "bin_y": {"type": "integer", "allowed": [3], "default": 3}
+                              "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [3], "default": 3}, "bin_y": {"type": "integer", "allowed": [3], "default": 3}}, "default": {}, "required": true}
                             }
                           }
                         ]
@@ -430,8 +424,7 @@
                             "overhead": 35.0,
                             "schedulable": true,
                             "validation_schema": {
-                              "bin_x": {"type": "integer", "allowed": [1], "default": 1},
-                              "bin_y": {"type": "integer", "allowed": [1], "default": 1}
+                              "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [1], "default": 1}, "bin_y": {"type": "integer", "allowed": [1], "default": 1}}, "default": {}, "required": true}
                             }
                           },
                           {
@@ -439,8 +432,7 @@
                             "overhead": 14.5,
                             "schedulable": true,
                             "validation_schema": {
-                              "bin_x": {"type": "integer", "allowed": [2], "default": 2},
-                              "bin_y": {"type": "integer", "allowed": [2], "default": 2}
+                              "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [2], "default": 2}, "bin_y": {"type": "integer", "allowed": [2], "default": 2}}, "default": {}, "required": true}
                             }
                           },
                           {
@@ -448,8 +440,7 @@
                             "overhead": 11.5,
                             "schedulable": true,
                             "validation_schema": {
-                              "bin_x": {"type": "integer", "allowed": [3], "default": 3},
-                              "bin_y": {"type": "integer", "allowed": [3], "default": 3}
+                              "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [3], "default": 3}, "bin_y": {"type": "integer", "allowed": [3], "default": 3}}, "default": {}, "required": true}
                             }
                           }
                         ]
@@ -601,8 +592,7 @@
                             "overhead": 25.0,
                             "schedulable": true,
                             "validation_schema": {
-                              "bin_x": {"type": "integer", "allowed": [1], "default": 1},
-                              "bin_y": {"type": "integer", "allowed": [1], "default": 1}
+                              "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [1], "default": 1}, "bin_y": {"type": "integer", "allowed": [1], "default": 1}}, "default": {}, "required": true}
                             }
                           }
                         ]
@@ -808,8 +798,7 @@
                             "overhead": 35.0,
                             "schedulable": true,
                             "validation_schema": {
-                              "bin_x": {"type": "integer", "allowed": [1], "default": 1},
-                              "bin_y": {"type": "integer", "allowed": [1], "default": 1}
+                              "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [1], "default": 1}, "bin_y": {"type": "integer", "allowed": [1], "default": 1}}, "default": {}, "required": true}
                             }
                           },
                           {
@@ -817,8 +806,7 @@
                             "overhead": 14.5,
                             "schedulable": true,
                             "validation_schema": {
-                              "bin_x": {"type": "integer", "allowed": [2], "default": 2},
-                              "bin_y": {"type": "integer", "allowed": [2], "default": 2}
+                              "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [2], "default": 2}, "bin_y": {"type": "integer", "allowed": [2], "default": 2}}, "default": {}, "required": true}
                             }
                           },
                           {
@@ -826,8 +814,7 @@
                             "overhead": 11.5,
                             "schedulable": true,
                             "validation_schema": {
-                              "bin_x": {"type": "integer", "allowed": [3], "default": 3},
-                              "bin_y": {"type": "integer", "allowed": [3], "default": 3}
+                              "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [3], "default": 3}, "bin_y": {"type": "integer", "allowed": [3], "default": 3}}, "default": {}, "required": true}
                             }
                           }
                         ]
@@ -978,8 +965,7 @@
                             "overhead": 35.0,
                             "schedulable": true,
                             "validation_schema": {
-                              "bin_x": {"type": "integer", "allowed": [1], "default": 1},
-                              "bin_y": {"type": "integer", "allowed": [1], "default": 1}
+                              "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [1], "default": 1}, "bin_y": {"type": "integer", "allowed": [1], "default": 1}}, "default": {}, "required": true}
                             }
                           },
                           {
@@ -987,8 +973,7 @@
                             "overhead": 90.5,
                             "schedulable": true,
                             "validation_schema": {
-                              "bin_x": {"type": "integer", "allowed": [2], "default": 2},
-                              "bin_y": {"type": "integer", "allowed": [2], "default": 2}
+                              "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [2], "default": 2}, "bin_y": {"type": "integer", "allowed": [2], "default": 2}}, "default": {}, "required": true}
                             }
                           }
                         ]
@@ -1138,8 +1123,7 @@
                             "overhead": 25.0,
                             "schedulable": true,
                             "validation_schema": {
-                              "bin_x": {"type": "integer", "allowed": [1], "default": 1},
-                              "bin_y": {"type": "integer", "allowed": [1], "default": 1}
+                              "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [1], "default": 1}, "bin_y": {"type": "integer", "allowed": [1], "default": 1}}, "default": {}, "required": true}
                             }
                           }
                         ]
@@ -1280,8 +1264,7 @@
                             "schedulable": true,
                             "code": "MUSCAT_SLOW",
                             "validation_schema": {
-                              "bin_x": {"type": "integer", "allowed": [1], "default": 1},
-                              "bin_y": {"type": "integer", "allowed": [1], "default": 1}
+                              "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [1], "default": 1}, "bin_y": {"type": "integer", "allowed": [1], "default": 1}}, "default": {}, "required": true}
                             }
                           }
                         ],
@@ -1695,8 +1678,7 @@
                             "overhead": 35.0,
                             "schedulable": true,
                             "validation_schema": {
-                              "bin_x": {"type": "integer", "allowed": [1], "default": 1},
-                              "bin_y": {"type": "integer", "allowed": [1], "default": 1}
+                              "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [1], "default": 1}, "bin_y": {"type": "integer", "allowed": [1], "default": 1}}, "default": {}, "required": true}
                             }
                           },
                           {
@@ -1704,8 +1686,7 @@
                             "overhead": 14.5,
                             "schedulable": true,
                             "validation_schema": {
-                              "bin_x": {"type": "integer", "allowed": [2], "default": 2},
-                              "bin_y": {"type": "integer", "allowed": [2], "default": 2}
+                              "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [2], "default": 2}, "bin_y": {"type": "integer", "allowed": [2], "default": 2}}, "default": {}, "required": true}
                             }
                           },
                           {
@@ -1713,8 +1694,7 @@
                             "overhead": 11.5,
                             "schedulable": true,
                             "validation_schema": {
-                              "bin_x": {"type": "integer", "allowed": [3], "default": 3},
-                              "bin_y": {"type": "integer", "allowed": [3], "default": 3}
+                              "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [3], "default": 3}, "bin_y": {"type": "integer", "allowed": [3], "default": 3}}, "default": {}, "required": true}
                             }
                           }
                         ]
@@ -1858,8 +1838,7 @@
                             "overhead": 35.0,
                             "schedulable": true,
                             "validation_schema": {
-                              "bin_x": {"type": "integer", "allowed": [1], "default": 1},
-                              "bin_y": {"type": "integer", "allowed": [1], "default": 1}
+                              "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [1], "default": 1}, "bin_y": {"type": "integer", "allowed": [1], "default": 1}}, "default": {}, "required": true}
                             }
                           },
                           {
@@ -1867,8 +1846,7 @@
                             "overhead": 14.5,
                             "schedulable": true,
                             "validation_schema": {
-                              "bin_x": {"type": "integer", "allowed": [2], "default": 2},
-                              "bin_y": {"type": "integer", "allowed": [2], "default": 2}
+                              "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [2], "default": 2}, "bin_y": {"type": "integer", "allowed": [2], "default": 2}}, "default": {}, "required": true}
                             }
                           },
                           {
@@ -1876,8 +1854,7 @@
                             "overhead": 11.5,
                             "schedulable": true,
                             "validation_schema": {
-                              "bin_x": {"type": "integer", "allowed": [3], "default": 3},
-                              "bin_y": {"type": "integer", "allowed": [3], "default": 3}
+                              "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [3], "default": 3}, "bin_y": {"type": "integer", "allowed": [3], "default": 3}}, "default": {}, "required": true}
                             }
                           }
                         ]
@@ -2042,8 +2019,7 @@
                             "overhead": 35.0,
                             "schedulable": true,
                             "validation_schema": {
-                              "bin_x": {"type": "integer", "allowed": [1], "default": 1},
-                              "bin_y": {"type": "integer", "allowed": [1], "default": 1}
+                              "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [1], "default": 1}, "bin_y": {"type": "integer", "allowed": [1], "default": 1}}, "default": {}, "required": true}
                             }
                           },
                           {
@@ -2051,8 +2027,7 @@
                             "overhead": 14.5,
                             "schedulable": true,
                             "validation_schema": {
-                              "bin_x": {"type": "integer", "allowed": [2], "default": 2},
-                              "bin_y": {"type": "integer", "allowed": [2], "default": 2}
+                              "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [2], "default": 2}, "bin_y": {"type": "integer", "allowed": [2], "default": 2}}, "default": {}, "required": true}
                             }
                           },
                           {
@@ -2060,8 +2035,7 @@
                             "overhead": 11.5,
                             "schedulable": true,
                             "validation_schema": {
-                              "bin_x": {"type": "integer", "allowed": [3], "default": 3},
-                              "bin_y": {"type": "integer", "allowed": [3], "default": 3}
+                              "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [3], "default": 3}, "bin_y": {"type": "integer", "allowed": [3], "default": 3}}, "default": {}, "required": true}
                             }
                           }
                         ]
@@ -2226,8 +2200,7 @@
                             "overhead": 35.0,
                             "schedulable": true,
                             "validation_schema": {
-                              "bin_x": {"type": "integer", "allowed": [1], "default": 1},
-                              "bin_y": {"type": "integer", "allowed": [1], "default": 1}
+                              "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [1], "default": 1}, "bin_y": {"type": "integer", "allowed": [1], "default": 1}}, "default": {}, "required": true}
                             }
                           },
                           {
@@ -2235,8 +2208,7 @@
                             "overhead": 14.5,
                             "schedulable": true,
                             "validation_schema": {
-                              "bin_x": {"type": "integer", "allowed": [2], "default": 2},
-                              "bin_y": {"type": "integer", "allowed": [2], "default": 2}
+                              "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [2], "default": 2}, "bin_y": {"type": "integer", "allowed": [2], "default": 2}}, "default": {}, "required": true}
                             }
                           },
                           {
@@ -2244,8 +2216,7 @@
                             "overhead": 11.5,
                             "schedulable": true,
                             "validation_schema": {
-                              "bin_x": {"type": "integer", "allowed": [3], "default": 3},
-                              "bin_y": {"type": "integer", "allowed": [3], "default": 3}
+                              "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [3], "default": 3}, "bin_y": {"type": "integer", "allowed": [3], "default": 3}}, "default": {}, "required": true}
                             }
                           }
                         ]

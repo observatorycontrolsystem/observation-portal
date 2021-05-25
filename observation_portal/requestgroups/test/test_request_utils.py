@@ -38,7 +38,7 @@ class BaseSetupRequest(SetTimeMixin, TestCase):
         )
         self.instrument_config = mixer.blend(
             InstrumentConfig, configuration=self.configuration, exposure_time=600, exposure_count=2,
-            optical_elements={'filter': 'blah'}, bin_x=2, bin_y=2
+            optical_elements={'filter': 'blah'}, mode='1m0_sbig_2', extra_params={'bin_x': 2, 'bin_y': 2}
         )
         self.acquisition_config = mixer.blend(AcquisitionConfig, configuration=self.configuration)
         self.guiding_config = mixer.blend(GuidingConfig, configuration=self.configuration)
@@ -575,7 +575,7 @@ class TestRequestTelescopeStates(TelescopeStatesFakeInput):
         )
         self.instrument_config = mixer.blend(
             InstrumentConfig, configuration=self.configuration, exposure_time=600, exposure_count=2,
-            optical_elements={'filter': 'blah'}, bin_x=2, bin_y=2
+            optical_elements={'filter': 'blah'}, mode='1m0_sbig_2', extra_params={'bin_x': 2, 'bin_y': 2}
         )
         self.acquisition_config = mixer.blend(AcquisitionConfig, configuration=self.configuration)
         self.guiding_config = mixer.blend(GuidingConfig, configuration=self.configuration)

@@ -38,11 +38,8 @@ observation = {
                         "optical_elements": {
                             "filter": "air"
                         },
-                        "mode": "",
                         "exposure_time": 370.0,
                         "exposure_count": 1,
-                        "bin_x": 1,
-                        "bin_y": 1,
                         "rotator_mode": "",
                         "extra_params": {}
                     }

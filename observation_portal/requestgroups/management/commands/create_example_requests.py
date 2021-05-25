@@ -275,8 +275,6 @@ class Command(BaseCommand):
                         optical_elements=instrument_defaults['optical_elements'],
                         mode=instrument_defaults.get('readout', ''),
                         rotator_mode=instrument_defaults.get('rotator', ''),
-                        bin_x=binning or 1,
-                        bin_y=binning or 1,
                         **base_instrument_config
                     )
 
