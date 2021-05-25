@@ -532,6 +532,8 @@ class ConfigDB(object):
                 if readout_mode and readout_mode.lower() == mode['code'].lower():
                     return mode['overhead'] + instrument_type['fixed_overhead_per_exposure']
             # if the named readout mode is not found, return the default mode's overhead (Added to support legacy 2x2 Sinistro obs)
+            if not default_mode:
+                raise ConfigDBException(f'No readout mode named {readout_mode} found for instrument type {instrument_type_code} and no default readout mode set.')
             return default_mode['overhead'] + instrument_type['fixed_overhead_per_exposure']
 
         raise ConfigDBException(f'Instruments of type {instrument_type_code} not found in configdb.')
