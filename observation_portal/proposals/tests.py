@@ -311,14 +311,22 @@ class TestProposalAdmin(TestCase):
         for proposal in self.proposals:
             self.assertEqual(Proposal.objects.get(pk=proposal.id).active, True)
 
-    def test_clean_time_allocation(self):
+    def test_clean_time_allocation_time_change_succeeds(self):
         ta_dict = self.time_allocation.as_dict()
+        ta_dict['std_allocation'] = ta_dict['std_allocation'] + 10.0
         taf = TimeAllocationForm(data=ta_dict, instance=self.time_allocation)
         self.assertTrue(taf.is_valid())
 
-        # Now attempt to change the semester and see it fail
-        # ta_dict2 = self.time_allocation.as_dict()
-        # ta_dict2['semester'] = self.future_semester.id
-        # taf2 = TimeAllocationForm(data=ta_dict2, instance=self.time_allocation)
-        # self.assertFalse(taf2.is_valid())
-        # self.assertIn("Cannot change TimeAllocation", taf2.non_field_errors()[0])
+    def test_clean_time_allocation_semester_change_fails(self):
+        ta_dict = self.time_allocation.as_dict()
+        ta_dict['semester'] = self.future_semester.id
+        taf = TimeAllocationForm(data=ta_dict, instance=self.time_allocation)
+        self.assertFalse(taf.is_valid())
+        self.assertIn("Cannot change TimeAllocation", taf.non_field_errors()[0])
+
+    def test_clean_time_allocation_instrument_type_change_fails(self):
+        ta_dict = self.time_allocation.as_dict()
+        ta_dict['instrument_type'] = '2M0-FLOYDS-SCICAM'
+        taf = TimeAllocationForm(data=ta_dict, instance=self.time_allocation)
+        self.assertFalse(taf.is_valid())
+        self.assertIn("Cannot change TimeAllocation", taf.non_field_errors()[0])
