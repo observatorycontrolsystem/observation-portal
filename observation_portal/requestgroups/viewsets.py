@@ -116,7 +116,7 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
                 else:
                     time_allocation = TimeAllocation.objects.get(
                         semester=tak.semester,
-                        instrument_type=tak.instrument_type,
+                        instrument_types__contains=[tak.instrument_type],
                         proposal=request_group.proposal.id,
                     )
                     tas[(tak, request_group.proposal.id)] = time_allocation

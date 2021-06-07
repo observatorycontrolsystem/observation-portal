@@ -1,3 +1,4 @@
+from django.contrib.postgres.fields import ArrayField
 from django.contrib.auth.models import User
 from django.utils.functional import cached_property
 from django.forms import model_to_dict
@@ -121,7 +122,8 @@ class Proposal(models.Model):
     def allocation(self, semester):
         allocs = {}
         for ta in self.timeallocation_set.filter(semester=semester):
-            allocs[ta.instrument_type.replace('-', '')] = {
+            instrument_types = ','.join(ta.instrument_types)
+            allocs[instrument_types.replace('-', '')] = {
                 'std': ta.std_allocation,
                 'std_used': ta.std_time_used,
                 'rr': ta.rr_allocation,
@@ -207,14 +209,16 @@ class TimeAllocation(models.Model):
     tc_time_used = models.FloatField(default=0)
     semester = models.ForeignKey(Semester, on_delete=models.CASCADE)
     proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE)
-    instrument_type = models.CharField(max_length=200)
+    instrument_types = ArrayField(base_field=models.CharField(max_length=200), default=list,
+        help_text='One or more instrument_types to share this time allocation'
+    )
 
     class Meta:
         ordering = ('-semester__id',)
         constraints = [
             models.UniqueConstraint(
-                fields=['semester', 'proposal', 'instrument_type'],
-                name='unique_proposal_timeallocation'
+                fields=['semester', 'proposal', 'instrument_types'],
+                name='unique_proposal_semester_instrument_type_ta'
             )
         ]
 
@@ -226,6 +230,15 @@ class TimeAllocation(models.Model):
             exclude = []
         time_allocation = model_to_dict(self, exclude=exclude)
         return time_allocation
+
+    def save(self, *args, **kwargs):
+        tas_count = TimeAllocation.objects.filter(proposal=self.proposal, semester=self.semester,
+                                                  instrument_types__overlap=self.instrument_types).count()
+        if tas_count > 1:
+            # Don't save the time allocation in this case, because it is not a unique combination
+            # of proposal, semester, and instrument_type
+            return
+        return super().save(*args, **kwargs)
 
 
 class Membership(models.Model):

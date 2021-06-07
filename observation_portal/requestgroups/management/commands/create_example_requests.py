@@ -315,18 +315,18 @@ class Command(BaseCommand):
 
         # Loop over all the current time allocations, which should include all available instrument types
         for time_allocation in time_allocations:
-            instrument_type = time_allocation.instrument_type
-            # Make a set of requests in the past, present, and future for each available instrument
-            past_windows = [{
-                'start': (timezone.now() - timedelta(days=15)),
-                'end': (timezone.now() - timedelta(days=7))
-            }]
-            self._create_requestgroups('Past RequestGroup', instrument_type, proposal, user, past_windows)
-            future_windows = [{
-                'start': timezone.now(),
-                'end': (timezone.now() + timedelta(days=7))
-            }]
-            self._create_requestgroups('Future RequestGroup', instrument_type, proposal, user, future_windows)
+            for instrument_type in time_allocation.instrument_types:
+                # Make a set of requests in the past, present, and future for each available instrument
+                past_windows = [{
+                    'start': (timezone.now() - timedelta(days=15)),
+                    'end': (timezone.now() - timedelta(days=7))
+                }]
+                self._create_requestgroups('Past RequestGroup', instrument_type, proposal, user, past_windows)
+                future_windows = [{
+                    'start': timezone.now(),
+                    'end': (timezone.now() + timedelta(days=7))
+                }]
+                self._create_requestgroups('Future RequestGroup', instrument_type, proposal, user, future_windows)
 
         logger.info(f"Created example requestgroups for proposal {options['proposal']} and submitter {options['submitter']}")
         sys.exit(0)

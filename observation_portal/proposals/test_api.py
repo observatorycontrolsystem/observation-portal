@@ -155,7 +155,7 @@ class TestSemesterApi(APITestCase):
                                               end=datetime(2016, 2, 1, tzinfo=timezone.utc))
         self.proposal = mixer.blend(Proposal, active=True, non_science=False)
         mixer.blend(Membership, proposal=self.proposal, user=blend_user(), role=Membership.PI)
-        mixer.blend(TimeAllocation, semester=self.semesters[0], proposal=self.proposal)
+        mixer.blend(TimeAllocation, semester=self.semesters[0], proposal=self.proposal, instrument_types=['1M0-SCICAM-SBIG'])
 
     def test_semester_list(self):
         response = self.client.get(reverse('api:semesters-list'))

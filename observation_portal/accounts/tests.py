@@ -249,7 +249,7 @@ class TestProfileAPI(APITestCase):
 
         proposal = mixer.blend(Proposal, active=True)
         mixer.blend(Membership, proposal=proposal, user=self.profile.user)
-        mixer.blend(TimeAllocation, proposal=proposal, telescope_class='1m0')
+        mixer.blend(TimeAllocation, proposal=proposal, instrument_types=['1M0-SCICAM-SBIG'])
 
         response = self.client.get(reverse('api:profile'))
         self.assertGreater(len(response.json()['available_instrument_types']), 0)

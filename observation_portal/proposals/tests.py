@@ -64,16 +64,16 @@ class TestProposal(DramatiqTestCase):
         proposal = mixer.blend(Proposal)
         semester = mixer.blend(Semester)
         instrument_type = 'instrument_a'
-        TimeAllocation.objects.create(proposal=proposal, semester=semester, instrument_type=instrument_type)
+        TimeAllocation.objects.create(proposal=proposal, semester=semester, instrument_types=[instrument_type])
         with self.assertRaises(IntegrityError):
-            TimeAllocation.objects.create(proposal=proposal, semester=semester, instrument_type=instrument_type)
+            TimeAllocation.objects.create(proposal=proposal, semester=semester, instrument_types=[instrument_type])
 
     def test_can_create_many_timeallocations_that_arent_duplicates(self):
         expected_timeallocations_count = 2
         proposal = mixer.blend(Proposal)
         semester = mixer.blend(Semester)
         for i in range(expected_timeallocations_count):
-            TimeAllocation.objects.create(proposal=proposal, semester=semester, instrument_type=f'instrument_{i}')
+            TimeAllocation.objects.create(proposal=proposal, semester=semester, instrument_types=[f'instrument_{i}'])
         self.assertEqual(TimeAllocation.objects.count(), expected_timeallocations_count)
 
 
@@ -205,7 +205,7 @@ class TestTimeAllocationEmail(DramatiqTestCase):
         )
 
     def test_sends_email_to_pi_for_current_active_proposal(self):
-        mixer.blend(TimeAllocation, proposal=self.proposal, semester=self.current_semester)
+        mixer.blend(TimeAllocation, proposal=self.proposal, semester=self.current_semester, instrument_types=['1M0-SCICAM-SBIG'])
         time_allocation_reminder()
 
         self.broker.join('default')
@@ -216,7 +216,7 @@ class TestTimeAllocationEmail(DramatiqTestCase):
         self.assertEqual(mail.outbox[0].to, [self.pi.email])
 
     def test_does_not_send_email_for_active_proposal_with_no_current_allocations(self):
-        mixer.blend(TimeAllocation, proposal=self.proposal, semester=self.future_semester)
+        mixer.blend(TimeAllocation, proposal=self.proposal, semester=self.future_semester, instrument_types=['1M0-SCICAM-SBIG'])
         time_allocation_reminder()
 
         self.broker.join('default')
@@ -225,7 +225,7 @@ class TestTimeAllocationEmail(DramatiqTestCase):
         self.assertEqual(len(mail.outbox), 0)
 
     def test_does_not_send_email_for_inactive_proposal(self):
-        mixer.blend(TimeAllocation, proposal=self.proposal, semester=self.current_semester)
+        mixer.blend(TimeAllocation, proposal=self.proposal, semester=self.current_semester, instrument_types=['1M0-SCICAM-SBIG'])
         self.proposal.active = False
         self.proposal.save()
         time_allocation_reminder()
@@ -241,7 +241,7 @@ class TestProposalUserLimits(TestCase):
         super().setUp()
         self.proposal = mixer.blend(Proposal)
         semester = mixer.blend(Semester, start=timezone.now(), end=timezone.now() + datetime.timedelta(days=180))
-        mixer.blend(TimeAllocation, proposal=self.proposal, semester=semester)
+        mixer.blend(TimeAllocation, proposal=self.proposal, semester=semester, instrument_types=['1M0-SCICAM-SBIG'])
         self.user = mixer.blend(User)
         mixer.blend(Profile, user=self.user)
         mixer.blend(Membership, user=self.user, proposal=self.proposal, role=Membership.CI)
@@ -261,21 +261,21 @@ class TestDefaultIPP(TestCase):
         self.semester = mixer.blend(Semester)
 
     def test_default_ipp_time_is_set(self):
-        ta = TimeAllocation(semester=self.semester, proposal=self.proposal, std_allocation=100)
+        ta = TimeAllocation(semester=self.semester, proposal=self.proposal, instrument_types=['1M0-SCICAM-SBIG'], std_allocation=100)
         ta.save()
         self.assertEqual(ta.ipp_limit, 10)
         self.assertEqual(ta.ipp_time_available, 5)
 
     def test_default_ipp_time_is_not_set(self):
         ta = TimeAllocation(
-            semester=self.semester, proposal=self.proposal, std_allocation=100, ipp_limit=99, ipp_time_available=42
+            semester=self.semester, proposal=self.proposal, instrument_types=['1M0-SCICAM-SBIG'], std_allocation=100, ipp_limit=99, ipp_time_available=42
         )
         ta.save()
         self.assertEqual(ta.ipp_limit, 99)
         self.assertEqual(ta.ipp_time_available, 42)
 
     def test_default_ipp_set_only_on_creation(self):
-        ta = TimeAllocation(semester=self.semester, proposal=self.proposal, std_allocation=100)
+        ta = TimeAllocation(semester=self.semester, proposal=self.proposal, instrument_types=['1M0-SCICAM-SBIG'], std_allocation=100)
         ta.save()
         ta.ipp_time_available = 0
         ta.save()
@@ -292,7 +292,7 @@ class TestProposalAdmin(TestCase):
         self.user = mixer.blend(User)
         self.current_semester = mixer.blend(
             Semester, start=now, end=now + datetime.timedelta(days=30))
-        self.time_allocation = mixer.blend(TimeAllocation, proposal=self.proposal, semester=self.current_semester, instrument_type='1M0-SCICAM-SBIG')
+        self.time_allocation = mixer.blend(TimeAllocation, proposal=self.proposal, semester=self.current_semester, instrument_types=['1M0-SCICAM-SBIG'])
         mixer.blend(Membership, user=self.user, proposal=self.proposal, role=Membership.PI)
         self.future_semester = mixer.blend(
             Semester, start=now + datetime.timedelta(days=60), end=now + datetime.timedelta(days=90))
@@ -324,9 +324,31 @@ class TestProposalAdmin(TestCase):
         self.assertFalse(taf.is_valid())
         self.assertIn("Cannot change TimeAllocation", taf.non_field_errors()[0])
 
-    def test_clean_time_allocation_instrument_type_change_fails(self):
+    def test_clean_time_allocation_semester_and_ta_change_fails(self):
         ta_dict = self.time_allocation.as_dict()
-        ta_dict['instrument_type'] = '2M0-FLOYDS-SCICAM'
+        ta_dict['semester'] = self.future_semester.id
+        ta_dict['instrument_types'] = ['1M0-SCICAM-SBIG', '2M0-FLOYDS-SCICAM']
         taf = TimeAllocationForm(data=ta_dict, instance=self.time_allocation)
         self.assertFalse(taf.is_valid())
         self.assertIn("Cannot change TimeAllocation", taf.non_field_errors()[0])
+
+    def test_clean_time_allocation_instrument_type_change_fails(self):
+        ta_dict = self.time_allocation.as_dict()
+        ta_dict['instrument_types'] = ['2M0-FLOYDS-SCICAM']
+        taf = TimeAllocationForm(data=ta_dict, instance=self.time_allocation)
+        self.assertFalse(taf.is_valid())
+        self.assertIn("Cannot change TimeAllocation", taf.non_field_errors()[0])
+
+    def test_clean_time_allocation_instrument_type_addition_succeeds(self):
+        ta_dict = self.time_allocation.as_dict()
+        ta_dict['instrument_types'] = ['1M0-SCICAM-SBIG', '2M0-FLOYDS-SCICAM']
+        taf = TimeAllocationForm(data=ta_dict, instance=self.time_allocation)
+        self.assertTrue(taf.is_valid())
+
+    def test_clean_time_allocation_instrument_type_overlap_fails(self):
+        time_allocation2 = mixer.blend(TimeAllocation, proposal=self.proposal, semester=self.current_semester, instrument_types=['2M0-FLOYDS-SCICAM'])
+        ta_dict = time_allocation2.as_dict()
+        ta_dict['instrument_types'] = ['1M0-SCICAM-SBIG', '2M0-FLOYDS-SCICAM']
+        taf = TimeAllocationForm(data=ta_dict, instance=time_allocation2)
+        self.assertFalse(taf.is_valid())
+        self.assertIn("must be unique", taf.non_field_errors()[0])

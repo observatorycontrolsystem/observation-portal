@@ -7,7 +7,7 @@ from PyPDF2 import PdfFileReader
 from PyPDF2.utils import PdfReadError
 from rest_framework import serializers
 
-from observation_portal.sciapplications.models import ScienceApplication, Call, TimeRequest, CoInvestigator
+from observation_portal.sciapplications.models import ScienceApplication, Call, TimeRequest, CoInvestigator, Instrument
 
 
 class CallSerializer(serializers.ModelSerializer):
@@ -42,7 +42,13 @@ class CoInvestigatorSerializer(serializers.ModelSerializer):
         fields = ('first_name', 'last_name', 'institution', 'email')
 
 
+class InstrumentTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Instrument
+        fields = ('id', 'code', 'display', 'telescope_name')
+
 class TimeRequestSerializer(serializers.ModelSerializer):
+    instrument_types = serializers.PrimaryKeyRelatedField(many=True, read_only=False, queryset=Instrument.objects.all())
     telescope_name = serializers.SerializerMethodField()
     instrument_name = serializers.SerializerMethodField()
     instrument_code = serializers.SerializerMethodField()
@@ -50,18 +56,24 @@ class TimeRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = TimeRequest
         fields = (
-            'semester', 'std_time', 'rr_time', 'tc_time', 'instrument', 'telescope_name',
-            'instrument_name', 'instrument_code'
+            'semester', 'std_time', 'rr_time', 'tc_time', 'telescope_name',
+            'instrument_name', 'instrument_code', 'instrument_types'
         )
 
     def get_telescope_name(self, obj):
-        return obj.instrument.telescope_name
+        instruments = Instrument.objects.filter(timerequests__pk=obj.pk)
+        telescope_names = {it.telescope_name for it in instruments}
+        return ','.join(list(telescope_names))
 
     def get_instrument_name(self, obj):
-        return obj.instrument.display
+        instruments = Instrument.objects.filter(timerequests__pk=obj.pk)
+        it_names = {it.display for it in instruments}
+        return ','.join(list(it_names))
 
     def get_instrument_code(self, obj):
-        return obj.instrument.code
+        instruments = Instrument.objects.filter(timerequests__pk=obj.pk)
+        it_codes = {it.code for it in instruments}
+        return ','.join(list(it_codes))
 
 
 class CallsPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
@@ -172,6 +184,7 @@ class ScienceApplicationSerializer(serializers.ModelSerializer):
         if pdf is not None and call.proposal_type == Call.COLLAB_PROPOSAL:
             raise serializers.ValidationError(_('Science collaboration proposals do not have pdfs.'))
 
+        unique_time_requests = set()
         for timerequest in timerequest_set:
             if timerequest['semester'].id not in call.eligible_semesters:
                 raise serializers.ValidationError(_(
@@ -179,13 +192,15 @@ class ScienceApplicationSerializer(serializers.ModelSerializer):
                     f'of [{", ".join(call.eligible_semesters)}]'
                 ))
             call_instrument_ids = [instrument.id for instrument in call.instruments.all()]
-            if timerequest['instrument'].id not in call_instrument_ids:
-                raise serializers.ValidationError(_(
-                    f'The instrument IDs set for the time requests of this application must be one '
-                    f'of [{", ".join([str(i) for i in call_instrument_ids])}]'
-                ))
+            for instrument_type in timerequest['instrument_types']:
+                if instrument_type.id not in call_instrument_ids:
+                    raise serializers.ValidationError(_(
+                        f'The instrument IDs set for the time requests of this application must be one '
+                        f'of [{", ".join([str(i) for i in call_instrument_ids])}]'
+                    ))
+            instrument_types = ','.join([str(it.id) for it in timerequest['instrument_types']])
+            unique_time_requests.add(f'{instrument_types}-{timerequest["semester"].id}')
 
-        unique_time_requests = set([f'{tr["instrument"]}-{tr["semester"]}' for tr in timerequest_set])
         if len(unique_time_requests) != len(timerequest_set):
             raise serializers.ValidationError(_(
                 'You cannot create more than one time request for the same semester and instrument. Please '
@@ -252,7 +267,11 @@ class ScienceApplicationSerializer(serializers.ModelSerializer):
                 coinvestigator.delete()
 
             for timerequest in timerequest_set:
-                TimeRequest.objects.create(**timerequest, science_application=instance)
+                instrument_types = timerequest['instrument_types']
+                del timerequest['instrument_types']
+                obj = TimeRequest.objects.create(**timerequest, science_application=instance)
+                obj.instrument_types.add(*instrument_types)
+                obj.save()
             for coinvestigator in coinvestigator_set:
                 CoInvestigator.objects.create(**coinvestigator, science_application=instance)
 
@@ -266,7 +285,11 @@ class ScienceApplicationSerializer(serializers.ModelSerializer):
         with transaction.atomic():
             sciapp = ScienceApplication.objects.create(**validated_data, submitter=self.context['request'].user)
             for timerequest in timerequest_set:
-                TimeRequest.objects.create(**timerequest, science_application=sciapp)
+                instrument_types = timerequest['instrument_types']
+                del timerequest['instrument_types']
+                obj = TimeRequest.objects.create(**timerequest, science_application=sciapp)
+                obj.instrument_types.add(*instrument_types)
+                obj.save()
             for coinvestigator in coinvestigator_set:
                 CoInvestigator.objects.create(**coinvestigator, science_application=sciapp)
 

@@ -26,15 +26,15 @@ class TimeAllocationForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['instrument_type'] = forms.ChoiceField(choices=configdb.get_instrument_type_tuples())
+        self.fields['instrument_types'] = forms.MultipleChoiceField(choices=configdb.get_instrument_type_tuples())
 
     def clean(self):
         cleaned_data = super().clean()
         if self.instance.pk is None:
             return
-        instrument_type_changed = cleaned_data.get('instrument_type') != self.instance.instrument_type
+        instrument_types_changed = cleaned_data.get('instrument_types') != self.instance.instrument_types
         semester_changed = cleaned_data.get('semester') != self.instance.semester
-        if instrument_type_changed or semester_changed:
+        if instrument_types_changed or semester_changed:
             # instrument_type has changed. We should block this if the old instrument_type was in use
             requestgroups = RequestGroup.objects.filter(proposal=self.instance.proposal).prefetch_related(
                 'requests', 'requests__windows', 'requests__configurations'
@@ -42,9 +42,16 @@ class TimeAllocationForm(forms.ModelForm):
             for requestgroup in requestgroups:
                 if requestgroup.observation_type != RequestGroup.DIRECT:
                     for request in requestgroup.requests.all():
-                        if (request.time_allocation_key.instrument_type == self.instance.instrument_type and
-                                request.time_allocation_key.semester == self.instance.semester.id):
-                            raise forms.ValidationError("Cannot change TimeAllocation's instrument_type/semester when it is in use")
+                        for tak in request.time_allocation_keys:
+                            if (tak.instrument_type in self.instance.instrument_types and
+                                    tak.semester == self.instance.semester.id):
+                                if tak.instrument_type not in cleaned_data.get('instrument_types') or semester_changed:
+                                    raise forms.ValidationError("Cannot change TimeAllocation's instrument_type/semester when it is in use")
+            # or if one of the new instrument types are in use already in the same semester/proposal
+            tas_count = TimeAllocation.objects.filter(proposal=self.instance.proposal, semester=cleaned_data.get('semester'),
+                                                      instrument_types__overlap=cleaned_data.get('instrument_types')).count()
+            if tas_count > 1:
+                raise forms.ValidationError("The TimeAllocation's combination of semester, proposal and instrument_type must be unique")
 
 
 class TimeAllocationFormSet(forms.models.BaseInlineFormSet):
@@ -60,6 +67,7 @@ class TimeAllocationFormSet(forms.models.BaseInlineFormSet):
                 for requestgroup in requestgroups:
                     if requestgroup.observation_type != RequestGroup.DIRECT:
                         for request in requestgroup.requests.all():
-                            if (request.time_allocation_key.instrument_type == form.cleaned_data.get('instrument_type') and
-                                    request.time_allocation_key.semester == form.cleaned_data.get('semester').id):
-                                raise forms.ValidationError('Cannot delete TimeAllocation when it is in use')
+                            for tak in request.time_allocation_keys:
+                                if (tak.instrument_type in form.cleaned_data.get('instrument_types') and
+                                        tak.semester == form.cleaned_data.get('semester').id):
+                                    raise forms.ValidationError('Cannot delete TimeAllocation when it is in use')

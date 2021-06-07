@@ -15,9 +15,9 @@ from observation_portal.proposals.models import Proposal, TimeAllocationKey
 from observation_portal.requestgroups.target_helpers import TARGET_TYPE_HELPER_MAP
 from observation_portal.common.rise_set_utils import get_rise_set_target
 from observation_portal.requestgroups.duration_utils import (
-    get_request_duration,
+    get_total_request_duration,
     get_configuration_duration,
-    get_complete_configurations_duration,
+    get_total_complete_configurations_duration,
     get_instrument_configuration_duration,
     get_total_duration_dict,
     get_semester_in
@@ -215,8 +215,8 @@ class Request(models.Model):
     def duration(self):
         cached_duration = cache.get('request_duration_{}'.format(self.id))
         if not cached_duration:
-            duration = get_request_duration({'configurations': [c.as_dict() for c in self.configurations.all()],
-                                             'windows': [w.as_dict() for w in self.windows.all()]})
+            duration = get_total_request_duration({'configurations': [c.as_dict() for c in self.configurations.all()],
+                                                  'windows': [w.as_dict() for w in self.windows.all()]})
             cache.set('request_duration_{}'.format(self.id), duration, 86400 * 30 * 6)
             return duration
         else:
@@ -235,15 +235,18 @@ class Request(models.Model):
         return get_semester_in(self.min_window_time, self.max_window_time)
 
     @property
-    def time_allocation_key(self):
-        return TimeAllocationKey(self.semester.id, self.configurations.first().instrument_type)
+    def time_allocation_keys(self):
+        taks = set()
+        for config in self.configurations.all():
+            taks.add(TimeAllocationKey(self.semester.id, config.instrument_type))
+        return list(taks)
 
     @property
     def timeallocations(self):
         return self.request_group.proposal.timeallocation_set.filter(
             semester__start__lte=self.min_window_time,
             semester__end__gte=self.max_window_time,
-            instrument_type__in=[conf.instrument_type for conf in self.configurations.all()]
+            instrument_types__overlap=list({conf.instrument_type for conf in self.configurations.all()})
         )
 
     def get_remaining_duration(self, configurations_after_priority):
@@ -254,7 +257,7 @@ class Request(models.Model):
             configurations = sorted(request_dict['configurations'], key=lambda x: x['priority'])
         except KeyError:
             configurations = request_dict['configurations']
-        duration = get_complete_configurations_duration(
+        duration = get_total_complete_configurations_duration(
             configurations,
             start_time,
             configurations_after_priority
