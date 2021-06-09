@@ -47,6 +47,11 @@ class TimeAllocationForm(forms.ModelForm):
                                     tak.semester == self.instance.semester.id):
                                 if tak.instrument_type not in cleaned_data.get('instrument_types') or semester_changed:
                                     raise forms.ValidationError("Cannot change TimeAllocation's instrument_type/semester when it is in use")
+            # or if one of the new instrument types are in use already in the same semester/proposal
+            tas_count = TimeAllocation.objects.exclude(id=self.instance.id).filter(proposal=self.instance.proposal, semester=cleaned_data.get('semester'),
+                                                      instrument_types__overlap=cleaned_data.get('instrument_types')).count()
+            if tas_count > 0:
+                raise forms.ValidationError("The TimeAllocation's combination of semester, proposal and instrument_type must be unique")
 
 
 class TimeAllocationFormSet(forms.models.BaseInlineFormSet):

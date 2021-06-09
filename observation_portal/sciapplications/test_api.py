@@ -240,7 +240,7 @@ class TestGetScienceApplicationDetailAPI(APITestCase):
         mixer.blend(TimeRequest, science_application=app, instrument_types=[instrument], std_time=8)
         response = self.client.get(reverse('api:scienceapplications-detail', kwargs={'pk': app.id}))
         self.assertEqual(response.json()['timerequest_set'][0]['std_time'], 8)
-        self.assertEqual(response.json()['timerequest_set'][0]['telescope_name'], '1 meter')
+        self.assertIn('1 meter', response.json()['timerequest_set'][0]['telescope_names'])
 
 
 class TestListScienceApplicationAPI(APITestCase):

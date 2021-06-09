@@ -145,7 +145,7 @@ class ScienceApplicationSerializer(serializers.ModelSerializer):
             errors = {}
             for it in timerequest['instrument_types']:
                 if it in its_by_semester[timerequest['semester']]:
-                    errors = {'instrument_types': [_(f"Multiple TimeRequests have {it} set for the {timerequest['semester']} semester. This combination must be unique.")]}
+                    errors = {'instrument_types': [_('You cannot create more than one time request for the same semester and instrument_type. Please consolidate your time requests.')]}
                 its_by_semester[timerequest['semester']].add(it)
             error_list.append(errors)
         if any(error_list):
@@ -209,7 +209,6 @@ class ScienceApplicationSerializer(serializers.ModelSerializer):
         if pdf is not None and call.proposal_type == Call.COLLAB_PROPOSAL:
             raise serializers.ValidationError(_('Science collaboration proposals do not have pdfs.'))
 
-        unique_time_requests = set()
         for timerequest in timerequest_set:
             if timerequest['semester'].id not in call.eligible_semesters:
                 raise serializers.ValidationError(_(
@@ -223,14 +222,6 @@ class ScienceApplicationSerializer(serializers.ModelSerializer):
                         f'The instrument IDs set for the time requests of this application must be one '
                         f'of [{", ".join([str(i) for i in call_instrument_ids])}]'
                     ))
-            instrument_types = ','.join([str(it.id) for it in timerequest['instrument_types']])
-            unique_time_requests.add(f'{instrument_types}-{timerequest["semester"].id}')
-
-        if len(unique_time_requests) != len(timerequest_set):
-            raise serializers.ValidationError(_(
-                'You cannot create more than one time request for the same semester and instrument. Please '
-                'consolidate your time requests.'
-            ))
 
         if tac_rank > 0 and call.proposal_type != Call.COLLAB_PROPOSAL:
             raise serializers.ValidationError(_(
