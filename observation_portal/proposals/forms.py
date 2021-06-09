@@ -47,19 +47,24 @@ class TimeAllocationForm(forms.ModelForm):
                                     tak.semester == self.instance.semester.id):
                                 if tak.instrument_type not in cleaned_data.get('instrument_types') or semester_changed:
                                     raise forms.ValidationError("Cannot change TimeAllocation's instrument_type/semester when it is in use")
-            # or if one of the new instrument types are in use already in the same semester/proposal
-            tas_count = TimeAllocation.objects.filter(proposal=self.instance.proposal, semester=cleaned_data.get('semester'),
-                                                      instrument_types__overlap=cleaned_data.get('instrument_types')).count()
-            if tas_count > 1:
-                raise forms.ValidationError("The TimeAllocation's combination of semester, proposal and instrument_type must be unique")
 
 
 class TimeAllocationFormSet(forms.models.BaseInlineFormSet):
     def clean(self):
         super().clean()
+        # Need to check if the combination of all cleaned form data results in a uniqueness violation
+        its_by_semester = {}
         for form in self.forms:
             if not form.is_valid():
                 return
+            if form.cleaned_data:
+                semester = form.cleaned_data.get('semester').id
+                if semester not in its_by_semester:
+                    its_by_semester[semester] = set()
+                for it in form.cleaned_data.get('instrument_types'):
+                    if it in its_by_semester[semester]:
+                        raise forms.ValidationError(f"Multiple TimeAllocations have instrument_type {it} set for the same semester. The combination of semester, proposal and instrument_type must be unique")
+                    its_by_semester[semester].add(it)
             if form.cleaned_data and form.cleaned_data.get('DELETE'):
                 requestgroups = RequestGroup.objects.filter(proposal=form.cleaned_data.get('proposal')).prefetch_related(
                     'requests', 'requests__windows', 'requests__configurations'

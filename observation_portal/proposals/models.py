@@ -123,13 +123,10 @@ class Proposal(models.Model):
         allocs = {}
         for ta in self.timeallocation_set.filter(semester=semester):
             instrument_types = ','.join(ta.instrument_types)
-            allocs[instrument_types.replace('-', '')] = {
+            allocs[instrument_types] = {
                 'std': ta.std_allocation,
-                'std_used': ta.std_time_used,
                 'rr': ta.rr_allocation,
-                'rr_used': ta.rr_time_used,
                 'tc': ta.tc_allocation,
-                'tc_used': ta.tc_time_used
             }
         return allocs
 

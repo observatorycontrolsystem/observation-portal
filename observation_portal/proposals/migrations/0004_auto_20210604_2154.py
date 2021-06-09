@@ -20,8 +20,4 @@ class Migration(migrations.Migration):
             name='instrument_types',
             field=django.contrib.postgres.fields.ArrayField(base_field=models.CharField(max_length=200), default=[], help_text='One or more instrument_types to share this time allocation', size=None),
         ),
-        migrations.AddConstraint(
-            model_name='timeallocation',
-            constraint=models.UniqueConstraint(fields=('semester', 'proposal', 'instrument_types'), name='unique_proposal_semester_instrument_type_ta'),
-        ),
     ]

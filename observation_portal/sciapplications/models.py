@@ -252,14 +252,14 @@ class TimeRequest(models.Model):
     approved = models.BooleanField(default=False)
 
     class Meta:
-        ordering = ('semester', 'instrument_types__display')
+        ordering = ('semester',)
 
     @property
     def total_requested_time(self):
         return sum([self.std_time, self.rr_time, self.tc_time])
 
     def __str__(self):
-        return '{} {} TimeRequest'.format(self.science_application, ','.join(self.instrument_types.all()))
+        return '{} {} TimeRequest'.format(self.science_application, ','.join([it.code for it in self.instrument_types.all()]))
 
 
 class CoInvestigator(models.Model):

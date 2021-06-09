@@ -1,4 +1,6 @@
 import os
+import json
+from collections import defaultdict
 
 from django.utils.translation import ugettext as _
 from django.utils import timezone
@@ -49,31 +51,38 @@ class InstrumentTypeSerializer(serializers.ModelSerializer):
 
 class TimeRequestSerializer(serializers.ModelSerializer):
     instrument_types = serializers.PrimaryKeyRelatedField(many=True, read_only=False, queryset=Instrument.objects.all())
-    telescope_name = serializers.SerializerMethodField()
-    instrument_name = serializers.SerializerMethodField()
-    instrument_code = serializers.SerializerMethodField()
+    telescope_names = serializers.SerializerMethodField()
+    instrument_names = serializers.SerializerMethodField()
+    instrument_codes = serializers.SerializerMethodField()
 
     class Meta:
         model = TimeRequest
         fields = (
-            'semester', 'std_time', 'rr_time', 'tc_time', 'telescope_name',
-            'instrument_name', 'instrument_code', 'instrument_types'
+            'semester', 'std_time', 'rr_time', 'tc_time', 'telescope_names',
+            'instrument_names', 'instrument_codes', 'instrument_types'
         )
 
-    def get_telescope_name(self, obj):
+    def to_internal_value(self, data):
+        # This is needed to unpack array values submitted via the frontend from formData
+        if isinstance(data['instrument_types'], str):
+            data.setlist('instrument_types', data['instrument_types'].split(','))
+        data = super().to_internal_value(data)
+        return data
+
+    def get_telescope_names(self, obj):
         instruments = Instrument.objects.filter(timerequests__pk=obj.pk)
         telescope_names = {it.telescope_name for it in instruments}
-        return ','.join(list(telescope_names))
+        return list(telescope_names)
 
-    def get_instrument_name(self, obj):
+    def get_instrument_names(self, obj):
         instruments = Instrument.objects.filter(timerequests__pk=obj.pk)
         it_names = {it.display for it in instruments}
-        return ','.join(list(it_names))
+        return list(it_names)
 
-    def get_instrument_code(self, obj):
+    def get_instrument_codes(self, obj):
         instruments = Instrument.objects.filter(timerequests__pk=obj.pk)
         it_codes = {it.code for it in instruments}
-        return ','.join(list(it_codes))
+        return list(it_codes)
 
 
 class CallsPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
@@ -127,6 +136,22 @@ class ScienceApplicationSerializer(serializers.ModelSerializer):
             'deadline': obj.call.deadline,
             'eligibility': obj.call.eligibility
         }
+
+    def validate_timerequest_set(self, timerequest_set):
+        # Check that the combination of semester and instrument_type is unique between timerequests
+        its_by_semester = defaultdict(set)
+        error_list = []
+        for timerequest in timerequest_set:
+            errors = {}
+            for it in timerequest['instrument_types']:
+                if it in its_by_semester[timerequest['semester']]:
+                    errors = {'instrument_types': [_(f"Multiple TimeRequests have {it} set for the {timerequest['semester']} semester. This combination must be unique.")]}
+                its_by_semester[timerequest['semester']].add(it)
+            error_list.append(errors)
+        if any(error_list):
+            raise serializers.ValidationError(error_list)
+
+        return timerequest_set
 
     def validate_status(self, status):
         # Other application statuses are set via admin actions, these are the only valid ones
