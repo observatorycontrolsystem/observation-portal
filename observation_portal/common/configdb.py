@@ -1,6 +1,7 @@
 import logging
 from typing import Union
 from collections import namedtuple, defaultdict
+from math import sqrt
 
 import requests
 from django.core.cache import caches
@@ -497,6 +498,22 @@ class ConfigDB(object):
         for instrument in self.get_instruments():
             if instrument_type_code.upper() == instrument['instrument_type']['code'].upper():
                 return instrument['science_cameras'][0]['camera_type']['max_rois']
+
+    def get_diagnol_ccd_fov(self, instrument_type_code):
+        ''' Get the diagnol fov in arcminutes for the ccd, from the camera_type['size'] field in configdb
+        '''
+        for instrument in self.get_instruments():
+            if instrument_type_code.upper() == instrument['instrument_type']['code'].upper():
+                size = instrument['science_cameras'][0]['camera_type']['size']
+                dimensions = size.split('x')
+                if len(dimensions) == 1:
+                    dimensions.append(dimensions[0])
+                try:
+                    diagonal = sqrt((float(dimensions[0]) ** 2) + (float(dimensions[1]) ** 2))
+                    return diagonal
+                except TypeError:
+                    pass
+        return 0
 
     def get_ccd_size(self, instrument_type_code):
         # TODO: This assumes the pixels for the science cameras of an instrument are the same
