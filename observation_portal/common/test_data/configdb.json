@@ -166,6 +166,7 @@
                     "camera_type": {
                       "code": "1M0-SCICAM-SBIG",
                       "name": "1M0-SCICAM-SBIG",
+                      "size": "3x4",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
                       "max_rois": 1
@@ -329,6 +330,7 @@
                     "camera_type": {
                       "code": "1M0-SCICAM-SBIG",
                       "name": "1M0-SCICAM-SBIG",
+                      "size": "3x4",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
                       "max_rois": 1
@@ -492,6 +494,7 @@
                     "camera_type": {
                       "code": "1M0-SCICAM-SBIG",
                       "name": "1M0-SCICAM-SBIG",
+                      "size": "3x4",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
                       "max_rois": 1
@@ -671,6 +674,7 @@
                     "camera_type": {
                       "code": "2M0-FLOYDS-SCICAM",
                       "name": "2M0-FLOYDS-SCICAM",
+                      "size": "3x4",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
                       "max_rois": 0
@@ -870,6 +874,7 @@
                     "camera_type": {
                       "code": "1M0-SCICAM-SBIG",
                       "name": "1M0-SCICAM-SBIG",
+                      "size": "3x4",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
                       "max_rois": 0
@@ -1043,6 +1048,7 @@
                     "camera_type": {
                       "code": "1M0-NRES-SCICAM",
                       "name": "1M0-NRES-SCICAM",
+                      "size": "3x4",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
                       "max_rois": 0
@@ -1208,6 +1214,7 @@
                     "camera_type": {
                       "code": "2M0-FLOYDS-SCICAM",
                       "name": "2M0-FLOYDS-SCICAM",
+                      "size": "3x4",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
                       "max_rois": 0
@@ -1757,6 +1764,7 @@
                     "camera_type": {
                       "code": "1M0-SCICAM-SBIG",
                       "name": "1M0-SCICAM-SBIG",
+                      "size": "3x4",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
                       "max_rois": 0
@@ -1920,6 +1928,7 @@
                     "camera_type": {
                       "code": "1M0-SCICAM-SBXX",
                       "name": "1M0-SCICAM-SBXX",
+                      "size": "3x4",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
                       "max_rois": 0
@@ -2104,6 +2113,7 @@
                     "camera_type": {
                       "code": "1M0-SCICAM-SBAG",
                       "name": "1M0-SCICAM-SBAG",
+                      "size": "3x4",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
                       "max_rois": 0
@@ -2287,6 +2297,7 @@
                     "camera_type": {
                       "code": "1M0-SCICAM-SOAR",
                       "name": "1M0-SCICAM-SOAR",
+                      "size": "3x4",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
                       "max_rois": 0
