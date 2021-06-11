@@ -35,7 +35,6 @@ def get_semester_in(start_date, end_date):
 
 def get_instrument_configuration_duration_per_exposure(instrument_configuration_dict, instrument_name):
     total_overhead_per_exp = configdb.get_exposure_overhead(instrument_name,
-                                                            instrument_configuration_dict['bin_x'],
                                                             instrument_configuration_dict['mode'])
     duration_per_exp = instrument_configuration_dict['exposure_time'] + total_overhead_per_exp
     return duration_per_exp
