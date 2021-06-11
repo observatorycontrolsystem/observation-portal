@@ -442,52 +442,6 @@ class ConfigDB(object):
 
         raise ConfigDBException(f'No mode named {code} found for instrument type {instrument_type}')
 
-    def get_readout_mode_with_binning(self, instrument_type, binning):
-        readout_modes = self.get_modes_by_type(instrument_type, 'readout')
-        if readout_modes:
-            modes = sorted(
-                readout_modes['readout']['modes'], key=lambda x: x['code'] == readout_modes['readout'].get('default'),
-                reverse=True
-            )  # Start with the default
-            for mode in modes:
-                if mode['validation_schema'].get('bin_x', {}).get('default', -1) == binning:
-                    return mode
-
-        raise ConfigDBException(f'No readout mode found with binning {binning} for instrument type {instrument_type}')
-
-    def get_binnings(self, instrument_type: str) -> set:
-        """Create a set of available binning modes.
-
-        Parameters:
-            instrument_type: Instrument type for which to create binning modes
-        Returns:
-             Available set of binnings
-        Examples:
-            >>> configdb.get_binnings('1M0-SCICAM-SBIG')
-            1
-        """
-        available_binnings = set()
-        readout_modes = self.get_modes_by_type(instrument_type, 'readout')
-        for mode in readout_modes['readout']['modes'] if 'readout' in readout_modes else []:
-            if 'bin_x' in mode['validation_schema'] and 'default' in mode['validation_schema']['bin_x']:
-                available_binnings.add(mode['validation_schema']['bin_x']['default'])
-        return available_binnings
-
-    def get_default_binning(self, instrument_type: str) -> Union[None, int]:
-        """Get the default binning.
-
-        Parameters:
-            instrument_type: Instrument type
-        Returns:
-             Default binning
-        """
-        readout_modes = self.get_modes_by_type(instrument_type, 'readout')
-        for mode in readout_modes['readout']['modes'] if 'readout' in readout_modes else []:
-            if (readout_modes['readout']['default'] == mode['code'] and 'bin_x' in mode['validation_schema']
-                and 'default' in mode['validation_schema']['bin_x']):
-                return mode['validation_schema']['bin_x']['default']
-        return None
-
     def get_default_acceptability_threshold(self, instrument_type_code):
         for instrument in self.get_instruments():
             if instrument_type_code.upper() == instrument['instrument_type']['code'].upper():
@@ -580,7 +534,7 @@ class ConfigDB(object):
                     return True
         return False
 
-    def get_exposure_overhead(self, instrument_type_code, binning, readout_mode=''):
+    def get_exposure_overhead(self, instrument_type_code, readout_mode):
         # using the instrument type code, build an instrument with the correct configdb parameters
         for instrument in self.get_instruments():
             if instrument['instrument_type']['code'].upper() == instrument_type_code.upper():
@@ -592,11 +546,11 @@ class ConfigDB(object):
             for mode in modes_by_type['readout']['modes']:
                 if mode['code'] == modes_by_type['readout'].get('default'):
                     default_mode = mode
-                if readout_mode and readout_mode.lower() != mode['code'].lower():
-                    continue
-                if mode['validation_schema'].get('bin_x', {}).get('default', -1) == binning:
+                if readout_mode and readout_mode.lower() == mode['code'].lower():
                     return mode['overhead'] + instrument_type['fixed_overhead_per_exposure']
-            # if the binning is not found, return the default binning (Added to support legacy 2x2 Sinistro obs)
+            # if the named readout mode is not found, return the default mode's overhead (Added to support legacy 2x2 Sinistro obs)
+            if not default_mode:
+                raise ConfigDBException(f'No readout mode named {readout_mode} found for instrument type {instrument_type_code} and no default readout mode set.')
             return default_mode['overhead'] + instrument_type['fixed_overhead_per_exposure']
 
         raise ConfigDBException(f'Instruments of type {instrument_type_code} not found in configdb.')

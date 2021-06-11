@@ -38,11 +38,8 @@ observation = {
                         "optical_elements": {
                             "filter": "air"
                         },
-                        "mode": "",
                         "exposure_time": 370.0,
                         "exposure_count": 1,
-                        "bin_x": 1,
-                        "bin_y": 1,
                         "rotator_mode": "",
                         "extra_params": {}
                     }
@@ -281,6 +278,7 @@ class TestPostScheduleApi(SetTimeMixin, APITestCase):
         observation['request']['configurations'][0]['guiding_config']['mode'] = 'ON'
         observation['request']['configurations'][0]['acquisition_config']['mode'] = 'WCS'
         observation['request']['configurations'][0]['type'] = 'NRES_SPECTRUM'
+        observation['request']['configurations'][0]['instrument_configs'][0]['mode'] = '1m0_nres_1'
         del observation['request']['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
 
         response = self.client.post(reverse('api:schedule-list'), data=observation)
@@ -292,6 +290,7 @@ class TestPostScheduleApi(SetTimeMixin, APITestCase):
         observation['request']['configurations'][0]['guiding_config']['mode'] = 'ON'
         observation['request']['configurations'][0]['acquisition_config']['mode'] = 'WCS'
         observation['request']['configurations'][0]['type'] = 'NRES_SPECTRUM'
+        observation['request']['configurations'][0]['instrument_configs'][0]['mode'] = '1m0_nres_1'
         del observation['request']['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
 
         response = self.client.post(reverse('api:schedule-list'), data=observation)
@@ -384,6 +383,7 @@ class TestPostScheduleMultiConfigApi(SetTimeMixin, APITestCase):
         self.observation['request']['configurations'][2]['guiding_config']['mode'] = 'ON'
         self.observation['request']['configurations'][2]['acquisition_config']['mode'] = 'WCS'
         self.observation['request']['configurations'][2]['type'] = 'NRES_SPECTRUM'
+        self.observation['request']['configurations'][2]['instrument_configs'][0]['mode'] = '1m0_nres_1'
         del self.observation['request']['configurations'][2]['instrument_configs'][0]['optical_elements']['filter']
 
     def test_post_observation_multiple_configurations_accepted(self):

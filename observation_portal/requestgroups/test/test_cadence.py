@@ -21,7 +21,7 @@ class TestCadence(SetTimeMixin, TestCase):
         )
         self.instrument_config = mixer.blend(
             InstrumentConfig, configuration=self.configuration, exposure_time=10, exposure_count=1,
-            optical_elements={'filter': 'blah'}, bin_x=2, bin_y=2
+            optical_elements={'filter': 'blah'}, mode='1m0_sbig_1', extra_params={'bin_x': 1, 'bin_y': 1}
         )
         self.acquisition_config = mixer.blend(AcquisitionConfig, configuration=self.configuration)
         self.guiding_config = mixer.blend(GuidingConfig, configuration=self.configuration)
