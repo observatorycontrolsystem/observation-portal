@@ -180,6 +180,25 @@ class ModeValidationHelper(ValidationHelper):
         return ''
 
 
+class DitherSerializer(serializers.Serializer):
+    pattern = serializers.ChoiceField(choices=('line', 'box', 'grid', 'spiral'), required=True)
+    num_points = serializers.IntegerField(required=False)
+    point_spacing = serializers.FloatField(required=True)
+    orientation = serializers.FloatField(required=False, default=0.0)
+    num_rows = serializers.IntegerField(required=False)
+    num_columns = serializers.IntegerField(required=False)
+    center = serializers.BooleanField(required=False, default=False)
+
+    def validate(self, data):
+        validated_data = super().validate(data)
+        if 'num_points' not in validated_data and validated_data.get('pattern') != 'grid':
+            raise serializers.ValidationError(_('Must specify num_points when selecting a grid, spiral, or box dither pattern'))
+        if validated_data.get('pattern') == 'grid':
+            if 'num_rows' not in validated_data or 'num_columns' not in validated_data:
+                raise serializers.ValidationError(_('Must specifcy num_rows and num_columns when selecting a grid dither pattern'))
+        return validated_data
+
+
 class CadenceSerializer(serializers.Serializer):
     start = serializers.DateTimeField()
     end = serializers.DateTimeField()
