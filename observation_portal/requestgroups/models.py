@@ -629,14 +629,6 @@ class InstrumentConfig(models.Model):
         validators=[MinValueValidator(1)],
         help_text='The number of exposures to take. This field must be set to a value greater than 0.'
     )
-    bin_x = models.PositiveSmallIntegerField(
-        verbose_name='y binning', default=1, blank=True,
-        help_text='Binning in the x dimension, defaults to the instrument default'
-    )
-    bin_y = models.PositiveSmallIntegerField(
-        verbose_name='x binning', default=1, blank=True,
-        help_text='Binning in the y dimension, defaults to the instrument default'
-    )
     rotator_mode = models.CharField(
         verbose_name='rotation mode', max_length=50, default='', blank=True,
         help_text='(Spectrograph only) How the slit is positioned on the sky. If set to VFLOAT, atmospheric '

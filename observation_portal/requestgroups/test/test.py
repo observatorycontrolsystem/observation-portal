@@ -47,12 +47,12 @@ class TestRequestGroupTotalDuration(SetTimeMixin, TestCase):
             Configuration, request=(r for r in self.requests),  instrument_type='1M0-SCICAM-SBIG', type='EXPOSE'
         )
         self.instrument_config = mixer.blend(
-            InstrumentConfig, configuration=self.configuration_expose, bin_x=2, bin_y=2,
-            optical_elements={'filter': 'blah'}, exposure_time=600, exposure_count=2
+            InstrumentConfig, configuration=self.configuration_expose, mode='1m0_sbig_2',
+            optical_elements={'filter': 'blah'}, exposure_time=600, exposure_count=2, extra_params={'bin_x': 2, 'bin_y': 2}
         )
         self.instrument_configs = mixer.cycle(3).blend(
-            InstrumentConfig, configuration=(c for c in self.configuration_exposes), bin_x=2, bin_y=2,
-            optical_elements=({'filter': f} for f in ('uv', 'uv', 'ir')), exposure_time=1000, exposure_count=1,
+            InstrumentConfig, configuration=(c for c in self.configuration_exposes), extra_params={'bin_x': 2, 'bin_y': 2},
+            optical_elements=({'filter': f} for f in ('uv', 'uv', 'ir')), mode='1m0_sbig_2', exposure_time=1000, exposure_count=1,
         )
         mixer.blend(
             Window, request=self.request, start=datetime(2016, 9, 29, tzinfo=timezone.utc),
@@ -129,35 +129,35 @@ class TestRequestDuration(SetTimeMixin, TestCase):
                                                ra=10.0, dec=10.0, proper_motion_ra=0, proper_motion_dec=0)
 
         self.instrument_config_expose = mixer.blend(
-            InstrumentConfig, bin_x=2, bin_y=2, exposure_time=600, exposure_count=2,
+            InstrumentConfig, extra_params={'bin_x': 2, 'bin_y': 2}, exposure_time=600, exposure_count=2,
             optical_elements={'filter': 'blah'}, mode='1m0_sbig_2'
         )
         self.instrument_config_expose_1 = mixer.blend(
-            InstrumentConfig, bin_x=2, bin_y=2, exposure_time=1000, exposure_count=1,
+            InstrumentConfig, extra_params={'bin_x': 2, 'bin_y': 2}, exposure_time=1000, exposure_count=1,
             optical_elements={'filter': 'uv'}, mode='1m0_sbig_2'
         )
         self.instrument_config_expose_2 = mixer.blend(
-            InstrumentConfig, bin_x=2, bin_y=2, exposure_time=10, exposure_count=5,
+            InstrumentConfig, extra_params={'bin_x': 2, 'bin_y': 2}, exposure_time=10, exposure_count=5,
             optical_elements={'filter': 'uv'}, mode='1m0_sbig_2'
         )
         self.instrument_config_expose_3 = mixer.blend(
-            InstrumentConfig, bin_x=2, bin_y=2, exposure_time=3, exposure_count=3,
+            InstrumentConfig, extra_params={'bin_x': 2, 'bin_y': 2}, exposure_time=3, exposure_count=3,
             optical_elements={'filter': 'ir'}, mode='1m0_sbig_2'
         )
         self.instrument_config_spectrum = mixer.blend(
-            InstrumentConfig, bin_x=1, bin_y=1, exposure_time=1800, exposure_count=1,
-            optical_elements={'slit': 'slit_1.6as'}, configuration=self.configuration_spectrum
+            InstrumentConfig, extra_params={'bin_x': 1, 'bin_y': 1}, exposure_time=1800, exposure_count=1,
+            optical_elements={'slit': 'slit_1.6as'}, configuration=self.configuration_spectrum, mode='2m0_floyds_1'
         )
         self.instrument_config_arc = mixer.blend(
-            InstrumentConfig, bin_x=1, bin_y=1, exposure_time=30, exposure_count=2,
-            optical_elements={'slit': 'slit_1.6as'}, configuration=self.configuration_arc
+            InstrumentConfig, extra_params={'bin_x': 1, 'bin_y': 1}, exposure_time=30, exposure_count=2,
+            optical_elements={'slit': 'slit_1.6as'}, configuration=self.configuration_arc, mode='2m0_floyds_1'
         )
         self.instrument_config_lampflat = mixer.blend(
-            InstrumentConfig, bin_x=1, bin_y=1, exposure_time=60, exposure_count=1,
-            optical_elements={'slit': 'slit_1.6as'}, configuration=self.configuration_lampflat
+            InstrumentConfig, extra_params={'bin_x': 1, 'bin_y': 1}, exposure_time=60, exposure_count=1,
+            optical_elements={'slit': 'slit_1.6as'}, configuration=self.configuration_lampflat, mode='2m0_floyds_1'
         )
         self.instrument_config_repeat_expose = mixer.blend(
-            InstrumentConfig, bin_x=2, bin_y=2, exposure_time=30, exposure_count=1,
+            InstrumentConfig, extra_params={'bin_x': 2, 'bin_y': 2}, exposure_time=30, exposure_count=1,
             optical_elements={'filter': 'b'}, mode='1m0_sbig_2', configuration=self.configuration_repeat_expose
         )
 
@@ -189,19 +189,6 @@ class TestRequestDuration(SetTimeMixin, TestCase):
         exp_time = self.instrument_config_expose.exposure_time
 
         self.assertEqual(duration, math.ceil(exp_count*(exp_time + self.sbig_readout_time2 + self.sbig_fixed_overhead_per_exposure) + self.sbig_front_padding + self.sbig_filter_optical_element_change_overhead + PER_CONFIGURATION_STARTUP_TIME + self.instrument_change_overhead_1m + self.minimum_slew_time))
-
-    def test_ccd_single_configuration_unsupported_binning_duration(self):
-        default_binning = mixer.blend(
-            InstrumentConfig, bin_x=2, bin_y=2,
-            exposure_time=600, exposure_count=2, type='EXPOSE', filter='blah', configuration=self.configuration_expose
-        )
-
-        bad_binning = mixer.blend(
-            InstrumentConfig, bin_x=300, bin_y=300,
-            exposure_time=600, exposure_count=2, type='EXPOSE', filter='blah', configuration=self.configuration_expose
-        )
-
-        self.assertEqual(default_binning.duration, bad_binning.duration)
 
     def test_ccd_single_configuration_duration(self):
         self.instrument_config_expose.configuration = self.configuration_expose
@@ -249,11 +236,11 @@ class TestRequestDuration(SetTimeMixin, TestCase):
         self.assertEqual(configuration_duration, self.configuration_repeat_expose.duration)
 
         mixer.blend(
-            InstrumentConfig, bin_x=2, bin_y=2, exposure_time=30, exposure_count=1,
+            InstrumentConfig, extra_params={'bin_x': 2, 'bin_y': 2}, exposure_time=30, exposure_count=1,
             optical_elements={'filter': 'g'}, mode='1m0_sbig_2', configuration=self.configuration_repeat_expose
         )
         mixer.blend(
-            InstrumentConfig, bin_x=2, bin_y=2, exposure_time=30, exposure_count=1,
+            InstrumentConfig, extra_params={'bin_x': 2, 'bin_y': 2}, exposure_time=30, exposure_count=1,
             optical_elements={'filter': 'r'}, mode='1m0_sbig_2'
         )
         # configuration duration is unchanged after adding instrument configs
@@ -377,8 +364,8 @@ class TestRequestDuration(SetTimeMixin, TestCase):
         self.configuration_spectrum.save()
 
         mixer.blend(
-            InstrumentConfig, configuration=self.configuration_spectrum_2, bin_x=1, bin_y=1,
-            exposure_time=1800, exposure_count=1
+            InstrumentConfig, configuration=self.configuration_spectrum_2, extra_params={'bin_x': 1, 'bin_y': 1},
+            exposure_time=1800, exposure_count=1, mode='2m0_floyds_1'
         )
         self.configuration_spectrum_2.request = self.request
         self.configuration_spectrum_2.acquisition_config.mode = 'WCS'
@@ -511,6 +498,7 @@ class TestValidationHelper(TestCase):
     def test_validate_mode_config_good_config(self):
         instrument_config = self.instrument_config.copy()
         instrument_config['mode'] = "1m0_sbig_1"
+        instrument_config['extra_params'] = {'bin_x': 1, 'bin_y': 1}
         modes = configdb.get_modes_by_type(self.request_instrument_type)
 
         validation_helper = ModeValidationHelper('readout', self.request_instrument_type, modes['readout'])
@@ -521,8 +509,7 @@ class TestValidationHelper(TestCase):
     def test_validate_mode_config_bad_config(self):
         instrument_config = self.instrument_config.copy()
         instrument_config['mode'] = "1m0_sbig_2"
-        instrument_config['bin_x'] = 1
-        instrument_config['bin_y'] = 2
+        instrument_config['extra_params'] = {'bin_x': 1, 'bin_y': 2}
         modes = configdb.get_modes_by_type(self.request_instrument_type)
 
         validation_helper = ModeValidationHelper('readout', self.request_instrument_type, modes['readout'])

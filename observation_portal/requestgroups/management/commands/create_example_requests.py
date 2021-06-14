@@ -225,7 +225,6 @@ class Command(BaseCommand):
         observation_types = ['NORMAL', 'TIME_CRITICAL', 'RAPID_RESPONSE']
         visible_targets = self._visible_targets(instrument_type, windows)
         instrument_defaults = self._instrument_defaults(instrument_type)
-        binning = configdb.get_default_binning(instrument_type)
         counter = 0
         for state in states:
             for observation_type in observation_types:
@@ -275,8 +274,6 @@ class Command(BaseCommand):
                         optical_elements=instrument_defaults['optical_elements'],
                         mode=instrument_defaults.get('readout', ''),
                         rotator_mode=instrument_defaults.get('rotator', ''),
-                        bin_x=binning or 1,
-                        bin_y=binning or 1,
                         **base_instrument_config
                     )
 
