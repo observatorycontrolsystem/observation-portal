@@ -126,7 +126,11 @@ class InstrumentsInformationView(APIView):
                     'optical_elements': configdb.get_optical_elements(instrument_type),
                     'modes': configdb.get_modes_by_type(instrument_type),
                     'default_acceptability_threshold': configdb.get_default_acceptability_threshold(instrument_type),
-                    'configuration_types': configdb.get_configuration_types(instrument_type)
+                    'configuration_types': configdb.get_configuration_types(instrument_type),
+                    'camera_type': {
+                        'field_of_view': configdb.get_diagnol_ccd_fov(instrument_type),
+                        'pixel_scale': configdb.get_pixel_scale(instrument_type)
+                    }
                 }
         return Response(info)
 
