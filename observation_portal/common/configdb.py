@@ -160,7 +160,6 @@ class ConfigDB(object):
         configuration_types = set()
         for instrument in self.get_instruments():
             for config_type in instrument['instrument_type']['configuration_types']:
-                print(config_type)
                 configuration_types.add(config_type.upper())
         return [(config_type, config_type) for config_type in configuration_types]
 
