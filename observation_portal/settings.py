@@ -299,7 +299,8 @@ WEBPACK_LOADER = {
 TEST_RUNNER = 'observation_portal.test_runner.MyDiscoverRunner'
 
 try:
-    from local_settings import *  # noqa
+    from .local_settings import *  # noqa
+    print("Using local")
 except ImportError:
     pass
 

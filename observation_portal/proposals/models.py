@@ -199,7 +199,7 @@ class Membership(models.Model):
     PI = 'PI'
     CI = 'CI'
     ROLE_CHOICES = (
-        (PI, 'Pricipal Investigator'),
+        (PI, 'Principal Investigator'),
         (CI, 'Co-Investigator')
     )
 
