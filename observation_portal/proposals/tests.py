@@ -66,6 +66,7 @@ class TestProposal(DramatiqTestCase):
         instrument_type = 'instrument_a'
         ta = TimeAllocation.objects.create(proposal=proposal, semester=semester, instrument_types=[instrument_type])
         ta2 = TimeAllocation.objects.create(proposal=proposal, semester=semester, instrument_types=[instrument_type])
+        self.assertIsNotNone(ta.id)
         self.assertIsNone(ta2.id)
 
     def test_can_create_many_timeallocations_that_arent_duplicates(self):

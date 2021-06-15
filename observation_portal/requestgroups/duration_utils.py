@@ -150,7 +150,7 @@ def get_total_complete_configurations_duration(configurations_list, start_time, 
     total_duration = 0
     for duration in durations_by_instrument_type.values():
         total_duration += duration
-    
+
     return total_duration
 
 
@@ -249,7 +249,7 @@ def get_request_duration_by_instrument_type(request_dict):
     durations_by_instrument_type = get_complete_configurations_duration_by_instrument_type(configurations, start_time)
     
     # Add in the front_padding proportionally by instrument_type here
-    # TODO: We should move front_padding to the telescope level rather than instrument_type so we don't need to 
+    # TODO: We should move front_padding to the telescope level rather than instrument_type so we don't need to
     # assign it's value proportionally to observation time used per instrument_type
     total_duration = 0.0
     for duration in durations_by_instrument_type.values():
