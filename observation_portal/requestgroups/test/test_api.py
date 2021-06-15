@@ -29,6 +29,7 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 import copy
 import random
+from math import ceil
 from unittest.mock import patch
 
 generic_payload = {
@@ -582,6 +583,7 @@ class TestRequestGroupIPP(SetTimeMixin, APITestCase):
         duration = 0.0
         for req in requests:
             duration += req.duration
+        duration -= 1  # This duration is 1 second higher than what is used for ipp_debitting due to ceiling each individual requests duration
         duration /= 3600.0
         self.assertAlmostEqual(time_allocation.ipp_time_available, 5.0 - (duration * (rg['ipp_value'] - 1.0)), 5)
 

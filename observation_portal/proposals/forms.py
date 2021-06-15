@@ -58,18 +58,18 @@ class TimeAllocationFormSet(forms.models.BaseInlineFormSet):
     def clean(self):
         super().clean()
         # Need to check if the combination of all cleaned form data results in a uniqueness violation
-        its_by_semester = {}
+        instrument_types_by_semester = {}
         for form in self.forms:
             if not form.is_valid():
                 return
             if form.cleaned_data:
                 semester = form.cleaned_data.get('semester').id
-                if semester not in its_by_semester:
-                    its_by_semester[semester] = set()
+                if semester not in instrument_types_by_semester:
+                    instrument_types_by_semester[semester] = set()
                 for it in form.cleaned_data.get('instrument_types'):
-                    if it in its_by_semester[semester]:
+                    if it in instrument_types_by_semester[semester]:
                         raise forms.ValidationError(f"Multiple TimeAllocations have instrument_type {it} set for the same semester. The combination of semester, proposal and instrument_type must be unique")
-                    its_by_semester[semester].add(it)
+                    instrument_types_by_semester[semester].add(it)
             if form.cleaned_data and form.cleaned_data.get('DELETE'):
                 requestgroups = RequestGroup.objects.filter(proposal=form.cleaned_data.get('proposal')).prefetch_related(
                     'requests', 'requests__windows', 'requests__configurations'

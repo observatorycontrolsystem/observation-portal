@@ -64,9 +64,9 @@ class TestProposal(DramatiqTestCase):
         proposal = mixer.blend(Proposal)
         semester = mixer.blend(Semester)
         instrument_type = 'instrument_a'
-        TimeAllocation.objects.create(proposal=proposal, semester=semester, instrument_types=[instrument_type])
-        with self.assertRaises(IntegrityError):
-            TimeAllocation.objects.create(proposal=proposal, semester=semester, instrument_types=[instrument_type])
+        ta = TimeAllocation.objects.create(proposal=proposal, semester=semester, instrument_types=[instrument_type])
+        ta2 = TimeAllocation.objects.create(proposal=proposal, semester=semester, instrument_types=[instrument_type])
+        self.assertIsNone(ta2.id)
 
     def test_can_create_many_timeallocations_that_arent_duplicates(self):
         expected_timeallocations_count = 2
@@ -204,6 +204,16 @@ class TestTimeAllocationEmail(DramatiqTestCase):
             Semester, start=now + datetime.timedelta(days=30), end=now + datetime.timedelta(days=60)
         )
 
+    def test_time_allocation_reminder_email_shows_instrument_types_list(self):
+        ta = mixer.blend(TimeAllocation, proposal=self.proposal, semester=self.current_semester, instrument_types=['1M0-SCICAM-SBIG', '2M0-FLOYDS-SCICAM'])
+        time_allocation_reminder()
+
+        self.broker.join('default')
+        self.worker.join()
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(', '.join(ta.instrument_types), str(mail.outbox[0].message()))
+
     def test_sends_email_to_pi_for_current_active_proposal(self):
         mixer.blend(TimeAllocation, proposal=self.proposal, semester=self.current_semester, instrument_types=['1M0-SCICAM-SBIG'])
         time_allocation_reminder()
@@ -280,6 +290,32 @@ class TestDefaultIPP(TestCase):
         ta.ipp_time_available = 0
         ta.save()
         self.assertEqual(ta.ipp_time_available, 0)
+
+
+class TestTimeAllocationModel(TestCase):
+    def setUp(self):
+        self.proposal = mixer.blend(Proposal)
+        now = timezone.now()
+        self.current_semester = mixer.blend(
+            Semester, start=now, end=now + datetime.timedelta(days=30))
+        self.time_allocation = mixer.blend(TimeAllocation, proposal=self.proposal, semester=self.current_semester,  instrument_types=['1M0-SCICAM-SBIG'])
+
+    def test_save_time_allocation_fails_for_duplicate(self):
+        # First make a time allocation that doesn't match an existing one
+        ta = TimeAllocation.objects.create(proposal=self.proposal, semester=self.current_semester, instrument_types=['2M0-FLOYDS-SCICAM'])
+        ta.instrument_types = ['1M0-SCICAM-SBIG', 'FAKE-TYPE']
+        ta.save()
+        ta.refresh_from_db()
+        # Make sure it did not actually save in the save method
+        self.assertEqual(ta.instrument_types, ['2M0-FLOYDS-SCICAM'])
+
+    def test_save_time_allocation_succeeds_no_duplicate(self):
+        ta = TimeAllocation.objects.create(proposal=self.proposal, semester=self.current_semester, instrument_types=['2M0-FLOYDS-SCICAM'])
+        ta.instrument_types = ['2M0-FLOYDS-SCICAM', 'FAKE-TYPE']
+        ta.save()
+        ta.refresh_from_db()
+        # Make sure it did save in the save method
+        self.assertEqual(ta.instrument_types, ['2M0-FLOYDS-SCICAM', 'FAKE-TYPE'])
 
 
 class TestProposalAdmin(TestCase):

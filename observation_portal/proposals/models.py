@@ -230,8 +230,10 @@ class TimeAllocation(models.Model):
 
     def save(self, *args, **kwargs):
         tas_count = TimeAllocation.objects.filter(proposal=self.proposal, semester=self.semester,
-                                                  instrument_types__overlap=self.instrument_types).count()
-        if tas_count > 1:
+                                                  instrument_types__overlap=self.instrument_types).exclude(
+                                                      id=self.id).count()
+
+        if tas_count > 0:
             # Don't save the time allocation in this case, because it is not a unique combination
             # of proposal, semester, and instrument_type
             return

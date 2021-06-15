@@ -1,6 +1,6 @@
 import logging
 from collections import defaultdict
-from math import floor, isclose
+from math import floor, isclose, ceil
 
 from django.conf import settings
 from django.core.cache import cache
@@ -196,7 +196,7 @@ def debit_ipp_time(request_group):
         }
 
         for tak, duration in requestgroup_duration_by_tak.items():
-            duration_hours = duration / 3600
+            duration_hours = ceil(duration) / 3600
             ipp_difference = ipp_value * duration_hours
             with transaction.atomic():
                 TimeAllocation.objects.select_for_update().filter(id=time_allocations_dict[tak].id).update(
@@ -220,7 +220,7 @@ def modify_ipp_time_from_request(ipp_val, request, modification='debit'):
                 semester__end__gte=request.max_window_time,
                 instrument_types__contains=[instrument_type]
             )
-            duration_hours = duration / 3600.0
+            duration_hours = ceil(duration) / 3600.0
             modified_time = 0
             if modification == 'debit':
                 modified_time -= (duration_hours * ipp_value)
