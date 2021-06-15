@@ -166,6 +166,7 @@
                       "size": "3x4",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
+                      "pscale": 0.5,
                       "max_rois": 1
                     },
                     "optical_element_groups": [
@@ -327,6 +328,7 @@
                       "size": "3x4",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
+                      "pscale": 0.5,
                       "max_rois": 1
                     },
                     "optical_element_groups": [
@@ -488,6 +490,7 @@
                       "size": "3x4",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
+                      "pscale": 0.5,
                       "max_rois": 1
                     },
                     "optical_element_groups": [
@@ -667,6 +670,7 @@
                       "size": "3x4",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
+                      "pscale": 0.5,
                       "max_rois": 0
                     },
                     "optical_element_groups": [
@@ -864,6 +868,7 @@
                       "size": "3x4",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
+                      "pscale": 0.5,
                       "max_rois": 0
                     },
                     "optical_element_groups": [
@@ -1036,6 +1041,7 @@
                       "size": "3x4",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
+                      "pscale": 0.5,
                       "max_rois": 0
                     },
                     "optical_element_groups": []
@@ -1201,6 +1207,7 @@
                       "size": "3x4",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
+                      "pscale": 0.5,
                       "max_rois": 0
                     },
                     "optical_element_groups": [
@@ -1747,6 +1754,7 @@
                       "size": "3x4",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
+                      "pscale": 0.5,
                       "max_rois": 0
                     },
                     "optical_element_groups": [
@@ -1908,6 +1916,7 @@
                       "size": "3x4",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
+                      "pscale": 0.5,
                       "max_rois": 0
                     },
                     "optical_element_groups": [
@@ -2090,6 +2099,7 @@
                       "size": "3x4",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
+                      "pscale": 0.5,
                       "max_rois": 0
                     },
                     "optical_element_groups": [
@@ -2271,6 +2281,7 @@
                       "size": "3x4",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
+                      "pscale": 0.5,
                       "max_rois": 0
                     },
                     "optical_element_groups": [
