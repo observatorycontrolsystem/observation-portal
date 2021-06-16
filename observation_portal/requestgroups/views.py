@@ -128,7 +128,8 @@ class InstrumentsInformationView(APIView):
                     'default_acceptability_threshold': configdb.get_default_acceptability_threshold(instrument_type),
                     'configuration_types': configdb.get_configuration_types(instrument_type),
                     'camera_type': {
-                        'field_of_view': configdb.get_diagnol_ccd_fov(instrument_type),
+                        'science_field_of_view': configdb.get_diagnol_ccd_fov(instrument_type, autoguider=False),
+                        'autoguider_field_of_view': configdb.get_diagnol_ccd_fov(instrument_type, autoguider=True),
                         'pixel_scale': configdb.get_pixel_scale(instrument_type)
                     }
                 }

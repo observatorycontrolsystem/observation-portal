@@ -31,6 +31,9 @@
                     "code": "ef01",
                     "camera_type": {
                       "code": "1M0-SCICAM-SBIG",
+                      "pixels_x": 240,
+                      "pixels_y": 180,
+                      "pscale": 1,
                       "allow_self_guiding": true
                     }
                   },
@@ -193,6 +196,9 @@
                     "code": "xx07",
                     "camera_type": {
                       "code": "1M0-SCICAM-SBIG",
+                      "pixels_x": 240,
+                      "pixels_y": 180,
+                      "pscale": 1,
                       "allow_self_guiding": true
                     }
                   },
@@ -355,6 +361,9 @@
                     "code": "xx09",
                     "camera_type": {
                       "code": "1M0-SCICAM-SBIG",
+                      "pixels_x": 240,
+                      "pixels_y": 180,
+                      "pscale": 1,
                       "allow_self_guiding": true
                     }
                   },
@@ -533,6 +542,9 @@
                     "code": "ef02",
                     "camera_type": {
                       "code": "2M0-FLOYDS-AG",
+                      "pixels_x": 240,
+                      "pixels_y": 180,
+                      "pscale": 1,
                       "allow_self_guiding": false
                     }
                   },
@@ -733,6 +745,9 @@
                     "code": "ef03",
                     "camera_type": {
                       "code": "1M0-SCICAM-AG",
+                      "pixels_x": 240,
+                      "pixels_y": 180,
+                      "pscale": 1,
                       "allow_self_guiding": true
                     }
                   },
@@ -895,6 +910,9 @@
                     "code": "ak02",
                     "camera_type": {
                       "code": "1M0-NRES-AG",
+                      "pixels_x": 240,
+                      "pixels_y": 180,
+                      "pscale": 1,
                       "allow_self_guiding": false
                     }
                   },
@@ -1071,6 +1089,9 @@
                     "code": "ef04",
                     "camera_type": {
                       "code": "2M0-FLOYDS-AG",
+                      "pixels_x": 240,
+                      "pixels_y": 180,
+                      "pscale": 1,
                       "allow_self_guiding": false
                     }
                   },
@@ -1619,6 +1640,9 @@
                     "code": "ef11",
                     "camera_type": {
                       "code": "1M0-SCICAM-AG",
+                      "pixels_x": 240,
+                      "pixels_y": 180,
+                      "pscale": 1,
                       "allow_self_guiding": true
                     }
                   },
@@ -1781,6 +1805,9 @@
                     "code": "ef12",
                     "camera_type": {
                       "code": "1M0-SCICAM-AG",
+                      "pixels_x": 240,
+                      "pixels_y": 180,
+                      "pscale": 1,
                       "allow_self_guiding": true
                     }
                   },
@@ -1964,6 +1991,9 @@
                     "code": "ey01",
                     "camera_type": {
                       "code": "1M0-SCICAM-AG",
+                      "pixels_x": 240,
+                      "pixels_y": 180,
+                      "pscale": 1,
                       "allow_self_guiding": true
                     }
                   },
@@ -2147,6 +2177,9 @@
                     "code": "sx01",
                     "camera_type": {
                       "code": "1M0-SCICAM-AG",
+                      "pixels_x": 240,
+                      "pixels_y": 180,
+                      "pscale": 1,
                       "allow_self_guiding": true
                     }
                   },

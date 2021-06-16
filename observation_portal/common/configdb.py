@@ -453,22 +453,22 @@ class ConfigDB(object):
             if instrument_type_code.upper() == instrument['instrument_type']['code'].upper():
                 return instrument['science_cameras'][0]['camera_type']['max_rois']
 
-    def get_diagnol_ccd_fov(self, instrument_type_code):
-        ''' Get the diagonal fov in arcminutes for the ccd, from the camera_type['size'] field in configdb
+    def get_diagnol_ccd_fov(self, instrument_type_code, autoguider=False):
+        ''' Get the diagonal fov in arcminutes for the ccd, from the camera_type pscale and pixelsx/y in configdb
         '''
         for instrument in self.get_instruments():
             if instrument_type_code.upper() == instrument['instrument_type']['code'].upper():
-                size = instrument['science_cameras'][0]['camera_type']['size']
-                dimensions = size.split('x')
-                if len(dimensions) == 1:
-                    dimensions.append(dimensions[0])
-                try:
-                    diagonal = sqrt((float(dimensions[0]) ** 2) + (float(dimensions[1]) ** 2))
-                    return diagonal
-                except TypeError:
-                    pass
-                except ValueError:
-                    pass
+                if autoguider:
+                    camera_type = instrument['autoguider_camera']['camera_type']
+                else:
+                    camera_type = instrument['science_cameras'][0]['camera_type']
+                pscale = camera_type['pscale']
+                pixels_x = camera_type['pixels_x']
+                pixels_y = camera_type['pixels_y']
+                fov_x = pixels_x * pscale / 60.0  # Convert from arcseconds to arcminutes
+                fov_y = pixels_y * pscale / 60.0
+                diagonal = sqrt((fov_x ** 2) + (fov_y ** 2))
+                return diagonal
         return 0
 
     def get_ccd_size(self, instrument_type_code):
