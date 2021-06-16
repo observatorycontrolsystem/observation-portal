@@ -184,6 +184,7 @@ class DitherSerializer(serializers.Serializer):
     pattern = serializers.ChoiceField(choices=('line', 'box', 'grid', 'spiral'), required=True)
     num_points = serializers.IntegerField(required=False)
     point_spacing = serializers.FloatField(required=True)
+    line_spacing = serializers.FloatField(required=False)
     orientation = serializers.FloatField(required=False, default=0.0)
     num_rows = serializers.IntegerField(required=False)
     num_columns = serializers.IntegerField(required=False)
@@ -191,8 +192,11 @@ class DitherSerializer(serializers.Serializer):
 
     def validate(self, data):
         validated_data = super().validate(data)
-        if 'num_points' not in validated_data and validated_data.get('pattern') != 'grid':
-            raise serializers.ValidationError(_('Must specify num_points when selecting a grid, spiral, or box dither pattern'))
+        if 'num_points' not in validated_data and validated_data.get('pattern') in ['line', 'spiral']:
+            raise serializers.ValidationError(_('Must specify num_points when selecting a line or spiral dither pattern'))
+        if 'line_spacing' not in validated_data and validated_data.get('pattern') in ['grid', 'box']:
+            # Set a default line spacing equal to the point spacing if it is not specified
+            validated_data['line_spacing'] = validated_data['point_spacing']
         if validated_data.get('pattern') == 'grid':
             if 'num_rows' not in validated_data or 'num_columns' not in validated_data:
                 raise serializers.ValidationError(_('Must specifcy num_rows and num_columns when selecting a grid dither pattern'))
