@@ -1,7 +1,7 @@
 from math import radians, degrees, cos, sin, pi, floor, ceil, sqrt
 from copy import deepcopy
 
-def expand_dither_pattern(configuration_dict, dither_details):
+def expand_dither_pattern(dither_details):
     '''
     Takes in a valid configuration and valid set of dither parameters, and expands the instrument_configs within the
     configuration with offsets to fit the dither pattern details specified.
@@ -9,6 +9,7 @@ def expand_dither_pattern(configuration_dict, dither_details):
     :param dither_details: a valid dictionary of dither pattern parameters
     :return: Configuration with expanded list of instrument_configurations.
     '''
+    configuration_dict = dither_details.get('configuration', {})
     offsets = []
     instrument_configs = []
     instrument_config = configuration_dict.get('instrument_configs', [{}])[0]

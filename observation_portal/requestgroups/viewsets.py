@@ -273,20 +273,11 @@ class DraftRequestGroupViewSet(viewsets.ModelViewSet):
 
 class ConfigurationViewSet(viewsets.GenericViewSet):
     permission_classes = (IsAuthenticated,)
+    serializer_class = import_string(settings.SERIALIZERS['requestgroups']['Dither'])
 
     @action(detail=False, methods=['post'])
     def dither(self, request):
-        configuration =  request.data.get('configuration', {})
-        dither_details = request.data.get('dither', {})
-        # Check that the configuration is a valid configuration
-        configuration_serializer = import_string(settings.SERIALIZERS['requestgroups']['Configuration'])(data=configuration)
-        if not configuration_serializer.is_valid():
-            return Response(configuration_serializer.errors, status=400)
-
-        # Ensure configuration only has a single instrument_config specified
-        configuration_dict = configuration_serializer.validated_data
-        if len(configuration_dict.get('instrument_configs', [])) > 1:
-            return Response("Cannot expand a configuration for dithering with more than one instrument_config set", status=400)
+        dither_details = request.data
 
         # Check that the dither parameters specified are valid
         dither_serializer = import_string(settings.SERIALIZERS['requestgroups']['Dither'])(data=dither_details)
@@ -294,5 +285,5 @@ class ConfigurationViewSet(viewsets.GenericViewSet):
             return Response(dither_serializer.errors, status=400)
 
         # Expand the instrument_configs within the configuration based on the dither pattern specified
-        configuration_dict = expand_dither_pattern(configuration_dict, dither_serializer.validated_data)
+        configuration_dict = expand_dither_pattern(dither_serializer.validated_data)
         return Response(configuration_dict)
