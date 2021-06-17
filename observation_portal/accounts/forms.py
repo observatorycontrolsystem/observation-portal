@@ -24,7 +24,6 @@ class CustomRegistrationForm(RegistrationFormTermsOfService, RegistrationFormUni
         fields = ('username', 'email', 'first_name', 'last_name')
         help_texts = {
             'username': 'Will be present under the USERID fits header.',
-            'simple_interface': 'Hide advanced fields when making an observation request',
         }
 
     def save(self, commit=True):
