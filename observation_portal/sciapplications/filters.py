@@ -20,6 +20,7 @@ class ScienceApplicationFilter(django_filters.FilterSet):
     only_authored = django_filters.BooleanFilter(
         method='filter_only_authored'
     )
+    tag = django_filters.CharFilter(method='filter_has_tag', label='Has tag')
 
     class Meta:
         model = ScienceApplication
@@ -30,6 +31,9 @@ class ScienceApplicationFilter(django_filters.FilterSet):
             return queryset.filter(submitter=self.request.user)
         else:
             return queryset
+
+    def filter_has_tag(self, queryset, name, value):
+        return queryset.filter(tags__contains=[value])
 
 
 class CallFilter(django_filters.FilterSet):

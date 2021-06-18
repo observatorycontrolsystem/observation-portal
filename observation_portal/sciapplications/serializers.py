@@ -80,6 +80,7 @@ class ScienceApplicationSerializer(serializers.ModelSerializer):
     timerequest_set = TimeRequestSerializer(many=True, required=False)
     pdf = serializers.FileField(required=False)
     clear_pdf = serializers.BooleanField(required=False, default=False, write_only=True)
+    tags = serializers.ListField(child=serializers.CharField(), allow_empty=True, required=False)
     call = serializers.SerializerMethodField()
     sca = serializers.SerializerMethodField()
     submitter = serializers.SerializerMethodField()
@@ -88,7 +89,7 @@ class ScienceApplicationSerializer(serializers.ModelSerializer):
         model = ScienceApplication
         fields = (
             'id', 'title', 'abstract', 'status', 'tac_rank', 'call', 'call_id', 'pi',
-            'pi_first_name', 'pi_last_name', 'pi_institution', 'timerequest_set',
+            'pi_first_name', 'pi_last_name', 'pi_institution', 'timerequest_set', 'tags',
             'coinvestigator_set', 'pdf', 'clear_pdf', 'sca', 'submitter', 'submitted'
         )
         read_only_fields = ('submitted', )
