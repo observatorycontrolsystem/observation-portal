@@ -14,7 +14,7 @@ def forward(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('proposals', '0004_auto_20210604_2154'),
+        ('proposals', '0005_auto_20210604_2154'),
     ]
 
     operations = [
