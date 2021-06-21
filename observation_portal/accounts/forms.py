@@ -12,11 +12,11 @@ class CustomRegistrationForm(RegistrationFormTermsOfService, RegistrationFormUni
     last_name = forms.CharField(max_length=200)
     institution = forms.CharField(max_length=200)
     title = forms.CharField(max_length=200)
-    education_user = forms.BooleanField(required=False)
+    simple_interface = forms.BooleanField(label="Use Basic Mode", help_text="Hide advanced fields when making an observation request.", required=False)
 
     field_order = [
         'first_name', 'last_name', 'institution', 'title',
-        'email', 'username', 'password1', 'password2', 'education_user', 'tos'
+        'email', 'username', 'password1', 'password2', 'simple_interface', 'tos'
     ]
 
     class Meta:
@@ -32,11 +32,7 @@ class CustomRegistrationForm(RegistrationFormTermsOfService, RegistrationFormUni
             user=new_user_instance,
             title=self.cleaned_data['title'],
             institution=self.cleaned_data['institution'],
-            education_user=self.cleaned_data['education_user'],
-            notifications_enabled=self.cleaned_data['education_user'],
-            notifications_on_authored_only=self.cleaned_data['education_user'],
-            view_authored_requests_only=self.cleaned_data['education_user'],
-            simple_interface=self.cleaned_data['education_user']
+            simple_interface=self.cleaned_data['simple_interface']
         )
         # There may be more than one proposal invite for the same proposal for the same user. Use the latest invite
         # that was sent if this is the case.
