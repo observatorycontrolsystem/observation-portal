@@ -334,6 +334,7 @@ SERIALIZERS = {
         'Membership': os.getenv('PROPOSALS_MEMBERSHIP_SERIALIZER', 'observation_portal.proposals.serializers.MembershipSerializer'),
         'ProposalNotification': os.getenv('PROPOSALS_PROPOSALNOTIFICATION_SERIALIZER', 'observation_portal.proposals.serializers.ProposalNotificationSerializer'),
         'TimeLimit': os.getenv('PROPOSALS_TIMELIMIT_SERIALIZER', 'observation_portal.proposals.serializers.TimeLimitSerializer'),
+        'TimeAllocation': os.getenv('PROPOSALS_TIMEALLOCATION_SERIALIZER', 'observation_portal.proposals.serializers.TimeAllocationSerializer'),
     },
     'accounts': {
         'Profile': os.getenv('ACCOUNTS_PROFILE_SERIALIZER', 'observation_portal.accounts.serializers.ProfileSerializer'),
