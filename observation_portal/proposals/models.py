@@ -8,6 +8,7 @@ from django.utils.translation import ugettext as _
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.html import strip_tags
+from django.utils.module_loading import import_string
 from django.conf import settings
 from collections import namedtuple
 import logging
@@ -16,6 +17,46 @@ from observation_portal.accounts.tasks import send_mail
 from observation_portal.common.configdb import configdb
 
 logger = logging.getLogger(__name__)
+
+
+def proposal_as_dict(instance):
+    proposal = model_to_dict(instance, exclude=['notes', 'users'])
+    proposal['sca'] = instance.sca.id
+    proposal['pis'] = [
+        {
+            'first_name': mem.user.first_name,
+            'last_name': mem.user.last_name,
+            'username': mem.user.username,
+            'email': mem.user.email,
+            'institution': mem.user.profile.institution
+        } for mem in instance.membership_set.all() if mem.role == Membership.PI
+    ]
+    proposal['requestgroup_count'] = instance.requestgroup_set.count()
+    proposal['coi_count'] = instance.membership_set.filter(role=Membership.CI).count()
+    proposal['timeallocation_set'] = [ta.as_dict() for ta in instance.timeallocation_set.all()]
+    return proposal
+
+
+def timeallocation_as_dict(instance, exclude=None):
+    if exclude is None:
+        exclude = []
+    time_allocation = model_to_dict(instance, exclude=exclude)
+    return time_allocation
+
+
+def membership_as_dict(instance):
+    return {
+        'username': instance.user.username,
+        'first_name': instance.user.first_name,
+        'last_name': instance.user.last_name,
+        'email': instance.user.email,
+        'role': instance.role,
+        'proposal': instance.proposal.id,
+        'time_limit': instance.time_limit,
+        'time_used_by_user': instance.user.profile.time_used_in_proposal(instance.proposal),
+        'simple_interface': instance.user.profile.simple_interface,
+        'id': instance.id
+    }
 
 
 class Semester(models.Model):
@@ -175,21 +216,7 @@ class Proposal(models.Model):
         return self.id
 
     def as_dict(self):
-        proposal = model_to_dict(self, exclude=['notes', 'users'])
-        proposal['sca'] = self.sca.id
-        proposal['pis'] = [
-            {
-                'first_name': mem.user.first_name,
-                'last_name': mem.user.last_name,
-                'username': mem.user.username,
-                'email': mem.user.email,
-                'institution': mem.user.profile.institution
-            } for mem in self.membership_set.all() if mem.role == Membership.PI
-        ]
-        proposal['requestgroup_count'] = self.requestgroup_set.count()
-        proposal['coi_count'] = self.membership_set.filter(role=Membership.CI).count()
-        proposal['timeallocation_set'] = [ta.as_dict() for ta in self.timeallocation_set.all()]
-        return proposal
+        return import_string(settings.AS_DICT['proposals']['Proposal'])(self)
 
 
 TimeAllocationKey = namedtuple('TimeAllocationKey', ['semester', 'instrument_type'])
@@ -223,10 +250,7 @@ class TimeAllocation(models.Model):
         return 'Timeallocation for {0}-{1}'.format(self.proposal, self.semester)
 
     def as_dict(self, exclude=None):
-        if exclude is None:
-            exclude = []
-        time_allocation = model_to_dict(self, exclude=exclude)
-        return time_allocation
+        return import_string(settings.AS_DICT['proposals']['TimeAllocation'])(self, exclude=exclude)
 
     def save(self, *args, **kwargs):
         tas_count = TimeAllocation.objects.filter(proposal=self.proposal, semester=self.semester,
@@ -277,18 +301,7 @@ class Membership(models.Model):
         return self.time_limit / 3600
 
     def as_dict(self):
-        return {
-            'username': self.user.username,
-            'first_name': self.user.first_name,
-            'last_name': self.user.last_name,
-            'email': self.user.email,
-            'role': self.role,
-            'proposal': self.proposal.id,
-            'time_limit': self.time_limit,
-            'time_used_by_user': self.user.profile.time_used_in_proposal(self.proposal),
-            'simple_interface': self.user.profile.simple_interface,
-            'id': self.id
-        }
+        return import_string(settings.AS_DICT['proposals']['Membership'])(self)
 
 
 class ProposalInvite(models.Model):

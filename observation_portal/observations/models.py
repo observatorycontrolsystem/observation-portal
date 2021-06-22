@@ -3,12 +3,57 @@ from django.contrib.postgres.fields import JSONField
 from django.forms.models import model_to_dict
 from django.utils import timezone
 from django.core.cache import cache
+from django.utils.module_loading import import_string
+from django.conf import settings
 from datetime import timedelta
 
 from observation_portal.requestgroups.models import Request, RequestGroup, Configuration, Location
 import logging
 
 logger = logging.getLogger()
+
+
+def observation_as_dict(instance, no_request=False):
+    ret_dict = model_to_dict(instance)
+    if no_request:
+        ret_dict['configuration_statuses'] = [config_status.as_dict() for config_status in instance.configuration_statuses.all()]
+    else:
+        ret_dict['request'] = instance.request.as_dict(for_observation=True)
+        ret_dict['proposal'] = instance.request.request_group.proposal.id
+        ret_dict['submitter'] = instance.request.request_group.submitter.username
+        ret_dict['name'] = instance.request.request_group.name
+        ret_dict['ipp_value'] = instance.request.request_group.ipp_value
+        ret_dict['observation_type'] = instance.request.request_group.observation_type
+        ret_dict['request_group_id'] = instance.request.request_group.id
+        ret_dict['created'] = instance.created
+        ret_dict['modified'] = instance.modified
+        configuration_status_by_config = {config_status.configuration.id: config_status
+                                        for config_status in instance.configuration_statuses.all()}
+        for configuration in ret_dict['request']['configurations']:
+            config_status = configuration_status_by_config[configuration['id']]
+            configuration['configuration_status'] = config_status.id
+            configuration['state'] = config_status.state
+            configuration['instrument_name'] = config_status.instrument_name
+            configuration['guide_camera_name'] = config_status.guide_camera_name
+            if hasattr(config_status, 'summary'):
+                configuration['summary'] = config_status.summary.as_dict()
+            else:
+                configuration['summary'] = {}
+    return ret_dict
+
+
+def configurationstatus_as_dict(instance):
+    ret_dict = model_to_dict(instance, exclude=instance.SERIALIZER_EXCLUDE)
+    if hasattr(instance, 'summary'):
+        ret_dict['summary'] = instance.summary.as_dict()
+    else:
+        ret_dict['summary'] = {}
+    return ret_dict
+
+
+def summary_as_dict(instance):
+    ret_dict = model_to_dict(instance, exclude=instance.SERIALIZER_EXCLUDE)
+    return ret_dict
 
 
 class Observation(models.Model):
@@ -132,32 +177,7 @@ class Observation(models.Model):
         ))
 
     def as_dict(self, no_request=False):
-        ret_dict = model_to_dict(self)
-        if no_request:
-            ret_dict['configuration_statuses'] = [config_status.as_dict() for config_status in self.configuration_statuses.all()]
-        else:
-            ret_dict['request'] = self.request.as_dict(for_observation=True)
-            ret_dict['proposal'] = self.request.request_group.proposal.id
-            ret_dict['submitter'] = self.request.request_group.submitter.username
-            ret_dict['name'] = self.request.request_group.name
-            ret_dict['ipp_value'] = self.request.request_group.ipp_value
-            ret_dict['observation_type'] = self.request.request_group.observation_type
-            ret_dict['request_group_id'] = self.request.request_group.id
-            ret_dict['created'] = self.created
-            ret_dict['modified'] = self.modified
-            configuration_status_by_config = {config_status.configuration.id: config_status
-                                            for config_status in self.configuration_statuses.all()}
-            for configuration in ret_dict['request']['configurations']:
-                config_status = configuration_status_by_config[configuration['id']]
-                configuration['configuration_status'] = config_status.id
-                configuration['state'] = config_status.state
-                configuration['instrument_name'] = config_status.instrument_name
-                configuration['guide_camera_name'] = config_status.guide_camera_name
-                if hasattr(config_status, 'summary'):
-                    configuration['summary'] = config_status.summary.as_dict()
-                else:
-                    configuration['summary'] = {}
-        return ret_dict
+        return import_string(settings.AS_DICT['observations']['Observation'])(self)
 
     @property
     def instrument_types(self):
@@ -203,12 +223,7 @@ class ConfigurationStatus(models.Model):
     )
 
     def as_dict(self):
-        ret_dict = model_to_dict(self, exclude=self.SERIALIZER_EXCLUDE)
-        if hasattr(self, 'summary'):
-            ret_dict['summary'] = self.summary.as_dict()
-        else:
-            ret_dict['summary'] = {}
-        return ret_dict
+        return import_string(settings.AS_DICT['observations']['ConfigurationStatus'])(self)
 
     class Meta:
         unique_together = ('configuration', 'observation')
@@ -258,8 +273,7 @@ class Summary(models.Model):
         verbose_name_plural = 'Summaries'
 
     def as_dict(self):
-        ret_dict = model_to_dict(self, exclude=self.SERIALIZER_EXCLUDE)
-        return ret_dict
+        return import_string(settings.AS_DICT['observations']['Summary'])(self)
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)

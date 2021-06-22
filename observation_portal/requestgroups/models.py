@@ -8,6 +8,8 @@ from django.utils import timezone
 from django.urls import reverse
 from django.forms.models import model_to_dict
 from django.utils.functional import lazy
+from django.utils.module_loading import import_string
+from django.conf import settings
 import logging
 
 from observation_portal.common.configdb import configdb
@@ -24,6 +26,92 @@ from observation_portal.requestgroups.duration_utils import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def requestgroup_as_dict(instance):
+    ret_dict = model_to_dict(instance)
+    ret_dict['created'] = instance.created
+    ret_dict['modified'] = instance.modified
+    ret_dict['submitter'] = instance.submitter.username
+    ret_dict['proposal'] = instance.proposal.id
+    ret_dict['requests'] = [r.as_dict() for r in instance.requests.all()]
+    return ret_dict
+
+
+def request_as_dict(instance, for_observation=False):
+    ret_dict = model_to_dict(instance, exclude=instance.SERIALIZER_EXCLUDE)
+    ret_dict['modified'] = instance.modified
+    ret_dict['duration'] = instance.duration
+    ret_dict['configurations'] = [c.as_dict() for c in instance.configurations.all()]
+    if not for_observation:
+        if instance.request_group.observation_type == RequestGroup.DIRECT:
+            if instance.observation_set.count() > 0:
+                observation = instance.observation_set.first()
+                ret_dict['location'] = {'site': observation.site, 'enclosure': observation.enclosure,
+                                        'telescope': observation.telescope}
+                ret_dict['windows'] = [{'start': observation.start, 'end': observation.end}]
+        else:
+            ret_dict['location'] = instance.location.as_dict() if hasattr(instance, 'location') else {}
+            ret_dict['windows'] = [w.as_dict() for w in instance.windows.all()]
+    return ret_dict
+
+
+def location_as_dict(instance):
+    ret_dict = model_to_dict(instance, exclude=instance.SERIALIZER_EXCLUDE)
+    ret_dict = {field: value for field, value in ret_dict.items() if value}
+    return ret_dict
+
+
+def window_as_dict(instance):
+    return model_to_dict(instance, exclude=instance.SERIALIZER_EXCLUDE)
+
+
+def configuration_as_dict(instance):
+    cdict = model_to_dict(instance, exclude=instance.SERIALIZER_EXCLUDE)
+    cdict['instrument_configs'] = [ic.as_dict() for ic in instance.instrument_configs.all()]
+    cdict['constraints'] = instance.constraints.as_dict()
+    cdict['acquisition_config'] = instance.acquisition_config.as_dict()
+    cdict['guiding_config'] = instance.guiding_config.as_dict()
+    try:
+        cdict['target'] = instance.target.as_dict()
+    except Exception:
+        cdict['target'] = {}
+    return cdict
+
+
+def target_as_dict(instance):
+    ret_dict = model_to_dict(instance, exclude=instance.SERIALIZER_EXCLUDE)
+    extra_params = ret_dict.get('extra_params', {})
+    target_helper = TARGET_TYPE_HELPER_MAP[ret_dict['type'].upper()](ret_dict)
+    ret_dict = {k: ret_dict.get(k) for k in target_helper.fields}
+    ret_dict['extra_params'] = extra_params
+    return ret_dict
+
+
+def instrumentconfig_as_dict(instance):
+    ic = model_to_dict(instance, exclude=instance.SERIALIZER_EXCLUDE)
+    ic['rois'] = [roi.as_dict() for roi in instance.rois.all()]
+    return ic
+
+
+def regionofinterest_as_dict(instance):
+    return model_to_dict(instance, exclude=instance.SERIALIZER_EXCLUDE)
+
+
+def guidingconfig_as_dict(instance):
+    return model_to_dict(instance, exclude=instance.SERIALIZER_EXCLUDE)
+
+
+def acquisitionconfig_as_dict(instance):
+    config = model_to_dict(instance, exclude=instance.SERIALIZER_EXCLUDE)
+    config = {field: value for field, value in config.items() if value is not None}
+    return config
+
+
+def constraints_as_dict(instance):
+    constraints = model_to_dict(instance, exclude=instance.SERIALIZER_EXCLUDE)
+    constraints = {field: value for field, value in constraints.items() if value is not None}
+    return constraints
 
 
 class RequestGroup(models.Model):
@@ -113,13 +201,7 @@ class RequestGroup(models.Model):
         return reverse('api:request_groups-detail', kwargs={'pk': self.pk})
 
     def as_dict(self):
-        ret_dict = model_to_dict(self)
-        ret_dict['created'] = self.created
-        ret_dict['modified'] = self.modified
-        ret_dict['submitter'] = self.submitter.username
-        ret_dict['proposal'] = self.proposal.id
-        ret_dict['requests'] = [r.as_dict() for r in self.requests.all()]
-        return ret_dict
+        return import_string(settings.AS_DICT['requestgroups']['RequestGroup'])(self)
 
     @property
     def min_window_time(self):
@@ -195,21 +277,7 @@ class Request(models.Model):
         return str(self.id)
 
     def as_dict(self, for_observation=False):
-        ret_dict = model_to_dict(self, exclude=self.SERIALIZER_EXCLUDE)
-        ret_dict['modified'] = self.modified
-        ret_dict['duration'] = self.duration
-        ret_dict['configurations'] = [c.as_dict() for c in self.configurations.all()]
-        if not for_observation:
-            if self.request_group.observation_type == RequestGroup.DIRECT:
-                if self.observation_set.count() > 0:
-                    observation = self.observation_set.first()
-                    ret_dict['location'] = {'site': observation.site, 'enclosure': observation.enclosure,
-                                            'telescope': observation.telescope}
-                    ret_dict['windows'] = [{'start': observation.start, 'end': observation.end}]
-            else:
-                ret_dict['location'] = self.location.as_dict() if hasattr(self, 'location') else {}
-                ret_dict['windows'] = [w.as_dict() for w in self.windows.all()]
-        return ret_dict
+        return import_string(settings.AS_DICT['requestgroups']['Request'])(self, for_observation=for_observation)
 
     @cached_property
     def duration(self):
@@ -294,9 +362,7 @@ class Location(models.Model):
         ordering = ('id',)
 
     def as_dict(self):
-        ret_dict = model_to_dict(self, exclude=self.SERIALIZER_EXCLUDE)
-        ret_dict = {field: value for field, value in ret_dict.items() if value}
-        return ret_dict
+        return import_string(settings.AS_DICT['requestgroups']['Location'])(self)
 
     def __str__(self):
         return '{}.{}.{}'.format(self.site, self.enclosure, self.telescope)
@@ -322,7 +388,7 @@ class Window(models.Model):
         ordering = ('id',)
 
     def as_dict(self):
-        return model_to_dict(self, exclude=self.SERIALIZER_EXCLUDE)
+        return import_string(settings.AS_DICT['requestgroups']['Window'])(self)
 
     def __str__(self):
         return 'Window {}: {} to {}'.format(self.id, self.start, self.end)
@@ -401,16 +467,7 @@ class Configuration(models.Model):
         return 'Configuration {0}: {1} type'.format(self.id, self.type)
 
     def as_dict(self):
-        cdict = model_to_dict(self, exclude=self.SERIALIZER_EXCLUDE)
-        cdict['instrument_configs'] = [ic.as_dict() for ic in self.instrument_configs.all()]
-        cdict['constraints'] = self.constraints.as_dict()
-        cdict['acquisition_config'] = self.acquisition_config.as_dict()
-        cdict['guiding_config'] = self.guiding_config.as_dict()
-        try:
-            cdict['target'] = self.target.as_dict()
-        except Exception:
-            cdict['target'] = {}
-        return cdict
+        return import_string(settings.AS_DICT['requestgroups']['Configuration'])(self)
 
     @cached_property
     def duration(self):
@@ -592,12 +649,7 @@ class Target(models.Model):
         return 'Target {}: {} type'.format(self.id, self.type)
 
     def as_dict(self):
-        ret_dict = model_to_dict(self, exclude=self.SERIALIZER_EXCLUDE)
-        extra_params = ret_dict.get('extra_params', {})
-        target_helper = TARGET_TYPE_HELPER_MAP[ret_dict['type'].upper()](ret_dict)
-        ret_dict = {k: ret_dict.get(k) for k in target_helper.fields}
-        ret_dict['extra_params'] = extra_params
-        return ret_dict
+        return import_string(settings.AS_DICT['requestgroups']['Target'])(self)
 
     @property
     def rise_set_target(self):
@@ -645,9 +697,7 @@ class InstrumentConfig(models.Model):
         ordering = ('id',)
 
     def as_dict(self):
-        ic = model_to_dict(self, exclude=self.SERIALIZER_EXCLUDE)
-        ic['rois'] = [roi.as_dict() for roi in self.rois.all()]
-        return ic
+        return import_string(settings.AS_DICT['requestgroups']['InstrumentConfig'])(self)
 
     @cached_property
     def duration(self):
@@ -682,7 +732,7 @@ class RegionOfInterest(models.Model):
         ordering = ('id',)
 
     def as_dict(self):
-        return model_to_dict(self, exclude=self.SERIALIZER_EXCLUDE)
+        return import_string(settings.AS_DICT['requestgroups']['RegionOfInterest'])(self)
 
 
 class GuidingConfig(models.Model):
@@ -722,7 +772,7 @@ class GuidingConfig(models.Model):
         ordering = ('id',)
 
     def as_dict(self):
-        return model_to_dict(self, exclude=self.SERIALIZER_EXCLUDE)
+        return import_string(settings.AS_DICT['requestgroups']['GuidingConfig'])(self)
 
 
 class AcquisitionConfig(models.Model):
@@ -752,9 +802,8 @@ class AcquisitionConfig(models.Model):
         ordering = ('id',)
 
     def as_dict(self):
-        config = model_to_dict(self, exclude=self.SERIALIZER_EXCLUDE)
-        config = {field: value for field, value in config.items() if value is not None}
-        return config
+        return import_string(settings.AS_DICT['requestgroups']['AcquisitionConfig'])(self)
+
 
 
 class Constraints(models.Model):
@@ -799,9 +848,7 @@ class Constraints(models.Model):
         verbose_name_plural = 'Constraints'
 
     def as_dict(self):
-        constraints = model_to_dict(self, exclude=self.SERIALIZER_EXCLUDE)
-        constraints = {field: value for field, value in constraints.items() if value is not None}
-        return constraints
+        return import_string(settings.AS_DICT['requestgroups']['Constraints'])(self)
 
     def __str__(self):
         return 'Constraints {}: {} max airmass, {} min_lunar_distance'.format(self.id, self.max_airmass,
