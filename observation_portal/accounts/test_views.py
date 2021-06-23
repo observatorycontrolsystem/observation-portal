@@ -136,15 +136,16 @@ class TestRegistration(TestCase):
 
     def test_education_register(self):
         reg_data = self.reg_data.copy()
-        reg_data['education_user'] = True
+        reg_data['simple_interface'] = True
         response = self.client.post(reverse('registration_register'), reg_data, follow=True)
         self.assertContains(response, 'check your email')
 
         user = User.objects.get(username=reg_data['username'])
-        self.assertTrue(user.profile.education_user)
-        self.assertTrue(user.profile.notifications_enabled)
-        self.assertTrue(user.profile.notifications_on_authored_only)
-        self.assertTrue(user.profile.view_authored_requests_only)
+        self.assertFalse(user.profile.education_user)
+        self.assertFalse(user.profile.notifications_enabled)
+        self.assertFalse(user.profile.notifications_on_authored_only)
+        self.assertFalse(user.profile.view_authored_requests_only)
+        self.assertTrue(user.profile.simple_interface)
 
     def test_username_max_length(self):
         reg_data = self.reg_data.copy()
