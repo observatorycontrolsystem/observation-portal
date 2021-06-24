@@ -67,6 +67,15 @@ class ProposalViewSet(DetailAsDictMixin, ListAsDictMixin, viewsets.ReadOnlyModel
         else:
             return Response({'errors': serializer.errors}, status=400)
 
+    @action(detail=False, methods=['get'])
+    def tags(self, request, pk=None):
+        all_proposal_tags = self.get_queryset().values_list('tags', flat=True)
+        tags = set()
+        for proposal_tags in all_proposal_tags:
+            if proposal_tags:
+                tags.update(proposal_tags)
+        return Response(list(tags))
+
 
 class SemesterViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = (AllowAny,)

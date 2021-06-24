@@ -45,6 +45,18 @@ class TestSciAppToProposal(TestCase):
         self.assertEqual(proposal.timeallocation_set.first().std_allocation, tr.std_time)
         self.assertFalse(ProposalInvite.objects.filter(proposal=proposal).exists())
 
+    def test_create_proposal_with_tags(self):
+        user = mixer.blend(User)
+        app = mixer.blend(ScienceApplication, submitter=self.user, pi=user.email)
+        tr = mixer.blend(TimeRequest, approved=True, science_application=app)
+        proposal = app.convert_to_proposal()
+        self.assertEqual(app.proposal, proposal)
+        self.assertEqual(user, proposal.membership_set.get(role=Membership.PI).user)
+        self.assertEqual(proposal.timeallocation_set.first().std_allocation, tr.std_time)
+        self.assertFalse(ProposalInvite.objects.filter(proposal=proposal).exists())
+        self.assertEqual(proposal.tags, app.tags)
+        self.assertTrue(len(proposal.tags) == 0)
+
     def test_create_proposal_with_nonexistant_cois(self):
         app = mixer.blend(ScienceApplication, submitter=self.user, pi='')
         mixer.cycle(3).blend(CoInvestigator, science_application=app)

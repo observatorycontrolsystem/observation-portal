@@ -693,6 +693,13 @@ class TestPostCreateSciApp(DramatiqTestCase):
         response = self.client.post(reverse('api:scienceapplications-list'), data=data)
         self.assertContains(response, 'Abstract is limited to', status_code=400)
 
+    def test_create_sciapp_with_tags(self):
+        data = self.sci_data.copy()
+        data['tags'] = ['planets']
+        response = self.client.post(reverse('api:scienceapplications-list'), data=data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()['tags'], ['planets'])
+
 
 @patch('observation_portal.sciapplications.serializers.PdfFileReader', new=MockPDFFileReader)
 class TestPostUpdateSciApp(DramatiqTestCase):
@@ -960,3 +967,15 @@ class TestPostUpdateSciApp(DramatiqTestCase):
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn(data['title'], str(mail.outbox[0].message()))
         self.assertIn(self.user.email, mail.outbox[0].to)
+
+    def test_add_tags_to_sciapp(self):
+        data = self.sci_data.copy()
+        data['tags'] = ['planets']
+        self.assertEqual(ScienceApplication.objects.get(pk=self.sci_app.id).tags, [])
+        response = self.client.put(
+            reverse('api:scienceapplications-detail', kwargs={'pk': self.sci_app.id}),
+            data=encode_multipart(BOUNDARY, data), content_type=MULTIPART_CONTENT
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(ScienceApplication.objects.get(pk=self.sci_app.id).tags, ['planets'])
+        self.assertIsNone(ScienceApplication.objects.get(pk=self.sci_app.id).submitted)

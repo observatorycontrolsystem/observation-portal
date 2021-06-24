@@ -121,7 +121,7 @@ class ScienceApplication(models.Model):
     tac_rank = models.PositiveIntegerField(default=0)
     tac_priority = models.PositiveIntegerField(default=0)
     pdf = models.FileField(upload_to=pdf_upload_path, blank=True, null=True)
-    tags = ArrayField(models.CharField(max_length=255), default=list)
+    tags = ArrayField(models.CharField(max_length=255), default=list, help_text='List of strings tagging this appllication')
 
     # Admin only Notes
     notes = models.TextField(blank=True, default='', help_text='Add notes here. Not visible to users.')

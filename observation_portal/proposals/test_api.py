@@ -13,7 +13,7 @@ from observation_portal.accounts.test_utils import blend_user
 class TestProposalApiList(APITestCase):
     def setUp(self):
         self.user = blend_user()
-        self.proposals = mixer.cycle(3).blend(Proposal)
+        self.proposals = mixer.cycle(3).blend(Proposal, tags=(t for t in [[], ['planets'], ['student', 'supernovae']]))
         mixer.cycle(3).blend(Membership, user=self.user, proposal=(p for p in self.proposals))
 
     def test_no_auth(self):
@@ -48,6 +48,25 @@ class TestProposalApiList(APITestCase):
         response = self.client.get(reverse('api:proposals-list'))
         for p in self.proposals:
             self.assertContains(response, p.id)
+
+    def test_normal_user_sees_only_their_tags(self):
+        mixer.blend(Proposal, tags=['secret'])
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('api:proposals-tags'))
+        expected_tags = ['student', 'planets', 'supernovae']
+        self.assertEqual(len(response.json()), len(expected_tags))
+        for expected_tag in expected_tags:
+            self.assertTrue(expected_tag in response.json())
+
+    def test_staff_user_with_staff_view_sees_all_tags(self):
+        mixer.blend(Proposal, tags=['secret'])
+        admin_user = blend_user(user_params={'is_staff': True}, profile_params={'staff_view': True})
+        self.client.force_login(admin_user)
+        response = self.client.get(reverse('api:proposals-tags'))
+        expected_tags = ['student', 'planets', 'supernovae', 'secret']
+        self.assertEqual(len(response.json()), len(expected_tags))
+        for expected_tag in expected_tags:
+            self.assertTrue(expected_tag in response.json())
 
 
 class TestProposalApiDetail(APITestCase):
