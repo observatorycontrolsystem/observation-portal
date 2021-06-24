@@ -177,7 +177,7 @@ class Observation(models.Model):
         ))
 
     def as_dict(self, no_request=False):
-        return import_string(settings.AS_DICT['observations']['Observation'])(self)
+        return import_string(settings.AS_DICT['observations']['Observation'])(self, no_request=no_request)
 
     @property
     def instrument_types(self):
