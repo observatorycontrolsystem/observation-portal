@@ -347,7 +347,7 @@ SERIALIZERS = {
     }
 }
 
-## model as_dict overrides - used to add or remove data from the detail and list viewsets. 
+## model as_dict overrides - used to add or remove data from the detail and list viewsets.
 #  The method must take in the model instance as the first argument. It may take other kwargs as additional arguments, but these are not used for basic list/detail views.
 AS_DICT = {
     'observations': {

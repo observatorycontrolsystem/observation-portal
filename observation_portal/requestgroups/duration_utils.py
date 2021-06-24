@@ -247,7 +247,7 @@ def get_request_duration_by_instrument_type(request_dict):
     except KeyError:
         configurations = request_dict['configurations']
     durations_by_instrument_type = get_complete_configurations_duration_by_instrument_type(configurations, start_time)
-    
+
     # Add in the front_padding proportionally by instrument_type here
     # TODO: We should move front_padding to the telescope level rather than instrument_type so we don't need to
     # assign it's value proportionally to observation time used per instrument_type

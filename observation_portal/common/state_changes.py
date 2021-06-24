@@ -1,5 +1,4 @@
 import logging
-from collections import defaultdict
 from math import floor, isclose, ceil
 
 from django.conf import settings
