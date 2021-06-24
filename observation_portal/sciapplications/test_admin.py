@@ -185,8 +185,8 @@ class TestSciAppAdmin(DramatiqTestCase):
         sciapp.tac_rank = 0
         sciapp.save()
         # Create duplicate time requests for the sciapp
-        mixer.blend(TimeRequest, science_application=sciapp, instrument=instrument, semester=semester, approved=True)
-        mixer.blend(TimeRequest, science_application=sciapp, instrument=instrument, semester=semester, approved=True)
+        mixer.blend(TimeRequest, science_application=sciapp, instrument_types=[instrument], semester=semester, approved=True)
+        mixer.blend(TimeRequest, science_application=sciapp, instrument_types=[instrument], semester=semester, approved=True)
         response = self.client.post(
             reverse('admin:sciapplications_scienceapplication_changelist'),
             data={'action': 'port', '_selected_action': [str(sciapp.pk)]},

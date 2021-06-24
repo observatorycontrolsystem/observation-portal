@@ -72,7 +72,7 @@ class Command(BaseCommand):
                 TimeAllocation.objects.get_or_create(
                     semester=current_semester,
                     proposal=proposal,
-                    instrument_type=instrument,
+                    instrument_types=[instrument],
                     defaults={
                         'std_allocation': 100,
                         'rr_allocation': 100,

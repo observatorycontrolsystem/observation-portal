@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.contrib.auth.models import User
 from mixer.backend.django import mixer
 
-from observation_portal.sciapplications.models import ScienceApplication, Call, TimeRequest, CoInvestigator
+from observation_portal.sciapplications.models import ScienceApplication, Call, TimeRequest, CoInvestigator, Instrument
 from observation_portal.proposals.models import Semester, Membership, ProposalInvite, ScienceCollaborationAllocation
 
 
@@ -18,12 +18,13 @@ class TestSciAppToProposal(TestCase):
 
     def test_create_proposal_from_single_pi(self):
         app = mixer.blend(ScienceApplication, submitter=self.user, pi='')
-        tr = mixer.blend(TimeRequest, approved=True, science_application=app)
+        it = mixer.blend(Instrument)
+        tr = mixer.blend(TimeRequest, approved=True, science_application=app, instrument_types=[it])
         proposal = app.convert_to_proposal()
         self.assertEqual(app.proposal, proposal)
         self.assertEqual(self.user, proposal.membership_set.get(role=Membership.PI).user)
         self.assertEqual(proposal.timeallocation_set.first().std_allocation, tr.std_time)
-        self.assertEqual(proposal.timeallocation_set.first().instrument_type, tr.instrument.code)
+        self.assertEqual(proposal.timeallocation_set.first().instrument_types[0], it.code)
         self.assertFalse(ProposalInvite.objects.filter(proposal=proposal).exists())
 
     def test_create_proposal_with_supplied_noexistant_pi(self):
@@ -74,18 +75,20 @@ class TestSciAppToProposal(TestCase):
     def test_create_key_proposal_multiple_semesters(self):
         other_semester = mixer.blend(Semester)
         app = mixer.blend(ScienceApplication, submitter=self.user, pi='')
-        tr = mixer.blend(TimeRequest, approved=True, science_application=app, semester=self.semester)
-        tr2 = mixer.blend(TimeRequest, approved=True, science_application=app, semester=other_semester)
+        it = mixer.blend(Instrument)
+        it2 = mixer.blend(Instrument)
+        tr = mixer.blend(TimeRequest, approved=True, science_application=app, instrument_types=[it], semester=self.semester)
+        tr2 = mixer.blend(TimeRequest, approved=True, science_application=app, instrument_types=[it2], semester=other_semester)
         proposal = app.convert_to_proposal()
         self.assertEqual(app.proposal, proposal)
         self.assertEqual(self.user, proposal.membership_set.get(role=Membership.PI).user)
         self.assertFalse(ProposalInvite.objects.filter(proposal=proposal).exists())
 
         self.assertEqual(proposal.timeallocation_set.get(semester=self.semester).std_allocation, tr.std_time)
-        self.assertEqual(proposal.timeallocation_set.get(semester=self.semester).instrument_type, tr.instrument.code)
+        self.assertEqual(proposal.timeallocation_set.get(semester=self.semester).instrument_types[0], it.code)
 
         self.assertEqual(proposal.timeallocation_set.get(semester=other_semester).std_allocation, tr2.std_time)
-        self.assertEqual(proposal.timeallocation_set.get(semester=other_semester).instrument_type, tr2.instrument.code)
+        self.assertEqual(proposal.timeallocation_set.get(semester=other_semester).instrument_types[0], it2.code)
 
     def test_create_collab_proposal(self):
         pi = mixer.blend(User)
