@@ -1470,7 +1470,7 @@ class TestLastScheduled(TestObservationApiBase):
 class TestTimeAccounting(TestObservationApiBase):
     def setUp(self):
         super().setUp()
-        self.time_allocation = mixer.blend(TimeAllocation, instrument_type='1M0-SCICAM-SBIG', semester=self.semester,
+        self.time_allocation = mixer.blend(TimeAllocation, instrument_types=['1M0-SCICAM-SBIG'], semester=self.semester,
                                            proposal=self.proposal, std_allocation=100, rr_allocation=100,
                                            tc_allocation=100, ipp_time_available=100)
 
@@ -1595,7 +1595,7 @@ class TestTimeAccounting(TestObservationApiBase):
 class TestTimeAccountingCommand(TestObservationApiBase):
     def setUp(self):
         super().setUp()
-        self.time_allocation = mixer.blend(TimeAllocation, instrument_type='1M0-SCICAM-SBIG', semester=self.semester,
+        self.time_allocation = mixer.blend(TimeAllocation, instrument_types=['1M0-SCICAM-SBIG'], semester=self.semester,
                                            proposal=self.proposal, std_allocation=100, rr_allocation=100,
                                            tc_allocation=100, ipp_time_available=100)
 

@@ -22,7 +22,7 @@ fake = Faker()
 
 def generate_time_request_data(index, instrument, semester):
     return {
-        f'timerequest_set[{index}]instrument': instrument.id,
+        f'timerequest_set[{index}]instrument_types': [instrument.id],
         f'timerequest_set[{index}]semester': semester.id,
         f'timerequest_set[{index}]std_time': fake.random_int(min=0, max=100),
         f'timerequest_set[{index}]rr_time': fake.random_int(min=0, max=100),
@@ -237,10 +237,10 @@ class TestGetScienceApplicationDetailAPI(APITestCase):
         instrument = mixer.blend(Instrument, code='1M0-SCICAM-SBIG')
         # The time request is made for an instrument, but the collaboration allocation is set per
         # telescope class. They are matched up by the names in configdb.
-        mixer.blend(TimeRequest, science_application=app, instrument=instrument, std_time=8)
+        mixer.blend(TimeRequest, science_application=app, instrument_types=[instrument], std_time=8)
         response = self.client.get(reverse('api:scienceapplications-detail', kwargs={'pk': app.id}))
         self.assertEqual(response.json()['timerequest_set'][0]['std_time'], 8)
-        self.assertEqual(response.json()['timerequest_set'][0]['telescope_name'], '1 meter')
+        self.assertIn('1 meter', response.json()['timerequest_set'][0]['telescope_names'])
 
 
 class TestListScienceApplicationAPI(APITestCase):
@@ -576,7 +576,7 @@ class TestPostCreateSciApp(DramatiqTestCase):
 
     def test_cannot_set_an_instrument_that_does_not_exist(self):
         data = self.sci_data.copy()
-        data['timerequest_set[0]instrument'] += 10
+        data['timerequest_set[0]instrument_types'] = [10]
         response = self.client.post(reverse('api:scienceapplications-list'), data=data)
         self.assertContains(response, 'object does not exist', status_code=400)
 

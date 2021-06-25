@@ -52,7 +52,7 @@ class ScienceApplicationViewSet(viewsets.ModelViewSet):
 
         return qs.prefetch_related(
             'call', 'call__semester', 'submitter', 'submitter__profile', 'submitter__sciencecollaborationallocation',
-            'timerequest_set', 'timerequest_set__instrument', 'coinvestigator_set',
+            'timerequest_set', 'timerequest_set__instrument_types', 'coinvestigator_set',
         )
 
     def perform_destroy(self, instance):

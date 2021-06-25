@@ -334,6 +334,7 @@ SERIALIZERS = {
         'Membership': os.getenv('PROPOSALS_MEMBERSHIP_SERIALIZER', 'observation_portal.proposals.serializers.MembershipSerializer'),
         'ProposalNotification': os.getenv('PROPOSALS_PROPOSALNOTIFICATION_SERIALIZER', 'observation_portal.proposals.serializers.ProposalNotificationSerializer'),
         'TimeLimit': os.getenv('PROPOSALS_TIMELIMIT_SERIALIZER', 'observation_portal.proposals.serializers.TimeLimitSerializer'),
+        'TimeAllocation': os.getenv('PROPOSALS_TIMEALLOCATION_SERIALIZER', 'observation_portal.proposals.serializers.TimeAllocationSerializer'),
     },
     'accounts': {
         'Profile': os.getenv('ACCOUNTS_PROFILE_SERIALIZER', 'observation_portal.accounts.serializers.ProfileSerializer'),
@@ -343,6 +344,34 @@ SERIALIZERS = {
     'sciapplications': {
         'Call': os.getenv('SCIAPPLICATIONS_CALL_SERIALIZER', 'observation_portal.sciapplications.serializers.CallSerializer'),
         'ScienceApplication': os.getenv('SCIAPPLICATIONS_SCIENCEAPPLICATION_SERIALIZER', 'observation_portal.sciapplications.serializers.ScienceApplicationSerializer'),
+    }
+}
+
+## model as_dict overrides - used to add or remove data from the detail and list viewsets.
+#  The method must take in the model instance as the first argument. It may take other kwargs as additional arguments, but these are not used for basic list/detail views.
+AS_DICT = {
+    'observations': {
+        'Summary': os.getenv('OBSERVATIONS_SUMMARY_AS_DICT', 'observation_portal.observations.models.summary_as_dict'),
+        'ConfigurationStatus': os.getenv('OBSERVATIONS_CONFIGURATIONSTATUS_AS_DICT', 'observation_portal.observations.models.configurationstatus_as_dict'),
+        'Observation': os.getenv('OBSERVATIONS_OBSERVATION_AS_DICT', 'observation_portal.observations.models.observation_as_dict'),
+    },
+    'requestgroups': {
+        'Constraints': os.getenv('REQUESTGROUPS_CONSTRAINTS_AS_DICT', 'observation_portal.requestgroups.models.constraints_as_dict'),
+        'RegionOfInterest': os.getenv('REQUESTGROUPS_REGIONOFINTEREST_AS_DICT', 'observation_portal.requestgroups.models.regionofinterest_as_dict'),
+        'InstrumentConfig': os.getenv('REQUESTGROUPS_INSTRUMENTCONFIG_AS_DICT', 'observation_portal.requestgroups.models.instrumentconfig_as_dict'),
+        'AcquisitionConfig': os.getenv('REQUESTGROUPS_ACQUISITIONCONFIG_AS_DICT', 'observation_portal.requestgroups.models.acquisitionconfig_as_dict'),
+        'GuidingConfig': os.getenv('REQUESTGROUPS_GUIDINGCONFIG_AS_DICT', 'observation_portal.requestgroups.models.guidingconfig_as_dict'),
+        'Target': os.getenv('REQUESTGROUPS_TARGET_AS_DICT', 'observation_portal.requestgroups.models.target_as_dict'),
+        'Configuration': os.getenv('REQUESTGROUPS_CONFIGURATION_AS_DICT', 'observation_portal.requestgroups.models.configuration_as_dict'),
+        'Location': os.getenv('REQUESTGROUPS_LOCATION_AS_DICT', 'observation_portal.requestgroups.models.location_as_dict'),
+        'Window': os.getenv('REQUESTGROUPS_WINDOW_AS_DICT', 'observation_portal.requestgroups.models.window_as_dict'),
+        'Request': os.getenv('REQUESTGROUPS_REQUEST_AS_DICT', 'observation_portal.requestgroups.models.request_as_dict'),
+        'RequestGroup': os.getenv('REQUESTGROUPS_REQUESTGROUP_AS_DICT', 'observation_portal.requestgroups.models.requestgroup_as_dict'),
+    },
+    'proposals': {
+        'Proposal': os.getenv('PROPOSALS_PROPOSAL_AS_DICT', 'observation_portal.proposals.models.proposal_as_dict'),
+        'Membership': os.getenv('PROPOSALS_MEMBERSHIP_AS_DICT', 'observation_portal.proposals.models.membership_as_dict'),
+        'TimeAllocation': os.getenv('PROPOSALS_TIMEALLOCATION_AS_DICT', 'observation_portal.proposals.models.timeallocation_as_dict'),
     }
 }
 

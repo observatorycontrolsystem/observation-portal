@@ -28,7 +28,7 @@ class BaseSetupRequest(SetTimeMixin, TestCase):
         self.time_allocation_1m0 = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=semester, std_allocation=100.0, std_time_used=0.0,
             rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0, ipp_time_available=5.0, tc_time_available=10.0,
-            tc_time_used=0.0
+            tc_time_used=0.0, instrument_types=['1M0-SCICAM-SBIG']
         )
         self.rg_single = mixer.blend(RequestGroup, proposal=self.proposal, operator='SINGLE',
                                      observation_type=RequestGroup.NORMAL)
@@ -561,7 +561,7 @@ class TestRequestTelescopeStates(TelescopeStatesFakeInput):
                                end=datetime(2016, 12, 31, tzinfo=timezone.utc)
                                )
         self.time_allocation_1m0 = mixer.blend(TimeAllocation, proposal=self.proposal, semester=semester,
-                                               telescope_class='1m0', std_allocation=100.0, std_time_used=0.0,
+                                               instrument_types=['1M0-SCICAM-SBIG'], std_allocation=100.0, std_time_used=0.0,
                                                rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
                                                ipp_time_available=5.0, tc_time_available=10.0, tc_time_used=0.0)
 
