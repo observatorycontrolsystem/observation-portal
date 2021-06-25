@@ -80,7 +80,7 @@ class ScienceApplicationSerializer(serializers.ModelSerializer):
     timerequest_set = TimeRequestSerializer(many=True, required=False)
     pdf = serializers.FileField(required=False)
     clear_pdf = serializers.BooleanField(required=False, default=False, write_only=True)
-    tags = serializers.ListField(child=serializers.CharField(), allow_empty=True, required=False)
+    tags = serializers.ListField(child=serializers.CharField(max_length=255), allow_empty=True, required=False)
     call = serializers.SerializerMethodField()
     sca = serializers.SerializerMethodField()
     submitter = serializers.SerializerMethodField()

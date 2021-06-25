@@ -979,3 +979,38 @@ class TestPostUpdateSciApp(DramatiqTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(ScienceApplication.objects.get(pk=self.sci_app.id).tags, ['planets'])
         self.assertIsNone(ScienceApplication.objects.get(pk=self.sci_app.id).submitted)
+
+    def test_remove_tags_from_sciapp(self):
+        sciapp = ScienceApplication.objects.get(pk=self.sci_app.id)
+        sciapp.tags = ['planets']
+        sciapp.save()
+        sciapp.refresh_from_db()
+        self.assertEqual(sciapp.tags, ['planets'])
+        data = self.sci_data.copy()
+        data['tags'] = []
+        response = self.client.put(
+            reverse('api:scienceapplications-detail', kwargs={'pk': self.sci_app.id}),
+            data=encode_multipart(BOUNDARY, data), content_type=MULTIPART_CONTENT
+        )
+        self.assertEqual(response.status_code, 200)
+        sciapp.refresh_from_db()
+        self.assertEqual(sciapp.tags, [])
+        self.assertIsNone(sciapp.submitted)
+
+    def test_remove_tags_from_sciapp_using_json(self):
+        sciapp = ScienceApplication.objects.get(pk=self.sci_app.id)
+        sciapp.tags = ['planets']
+        sciapp.save()
+        sciapp.refresh_from_db()
+        self.assertEqual(sciapp.tags, ['planets'])
+        data = {
+            'title': fake.text(max_nb_chars=50),
+            'status': ScienceApplication.DRAFT,
+            'call_id': self.sci_call.id,
+            'tags': []
+        }
+        response = self.client.put(reverse('api:scienceapplications-detail', kwargs={'pk': self.sci_app.id}), data=data, content_type='application/json')
+        self.assertEqual(response.status_code, 200)
+        sciapp.refresh_from_db()
+        self.assertEqual(sciapp.tags, [])
+        self.assertIsNone(sciapp.submitted)
