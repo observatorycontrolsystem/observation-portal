@@ -76,6 +76,7 @@ class ProposalAdmin(admin.ModelAdmin):
         'public',
         'semesters',
         'pi',
+        'tags',
         'created',
         'modified'
     )

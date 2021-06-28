@@ -49,6 +49,18 @@ class TestProposalApiList(APITestCase):
         for p in self.proposals:
             self.assertContains(response, p.id)
 
+    def test_filter_for_tags(self):
+        self.client.force_login(self.user)
+        # Filter for 'planets' tag
+        response = self.client.get(reverse('api:proposals-list') + '?tag=planets')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['count'], 1)
+        self.assertEqual(response.json()['results'][0]['tags'], ['planets'])
+        # Get all tags
+        response = self.client.get(reverse('api:proposals-list'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['count'], 3)
+
     def test_normal_user_sees_only_their_tags(self):
         mixer.blend(Proposal, tags=['secret'])
         self.client.force_login(self.user)

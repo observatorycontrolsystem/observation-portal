@@ -281,6 +281,44 @@ class TestListScienceApplicationAPI(APITestCase):
         self.assertContains(response, app.title)
         self.assertEqual(response.json()['count'], 1)
 
+    def test_filter_tags(self):
+        app1 = mixer.blend(
+            ScienceApplication,
+            status=ScienceApplication.DRAFT,
+            submitter=self.user,
+            call=self.call,
+            tags=['transits', 'education']
+        )
+        app2 = mixer.blend(
+            ScienceApplication,
+            status=ScienceApplication.DRAFT,
+            submitter=self.user,
+            call=self.call,
+            tags=['transits']
+        )
+        mixer.blend(
+            ScienceApplication,
+            status=ScienceApplication.DRAFT,
+            submitter=self.user,
+            call=self.call,
+            tags=[]
+        )
+        # Get only apps with tag 'education'
+        response = self.client.get(reverse('api:scienceapplications-list') + '?tag=education')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['count'], 1)
+        self.assertEqual(app1.id, response.json()['results'][0]['id'])
+        # Get only apps with tag 'transits'
+        response = self.client.get(reverse('api:scienceapplications-list') + '?tag=transits')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['count'], 2)
+        returned_app_ids = [app['id'] for app in response.json()['results']]
+        self.assertTrue(app1.id in returned_app_ids)
+        self.assertTrue(app2.id in returned_app_ids)
+        # Don't filter for any tags
+        response = self.client.get(reverse('api:scienceapplications-list'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['count'], 3)
 
 @patch('observation_portal.sciapplications.serializers.PdfFileReader', new=MockPDFFileReader)
 class TestPostCreateSciApp(DramatiqTestCase):
@@ -693,12 +731,19 @@ class TestPostCreateSciApp(DramatiqTestCase):
         response = self.client.post(reverse('api:scienceapplications-list'), data=data)
         self.assertContains(response, 'Abstract is limited to', status_code=400)
 
+    def test_create_sciapp_without_tags(self):
+        data = self.sci_data.copy()
+        response = self.client.post(reverse('api:scienceapplications-list'), data=data)
+        self.assertTrue(len(response.json()['tags']) == 0)
+
     def test_create_sciapp_with_tags(self):
         data = self.sci_data.copy()
-        data['tags'] = ['planets']
+        data['tags'] = ['planets', 'moon']
         response = self.client.post(reverse('api:scienceapplications-list'), data=data)
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.json()['tags'], ['planets'])
+        self.assertTrue(len(response.json()['tags']) == 2)
+        self.assertTrue('planets' in response.json()['tags'])
+        self.assertTrue('moon' in response.json()['tags'])
 
 
 @patch('observation_portal.sciapplications.serializers.PdfFileReader', new=MockPDFFileReader)
@@ -970,15 +1015,19 @@ class TestPostUpdateSciApp(DramatiqTestCase):
 
     def test_add_tags_to_sciapp(self):
         data = self.sci_data.copy()
-        data['tags'] = ['planets']
-        self.assertEqual(ScienceApplication.objects.get(pk=self.sci_app.id).tags, [])
+        data['tags'] = ['planets', 'moon']
+        sciapp = ScienceApplication.objects.get(pk=self.sci_app.id)
+        self.assertEqual(len(sciapp.tags), 0)
         response = self.client.put(
             reverse('api:scienceapplications-detail', kwargs={'pk': self.sci_app.id}),
             data=encode_multipart(BOUNDARY, data), content_type=MULTIPART_CONTENT
         )
+        sciapp.refresh_from_db()
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(ScienceApplication.objects.get(pk=self.sci_app.id).tags, ['planets'])
-        self.assertIsNone(ScienceApplication.objects.get(pk=self.sci_app.id).submitted)
+        self.assertTrue(len(sciapp.tags) == 2)
+        self.assertTrue('planets' in sciapp.tags)
+        self.assertTrue('moon' in sciapp.tags)
+        self.assertIsNone(sciapp.submitted)
 
     def test_remove_tags_from_sciapp(self):
         sciapp = ScienceApplication.objects.get(pk=self.sci_app.id)
@@ -987,7 +1036,8 @@ class TestPostUpdateSciApp(DramatiqTestCase):
         sciapp.refresh_from_db()
         self.assertEqual(sciapp.tags, ['planets'])
         data = self.sci_data.copy()
-        data['tags'] = []
+        # Leaving the tags field out when using multipart data on an update will clear out tags
+        del data['tags']
         response = self.client.put(
             reverse('api:scienceapplications-detail', kwargs={'pk': self.sci_app.id}),
             data=encode_multipart(BOUNDARY, data), content_type=MULTIPART_CONTENT
@@ -999,10 +1049,12 @@ class TestPostUpdateSciApp(DramatiqTestCase):
 
     def test_remove_tags_from_sciapp_using_json(self):
         sciapp = ScienceApplication.objects.get(pk=self.sci_app.id)
-        sciapp.tags = ['planets']
+        sciapp.tags = ['planets', 'moon']
         sciapp.save()
         sciapp.refresh_from_db()
-        self.assertEqual(sciapp.tags, ['planets'])
+        self.assertTrue(len(sciapp.tags) == 2)
+        self.assertTrue('planets' in sciapp.tags)
+        self.assertTrue('moon' in sciapp.tags)
         data = {
             'title': fake.text(max_nb_chars=50),
             'status': ScienceApplication.DRAFT,

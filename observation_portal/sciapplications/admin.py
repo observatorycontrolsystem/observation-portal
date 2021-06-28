@@ -39,6 +39,27 @@ class CoInvestigatorInline(admin.TabularInline):
     model = CoInvestigator
 
 
+class ScienceApplicationTagListFilter(admin.SimpleListFilter):
+    """Filter science applications given a tag"""
+    title = 'Tag'
+    parameter_name = 'tag'
+
+    def lookups(self, request, model_admin):
+        all_sciapp_tags = ScienceApplication.objects.values_list('tags', flat=True)
+        tags = set()
+        for sciapp_tags in all_sciapp_tags:
+            if sciapp_tags:
+                tags.update(sciapp_tags)
+        return ((tag, tag) for tag in tags)
+
+    def queryset(self, request, queryset):
+        value = self.value()
+        if value:
+            return queryset.filter(tags__contains=[self.value()])
+        else:
+            return queryset
+
+
 class ScienceApplicationAdmin(admin.ModelAdmin):
     inlines = [CoInvestigatorInline, TimeRequestAdminInline]
     list_display = (
@@ -47,9 +68,10 @@ class ScienceApplicationAdmin(admin.ModelAdmin):
         'status',
         'submitter',
         'tac_rank',
+        'tags',
         'preview_link',
     )
-    list_filter = ('call', 'status', 'call__proposal_type')
+    list_filter = (ScienceApplicationTagListFilter, 'call', 'status', 'call__proposal_type')
     actions = ['accept', 'reject', 'port']
     search_fields = ['title', 'abstract', 'submitter__first_name', 'submitter__last_name', 'submitter__username']
 

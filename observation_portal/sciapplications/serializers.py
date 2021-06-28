@@ -263,8 +263,10 @@ class ScienceApplicationSerializer(serializers.ModelSerializer):
         clear_pdf = validated_data.pop('clear_pdf', False)
         timerequest_set = validated_data.pop('timerequest_set', [])
         coinvestigator_set = validated_data.pop('coinvestigator_set', [])
+        tags = validated_data.pop('tags', [])
 
         with transaction.atomic():
+            instance.tags = tags
             for field, value in validated_data.items():
                 setattr(instance, field, value)
 
