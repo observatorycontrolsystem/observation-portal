@@ -1037,7 +1037,7 @@ class TestPostUpdateSciApp(DramatiqTestCase):
         self.assertEqual(sciapp.tags, ['planets'])
         data = self.sci_data.copy()
         # Leaving the tags field out when using multipart data on an update will clear out tags
-        del data['tags']
+        data.pop('tags', '')
         response = self.client.put(
             reverse('api:scienceapplications-detail', kwargs={'pk': self.sci_app.id}),
             data=encode_multipart(BOUNDARY, data), content_type=MULTIPART_CONTENT
