@@ -38,7 +38,7 @@ setup(
         'django-dramatiq>=0.7,<0.8',
         'django-extensions>=2.1,<2.2',
         'django-filter>=2.1,<2.4',
-        'django-oauth-toolkit>=1.2,<1.3',
+        'django-oauth-toolkit>=1.2,<1.6',
         'django-redis-cache<2.1',
         'django-registration-redux>=2.6,<2.7',
         'django-storages>=1.7,<1.8',
