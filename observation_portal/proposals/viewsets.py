@@ -9,6 +9,7 @@ from django.conf import settings
 
 from observation_portal.accounts.permissions import IsPrincipleInvestigator
 from observation_portal.common.mixins import ListAsDictMixin, DetailAsDictMixin
+from observation_portal.common.utils import get_queryset_field_values
 from observation_portal.proposals.filters import SemesterFilter, ProposalFilter, MembershipFilter, ProposalInviteFilter
 from observation_portal.proposals.models import Proposal, Semester, ProposalNotification, Membership, ProposalInvite
 
@@ -69,12 +70,8 @@ class ProposalViewSet(DetailAsDictMixin, ListAsDictMixin, viewsets.ReadOnlyModel
 
     @action(detail=False, methods=['get'])
     def tags(self, request, pk=None):
-        all_proposal_tags = self.get_queryset().values_list('tags', flat=True)
-        tags = set()
-        for proposal_tags in all_proposal_tags:
-            if proposal_tags:
-                tags.update(proposal_tags)
-        return Response(list(tags))
+        proposal_tags = get_queryset_field_values(self.get_queryset(), 'tags')
+        return Response(list(proposal_tags))
 
 
 class SemesterViewSet(viewsets.ReadOnlyModelViewSet):

@@ -2,7 +2,7 @@
 from django.contrib import admin
 
 from observation_portal.proposals.forms import TimeAllocationForm, TimeAllocationFormSet, CollaborationAllocationForm
-
+from observation_portal.common.utils import get_queryset_field_values
 from observation_portal.proposals.models import (
     Semester,
     ScienceCollaborationAllocation,
@@ -51,17 +51,13 @@ class ProposalTagListFilter(admin.SimpleListFilter):
     parameter_name = 'tag'
 
     def lookups(self, request, model_admin):
-        all_proposal_tags = Proposal.objects.values_list('tags', flat=True)
-        tags = set()
-        for proposal_tags in all_proposal_tags:
-            if proposal_tags:
-                tags.update(proposal_tags)
-        return ((tag, tag) for tag in tags)
+        proposal_tags = get_queryset_field_values(Proposal.objects.all(), 'tags')
+        return ((tag, tag) for tag in proposal_tags)
 
     def queryset(self, request, queryset):
         value = self.value()
         if value:
-            return queryset.filter(tags__contains=[self.value()])
+            return queryset.filter(tags__contains=[value])
         else:
             return queryset
 

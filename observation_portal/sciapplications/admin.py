@@ -9,6 +9,7 @@ from .models import (
     NoTimeAllocatedError, MultipleTimesAllocatedError
 )
 from observation_portal.proposals.models import Proposal
+from observation_portal.common.utils import get_queryset_field_values
 
 
 class InstrumentAdmin(admin.ModelAdmin):
@@ -45,17 +46,13 @@ class ScienceApplicationTagListFilter(admin.SimpleListFilter):
     parameter_name = 'tag'
 
     def lookups(self, request, model_admin):
-        all_sciapp_tags = ScienceApplication.objects.values_list('tags', flat=True)
-        tags = set()
-        for sciapp_tags in all_sciapp_tags:
-            if sciapp_tags:
-                tags.update(sciapp_tags)
-        return ((tag, tag) for tag in tags)
+        sciapp_tags = get_queryset_field_values(ScienceApplication.objects.all(), 'tags')
+        return ((tag, tag) for tag in sciapp_tags)
 
     def queryset(self, request, queryset):
         value = self.value()
         if value:
-            return queryset.filter(tags__contains=[self.value()])
+            return queryset.filter(tags__contains=[value])
         else:
             return queryset
 
