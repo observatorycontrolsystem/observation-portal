@@ -1,4 +1,5 @@
 import os
+from collections import defaultdict
 
 from django.utils.translation import ugettext as _
 from django.utils import timezone
@@ -7,7 +8,7 @@ from PyPDF2 import PdfFileReader
 from PyPDF2.utils import PdfReadError
 from rest_framework import serializers
 
-from observation_portal.sciapplications.models import ScienceApplication, Call, TimeRequest, CoInvestigator
+from observation_portal.sciapplications.models import ScienceApplication, Call, TimeRequest, CoInvestigator, Instrument
 
 
 class CallSerializer(serializers.ModelSerializer):
@@ -42,26 +43,45 @@ class CoInvestigatorSerializer(serializers.ModelSerializer):
         fields = ('first_name', 'last_name', 'institution', 'email')
 
 
+class InstrumentTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Instrument
+        fields = ('id', 'code', 'display', 'telescope_name')
+
 class TimeRequestSerializer(serializers.ModelSerializer):
-    telescope_name = serializers.SerializerMethodField()
-    instrument_name = serializers.SerializerMethodField()
-    instrument_code = serializers.SerializerMethodField()
+    instrument_types = serializers.PrimaryKeyRelatedField(many=True, read_only=False, queryset=Instrument.objects.all())
+    telescope_names = serializers.SerializerMethodField()
+    instrument_names = serializers.SerializerMethodField()
+    instrument_codes = serializers.SerializerMethodField()
 
     class Meta:
         model = TimeRequest
         fields = (
-            'semester', 'std_time', 'rr_time', 'tc_time', 'instrument', 'telescope_name',
-            'instrument_name', 'instrument_code'
+            'semester', 'std_time', 'rr_time', 'tc_time', 'telescope_names',
+            'instrument_names', 'instrument_codes', 'instrument_types'
         )
 
-    def get_telescope_name(self, obj):
-        return obj.instrument.telescope_name
+    def to_internal_value(self, data):
+        # This is needed to unpack array values submitted via the frontend from formData
+        if isinstance(data['instrument_types'], str):
+            data.setlist('instrument_types', data['instrument_types'].split(','))
+        data = super().to_internal_value(data)
+        return data
 
-    def get_instrument_name(self, obj):
-        return obj.instrument.display
+    def get_telescope_names(self, obj):
+        instruments = Instrument.objects.filter(timerequests__pk=obj.pk)
+        telescope_names = {it.telescope_name for it in instruments}
+        return list(telescope_names)
 
-    def get_instrument_code(self, obj):
-        return obj.instrument.code
+    def get_instrument_names(self, obj):
+        instruments = Instrument.objects.filter(timerequests__pk=obj.pk)
+        it_names = {it.display for it in instruments}
+        return list(it_names)
+
+    def get_instrument_codes(self, obj):
+        instruments = Instrument.objects.filter(timerequests__pk=obj.pk)
+        it_codes = {it.code for it in instruments}
+        return list(it_codes)
 
 
 class CallsPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
@@ -115,6 +135,22 @@ class ScienceApplicationSerializer(serializers.ModelSerializer):
             'deadline': obj.call.deadline,
             'eligibility': obj.call.eligibility
         }
+
+    def validate_timerequest_set(self, timerequest_set):
+        # Check that the combination of semester and instrument_type is unique between timerequests
+        its_by_semester = defaultdict(set)
+        error_list = []
+        for timerequest in timerequest_set:
+            errors = {}
+            for it in timerequest['instrument_types']:
+                if it in its_by_semester[timerequest['semester']]:
+                    errors = {'instrument_types': [_('You cannot create more than one time request for the same semester and instrument_type. Please consolidate your time requests.')]}
+                its_by_semester[timerequest['semester']].add(it)
+            error_list.append(errors)
+        if any(error_list):
+            raise serializers.ValidationError(error_list)
+
+        return timerequest_set
 
     def validate_status(self, status):
         # Other application statuses are set via admin actions, these are the only valid ones
@@ -179,18 +215,12 @@ class ScienceApplicationSerializer(serializers.ModelSerializer):
                     f'of [{", ".join(call.eligible_semesters)}]'
                 ))
             call_instrument_ids = [instrument.id for instrument in call.instruments.all()]
-            if timerequest['instrument'].id not in call_instrument_ids:
-                raise serializers.ValidationError(_(
-                    f'The instrument IDs set for the time requests of this application must be one '
-                    f'of [{", ".join([str(i) for i in call_instrument_ids])}]'
-                ))
-
-        unique_time_requests = set([f'{tr["instrument"]}-{tr["semester"]}' for tr in timerequest_set])
-        if len(unique_time_requests) != len(timerequest_set):
-            raise serializers.ValidationError(_(
-                'You cannot create more than one time request for the same semester and instrument. Please '
-                'consolidate your time requests.'
-            ))
+            for instrument_type in timerequest['instrument_types']:
+                if instrument_type.id not in call_instrument_ids:
+                    raise serializers.ValidationError(_(
+                        f'The instrument IDs set for the time requests of this application must be one '
+                        f'of [{", ".join([str(i) for i in call_instrument_ids])}]'
+                    ))
 
         if tac_rank > 0 and call.proposal_type != Call.COLLAB_PROPOSAL:
             raise serializers.ValidationError(_(
@@ -252,7 +282,11 @@ class ScienceApplicationSerializer(serializers.ModelSerializer):
                 coinvestigator.delete()
 
             for timerequest in timerequest_set:
-                TimeRequest.objects.create(**timerequest, science_application=instance)
+                instrument_types = timerequest['instrument_types']
+                del timerequest['instrument_types']
+                obj = TimeRequest.objects.create(**timerequest, science_application=instance)
+                obj.instrument_types.add(*instrument_types)
+                obj.save()
             for coinvestigator in coinvestigator_set:
                 CoInvestigator.objects.create(**coinvestigator, science_application=instance)
 
@@ -266,7 +300,11 @@ class ScienceApplicationSerializer(serializers.ModelSerializer):
         with transaction.atomic():
             sciapp = ScienceApplication.objects.create(**validated_data, submitter=self.context['request'].user)
             for timerequest in timerequest_set:
-                TimeRequest.objects.create(**timerequest, science_application=sciapp)
+                instrument_types = timerequest['instrument_types']
+                del timerequest['instrument_types']
+                obj = TimeRequest.objects.create(**timerequest, science_application=sciapp)
+                obj.instrument_types.add(*instrument_types)
+                obj.save()
             for coinvestigator in coinvestigator_set:
                 CoInvestigator.objects.create(**coinvestigator, science_application=sciapp)
 

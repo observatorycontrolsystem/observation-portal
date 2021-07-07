@@ -29,7 +29,7 @@ class TestRequestGroupTotalDuration(SetTimeMixin, TestCase):
         )
         self.time_allocation_1m0 = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=semester, std_allocation=100.0, std_time_used=0.0,
-            instrument_type='1M0-SCICAM-SBIG', rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
+            instrument_types=['1M0-SCICAM-SBIG'], rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
             ipp_time_available=5.0
         )
         self.rg_single = mixer.blend(RequestGroup, proposal=self.proposal, operator='SINGLE',
@@ -80,8 +80,8 @@ class TestRequestGroupTotalDuration(SetTimeMixin, TestCase):
     def test_single_rg_total_duration(self):
         request_duration = self.request.duration
         total_duration = self.rg_single.total_duration
-        tak = self.request.time_allocation_key
-        self.assertEqual(request_duration, total_duration[tak])
+        taks = self.request.time_allocation_keys
+        self.assertEqual(request_duration, total_duration[taks[0]])
 
     def test_many_rg_takes_highest_duration(self):
         self.rg_many.operator = 'MANY'
@@ -89,8 +89,8 @@ class TestRequestGroupTotalDuration(SetTimeMixin, TestCase):
 
         highest_duration = max(r.duration for r in self.requests)
         total_duration = self.rg_many.total_duration
-        tak = self.requests[0].time_allocation_key
-        self.assertEqual(highest_duration, total_duration[tak])
+        taks = self.requests[0].time_allocation_keys
+        self.assertEqual(highest_duration, total_duration[taks[0]])
 
     def test_and_rg_takes_sum_of_durations(self):
         self.rg_many.operator = 'AND'
@@ -98,8 +98,8 @@ class TestRequestGroupTotalDuration(SetTimeMixin, TestCase):
 
         sum_duration = sum(r.duration for r in self.requests)
         total_duration = self.rg_many.total_duration
-        tak = self.requests[0].time_allocation_key
-        self.assertEqual(sum_duration, total_duration[tak])
+        taks = self.requests[0].time_allocation_keys
+        self.assertEqual(sum_duration, total_duration[taks[0]])
 
 
 class TestRequestDuration(SetTimeMixin, TestCase):

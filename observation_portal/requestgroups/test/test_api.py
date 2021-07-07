@@ -29,6 +29,7 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 import copy
 import random
+from math import ceil
 from unittest.mock import patch
 
 generic_payload = {
@@ -213,12 +214,12 @@ class TestUserPostRequestApi(SetTimeMixin, APITestCase):
         )
         self.time_allocation_1m0_sbig = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=self.semester,
-            instrument_type='1M0-SCICAM-SBIG', std_allocation=100.0, std_time_used=0.0,
+            instrument_types=['1M0-SCICAM-SBIG'], std_allocation=100.0, std_time_used=0.0,
             rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0, ipp_time_available=5.0
         )
         self.time_allocation_2m0_floyds = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=self.semester,
-            instrument_type='2M0-FLOYDS-SCICAM', std_allocation=100.0, std_time_used=0.0,
+            instrument_types=['2M0-FLOYDS-SCICAM'], std_allocation=100.0, std_time_used=0.0,
             rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0, ipp_time_available=5.0
         )
         self.membership = mixer.blend(Membership, user=self.user, proposal=self.proposal)
@@ -524,13 +525,13 @@ class TestRequestGroupIPP(SetTimeMixin, APITestCase):
         )
 
         self.time_allocation_1m0_sbig = mixer.blend(
-            TimeAllocation, proposal=self.proposal, semester=semester, instrument_type='1M0-SCICAM-SBIG',
+            TimeAllocation, proposal=self.proposal, semester=semester, instrument_types=['1M0-SCICAM-SBIG'],
             std_allocation=100.0, std_time_used=0.0, rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
             ipp_time_available=5.0, tc_allocation=10, tc_time_used=0
         )
 
         self.time_allocation_2m0_floyds = mixer.blend(
-            TimeAllocation, proposal=self.proposal, semester=semester, instrument_type='2M0-FLOYDS-SCICAM',
+            TimeAllocation, proposal=self.proposal, semester=semester, instrument_types=['2M0-FLOYDS-SCICAM'],
             std_allocation=100.0, std_time_used=0.0, rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
             ipp_time_available=5.0, tc_allocation=10, tc_time_used=0
         )
@@ -582,6 +583,7 @@ class TestRequestGroupIPP(SetTimeMixin, APITestCase):
         duration = 0.0
         for req in requests:
             duration += req.duration
+        duration -= 1  # This duration is 1 second higher than what is used for ipp_debitting due to ceiling each individual requests duration
         duration /= 3600.0
         self.assertAlmostEqual(time_allocation.ipp_time_available, 5.0 - (duration * (rg['ipp_value'] - 1.0)), 5)
 
@@ -695,7 +697,7 @@ class TestRequestIPP(SetTimeMixin, APITestCase):
 
         self.time_allocation_1m0 = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=semester,
-            instrument_type='1M0-SCICAM-SBIG', std_allocation=100.0, std_time_used=0.0,
+            instrument_types=['1M0-SCICAM-SBIG'], std_allocation=100.0, std_time_used=0.0,
             rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0, ipp_time_available=5.0
         )
 
@@ -801,7 +803,7 @@ class TestWindowApi(SetTimeMixin, APITestCase):
         )
         self.time_allocation_1m0 = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=self.semester,
-            telescope_class='1m0', std_allocation=100.0, std_time_used=0.0,
+            instrument_types=['1M0-SCICAM-SBIG'], std_allocation=100.0, std_time_used=0.0,
             rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
             ipp_time_available=5.0
         )
@@ -943,9 +945,9 @@ class TestCadenceApi(SetTimeMixin, APITestCase):
         )
         self.time_allocation_1m0 = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=semester,
-            telescope_class='1m0', std_allocation=100.0, std_time_used=0.0,
+            instrument_types=['1M0-SCICAM-SBIG'], std_allocation=100.0, std_time_used=0.0,
             rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
-            ipp_time_available=5.0, instrument_type='1M0-SCICAM-SBIG'
+            ipp_time_available=5.0
         )
 
         self.client.force_login(self.user)
@@ -1054,14 +1056,14 @@ class TestICRSTarget(SetTimeMixin, APITestCase):
                                )
         self.time_allocation_1m0_sbig = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=semester,
-            instrument_type='1M0-SCICAM-SBIG', std_allocation=100.0,
+            instrument_types=['1M0-SCICAM-SBIG'], std_allocation=100.0,
             std_time_used=0.0, rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
             ipp_time_available=5.0
         )
 
         self.time_allocation_2m0_floyds = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=semester,
-            instrument_type='2M0-FLOYDS-SCICAM', std_allocation=100.0, std_time_used=0.0,
+            instrument_types=['2M0-FLOYDS-SCICAM'], std_allocation=100.0, std_time_used=0.0,
             rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0, ipp_time_available=5.0
         )
 
@@ -1140,7 +1142,7 @@ class TestOrbitalElementsTarget(SetTimeMixin, APITestCase):
         )
         self.time_allocation_1m0 = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=semester, std_allocation=100.0, std_time_used=0.0,
-            instrument_type='1M0-SCICAM-SBIG', rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
+            instrument_types=['1M0-SCICAM-SBIG'], rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
             ipp_time_available=5.0
         )
         mixer.blend(Membership, user=self.user, proposal=self.proposal)
@@ -1247,7 +1249,7 @@ class TestSatelliteTarget(SetTimeMixin, APITestCase):
         )
         self.time_allocation_1m0 = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=semester, std_allocation=100.0, std_time_used=0.0,
-            instrument_type='1M0-SCICAM-SBIG', rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
+            instrument_types=['1M0-SCICAM-SBIG'], rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
             ipp_time_available=5.0
         )
         mixer.blend(Membership, user=self.user, proposal=self.proposal)
@@ -1296,7 +1298,7 @@ class TestHourAngleTarget(SetTimeMixin, APITestCase):
         )
         self.time_allocation_1m0 = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=semester, std_allocation=100.0, std_time_used=0.0,
-            instrument_type='1M0-SCICAM-SBIG', rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
+            instrument_types=['1M0-SCICAM-SBIG'], rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
             ipp_time_available=5.0
         )
         mixer.blend(Membership, user=self.user, proposal=self.proposal)
@@ -1334,12 +1336,12 @@ class TestLocationApi(SetTimeMixin, APITestCase):
         self.time_allocation_1m0 = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=semester, std_allocation=100.0, std_time_used=0.0,
             rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0, ipp_time_available=5.0,
-            instrument_type='1M0-SCICAM-SBIG'
+            instrument_types=['1M0-SCICAM-SBIG']
         )
         self.time_allocation_2m0 = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=semester, std_allocation=100.0, std_time_used=0.0,
             rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0, ipp_time_available=5.0,
-            instrument_type='2M0-FLOYDS-SCICAM'
+            instrument_types=['2M0-FLOYDS-SCICAM']
         )
         mixer.blend(Membership, user=self.user, proposal=self.proposal)
         self.generic_payload = copy.deepcopy(generic_payload)
@@ -1418,22 +1420,22 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
             end=datetime(2016, 12, 31, tzinfo=timezone.utc)
         )
         self.time_allocation_1m0_sbig = mixer.blend(
-            TimeAllocation, proposal=self.proposal, semester=semester, instrument_type='1M0-SCICAM-SBIG',
+            TimeAllocation, proposal=self.proposal, semester=semester, instrument_types=['1M0-SCICAM-SBIG'],
             std_allocation=100.0, std_time_used=0.0, rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
             ipp_time_available=5.0
         )
         self.time_allocation_1m0_nres = mixer.blend(
-            TimeAllocation, proposal=self.proposal, semester=semester, instrument_type='1M0-NRES-SCICAM',
+            TimeAllocation, proposal=self.proposal, semester=semester, instrument_types=['1M0-NRES-SCICAM'],
             std_allocation=100.0, std_time_used=0.0, rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
             ipp_time_available=5.0
         )
         self.time_allocation_2m0_floyds = mixer.blend(
-            TimeAllocation, proposal=self.proposal, semester=semester, instrument_type='2M0-FLOYDS-SCICAM',
+            TimeAllocation, proposal=self.proposal, semester=semester, instrument_types=['2M0-FLOYDS-SCICAM'],
             std_allocation=100.0, std_time_used=0.0, rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
             ipp_time_available=5.0
         )
         self.time_allocation_soar = mixer.blend(
-            TimeAllocation, proposal=self.proposal, semester=semester, instrument_type='1M0-SCICAM-SOAR',
+            TimeAllocation, proposal=self.proposal, semester=semester, instrument_types=['1M0-SCICAM-SOAR'],
             std_allocation=100.0, std_time_used=0.0, rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
             ipp_time_available=5.0
         )
@@ -2232,7 +2234,7 @@ class TestAirmassApi(SetTimeMixin, APITestCase):
         self.assertTrue(response.json()['airmass_data']['tst']['times'])
 
 
-@patch('observation_portal.common.state_changes.modify_ipp_time_from_requests')
+@patch('observation_portal.common.state_changes.modify_ipp_time_from_request')
 class TestCancelRequestGroupApi(SetTimeMixin, APITestCase):
     ''' Test canceling user requests via API. Mocking out modify_ipp_time_from_requets
         as it is called on state change, but tested elsewhere '''
@@ -2300,7 +2302,7 @@ class TestCancelRequestGroupApi(SetTimeMixin, APITestCase):
         self.assertEqual(Request.objects.get(pk=completed_r.id).state, 'COMPLETED')
 
 
-@patch('observation_portal.common.state_changes.modify_ipp_time_from_requests')
+@patch('observation_portal.common.state_changes.modify_ipp_time_from_request')
 class TestSchedulableRequestsApi(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
@@ -2314,14 +2316,14 @@ class TestSchedulableRequestsApi(SetTimeMixin, APITestCase):
         )
         self.time_allocation_1m0 = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=semester,
-            instrument_type='1M0-SCICAM-SBIG', std_allocation=100.0, std_time_used=0.0,
+            instrument_types=['1M0-SCICAM-SBIG'], std_allocation=100.0, std_time_used=0.0,
             rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
             ipp_time_available=5.0
         )
         self.time_allocation_2m0 = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=semester, std_allocation=100.0, std_time_used=0.0,
             rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0, ipp_time_available=5.0,
-            instrument_type='2M0-FLOYDS-SCICAM'
+            instrument_types=['2M0-FLOYDS-SCICAM']
         )
 
         # Add a few requests within the current semester
@@ -2722,12 +2724,12 @@ class TestMaxIppRequestgroupApi(SetTimeMixin, APITestCase):
 
         self.time_allocation_1m0_sbig = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=self.semester,
-            instrument_type='1M0-SCICAM-SBIG', std_allocation=100.0, std_time_used=0.0,
+            instrument_types=['1M0-SCICAM-SBIG'], std_allocation=100.0, std_time_used=0.0,
             rr_allocation=10.0, rr_time_used=0.0, ipp_limit=10.0, ipp_time_available=1.0
         )
         self.time_allocation_0m4_sbig = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=self.semester,
-            instrument_type='0M4-SCICAM-SBIG', std_allocation=100.0, std_time_used=0.0,
+            instrument_types=['0M4-SCICAM-SBIG'], std_allocation=100.0, std_time_used=0.0,
             rr_allocation=10.0, rr_time_used=0.0, ipp_limit=10.0, ipp_time_available=1.0
         )
         self.user = blend_user()
@@ -2835,12 +2837,12 @@ class TestLastChanged(SetTimeMixin, APITestCase):
         )
         self.time_allocation_1m0_sbig = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=self.semester,
-            instrument_type='1M0-SCICAM-SBIG', std_allocation=100.0, std_time_used=0.0,
+            instrument_types=['1M0-SCICAM-SBIG'], std_allocation=100.0, std_time_used=0.0,
             rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0, ipp_time_available=5.0
         )
         self.time_allocation_2m0_floyds = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=self.semester,
-            instrument_type='2M0-FLOYDS-SCICAM', std_allocation=100.0, std_time_used=0.0,
+            instrument_types=['2M0-FLOYDS-SCICAM'], std_allocation=100.0, std_time_used=0.0,
             rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0, ipp_time_available=5.0
         )
         self.membership = mixer.blend(Membership, user=self.user, proposal=self.proposal)

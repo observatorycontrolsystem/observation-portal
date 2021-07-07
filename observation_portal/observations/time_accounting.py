@@ -27,7 +27,7 @@ def on_summary_update_time_accounting(current, instance):
     if time_difference:
         time_allocations = instance.configuration_status.observation.request.timeallocations
         for time_allocation in time_allocations:
-            if time_allocation.instrument_type.upper() == instance.configuration_status.configuration.instrument_type.upper():
+            if instance.configuration_status.configuration.instrument_type in time_allocation.instrument_types:
                 if observation_type == RequestGroup.NORMAL:
                     with transaction.atomic():
                         TimeAllocation.objects.select_for_update().filter(
