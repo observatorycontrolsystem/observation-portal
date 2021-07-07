@@ -1149,10 +1149,9 @@ class TestUpdateConfigurationStatusApi(TestObservationApiBase):
         )
         self._create_observation(observation)
         configuration_status = ConfigurationStatus.objects.first()
-        # start="2016-09-05T22:35:39Z", end="2016-09-05T23:35:40Z"
         end_time = datetime(2016, 9, 5, 23, 35, 40).replace(tzinfo=timezone.utc)
         exposure_start = datetime(2016, 9, 5, 22, 45, 22).replace(tzinfo=timezone.utc)
-        update_data = {"start_exposures": datetime.strftime(exposure_start, '%Y-%m-%dT%H:%M:%SZ')}
+        update_data = {"exposures_start_at": datetime.strftime(exposure_start, '%Y-%m-%dT%H:%M:%SZ')}
         self.client.patch(reverse('api:configurationstatus-detail', args=(configuration_status.id,)), update_data)
         observation = Observation.objects.first()
         self.assertGreater(observation.end, exposure_start)
@@ -1184,7 +1183,7 @@ class TestUpdateConfigurationStatusApi(TestObservationApiBase):
 
         end_time = datetime(2016, 9, 5, 23, 35, 40).replace(tzinfo=timezone.utc)
         exposure_start = datetime(2016, 9, 5, 22, 45, 22).replace(tzinfo=timezone.utc)
-        update_data = {"start_exposures": datetime.strftime(exposure_start, '%Y-%m-%dT%H:%M:%SZ')}
+        update_data = {"exposures_start_at": datetime.strftime(exposure_start, '%Y-%m-%dT%H:%M:%SZ')}
         self.client.patch(reverse('api:configurationstatus-detail', args=(configuration_status.id,)), update_data)
         observation = Observation.objects.first()
         new_obs_end = exposure_start + timedelta(seconds=self.requestgroup.requests.first().get_remaining_duration(
@@ -1218,7 +1217,7 @@ class TestUpdateConfigurationStatusApi(TestObservationApiBase):
         end_time = datetime(2016, 9, 5, 23, 35, 40).replace(tzinfo=timezone.utc)
         start_time = datetime(2016, 9, 5, 22, 35, 39).replace(tzinfo=timezone.utc)
         exposure_start = datetime(2016, 9, 5, 22, 35, 45).replace(tzinfo=timezone.utc)
-        update_data = {"start_exposures": datetime.strftime(exposure_start, '%Y-%m-%dT%H:%M:%SZ')}
+        update_data = {"exposures_start_at": datetime.strftime(exposure_start, '%Y-%m-%dT%H:%M:%SZ')}
         self.client.patch(reverse('api:configurationstatus-detail', args=(configuration_status.id,)), update_data)
         observation = Observation.objects.first()
         new_obs_end = exposure_start + timedelta(seconds=self.requestgroup.requests.first().get_remaining_duration(
@@ -1235,7 +1234,7 @@ class TestUpdateConfigurationStatusApi(TestObservationApiBase):
         start_time = datetime(2016, 9, 5, 22, 35, 39).replace(tzinfo=timezone.utc)
         end_time = datetime(2016, 9, 5, 23, 35, 40).replace(tzinfo=timezone.utc)
         exposure_start = datetime(2016, 9, 5, 22, 33, 0).replace(tzinfo=timezone.utc)
-        update_data = {"start_exposures": datetime.strftime(exposure_start, '%Y-%m-%dT%H:%M:%SZ')}
+        update_data = {"exposures_start_at": datetime.strftime(exposure_start, '%Y-%m-%dT%H:%M:%SZ')}
         response = self.client.patch(reverse('api:configurationstatus-detail', args=(configuration_status.id,)), update_data)
         self.assertEqual(response.status_code, 400)
         self.assertIn('Updated exposure start time must be after the observation start time', str(response.content))
