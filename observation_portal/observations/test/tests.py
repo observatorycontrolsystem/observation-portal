@@ -309,6 +309,7 @@ class TestPostScheduleApi(SetTimeMixin, APITestCase):
             obs_json['request']['configurations'][0]['instrument_name'],
             obs_json['request']['configurations'][0]['guide_camera_name']
         )
+        self.assertIs(obs_json['request']['configurations'][0]['extra_params']['self_guide'], observation['request']['configurations'][0]['extra_params']['self_guide'])
 
     def test_post_observation_hour_angle_missing_required_fields(self):
         bad_observation = copy.deepcopy(self.observation)

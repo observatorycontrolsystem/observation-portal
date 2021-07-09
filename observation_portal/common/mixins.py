@@ -51,17 +51,23 @@ class CustomIsoDateTimeFilterMixin(object):
 
 class ExtraParamsFormatter(object):
     """ This should be mixed in with Serializers that have extra_params JSON fields, to ensure the float values are
-        stored as float or integer values in the db instead of as strings
+        stored as float or integer values in the db instead of as strings, and to make sure booleans are treated as such
     """
     def to_internal_value(self, data):
         data = super().to_internal_value(data)
         for field, value in data.get('extra_params', {}).items():
-            try:
-                float_value = float(value)
-                if float_value.is_integer():
-                    data['extra_params'][field] = int(float_value)
+            if not isinstance(value, bool):
+                if value == 'true' or value == 'True':
+                    data['extra_params'][field] = True
+                elif value == 'false' or value == 'False':
+                    data['extra_params'][field] = False
                 else:
-                    data['extra_params'][field] = float_value
-            except (ValueError, TypeError):
-                pass
+                    try:
+                        float_value = float(value)
+                        if float_value.is_integer():
+                            data['extra_params'][field] = int(float_value)
+                        else:
+                            data['extra_params'][field] = float_value
+                    except (ValueError, TypeError):
+                        pass
         return data
