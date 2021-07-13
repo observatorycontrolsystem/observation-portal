@@ -100,6 +100,7 @@ class ScienceApplicationSerializer(serializers.ModelSerializer):
     timerequest_set = TimeRequestSerializer(many=True, required=False)
     pdf = serializers.FileField(required=False)
     clear_pdf = serializers.BooleanField(required=False, default=False, write_only=True)
+    tags = serializers.ListField(child=serializers.CharField(max_length=255), allow_empty=True, required=False)
     call = serializers.SerializerMethodField()
     sca = serializers.SerializerMethodField()
     submitter = serializers.SerializerMethodField()
@@ -108,7 +109,7 @@ class ScienceApplicationSerializer(serializers.ModelSerializer):
         model = ScienceApplication
         fields = (
             'id', 'title', 'abstract', 'status', 'tac_rank', 'call', 'call_id', 'pi',
-            'pi_first_name', 'pi_last_name', 'pi_institution', 'timerequest_set',
+            'pi_first_name', 'pi_last_name', 'pi_institution', 'timerequest_set', 'tags',
             'coinvestigator_set', 'pdf', 'clear_pdf', 'sca', 'submitter', 'submitted'
         )
         read_only_fields = ('submitted', )
@@ -262,8 +263,10 @@ class ScienceApplicationSerializer(serializers.ModelSerializer):
         clear_pdf = validated_data.pop('clear_pdf', False)
         timerequest_set = validated_data.pop('timerequest_set', [])
         coinvestigator_set = validated_data.pop('coinvestigator_set', [])
+        tags = validated_data.pop('tags', [])
 
         with transaction.atomic():
+            instance.tags = tags
             for field, value in validated_data.items():
                 setattr(instance, field, value)
 
