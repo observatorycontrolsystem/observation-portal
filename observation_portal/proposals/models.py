@@ -1,4 +1,3 @@
-from django.contrib.postgres.fields import ArrayField
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import ArrayField
 from django.utils.functional import cached_property

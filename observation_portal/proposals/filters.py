@@ -1,6 +1,7 @@
 import django_filters
 from django.utils import timezone
 from dateutil.parser import parse
+
 from observation_portal.proposals.models import Semester, Proposal, Membership, ProposalInvite
 
 
@@ -20,14 +21,14 @@ class ProposalFilter(django_filters.FilterSet):
         label="Semester", distinct=True, queryset=Semester.objects.all().order_by('-start')
     )
     active = django_filters.ChoiceFilter(choices=((False, 'Inactive'), (True, 'Active')), empty_label='All')
-    tag = django_filters.CharFilter(method='filter_has_tag', label='Has tag')
+    tags = django_filters.BaseInFilter(method='filter_has_tag', label='Comma separated list of tags')
 
     class Meta:
         model = Proposal
         fields = ('active', 'semester', 'id', 'tac_rank', 'tac_priority', 'public', 'title')
 
     def filter_has_tag(self, queryset, name, value):
-        return queryset.filter(tags__contains=[value])
+        return queryset.filter(tags__overlap=[value])
 
 
 class SemesterFilter(django_filters.FilterSet):

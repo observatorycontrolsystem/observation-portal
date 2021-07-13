@@ -304,12 +304,19 @@ class TestListScienceApplicationAPI(APITestCase):
             tags=[]
         )
         # Get only apps with tag 'education'
-        response = self.client.get(reverse('api:scienceapplications-list') + '?tag=education')
+        response = self.client.get(reverse('api:scienceapplications-list') + '?tags=education')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['count'], 1)
         self.assertEqual(app1.id, response.json()['results'][0]['id'])
         # Get only apps with tag 'transits'
-        response = self.client.get(reverse('api:scienceapplications-list') + '?tag=transits')
+        response = self.client.get(reverse('api:scienceapplications-list') + '?tags=transits')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['count'], 2)
+        returned_app_ids = [app['id'] for app in response.json()['results']]
+        self.assertTrue(app1.id in returned_app_ids)
+        self.assertTrue(app2.id in returned_app_ids)
+        # Get tags with either 'education' or 'transits'
+        response = self.client.get(reverse('api:scienceapplications-list') + '?tags=transits,education')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['count'], 2)
         returned_app_ids = [app['id'] for app in response.json()['results']]

@@ -51,11 +51,26 @@ class TestProposalApiList(APITestCase):
 
     def test_filter_for_tags(self):
         self.client.force_login(self.user)
-        # Filter for 'planets' tag
-        response = self.client.get(reverse('api:proposals-list') + '?tag=planets')
+        # Filter for proposals with the 'planets' tag
+        response = self.client.get(reverse('api:proposals-list') + '?tags=planets')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['count'], 1)
         self.assertEqual(response.json()['results'][0]['tags'], ['planets'])
+        # Filter for proposals with either the 'planets' tag or the 'student' tag
+        response = self.client.get(reverse('api:proposals-list') + '?tags=planets,student')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['count'], 2)
+        response_tags = []
+        for result in response.json()['results']:
+            response_tags.extend(result['tags'])
+        self.assertTrue('planets' in response_tags)
+        self.assertTrue('student' in response_tags)
+        # Filter for two tags but where both come from a single proposal
+        response = self.client.get(reverse('api:proposals-list') + '?tags=supernovae,student')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['count'], 1)
+        self.assertTrue('supernovae' in response.json()['results'][0]['tags'])
+        self.assertTrue('student' in response.json()['results'][0]['tags'])
         # Get all tags
         response = self.client.get(reverse('api:proposals-list'))
         self.assertEqual(response.status_code, 200)
