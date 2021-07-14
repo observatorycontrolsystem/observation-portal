@@ -1,4 +1,4 @@
-from math import radians, degrees, cos, sin, pi, floor, ceil, sqrt
+from math import radians, cos, sin, pi, floor, ceil, sqrt
 from copy import deepcopy
 
 def expand_dither_pattern(dither_details):
@@ -89,8 +89,6 @@ def calc_spiral_offsets(num_points, point_spacing, orientation):
     """
     # TODO: work orientation angle into this, right now it isn't used
     offsets = [(0,0),]
-    # Offsets from origin
-    x0 = y0 = 0.0
 
     n = 1
     r = 1  # This is a parameter related to size of spirals. It seems like distance between spirals is roughly r * point_spacing
