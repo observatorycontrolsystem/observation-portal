@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.contrib.auth.models import User
 from django.urls import reverse
 from django.utils.translation import ugettext as _
+from django.contrib.postgres.fields import ArrayField
 from django.template.loader import render_to_string
 from django.utils.functional import cached_property
 from django.conf import settings
@@ -120,6 +121,7 @@ class ScienceApplication(models.Model):
     tac_rank = models.PositiveIntegerField(default=0)
     tac_priority = models.PositiveIntegerField(default=0)
     pdf = models.FileField(upload_to=pdf_upload_path, blank=True, null=True)
+    tags = ArrayField(models.CharField(max_length=255), default=list, blank=True, help_text='List of strings tagging this application')
 
     # Admin only Notes
     notes = models.TextField(blank=True, default='', help_text='Add notes here. Not visible to users.')
@@ -191,7 +193,8 @@ class ScienceApplication(models.Model):
             tac_priority=self.tac_priority,
             tac_rank=self.tac_rank,
             active=False,
-            sca=self.sca
+            sca=self.sca,
+            tags=self.tags
         )
 
         for tr in self.timerequest_set.filter(approved=True):
