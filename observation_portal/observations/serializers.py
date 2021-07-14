@@ -30,6 +30,7 @@ class ConfigurationStatusSerializer(serializers.ModelSerializer):
     instrument_name = serializers.CharField(required=False)
     guide_camera_name = serializers.CharField(required=False)
     end = serializers.DateTimeField(required=False)
+    exposures_start_at = serializers.DateTimeField(required=False)
 
     class Meta:
         model = ConfigurationStatus
@@ -41,6 +42,10 @@ class ConfigurationStatusSerializer(serializers.ModelSerializer):
             # For a partial update, only validate the end time if its set
             if 'end' in data and data['end'] <= timezone.now():
                 raise serializers.ValidationError(_('Updated end time must be in the future'))
+            if 'exposures_start_at' in data and self.instance and data['exposures_start_at'] < self.instance.observation.start:
+                raise serializers.ValidationError(_('Updated exposure start time must be after the observation start time'))
+            if 'end' in data and 'exposures_start_at' in data:
+                raise serializers.ValidationError(_('Cannot specify both an end time and an exposures_start_at time'))
             return data
 
         if ('guide_camera_name' in data and
@@ -74,6 +79,11 @@ class ConfigurationStatusSerializer(serializers.ModelSerializer):
         if 'end' in validated_data:
             obs_end_time = validated_data['end']
             obs_end_time += timedelta(seconds=instance.observation.request.get_remaining_duration(instance.configuration.priority))
+            instance.observation.update_end_time(obs_end_time)
+
+        if 'exposures_start_at' in validated_data:
+            obs_end_time = validated_data['exposures_start_at']
+            obs_end_time += timedelta(seconds=instance.observation.request.get_remaining_duration(instance.configuration.priority, include_current=True))
             instance.observation.update_end_time(obs_end_time)
 
         return instance
