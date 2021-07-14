@@ -1,5 +1,5 @@
-from django.contrib.postgres.fields import ArrayField
 from django.contrib.auth.models import User
+from django.contrib.postgres.fields import ArrayField
 from django.utils.functional import cached_property
 from django.forms import model_to_dict
 from django.db import models
@@ -133,6 +133,7 @@ class Proposal(models.Model):
     non_science = models.BooleanField(default=False)
     direct_submission = models.BooleanField(default=False)
     users = models.ManyToManyField(User, through='Membership')
+    tags = ArrayField(models.CharField(max_length=255), default=list, blank=True, help_text='List of strings tagging this proposal')
 
     # Admin only notes
     notes = models.TextField(blank=True, default='', help_text='Add notes here. Not visible to users.')
