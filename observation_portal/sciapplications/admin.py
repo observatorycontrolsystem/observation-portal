@@ -9,6 +9,7 @@ from .models import (
     NoTimeAllocatedError, MultipleTimesAllocatedError
 )
 from observation_portal.proposals.models import Proposal
+from observation_portal.common.utils import get_queryset_field_values
 
 
 class InstrumentAdmin(admin.ModelAdmin):
@@ -39,6 +40,23 @@ class CoInvestigatorInline(admin.TabularInline):
     model = CoInvestigator
 
 
+class ScienceApplicationTagListFilter(admin.SimpleListFilter):
+    """Filter science applications given a tag"""
+    title = 'Tag'
+    parameter_name = 'tag'
+
+    def lookups(self, request, model_admin):
+        sciapp_tags = get_queryset_field_values(ScienceApplication.objects.all(), 'tags')
+        return ((tag, tag) for tag in sciapp_tags)
+
+    def queryset(self, request, queryset):
+        value = self.value()
+        if value:
+            return queryset.filter(tags__contains=[value])
+        else:
+            return queryset
+
+
 class ScienceApplicationAdmin(admin.ModelAdmin):
     inlines = [CoInvestigatorInline, TimeRequestAdminInline]
     list_display = (
@@ -47,9 +65,10 @@ class ScienceApplicationAdmin(admin.ModelAdmin):
         'status',
         'submitter',
         'tac_rank',
+        'tags',
         'preview_link',
     )
-    list_filter = ('call', 'status', 'call__proposal_type')
+    list_filter = (ScienceApplicationTagListFilter, 'call', 'status', 'call__proposal_type')
     actions = ['accept', 'reject', 'port']
     search_fields = ['title', 'abstract', 'submitter__first_name', 'submitter__last_name', 'submitter__username']
 

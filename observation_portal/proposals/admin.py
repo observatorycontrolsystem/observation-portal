@@ -2,7 +2,7 @@
 from django.contrib import admin
 
 from observation_portal.proposals.forms import TimeAllocationForm, TimeAllocationFormSet, CollaborationAllocationForm
-
+from observation_portal.common.utils import get_queryset_field_values
 from observation_portal.proposals.models import (
     Semester,
     ScienceCollaborationAllocation,
@@ -45,6 +45,23 @@ class TimeAllocationAdminInline(admin.TabularInline):
     extra = 0
 
 
+class ProposalTagListFilter(admin.SimpleListFilter):
+    """Filter proposals given a proposal tag"""
+    title = 'Tag'
+    parameter_name = 'tag'
+
+    def lookups(self, request, model_admin):
+        proposal_tags = get_queryset_field_values(Proposal.objects.all(), 'tags')
+        return ((tag, tag) for tag in proposal_tags)
+
+    def queryset(self, request, queryset):
+        value = self.value()
+        if value:
+            return queryset.filter(tags__contains=[value])
+        else:
+            return queryset
+
+
 class ProposalAdmin(admin.ModelAdmin):
     list_display = (
         'id',
@@ -55,10 +72,11 @@ class ProposalAdmin(admin.ModelAdmin):
         'public',
         'semesters',
         'pi',
+        'tags',
         'created',
         'modified'
     )
-    list_filter = ('active', 'sca', 'public')
+    list_filter = ('active', ProposalTagListFilter, 'sca', 'public')
     raw_id_fields = ('users',)
     inlines = [TimeAllocationAdminInline]
     search_fields = ['id', 'title', 'abstract']
