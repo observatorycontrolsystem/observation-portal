@@ -1181,7 +1181,6 @@ class TestUpdateConfigurationStatusApi(TestObservationApiBase):
         self._create_observation(observation)
         configuration_status = ConfigurationStatus.objects.first()
 
-        end_time = datetime(2016, 9, 5, 23, 35, 40).replace(tzinfo=timezone.utc)
         exposure_start = datetime(2016, 9, 5, 22, 45, 22).replace(tzinfo=timezone.utc)
         update_data = {"exposures_start_at": datetime.strftime(exposure_start, '%Y-%m-%dT%H:%M:%SZ')}
         self.client.patch(reverse('api:configurationstatus-detail', args=(configuration_status.id,)), update_data)
@@ -1214,8 +1213,6 @@ class TestUpdateConfigurationStatusApi(TestObservationApiBase):
         self._create_observation(observation)
         configuration_status = ConfigurationStatus.objects.first()
 
-        end_time = datetime(2016, 9, 5, 23, 35, 40).replace(tzinfo=timezone.utc)
-        start_time = datetime(2016, 9, 5, 22, 35, 39).replace(tzinfo=timezone.utc)
         exposure_start = datetime(2016, 9, 5, 22, 35, 45).replace(tzinfo=timezone.utc)
         update_data = {"exposures_start_at": datetime.strftime(exposure_start, '%Y-%m-%dT%H:%M:%SZ')}
         self.client.patch(reverse('api:configurationstatus-detail', args=(configuration_status.id,)), update_data)
@@ -1231,7 +1228,6 @@ class TestUpdateConfigurationStatusApi(TestObservationApiBase):
         self._create_observation(observation)
         configuration_status = ConfigurationStatus.objects.first()
 
-        start_time = datetime(2016, 9, 5, 22, 35, 39).replace(tzinfo=timezone.utc)
         end_time = datetime(2016, 9, 5, 23, 35, 40).replace(tzinfo=timezone.utc)
         exposure_start = datetime(2016, 9, 5, 22, 33, 0).replace(tzinfo=timezone.utc)
         update_data = {"exposures_start_at": datetime.strftime(exposure_start, '%Y-%m-%dT%H:%M:%SZ')}
