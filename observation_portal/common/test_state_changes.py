@@ -981,7 +981,7 @@ class TestAggregateRequestStates(TestCase):
         self.assertEqual(aggregate_state, 'WINDOW_EXPIRED')
 
 
-@patch('observation_portal.common.state_changes.modify_ipp_time_from_requests')
+@patch('observation_portal.common.state_changes.modify_ipp_time_from_request')
 class TestExpireRequests(TestCase):
     def setUp(self):
         self.request_group = dmixer.blend(RequestGroup, state='PENDING', observation_type=RequestGroup.NORMAL)

@@ -130,7 +130,8 @@ class InstrumentsInformationView(APIView):
                     'name': configdb.get_instrument_type_full_name(instrument_type),
                     'optical_elements': configdb.get_optical_elements(instrument_type),
                     'modes': configdb.get_modes_by_type(instrument_type),
-                    'default_acceptability_threshold': configdb.get_default_acceptability_threshold(instrument_type)
+                    'default_acceptability_threshold': configdb.get_default_acceptability_threshold(instrument_type),
+                    'configuration_types': configdb.get_configuration_types(instrument_type)
                 }
         return Response(info)
 

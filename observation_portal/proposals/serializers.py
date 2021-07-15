@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from django.utils.translation import ugettext as _
+from django.utils.module_loading import import_string
+from django.conf import settings
 
 from observation_portal.proposals.models import Proposal, TimeAllocation, Semester, ProposalInvite, Membership
 
@@ -11,7 +13,7 @@ class TimeAllocationSerializer(serializers.ModelSerializer):
 
 
 class ProposalSerializer(serializers.ModelSerializer):
-    timeallocation_set = TimeAllocationSerializer(many=True)
+    timeallocation_set = import_string(settings.SERIALIZERS['proposals']['TimeAllocation'])(many=True)
     pi = serializers.StringRelatedField()
 
     class Meta:

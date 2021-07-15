@@ -26,7 +26,7 @@ from observation_portal.requestgroups.target_helpers import TARGET_TYPE_HELPER_M
 from observation_portal.common.mixins import ExtraParamsFormatter
 from observation_portal.common.configdb import configdb, ConfigDB, ConfigDBException
 from observation_portal.requestgroups.duration_utils import (
-    get_request_duration, get_request_duration_sum, get_total_duration_dict,
+    get_total_request_duration, get_requestgroup_duration, get_total_duration_dict,
     get_instrument_configuration_duration, get_semester_in
 )
 from datetime import timedelta
@@ -227,19 +227,6 @@ class InstrumentConfigSerializer(ExtraParamsFormatter, serializers.ModelSerializ
         model = InstrumentConfig
         exclude = InstrumentConfig.SERIALIZER_EXCLUDE
 
-    def validate(self, data):
-        if 'bin_x' in data and not 'bin_y' in data:
-            data['bin_y'] = data['bin_x']
-        elif 'bin_y' in data and not 'bin_x' in data:
-            data['bin_x'] = data['bin_y']
-
-        if 'bin_x' in data and 'bin_y' in data and data['bin_x'] != data['bin_y']:
-            raise serializers.ValidationError(_(
-                'Currently only square binnings are supported. Please submit with bin_x == bin_y'
-            ))
-
-        return data
-
     def to_representation(self, instance):
         data = super().to_representation(instance)
         if not data['rois']:
@@ -368,18 +355,8 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
 
         available_optical_elements = configdb.get_optical_elements(instrument_type)
         for i, instrument_config in enumerate(data['instrument_configs']):
-            # Validate the readout mode and the binning. Readout modes and binning are tied
-            # together- If one is set, we can determine the other.
-            # TODO: Remove the binning checks when binnings are removed entirely
+            # Validate the named readout mode if set, or set the default readout mode if left blank
             readout_mode = instrument_config.get('mode', '')
-            if not readout_mode and 'bin_x' in instrument_config:
-                # A binning is set already - figure out what the readout mode should be from that
-                try:
-                    readout_mode = instrument_config['mode'] = configdb.get_readout_mode_with_binning(
-                        instrument_type, instrument_config['bin_x']
-                    )['code']
-                except ConfigDBException as cdbe:
-                    raise serializers.ValidationError(_(str(cdbe)))
             readout_validation_helper = ModeValidationHelper('readout', instrument_type, modes['readout'])
             instrument_config = readout_validation_helper.validate(instrument_config)
 
@@ -643,14 +620,14 @@ class RequestSerializer(serializers.ModelSerializer):
 
         # check that the requests window has enough rise_set visible time to accomodate the requests duration
         if data.get('windows'):
-            duration = get_request_duration(data)
+            duration = get_total_request_duration(data)
             rise_set_intervals_by_site = get_filtered_rise_set_intervals_by_site(data, is_staff=is_staff)
             largest_interval = get_largest_interval(rise_set_intervals_by_site)
             for configuration in data['configurations']:
                 if 'REPEAT' in configuration['type'].upper() and configuration.get('fill_window'):
                     max_configuration_duration = largest_interval.total_seconds() - duration + configuration.get('repeat_duration', 0) - 1
                     configuration['repeat_duration'] = max_configuration_duration
-                    duration = get_request_duration(data)
+                    duration = get_total_request_duration(data)
 
                 # delete the fill window attribute, it is only used for this validation
                 try:
@@ -792,7 +769,7 @@ class RequestGroupSerializer(serializers.ModelSerializer):
         # Check that the user has not exceeded the time limit on this membership
         membership = Membership.objects.get(user=user, proposal=data['proposal'])
         if membership.time_limit >= 0:
-            duration = sum(d for i, d in get_request_duration_sum(data).items())
+            duration = sum(d for i, d in get_requestgroup_duration(data).items())
             time_to_be_used = user.profile.time_used_in_proposal(data['proposal']) + duration
             if membership.time_limit < time_to_be_used:
                 raise serializers.ValidationError(
@@ -814,7 +791,7 @@ class RequestGroupSerializer(serializers.ModelSerializer):
             for tak, duration in total_duration_dict.items():
                 time_allocation = TimeAllocation.objects.get(
                     semester=tak.semester,
-                    instrument_type=tak.instrument_type,
+                    instrument_types__contains=[tak.instrument_type],
                     proposal=data['proposal'],
                 )
                 time_available = 0

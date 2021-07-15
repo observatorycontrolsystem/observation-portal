@@ -38,11 +38,8 @@ observation = {
                         "optical_elements": {
                             "filter": "air"
                         },
-                        "mode": "",
                         "exposure_time": 370.0,
                         "exposure_count": 1,
-                        "bin_x": 1,
-                        "bin_y": 1,
                         "rotator_mode": "",
                         "extra_params": {}
                     }
@@ -281,6 +278,7 @@ class TestPostScheduleApi(SetTimeMixin, APITestCase):
         observation['request']['configurations'][0]['guiding_config']['mode'] = 'ON'
         observation['request']['configurations'][0]['acquisition_config']['mode'] = 'WCS'
         observation['request']['configurations'][0]['type'] = 'NRES_SPECTRUM'
+        observation['request']['configurations'][0]['instrument_configs'][0]['mode'] = '1m0_nres_1'
         del observation['request']['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
 
         response = self.client.post(reverse('api:schedule-list'), data=observation)
@@ -292,6 +290,7 @@ class TestPostScheduleApi(SetTimeMixin, APITestCase):
         observation['request']['configurations'][0]['guiding_config']['mode'] = 'ON'
         observation['request']['configurations'][0]['acquisition_config']['mode'] = 'WCS'
         observation['request']['configurations'][0]['type'] = 'NRES_SPECTRUM'
+        observation['request']['configurations'][0]['instrument_configs'][0]['mode'] = '1m0_nres_1'
         del observation['request']['configurations'][0]['instrument_configs'][0]['optical_elements']['filter']
 
         response = self.client.post(reverse('api:schedule-list'), data=observation)
@@ -310,6 +309,7 @@ class TestPostScheduleApi(SetTimeMixin, APITestCase):
             obs_json['request']['configurations'][0]['instrument_name'],
             obs_json['request']['configurations'][0]['guide_camera_name']
         )
+        self.assertIs(obs_json['request']['configurations'][0]['extra_params']['self_guide'], observation['request']['configurations'][0]['extra_params']['self_guide'])
 
     def test_post_observation_hour_angle_missing_required_fields(self):
         bad_observation = copy.deepcopy(self.observation)
@@ -384,6 +384,7 @@ class TestPostScheduleMultiConfigApi(SetTimeMixin, APITestCase):
         self.observation['request']['configurations'][2]['guiding_config']['mode'] = 'ON'
         self.observation['request']['configurations'][2]['acquisition_config']['mode'] = 'WCS'
         self.observation['request']['configurations'][2]['type'] = 'NRES_SPECTRUM'
+        self.observation['request']['configurations'][2]['instrument_configs'][0]['mode'] = '1m0_nres_1'
         del self.observation['request']['configurations'][2]['instrument_configs'][0]['optical_elements']['filter']
 
     def test_post_observation_multiple_configurations_accepted(self):
@@ -1143,6 +1144,20 @@ class TestUpdateConfigurationStatusApi(TestObservationApiBase):
         observation = Observation.objects.first()
         self.assertEqual(observation.end, new_end)
 
+    def test_update_configuration_status_exposure_start_time_succeeds(self):
+        observation = self._generate_observation_data(
+            self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
+        )
+        self._create_observation(observation)
+        configuration_status = ConfigurationStatus.objects.first()
+        end_time = datetime(2016, 9, 5, 23, 35, 40).replace(tzinfo=timezone.utc)
+        exposure_start = datetime(2016, 9, 5, 22, 45, 22).replace(tzinfo=timezone.utc)
+        update_data = {"exposures_start_at": datetime.strftime(exposure_start, '%Y-%m-%dT%H:%M:%SZ')}
+        self.client.patch(reverse('api:configurationstatus-detail', args=(configuration_status.id,)), update_data)
+        observation = Observation.objects.first()
+        self.assertGreater(observation.end, exposure_start)
+        self.assertGreater(end_time, observation.end)
+
     def test_lengthen_first_configuration_status_end_time_with_multiple_configs(self):
         create_simple_configuration(self.requestgroup.requests.first(), priority=2)
         create_simple_configuration(self.requestgroup.requests.first(), priority=3)
@@ -1157,6 +1172,22 @@ class TestUpdateConfigurationStatusApi(TestObservationApiBase):
         observation = Observation.objects.first()
         new_obs_end = new_end + timedelta(seconds=self.requestgroup.requests.first().get_remaining_duration(
             configuration_status.configuration.priority))
+        self.assertEqual(observation.end, new_obs_end)
+
+    def test_lengthen_first_configuration_status_exposure_start_with_multiple_configs(self):
+        create_simple_configuration(self.requestgroup.requests.first(), priority=2)
+        create_simple_configuration(self.requestgroup.requests.first(), priority=3)
+        configuration_ids = [config.id for config in self.requestgroup.requests.first().configurations.all()]
+        observation = self._generate_observation_data(self.requestgroup.requests.first().id, configuration_ids)
+        self._create_observation(observation)
+        configuration_status = ConfigurationStatus.objects.first()
+
+        exposure_start = datetime(2016, 9, 5, 22, 45, 22).replace(tzinfo=timezone.utc)
+        update_data = {"exposures_start_at": datetime.strftime(exposure_start, '%Y-%m-%dT%H:%M:%SZ')}
+        self.client.patch(reverse('api:configurationstatus-detail', args=(configuration_status.id,)), update_data)
+        observation = Observation.objects.first()
+        new_obs_end = exposure_start + timedelta(seconds=self.requestgroup.requests.first().get_remaining_duration(
+            configuration_status.configuration.priority, include_current=True))
         self.assertEqual(observation.end, new_obs_end)
 
     def test_shorten_first_configuration_status_end_time_with_multiple_configs(self):
@@ -1174,6 +1205,38 @@ class TestUpdateConfigurationStatusApi(TestObservationApiBase):
         new_obs_end = new_end + timedelta(seconds=self.requestgroup.requests.first().get_remaining_duration(
             configuration_status.configuration.priority))
         self.assertEqual(observation.end, new_obs_end)
+
+    def test_shorten_first_configuration_status_exposure_start_with_multiple_configs(self):
+        create_simple_configuration(self.requestgroup.requests.first(), priority=2)
+        create_simple_configuration(self.requestgroup.requests.first(), priority=3)
+        configuration_ids = [config.id for config in self.requestgroup.requests.first().configurations.all()]
+        observation = self._generate_observation_data(self.requestgroup.requests.first().id, configuration_ids)
+        self._create_observation(observation)
+        configuration_status = ConfigurationStatus.objects.first()
+
+        exposure_start = datetime(2016, 9, 5, 22, 35, 45).replace(tzinfo=timezone.utc)
+        update_data = {"exposures_start_at": datetime.strftime(exposure_start, '%Y-%m-%dT%H:%M:%SZ')}
+        self.client.patch(reverse('api:configurationstatus-detail', args=(configuration_status.id,)), update_data)
+        observation = Observation.objects.first()
+        new_obs_end = exposure_start + timedelta(seconds=self.requestgroup.requests.first().get_remaining_duration(
+            configuration_status.configuration.priority, include_current=True))
+        self.assertEqual(observation.end, new_obs_end)
+
+    def test_configuration_status_exposure_start_cant_be_before_observation_start(self):
+        observation = self._generate_observation_data(self.requestgroup.requests.first().id,
+            [self.requestgroup.requests.first().configurations.first().id]
+        )
+        self._create_observation(observation)
+        configuration_status = ConfigurationStatus.objects.first()
+
+        end_time = datetime(2016, 9, 5, 23, 35, 40).replace(tzinfo=timezone.utc)
+        exposure_start = datetime(2016, 9, 5, 22, 33, 0).replace(tzinfo=timezone.utc)
+        update_data = {"exposures_start_at": datetime.strftime(exposure_start, '%Y-%m-%dT%H:%M:%SZ')}
+        response = self.client.patch(reverse('api:configurationstatus-detail', args=(configuration_status.id,)), update_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Updated exposure start time must be after the observation start time', str(response.content))
+        observation = Observation.objects.first()
+        self.assertEqual(observation.end, end_time)
 
     def test_update_last_configuration_status_end_time_is_same_as_obs_end(self):
         create_simple_configuration(self.requestgroup.requests.first(), priority=2)
@@ -1470,7 +1533,7 @@ class TestLastScheduled(TestObservationApiBase):
 class TestTimeAccounting(TestObservationApiBase):
     def setUp(self):
         super().setUp()
-        self.time_allocation = mixer.blend(TimeAllocation, instrument_type='1M0-SCICAM-SBIG', semester=self.semester,
+        self.time_allocation = mixer.blend(TimeAllocation, instrument_types=['1M0-SCICAM-SBIG'], semester=self.semester,
                                            proposal=self.proposal, std_allocation=100, rr_allocation=100,
                                            tc_allocation=100, ipp_time_available=100)
 
@@ -1595,7 +1658,7 @@ class TestTimeAccounting(TestObservationApiBase):
 class TestTimeAccountingCommand(TestObservationApiBase):
     def setUp(self):
         super().setUp()
-        self.time_allocation = mixer.blend(TimeAllocation, instrument_type='1M0-SCICAM-SBIG', semester=self.semester,
+        self.time_allocation = mixer.blend(TimeAllocation, instrument_types=['1M0-SCICAM-SBIG'], semester=self.semester,
                                            proposal=self.proposal, std_allocation=100, rr_allocation=100,
                                            tc_allocation=100, ipp_time_available=100)
 

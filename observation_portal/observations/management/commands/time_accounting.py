@@ -85,7 +85,7 @@ class Command(BaseCommand):
                         attempted_time[RequestGroup.TIME_CRITICAL]), file=self.stdout
                 )
 
-                time_allocation = TimeAllocation.objects.get(proposal=proposal, instrument_type=instrument_type,
+                time_allocation = TimeAllocation.objects.get(proposal=proposal, instrument_types__contains=[instrument_type],
                                                              semester=semester)
                 if not math.isclose(time_allocation.std_time_used, attempted_time[RequestGroup.NORMAL], abs_tol=0.0001):
                     print("{} is different from existing NORMAL time {}".format(attempted_time[RequestGroup.NORMAL], time_allocation.std_time_used), file=self.stderr)

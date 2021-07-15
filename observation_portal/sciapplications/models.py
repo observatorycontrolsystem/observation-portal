@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.contrib.auth.models import User
 from django.urls import reverse
 from django.utils.translation import ugettext as _
+from django.contrib.postgres.fields import ArrayField
 from django.template.loader import render_to_string
 from django.utils.functional import cached_property
 from django.conf import settings
@@ -120,6 +121,7 @@ class ScienceApplication(models.Model):
     tac_rank = models.PositiveIntegerField(default=0)
     tac_priority = models.PositiveIntegerField(default=0)
     pdf = models.FileField(upload_to=pdf_upload_path, blank=True, null=True)
+    tags = ArrayField(models.CharField(max_length=255), default=list, blank=True, help_text='List of strings tagging this application')
 
     # Admin only Notes
     notes = models.TextField(blank=True, default='', help_text='Add notes here. Not visible to users.')
@@ -159,7 +161,12 @@ class ScienceApplication(models.Model):
     def time_requested_by_telescope_name(self):
         time_by_telescope_name = defaultdict(int)
         for timerequest in self.timerequest_set.all():
-            time_by_telescope_name[timerequest.instrument.telescope_name] += timerequest.total_requested_time
+            telescope_names = set()
+            for instrument_type in timerequest.instrument_types.all():
+                # Use a set to make sure we only add once per telescope class here
+                telescope_names.add(instrument_type.telescope_name)
+            for telescope_name in telescope_names:
+                time_by_telescope_name[telescope_name] += timerequest.total_requested_time
         return time_by_telescope_name
 
     def get_absolute_url(self):
@@ -173,7 +180,9 @@ class ScienceApplication(models.Model):
         if not approved_time_requests.count():
             raise NoTimeAllocatedError
 
-        unique_time_requests = set([f'{tr.semester.id}-{tr.instrument.code}' for tr in approved_time_requests])
+        unique_time_requests = set()
+        for tr in approved_time_requests:
+            unique_time_requests.add(f'{tr.semester.id}-{",".join([it.code for it in tr.instrument_types.all()])}')
         if approved_time_requests.count() != len(unique_time_requests):
             raise MultipleTimesAllocatedError
 
@@ -184,7 +193,8 @@ class ScienceApplication(models.Model):
             tac_priority=self.tac_priority,
             tac_rank=self.tac_rank,
             active=False,
-            sca=self.sca
+            sca=self.sca,
+            tags=self.tags
         )
 
         for tr in self.timerequest_set.filter(approved=True):
@@ -192,7 +202,7 @@ class ScienceApplication(models.Model):
                 std_allocation=tr.std_time,
                 rr_allocation=tr.rr_time,
                 tc_allocation=tr.tc_time,
-                instrument_type=tr.instrument.code,
+                instrument_types=[it.code for it in tr.instrument_types.all()],
                 semester=tr.semester,
                 proposal=proposal
             )
@@ -238,21 +248,21 @@ class ScienceApplication(models.Model):
 class TimeRequest(models.Model):
     science_application = models.ForeignKey(ScienceApplication, on_delete=models.CASCADE)
     semester = models.ForeignKey(Semester, on_delete=models.CASCADE)
-    instrument = models.ForeignKey(Instrument, on_delete=models.CASCADE)
+    instrument_types = models.ManyToManyField(Instrument, related_name='timerequests')
     std_time = models.PositiveIntegerField(default=0)
     rr_time = models.PositiveIntegerField(default=0)
     tc_time = models.PositiveIntegerField(default=0)
     approved = models.BooleanField(default=False)
 
     class Meta:
-        ordering = ('semester', 'instrument__display')
+        ordering = ('semester',)
 
     @property
     def total_requested_time(self):
         return sum([self.std_time, self.rr_time, self.tc_time])
 
     def __str__(self):
-        return '{} {} TimeRequest'.format(self.science_application, self.instrument)
+        return '{} {} TimeRequest'.format(self.science_application, ','.join([it.code for it in self.instrument_types.all()]))
 
 
 class CoInvestigator(models.Model):

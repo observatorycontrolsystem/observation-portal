@@ -1,6 +1,5 @@
 import logging
-from collections import defaultdict
-from math import floor, isclose
+from math import floor, isclose, ceil
 
 from django.conf import settings
 from django.core.cache import cache
@@ -10,13 +9,14 @@ from django.utils import timezone
 from django.utils.translation import ugettext as _
 
 from observation_portal.observations.models import Observation
-from observation_portal.proposals.models import (TimeAllocation,
-                                                 TimeAllocationKey)
+from observation_portal.proposals.models import TimeAllocation
 from observation_portal.proposals.notifications import \
     requestgroup_notifications, request_notifications
 from observation_portal.requestgroups.models import Request, RequestGroup, Location
 from observation_portal.requestgroups.request_utils import \
     exposure_completion_percentage
+from observation_portal.requestgroups.duration_utils import \
+    get_requestgroup_duration, get_request_duration_by_instrument_type
 
 logger = logging.getLogger(__name__)
 
@@ -88,11 +88,11 @@ def on_request_state_change(old_request_state, new_request):
         if new_request.state == 'COMPLETED':
             ipp_value = new_request.request_group.ipp_value
             if ipp_value < 1.0:
-                modify_ipp_time_from_requests(ipp_value, [new_request], 'credit')
+                modify_ipp_time_from_request(ipp_value, new_request, 'credit')
             else:
                 if old_request_state == 'WINDOW_EXPIRED':
                     try:
-                        modify_ipp_time_from_requests(ipp_value, [new_request], 'debit')
+                        modify_ipp_time_from_request(ipp_value, new_request, 'debit')
                     except TimeAllocationError as tae:
                         logger.warning(_(
                             f'Request {new_request} switched from WINDOW_EXPIRED to COMPLETED but did not have enough '
@@ -101,7 +101,7 @@ def on_request_state_change(old_request_state, new_request):
         if new_request.state in ['CANCELED', 'WINDOW_EXPIRED', 'FAILURE_LIMIT_REACHED']:
             ipp_value = new_request.request_group.ipp_value
             if ipp_value >= 1.0:
-                modify_ipp_time_from_requests(ipp_value, [new_request], 'credit')
+                modify_ipp_time_from_request(ipp_value, new_request, 'credit')
 
 
 def on_requestgroup_state_change(old_requestgroup_state, new_requestgroup):
@@ -163,7 +163,7 @@ def validate_ipp(request_group_dict, total_duration_dict):
     time_allocations_dict = {
         tak: TimeAllocation.objects.get(
             semester__id=tak.semester,
-            instrument_type=tak.instrument_type,
+            instrument_types__contains=[tak.instrument_type],
             proposal__id=request_group_dict['proposal']
         ).ipp_time_available for tak in total_duration_dict.keys()
     }
@@ -186,18 +186,16 @@ def debit_ipp_time(request_group):
     if ipp_value <= 0:
         return
     try:
-        total_duration_dict = defaultdict(int)
-        for request in request_group.requests.all():
-            tak = request.time_allocation_key
-            total_duration_dict[tak] += request.duration
-
-        time_allocations = request_group.timeallocations
+        requestgroup_duration_by_tak = get_requestgroup_duration(request_group.as_dict())
         time_allocations_dict = {
-            TimeAllocationKey(ta.semester.id, ta.instrument_type): ta for ta in time_allocations.all()
+            tak: request_group.proposal.timeallocation_set.get(
+                semester__id=tak.semester,
+                instrument_types__contains=[tak.instrument_type]
+            ) for tak in requestgroup_duration_by_tak.keys()
         }
 
-        for tak, duration in total_duration_dict.items():
-            duration_hours = duration / 3600
+        for tak, duration in requestgroup_duration_by_tak.items():
+            duration_hours = ceil(duration) / 3600
             ipp_difference = ipp_value * duration_hours
             with transaction.atomic():
                 TimeAllocation.objects.select_for_update().filter(id=time_allocations_dict[tak].id).update(
@@ -209,35 +207,39 @@ def debit_ipp_time(request_group):
         ))
 
 
-def modify_ipp_time_from_requests(ipp_val, requests_list, modification='debit'):
+def modify_ipp_time_from_request(ipp_val, request, modification='debit'):
     ipp_value = ipp_val - 1
     if ipp_value == 0:
         return
     try:
-        for request in requests_list:
-            time_allocations = request.timeallocations
-            for time_allocation in time_allocations:
-                duration_hours = request.duration / 3600.0
-                modified_time = 0
-                if modification == 'debit':
-                    modified_time -= (duration_hours * ipp_value)
-                elif modification == 'credit':
-                    modified_time += abs(ipp_value) * duration_hours
-                if (modified_time + time_allocation.ipp_time_available) < 0:
-                    logger.warning(_(
-                        f'ipp debiting for request {request.id} would set ipp_time_available < 0. Time available after '
-                        f'debiting will be capped at 0'
-                    ))
-                    modified_time = -time_allocation.ipp_time_available
-                elif (modified_time + time_allocation.ipp_time_available) > time_allocation.ipp_limit:
-                    logger.warning(_(
-                        f'ipp crediting for request {request.id} would set ipp_time_available > ipp_limit. Time '
-                        f'available after crediting will be capped at ipp_limit'
-                    ))
-                    modified_time = time_allocation.ipp_limit - time_allocation.ipp_time_available
-                with transaction.atomic():
-                    TimeAllocation.objects.select_for_update().filter(
-                        id=time_allocation.id).update(ipp_time_available=F('ipp_time_available') + modified_time)
+        duration_by_instrument_type = get_request_duration_by_instrument_type(request.as_dict())
+        for instrument_type, duration in duration_by_instrument_type.items():
+            time_allocation = request.request_group.proposal.timeallocation_set.get(
+                semester__start__lte=request.min_window_time,
+                semester__end__gte=request.max_window_time,
+                instrument_types__contains=[instrument_type]
+            )
+            duration_hours = ceil(duration) / 3600.0
+            modified_time = 0
+            if modification == 'debit':
+                modified_time -= (duration_hours * ipp_value)
+            elif modification == 'credit':
+                modified_time += abs(ipp_value) * duration_hours
+            if (modified_time + time_allocation.ipp_time_available) < 0:
+                logger.warning(_(
+                    f'ipp debiting for request {request.id} would set ipp_time_available < 0. Time available after '
+                    f'debiting will be capped at 0'
+                ))
+                modified_time = -time_allocation.ipp_time_available
+            elif (modified_time + time_allocation.ipp_time_available) > time_allocation.ipp_limit:
+                logger.warning(_(
+                    f'ipp crediting for request {request.id} would set ipp_time_available > ipp_limit. Time '
+                    f'available after crediting will be capped at ipp_limit'
+                ))
+                modified_time = time_allocation.ipp_limit - time_allocation.ipp_time_available
+            with transaction.atomic():
+                TimeAllocation.objects.select_for_update().filter(
+                    id=time_allocation.id).update(ipp_time_available=F('ipp_time_available') + modified_time)
     except Exception as e:
         logger.warning(_(f'Problem {modification}ing ipp time for request {request.id}: {repr(e)}'))
 

@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.contrib.postgres.fields import ArrayField
 from django.utils.functional import cached_property
 from django.forms import model_to_dict
 from django.db import models
@@ -7,6 +8,7 @@ from django.utils.translation import ugettext as _
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.html import strip_tags
+from django.utils.module_loading import import_string
 from django.conf import settings
 from collections import namedtuple
 import logging
@@ -15,6 +17,46 @@ from observation_portal.accounts.tasks import send_mail
 from observation_portal.common.configdb import configdb
 
 logger = logging.getLogger(__name__)
+
+
+def proposal_as_dict(instance):
+    proposal = model_to_dict(instance, exclude=['notes', 'users'])
+    proposal['sca'] = instance.sca.id
+    proposal['pis'] = [
+        {
+            'first_name': mem.user.first_name,
+            'last_name': mem.user.last_name,
+            'username': mem.user.username,
+            'email': mem.user.email,
+            'institution': mem.user.profile.institution
+        } for mem in instance.membership_set.all() if mem.role == Membership.PI
+    ]
+    proposal['requestgroup_count'] = instance.requestgroup_set.count()
+    proposal['coi_count'] = instance.membership_set.filter(role=Membership.CI).count()
+    proposal['timeallocation_set'] = [ta.as_dict() for ta in instance.timeallocation_set.all()]
+    return proposal
+
+
+def timeallocation_as_dict(instance, exclude=None):
+    if exclude is None:
+        exclude = []
+    time_allocation = model_to_dict(instance, exclude=exclude)
+    return time_allocation
+
+
+def membership_as_dict(instance):
+    return {
+        'username': instance.user.username,
+        'first_name': instance.user.first_name,
+        'last_name': instance.user.last_name,
+        'email': instance.user.email,
+        'role': instance.role,
+        'proposal': instance.proposal.id,
+        'time_limit': instance.time_limit,
+        'time_used_by_user': instance.user.profile.time_used_in_proposal(instance.proposal),
+        'simple_interface': instance.user.profile.simple_interface,
+        'id': instance.id
+    }
 
 
 class Semester(models.Model):
@@ -91,6 +133,7 @@ class Proposal(models.Model):
     non_science = models.BooleanField(default=False)
     direct_submission = models.BooleanField(default=False)
     users = models.ManyToManyField(User, through='Membership')
+    tags = ArrayField(models.CharField(max_length=255), default=list, blank=True, help_text='List of strings tagging this proposal')
 
     # Admin only notes
     notes = models.TextField(blank=True, default='', help_text='Add notes here. Not visible to users.')
@@ -121,13 +164,11 @@ class Proposal(models.Model):
     def allocation(self, semester):
         allocs = {}
         for ta in self.timeallocation_set.filter(semester=semester):
-            allocs[ta.instrument_type.replace('-', '')] = {
+            instrument_types = ','.join(ta.instrument_types)
+            allocs[instrument_types] = {
                 'std': ta.std_allocation,
-                'std_used': ta.std_time_used,
                 'rr': ta.rr_allocation,
-                'rr_used': ta.rr_time_used,
                 'tc': ta.tc_allocation,
-                'tc_used': ta.tc_time_used
             }
         return allocs
 
@@ -176,21 +217,7 @@ class Proposal(models.Model):
         return self.id
 
     def as_dict(self):
-        proposal = model_to_dict(self, exclude=['notes', 'users'])
-        proposal['sca'] = self.sca.id
-        proposal['pis'] = [
-            {
-                'first_name': mem.user.first_name,
-                'last_name': mem.user.last_name,
-                'username': mem.user.username,
-                'email': mem.user.email,
-                'institution': mem.user.profile.institution
-            } for mem in self.membership_set.all() if mem.role == Membership.PI
-        ]
-        proposal['requestgroup_count'] = self.requestgroup_set.count()
-        proposal['coi_count'] = self.membership_set.filter(role=Membership.CI).count()
-        proposal['timeallocation_set'] = [ta.as_dict() for ta in self.timeallocation_set.all()]
-        return proposal
+        return import_string(settings.AS_DICT['proposals']['Proposal'])(self)
 
 
 TimeAllocationKey = namedtuple('TimeAllocationKey', ['semester', 'instrument_type'])
@@ -207,14 +234,16 @@ class TimeAllocation(models.Model):
     tc_time_used = models.FloatField(default=0)
     semester = models.ForeignKey(Semester, on_delete=models.CASCADE)
     proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE)
-    instrument_type = models.CharField(max_length=200)
+    instrument_types = ArrayField(base_field=models.CharField(max_length=200), default=list,
+        help_text='One or more instrument_types to share this time allocation'
+    )
 
     class Meta:
         ordering = ('-semester__id',)
         constraints = [
             models.UniqueConstraint(
-                fields=['semester', 'proposal', 'instrument_type'],
-                name='unique_proposal_timeallocation'
+                fields=['semester', 'proposal', 'instrument_types'],
+                name='unique_proposal_semester_instrument_type_ta'
             )
         ]
 
@@ -222,17 +251,25 @@ class TimeAllocation(models.Model):
         return 'Timeallocation for {0}-{1}'.format(self.proposal, self.semester)
 
     def as_dict(self, exclude=None):
-        if exclude is None:
-            exclude = []
-        time_allocation = model_to_dict(self, exclude=exclude)
-        return time_allocation
+        return import_string(settings.AS_DICT['proposals']['TimeAllocation'])(self, exclude=exclude)
+
+    def save(self, *args, **kwargs):
+        tas_count = TimeAllocation.objects.filter(proposal=self.proposal, semester=self.semester,
+                                                  instrument_types__overlap=self.instrument_types).exclude(
+                                                      id=self.id).count()
+
+        if tas_count > 0:
+            # Don't save the time allocation in this case, because it is not a unique combination
+            # of proposal, semester, and instrument_type
+            return
+        return super().save(*args, **kwargs)
 
 
 class Membership(models.Model):
     PI = 'PI'
     CI = 'CI'
     ROLE_CHOICES = (
-        (PI, 'Pricipal Investigator'),
+        (PI, 'Principal Investigator'),
         (CI, 'Co-Investigator')
     )
 
@@ -265,18 +302,7 @@ class Membership(models.Model):
         return self.time_limit / 3600
 
     def as_dict(self):
-        return {
-            'username': self.user.username,
-            'first_name': self.user.first_name,
-            'last_name': self.user.last_name,
-            'email': self.user.email,
-            'role': self.role,
-            'proposal': self.proposal.id,
-            'time_limit': self.time_limit,
-            'time_used_by_user': self.user.profile.time_used_in_proposal(self.proposal),
-            'simple_interface': self.user.profile.simple_interface,
-            'id': self.id
-        }
+        return import_string(settings.AS_DICT['proposals']['Membership'])(self)
 
 
 class ProposalInvite(models.Model):

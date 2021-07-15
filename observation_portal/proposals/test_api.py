@@ -13,7 +13,7 @@ from observation_portal.accounts.test_utils import blend_user
 class TestProposalApiList(APITestCase):
     def setUp(self):
         self.user = blend_user()
-        self.proposals = mixer.cycle(3).blend(Proposal)
+        self.proposals = mixer.cycle(3).blend(Proposal, tags=(t for t in [[], ['planets'], ['student', 'supernovae']]))
         mixer.cycle(3).blend(Membership, user=self.user, proposal=(p for p in self.proposals))
 
     def test_no_auth(self):
@@ -48,6 +48,52 @@ class TestProposalApiList(APITestCase):
         response = self.client.get(reverse('api:proposals-list'))
         for p in self.proposals:
             self.assertContains(response, p.id)
+
+    def test_filter_for_tags(self):
+        self.client.force_login(self.user)
+        # Filter for proposals with the 'planets' tag
+        response = self.client.get(reverse('api:proposals-list') + '?tags=planets')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['count'], 1)
+        self.assertEqual(response.json()['results'][0]['tags'], ['planets'])
+        # Filter for proposals with either the 'planets' tag or the 'student' tag
+        response = self.client.get(reverse('api:proposals-list') + '?tags=planets,student')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['count'], 2)
+        response_tags = []
+        for result in response.json()['results']:
+            response_tags.extend(result['tags'])
+        self.assertTrue('planets' in response_tags)
+        self.assertTrue('student' in response_tags)
+        # Filter for two tags but where both come from a single proposal
+        response = self.client.get(reverse('api:proposals-list') + '?tags=supernovae,student')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['count'], 1)
+        self.assertTrue('supernovae' in response.json()['results'][0]['tags'])
+        self.assertTrue('student' in response.json()['results'][0]['tags'])
+        # Get all tags
+        response = self.client.get(reverse('api:proposals-list'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['count'], 3)
+
+    def test_normal_user_sees_only_their_tags(self):
+        mixer.blend(Proposal, tags=['secret'])
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('api:proposals-tags'))
+        expected_tags = ['student', 'planets', 'supernovae']
+        self.assertEqual(len(response.json()), len(expected_tags))
+        for expected_tag in expected_tags:
+            self.assertTrue(expected_tag in response.json())
+
+    def test_staff_user_with_staff_view_sees_all_tags(self):
+        mixer.blend(Proposal, tags=['secret'])
+        admin_user = blend_user(user_params={'is_staff': True}, profile_params={'staff_view': True})
+        self.client.force_login(admin_user)
+        response = self.client.get(reverse('api:proposals-tags'))
+        expected_tags = ['student', 'planets', 'supernovae', 'secret']
+        self.assertEqual(len(response.json()), len(expected_tags))
+        for expected_tag in expected_tags:
+            self.assertTrue(expected_tag in response.json())
 
 
 class TestProposalApiDetail(APITestCase):
@@ -155,7 +201,7 @@ class TestSemesterApi(APITestCase):
                                               end=datetime(2016, 2, 1, tzinfo=timezone.utc))
         self.proposal = mixer.blend(Proposal, active=True, non_science=False)
         mixer.blend(Membership, proposal=self.proposal, user=blend_user(), role=Membership.PI)
-        mixer.blend(TimeAllocation, semester=self.semesters[0], proposal=self.proposal)
+        mixer.blend(TimeAllocation, semester=self.semesters[0], proposal=self.proposal, instrument_types=['1M0-SCICAM-SBIG'])
 
     def test_semester_list(self):
         response = self.client.get(reverse('api:semesters-list'))

@@ -62,8 +62,8 @@ class UserSerializer(serializers.ModelSerializer):
         active_proposals = [proposal for proposal in obj.proposal_set.all() if proposal.active]
         for proposal in active_proposals:
             for timeallocation in proposal.timeallocation_set.all():
-                if timeallocation.instrument_type:
-                    instrument_types.add(timeallocation.instrument_type)
+                for instrument_type in timeallocation.instrument_types:
+                    instrument_types.add(instrument_type)
         return list(instrument_types)
 
     def get_tokens(self, obj):

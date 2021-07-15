@@ -10,6 +10,7 @@ from django.conf import settings
 
 from observation_portal.accounts.permissions import IsPrincipleInvestigator
 from observation_portal.common.mixins import ListAsDictMixin, DetailAsDictMixin
+from observation_portal.common.utils import get_queryset_field_values
 from observation_portal.proposals.filters import SemesterFilter, ProposalFilter, MembershipFilter, ProposalInviteFilter
 from observation_portal.proposals.models import Proposal, Semester, ProposalNotification, Membership, ProposalInvite
 
@@ -68,6 +69,11 @@ class ProposalViewSet(DetailAsDictMixin, ListAsDictMixin, viewsets.ReadOnlyModel
             return Response({'message': f'All CI time limits set to {time_limit_hours} hours'})
         else:
             return Response({'errors': serializer.errors}, status=400)
+
+    @action(detail=False, methods=['get'])
+    def tags(self, request, pk=None):
+        proposal_tags = get_queryset_field_values(self.get_queryset(), 'tags')
+        return Response(list(proposal_tags))
 
 
 class SemesterViewSet(viewsets.ReadOnlyModelViewSet):

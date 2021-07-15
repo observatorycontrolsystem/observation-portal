@@ -1,4 +1,4 @@
-from observation_portal.requestgroups.duration_utils import get_request_duration
+from observation_portal.requestgroups.duration_utils import get_total_request_duration
 from observation_portal.common.rise_set_utils import get_filtered_rise_set_intervals_by_site, get_largest_interval
 
 from django.utils import timezone
@@ -17,7 +17,7 @@ def expand_cadence_request(request_dict, is_staff=False):
     # now expand the request into a list of requests with the proper windows from the cadence block
     cadence_requests = []
     half_jitter = timedelta(hours=cadence['jitter'] / 2.0)
-    request_duration = get_request_duration(request_dict)
+    request_duration = get_total_request_duration(request_dict)
     request_window_start = cadence['start']
 
     while request_window_start < cadence['end']:

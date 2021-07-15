@@ -28,7 +28,7 @@ class BaseSetupRequest(SetTimeMixin, TestCase):
         self.time_allocation_1m0 = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=semester, std_allocation=100.0, std_time_used=0.0,
             rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0, ipp_time_available=5.0, tc_time_available=10.0,
-            tc_time_used=0.0
+            tc_time_used=0.0, instrument_types=['1M0-SCICAM-SBIG']
         )
         self.rg_single = mixer.blend(RequestGroup, proposal=self.proposal, operator='SINGLE',
                                      observation_type=RequestGroup.NORMAL)
@@ -38,7 +38,7 @@ class BaseSetupRequest(SetTimeMixin, TestCase):
         )
         self.instrument_config = mixer.blend(
             InstrumentConfig, configuration=self.configuration, exposure_time=600, exposure_count=2,
-            optical_elements={'filter': 'blah'}, bin_x=2, bin_y=2
+            optical_elements={'filter': 'blah'}, mode='1m0_sbig_2', extra_params={'bin_x': 2, 'bin_y': 2}
         )
         self.acquisition_config = mixer.blend(AcquisitionConfig, configuration=self.configuration)
         self.guiding_config = mixer.blend(GuidingConfig, configuration=self.configuration)
@@ -561,7 +561,7 @@ class TestRequestTelescopeStates(TelescopeStatesFakeInput):
                                end=datetime(2016, 12, 31, tzinfo=timezone.utc)
                                )
         self.time_allocation_1m0 = mixer.blend(TimeAllocation, proposal=self.proposal, semester=semester,
-                                               telescope_class='1m0', std_allocation=100.0, std_time_used=0.0,
+                                               instrument_types=['1M0-SCICAM-SBIG'], std_allocation=100.0, std_time_used=0.0,
                                                rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
                                                ipp_time_available=5.0, tc_time_available=10.0, tc_time_used=0.0)
 
@@ -575,7 +575,7 @@ class TestRequestTelescopeStates(TelescopeStatesFakeInput):
         )
         self.instrument_config = mixer.blend(
             InstrumentConfig, configuration=self.configuration, exposure_time=600, exposure_count=2,
-            optical_elements={'filter': 'blah'}, bin_x=2, bin_y=2
+            optical_elements={'filter': 'blah'}, mode='1m0_sbig_2', extra_params={'bin_x': 2, 'bin_y': 2}
         )
         self.acquisition_config = mixer.blend(AcquisitionConfig, configuration=self.configuration)
         self.guiding_config = mixer.blend(GuidingConfig, configuration=self.configuration)
