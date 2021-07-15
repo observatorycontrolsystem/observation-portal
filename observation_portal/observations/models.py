@@ -110,7 +110,9 @@ class Observation(models.Model):
     def cancel(observations):
         now = timezone.now()
 
-        _, deleted_observations = observations.filter(start__gte=now + timedelta(hours=72)).delete()
+        observation_ids_to_delete = [observation.id for observation in observations if
+                                     observation.start >= now + timedelta(hours=72)]
+        _, deleted_observations = Observation.objects.filter(id__in=observation_ids_to_delete).delete()
 
         observation_ids_to_cancel = [observation.id for observation in observations if
                                      now < observation.start < now + timedelta(hours=72)]

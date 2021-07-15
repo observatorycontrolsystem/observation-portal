@@ -18,7 +18,7 @@ from observation_portal.requestgroups.contention import Pressure
 from observation_portal.accounts.test_utils import blend_user
 
 from django.urls import reverse
-from django.core import cache
+from django.core.cache import caches
 from django.conf import settings
 from dateutil.parser import parse as datetime_parser
 from rest_framework.test import APITestCase
@@ -2751,7 +2751,7 @@ class TestLastChanged(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
         # Mock the cache with a real one for these tests
-        self.locmem_cache = cache._create_cache('django.core.cache.backends.locmem.LocMemCache')
+        self.locmem_cache = caches.create_connection('testlocmem')
         self.locmem_cache.clear()
         self.patch1 = patch.object(views, 'cache', self.locmem_cache)
         self.patch1.start()

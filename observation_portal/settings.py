@@ -65,7 +65,6 @@ INSTALLED_APPS = [
     'registration',  # must come before admin to use custom templates
     'django.contrib.admin',
     'rest_framework',
-    'drf_yasg',
     'django_filters',
     'rest_framework.authtoken',
     'bootstrap4',
@@ -137,6 +136,7 @@ DATABASES = {
 OAUTH2_PROVIDER_ACCESS_TOKEN_MODEL = 'oauth2_provider.AccessToken'
 OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
 OAUTH2_PROVIDER_REFRESH_TOKEN_MODEL = 'oauth2_provider.RefreshToken'
+OAUTH2_PROVIDER_ID_TOKEN_MODEL = 'oauth2_provider.IDToken'
 MIGRATION_MODULES = {
     'oauth2_provider': 'observation_portal.accounts.oauth2_migrations'
 }
