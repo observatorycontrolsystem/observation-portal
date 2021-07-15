@@ -19,6 +19,7 @@ from observation_portal.common.rise_set_utils import get_rise_set_target
 from observation_portal.requestgroups.duration_utils import (
     get_total_request_duration,
     get_configuration_duration,
+    get_optical_change_duration,
     get_total_complete_configurations_duration,
     get_instrument_configuration_duration,
     get_total_duration_dict,
@@ -317,7 +318,7 @@ class Request(models.Model):
             instrument_types__overlap=list({conf.instrument_type for conf in self.configurations.all()})
         )
 
-    def get_remaining_duration(self, configurations_after_priority):
+    def get_remaining_duration(self, configurations_after_priority, include_current=False):
         request_dict = self.as_dict()
         start_time = (min([window['start'] for window in request_dict['windows']])
                       if 'windows' in request_dict and request_dict['windows'] else timezone.now())
@@ -330,6 +331,19 @@ class Request(models.Model):
             start_time,
             configurations_after_priority
         )
+        if include_current:
+            previous_optical_elements = {}
+            for configuration_dict in configurations:
+                if configuration_dict['priority'] == configurations_after_priority:
+                    request_overheads = configdb.get_request_overheads(configuration_dict['instrument_type'])
+                    # Add the exposure overhead for the current configuration (no front padding)
+                    duration += get_configuration_duration(configuration_dict, request_overheads, include_front_padding=False)['duration']
+                    # Add in the optical element change overhead for any changes within this configuration
+                    duration += get_optical_change_duration(configuration_dict, request_overheads, previous_optical_elements)
+                    break
+                else:
+                    previous_optical_elements = configuration_dict['instrument_configs'][-1].get('optical_elements', {})
+
         return duration
 
 

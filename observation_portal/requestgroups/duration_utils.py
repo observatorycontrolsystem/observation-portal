@@ -46,7 +46,7 @@ def get_instrument_configuration_duration(instrument_config_dict, instrument_nam
     return instrument_config_dict['exposure_count'] * duration_per_exposure
 
 
-def get_configuration_duration(configuration_dict, request_overheads):
+def get_configuration_duration(configuration_dict, request_overheads, include_front_padding=True):
     conf_duration = {}
     instrumentconf_durations = [{
         'duration': get_instrument_configuration_duration(
@@ -59,7 +59,8 @@ def get_configuration_duration(configuration_dict, request_overheads):
         conf_duration['duration'] = configuration_dict['repeat_duration']
     else:
         conf_duration['duration'] = sum([icd['duration'] for icd in instrumentconf_durations])
-        conf_duration['duration'] += request_overheads['config_front_padding']
+        if include_front_padding:
+            conf_duration['duration'] += request_overheads['config_front_padding']
     return conf_duration
 
 
@@ -154,6 +155,21 @@ def get_total_complete_configurations_duration(configurations_list, start_time, 
     return total_duration
 
 
+def get_optical_change_duration(configuration_dict, request_overheads, previous_optical_elements):
+    total_change_overhead = 0
+    for inst_config in configuration_dict['instrument_configs']:
+        optical_elements = inst_config.get('optical_elements', {})
+        change_overhead = 0
+        for oe_type, oe_value in optical_elements.items():
+            if oe_type not in previous_optical_elements or oe_value != previous_optical_elements[oe_type]:
+                if '{}s'.format(oe_type) in request_overheads['optical_element_change_overheads']:
+                    change_overhead = max(request_overheads['optical_element_change_overheads']['{}s'.format(oe_type)], change_overhead)
+        previous_optical_elements = optical_elements
+        total_change_overhead += change_overhead
+
+    return total_change_overhead
+
+
 def get_complete_configurations_duration_by_instrument_type(configurations_list, start_time, priority_after=-1):
     previous_conf_type = ''
     previous_optical_elements = {}
@@ -172,15 +188,8 @@ def get_complete_configurations_duration_by_instrument_type(configurations_list,
             previous_instrument = configuration_dict['instrument_type']
 
             # Now add in optical element change time if the set of optical elements has changed
-            for inst_config in configuration_dict['instrument_configs']:
-                optical_elements = inst_config.get('optical_elements', {})
-                change_overhead = 0
-                for oe_type, oe_value in optical_elements.items():
-                    if oe_type not in previous_optical_elements or oe_value != previous_optical_elements[oe_type]:
-                        if '{}s'.format(oe_type) in request_overheads['optical_element_change_overheads']:
-                            change_overhead = max(request_overheads['optical_element_change_overheads']['{}s'.format(oe_type)], change_overhead)
-                previous_optical_elements = optical_elements
-                duration += change_overhead
+            duration += get_optical_change_duration(configuration_dict, request_overheads, previous_optical_elements)
+            previous_optical_elements = configuration_dict['instrument_configs'][-1].get('optical_elements', {})
 
             # Now add in the slew time between targets (configurations). Only Sidereal can be calculated based on position.
             if (
