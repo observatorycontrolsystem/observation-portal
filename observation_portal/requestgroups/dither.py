@@ -1,4 +1,4 @@
-from math import radians, cos, sin, floor, ceil, sqrt
+from math import radians, cos, sin, sqrt
 from copy import deepcopy
 
 def expand_dither_pattern(dither_details):
