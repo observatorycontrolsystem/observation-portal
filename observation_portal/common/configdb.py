@@ -453,7 +453,7 @@ class ConfigDB(object):
             if instrument_type_code.upper() == instrument['instrument_type']['code'].upper():
                 return instrument['science_cameras'][0]['camera_type']['max_rois']
 
-    def get_diagnol_ccd_fov(self, instrument_type_code, autoguider=False):
+    def get_diagonal_ccd_fov(self, instrument_type_code, autoguider=False):
         ''' Get the diagonal fov in arcminutes for the ccd, from the camera_type pscale and pixelsx/y in configdb
         '''
         for instrument in self.get_instruments():

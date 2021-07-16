@@ -877,19 +877,6 @@ class TestDitherApi(SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('Cannot expand a configuration for dithering with more than one instrument_config set', str(response.content))
 
-    def test_expansion_fails_if_target_dec_close_to_pole(self):
-        configuration = self.configuration.copy()
-        configuration['target']['dec'] = 89.5
-        dither_data = {
-            'configuration': configuration,
-            'num_points': 4,
-            'pattern': 'line',
-            'point_spacing': 2
-        }
-        response = self.client.post(reverse('api:configuration-dither'), data=dither_data)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn('Target declination must be greater than 1 degree from the pole to support dither generation', str(response.content))
-
     def test_expansion_fails_if_numpoints_not_specified_for_line(self):
         configuration = self.configuration.copy()
         dither_data = {

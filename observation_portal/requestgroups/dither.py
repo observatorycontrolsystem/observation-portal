@@ -5,8 +5,8 @@ def expand_dither_pattern(dither_details):
     '''
     Takes in a valid configuration and valid set of dither parameters, and expands the instrument_configs within the
     configuration with offsets to fit the dither pattern details specified.
-    :param configuration_dict: a valid configuration dictionary.
-    :param dither_details: a valid dictionary of dither pattern parameters
+    :param dither_details: a valid dictionary containing the `configuration`, and a number of dither
+                           parameters such as `num_points`, `pattern`, `point_spacing` and others.
     :return: Configuration with expanded list of instrument_configurations.
     '''
     configuration_dict = dither_details.get('configuration', {})
@@ -17,11 +17,8 @@ def expand_dither_pattern(dither_details):
     if pattern == 'line':
         offsets = calc_line_offsets(dither_details.get('num_points'), dither_details.get('point_spacing'), dither_details.get('orientation'),
                                     dither_details.get('center'))
-    elif pattern == 'box':
-        offsets = calc_box_offsets(dither_details.get('point_spacing'), dither_details.get('line_spacing'),
-                                   dither_details.get('orientation'), sides_angle=270)
     elif pattern == 'spiral':
-        offsets = calc_spiral_offsets(dither_details.get('num_points'), dither_details.get('point_spacing'), dither_details.get('orientation'))
+        offsets = calc_spiral_offsets(dither_details.get('num_points'), dither_details.get('point_spacing'))
     elif pattern == 'grid':
         offsets = calc_grid_offsets(dither_details.get('num_rows'), dither_details.get('num_columns'), dither_details.get('point_spacing'),
                                     dither_details.get('line_spacing'), dither_details.get('orientation'), dither_details.get('center'))
@@ -62,32 +59,11 @@ def calc_line_offsets(num_points, point_spacing, orient, center):
     return offsets
 
 
-def normalize_angle(angle):
-    """Normalize an <angle> so that: 0 <= angle_norm < 2 * np.pi"""
-    twopi = 2.0 * pi
-
-    if angle >= twopi:
-        m = floor(angle/twopi)
-        if angle/twopi - m > 0.99999:   # account for rounding errors
-            m += 1
-        angle_norm = angle - m * twopi
-    elif angle < 0:
-        m = ceil(angle/twopi)
-        if angle/twopi - m < -0.99999:   # account for rounding errors
-            m -= 1
-        angle_norm = abs(angle - m * twopi)
-    else:
-        angle_norm = angle
-
-    return angle_norm
-
-
-def calc_spiral_offsets(num_points, point_spacing, orientation):
+def calc_spiral_offsets(num_points, point_spacing):
     """ Calculates offsets for a spiral pattern spaced <point_spacing> arcseconds apart and spiraling outward
-        from the origin until <num_points> is reached. The initial angle out is the orientation angle.
-        Points are calculated using this equation: https://math.stackexchange.com/questions/2335055/placing-points-equidistantly-along-an-archimedean-spiral-from-parametric-equatio
+        from the origin until <num_points> is reached. Points are calculated using this equation: 
+        https://math.stackexchange.com/questions/2335055/placing-points-equidistantly-along-an-archimedean-spiral-from-parametric-equatio
     """
-    # TODO: work orientation angle into this, right now it isn't used
     offsets = [(0,0),]
 
     n = 1
@@ -100,43 +76,6 @@ def calc_spiral_offsets(num_points, point_spacing, orientation):
         offsets.append((x, y))
         n += 1
 
-    return offsets
-
-
-def calc_box_offsets(point_spacing, line_spacing, orient=0, sides_angle=-90):
-    """Calculates offsets for a BOX (4 point) dither pattern spaced
-    <point_spacing> arcseconds apart horizontally and <line_spacing> arcseconds
-    apart vertically orientated along  <orient> degrees East of North
-    (clockwise from North through East) with <sides_angle> clockwise from one
-    line segment to the next
-    Returns a list of tuples for the offsets"""
-    # TODO: work number of points into this? Not sure an arbitrary number of points makes sense if we assume
-    # That a box should be a closed loop and end at its origin.
-    offsets = [(0,0),]
-
-    # Offsets from origin
-    x0 = y0 = 0.0
-
-    num_points = 4 # fixed 4 point BOX for now
-
-    for angle,segment_num in zip([orient, orient+sides_angle+180, 360-(180-orient)], range(1, num_points)):
-
-        # Normalize accumulated angle to 0..2*pi (0..360deg)
-        norm_angle = normalize_angle(radians(angle))
-
-        # If its the 1st or 3rd line segment, use point_spacing as length
-        # otherwise use line_spacing
-        if (segment_num-1) % 2 == 0:
-            distance = point_spacing
-        else:
-            distance = line_spacing
-        # Angles measured clockwise from North ("y-axis") rather than anti-clockwise
-        # from East ("x-axis") so sin/cos flipped compared to normal
-        x_offset = (distance * sin(norm_angle)) + x0
-        y_offset = (distance * cos(norm_angle)) + y0
-        x0 = x_offset
-        y0 = y_offset
-        offsets.append((x_offset, y_offset))
     return offsets
 
 

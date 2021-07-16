@@ -166,7 +166,6 @@
                     "camera_type": {
                       "code": "1M0-SCICAM-SBIG",
                       "name": "1M0-SCICAM-SBIG",
-                      "size": "3x4",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
                       "pscale": 0.5,
@@ -331,7 +330,6 @@
                     "camera_type": {
                       "code": "1M0-SCICAM-SBIG",
                       "name": "1M0-SCICAM-SBIG",
-                      "size": "3x4",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
                       "pscale": 0.5,
@@ -496,7 +494,6 @@
                     "camera_type": {
                       "code": "1M0-SCICAM-SBIG",
                       "name": "1M0-SCICAM-SBIG",
-                      "size": "3x4",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
                       "pscale": 0.5,
@@ -679,7 +676,6 @@
                     "camera_type": {
                       "code": "2M0-FLOYDS-SCICAM",
                       "name": "2M0-FLOYDS-SCICAM",
-                      "size": "3x4",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
                       "pscale": 0.5,
@@ -880,7 +876,6 @@
                     "camera_type": {
                       "code": "1M0-SCICAM-SBIG",
                       "name": "1M0-SCICAM-SBIG",
-                      "size": "3x4",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
                       "pscale": 0.5,
@@ -1056,7 +1051,6 @@
                     "camera_type": {
                       "code": "1M0-NRES-SCICAM",
                       "name": "1M0-NRES-SCICAM",
-                      "size": "3x4",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
                       "pscale": 0.5,
@@ -1225,7 +1219,6 @@
                     "camera_type": {
                       "code": "2M0-FLOYDS-SCICAM",
                       "name": "2M0-FLOYDS-SCICAM",
-                      "size": "3x4",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
                       "pscale": 0.5,
@@ -1437,7 +1430,6 @@
                     {
                       "code": "mc03g",
                       "camera_type": {
-                        "size": "26.4x26.4",
                         "pscale": 1.0,
                         "name": "2.0 meter Muscat G Camera",
                         "code": "2M0-PIXIS-G",
@@ -1472,7 +1464,6 @@
                     {
                       "code": "mc03r",
                       "camera_type": {
-                        "size": "26.4x26.4",
                         "pscale": 1.0,
                         "name": "2.0 meter Muscat R Camera",
                         "code": "2M0-PIXIS-R",
@@ -1507,7 +1498,6 @@
                     {
                       "code": "mc03i",
                       "camera_type": {
-                        "size": "26.4x26.4",
                         "pscale": 1.0,
                         "name": "2.0 meter Muscat I Camera",
                         "code": "2M0-PIXIS-I",
@@ -1542,7 +1532,6 @@
                     {
                       "code": "mc03z",
                       "camera_type": {
-                        "size": "26.4x26.4",
                         "pscale": 1.0,
                         "name": "2.0 meter Muscat Z Camera",
                         "code": "2M0-PIXIS-Z",
@@ -1578,7 +1567,6 @@
                   "autoguider_camera": {
                     "code": "mc03g",
                     "camera_type": {
-                      "size": "26.4x26.4",
                       "pscale": 1.0,
                       "name": "2.0 meter Muscat G Camera",
                       "code": "2M0-PIXIS-G",
@@ -1775,7 +1763,6 @@
                     "camera_type": {
                       "code": "1M0-SCICAM-SBIG",
                       "name": "1M0-SCICAM-SBIG",
-                      "size": "3x4",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
                       "pscale": 0.5,
@@ -1940,7 +1927,6 @@
                     "camera_type": {
                       "code": "1M0-SCICAM-SBXX",
                       "name": "1M0-SCICAM-SBXX",
-                      "size": "3x4",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
                       "pscale": 0.5,
@@ -2126,7 +2112,6 @@
                     "camera_type": {
                       "code": "1M0-SCICAM-SBAG",
                       "name": "1M0-SCICAM-SBAG",
-                      "size": "3x4",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
                       "pscale": 0.5,
@@ -2311,7 +2296,6 @@
                     "camera_type": {
                       "code": "1M0-SCICAM-SOAR",
                       "name": "1M0-SCICAM-SOAR",
-                      "size": "3x4",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
                       "pscale": 0.5,

@@ -851,7 +851,7 @@ class RequestGroupSerializer(serializers.ModelSerializer):
 
 class DitherSerializer(serializers.Serializer):
     configuration = import_string(settings.SERIALIZERS['requestgroups']['Configuration'])()
-    pattern = serializers.ChoiceField(choices=('line', 'box', 'grid', 'spiral'), required=True)
+    pattern = serializers.ChoiceField(choices=('line', 'grid', 'spiral'), required=True)
     num_points = serializers.IntegerField(required=False)
     point_spacing = serializers.FloatField(required=True)
     line_spacing = serializers.FloatField(required=False)
@@ -864,18 +864,13 @@ class DitherSerializer(serializers.Serializer):
         if len(configuration.get('instrument_configs', [])) > 1:
             raise serializers.ValidationError(_("Cannot expand a configuration for dithering with more than one instrument_config set"))
 
-        target = configuration.get('target')
-        if target.get('type') == 'ICRS':
-            if abs(90-target.get('dec')) < 1 or abs(-90-target.get('dec')) < 1:
-                raise serializers.ValidationError(_('Target declination must be greater than 1 degree from the pole to support dither generation'))
-
         return configuration
 
     def validate(self, data):
         validated_data = super().validate(data)
         if 'num_points' not in validated_data and validated_data.get('pattern') in ['line', 'spiral']:
             raise serializers.ValidationError(_('Must specify num_points when selecting a line or spiral dither pattern'))
-        if 'line_spacing' not in validated_data and validated_data.get('pattern') in ['grid', 'box']:
+        if 'line_spacing' not in validated_data and validated_data.get('pattern') == 'grid':
             # Set a default line spacing equal to the point spacing if it is not specified
             validated_data['line_spacing'] = validated_data['point_spacing']
         if validated_data.get('pattern') == 'grid':

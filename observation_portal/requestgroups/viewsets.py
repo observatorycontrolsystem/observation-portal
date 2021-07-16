@@ -277,10 +277,8 @@ class ConfigurationViewSet(viewsets.GenericViewSet):
 
     @action(detail=False, methods=['post'])
     def dither(self, request):
-        dither_details = request.data
-
         # Check that the dither parameters specified are valid
-        dither_serializer = import_string(settings.SERIALIZERS['requestgroups']['Dither'])(data=dither_details)
+        dither_serializer = self.get_serializer(data=request.data)
         if not dither_serializer.is_valid():
             return Response(dither_serializer.errors, status=400)
 
