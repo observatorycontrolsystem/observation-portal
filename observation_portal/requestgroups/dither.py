@@ -1,4 +1,4 @@
-from math import radians, cos, sin, pi, floor, ceil, sqrt
+from math import radians, cos, sin, floor, ceil, sqrt
 from copy import deepcopy
 
 def expand_dither_pattern(dither_details):
@@ -61,7 +61,7 @@ def calc_line_offsets(num_points, point_spacing, orient, center):
 
 def calc_spiral_offsets(num_points, point_spacing):
     """ Calculates offsets for a spiral pattern spaced <point_spacing> arcseconds apart and spiraling outward
-        from the origin until <num_points> is reached. Points are calculated using this equation: 
+        from the origin until <num_points> is reached. Points are calculated using this equation:
         https://math.stackexchange.com/questions/2335055/placing-points-equidistantly-along-an-archimedean-spiral-from-parametric-equatio
     """
     offsets = [(0,0),]
