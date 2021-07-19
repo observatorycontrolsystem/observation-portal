@@ -857,6 +857,68 @@ class TestWindowApi(SetTimeMixin, APITestCase):
         self.assertIn('The observation windows must all be in the same semester', str(response.content))
 
 
+class TestDitherApi(SetTimeMixin, APITestCase):
+    def setUp(self):
+        super().setUp()
+        self.configuration = copy.deepcopy(generic_payload['requests'][0]['configurations'][0])
+        self.staff_user = blend_user(user_params={'is_staff': True})
+        self.client.force_login(self.staff_user)
+
+    def test_expansion_fails_for_multiple_instrument_configs(self):
+        configuration = self.configuration.copy()
+        configuration['instrument_configs'].append(configuration['instrument_configs'][0])
+        dither_data = {
+            'configuration': configuration,
+            'num_points': 4,
+            'pattern': 'line',
+            'point_spacing': 2
+        }
+        response = self.client.post(reverse('api:configuration-dither'), data=dither_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Cannot expand a configuration for dithering with more than one instrument_config set', str(response.content))
+
+    def test_expansion_fails_if_numpoints_not_specified_for_line(self):
+        configuration = self.configuration.copy()
+        dither_data = {
+            'configuration': configuration,
+            'pattern': 'line',
+            'point_spacing': 2
+        }
+        response = self.client.post(reverse('api:configuration-dither'), data=dither_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Must specify num_points when selecting a line or spiral dither pattern', str(response.content))
+
+    def test_expansion_fails_if_numrows_not_specified_for_grid(self):
+        configuration = self.configuration.copy()
+        dither_data = {
+            'configuration': configuration,
+            'num_points': 4,
+            'pattern': 'grid',
+            'point_spacing': 2
+        }
+        response = self.client.post(reverse('api:configuration-dither'), data=dither_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Must specifcy num_rows and num_columns when selecting a grid dither pattern', str(response.content))
+
+    def test_expansion_autofills_line_spacing_for_grid(self):
+        configuration = self.configuration.copy()
+        dither_data = {
+            'configuration': configuration,
+            'num_rows': 2,
+            'num_columns': 2,
+            'pattern': 'grid',
+            'point_spacing': 2,
+            'orientation': 90
+        }
+        response = self.client.post(reverse('api:configuration-dither'), data=dither_data)
+        self.assertEqual(response.status_code, 200)
+        config_dict = response.json()
+        offset_diff_dec = config_dict['instrument_configs'][3]['extra_params']['offset_dec'] - config_dict['instrument_configs'][0]['extra_params']['offset_dec']
+        offset_diff_ra = config_dict['instrument_configs'][1]['extra_params']['offset_ra'] - config_dict['instrument_configs'][0]['extra_params']['offset_ra']
+        self.assertEqual(offset_diff_ra, dither_data['point_spacing'])
+        self.assertEqual(offset_diff_dec, dither_data['point_spacing'])
+
+
 class TestCadenceApi(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()

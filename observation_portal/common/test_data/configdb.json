@@ -31,6 +31,9 @@
                     "code": "ef01",
                     "camera_type": {
                       "code": "1M0-SCICAM-SBIG",
+                      "pixels_x": 240,
+                      "pixels_y": 180,
+                      "pscale": 1,
                       "allow_self_guiding": true
                     }
                   },
@@ -165,6 +168,7 @@
                       "name": "1M0-SCICAM-SBIG",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
+                      "pscale": 0.5,
                       "max_rois": 1
                     },
                     "optical_element_groups": [
@@ -191,6 +195,9 @@
                     "code": "xx07",
                     "camera_type": {
                       "code": "1M0-SCICAM-SBIG",
+                      "pixels_x": 240,
+                      "pixels_y": 180,
+                      "pscale": 1,
                       "allow_self_guiding": true
                     }
                   },
@@ -325,6 +332,7 @@
                       "name": "1M0-SCICAM-SBIG",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
+                      "pscale": 0.5,
                       "max_rois": 1
                     },
                     "optical_element_groups": [
@@ -351,6 +359,9 @@
                     "code": "xx09",
                     "camera_type": {
                       "code": "1M0-SCICAM-SBIG",
+                      "pixels_x": 240,
+                      "pixels_y": 180,
+                      "pscale": 1,
                       "allow_self_guiding": true
                     }
                   },
@@ -485,6 +496,7 @@
                       "name": "1M0-SCICAM-SBIG",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
+                      "pscale": 0.5,
                       "max_rois": 1
                     },
                     "optical_element_groups": [
@@ -527,6 +539,9 @@
                     "code": "ef02",
                     "camera_type": {
                       "code": "2M0-FLOYDS-AG",
+                      "pixels_x": 240,
+                      "pixels_y": 180,
+                      "pscale": 1,
                       "allow_self_guiding": false
                     }
                   },
@@ -663,6 +678,7 @@
                       "name": "2M0-FLOYDS-SCICAM",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
+                      "pscale": 0.5,
                       "max_rois": 0
                     },
                     "optical_element_groups": [
@@ -725,6 +741,9 @@
                     "code": "ef03",
                     "camera_type": {
                       "code": "1M0-SCICAM-AG",
+                      "pixels_x": 240,
+                      "pixels_y": 180,
+                      "pscale": 1,
                       "allow_self_guiding": true
                     }
                   },
@@ -859,6 +878,7 @@
                       "name": "1M0-SCICAM-SBIG",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
+                      "pscale": 0.5,
                       "max_rois": 0
                     },
                     "optical_element_groups": [
@@ -885,6 +905,9 @@
                     "code": "ak02",
                     "camera_type": {
                       "code": "1M0-NRES-AG",
+                      "pixels_x": 240,
+                      "pixels_y": 180,
+                      "pscale": 1,
                       "allow_self_guiding": false
                     }
                   },
@@ -1030,6 +1053,7 @@
                       "name": "1M0-NRES-SCICAM",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
+                      "pscale": 0.5,
                       "max_rois": 0
                     },
                     "optical_element_groups": []
@@ -1059,6 +1083,9 @@
                     "code": "ef04",
                     "camera_type": {
                       "code": "2M0-FLOYDS-AG",
+                      "pixels_x": 240,
+                      "pixels_y": 180,
+                      "pscale": 1,
                       "allow_self_guiding": false
                     }
                   },
@@ -1194,6 +1221,7 @@
                       "name": "2M0-FLOYDS-SCICAM",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
+                      "pscale": 0.5,
                       "max_rois": 0
                     },
                     "optical_element_groups": [
@@ -1402,7 +1430,6 @@
                     {
                       "code": "mc03g",
                       "camera_type": {
-                        "size": "26.4x26.4",
                         "pscale": 1.0,
                         "name": "2.0 meter Muscat G Camera",
                         "code": "2M0-PIXIS-G",
@@ -1437,7 +1464,6 @@
                     {
                       "code": "mc03r",
                       "camera_type": {
-                        "size": "26.4x26.4",
                         "pscale": 1.0,
                         "name": "2.0 meter Muscat R Camera",
                         "code": "2M0-PIXIS-R",
@@ -1472,7 +1498,6 @@
                     {
                       "code": "mc03i",
                       "camera_type": {
-                        "size": "26.4x26.4",
                         "pscale": 1.0,
                         "name": "2.0 meter Muscat I Camera",
                         "code": "2M0-PIXIS-I",
@@ -1507,7 +1532,6 @@
                     {
                       "code": "mc03z",
                       "camera_type": {
-                        "size": "26.4x26.4",
                         "pscale": 1.0,
                         "name": "2.0 meter Muscat Z Camera",
                         "code": "2M0-PIXIS-Z",
@@ -1543,7 +1567,6 @@
                   "autoguider_camera": {
                     "code": "mc03g",
                     "camera_type": {
-                      "size": "26.4x26.4",
                       "pscale": 1.0,
                       "name": "2.0 meter Muscat G Camera",
                       "code": "2M0-PIXIS-G",
@@ -1605,6 +1628,9 @@
                     "code": "ef11",
                     "camera_type": {
                       "code": "1M0-SCICAM-AG",
+                      "pixels_x": 240,
+                      "pixels_y": 180,
+                      "pscale": 1,
                       "allow_self_guiding": true
                     }
                   },
@@ -1739,6 +1765,7 @@
                       "name": "1M0-SCICAM-SBIG",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
+                      "pscale": 0.5,
                       "max_rois": 0
                     },
                     "optical_element_groups": [
@@ -1765,6 +1792,9 @@
                     "code": "ef12",
                     "camera_type": {
                       "code": "1M0-SCICAM-AG",
+                      "pixels_x": 240,
+                      "pixels_y": 180,
+                      "pscale": 1,
                       "allow_self_guiding": true
                     }
                   },
@@ -1899,6 +1929,7 @@
                       "name": "1M0-SCICAM-SBXX",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
+                      "pscale": 0.5,
                       "max_rois": 0
                     },
                     "optical_element_groups": [
@@ -1946,6 +1977,9 @@
                     "code": "ey01",
                     "camera_type": {
                       "code": "1M0-SCICAM-AG",
+                      "pixels_x": 240,
+                      "pixels_y": 180,
+                      "pscale": 1,
                       "allow_self_guiding": true
                     }
                   },
@@ -2080,6 +2114,7 @@
                       "name": "1M0-SCICAM-SBAG",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
+                      "pscale": 0.5,
                       "max_rois": 0
                     },
                     "optical_element_groups": [
@@ -2127,6 +2162,9 @@
                     "code": "sx01",
                     "camera_type": {
                       "code": "1M0-SCICAM-AG",
+                      "pixels_x": 240,
+                      "pixels_y": 180,
+                      "pscale": 1,
                       "allow_self_guiding": true
                     }
                   },
@@ -2260,6 +2298,7 @@
                       "name": "1M0-SCICAM-SOAR",
                       "pixels_x": 1000,
                       "pixels_y": 1000,
+                      "pscale": 0.5,
                       "max_rois": 0
                     },
                     "optical_element_groups": [

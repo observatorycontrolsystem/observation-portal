@@ -326,6 +326,7 @@ SERIALIZERS = {
         'Request': os.getenv('REQUESTGROUPS_REQUEST_SERIALIZER', 'observation_portal.requestgroups.serializers.RequestSerializer'),
         'RequestGroup': os.getenv('REQUESTGROUPS_REQUESTGROUP_SERIALIZER', 'observation_portal.requestgroups.serializers.RequestGroupSerializer'),
         'DraftRequestGroup': os.getenv('REQUESTGROUPS_DRAFTREQUESTGROUP_SERIALIZER', 'observation_portal.requestgroups.serializers.DraftRequestGroupSerializer'),
+        'Dither': os.getenv('REQUESTGROUPS_DITHER_SERIALIZER', 'observation_portal.requestgroups.serializers.DitherSerializer'),
     },
     'proposals': {
         'Proposal': os.getenv('PROPOSALS_PROPOSAL_SERIALIZER', 'observation_portal.proposals.serializers.ProposalSerializer'),
