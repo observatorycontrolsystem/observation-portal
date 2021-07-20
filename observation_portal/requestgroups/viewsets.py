@@ -4,7 +4,7 @@ from rest_framework import viewsets, filters
 from rest_framework.schemas.openapi import AutoSchema
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAdminUser
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAdminUser, IsAuthenticated
 from django.utils import timezone
 from django.db.models import Prefetch
 from django_filters.rest_framework import DjangoFilterBackend
@@ -18,6 +18,7 @@ from observation_portal.requestgroups.models import (RequestGroup, Request, Draf
                                                      Configuration)
 from observation_portal.requestgroups.filters import RequestGroupFilter, RequestFilter
 from observation_portal.requestgroups.cadence import expand_cadence_request
+from observation_portal.requestgroups.dither import expand_dither_pattern
 from observation_portal.requestgroups.duration_utils import (
     get_request_duration_dict, get_max_ipp_for_requestgroup
 )
@@ -272,3 +273,19 @@ class DraftRequestGroupViewSet(viewsets.ModelViewSet):
             return DraftRequestGroup.objects.filter(proposal__in=self.request.user.proposal_set.all())
         else:
             return DraftRequestGroup.objects.none()
+
+
+class ConfigurationViewSet(viewsets.GenericViewSet):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = import_string(settings.SERIALIZERS['requestgroups']['Dither'])
+
+    @action(detail=False, methods=['post'])
+    def dither(self, request):
+        # Check that the dither parameters specified are valid
+        dither_serializer = self.get_serializer(data=request.data)
+        if not dither_serializer.is_valid():
+            return Response(dither_serializer.errors, status=400)
+
+        # Expand the instrument_configs within the configuration based on the dither pattern specified
+        configuration_dict = expand_dither_pattern(dither_serializer.validated_data)
+        return Response(configuration_dict)

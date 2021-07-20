@@ -1,6 +1,7 @@
 import logging
 from typing import Union
 from collections import namedtuple, defaultdict
+from math import sqrt
 
 import requests
 from django.core.cache import caches
@@ -452,6 +453,24 @@ class ConfigDB(object):
             if instrument_type_code.upper() == instrument['instrument_type']['code'].upper():
                 return instrument['science_cameras'][0]['camera_type']['max_rois']
 
+    def get_diagonal_ccd_fov(self, instrument_type_code, autoguider=False):
+        ''' Get the diagonal fov in arcminutes for the ccd, from the camera_type pscale and pixelsx/y in configdb
+        '''
+        for instrument in self.get_instruments():
+            if instrument_type_code.upper() == instrument['instrument_type']['code'].upper():
+                if autoguider:
+                    camera_type = instrument['autoguider_camera']['camera_type']
+                else:
+                    camera_type = instrument['science_cameras'][0]['camera_type']
+                pscale = camera_type['pscale']
+                pixels_x = camera_type['pixels_x']
+                pixels_y = camera_type['pixels_y']
+                fov_x = pixels_x * pscale / 60.0  # Convert from arcseconds to arcminutes
+                fov_y = pixels_y * pscale / 60.0
+                diagonal = sqrt((fov_x ** 2) + (fov_y ** 2))
+                return diagonal
+        return 0
+
     def get_ccd_size(self, instrument_type_code):
         # TODO: This assumes the pixels for the science cameras of an instrument are the same
         for instrument in self.get_instruments():
@@ -460,6 +479,12 @@ class ConfigDB(object):
                     'x': instrument['science_cameras'][0]['camera_type']['pixels_x'],
                     'y': instrument['science_cameras'][0]['camera_type']['pixels_y']
                 }
+
+    def get_pixel_scale(self, instrument_type_code):
+        # TODO: This assumes the pixel scale for the science cameras of an instrument are the same
+        for instrument in self.get_instruments():
+            if instrument_type_code.upper() == instrument['instrument_type']['code'].upper():
+                return instrument['science_cameras'][0]['camera_type']['pscale']
 
     def get_instrument_type_category(self, instrument_type_code: str) -> str:
         instrument_types = self.get_instrument_types()
