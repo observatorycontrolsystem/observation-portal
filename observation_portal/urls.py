@@ -77,7 +77,8 @@ schema_view = get_schema_view(
     description="Test description",
     version='3.0.0',
     permission_classes=[permissions.AllowAny,],
-    authentication_classes=[]
+    authentication_classes=[],
+    public=True
 )
 
 urlpatterns = [
