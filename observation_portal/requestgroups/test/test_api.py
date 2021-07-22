@@ -913,10 +913,10 @@ class TestDitherApi(SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:configuration-dither'), data=dither_data)
         self.assertEqual(response.status_code, 200)
         config_dict = response.json()
-        offset_diff_dec = config_dict['instrument_configs'][3]['extra_params']['offset_dec'] - config_dict['instrument_configs'][0]['extra_params']['offset_dec']
-        offset_diff_ra = config_dict['instrument_configs'][1]['extra_params']['offset_ra'] - config_dict['instrument_configs'][0]['extra_params']['offset_ra']
+        offset_diff_dec = config_dict['instrument_configs'][2]['extra_params']['offset_dec'] - config_dict['instrument_configs'][0]['extra_params']['offset_dec']
+        offset_diff_ra = config_dict['instrument_configs'][2]['extra_params']['offset_ra'] - config_dict['instrument_configs'][0]['extra_params']['offset_ra']
         self.assertEqual(offset_diff_ra, dither_data['point_spacing'])
-        self.assertEqual(offset_diff_dec, dither_data['point_spacing'])
+        self.assertEqual(offset_diff_dec, -dither_data['point_spacing'])
 
 
 class TestCadenceApi(SetTimeMixin, APITestCase):
