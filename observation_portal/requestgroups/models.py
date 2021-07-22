@@ -1,6 +1,5 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.contrib.postgres.fields import JSONField
 from django.utils.functional import cached_property
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.core.cache import cache
@@ -461,7 +460,7 @@ class Configuration(models.Model):
                   'possible given its visibility within the observing window.'
     )
 
-    extra_params = JSONField(
+    extra_params = models.JSONField(
         default=dict,
         blank=True,
         verbose_name='extra parameters',
@@ -649,7 +648,7 @@ class Target(models.Model):
         help_text='Epoch of perihelion (MJD)'
     )
 
-    extra_params = JSONField(
+    extra_params = models.JSONField(
         default=dict,
         blank=True,
         verbose_name='extra parameters',
@@ -677,7 +676,7 @@ class InstrumentConfig(models.Model):
         Configuration, related_name='instrument_configs', on_delete=models.CASCADE,
         help_text='The Configuration to which this InstrumentConfig belongs'
     )
-    optical_elements = JSONField(
+    optical_elements = models.JSONField(
         default=dict,
         blank=True,
         help_text='Specification of optical elements used for this InstrumentConfig'
@@ -700,7 +699,7 @@ class InstrumentConfig(models.Model):
         help_text='(Spectrograph only) How the slit is positioned on the sky. If set to VFLOAT, atmospheric '
                   'dispersion is along the slit.'
     )
-    extra_params = JSONField(
+    extra_params = models.JSONField(
         default=dict,
         blank=True,
         verbose_name='extra parameters',
@@ -766,7 +765,7 @@ class GuidingConfig(models.Model):
         max_length=50, default='', blank=True,
         help_text='Guiding mode to use for the observations'
     )
-    optical_elements = JSONField(
+    optical_elements = models.JSONField(
         default=dict,
         blank=True,
         help_text='Optical Element specification for this GuidingConfig'
@@ -775,7 +774,7 @@ class GuidingConfig(models.Model):
         validators=[MinValueValidator(0.0), MaxValueValidator(120.0)],
         help_text='Guiding exposure time'
     )
-    extra_params = JSONField(
+    extra_params = models.JSONField(
         default=dict,
         blank=True,
         verbose_name='extra parameters',
@@ -805,7 +804,7 @@ class AcquisitionConfig(models.Model):
         validators=[MinValueValidator(0.0), MaxValueValidator(60.0)],
         help_text='Acquisition exposure time'
     )
-    extra_params = JSONField(
+    extra_params = models.JSONField(
         default=dict,
         blank=True,
         verbose_name='extra parameters',
@@ -850,7 +849,7 @@ class Constraints(models.Model):
         verbose_name='minimum transparency', null=True, blank=True,
         help_text='Minimum acceptable transparency'
     )
-    extra_params = JSONField(
+    extra_params = models.JSONField(
         default=dict,
         blank=True,
         verbose_name='extra parameters',
