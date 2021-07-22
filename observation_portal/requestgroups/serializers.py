@@ -849,6 +849,36 @@ class RequestGroupSerializer(serializers.ModelSerializer):
         return value
 
 
+class DitherSerializer(serializers.Serializer):
+    configuration = import_string(settings.SERIALIZERS['requestgroups']['Configuration'])()
+    pattern = serializers.ChoiceField(choices=('line', 'grid', 'spiral'), required=True)
+    num_points = serializers.IntegerField(required=False)
+    point_spacing = serializers.FloatField(required=True)
+    line_spacing = serializers.FloatField(required=False)
+    orientation = serializers.FloatField(required=False, default=0.0)
+    num_rows = serializers.IntegerField(required=False)
+    num_columns = serializers.IntegerField(required=False)
+    center = serializers.BooleanField(required=False, default=False)
+
+    def validate_configuration(self, configuration):
+        if len(configuration.get('instrument_configs', [])) > 1:
+            raise serializers.ValidationError(_("Cannot expand a configuration for dithering with more than one instrument_config set"))
+
+        return configuration
+
+    def validate(self, data):
+        validated_data = super().validate(data)
+        if 'num_points' not in validated_data and validated_data.get('pattern') in ['line', 'spiral']:
+            raise serializers.ValidationError(_('Must specify num_points when selecting a line or spiral dither pattern'))
+        if 'line_spacing' not in validated_data and validated_data.get('pattern') == 'grid':
+            # Set a default line spacing equal to the point spacing if it is not specified
+            validated_data['line_spacing'] = validated_data['point_spacing']
+        if validated_data.get('pattern') == 'grid':
+            if 'num_rows' not in validated_data or 'num_columns' not in validated_data:
+                raise serializers.ValidationError(_('Must specifcy num_rows and num_columns when selecting a grid dither pattern'))
+        return validated_data
+
+
 class DraftRequestGroupSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
         read_only=True,

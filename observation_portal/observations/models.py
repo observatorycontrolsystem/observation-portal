@@ -1,5 +1,4 @@
 from django.db import models
-from django.contrib.postgres.fields import JSONField
 from django.forms.models import model_to_dict
 from django.utils import timezone
 from django.core.cache import cache
@@ -266,7 +265,7 @@ class Summary(models.Model):
     time_completed = models.FloatField(
         help_text='The seconds of exposure time completed for this configuration'
     )
-    events = JSONField(
+    events = models.JSONField(
         default=list, blank=True,
         help_text='Raw set of telescope events during this observation, in json format'
     )
