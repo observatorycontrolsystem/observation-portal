@@ -1,28 +1,23 @@
 from math import radians, cos, sin, sqrt
 from copy import deepcopy
 
-def expand_dither_pattern(dither_details):
+from observation_portal.common.configdb import configdb
+
+
+def expand_dither_pattern(expansion_details):
     '''
     Takes in a valid configuration and valid set of dither parameters, and expands the instrument_configs within the
     configuration with offsets to fit the dither pattern details specified.
-    :param dither_details: a valid dictionary containing the `configuration`, and a number of dither
+    :param expansion_details: a valid dictionary containing the `configuration`, and a number of pattern expansion
                            parameters such as `num_points`, `pattern`, `point_spacing` and others.
     :return: Configuration with expanded list of instrument_configurations.
     '''
-    configuration_dict = dither_details.get('configuration', {})
+    configuration_dict = expansion_details.get('configuration', {})
     offsets = []
     instrument_configs = []
     instrument_config = configuration_dict.get('instrument_configs', [{}])[0]
-    pattern = dither_details.get('pattern')
-    if pattern == 'line':
-        offsets = calc_line_offsets(dither_details.get('num_points'), dither_details.get('point_spacing'), dither_details.get('orientation'),
-                                    dither_details.get('center'))
-    elif pattern == 'spiral':
-        offsets = calc_spiral_offsets(dither_details.get('num_points'), dither_details.get('point_spacing'))
-    elif pattern == 'grid':
-        offsets = calc_grid_offsets(dither_details.get('num_rows'), dither_details.get('num_columns'), dither_details.get('point_spacing'),
-                                    dither_details.get('line_spacing'), dither_details.get('orientation'), dither_details.get('center'))
 
+    offsets = expand_pattern(expansion_details)
 
     for offset in offsets:
         instrument_config_copy = deepcopy(instrument_config)
@@ -35,6 +30,49 @@ def expand_dither_pattern(dither_details):
     configuration_dict['instrument_configs'] = instrument_configs
     return configuration_dict
 
+
+def expand_mosaic_pattern(expansion_details):
+    '''
+    Takes in a valid request with one configuration and valid set of mosaic parameters,
+    and expands the configuration within the request with new targets using offsets to fit the
+    mosaic pattern details specified.
+    :param expansion_details: a valid dictionary containing the `request`, and a number of pattern expansion
+                           parameters such as `num_points`, `pattern`, `point_spacing` and others.
+    :return: Request with expanded list of configurations with different targets following pattern.
+    '''
+    request_dict = expansion_details.get('request', {})
+    offsets = []
+    configurations = []
+    configuration = request_dict.get('configurations', [{}])[0]
+
+    offsets = expand_pattern(expansion_details)
+    # We must rotate the offsets by the instrument orientation if it is non-zero so the overlap works properly
+    orientation = configdb.get_average_ccd_orientation(configuration['instrument_type'])
+    if orientation != 0.0:
+        pass
+
+    return request_dict
+
+
+def expand_pattern(expansion_details):
+    '''
+    Takes in just a set of pattern expansion parameters and returns a set of ra/dec offsets following
+    the pattern parameters provided
+    :param expansion_details: a valide dictionary containing a number of pattern expansion
+                           parameters such as `num_points`, `pattern`, `point_spacing` and others.
+    :return: list of x/y (ra/dec) offset tuples
+    '''
+    pattern = expansion_details.get('pattern')
+    if pattern == 'line':
+        offsets = calc_line_offsets(expansion_details.get('num_points'), expansion_details.get('point_spacing'), expansion_details.get('orientation'),
+                                    expansion_details.get('center'))
+    elif pattern == 'spiral':
+        offsets = calc_spiral_offsets(expansion_details.get('num_points'), expansion_details.get('point_spacing'))
+    elif pattern == 'grid':
+        offsets = calc_grid_offsets(expansion_details.get('num_rows'), expansion_details.get('num_columns'), expansion_details.get('point_spacing'),
+                                    expansion_details.get('line_spacing'), expansion_details.get('orientation'), expansion_details.get('center'))
+
+    return offsets
 
 def calc_line_offsets(num_points, point_spacing, orient, center):
     """Calculate offsets for a LINE dither pattern with <num_points> spaced

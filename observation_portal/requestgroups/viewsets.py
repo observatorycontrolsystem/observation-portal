@@ -254,6 +254,17 @@ class RequestViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
             return Response([o.as_dict(no_request=True) for o in observations if o.state != 'CANCELED'])
         return Response([o.as_dict(no_request=True) for o in observations])
 
+    @action(detail=False, methods=['post'])
+    def mosaic(self, request):
+        # Check that the mosaic parameters specified are valid
+        mosaic_serializer = import_string(settings.SERIALIZERS['requestgroups']['Mosaic'])(data=request.data)
+        if not mosaic_serializer.is_valid():
+            return Response(mosaic_serializer.errors, status=400)
+
+        # Expand the configurations within the request based on the mosaic pattern specified
+        request_dict = expand_mosaic_pattern(mosaic_serializer.validated_data)
+        return Response(request_dict)
+
 
 class DraftRequestGroupViewSet(viewsets.ModelViewSet):
     serializer_class = import_string(settings.SERIALIZERS['requestgroups']['DraftRequestGroup'])

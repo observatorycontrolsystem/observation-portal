@@ -849,34 +849,74 @@ class RequestGroupSerializer(serializers.ModelSerializer):
         return value
 
 
-class DitherSerializer(serializers.Serializer):
-    configuration = import_string(settings.SERIALIZERS['requestgroups']['Configuration'])()
+class PatternExpansionSerializer(serializers.Serializer):
     pattern = serializers.ChoiceField(choices=('line', 'grid', 'spiral'), required=True)
     num_points = serializers.IntegerField(required=False)
-    point_spacing = serializers.FloatField(required=True)
+    point_spacing = serializers.FloatField(required=False)
     line_spacing = serializers.FloatField(required=False)
     orientation = serializers.FloatField(required=False, default=0.0)
     num_rows = serializers.IntegerField(required=False)
     num_columns = serializers.IntegerField(required=False)
     center = serializers.BooleanField(required=False, default=False)
 
+    def validate(self, data):
+        validated_data = super().validate(data)
+        if 'num_points' not in validated_data and validated_data.get('pattern') in ['line', 'spiral']:
+            raise serializers.ValidationError(_('Must specify num_points when selecting a line or spiral pattern'))
+        if 'line_spacing' not in validated_data and 'point_spacing' in validated_data and validated_data.get('pattern') == 'grid':
+            # Set a default line spacing equal to the point spacing if it is not specified
+            validated_data['line_spacing'] = validated_data['point_spacing']
+        if validated_data.get('pattern') == 'grid':
+            if 'num_rows' not in validated_data or 'num_columns' not in validated_data:
+                raise serializers.ValidationError(_('Must specify num_rows and num_columns when selecting a grid pattern'))
+        return validated_data
+
+
+class MosaicSerializer(PatternExpansionSerializer):
+    request = import_string(settings.SERIALIZERS['requestgroups']['Request'])()
+    pattern = serializers.ChoiceField(choices=('line', 'grid'), required=True)
+    point_overlap_percent = serializers.FloatField(required=False, validators=[MinValueValidator(0.0), MaxValueValidator(100.0)])
+    line_overlap_percent = serializers.FloatField(required=False, validators=[MinValueValidator(0.0), MaxValueValidator(100.0)])
+
+    def validate_request(self, request):
+        if len(request.get('configurations', [])) > 1:
+            raise serializers.ValidationError(_("Cannot expand a request for mosaicing with more than one configuration set"))
+        if request['configurations'][0]['target']['type'] != 'ICRS':
+            raise serializers.ValidationError(_("Mosaic expansion is only for ICRS Targets. Try using dither expansion for patterns with other target types"))
+
+        return request
+
+    def validate(self, data):
+        validated_data = super().validate(data)
+        # If point_overlap_percent is set, we will overwrite the point_spacing based on the requested
+        # instrument_type and its fov on horizontal axis. If line_overlap_percent is specified, we will
+        # do the same for the fov on the vertical axis - if it is not specified we will use the
+        # point_overlap_percent and overwrite the line_spacing value
+        if 'point_overlap_percent' in validated_data:
+            instrument_type = data['request']['configurations'][0]['instrument_type']
+            ccd_size = configdb.get_ccd_size(instrument_type)
+            pixel_scale = configdb.get_pixel_scale(instrument_type)
+            validated_data['point_spacing'] = ccd_size['x'] * pixel_scale * (100.0 - validated_data['point_overlap_percent'])
+            if 'line_overlap_percent' in validated_data:
+                validated_data['line_spacing'] = ccd_size['y'] * pixel_scale * (100.0 - validated_data['line_overlap_percent'])
+            else:
+                validated_data['line_spacing'] = validated_data['point_spacing']
+        elif 'point_spacing' not in validated_data:
+            # One of point_spacing or point_overlap_percent must be specified
+            raise serializers.ValidationError(_("Must specify one of 'point_spacing' or 'point_overlap_percent'"))
+
+        return validated_data
+
+
+class DitherSerializer(PatternExpansionSerializer):
+    configuration = import_string(settings.SERIALIZERS['requestgroups']['Configuration'])()
+    point_spacing = serializers.FloatField(required=True)
+
     def validate_configuration(self, configuration):
         if len(configuration.get('instrument_configs', [])) > 1:
             raise serializers.ValidationError(_("Cannot expand a configuration for dithering with more than one instrument_config set"))
 
         return configuration
-
-    def validate(self, data):
-        validated_data = super().validate(data)
-        if 'num_points' not in validated_data and validated_data.get('pattern') in ['line', 'spiral']:
-            raise serializers.ValidationError(_('Must specify num_points when selecting a line or spiral dither pattern'))
-        if 'line_spacing' not in validated_data and validated_data.get('pattern') == 'grid':
-            # Set a default line spacing equal to the point spacing if it is not specified
-            validated_data['line_spacing'] = validated_data['point_spacing']
-        if validated_data.get('pattern') == 'grid':
-            if 'num_rows' not in validated_data or 'num_columns' not in validated_data:
-                raise serializers.ValidationError(_('Must specifcy num_rows and num_columns when selecting a grid dither pattern'))
-        return validated_data
 
 
 class DraftRequestGroupSerializer(serializers.ModelSerializer):
