@@ -1,6 +1,7 @@
 from math import radians, cos, sin, sqrt
 from copy import deepcopy
 
+
 def expand_dither_pattern(dither_details):
     '''
     Takes in a valid configuration and valid set of dither parameters, and expands the instrument_configs within the
@@ -53,7 +54,7 @@ def calc_line_offsets(num_points, point_spacing, orient, center):
         distance = i*point_spacing + distance_offset
         # Angles measured clockwise from North ("y-axis") rather than anti-clockwise
         # from East ("x-axis") so sin/cos flipped compared to normal
-        x_offset = (distance * sino)
+        x_offset = (distance * -sino)
         y_offset = (distance * coso)
         offsets.append((x_offset, y_offset))
     return offsets
@@ -87,21 +88,15 @@ def calc_grid_offsets(num_rows, num_columns, point_spacing, line_spacing, orient
     (clockwise from North through East)
     """
     offsets = []
-    # Offsets from origin (not currently used)
-    x0 = y0 = 0.0
 
     # A centered grid pattern has the middle of the grid corresponding with an offset of 0
-    row_distance_offset = -(line_spacing * (num_columns-1)) / 2.0 if center else 0.0
-    col_distance_offset = -(point_spacing * (num_rows-1)) / 2.0 if center else 0.0
-    col_x_distance_offset = col_distance_offset * sin(radians(orient))
-    col_y_distance_offset = col_distance_offset * cos(radians(orient))
-    row_x_distance_offset = row_distance_offset * sin(radians(360-(90-orient)))
-    row_y_distance_offset = row_distance_offset * cos(radians(360-(90-orient)))
+    row_distance_offset = -(line_spacing * (num_rows-1)) / 2.0 if center else 0.0
+    col_distance_offset = -(point_spacing * (num_columns-1)) / 2.0 if center else 0.0
+    sino = sin(radians(orient))
+    coso = cos(radians(orient))
+    rotated_x_offset = coso * col_distance_offset + sino * row_distance_offset
+    rotated_y_offset = -sino * col_distance_offset + coso * row_distance_offset
 
-    col_x_distance = point_spacing * sin(radians(orient))
-    col_y_distance = point_spacing * cos(radians(orient))
-    row_x_distance = line_spacing * sin(radians(360-(90-orient)))
-    row_y_distance = line_spacing * cos(radians(360-(90-orient)))
     for row in range(0, num_rows):
         if (row % 2) == 0:
             columns = range(0, num_columns)
@@ -110,8 +105,10 @@ def calc_grid_offsets(num_rows, num_columns, point_spacing, line_spacing, orient
         for column in columns:
             # Angles measured clockwise from North ("y-axis") rather than anti-clockwise
             # from East ("x-axis") so sin/cos flipped compared to normal
-            x_offset = (column * col_x_distance) + (row * row_x_distance) + x0 + col_x_distance_offset + row_x_distance_offset
-            y_offset = (column * col_y_distance) + (row * row_y_distance) + y0 + col_y_distance_offset + row_y_distance_offset
+            base_x = column * point_spacing
+            base_y = row * line_spacing
+            x_offset = base_x * coso + base_y * sino + rotated_x_offset
+            y_offset = base_x * -sino + base_y * coso + rotated_y_offset
             offsets.append((x_offset, y_offset))
 
     return offsets
