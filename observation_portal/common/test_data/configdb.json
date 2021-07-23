@@ -680,7 +680,7 @@
                   },
                   "science_cameras": [{
                     "code": "xx02",
-                    "orientation": 90.0,
+                    "orientation": 80.0,
                     "camera_type": {
                       "code": "2M0-FLOYDS-SCICAM",
                       "name": "2M0-FLOYDS-SCICAM",
@@ -1059,12 +1059,12 @@
                   },
                   "science_cameras": [{
                     "code": "nres02",
-                    "orientation": 0.0,
+                    "orientation": 90.0,
                     "camera_type": {
                       "code": "1M0-NRES-SCICAM",
                       "name": "1M0-NRES-SCICAM",
                       "pixels_x": 1000,
-                      "pixels_y": 1000,
+                      "pixels_y": 5000,
                       "pscale": 0.5,
                       "max_rois": 0
                     },
@@ -1229,7 +1229,7 @@
                   },
                   "science_cameras": [{
                     "code": "xx04",
-                    "orientation": 90.0,
+                    "orientation": 100.0,
                     "camera_type": {
                       "code": "2M0-FLOYDS-SCICAM",
                       "name": "2M0-FLOYDS-SCICAM",

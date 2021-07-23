@@ -46,11 +46,14 @@ def expand_mosaic_pattern(expansion_details):
     configuration = request_dict.get('configurations', [{}])[0]
 
     offsets = expand_pattern(expansion_details)
-    # We must rotate the offsets by the instrument orientation if it is non-zero so the overlap works properly
-    orientation = configdb.get_average_ccd_orientation(configuration['instrument_type'])
-    if orientation != 0.0:
-        pass
 
+    for offset in offsets:
+        configuration_copy = deepcopy(configuration)
+        configuration_copy['target']['ra'] += (offset[0] / 3600.0)
+        configuration_copy['target']['dec'] += (offset[1] / 3600.0)
+        configurations.append(configuration_copy)
+
+    request_dict['configurations'] = configurations
     return request_dict
 
 

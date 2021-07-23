@@ -919,6 +919,118 @@ class TestDitherApi(SetTimeMixin, APITestCase):
         self.assertEqual(offset_diff_dec, dither_data['point_spacing'])
 
 
+class TestMosaicApi(SetTimeMixin, APITestCase):
+    def setUp(self):
+        super().setUp()
+        self.request = copy.deepcopy(generic_payload['requests'][0])
+        self.staff_user = blend_user(user_params={'is_staff': True})
+        self.client.force_login(self.staff_user)
+        self.proposal = mixer.blend(Proposal)
+        mixer.blend(Membership, user=self.staff_user, proposal=self.proposal)
+        semester = mixer.blend(
+            Semester, id='2016B', start=datetime(2016, 9, 1, tzinfo=timezone.utc),
+            end=datetime(2016, 12, 31, tzinfo=timezone.utc)
+        )
+        self.time_allocation_1m0 = mixer.blend(
+            TimeAllocation, proposal=self.proposal, semester=semester,
+            instrument_types=['1M0-SCICAM-SBIG'], std_allocation=100.0, std_time_used=0.0,
+            rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
+            ipp_time_available=5.0
+        )
+
+    def test_expansion_fails_for_multiple_configurations(self):
+        request = self.request.copy()
+        request['configurations'].append(request['configurations'][0])
+        mosaic_data = {
+            'request': request,
+            'num_points': 4,
+            'pattern': 'line',
+            'point_spacing': 2
+        }
+        response = self.client.post(reverse('api:requests-mosaic'), data=mosaic_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Cannot expand a request for mosaicing with more than one configuration set', str(response.content))
+
+    def test_expansion_fails_for_non_icrs_target(self):
+        request = self.request.copy()
+        request['configurations'][0]['target'] = {
+            'name': 'test_target',
+            'type': 'ORBITAL_ELEMENTS',
+            'scheme': 'MPC_MINOR_PLANET',
+            # Non sidereal param
+            'epochofel': 57660.0,
+            'orbinc': 9.7942900,
+            'longascnode': 122.8943400,
+            'argofperih': 78.3278300,
+            'perihdist': 1.0,
+            'meandist': 0.7701170,
+            'meananom': 165.6860400,
+            'eccentricity': 0.5391962,
+            'epochofperih': 57400.0
+        }
+        mosaic_data = {
+            'request': request,
+            'num_points': 4,
+            'pattern': 'line',
+            'point_spacing': 2
+        }
+        response = self.client.post(reverse('api:requests-mosaic'), data=mosaic_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Mosaic expansion is only for ICRS Targets. Try using dither expansion for patterns with other target types', str(response.content))
+
+    def test_expansion_fails_requires_point_spacing_or_overlap_set(self):
+        request = self.request.copy()
+        mosaic_data = {
+            'request': request,
+            'num_points': 4,
+            'pattern': 'line',
+        }
+        response = self.client.post(reverse('api:requests-mosaic'), data=mosaic_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Must specify one of point_spacing or point_overlap_percent', str(response.content))
+
+    def test_expansion_hundred_percent_overlap_zero_spacing(self):
+        request = self.request.copy()
+        mosaic_data = {
+            'request': request,
+            'num_points': 4,
+            'pattern': 'line',
+            'point_overlap_percent': 100.0
+        }
+        response = self.client.post(reverse('api:requests-mosaic'), data=mosaic_data)
+        self.assertEqual(response.status_code, 200)
+        request = response.json()
+        self.assertEqual(len(request['configurations']), 4)
+        for configuration in request['configurations']:
+            # 100% overlap means point_spacing = 0 so all targets are the same!
+            self.assertEqual(configuration['target']['ra'], self.request['configurations'][0]['target']['ra'])
+            self.assertEqual(configuration['target']['dec'], self.request['configurations'][0]['target']['dec'])
+
+    def test_expansion_10_percent_overlap_spacing(self):
+        request = self.request.copy()
+        mosaic_data = {
+            'request': request,
+            'num_points': 2,
+            'pattern': 'line',
+            'point_overlap_percent': 10.0,
+            'orientation': 90.0
+        }
+        response = self.client.post(reverse('api:requests-mosaic'), data=mosaic_data)
+        self.assertEqual(response.status_code, 200)
+        request = response.json()
+        self.assertEqual(len(request['configurations']), 2)
+        # The two targets should be pixels_x * pscale * 90% apart
+        instrument_type = request['configurations'][0]['instrument_type']
+        ccd_size = configdb.get_ccd_size(instrument_type)
+        pixel_scale = configdb.get_pixel_scale(instrument_type)
+        ra_diff = ccd_size['x'] * pixel_scale * ((100.0 - mosaic_data['point_overlap_percent']) / 100.0)
+        target1 = request['configurations'][0]['target']
+        target2 = request['configurations'][1]['target']
+        self.assertEqual(target1['ra'], self.request['configurations'][0]['target']['ra'])
+        self.assertEqual(target1['dec'], self.request['configurations'][0]['target']['dec'])
+        self.assertEqual(target2['ra'], target1['ra'] + (ra_diff / 3600.0))
+        self.assertEqual(target2['dec'], target1['dec'])
+
 class TestCadenceApi(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
