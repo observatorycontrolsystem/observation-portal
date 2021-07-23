@@ -864,18 +864,27 @@ class TestDitherApi(SetTimeMixin, APITestCase):
         self.staff_user = blend_user(user_params={'is_staff': True})
         self.client.force_login(self.staff_user)
 
-    def test_expansion_fails_for_multiple_instrument_configs(self):
+    def test_expansion_succeeds_for_multiple_instrument_configs(self):
         configuration = self.configuration.copy()
-        configuration['instrument_configs'].append(configuration['instrument_configs'][0])
+        first_mode = '1m0_sbig_2'
+        second_mode = '1m0_sbig_1'
+        configuration['instrument_configs'].append(configuration['instrument_configs'][0].copy())
+        configuration['instrument_configs'][0]['mode'] = first_mode
+        configuration['instrument_configs'][1]['mode'] = second_mode
         dither_data = {
             'configuration': configuration,
-            'num_points': 4,
+            'num_points': 2,
             'pattern': 'line',
             'point_spacing': 2
         }
         response = self.client.post(reverse('api:configuration-dither'), data=dither_data)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn('Cannot expand a configuration for dithering with more than one instrument_config set', str(response.content))
+        config_dict = response.json()
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(config_dict['instrument_configs']), 4)
+        self.assertEqual(config_dict['instrument_configs'][0]['mode'], first_mode)
+        self.assertEqual(config_dict['instrument_configs'][1]['mode'], second_mode)
+        self.assertEqual(config_dict['instrument_configs'][2]['mode'], first_mode)
+        self.assertEqual(config_dict['instrument_configs'][3]['mode'], second_mode)
 
     def test_expansion_fails_if_numpoints_not_specified_for_line(self):
         configuration = self.configuration.copy()

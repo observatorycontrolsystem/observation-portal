@@ -12,8 +12,8 @@ def expand_dither_pattern(dither_details):
     '''
     configuration_dict = dither_details.get('configuration', {})
     offsets = []
-    instrument_configs = []
-    instrument_config = configuration_dict.get('instrument_configs', [{}])[0]
+    final_instrument_configs = []
+    instrument_configs = configuration_dict.get('instrument_configs', [])
     pattern = dither_details.get('pattern')
     if pattern == 'line':
         offsets = calc_line_offsets(dither_details.get('num_points'), dither_details.get('point_spacing'), dither_details.get('orientation'),
@@ -26,14 +26,15 @@ def expand_dither_pattern(dither_details):
 
 
     for offset in offsets:
-        instrument_config_copy = deepcopy(instrument_config)
-        if 'extra_params' not in instrument_config_copy:
-            instrument_config_copy['extra_params'] = {}
-        instrument_config_copy['extra_params']['offset_ra'] = round(offset[0], 3)
-        instrument_config_copy['extra_params']['offset_dec'] = round(offset[1], 3)
-        instrument_configs.append(instrument_config_copy)
+        for instrument_config in instrument_configs:
+            instrument_config_copy = deepcopy(instrument_config)
+            if 'extra_params' not in instrument_config_copy:
+                instrument_config_copy['extra_params'] = {}
+            instrument_config_copy['extra_params']['offset_ra'] = round(offset[0], 3)
+            instrument_config_copy['extra_params']['offset_dec'] = round(offset[1], 3)
+            final_instrument_configs.append(instrument_config_copy)
 
-    configuration_dict['instrument_configs'] = instrument_configs
+    configuration_dict['instrument_configs'] = final_instrument_configs
     return configuration_dict
 
 
