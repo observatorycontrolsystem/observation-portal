@@ -903,10 +903,9 @@ class MosaicSerializer(PatternExpansionSerializer):
             rotated_ccd_x = ccd_size['x'] * coso + ccd_size['y'] * sino
             rotated_ccd_y = ccd_size['x'] * -sino + ccd_size['y'] * coso
             validated_data['point_spacing'] = abs(rotated_ccd_x) * pixel_scale * ((100.0 - validated_data['point_overlap_percent']) / 100.0)
-            if 'line_overlap_percent' in validated_data:
-                validated_data['line_spacing'] = abs(rotated_ccd_y) * pixel_scale * ((100.0 - validated_data['line_overlap_percent']) / 100.0)
-            else:
-                validated_data['line_spacing'] = validated_data['point_spacing']
+            if 'line_overlap_percent' not in validated_data:
+                validated_data['line_overlap_percent'] = validated_data['point_overlap_percent']
+            validated_data['line_spacing'] = abs(rotated_ccd_y) * pixel_scale * ((100.0 - validated_data['line_overlap_percent']) / 100.0)
         elif 'point_spacing' not in validated_data:
             # One of point_spacing or point_overlap_percent must be specified
             raise serializers.ValidationError(_("Must specify one of point_spacing or point_overlap_percent"))

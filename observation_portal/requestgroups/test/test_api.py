@@ -29,7 +29,7 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 import copy
 import random
-from math import ceil
+from math import ceil, cos, sin, radians
 from unittest.mock import patch
 
 generic_payload = {
@@ -933,7 +933,7 @@ class TestMosaicApi(SetTimeMixin, APITestCase):
         )
         self.time_allocation_1m0 = mixer.blend(
             TimeAllocation, proposal=self.proposal, semester=semester,
-            instrument_types=['1M0-SCICAM-SBIG'], std_allocation=100.0, std_time_used=0.0,
+            instrument_types=['1M0-SCICAM-SBIG', '1M0-NRES-SCICAM'], std_allocation=100.0, std_time_used=0.0,
             rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
             ipp_time_available=5.0
         )
@@ -950,6 +950,19 @@ class TestMosaicApi(SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:requests-mosaic'), data=mosaic_data)
         self.assertEqual(response.status_code, 400)
         self.assertIn('Cannot expand a request for mosaicing with more than one configuration set', str(response.content))
+
+    def test_expansion_fails_for_spiral_pattern(self):
+        request = self.request.copy()
+        mosaic_data = {
+            'request': request,
+            'num_points': 4,
+            'pattern': 'spiral',
+            'point_spacing': 2
+        }
+        response = self.client.post(reverse('api:requests-mosaic'), data=mosaic_data)
+        self.assertEqual(response.status_code, 400)
+        print(response.json())
+        self.assertEqual('"spiral" is not a valid choice.', response.json()['pattern'][0])
 
     def test_expansion_fails_for_non_icrs_target(self):
         request = self.request.copy()
@@ -1030,6 +1043,70 @@ class TestMosaicApi(SetTimeMixin, APITestCase):
         self.assertEqual(target1['dec'], self.request['configurations'][0]['target']['dec'])
         self.assertEqual(target2['ra'], target1['ra'] + (ra_diff / 3600.0))
         self.assertEqual(target2['dec'], target1['dec'])
+
+    def test_expansion_10_percent_overlap_rotated_ccd_spacing(self):
+        request = self.request.copy()
+        request['configurations'][0]['instrument_type'] = '1M0-NRES-SCICAM'
+        request['configurations'][0]['type'] = 'NRES_SPECTRUM'
+        request['configurations'][0]['instrument_configs'][0]['optical_elements'] = {}
+        request['configurations'][0]['instrument_configs'][0]['mode'] = '1m0_nres_1'
+        request['configurations'][0]['guiding_config']['mode'] = 'ON'
+        mosaic_data = {
+            'request': request,
+            'num_rows': 2,
+            'num_columns': 2,
+            'pattern': 'grid',
+            'point_overlap_percent': 10.0,
+            'orientation': 0.0
+        }
+        response = self.client.post(reverse('api:requests-mosaic'), data=mosaic_data)
+        self.assertEqual(response.status_code, 200)
+        request = response.json()
+        self.assertEqual(len(request['configurations']), 4)
+        # The two targets should be pixels_x * pscale * 90% apart
+        instrument_type = request['configurations'][0]['instrument_type']
+        ccd_size = configdb.get_ccd_size(instrument_type)
+        orientation = configdb.get_average_ccd_orientation(instrument_type)
+        pixel_scale = configdb.get_pixel_scale(instrument_type)
+        coso = cos(radians(orientation))
+        sino = sin(radians(orientation))
+        # Rotate the ccd dimensions by the ccd orientation - needed so our % overlap is in the correct frame
+        rotated_ccd_x = ccd_size['x'] * coso + ccd_size['y'] * sino
+        rotated_ccd_y = ccd_size['x'] * -sino + ccd_size['y'] * coso
+        ra_diff = abs(rotated_ccd_x) * pixel_scale * ((100.0 - mosaic_data['point_overlap_percent']) / 100.0)
+        dec_diff = abs(rotated_ccd_y) * pixel_scale * ((100.0 - mosaic_data['point_overlap_percent']) / 100.0)
+
+        target1 = request['configurations'][0]['target']
+        t11 = request['configurations'][1]['target']
+        t22 = request['configurations'][3]['target']
+        target2 = request['configurations'][2]['target']
+        print(target1)
+        print(t11)
+        print(target2)
+        print(t22)
+        self.assertEqual(target1['ra'], self.request['configurations'][0]['target']['ra'])
+        self.assertEqual(target1['dec'], self.request['configurations'][0]['target']['dec'])
+        self.assertEqual(target2['ra'], target1['ra'] + (dec_diff / 3600.0))
+        self.assertEqual(target2['dec'], target1['dec'] + (ra_diff / 3600.0))
+
+        mosaic_data['orientation'] = 90.0
+        response = self.client.post(reverse('api:requests-mosaic'), data=mosaic_data)
+        self.assertEqual(response.status_code, 200)
+        request = response.json()
+        self.assertEqual(len(request['configurations']), 4)
+        target1 = request['configurations'][0]['target']
+        t11 = request['configurations'][1]['target']
+        t22 = request['configurations'][3]['target']
+        target2 = request['configurations'][2]['target']
+        print(target1)
+        print(t11)
+        print(target2)
+        print(t22)
+        self.assertEqual(target1['ra'], self.request['configurations'][0]['target']['ra'])
+        self.assertEqual(target1['dec'], self.request['configurations'][0]['target']['dec'])
+        self.assertEqual(target2['ra'], target1['ra'] + (ra_diff / 3600.0))
+        self.assertEqual(target2['dec'], target1['dec'] + (dec_diff / 3600.0))
+
 
 class TestCadenceApi(SetTimeMixin, APITestCase):
     def setUp(self):
