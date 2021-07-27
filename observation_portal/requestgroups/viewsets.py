@@ -17,7 +17,7 @@ from observation_portal.requestgroups.models import (RequestGroup, Request, Draf
                                                      Configuration)
 from observation_portal.requestgroups.filters import RequestGroupFilter, RequestFilter
 from observation_portal.requestgroups.cadence import expand_cadence_request
-from observation_portal.requestgroups.dither import expand_dither_pattern, expand_mosaic_pattern
+from observation_portal.requestgroups.pattern_expansion import expand_dither_pattern, expand_mosaic_pattern
 from observation_portal.requestgroups.duration_utils import (
     get_request_duration_dict, get_max_ipp_for_requestgroup
 )
