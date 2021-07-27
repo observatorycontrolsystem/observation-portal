@@ -1,6 +1,7 @@
 from math import radians, cos, sin, sqrt
 from copy import deepcopy
 
+
 def expand_dither_pattern(dither_details):
     '''
     Takes in a valid configuration and valid set of dither parameters, and expands the instrument_configs within the
@@ -11,8 +12,8 @@ def expand_dither_pattern(dither_details):
     '''
     configuration_dict = dither_details.get('configuration', {})
     offsets = []
-    instrument_configs = []
-    instrument_config = configuration_dict.get('instrument_configs', [{}])[0]
+    final_instrument_configs = []
+    instrument_configs = configuration_dict.get('instrument_configs', [])
     pattern = dither_details.get('pattern')
     if pattern == 'line':
         offsets = calc_line_offsets(dither_details.get('num_points'), dither_details.get('point_spacing'), dither_details.get('orientation'),
@@ -25,14 +26,15 @@ def expand_dither_pattern(dither_details):
 
 
     for offset in offsets:
-        instrument_config_copy = deepcopy(instrument_config)
-        if 'extra_params' not in instrument_config_copy:
-            instrument_config_copy['extra_params'] = {}
-        instrument_config_copy['extra_params']['offset_ra'] = round(offset[0], 3)
-        instrument_config_copy['extra_params']['offset_dec'] = round(offset[1], 3)
-        instrument_configs.append(instrument_config_copy)
+        for instrument_config in instrument_configs:
+            instrument_config_copy = deepcopy(instrument_config)
+            if 'extra_params' not in instrument_config_copy:
+                instrument_config_copy['extra_params'] = {}
+            instrument_config_copy['extra_params']['offset_ra'] = round(offset[0], 3)
+            instrument_config_copy['extra_params']['offset_dec'] = round(offset[1], 3)
+            final_instrument_configs.append(instrument_config_copy)
 
-    configuration_dict['instrument_configs'] = instrument_configs
+    configuration_dict['instrument_configs'] = final_instrument_configs
     return configuration_dict
 
 
@@ -52,8 +54,8 @@ def calc_line_offsets(num_points, point_spacing, orient, center):
     for i in range(0, max(num_points, 0)):
         distance = i*point_spacing + distance_offset
         # Angles measured clockwise from North ("y-axis") rather than anti-clockwise
-        # from East ("x-axis") so sin/cos flipped compared to normal
-        x_offset = (distance * sino)
+        # from East ("x-axis")
+        x_offset = (distance * -sino)
         y_offset = (distance * coso)
         offsets.append((x_offset, y_offset))
     return offsets
@@ -82,36 +84,32 @@ def calc_spiral_offsets(num_points, point_spacing):
 def calc_grid_offsets(num_rows, num_columns, point_spacing, line_spacing, orient=90, center=False):
     """Calculates offsets for a grid of <num_points> (must be a square number
     if scalar or a tuple of (n_columns x n_rows) grid points) with <point_spacing>
-    arcseconds apart horizontally and <line_spacing> arcseconds apart vertically,
-    orientated with columns increasing along <orient> degrees East of North
+    arcseconds apart vertically and <line_spacing> arcseconds apart horizontally at 0 orientation,
+    orientated with rows increasing along <orient> degrees East of North
     (clockwise from North through East)
     """
     offsets = []
-    # Offsets from origin (not currently used)
-    x0 = y0 = 0.0
 
     # A centered grid pattern has the middle of the grid corresponding with an offset of 0
-    row_distance_offset = -(line_spacing * (num_columns-1)) / 2.0 if center else 0.0
-    col_distance_offset = -(point_spacing * (num_rows-1)) / 2.0 if center else 0.0
-    col_x_distance_offset = col_distance_offset * sin(radians(orient))
-    col_y_distance_offset = col_distance_offset * cos(radians(orient))
-    row_x_distance_offset = row_distance_offset * sin(radians(360-(90-orient)))
-    row_y_distance_offset = row_distance_offset * cos(radians(360-(90-orient)))
+    row_distance_offset = -(point_spacing * (num_rows-1)) / 2.0 if center else 0.0
+    col_distance_offset = -(line_spacing * (num_columns-1)) / 2.0 if center else 0.0
+    sino = sin(radians(orient))
+    coso = cos(radians(orient))
+    rotated_x_offset = coso * col_distance_offset - sino * row_distance_offset
+    rotated_y_offset = sino * col_distance_offset + coso * row_distance_offset
 
-    col_x_distance = point_spacing * sin(radians(orient))
-    col_y_distance = point_spacing * cos(radians(orient))
-    row_x_distance = line_spacing * sin(radians(360-(90-orient)))
-    row_y_distance = line_spacing * cos(radians(360-(90-orient)))
-    for row in range(0, num_rows):
-        if (row % 2) == 0:
-            columns = range(0, num_columns)
+    for column in range(0, num_columns):
+        if (column % 2) == 0:
+            rows = range(0, num_rows)
         else:
-            columns = reversed(range(0, num_columns))
-        for column in columns:
+            rows = reversed(range(0, num_rows))
+        for row in rows:
             # Angles measured clockwise from North ("y-axis") rather than anti-clockwise
-            # from East ("x-axis") so sin/cos flipped compared to normal
-            x_offset = (column * col_x_distance) + (row * row_x_distance) + x0 + col_x_distance_offset + row_x_distance_offset
-            y_offset = (column * col_y_distance) + (row * row_y_distance) + y0 + col_y_distance_offset + row_y_distance_offset
+            # from East ("x-axis")
+            base_x = column * line_spacing
+            base_y = row * point_spacing
+            x_offset = base_x * coso + base_y * -sino + rotated_x_offset
+            y_offset = base_x * sino + base_y * coso + rotated_y_offset
             offsets.append((x_offset, y_offset))
 
     return offsets

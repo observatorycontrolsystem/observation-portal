@@ -860,12 +860,6 @@ class DitherSerializer(serializers.Serializer):
     num_columns = serializers.IntegerField(required=False)
     center = serializers.BooleanField(required=False, default=False)
 
-    def validate_configuration(self, configuration):
-        if len(configuration.get('instrument_configs', [])) > 1:
-            raise serializers.ValidationError(_("Cannot expand a configuration for dithering with more than one instrument_config set"))
-
-        return configuration
-
     def validate(self, data):
         validated_data = super().validate(data)
         if 'num_points' not in validated_data and validated_data.get('pattern') in ['line', 'spiral']:
