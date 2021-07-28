@@ -894,12 +894,18 @@ class MosaicSerializer(PatternExpansionSerializer):
         # point_overlap_percent and overwrite the line_spacing value
         if 'point_overlap_percent' in validated_data:
             instrument_type = data['request']['configurations'][0]['instrument_type']
+            orientation = configdb.get_average_ccd_orientation(instrument_type)
+            coso = cos(radians(orientation))
+            sino = sin(radians(orientation))
             ccd_size = configdb.get_ccd_size(instrument_type)
             pixel_scale = configdb.get_pixel_scale(instrument_type)
-            validated_data['point_spacing'] = ccd_size['y'] * pixel_scale * ((100.0 - validated_data['point_overlap_percent']) / 100.0)
+            # Rotate the ccd dimensions by the ccd orientation - needed so our % overlap is in the correct frame
+            rotated_ccd_x = ccd_size['x'] * coso + ccd_size['y'] * sino
+            rotated_ccd_y = ccd_size['x'] * -sino + ccd_size['y'] * coso
+            validated_data['point_spacing'] = abs(rotated_ccd_y) * pixel_scale * ((100.0 - validated_data['point_overlap_percent']) / 100.0)
             if 'line_overlap_percent' not in validated_data:
                 validated_data['line_overlap_percent'] = validated_data['point_overlap_percent']
-            validated_data['line_spacing'] = ccd_size['x'] * pixel_scale * ((100.0 - validated_data['line_overlap_percent']) / 100.0)
+            validated_data['line_spacing'] = abs(rotated_ccd_x) * pixel_scale * ((100.0 - validated_data['line_overlap_percent']) / 100.0)
         elif 'point_spacing' not in validated_data:
             # One of point_spacing or point_overlap_percent must be specified
             raise serializers.ValidationError(_("Must specify one of point_spacing or point_overlap_percent"))

@@ -1074,10 +1074,16 @@ class TestMosaicApi(SetTimeMixin, APITestCase):
         self.assertEqual(len(request['configurations']), 4)
         # The two targets should be pixels_x * pscale * 90% apart
         instrument_type = request['configurations'][0]['instrument_type']
+        orientation = configdb.get_average_ccd_orientation(instrument_type)
+        coso = cos(radians(orientation))
+        sino = sin(radians(orientation))
         ccd_size = configdb.get_ccd_size(instrument_type)
         pixel_scale = configdb.get_pixel_scale(instrument_type)
-        ra_diff = ccd_size['x'] * pixel_scale * ((100.0 - mosaic_data['point_overlap_percent']) / 100.0)
-        dec_diff = ccd_size['y'] * pixel_scale * ((100.0 - mosaic_data['point_overlap_percent']) / 100.0)
+        # Rotate the ccd dimensions by the ccd orientation - needed so our % overlap is in the correct frame
+        rotated_ccd_x = ccd_size['x'] * coso + ccd_size['y'] * sino
+        rotated_ccd_y = ccd_size['x'] * -sino + ccd_size['y'] * coso
+        ra_diff = abs(rotated_ccd_x) * pixel_scale * ((100.0 - mosaic_data['point_overlap_percent']) / 100.0)
+        dec_diff = abs(rotated_ccd_y) * pixel_scale * ((100.0 - mosaic_data['point_overlap_percent']) / 100.0)
         target1 = request['configurations'][0]['target']
         target2 = request['configurations'][2]['target']
         self.assertEqual(target1['ra'], self.request['configurations'][0]['target']['ra'])
@@ -1091,6 +1097,7 @@ class TestMosaicApi(SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 200)
         request = response.json()
         self.assertEqual(len(request['configurations']), 4)
+        # The 90 degree rotation will both change the sign of the dec_diff and make dec_diff apply in the ra direction
         dec_diff *= -sin(radians(mosaic_data['orientation']))
         target1 = request['configurations'][0]['target']
         target2 = request['configurations'][2]['target']
