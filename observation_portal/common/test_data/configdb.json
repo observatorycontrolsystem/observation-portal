@@ -1478,6 +1478,7 @@
                     },
                     {
                       "code": "mc03r",
+                      "orientation": 45.0,
                       "camera_type": {
                         "pscale": 1.0,
                         "name": "2.0 meter Muscat R Camera",
@@ -1512,6 +1513,7 @@
                     },
                     {
                       "code": "mc03i",
+                      "orientation": 45.0,
                       "camera_type": {
                         "pscale": 1.0,
                         "name": "2.0 meter Muscat I Camera",
@@ -1546,6 +1548,7 @@
                     },
                     {
                       "code": "mc03z",
+                      "orientation": 45.0,
                       "camera_type": {
                         "pscale": 1.0,
                         "name": "2.0 meter Muscat Z Camera",

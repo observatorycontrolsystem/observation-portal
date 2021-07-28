@@ -895,7 +895,7 @@ class TestDitherApi(SetTimeMixin, APITestCase):
         }
         response = self.client.post(reverse('api:configuration-dither'), data=dither_data)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('Must specify num_points when selecting a line or spiral dither pattern', str(response.content))
+        self.assertIn('Must specify num_points when selecting a line or spiral pattern', str(response.content))
 
     def test_expansion_fails_if_numrows_not_specified_for_grid(self):
         configuration = self.configuration.copy()
@@ -907,7 +907,7 @@ class TestDitherApi(SetTimeMixin, APITestCase):
         }
         response = self.client.post(reverse('api:configuration-dither'), data=dither_data)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('Must specifcy num_rows and num_columns when selecting a grid dither pattern', str(response.content))
+        self.assertIn('Must specify num_rows and num_columns when selecting a grid pattern', str(response.content))
 
     def test_expansion_autofills_line_spacing_for_grid(self):
         configuration = self.configuration.copy()
@@ -970,7 +970,6 @@ class TestMosaicApi(SetTimeMixin, APITestCase):
         }
         response = self.client.post(reverse('api:requests-mosaic'), data=mosaic_data)
         self.assertEqual(response.status_code, 400)
-        print(response.json())
         self.assertEqual('"spiral" is not a valid choice.', response.json()['pattern'][0])
 
     def test_expansion_fails_for_non_icrs_target(self):
@@ -1045,15 +1044,16 @@ class TestMosaicApi(SetTimeMixin, APITestCase):
         instrument_type = request['configurations'][0]['instrument_type']
         ccd_size = configdb.get_ccd_size(instrument_type)
         pixel_scale = configdb.get_pixel_scale(instrument_type)
-        ra_diff = ccd_size['x'] * pixel_scale * ((100.0 - mosaic_data['point_overlap_percent']) / 100.0)
+        dec_diff = ccd_size['y'] * pixel_scale * ((100.0 - mosaic_data['point_overlap_percent']) / 100.0)
+        dec_diff *= -sin(radians(mosaic_data['orientation']))
         target1 = request['configurations'][0]['target']
         target2 = request['configurations'][1]['target']
         self.assertEqual(target1['ra'], self.request['configurations'][0]['target']['ra'])
         self.assertEqual(target1['dec'], self.request['configurations'][0]['target']['dec'])
-        self.assertEqual(target2['ra'], target1['ra'] + (ra_diff / 3600.0))
+        self.assertEqual(target2['ra'], target1['ra'] + (dec_diff / 3600.0))
         self.assertEqual(target2['dec'], target1['dec'])
 
-    def test_expansion_10_percent_overlap_rotated_ccd_spacing(self):
+    def test_expansion_10_percent_overlap_spacing_grid(self):
         request = self.request.copy()
         request['configurations'][0]['instrument_type'] = '1M0-NRES-SCICAM'
         request['configurations'][0]['type'] = 'NRES_SPECTRUM'
@@ -1075,46 +1075,29 @@ class TestMosaicApi(SetTimeMixin, APITestCase):
         # The two targets should be pixels_x * pscale * 90% apart
         instrument_type = request['configurations'][0]['instrument_type']
         ccd_size = configdb.get_ccd_size(instrument_type)
-        orientation = configdb.get_average_ccd_orientation(instrument_type)
         pixel_scale = configdb.get_pixel_scale(instrument_type)
-        coso = cos(radians(orientation))
-        sino = sin(radians(orientation))
-        # Rotate the ccd dimensions by the ccd orientation - needed so our % overlap is in the correct frame
-        rotated_ccd_x = ccd_size['x'] * coso + ccd_size['y'] * sino
-        rotated_ccd_y = ccd_size['x'] * -sino + ccd_size['y'] * coso
-        ra_diff = abs(rotated_ccd_x) * pixel_scale * ((100.0 - mosaic_data['point_overlap_percent']) / 100.0)
-        dec_diff = abs(rotated_ccd_y) * pixel_scale * ((100.0 - mosaic_data['point_overlap_percent']) / 100.0)
-
+        ra_diff = ccd_size['x'] * pixel_scale * ((100.0 - mosaic_data['point_overlap_percent']) / 100.0)
+        dec_diff = ccd_size['y'] * pixel_scale * ((100.0 - mosaic_data['point_overlap_percent']) / 100.0)
         target1 = request['configurations'][0]['target']
-        t11 = request['configurations'][1]['target']
-        t22 = request['configurations'][3]['target']
         target2 = request['configurations'][2]['target']
-        print(target1)
-        print(t11)
-        print(target2)
-        print(t22)
         self.assertEqual(target1['ra'], self.request['configurations'][0]['target']['ra'])
         self.assertEqual(target1['dec'], self.request['configurations'][0]['target']['dec'])
-        self.assertEqual(target2['ra'], target1['ra'] + (dec_diff / 3600.0))
-        self.assertEqual(target2['dec'], target1['dec'] + (ra_diff / 3600.0))
+        self.assertEqual(target2['ra'], target1['ra'] + (ra_diff / 3600.0))
+        self.assertEqual(target2['dec'], target1['dec'] + (dec_diff / 3600.0))
 
+        # now try a rotated 90 degree pattern to show ra changes by dec_diff and dec by ra_diff
         mosaic_data['orientation'] = 90.0
         response = self.client.post(reverse('api:requests-mosaic'), data=mosaic_data)
         self.assertEqual(response.status_code, 200)
         request = response.json()
         self.assertEqual(len(request['configurations']), 4)
+        dec_diff *= -sin(radians(mosaic_data['orientation']))
         target1 = request['configurations'][0]['target']
-        t11 = request['configurations'][1]['target']
-        t22 = request['configurations'][3]['target']
         target2 = request['configurations'][2]['target']
-        print(target1)
-        print(t11)
-        print(target2)
-        print(t22)
         self.assertEqual(target1['ra'], self.request['configurations'][0]['target']['ra'])
         self.assertEqual(target1['dec'], self.request['configurations'][0]['target']['dec'])
-        self.assertEqual(target2['ra'], target1['ra'] + (ra_diff / 3600.0))
-        self.assertEqual(target2['dec'], target1['dec'] + (dec_diff / 3600.0))
+        self.assertEqual(target2['ra'], target1['ra'] + (dec_diff / 3600.0))
+        self.assertEqual(target2['dec'], target1['dec'] + (ra_diff / 3600.0))
 
 
 class TestCadenceApi(SetTimeMixin, APITestCase):

@@ -79,8 +79,8 @@ def expand_pattern(expansion_details):
 
 def calc_line_offsets(num_points, point_spacing, orient, center):
     """Calculate offsets for a LINE dither pattern with <num_points> spaced
-    <point_spacing> arcseconds apart along a line of <orient> degrees East of North
-    (clockwise from North through East)
+    <point_spacing> arcseconds apart along a line of <orient> degrees towards
+    negative ra from positive dec (clockwise from North through East)
     Returns a list of tuples for the offsets"""
 
     offsets = []
@@ -92,8 +92,8 @@ def calc_line_offsets(num_points, point_spacing, orient, center):
 
     for i in range(0, max(num_points, 0)):
         distance = i*point_spacing + distance_offset
-        # Angles measured clockwise from North ("y-axis") rather than anti-clockwise
-        # from East ("x-axis")
+        # Angles measured clockwise from North (y-axis / +dec) rather than anti-clockwise
+        # from East (x-axis / -ra)
         x_offset = (distance * -sino)
         y_offset = (distance * coso)
         offsets.append((x_offset, y_offset))
@@ -124,7 +124,7 @@ def calc_grid_offsets(num_rows, num_columns, point_spacing, line_spacing, orient
     """Calculates offsets for a grid of <num_points> (must be a square number
     if scalar or a tuple of (n_columns x n_rows) grid points) with <point_spacing>
     arcseconds apart vertically and <line_spacing> arcseconds apart horizontally at 0 orientation,
-    orientated with rows increasing along <orient> degrees East of North
+    orientated with rows increasing along <orient> degrees towards negative ra from positive dec
     (clockwise from North through East)
     """
     offsets = []
@@ -143,8 +143,8 @@ def calc_grid_offsets(num_rows, num_columns, point_spacing, line_spacing, orient
         else:
             rows = reversed(range(0, num_rows))
         for row in rows:
-            # Angles measured clockwise from North ("y-axis") rather than anti-clockwise
-            # from East ("x-axis")
+            # Angles measured clockwise from North (y-axis / +dec) rather than anti-clockwise
+            # from East (x-axis / -ra)
             base_x = column * line_spacing
             base_y = row * point_spacing
             x_offset = base_x * coso + base_y * -sino + rotated_x_offset
