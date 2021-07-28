@@ -895,6 +895,7 @@ class MosaicSerializer(PatternExpansionSerializer):
         if 'point_overlap_percent' in validated_data:
             instrument_type = data['request']['configurations'][0]['instrument_type']
             orientation = configdb.get_average_ccd_orientation(instrument_type)
+            orientation += validated_data.get('orientation', 0.0)
             coso = cos(radians(orientation))
             sino = sin(radians(orientation))
             ccd_size = configdb.get_ccd_size(instrument_type)
