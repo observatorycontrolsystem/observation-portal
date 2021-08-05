@@ -87,3 +87,11 @@ class ConfigurationStatusFilter(django_filters.FilterSet):
     class Meta:
         model = ConfigurationStatus
         fields = ('guide_camera_name',)
+
+
+class LastScheduledFilter(django_filters.FilterSet):
+    site = django_filters.ChoiceFilter(choices=configdb.get_site_tuples(), 
+                                       label='Site to retrieve last scheduled time for')
+
+    class Meta:
+        fields = ('site',)

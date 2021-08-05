@@ -392,18 +392,30 @@ class ObservationSerializer(serializers.ModelSerializer):
 
 
 class CancelObservationsSerializer(serializers.Serializer):
-    ids = serializers.ListField(child=serializers.IntegerField(), min_length=1, required=False)
-    start = serializers.DateTimeField(required=False)
-    end = serializers.DateTimeField(required=False)
-    site = serializers.CharField(required=False)
-    enclosure = serializers.CharField(required=False)
-    telescope = serializers.CharField(required=False)
-    include_normal = serializers.BooleanField(required=False, default=True)
-    include_rr = serializers.BooleanField(required=False, default=False)
-    include_direct = serializers.BooleanField(required=False, default=False)
+    ids = serializers.ListField(child=serializers.IntegerField(), min_length=1, required=False, write_only=True)
+    start = serializers.DateTimeField(required=False, write_only=True)
+    end = serializers.DateTimeField(required=False, write_only=True)
+    site = serializers.CharField(required=False, write_only=True)
+    enclosure = serializers.CharField(required=False, write_only=True)
+    telescope = serializers.CharField(required=False, write_only=True)
+    include_normal = serializers.BooleanField(required=False, default=True, write_only=True)
+    include_rr = serializers.BooleanField(required=False, default=False, write_only=True)
+    include_direct = serializers.BooleanField(required=False, default=False, write_only=True)
+    canceled = serializers.IntegerField(required=False, read_only=True)
 
     def validate(self, data):
         if 'ids' not in data and ('start' not in data or 'end' not in data):
             raise serializers.ValidationError("Must include either an observation id list or a start and end time")
 
         return data
+
+
+class LastScheduledSerializer(serializers.Serializer):
+    last_schedule_time = serializers.DateTimeField()
+
+
+# TODO: See if we can get some example data in here
+# TODO: Make the view use this serializer somehow
+class ObservationFiltersSerializer(serializers.Serializer):
+    fields = serializers.ListField(child=serializers.CharField(), required=False, read_only=True)
+    choice_fields = serializers.ListField(child=serializers.DictField(), required=False, read_only=True)

@@ -6,11 +6,17 @@ from rest_framework.schemas.openapi import AutoSchema
 from django.core.cache import cache
 from django.utils import timezone
 from rest_framework.response import Response
+from django_filters.rest_framework.backends import DjangoFilterBackend
+from django.utils.module_loading import import_string
 
 from observation_portal.common.configdb import configdb
+from observation_portal.common.mixins import GetSerializerMixin
+from observation_portal.observations.filters import LastScheduledFilter
+from observation_portal.observations.serializers import LastScheduledSerializer
+from observation_portal import settings
 
 
-class LastScheduledView(APIView):
+class LastScheduledView(APIView, GetSerializerMixin):
     """
         Returns the datetime of the last time new observations were submitted. This endpoint is expected to be polled
         frequently (~every 5 seconds) to for a client to decide if it needs to pull down the schedule or not.
@@ -20,6 +26,9 @@ class LastScheduledView(APIView):
     """
     permission_classes = (IsAdminUser,)
     schema=AutoSchema(tags=['Observations'])
+    filter_backends = (DjangoFilterBackend,)
+    filter_class = LastScheduledFilter
+    serializer_class = import_string(settings.SERIALIZERS['observations']['LastScheduled'])
 
     def get(self, request):
         site = request.query_params.get('site')
@@ -33,4 +42,4 @@ class LastScheduledView(APIView):
             cache_dict = cache.get_many(keys)
             last_schedule_time = max(list(cache_dict.values()) + [timezone.now() - timedelta(days=7)])
 
-        return Response({'last_schedule_time': last_schedule_time})
+        return Response(LastScheduledSerializer({'last_schedule_time': last_schedule_time}).data)    

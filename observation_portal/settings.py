@@ -312,6 +312,8 @@ SERIALIZERS = {
         'Schedule': os.getenv('OBSERVATIONS_SCHEDULE_SERIALIZER', 'observation_portal.observations.serializers.ScheduleSerializer'),
         'Observation': os.getenv('OBSERVATIONS_OBSERVATION_SERIALIZER', 'observation_portal.observations.serializers.ObservationSerializer'),
         'Cancel': os.getenv('OBSERVATIONS_CANCEL_SERIALIZER', 'observation_portal.observations.serializers.CancelObservationsSerializer'),
+        'LastScheduled': os.getenv('OBSERVATIONS_LAST_SCHEDULED_SERIALIZER', 'observation_portal.observations.serializers.LastScheduledSerializer'),
+        'ObservationFilters': os.getenv('OBSERVATIONS_OBSERVATIONFILTERS_SERIALIZER', 'observation_portal.observations.serializers.ObservationFiltersSerializer'),
     },
     'requestgroups': {
         'Cadence': os.getenv('REQUESTGROUPS_CADENCE_SERIALIZER', 'observation_portal.requestgroups.serializers.CadenceSerializer'),
@@ -333,16 +335,22 @@ SERIALIZERS = {
     'proposals': {
         'Proposal': os.getenv('PROPOSALS_PROPOSAL_SERIALIZER', 'observation_portal.proposals.serializers.ProposalSerializer'),
         'ProposalInvite': os.getenv('PROPOSALS_PROPOSALINVITE_SERIALIZER', 'observation_portal.proposals.serializers.ProposalInviteSerializer'),
-        'Semester': os.getenv('PROPOSALS_SEMESTER_SERIALIZER', 'observation_portal.proposals.serializers.SemesterSerialzer'),
+        'Semester': os.getenv('PROPOSALS_SEMESTER_SERIALIZER', 'observation_portal.proposals.serializers.SemesterSerializer'),
         'Membership': os.getenv('PROPOSALS_MEMBERSHIP_SERIALIZER', 'observation_portal.proposals.serializers.MembershipSerializer'),
         'ProposalNotification': os.getenv('PROPOSALS_PROPOSALNOTIFICATION_SERIALIZER', 'observation_portal.proposals.serializers.ProposalNotificationSerializer'),
         'TimeLimit': os.getenv('PROPOSALS_TIMELIMIT_SERIALIZER', 'observation_portal.proposals.serializers.TimeLimitSerializer'),
         'TimeAllocation': os.getenv('PROPOSALS_TIMEALLOCATION_SERIALIZER', 'observation_portal.proposals.serializers.TimeAllocationSerializer'),
+        'ProposalTags': os.getenv('PROPOSALS_TAGS_SERIALIZER', 'observation_portal.proposals.serializers.ProposalTagsSerializer'),
+        'SemesterProposals': os.getenv('PROPOSALS_SEMESTERPROPOSALS_SERIALIZER', 'observation_portal.proposals.serializers.SemesterProposalSerializer'),
+        'SemesterTimeAllocations': os.getenv('PROPOSALS_SEMESTERTIMEALLOCATIONS_SERIALIZER', 'observation_portal.proposals.serializers.SemesterTimeAllocationSerializer'),
     },
     'accounts': {
         'Profile': os.getenv('ACCOUNTS_PROFILE_SERIALIZER', 'observation_portal.accounts.serializers.ProfileSerializer'),
         'User': os.getenv('ACCOUNTS_USER_SERIALIZER', 'observation_portal.accounts.serializers.UserSerializer'),
-        'AccountRemoval': os.getenv('ACCOUNTS_ACCOUNTREMOVAL_SERIALIZER', 'observation_portal.accounts.serializers.AccountRemovalSerializer'),
+        'AccountRemovalRequest': os.getenv('ACCOUNTS_ACCOUNTREMOVAL_SERIALIZER', 'observation_portal.accounts.serializers.AccountRemovalRequestSerializer'),
+        'AcceptTerms': os.getenv('ACCOUNTS_ACCEPTTERMS_SERIALIZER', 'observation_portal.accounts.serializers.AcceptTermsSerializer'),
+        'RevokeToken': os.getenv('ACCOUNTS_REVOKETOKEN_SERIALIZER', 'observation_portal.accounts.serializers.RevokeTokenSerializer'),
+        'AccountRemovalRequest': os.getenv('ACCOUNTS_ACCOUNTREMOVALREQUEST_SERIALIZER', 'observation_portal.accounts.serializers.AccountRemovalRequestSerializer'),
     },
     'sciapplications': {
         'Call': os.getenv('SCIAPPLICATIONS_CALL_SERIALIZER', 'observation_portal.sciapplications.serializers.CallSerializer'),

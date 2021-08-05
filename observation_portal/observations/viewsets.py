@@ -1,9 +1,9 @@
+from observation_portal.common.schema import ObservationPortalSchema
 from rest_framework import viewsets, filters
 from rest_framework.permissions import IsAdminUser
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
-from rest_framework.schemas.openapi import AutoSchema
 from django.core.cache import cache
 from django.utils import timezone
 from django.utils.module_loading import import_string
@@ -40,7 +40,7 @@ def observations_queryset(request):
 class ScheduleViewSet(ListAsDictMixin, CreateListModelMixin, viewsets.ModelViewSet):
     permission_classes = (IsAdminOrReadOnly | IsDirectUser,)
     http_method_names = ['get', 'post', 'head', 'options']
-    schema=AutoSchema(tags=['Observations'])
+    schema=ObservationPortalSchema(tags=['Observations'])
     serializer_class = import_string(settings.SERIALIZERS['observations']['Schedule'])
     filter_class = ObservationFilter
     filter_backends = (
@@ -60,8 +60,7 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
     permission_classes = (IsAdminOrReadOnly | IsDirectUser,)
     http_method_names = ['get', 'post', 'head', 'options', 'patch']
     filter_class = ObservationFilter
-    schema=AutoSchema(tags=['Observations'])
-    serializer_class = import_string(settings.SERIALIZERS['observations']['Observation'])
+    schema=ObservationPortalSchema(tags=['Observations'])
     filter_backends = (
         filters.OrderingFilter,
         DjangoFilterBackend
@@ -71,8 +70,18 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
     def get_queryset(self):
         return observations_queryset(self.request).prefetch_related('request__windows', 'request__location').distinct()
 
+    def get_serializer_class(self):
+        if self.action == 'cancel':
+            return import_string(settings.SERIALIZERS['observations']['Cancel'])
+        elif self.action == 'filters':
+            return import_string(settings.SERIALIZERS['observations']['ObservationFilters'])
+        else:
+            return import_string(settings.SERIALIZERS['observations']['Observation'])
+
     @action(detail=False, methods=['get'])
     def filters(self, request):
+        """ Endpoint for querying the currently available observation filters
+        """
         obs_filter_options = {'fields': [], 'choice_fields': []}
         for filter_name, filter_field in self.filter_class.get_filters().items():
             if hasattr(filter_field.field, 'choices'):
@@ -163,7 +172,7 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
 class ConfigurationStatusViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAdminUser,)
     http_method_names = ['get', 'patch']
-    schema=AutoSchema(tags=['Observations'])
+    schema=ObservationPortalSchema(tags=['Observations'])
     serializer_class = import_string(settings.SERIALIZERS['observations']['ConfigurationStatus'])
     filter_class = ConfigurationStatusFilter
     filter_backends = (
