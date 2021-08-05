@@ -1,3 +1,4 @@
+from observation_portal.common.utils import get_queryset_field_values
 from rest_framework import serializers
 from django.utils.translation import ugettext as _
 from django.utils.module_loading import import_string
@@ -21,7 +22,7 @@ class ProposalSerializer(serializers.ModelSerializer):
         exclude = ('direct_submission', )
 
 
-class SemesterSerialzer(serializers.ModelSerializer):
+class SemesterSerializer(serializers.ModelSerializer):
     class Meta:
         model = Semester
         fields = ('id', 'start', 'end')
@@ -29,11 +30,11 @@ class SemesterSerialzer(serializers.ModelSerializer):
 
 class ProposalInviteSerializer(serializers.ModelSerializer):
     emails = serializers.ListField(child=serializers.EmailField(), write_only=True)
+    message = serializers.CharField(read_only=True, default='5 Co Investigator(s) invited')
 
     class Meta:
+        fields = ('emails', 'message')
         model = ProposalInvite
-        fields = ('id', 'role', 'email', 'sent', 'used', 'proposal', 'emails')
-        read_only_fields = ('role', 'email', 'proposal')
 
     def validate_emails(self, emails):
         user = self.context.get('user')
@@ -53,14 +54,81 @@ class MembershipSerializer(serializers.ModelSerializer):
 
 
 class ProposalNotificationSerializer(serializers.Serializer):
-    enabled = serializers.BooleanField()
+    enabled = serializers.BooleanField(write_only=True)
+    message = serializers.CharField(read_only=True, default='Preferences saved')
 
 
 class TimeLimitSerializer(serializers.Serializer):
-    time_limit_hours = serializers.FloatField()
+    time_limit_hours = serializers.FloatField(write_only=True)
+    message = serializers.CharField(read_only=True, default='All CI time limits set to 20 hours')
 
     def validate(self, data):
         membership = self.context.get('membership')
         if membership and membership.role == Membership.PI:
             raise serializers.ValidationError(_('You cannot set the limit on a PI membership'))
         return data
+
+
+class ProposalTagsSerializer(serializers.Serializer):
+    tags = serializers.SerializerMethodField()
+
+    def get_tags(self, obj):
+        return get_queryset_field_values(obj, 'tags')
+
+
+class SemesterProposalSerializer(serializers.ModelSerializer):
+    # TODO: Figure out a way to get the Serializer data type right
+    semesters = serializers.SerializerMethodField()
+    allocation = serializers.SerializerMethodField()
+    pis = serializers.SerializerMethodField()
+    sca_name = serializers.SerializerMethodField()
+    sca_id = serializers.SerializerMethodField()
+    class Meta:
+        model = Proposal
+        fields = ('id', 'title', 'abstract', 'allocation', 'semesters', 'pis', 'sca_id', 'sca_name')
+        read_only_fields = fields
+
+    def get_pis(self, obj):
+        return [
+            {
+                'first_name': mem.user.first_name,
+                'last_name': mem.user.last_name,
+                'institution': mem.user.profile.institution
+            } for mem in obj.membership_set.all() if mem.role == Membership.PI
+        ]
+    
+    def get_sca_name(self, obj):
+        return obj.sca.name
+    
+    def get_sca_id(self, obj):
+        return obj.sca.id
+
+    def get_allocation(self, obj):
+        return obj.allocation(semester=self.context.get('semester'))
+
+    def get_semesters(self, obj):
+        return obj.semester_set.distinct().values_list('id', flat=True)
+
+    
+class SemesterTimeAllocationSerializer(serializers.Serializer):
+    timeallocation_dict = serializers.SerializerMethodField()
+
+    def get_timeallocation_dict(self, obj):
+        memberships = obj.proposal.membership_set
+        ta_dict = obj.as_dict(exclude=['proposal', 'semester'])
+        ta_dict['proposal'] = {
+            'notes': obj.proposal.notes,
+            'id': obj.proposal.id,
+            'tac_priority': obj.proposal.tac_priority,
+            'num_users': memberships.count(),
+            'pis': [
+                {
+                'first_name': mem.user.first_name,
+                'last_name': mem.user.last_name
+                } for mem in memberships.all() if mem.role == Membership.PI
+            ]
+        }
+
+        return ta_dict
+
+

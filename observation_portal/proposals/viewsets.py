@@ -1,3 +1,4 @@
+from observation_portal.proposals.serializers import ProposalTagsSerializer, SemesterTimeAllocationSerializer
 from rest_framework import viewsets, filters, mixins
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
@@ -10,19 +11,30 @@ from django.conf import settings
 
 from observation_portal.accounts.permissions import IsPrincipleInvestigator
 from observation_portal.common.mixins import ListAsDictMixin, DetailAsDictMixin
-from observation_portal.common.utils import get_queryset_field_values
+from observation_portal.common.schema import ObservationPortalSchema
 from observation_portal.proposals.filters import SemesterFilter, ProposalFilter, MembershipFilter, ProposalInviteFilter
 from observation_portal.proposals.models import Proposal, Semester, ProposalNotification, Membership, ProposalInvite
 
 
 class ProposalViewSet(DetailAsDictMixin, ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
     permission_classes = (IsAuthenticated,)
-    schema=AutoSchema(tags=['Proposals'])
-    serializer_class = import_string(settings.SERIALIZERS['proposals']['Proposal'])
+    schema=ObservationPortalSchema(tags=['Proposals'])
     filter_class = ProposalFilter
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
     ordering = ('-id',)
 
+    def get_serializer_class(self):
+        if self.action == 'notification':
+            return import_string(settings.SERIALIZERS['proposals']['ProposalNotification'])
+        elif self.action == 'invite':
+            return import_string(settings.SERIALIZERS['proposals']['ProposalInvite'])
+        elif self.action == 'globallimit':
+            return import_string(settings.SERIALIZERS['proposals']['TimeLimit'])
+        elif self.action == 'tags':
+            return import_string(settings.SERIALIZERS['proposals']['ProposalTags'])
+        else:
+            return import_string(settings.SERIALIZERS['proposals']['Proposal'])
+    
     def get_queryset(self):
         if self.request.user.is_staff and self.request.user.profile.staff_view:
             return Proposal.objects.all().prefetch_related(
@@ -72,18 +84,25 @@ class ProposalViewSet(DetailAsDictMixin, ListAsDictMixin, viewsets.ReadOnlyModel
 
     @action(detail=False, methods=['get'])
     def tags(self, request, pk=None):
-        proposal_tags = get_queryset_field_values(self.get_queryset(), 'tags')
-        return Response(list(proposal_tags))
+        proposal_tags = ProposalTagsSerializer(self.get_queryset()).data
+        return Response(list(proposal_tags['tags']))
 
 
 class SemesterViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = (AllowAny,)
-    schema=AutoSchema(tags=['Proposals'])
-    serializer_class = import_string(settings.SERIALIZERS['proposals']['Semester'])
+    schema=ObservationPortalSchema(tags=['Proposals'])
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
     filter_class = SemesterFilter
     ordering = ('-start',)
     queryset = Semester.objects.all()
+
+    def get_serializer_class(self):
+        if self.action == 'proposals':
+            return import_string(settings.SERIALIZERS['proposals']['SemesterProposals'])
+        if self.action == 'timeallocations':
+            return import_string(settings.SERIALIZERS['proposals']['SemesterTimeAllocations'])
+        else:
+            return import_string(settings.SERIALIZERS['proposals']['Semester'])
 
     @action(detail=True, methods=['get'])
     def proposals(self, request, pk=None):
@@ -94,24 +113,12 @@ class SemesterViewSet(viewsets.ReadOnlyModelViewSet):
             'sca', 'membership_set', 'membership_set__user', 'membership_set__user__profile',
             'semester_set', 'timeallocation_set'
         ).distinct().order_by('sca__name')
+        serializer = import_string(settings.SERIALIZERS['proposals']['SemesterProposals'])
         results = []
         for proposal in proposals:
-            results.append({
-                'id': proposal.id,
-                'title': proposal.title,
-                'abstract': proposal.abstract,
-                'allocation': proposal.allocation(semester=semester),
-                'pis': [
-                    {
-                        'first_name': mem.user.first_name,
-                        'last_name': mem.user.last_name,
-                        'institution': mem.user.profile.institution
-                    } for mem in proposal.membership_set.all() if mem.role == Membership.PI
-                ],
-                'sca_id': proposal.sca.id,
-                'sca_name': proposal.sca.name,
-                'semesters': proposal.semester_set.distinct().values_list('id', flat=True)
-            })
+            data = serializer(proposal).data
+            data['allocation'] = proposal.allocation(semester=semester)
+            results.append(data)
         return Response(results)
 
     @action(detail=True, methods=['get'], permission_classes=(IsAdminUser,))
@@ -121,27 +128,14 @@ class SemesterViewSet(viewsets.ReadOnlyModelViewSet):
         ).distinct()
         results = []
         for timeallocation in timeallocations:
-            memberships = timeallocation.proposal.membership_set
-            timeallocation_dict = timeallocation.as_dict(exclude=['proposal', 'semester'])
-            timeallocation_dict['proposal'] = {
-                'notes': timeallocation.proposal.notes,
-                'id': timeallocation.proposal.id,
-                'tac_priority': timeallocation.proposal.tac_priority,
-                'num_users': memberships.count(),
-                'pis': [
-                    {
-                        'first_name': mem.user.first_name,
-                        'last_name': mem.user.last_name
-                    } for mem in memberships.all() if mem.role == Membership.PI
-                ]
-            }
-            results.append(timeallocation_dict)
+            data = SemesterTimeAllocationSerializer(timeallocation).data
+            results.append(data['timeallocation_dict'])
         return Response(results)
 
 
 class MembershipViewSet(ListAsDictMixin, DetailAsDictMixin, mixins.DestroyModelMixin, viewsets.ReadOnlyModelViewSet):
     http_method_names = ('get', 'head', 'options', 'post', 'delete')
-    schema=AutoSchema(tags=['Proposals'])
+    schema=ObservationPortalSchema(tags=['Proposals'])
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
     filter_class = MembershipFilter
     serializer_class = import_string(settings.SERIALIZERS['proposals']['Membership'])
@@ -191,7 +185,7 @@ class MembershipViewSet(ListAsDictMixin, DetailAsDictMixin, mixins.DestroyModelM
 
 class ProposalInviteViewSet(mixins.DestroyModelMixin, viewsets.ReadOnlyModelViewSet):
     http_method_names = ('get', 'head', 'options', 'delete')
-    schema=AutoSchema(tags=['Proposals'])
+    schema=ObservationPortalSchema(tags=['Proposals'])
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
     filter_class = ProposalInviteFilter
     serializer_class = import_string(settings.SERIALIZERS['proposals']['ProposalInvite'])
