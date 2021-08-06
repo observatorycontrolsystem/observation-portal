@@ -117,6 +117,7 @@ class SemesterViewSet(viewsets.ReadOnlyModelViewSet):
         results = []
         for proposal in proposals:
             data = serializer(proposal).data
+            # TODO: Figure out how to get this in the serializer
             data['allocation'] = proposal.allocation(semester=semester)
             results.append(data)
         return Response(results)
@@ -129,7 +130,7 @@ class SemesterViewSet(viewsets.ReadOnlyModelViewSet):
         results = []
         for timeallocation in timeallocations:
             data = SemesterTimeAllocationSerializer(timeallocation).data
-            results.append(data['timeallocation_dict'])
+            results.append(data)
         return Response(results)
 
 

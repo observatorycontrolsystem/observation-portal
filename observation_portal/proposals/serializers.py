@@ -33,8 +33,9 @@ class ProposalInviteSerializer(serializers.ModelSerializer):
     message = serializers.CharField(read_only=True, default='5 Co Investigator(s) invited')
 
     class Meta:
-        fields = ('emails', 'message')
         model = ProposalInvite
+        fields = ('id', 'role', 'email', 'sent', 'used', 'proposal', 'emails')
+        read_only_fields = ('role', 'email', 'proposal')
 
     def validate_emails(self, emails):
         user = self.context.get('user')
@@ -77,7 +78,6 @@ class ProposalTagsSerializer(serializers.Serializer):
 
 
 class SemesterProposalSerializer(serializers.ModelSerializer):
-    # TODO: Figure out a way to get the Serializer data type right
     semesters = serializers.SerializerMethodField()
     allocation = serializers.SerializerMethodField()
     pis = serializers.SerializerMethodField()
@@ -109,26 +109,49 @@ class SemesterProposalSerializer(serializers.ModelSerializer):
     def get_semesters(self, obj):
         return obj.semester_set.distinct().values_list('id', flat=True)
 
-    
-class SemesterTimeAllocationSerializer(serializers.Serializer):
-    timeallocation_dict = serializers.SerializerMethodField()
 
-    def get_timeallocation_dict(self, obj):
-        memberships = obj.proposal.membership_set
-        ta_dict = obj.as_dict(exclude=['proposal', 'semester'])
-        ta_dict['proposal'] = {
-            'notes': obj.proposal.notes,
-            'id': obj.proposal.id,
-            'tac_priority': obj.proposal.tac_priority,
-            'num_users': memberships.count(),
-            'pis': [
-                {
+class ProposalTimeAllocationProposalDictSerializer(serializers.Serializer):
+    notes = serializers.SerializerMethodField()
+    id = serializers.SerializerMethodField()
+    tac_priority = serializers.SerializerMethodField()
+    num_users = serializers.SerializerMethodField()
+    pis = serializers.SerializerMethodField()
+
+    def get_notes(self, obj):
+        return obj.proposal.notes
+
+    def get_id(self, obj):
+        return obj.proposal.id
+
+    def get_tac_priority(self, obj):
+        return obj.proposal.tac_priority
+
+    def get_num_users(self, obj):
+        return obj.proposal.membership_set.count()
+
+    def get_pis(self, obj):
+        return [
+            {
                 'first_name': mem.user.first_name,
                 'last_name': mem.user.last_name
-                } for mem in memberships.all() if mem.role == Membership.PI
-            ]
-        }
+            } for mem in obj.proposal.membership_set.all() if mem.role == Membership.PI
+        ]
 
-        return ta_dict
+    
+class SemesterTimeAllocationSerializer(serializers.Serializer):
+    proposal = serializers.SerializerMethodField(read_only=True)
+    timeallocation_dict = serializers.SerializerMethodField(read_only=True)
 
+    # return the list of time allocations without the JSON field name
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['timeallocation_dict']['proposal'] = representation['proposal']
+        del representation['proposal']
+        return representation['timeallocation_dict']
 
+    def get_proposal(self, obj):
+        return ProposalTimeAllocationProposalDictSerializer(obj).data
+
+    # TODO: Need to figure out how to get the JSON structure from as_dict()
+    def get_timeallocation_dict(self, obj):
+        return obj.as_dict(exclude=['proposal', 'semester'])    
