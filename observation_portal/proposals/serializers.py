@@ -34,7 +34,7 @@ class ProposalInviteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ProposalInvite
-        fields = ('id', 'role', 'email', 'sent', 'used', 'proposal', 'emails')
+        fields = ('id', 'role', 'email', 'sent', 'used', 'proposal', 'emails', 'message')
         read_only_fields = ('role', 'email', 'proposal')
 
     def validate_emails(self, emails):

@@ -1,5 +1,5 @@
-from observation_portal.requestgroups.serializers import TelescopeStatesSerializer
 from django.core.cache import cache
+from django_filters.rest_framework.backends import DjangoFilterBackend
 from rest_framework.response import Response
 from rest_framework.schemas.openapi import AutoSchema
 from rest_framework.permissions import AllowAny, IsAdminUser
@@ -12,13 +12,17 @@ from datetime import timedelta
 from rest_framework.views import APIView
 import logging
 
+from observation_portal import settings
 from observation_portal.common.configdb import configdb
 from observation_portal.common.telescope_states import (
-    TelescopeStates, get_telescope_availability_per_day, combine_telescope_availabilities_by_site_and_class,
+    get_telescope_availability_per_day, combine_telescope_availabilities_by_site_and_class,
     ElasticSearchException
 )
 from observation_portal.requestgroups.request_utils import get_airmasses_for_request_at_sites
 from observation_portal.requestgroups.contention import Contention, Pressure
+from observation_portal.requestgroups.filters import TelescopeStatesFilter
+from observation_portal.requestgroups.serializers import TelescopeStatesSerializer
+from observation_portal.common.mixins import GetSerializerMixin
 
 logger = logging.getLogger(__name__)
 
@@ -37,12 +41,15 @@ def get_start_end_parameters(request, default_days_back):
     return start, end
 
 
-class TelescopeStatesView(APIView):
+class TelescopeStatesView(APIView, GetSerializerMixin):
     """
     Retrieves the telescope states for all telescopes between the start and end times
     """
     permission_classes = (AllowAny,)
     schema=AutoSchema(tags=['Utility'])
+    filter_class = TelescopeStatesFilter
+    filter_backends = (DjangoFilterBackend,)
+    serializer_class = import_string(settings.SERIALIZERS['requestgroups']['TelescopeStates'])
 
     def get(self, request):
         try:

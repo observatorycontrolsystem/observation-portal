@@ -46,3 +46,13 @@ class RequestFilter(django_filters.FilterSet):
     class Meta:
         model = Request
         fields = ('state',)
+
+
+class TelescopeStatesFilter(django_filters.FilterSet):
+    start = django_filters.DateTimeFilter()
+    end = django_filters.DateTimeFilter()
+    site = django_filters.MultipleChoiceFilter()
+    telescopes = django_filters.MultipleChoiceFilter()
+
+    class Meta:
+        fields = ('start', 'end', 'site', 'telescopes',)
