@@ -1,3 +1,4 @@
+from observation_portal.requestgroups.serializers import TelescopeStatesSerializer
 from django.core.cache import cache
 from rest_framework.response import Response
 from rest_framework.schemas.openapi import AutoSchema
@@ -50,8 +51,11 @@ class TelescopeStatesView(APIView):
             return HttpResponseBadRequest(str(e))
         sites = request.query_params.getlist('site')
         telescopes = request.query_params.getlist('telescope')
-        telescope_states = TelescopeStates(start, end, sites=sites, telescopes=telescopes).get()
-        str_telescope_states = {str(k): v for k, v in telescope_states.items()}
+
+        str_telescope_states = TelescopeStatesSerializer({'start': start,
+                                                          'end': end,
+                                                          'sites': sites,
+                                                          'telescopes': telescopes}).data
 
         return Response(str_telescope_states)
 

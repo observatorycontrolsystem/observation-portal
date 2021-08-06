@@ -3,6 +3,7 @@ import logging
 from math import isnan
 from json import JSONDecodeError
 from abc import ABC, abstractmethod
+from observation_portal.common.telescope_states import TelescopeStates
 
 from cerberus import Validator
 from rest_framework import serializers
@@ -14,6 +15,7 @@ from django.utils import timezone
 from django.utils.module_loading import import_string
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
+from rest_framework.fields import SerializerMethodField
 
 from observation_portal.proposals.models import TimeAllocation, Membership
 from observation_portal.requestgroups.models import (
@@ -902,3 +904,32 @@ class DraftRequestGroupSerializer(serializers.ModelSerializer):
         except JSONDecodeError:
             raise serializers.ValidationError('Content must be valid JSON')
         return data
+
+
+class TelescopeStatesSerializer(serializers.Serializer):
+    # TODO: We need to be able to introspect this field to get the serializer beneath
+    telescope_states = SerializerMethodField()
+
+    def to_representation(self, instance):
+        return super().to_representation(instance)['telescope_states']
+
+    def get_telescope_states(self, obj):
+        telescope_states_dict = TelescopeStates(obj['start'], 
+                                                obj['end'], 
+                                                obj['sites'], 
+                                                obj['telescopes']).get()
+        return_dict = {}
+        for k, v in telescope_states_dict.items():
+            return_list= []
+            for value in v:
+                return_list.append(TelescopeStateSerializer(value).data)
+            return_dict[str(k)] = return_list
+        return return_dict
+
+
+class TelescopeStateSerializer(serializers.Serializer):
+    telescope = serializers.CharField()
+    event_type = serializers.CharField()
+    event_reason = serializers.CharField()
+    start = serializers.DateTimeField()
+    end = serializers.DateTimeField()
