@@ -49,8 +49,10 @@ def expand_mosaic_pattern(expansion_details):
 
     for offset in offsets:
         configuration_copy = deepcopy(configuration)
-        configuration_copy['target']['ra'] += (offset[0] / 3600.0)
         configuration_copy['target']['dec'] += (offset[1] / 3600.0)
+        cos_dec = cos(radians(configuration_copy['target']['dec']))
+        cos_dec = max(cos_dec, 10e-4)
+        configuration_copy['target']['ra'] += (offset[0] / 3600.0 / cos_dec)
         configurations.append(configuration_copy)
 
     request_dict['configurations'] = configurations
