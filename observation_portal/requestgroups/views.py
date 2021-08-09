@@ -14,14 +14,11 @@ import logging
 
 from observation_portal import settings
 from observation_portal.common.configdb import configdb
-from observation_portal.common.telescope_states import (
-    get_telescope_availability_per_day, combine_telescope_availabilities_by_site_and_class,
-    ElasticSearchException
-)
+from observation_portal.common.telescope_states import ElasticSearchException
 from observation_portal.requestgroups.request_utils import get_airmasses_for_request_at_sites
 from observation_portal.requestgroups.contention import Contention, Pressure
-from observation_portal.requestgroups.filters import TelescopeStatesFilter
-from observation_portal.requestgroups.serializers import TelescopeStatesSerializer
+from observation_portal.requestgroups.filters import TelescopeAvailabilityFilter, TelescopeStatesFilter
+from observation_portal.requestgroups.serializers import TelescopeAvailabilitySerializer, TelescopeStatesSerializer
 from observation_portal.common.mixins import GetSerializerMixin
 
 logger = logging.getLogger(__name__)
@@ -73,6 +70,8 @@ class TelescopeAvailabilityView(APIView):
     """
     permission_classes = (AllowAny,)
     schema=AutoSchema(tags=['Utility'])
+    filter_class = TelescopeAvailabilityFilter
+    filter_backends = (DjangoFilterBackend,)
 
     def get(self, request):
         try:
@@ -82,18 +81,19 @@ class TelescopeAvailabilityView(APIView):
         combine = request.query_params.get('combine')
         sites = request.query_params.getlist('site')
         telescopes = request.query_params.getlist('telescope')
+
+
+
         try:
-            telescope_availability = get_telescope_availability_per_day(
-                start, end, sites=sites, telescopes=telescopes
-            )
+            telescope_availability = TelescopeAvailabilitySerializer({'start': start,
+                                                                      'end': end,
+                                                                      'sites': sites,
+                                                                      'telescopes': telescopes,
+                                                                      'combine': combine}).data
         except ElasticSearchException:
             logger.warning('Error connecting to ElasticSearch. Is SBA reachable?')
             return Response('ConnectionError')
-        if combine:
-            telescope_availability = combine_telescope_availabilities_by_site_and_class(telescope_availability)
-        str_telescope_availability = {str(k): v for k, v in telescope_availability.items()}
-
-        return Response(str_telescope_availability)
+        return Response(telescope_availability)
 
 
 class AirmassView(APIView):

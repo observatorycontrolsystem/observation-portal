@@ -1,9 +1,8 @@
 import json
 import logging
-from math import isnan
 from json import JSONDecodeError
 from abc import ABC, abstractmethod
-from observation_portal.common.telescope_states import TelescopeStates
+from observation_portal.common.telescope_states import TelescopeStates, combine_telescope_availabilities_by_site_and_class, get_telescope_availability_per_day
 
 from cerberus import Validator
 from rest_framework import serializers
@@ -933,3 +932,21 @@ class TelescopeStateSerializer(serializers.Serializer):
     event_reason = serializers.CharField()
     start = serializers.DateTimeField()
     end = serializers.DateTimeField()
+
+
+# TODO: We need to be able to document the structure of this
+class TelescopeAvailabilitySerializer(serializers.Serializer):
+    telescope_availability = SerializerMethodField()
+
+    def to_representation(self, instance):
+        return super().to_representation(instance)['telescope_availability']
+
+    def get_telescope_availability(self, obj):
+        telescope_availability = get_telescope_availability_per_day(obj['start'], obj['end'], telescopes=obj.get('telescopes'), sites=obj.get('sites'))
+        if obj.get('combine', False):
+            telescope_availability = combine_telescope_availabilities_by_site_and_class(telescope_availability)
+
+        str_telescope_availability = {}
+        for k, v in telescope_availability.items():
+            str_telescope_availability[str(k)] = v
+        return str_telescope_availability
