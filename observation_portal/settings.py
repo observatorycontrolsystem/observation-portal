@@ -331,7 +331,7 @@ SERIALIZERS = {
         'RequestGroup': os.getenv('REQUESTGROUPS_REQUESTGROUP_SERIALIZER', 'observation_portal.requestgroups.serializers.RequestGroupSerializer'),
         'DraftRequestGroup': os.getenv('REQUESTGROUPS_DRAFTREQUESTGROUP_SERIALIZER', 'observation_portal.requestgroups.serializers.DraftRequestGroupSerializer'),
         'Dither': os.getenv('REQUESTGROUPS_DITHER_SERIALIZER', 'observation_portal.requestgroups.serializers.DitherSerializer'),
-        'TelescopeStates': os.getenv('REQUESTGROUPS_TELESCOPESTATES_SERIALIZER', 'observation_portal.requestgroups.serializers.TelescopeStatesSerializer'),
+        'TelescopeStates': os.getenv('REQUESTGROUPS_TELESCOPESTATES_SERIALIZER', 'observation_portal.requestgroups.serializers.AllTelescopeStatesSerializer'),
     },
     'proposals': {
         'Proposal': os.getenv('PROPOSALS_PROPOSAL_SERIALIZER', 'observation_portal.proposals.serializers.ProposalSerializer'),

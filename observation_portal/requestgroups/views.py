@@ -10,15 +10,16 @@ from django.conf import settings
 from dateutil.parser import parse
 from datetime import timedelta
 from rest_framework.views import APIView
+from rest_framework import status, serializers
 import logging
 
 from observation_portal import settings
 from observation_portal.common.configdb import configdb
-from observation_portal.common.telescope_states import ElasticSearchException
+from observation_portal.common.telescope_states import ElasticSearchException, TelescopeStates
 from observation_portal.requestgroups.request_utils import get_airmasses_for_request_at_sites
 from observation_portal.requestgroups.contention import Contention, Pressure
 from observation_portal.requestgroups.filters import TelescopeAvailabilityFilter, TelescopeStatesFilter
-from observation_portal.requestgroups.serializers import TelescopeAvailabilitySerializer, TelescopeStatesSerializer
+from observation_portal.requestgroups.serializers import TelescopeAvailabilitySerializer
 from observation_portal.common.mixins import GetSerializerMixin
 
 logger = logging.getLogger(__name__)
@@ -43,7 +44,7 @@ class TelescopeStatesView(APIView, GetSerializerMixin):
     Retrieves the telescope states for all telescopes between the start and end times
     """
     permission_classes = (AllowAny,)
-    schema=AutoSchema(tags=['Utility'])
+    schema = AutoSchema(tags=['Utility'])
     filter_class = TelescopeStatesFilter
     filter_backends = (DjangoFilterBackend,)
     serializer_class = import_string(settings.SERIALIZERS['requestgroups']['TelescopeStates'])
@@ -56,12 +57,13 @@ class TelescopeStatesView(APIView, GetSerializerMixin):
         sites = request.query_params.getlist('site')
         telescopes = request.query_params.getlist('telescope')
 
-        str_telescope_states = TelescopeStatesSerializer({'start': start,
-                                                          'end': end,
-                                                          'sites': sites,
-                                                          'telescopes': telescopes}).data
-
-        return Response(str_telescope_states)
+        telescope_states = TelescopeStates(start, end, sites=sites, telescopes=telescopes).get()
+        str_telescope_states = {str(k): v for k, v in telescope_states.items()}
+        serializer = self.get_serializer(data={'data': str_telescope_states})
+        if serializer.is_valid():
+            return Response(serializer.validated_data)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class TelescopeAvailabilityView(APIView):

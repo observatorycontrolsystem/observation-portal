@@ -2,7 +2,7 @@ import json
 import logging
 from json import JSONDecodeError
 from abc import ABC, abstractmethod
-from observation_portal.common.telescope_states import TelescopeStates, combine_telescope_availabilities_by_site_and_class, get_telescope_availability_per_day
+from observation_portal.common.telescope_states import combine_telescope_availabilities_by_site_and_class, get_telescope_availability_per_day
 
 from cerberus import Validator
 from rest_framework import serializers
@@ -25,7 +25,7 @@ from observation_portal.requestgroups.models import DraftRequestGroup
 from observation_portal.common.state_changes import debit_ipp_time, TimeAllocationError, validate_ipp
 from observation_portal.requestgroups.target_helpers import TARGET_TYPE_HELPER_MAP
 from observation_portal.common.mixins import ExtraParamsFormatter
-from observation_portal.common.configdb import configdb, ConfigDB, ConfigDBException
+from observation_portal.common.configdb import configdb, ConfigDB
 from observation_portal.requestgroups.duration_utils import (
     get_total_request_duration, get_requestgroup_duration, get_total_duration_dict,
     get_instrument_configuration_duration, get_semester_in
@@ -905,33 +905,19 @@ class DraftRequestGroupSerializer(serializers.ModelSerializer):
         return data
 
 
-class TelescopeStatesSerializer(serializers.Serializer):
-    # TODO: We need to be able to introspect this field to get the serializer beneath
-    telescope_states = SerializerMethodField()
-
-    def to_representation(self, instance):
-        return super().to_representation(instance)['telescope_states']
-
-    def get_telescope_states(self, obj):
-        telescope_states_dict = TelescopeStates(obj['start'], 
-                                                obj['end'], 
-                                                obj['sites'], 
-                                                obj['telescopes']).get()
-        return_dict = {}
-        for k, v in telescope_states_dict.items():
-            return_list= []
-            for value in v:
-                return_list.append(TelescopeStateSerializer(value).data)
-            return_dict[str(k)] = return_list
-        return return_dict
-
-
 class TelescopeStateSerializer(serializers.Serializer):
     telescope = serializers.CharField()
     event_type = serializers.CharField()
     event_reason = serializers.CharField()
     start = serializers.DateTimeField()
     end = serializers.DateTimeField()
+
+
+class AllTelescopeStatesSerializer(serializers.Serializer):
+    data = serializers.DictField(
+        child=TelescopeStateSerializer(many=True),
+        source='*'
+    )
 
 
 # TODO: We need to be able to document the structure of this

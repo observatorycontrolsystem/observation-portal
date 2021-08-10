@@ -52,6 +52,7 @@ class TelescopeStatesFilter(django_filters.FilterSet):
     start = django_filters.DateTimeFilter()
     end = django_filters.DateTimeFilter()
     site = django_filters.MultipleChoiceFilter()
+    # FIXME: I think the view grabs the filter "telescope", not "telescopes"
     telescopes = django_filters.MultipleChoiceFilter()
 
     class Meta:
