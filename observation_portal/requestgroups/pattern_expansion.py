@@ -53,6 +53,9 @@ def expand_mosaic_pattern(expansion_details):
         cos_dec = cos(radians(configuration_copy['target']['dec']))
         cos_dec = max(cos_dec, 10e-4)
         configuration_copy['target']['ra'] += (offset[0] / 3600.0 / cos_dec)
+        extra_params = configuration_copy.get('extra_params', {})
+        extra_params['obs_recipe'] = 'Mosaic'
+        configuration_copy['extra_params'] = extra_params
         configurations.append(configuration_copy)
 
     request_dict['configurations'] = configurations
