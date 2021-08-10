@@ -1050,7 +1050,8 @@ class TestMosaicApi(SetTimeMixin, APITestCase):
         target2 = request['configurations'][1]['target']
         self.assertEqual(target1['ra'], self.request['configurations'][0]['target']['ra'])
         self.assertEqual(target1['dec'], self.request['configurations'][0]['target']['dec'])
-        self.assertEqual(target2['ra'], target1['ra'] + (dec_diff / 3600.0))
+        cos_dec = cos(radians(target2['dec']))
+        self.assertEqual(target2['ra'], target1['ra'] + (dec_diff / 3600.0) / cos_dec)
         self.assertEqual(target2['dec'], target1['dec'])
 
     def test_expansion_10_percent_overlap_spacing_grid(self):
@@ -1088,23 +1089,25 @@ class TestMosaicApi(SetTimeMixin, APITestCase):
         target2 = request['configurations'][2]['target']
         self.assertEqual(target1['ra'], self.request['configurations'][0]['target']['ra'])
         self.assertEqual(target1['dec'], self.request['configurations'][0]['target']['dec'])
-        self.assertEqual(target2['ra'], target1['ra'] + (ra_diff / 3600.0))
+        cos_dec = cos(radians(target2['dec']))
+        self.assertEqual(target2['ra'], target1['ra'] + (ra_diff / 3600.0) / cos_dec)
         self.assertEqual(target2['dec'], target1['dec'] + (dec_diff / 3600.0))
 
-        # now try a rotated 90 degree pattern to show ra changes by dec_diff and dec by ra_diff
+        # now try a rotated 90 degree pattern to show ra still changes by ra_diff due to overlap flipping in the serializer
         mosaic_data['orientation'] = 90.0
         response = self.client.post(reverse('api:requests-mosaic'), data=mosaic_data)
         self.assertEqual(response.status_code, 200)
         request = response.json()
         self.assertEqual(len(request['configurations']), 4)
-        # The 90 degree rotation will both change the sign of the dec_diff and make dec_diff apply in the ra direction
-        dec_diff *= -sin(radians(mosaic_data['orientation']))
+        # The 90 degree rotation will change the sign of the ra_diff. Ra_diff is still used due to the "flipping" of overlaps on rotation.
+        ra_diff *= -sin(radians(mosaic_data['orientation']))
         target1 = request['configurations'][0]['target']
         target2 = request['configurations'][2]['target']
+        cos_dec = cos(radians(target2['dec']))
         self.assertEqual(target1['ra'], self.request['configurations'][0]['target']['ra'])
         self.assertEqual(target1['dec'], self.request['configurations'][0]['target']['dec'])
-        self.assertEqual(target2['ra'], target1['ra'] + (dec_diff / 3600.0))
-        self.assertEqual(target2['dec'], target1['dec'] + (ra_diff / 3600.0))
+        self.assertEqual(target2['ra'], target1['ra'] + (ra_diff / 3600.0) / cos_dec)
+        self.assertEqual(target2['dec'], target1['dec'] + (dec_diff / 3600.0))
 
 
 class TestCadenceApi(SetTimeMixin, APITestCase):
