@@ -894,38 +894,34 @@ class MosaicSerializer(PatternExpansionSerializer):
         # point_overlap_percent and overwrite the line_spacing value
         if 'point_overlap_percent' in validated_data:
             instrument_type = data['request']['configurations'][0]['instrument_type']
-            orientation = configdb.get_average_ccd_orientation(instrument_type)
-            orientation += validated_data.get('orientation', 0.0)
-            orientation = orientation % 360
+            ccd_orientation = configdb.get_average_ccd_orientation(instrument_type)
+            pattern_orientation = validated_data.get('orientation', 0.0)
+            pattern_orientation = pattern_orientation % 360
             # Decide to flip the point/line overlapped sense based on general orientation
-            if orientation < 45 or orientation > 315:
+            if pattern_orientation < 45 or pattern_orientation > 315:
                 flip = False
-            elif orientation < 135:
+            elif pattern_orientation < 135:
                 flip = True
-            elif orientation < 225:
+            elif pattern_orientation < 225:
                 flip = False
-            elif orientation < 315:
+            elif pattern_orientation < 315:
                 flip = True
             ccd_size = configdb.get_ccd_size(instrument_type)
             pixel_scale = configdb.get_pixel_scale(instrument_type)
-            ## Old code for rotating the ccd dimensions for calculating point/line overlap - this looks bad for angles between 0-90
-            # coso = cos(radians(orientation))
-            # sino = sin(radians(orientation))
+            coso = cos(radians(ccd_orientation))
+            sino = sin(radians(ccd_orientation))
             # Rotate the ccd dimensions by the ccd orientation - needed so our % overlap is in the correct frame
-            # rotated_ccd_x = ccd_size['x'] * coso + ccd_size['y'] * sino
-            # rotated_ccd_y = ccd_size['x'] * -sino + ccd_size['y'] * coso
-            # print(rotated_ccd_x)
-            # print(rotated_ccd_y)
-            # validated_data['point_spacing'] = abs(rotated_ccd_y) * pixel_scale * ((100.0 - validated_data['point_overlap_percent']) / 100.0)
+            rotated_ccd_x = ccd_size['x'] * coso + ccd_size['y'] * sino
+            rotated_ccd_y = ccd_size['x'] * -sino + ccd_size['y'] * coso
             if 'line_overlap_percent' not in validated_data:
                 validated_data['line_overlap_percent'] = validated_data['point_overlap_percent']
+            validated_data['point_spacing'] = abs(rotated_ccd_y) * pixel_scale * ((100.0 - validated_data['point_overlap_percent']) / 100.0)
+            validated_data['line_spacing'] = abs(rotated_ccd_x) * pixel_scale * ((100.0 - validated_data['line_overlap_percent']) / 100.0)
             if flip:
-                validated_data['point_spacing'] = ccd_size['x'] * pixel_scale * ((100.0 - validated_data['line_overlap_percent']) / 100.0)
-                validated_data['line_spacing'] = ccd_size['y'] * pixel_scale * ((100.0 - validated_data['point_overlap_percent']) / 100.0)
-            else:
-                validated_data['point_spacing'] = ccd_size['y'] * pixel_scale * ((100.0 - validated_data['point_overlap_percent']) / 100.0)
-                validated_data['line_spacing'] = ccd_size['x'] * pixel_scale * ((100.0 - validated_data['line_overlap_percent']) / 100.0)
-            # validated_data['line_spacing'] = abs(rotated_ccd_x) * pixel_scale * ((100.0 - validated_data['line_overlap_percent']) / 100.0)
+                # If the pattern orientation is closer to 90 or 270 (within 45 degrees), then flip the point/line spacing to better align with pattern orientation
+                temp = validated_data['line_spacing']
+                validated_data['line_spacing'] = validated_data['point_spacing']
+                validated_data['point_spacing'] = temp
         elif 'point_spacing' not in validated_data:
             # One of point_spacing or point_overlap_percent must be specified
             raise serializers.ValidationError(_("Must specify one of point_spacing or point_overlap_percent"))
