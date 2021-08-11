@@ -4,6 +4,7 @@ from rest_framework import viewsets, filters
 from rest_framework.decorators import action, list_route
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAdminUser, IsAuthenticated
+from rest_framework import status
 from django.utils import timezone
 from django.db.models import Prefetch
 from django_filters.rest_framework import DjangoFilterBackend
@@ -153,7 +154,7 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
             request_group.state = 'CANCELED'
             request_group.save()
         except InvalidStateChange as exc:
-            return Response({'errors': [str(exc)]}, status=400)
+            return Response({'errors': [str(exc)]}, status=status.HTTP_400_BAD_REQUEST)
         return Response(import_string(settings.SERIALIZERS['requestgroups']['RequestGroup'])(request_group).data)
 
     @list_route(methods=['post'])
@@ -190,13 +191,13 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
                     expanded_requests.extend(expand_cadence_request(cadence_request_serializer.validated_data,
                                                                     request.user.is_staff))
                 else:
-                    return Response(cadence_request_serializer.errors, status=400)
+                    return Response(cadence_request_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             else:
                 expanded_requests.append(req)
 
         # if we couldn't find any valid cadence requests, return that as an error
         if not expanded_requests:
-            return Response({'errors': 'No visible requests within cadence window parameters'}, status=400)
+            return Response({'errors': 'No visible requests within cadence window parameters'}, status=status.HTTP_400_BAD_REQUEST)
 
         # now replace the originally sent requests with the cadence requests and send it back
         ret_data = request.data.copy()
@@ -206,7 +207,7 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
             ret_data['operator'] = 'MANY'
         request_group_serializer = import_string(settings.SERIALIZERS['requestgroups']['RequestGroup'])(data=ret_data, context={'request': request})
         if not request_group_serializer.is_valid():
-            return Response(request_group_serializer.errors, status=400)
+            return Response(request_group_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         return Response(ret_data)
 
 
@@ -259,7 +260,7 @@ class RequestViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
         # Check that the mosaic parameters specified are valid
         mosaic_serializer = import_string(settings.SERIALIZERS['requestgroups']['Mosaic'])(data=request.data)
         if not mosaic_serializer.is_valid():
-            return Response(mosaic_serializer.errors, status=400)
+            return Response(mosaic_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         # Expand the configurations within the request based on the mosaic pattern specified
         request_dict = expand_mosaic_pattern(mosaic_serializer.validated_data)
@@ -291,7 +292,7 @@ class ConfigurationViewSet(viewsets.GenericViewSet):
         # Check that the dither parameters specified are valid
         dither_serializer = self.get_serializer(data=request.data)
         if not dither_serializer.is_valid():
-            return Response(dither_serializer.errors, status=400)
+            return Response(dither_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         # Expand the instrument_configs within the configuration based on the dither pattern specified
         configuration_dict = expand_dither_pattern(dither_serializer.validated_data)

@@ -66,7 +66,7 @@ def expand_pattern(expansion_details):
     '''
     Takes in just a set of pattern expansion parameters and returns a set of ra/dec offsets following
     the pattern parameters provided
-    :param expansion_details: a valide dictionary containing a number of pattern expansion
+    :param expansion_details: a valid dictionary containing a number of pattern expansion
                            parameters such as `num_points`, `pattern`, `point_spacing` and others.
     :return: list of x/y (ra/dec) offset tuples
     '''

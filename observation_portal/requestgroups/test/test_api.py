@@ -877,7 +877,7 @@ class TestDitherApi(SetTimeMixin, APITestCase):
             'pattern': 'line',
             'point_spacing': 2
         }
-        response = self.client.post(reverse('api:configuration-dither'), data=dither_data)
+        response = self.client.post(reverse('api:configurations-dither'), data=dither_data)
         config_dict = response.json()
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(config_dict['instrument_configs']), 4)
@@ -893,7 +893,7 @@ class TestDitherApi(SetTimeMixin, APITestCase):
             'pattern': 'line',
             'point_spacing': 2
         }
-        response = self.client.post(reverse('api:configuration-dither'), data=dither_data)
+        response = self.client.post(reverse('api:configurations-dither'), data=dither_data)
         self.assertEqual(response.status_code, 400)
         self.assertIn('Must specify num_points when selecting a line or spiral pattern', str(response.content))
 
@@ -905,7 +905,7 @@ class TestDitherApi(SetTimeMixin, APITestCase):
             'pattern': 'grid',
             'point_spacing': 2
         }
-        response = self.client.post(reverse('api:configuration-dither'), data=dither_data)
+        response = self.client.post(reverse('api:configurations-dither'), data=dither_data)
         self.assertEqual(response.status_code, 400)
         self.assertIn('Must specify num_rows and num_columns when selecting a grid pattern', str(response.content))
 
@@ -919,7 +919,7 @@ class TestDitherApi(SetTimeMixin, APITestCase):
             'point_spacing': 2,
             'orientation': 90
         }
-        response = self.client.post(reverse('api:configuration-dither'), data=dither_data)
+        response = self.client.post(reverse('api:configurations-dither'), data=dither_data)
         self.assertEqual(response.status_code, 200)
         config_dict = response.json()
         offset_diff_dec = abs(config_dict['instrument_configs'][2]['extra_params']['offset_dec'] - config_dict['instrument_configs'][0]['extra_params']['offset_dec'])
