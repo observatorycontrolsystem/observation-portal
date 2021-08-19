@@ -453,6 +453,19 @@ class ConfigDB(object):
             if instrument_type_code.upper() == instrument['instrument_type']['code'].upper():
                 return instrument['science_cameras'][0]['camera_type']['max_rois']
 
+    def get_average_ccd_orientation(self, instrument_type_code):
+        ''' Gets an average of the individual camera orientations for a given instrument_type. Ideally,
+            all cameras of a given instrument_type will have the same mounted orientation.
+        '''
+        sum_orientation = 0.0
+        orientation_count = 0
+        for instrument in self.get_instruments():
+            if instrument_type_code.upper() == instrument['instrument_type']['code'].upper():
+                for camera in instrument['science_cameras']:
+                    sum_orientation += camera['orientation']
+                    orientation_count += 1
+        return sum_orientation / orientation_count
+
     def get_diagonal_ccd_fov(self, instrument_type_code, autoguider=False):
         ''' Get the diagonal fov in arcminutes for the ccd, from the camera_type pscale and pixelsx/y in configdb
         '''

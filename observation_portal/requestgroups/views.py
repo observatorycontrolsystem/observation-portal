@@ -119,6 +119,7 @@ class InstrumentsInformationView(APIView):
         }
         for instrument_type in configdb.get_instrument_type_codes(location=location, only_schedulable=only_schedulable):
             if not requested_instrument_type or requested_instrument_type.lower() == instrument_type.lower():
+                ccd_size = configdb.get_ccd_size(instrument_type)
                 info[instrument_type] = {
                     'type': configdb.get_instrument_type_category(instrument_type),
                     'class': configdb.get_instrument_type_telescope_class(instrument_type),
@@ -130,7 +131,10 @@ class InstrumentsInformationView(APIView):
                     'camera_type': {
                         'science_field_of_view': configdb.get_diagonal_ccd_fov(instrument_type, autoguider=False),
                         'autoguider_field_of_view': configdb.get_diagonal_ccd_fov(instrument_type, autoguider=True),
-                        'pixel_scale': configdb.get_pixel_scale(instrument_type)
+                        'pixel_scale': configdb.get_pixel_scale(instrument_type),
+                        'pixels_x': ccd_size['x'],
+                        'pixels_y': ccd_size['y'],
+                        'orientation': configdb.get_average_ccd_orientation(instrument_type)
                     }
                 }
         return Response(info)

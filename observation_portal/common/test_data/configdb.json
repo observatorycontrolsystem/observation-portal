@@ -29,6 +29,7 @@
                   "code": "xx01",
                   "autoguider_camera": {
                     "code": "ef01",
+                    "orientation": 0.0,
                     "camera_type": {
                       "code": "1M0-SCICAM-SBIG",
                       "pixels_x": 240,
@@ -163,6 +164,7 @@
                   },
                   "science_cameras": [{
                     "code": "xx01",
+                    "orientation": 0.0,
                     "camera_type": {
                       "code": "1M0-SCICAM-SBIG",
                       "name": "1M0-SCICAM-SBIG",
@@ -193,6 +195,7 @@
                   "code": "xx06",
                   "autoguider_camera": {
                     "code": "xx07",
+                    "orientation": 0.0,
                     "camera_type": {
                       "code": "1M0-SCICAM-SBIG",
                       "pixels_x": 240,
@@ -327,6 +330,7 @@
                   },
                   "science_cameras": [{
                     "code": "xx06",
+                    "orientation": 0.0,
                     "camera_type": {
                       "code": "1M0-SCICAM-SBIG",
                       "name": "1M0-SCICAM-SBIG",
@@ -357,6 +361,7 @@
                   "code": "xx08",
                   "autoguider_camera": {
                     "code": "xx09",
+                    "orientation": 0.0,
                     "camera_type": {
                       "code": "1M0-SCICAM-SBIG",
                       "pixels_x": 240,
@@ -491,6 +496,7 @@
                   },
                   "science_cameras": [{
                     "code": "xx08",
+                    "orientation": 0.0,
                     "camera_type": {
                       "code": "1M0-SCICAM-SBIG",
                       "name": "1M0-SCICAM-SBIG",
@@ -537,6 +543,7 @@
                   "code": "xx02",
                   "autoguider_camera": {
                     "code": "ef02",
+                    "orientation": 0.0,
                     "camera_type": {
                       "code": "2M0-FLOYDS-AG",
                       "pixels_x": 240,
@@ -673,6 +680,7 @@
                   },
                   "science_cameras": [{
                     "code": "xx02",
+                    "orientation": 80.0,
                     "camera_type": {
                       "code": "2M0-FLOYDS-SCICAM",
                       "name": "2M0-FLOYDS-SCICAM",
@@ -739,6 +747,7 @@
                   "code": "xx03",
                   "autoguider_camera": {
                     "code": "ef03",
+                    "orientation": 0.0,
                     "camera_type": {
                       "code": "1M0-SCICAM-AG",
                       "pixels_x": 240,
@@ -873,6 +882,7 @@
                   },
                   "science_cameras": [{
                     "code": "xx03",
+                    "orientation": 0.0,
                     "camera_type": {
                       "code": "1M0-SCICAM-SBIG",
                       "name": "1M0-SCICAM-SBIG",
@@ -903,6 +913,7 @@
                   "code": "nres02",
                   "autoguider_camera": {
                     "code": "ak02",
+                    "orientation": 0.0,
                     "camera_type": {
                       "code": "1M0-NRES-AG",
                       "pixels_x": 240,
@@ -1048,11 +1059,12 @@
                   },
                   "science_cameras": [{
                     "code": "nres02",
+                    "orientation": 90.0,
                     "camera_type": {
                       "code": "1M0-NRES-SCICAM",
                       "name": "1M0-NRES-SCICAM",
                       "pixels_x": 1000,
-                      "pixels_y": 1000,
+                      "pixels_y": 5000,
                       "pscale": 0.5,
                       "max_rois": 0
                     },
@@ -1081,6 +1093,7 @@
                   "code": "xx04",
                   "autoguider_camera": {
                     "code": "ef04",
+                    "orientation": 0.0,
                     "camera_type": {
                       "code": "2M0-FLOYDS-AG",
                       "pixels_x": 240,
@@ -1216,6 +1229,7 @@
                   },
                   "science_cameras": [{
                     "code": "xx04",
+                    "orientation": 100.0,
                     "camera_type": {
                       "code": "2M0-FLOYDS-SCICAM",
                       "name": "2M0-FLOYDS-SCICAM",
@@ -1429,6 +1443,7 @@
                   "science_cameras": [
                     {
                       "code": "mc03g",
+                      "orientation": 45.0,
                       "camera_type": {
                         "pscale": 1.0,
                         "name": "2.0 meter Muscat G Camera",
@@ -1463,6 +1478,7 @@
                     },
                     {
                       "code": "mc03r",
+                      "orientation": 45.0,
                       "camera_type": {
                         "pscale": 1.0,
                         "name": "2.0 meter Muscat R Camera",
@@ -1497,6 +1513,7 @@
                     },
                     {
                       "code": "mc03i",
+                      "orientation": 45.0,
                       "camera_type": {
                         "pscale": 1.0,
                         "name": "2.0 meter Muscat I Camera",
@@ -1531,6 +1548,7 @@
                     },
                     {
                       "code": "mc03z",
+                      "orientation": 45.0,
                       "camera_type": {
                         "pscale": 1.0,
                         "name": "2.0 meter Muscat Z Camera",
@@ -1566,6 +1584,7 @@
                   ],
                   "autoguider_camera": {
                     "code": "mc03g",
+                    "orientation": 0.0,
                     "camera_type": {
                       "pscale": 1.0,
                       "name": "2.0 meter Muscat G Camera",
@@ -1626,6 +1645,7 @@
                   "code": "xx11",
                   "autoguider_camera": {
                     "code": "ef11",
+                    "orientation": 0.0,
                     "camera_type": {
                       "code": "1M0-SCICAM-AG",
                       "pixels_x": 240,
@@ -1760,6 +1780,7 @@
                   },
                   "science_cameras": [{
                     "code": "xx11",
+                    "orientation": 0.0,
                     "camera_type": {
                       "code": "1M0-SCICAM-SBIG",
                       "name": "1M0-SCICAM-SBIG",
@@ -1790,6 +1811,7 @@
                   "code": "xx12",
                   "autoguider_camera": {
                     "code": "ef12",
+                    "orientation": 0.0,
                     "camera_type": {
                       "code": "1M0-SCICAM-AG",
                       "pixels_x": 240,
@@ -1924,6 +1946,7 @@
                   },
                   "science_cameras": [{
                     "code": "xx12",
+                    "orientation": 0.0,
                     "camera_type": {
                       "code": "1M0-SCICAM-SBXX",
                       "name": "1M0-SCICAM-SBXX",
@@ -1975,6 +1998,7 @@
                   "code": "xy01",
                   "autoguider_camera": {
                     "code": "ey01",
+                    "orientation": 0.0,
                     "camera_type": {
                       "code": "1M0-SCICAM-AG",
                       "pixels_x": 240,
@@ -2109,6 +2133,7 @@
                   },
                   "science_cameras": [{
                     "code": "xy01",
+                    "orientation": 0.0,
                     "camera_type": {
                       "code": "1M0-SCICAM-SBAG",
                       "name": "1M0-SCICAM-SBAG",
@@ -2160,6 +2185,7 @@
                   "code": "os01",
                   "autoguider_camera": {
                     "code": "sx01",
+                    "orientation": 0.0,
                     "camera_type": {
                       "code": "1M0-SCICAM-AG",
                       "pixels_x": 240,
@@ -2293,6 +2319,7 @@
                   },
                   "science_cameras": [{
                     "code": "so01",
+                    "orientation": 60.0,
                     "camera_type": {
                       "code": "1M0-SCICAM-SOAR",
                       "name": "1M0-SCICAM-SOAR",

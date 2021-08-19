@@ -43,7 +43,7 @@ from observation_portal import settings
 router = DefaultRouter()
 router.register(r'requests', RequestViewSet, 'requests')
 router.register(r'requestgroups', RequestGroupViewSet, 'request_groups')
-router.register(r'configuration', ConfigurationViewSet, 'configuration')
+router.register(r'configurations', ConfigurationViewSet, 'configurations')
 router.register(r'drafts', DraftRequestGroupViewSet, 'drafts')
 router.register(r'proposals', ProposalViewSet, 'proposals')
 router.register(r'semesters', SemesterViewSet, 'semesters')
