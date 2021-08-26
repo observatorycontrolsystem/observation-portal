@@ -968,8 +968,8 @@ class SiteAirmassSerializer(serializers.Serializer):
 
 
 class AirmassSerializer(serializers.Serializer):
+    request = import_string(settings.SERIALIZERS['requestgroups']['Request'])(write_only=True)
     airmass_data = SiteAirmassSerializer(many=True, read_only=True)
-    request = RequestSerializer(write_only=True)
 
     # TODO: Need to be able to document this without the upper-level 'request' key
     def to_internal_value(self, data):

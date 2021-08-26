@@ -225,6 +225,12 @@ class RequestViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
     ordering = ('-id',)
     ordering_fields = ('id', 'state')
 
+    def get_serializer_class(self):
+        if self.action == 'mosaic':
+            return import_string(settings.SERIALIZERS['requestgroups']['Mosaic'])
+        else:
+            return import_string(settings.SERIALIZERS['requestgroups']['Request'])
+
     def get_queryset(self):
         if self.request.user.is_authenticated:
             if self.request.user.profile.staff_view and self.request.user.is_staff:
