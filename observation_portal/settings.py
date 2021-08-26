@@ -330,6 +330,7 @@ SERIALIZERS = {
         'Request': os.getenv('REQUESTGROUPS_REQUEST_SERIALIZER', 'observation_portal.requestgroups.serializers.RequestSerializer'),
         'RequestGroup': os.getenv('REQUESTGROUPS_REQUESTGROUP_SERIALIZER', 'observation_portal.requestgroups.serializers.RequestGroupSerializer'),
         'DraftRequestGroup': os.getenv('REQUESTGROUPS_DRAFTREQUESTGROUP_SERIALIZER', 'observation_portal.requestgroups.serializers.DraftRequestGroupSerializer'),
+        'Mosaic': os.getenv('REQUESTGROUPS_MOSAIC_SERIALIZER', 'observation_portal.requestgroups.serializers.MosaicSerializer'),
         'Dither': os.getenv('REQUESTGROUPS_DITHER_SERIALIZER', 'observation_portal.requestgroups.serializers.DitherSerializer'),
         'Airmass': os.getenv('REQUESTGROUPS_AIRMASS_SERIALIZER', 'observation_portal.requestgroups.serializers.AirmassSerializer'),
     },

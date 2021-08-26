@@ -28,7 +28,7 @@ setup(
     use_scm_version=True,
     setup_requires=['setuptools_scm', 'wheel', 'numpy>=1.16,<1.17'],
     install_requires=[
-        'apscheduler>=3.6,<3.8',
+        'apscheduler>=3.7,<3.8',
         'boto3<2.0',
         'cerberus>1.0,<2.0',
         'django>=3.2,<3.3',
