@@ -977,3 +977,6 @@ class AirmassSerializer(serializers.Serializer):
         new_data = {'request': data}
         # do validation on the new request dict, then return it without the extra request key
         return super().to_internal_value(new_data)['request']
+
+class LastChangedSerializer(serializers.Serializer):
+    last_change_time = serializers.DateTimeField()

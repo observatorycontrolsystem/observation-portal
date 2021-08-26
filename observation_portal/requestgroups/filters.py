@@ -1,6 +1,6 @@
 import django_filters
 from observation_portal.requestgroups.models import RequestGroup, Request
-
+from observation_portal.common.configdb import configdb
 
 class RequestGroupFilter(django_filters.FilterSet):
     created_after = django_filters.DateTimeFilter(field_name='created', lookup_expr='gte', label='Submitted after')
@@ -67,3 +67,7 @@ class TelescopeAvailabilityFilter(django_filters.FilterSet):
 
     class Meta:
         fields = ('start', 'end', 'site', 'telescope', 'combine')
+
+
+class LastChangedFilter(django_filters.FilterSet):
+    telescope_class = django_filters.MultipleChoiceFilter(choices=configdb.get_telescope_class_tuples())

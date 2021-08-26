@@ -1,3 +1,5 @@
+from django.core.exceptions import ValidationError
+from observation_portal.common.schema import ObservationPortalSchema
 from django.core.cache import cache
 from django_filters.rest_framework.backends import DjangoFilterBackend
 from rest_framework.response import Response
@@ -17,7 +19,7 @@ from observation_portal.common.configdb import configdb
 from observation_portal.common.telescope_states import ElasticSearchException, TelescopeStates
 from observation_portal.requestgroups.request_utils import get_airmasses_for_request_at_sites
 from observation_portal.requestgroups.contention import Contention, Pressure
-from observation_portal.requestgroups.filters import TelescopeAvailabilityFilter, TelescopeStatesFilter
+from observation_portal.requestgroups.filters import LastChangedFilter, TelescopeAvailabilityFilter, TelescopeStatesFilter
 from observation_portal.common.mixins import GetSerializerMixin
 
 logger = logging.getLogger(__name__)
@@ -176,12 +178,15 @@ class PressureView(APIView):
         return Response(pressure.data())
 
 
-class ObservationPortalLastChangedView(APIView):
+class ObservationPortalLastChangedView(APIView, GetSerializerMixin):
     '''
         Returns the datetime of the last status of requests change or new requests addition
     '''
     permission_classes = (IsAdminUser,)
-    schema=AutoSchema(tags=['RequestGroups'])
+    schema=ObservationPortalSchema(tags=['RequestGroups'], is_list_view=False)
+    filter_class = LastChangedFilter
+    filter_backends = (DjangoFilterBackend,)
+    serializer_class = import_string(settings.SERIALIZERS['requestgroups']['LastChanged'])
 
     def get(self, request):
         telescope_classes = request.GET.getlist('telescope_class', ['all'])
@@ -189,4 +194,8 @@ class ObservationPortalLastChangedView(APIView):
         for telescope_class in telescope_classes:
             most_recent_change_time = max(most_recent_change_time, cache.get(f"observation_portal_last_change_time_{telescope_class}", timezone.now() - timedelta(days=7)))
 
-        return Response({'last_change_time': most_recent_change_time})
+        serializer = import_string(settings.SERIALIZERS['requestgroups']['LastChanged'])(data={'last_change_time': most_recent_change_time})
+        if serializer.is_valid():
+            return Response(serializer.validated_data)
+        else:
+            raise ValidationError(serializer.errors)
