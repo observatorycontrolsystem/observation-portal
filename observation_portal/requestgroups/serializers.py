@@ -849,6 +849,10 @@ class RequestGroupSerializer(serializers.ModelSerializer):
         return value
 
 
+class CadenceRequestGroupSerializer(RequestGroupSerializer):
+    requests = import_string(settings.SERIALIZERS['requestgroups']['CadenceRequest'])(many=True)
+
+
 class PatternExpansionSerializer(serializers.Serializer):
     pattern = serializers.ChoiceField(choices=('line', 'grid', 'spiral'), required=True)
     num_points = serializers.IntegerField(required=False)

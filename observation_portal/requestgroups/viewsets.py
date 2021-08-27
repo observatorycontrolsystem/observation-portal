@@ -28,6 +28,7 @@ from observation_portal.requestgroups.request_utils import (
     get_airmasses_for_request_at_sites, get_telescope_states_for_request
 )
 from observation_portal.common.mixins import ListAsDictMixin
+from observation_portal.common.schema import ObservationPortalSchema
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +36,7 @@ logger = logging.getLogger(__name__)
 class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
     permission_classes = (IsAuthenticatedOrReadOnly,)
     http_method_names = ['get', 'post', 'head', 'options']
-    schema=AutoSchema(tags=['RequestGroups'])
+    schema=ObservationPortalSchema(tags=['RequestGroups'])
     serializer_class = import_string(settings.SERIALIZERS['requestgroups']['RequestGroup'])
     filter_class = RequestGroupFilter
     filter_backends = (
@@ -44,6 +45,20 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
     )
     ordering = ('-id',)
 
+    def get_request_serializer(self):
+        context = self.get_serializer_context()
+        if self.action == 'cadence':
+            return import_string(settings.SERIALIZERS['requestgroups']['CadenceRequestGroup'])(context=context)
+        else:
+            return import_string(settings.SERIALIZERS['requestgroups']['RequestGroup'])(context=context)
+    
+    def get_response_serializer(self):
+        context = self.get_serializer_context()
+        if self.action == 'cadence':
+            return import_string(settings.SERIALIZERS['requestgroups']['RequestGroup'])(context=context)
+        else:
+            return import_string(settings.SERIALIZERS['requestgroups']['RequestGroup'])(context=context)
+    
     def get_throttles(self):
         actions_to_throttle = ['cancel', 'validate', 'create']
         if self.action in actions_to_throttle:
@@ -185,32 +200,36 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'])
     def cadence(self, request):
+        cadence_request_group_serializer = import_string(settings.SERIALIZERS['requestgroups']['CadenceRequestGroup'])(data=request.data, context={'request': request})
         expanded_requests = []
-        for req in request.data.get('requests', []):
-            if isinstance(req, dict) and req.get('cadence'):
-                cadence_request_serializer = import_string(settings.SERIALIZERS['requestgroups']['CadenceRequest'])(data=req)
-                if cadence_request_serializer.is_valid():
-                    expanded_requests.extend(expand_cadence_request(cadence_request_serializer.validated_data,
-                                                                    request.user.is_staff))
+        if cadence_request_group_serializer.is_valid():
+            for req in cadence_request_group_serializer.validated_data.get('requests', []):
+                if isinstance(req, dict) and req.get('cadence'):
+                    cadence_request_serializer = import_string(settings.SERIALIZERS['requestgroups']['CadenceRequest'])(data=req)
+                    if cadence_request_serializer.is_valid():
+                        expanded_requests.extend(expand_cadence_request(cadence_request_serializer.validated_data,
+                                                                        request.user.is_staff))
+                    else:
+                        return Response(cadence_request_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
                 else:
-                    return Response(cadence_request_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            else:
-                expanded_requests.append(req)
+                    expanded_requests.append(req)
 
-        # if we couldn't find any valid cadence requests, return that as an error
-        if not expanded_requests:
-            return Response({'errors': 'No visible requests within cadence window parameters'}, status=status.HTTP_400_BAD_REQUEST)
+            # if we couldn't find any valid cadence requests, return that as an error
+            if not expanded_requests:
+                return Response({'errors': 'No visible requests within cadence window parameters'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # now replace the originally sent requests with the cadence requests and send it back
-        ret_data = request.data.copy()
-        ret_data['requests'] = expanded_requests
+            # now replace the originally sent requests with the cadence requests and send it back
+            ret_data = request.data.copy()
+            ret_data['requests'] = expanded_requests
 
-        if len(ret_data['requests']) > 1:
-            ret_data['operator'] = 'MANY'
-        request_group_serializer = import_string(settings.SERIALIZERS['requestgroups']['RequestGroup'])(data=ret_data, context={'request': request})
-        if not request_group_serializer.is_valid():
-            return Response(request_group_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        return Response(ret_data)
+            if len(ret_data['requests']) > 1:
+                ret_data['operator'] = 'MANY'
+            request_group_serializer = import_string(settings.SERIALIZERS['requestgroups']['RequestGroup'])(data=ret_data, context={'request': request})
+            if not request_group_serializer.is_valid():
+                return Response(request_group_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(ret_data)
+        else:
+            return(Response(cadence_request_group_serializer.errors, status=status.HTTP_400_BAD_REQUEST))
 
 
 class RequestViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):

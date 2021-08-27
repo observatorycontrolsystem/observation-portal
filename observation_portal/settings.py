@@ -318,6 +318,7 @@ SERIALIZERS = {
     'requestgroups': {
         'Cadence': os.getenv('REQUESTGROUPS_CADENCE_SERIALIZER', 'observation_portal.requestgroups.serializers.CadenceSerializer'),
         'CadenceRequest': os.getenv('REQUESTGROUPS_CADENCEREQUEST_SERIALIZER', 'observation_portal.requestgroups.serializers.CadenceRequestSerializer'),
+        'CadenceRequestGroup': os.getenv('REQUESTGROUPS_CADENCEREQUESTGROUP_SERIALIZER', 'observation_portal.requestgroups.serializers.CadenceRequestGroupSerializer'),
         'Constraints': os.getenv('REQUESTGROUPS_CONSTRAINTS_SERIALIZER', 'observation_portal.requestgroups.serializers.ConstraintsSerializer'),
         'RegionOfInterest': os.getenv('REQUESTGROUPS_REGIONOFINTEREST_SERIALIZER', 'observation_portal.requestgroups.serializers.RegionOfInterestSerializer'),
         'InstrumentConfig': os.getenv('REQUESTGROUPS_INSTRUMENTCONFIG_SERIALIZER', 'observation_portal.requestgroups.serializers.InstrumentConfigSerializer'),
