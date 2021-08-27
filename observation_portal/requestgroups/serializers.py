@@ -968,19 +968,12 @@ class SiteAirmassDatumSerializer(serializers.Serializer):
 
 
 class SiteAirmassSerializer(serializers.Serializer):
-    site = SiteAirmassDatumSerializer()
+    site = SiteAirmassDatumSerializer(source='*')
 
-
+#TODO: This still does not serialize the data correctly.
 class AirmassSerializer(serializers.Serializer):
-    request = import_string(settings.SERIALIZERS['requestgroups']['Request'])(write_only=True)
-    airmass_data = SiteAirmassSerializer(many=True, read_only=True)
-
-    # TODO: Need to be able to document this without the upper-level 'request' key
-    def to_internal_value(self, data):
-        # add an upper level request key to the request so it can validate against the serializer
-        new_data = {'request': data}
-        # do validation on the new request dict, then return it without the extra request key
-        return super().to_internal_value(new_data)['request']
-
+    airmass_data = SiteAirmassSerializer(source='*')
+    airmass_limit = serializers.FloatField()
+    
 class LastChangedSerializer(serializers.Serializer):
     last_change_time = serializers.DateTimeField()

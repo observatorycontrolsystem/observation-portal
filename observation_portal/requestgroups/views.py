@@ -96,15 +96,24 @@ class AirmassView(APIView, GetSerializerMixin):
     Gets the airmasses for the request at available sites
     """
     permission_classes = (AllowAny,)
-    schema=AutoSchema(tags=['Requests'])
+    schema=ObservationPortalSchema(tags=['Requests'])
     serializer_class = import_string(settings.SERIALIZERS['requestgroups']['Airmass'])
 
+    def get_request_serializer(self, *args, **kwargs):
+        return import_string(settings.SERIALIZERS['requestgroups']['Request'])(*args, **kwargs)
+
+    def get_response_serializer(self, *args, **kwargs):
+        return import_string(settings.SERIALIZERS['requestgroups']['Airmass'])(*args, **kwargs)
+
     def post(self, request):
-        request_serializer = import_string(settings.SERIALIZERS['requestgroups']['Airmass'])(data=request.data)
+        request_serializer = self.get_request_serializer(data=request.data)
         if request_serializer.is_valid():
             airmass_data = get_airmasses_for_request_at_sites(request_serializer.validated_data, is_staff=request.user.is_staff)
-            # TODO: Make the serializer validate our data
-            return Response(airmass_data)
+            response_serializer = self.get_response_serializer(data=airmass_data)
+            if response_serializer.is_valid():
+                return Response(response_serializer.data)
+            else:
+                return Response(response_serializer.errors)
         else:
             return Response(request_serializer.errors)
 
