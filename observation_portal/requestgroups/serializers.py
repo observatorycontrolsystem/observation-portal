@@ -961,52 +961,8 @@ class DraftRequestGroupSerializer(serializers.ModelSerializer):
         except JSONDecodeError:
             raise serializers.ValidationError('Content must be valid JSON')
         return data
-
-
-# class SiteAirmassDatumSerializer(serializers.Serializer):
-#     times = serializers.ListField(child=serializers.CharField())
-#     airmasses = serializers.ListField(child=serializers.FloatField())
-
-
-# class SiteAirmassSerializer(serializers.Serializer):
-#     site = SiteAirmassDatumSerializer(source='*')
-
-
-# class AirmassSerializer(serializers.Serializer):
-#     airmass_data = SiteAirmassSerializer(source='*')
-#     airmass_limit = serializers.FloatField()
-
-class SiteAirmassDatumSerializer(serializers.Serializer):
-    times = serializers.ListField(child=serializers.CharField())
-    airmasses = serializers.ListField(child=serializers.FloatField())
-
-
-class SiteAirmassSerializer(serializers.Serializer):
-    site = DictField(child=SiteAirmassDatumSerializer(), source='*')
-
-
-class AirmassSerializer(serializers.Serializer):
-    airmass_data = DictField(child=SiteAirmassSerializer(), source='*')
-    airmass_limit = serializers.FloatField()
     
 
 class LastChangedSerializer(serializers.Serializer):
     last_change_time = serializers.DateTimeField()
 
-
-class MaxAllowableIPPSemesterSerializer(serializers.Serializer):
-    ipp_time_available = serializers.FloatField()
-    ipp_limit = serializers.FloatField()
-    request_duration = serializers.FloatField()
-    max_allowable_ipp_value = serializers.FloatField()
-    min_allowable_ipp_value = serializers.FloatField()
-
-
-class MaxAllowableIPPSemesterSerializer(serializers.Serializer):
-    instrument_type = serializers.DictField(child=MaxAllowableIPPSemesterSerializer(),
-    source='*')
-
-
-class MaxAllowableIPPSerializer(serializers.Serializer):
-    semester = serializers.DictField(child=MaxAllowableIPPSemesterSerializer(), 
-                                     source='*')

@@ -21,6 +21,7 @@ from observation_portal.requestgroups.request_utils import get_airmasses_for_req
 from observation_portal.requestgroups.contention import Contention, Pressure
 from observation_portal.requestgroups.filters import LastChangedFilter, TelescopeAvailabilityFilter, TelescopeStatesFilter
 from observation_portal.common.mixins import GetSerializerMixin
+from observation_portal.common.doc_examples import EXAMPLE_RESPONSES
 
 logger = logging.getLogger(__name__)
 
@@ -97,23 +98,19 @@ class AirmassView(APIView, GetSerializerMixin):
     """
     permission_classes = (AllowAny,)
     schema=ObservationPortalSchema(tags=['Requests'])
-    serializer_class = import_string(settings.SERIALIZERS['requestgroups']['Airmass'])
+    serializer_class = import_string(settings.SERIALIZERS['requestgroups']['Request'])
+
+    def get_example_response(self):
+        return EXAMPLE_RESPONSES['airmass']
 
     def get_request_serializer(self, *args, **kwargs):
         return import_string(settings.SERIALIZERS['requestgroups']['Request'])(*args, **kwargs)
-
-    def get_response_serializer(self, *args, **kwargs):
-        return import_string(settings.SERIALIZERS['requestgroups']['Airmass'])(*args, **kwargs)
 
     def post(self, request):
         request_serializer = self.get_request_serializer(data=request.data)
         if request_serializer.is_valid():
             airmass_data = get_airmasses_for_request_at_sites(request_serializer.validated_data, is_staff=request.user.is_staff)
-            response_serializer = self.get_response_serializer(data=airmass_data)
-            if response_serializer.is_valid():
-                return Response(response_serializer.data)
-            else:
-                return Response(response_serializer.errors)
+            return Response(airmass_data)
         else:
             return Response(request_serializer.errors)
 

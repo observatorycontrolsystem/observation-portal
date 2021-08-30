@@ -9,7 +9,20 @@ class ObservationPortalSchema(AutoSchema):
         self.is_list_view = is_list_view
 
     def get_operation(self, path, method):
-        operations =  super().get_operation(path, method)        
+        operations =  super().get_operation(path, method)
+        # If the view has implemented get_example_response, then use it to present in the documentation
+        if getattr(self.view, 'get_example_response', None) is not None:
+            example_response = self.view.get_example_response()
+            status_code = '201' if method == 'POST' else '200'
+            if example_response is not None:
+                operations['responses'] = {status_code: {'content': {'application/json': {'example': example_response}}}}
+
+        # If the view has implemented get_example_request, then use it to present in the documentation
+        if getattr(self.view, 'get_example_request', None) is not None:
+            example_request = self.view.get_example_request()
+            if example_request is not None:
+                operations['requestBody'] = example_request
+
         if self.empty_request:
             operations['requestBody'] = {}
 

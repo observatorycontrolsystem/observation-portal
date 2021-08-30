@@ -29,6 +29,7 @@ from observation_portal.requestgroups.request_utils import (
 )
 from observation_portal.common.mixins import ListAsDictMixin
 from observation_portal.common.schema import ObservationPortalSchema
+from observation_portal.common.doc_examples import EXAMPLE_RESPONSES
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +45,10 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
         DjangoFilterBackend
     )
     ordering = ('-id',)
+
+    def get_example_response(self):
+        if self.action == 'max_allowable_ipp':
+            return EXAMPLE_RESPONSES['max_allowable_ipp']
 
     def get_request_serializer(self):
         context = self.get_serializer_context()
@@ -194,11 +199,7 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
         serializer = import_string(settings.SERIALIZERS['requestgroups']['RequestGroup'])(data=request.data, context={'request': request})
         if serializer.is_valid():
             ipp_dict = get_max_ipp_for_requestgroup(serializer.validated_data)
-            serializer = import_string(settings.SERIALIZERS['requestgroups']['MaxAllowableIPP'])(data=ipp_dict)
-            if serializer.is_valid():
-                return Response(serializer.validate_data)
-            else:
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(ipp_dict)
         else:
             return Response({'errors': serializer.errors})
 
