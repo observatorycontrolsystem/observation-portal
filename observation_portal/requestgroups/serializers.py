@@ -14,6 +14,7 @@ from django.utils import timezone
 from django.utils.module_loading import import_string
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
+from rest_framework.fields import DictField
 
 from observation_portal.proposals.models import TimeAllocation, Membership
 from observation_portal.requestgroups.models import (
@@ -962,18 +963,50 @@ class DraftRequestGroupSerializer(serializers.ModelSerializer):
         return data
 
 
+# class SiteAirmassDatumSerializer(serializers.Serializer):
+#     times = serializers.ListField(child=serializers.CharField())
+#     airmasses = serializers.ListField(child=serializers.FloatField())
+
+
+# class SiteAirmassSerializer(serializers.Serializer):
+#     site = SiteAirmassDatumSerializer(source='*')
+
+
+# class AirmassSerializer(serializers.Serializer):
+#     airmass_data = SiteAirmassSerializer(source='*')
+#     airmass_limit = serializers.FloatField()
+
 class SiteAirmassDatumSerializer(serializers.Serializer):
-    times = serializers.ListField(child=serializers.DateTimeField())
+    times = serializers.ListField(child=serializers.CharField())
     airmasses = serializers.ListField(child=serializers.FloatField())
 
 
 class SiteAirmassSerializer(serializers.Serializer):
-    site = SiteAirmassDatumSerializer(source='*')
+    site = DictField(child=SiteAirmassDatumSerializer(), source='*')
 
-#TODO: This still does not serialize the data correctly.
+
 class AirmassSerializer(serializers.Serializer):
-    airmass_data = SiteAirmassSerializer(source='*')
+    airmass_data = DictField(child=SiteAirmassSerializer(), source='*')
     airmass_limit = serializers.FloatField()
     
+
 class LastChangedSerializer(serializers.Serializer):
     last_change_time = serializers.DateTimeField()
+
+
+class MaxAllowableIPPSemesterSerializer(serializers.Serializer):
+    ipp_time_available = serializers.FloatField()
+    ipp_limit = serializers.FloatField()
+    request_duration = serializers.FloatField()
+    max_allowable_ipp_value = serializers.FloatField()
+    min_allowable_ipp_value = serializers.FloatField()
+
+
+class MaxAllowableIPPSemesterSerializer(serializers.Serializer):
+    instrument_type = serializers.DictField(child=MaxAllowableIPPSemesterSerializer(),
+    source='*')
+
+
+class MaxAllowableIPPSerializer(serializers.Serializer):
+    semester = serializers.DictField(child=MaxAllowableIPPSemesterSerializer(), 
+                                     source='*')

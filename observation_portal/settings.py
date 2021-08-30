@@ -335,6 +335,7 @@ SERIALIZERS = {
         'Dither': os.getenv('REQUESTGROUPS_DITHER_SERIALIZER', 'observation_portal.requestgroups.serializers.DitherSerializer'),
         'Airmass': os.getenv('REQUESTGROUPS_AIRMASS_SERIALIZER', 'observation_portal.requestgroups.serializers.AirmassSerializer'),
         'LastChanged': os.getenv('REQUESTGROUPS_LAST_CHANGED_SERIALIZER', 'observation_portal.requestgroups.serializers.LastChangedSerializer'),
+        'MaxAllowableIPP' : os.getenv('REQUESTGROUPS_MAX_ALLOWABLE_IPP_SERIALIZER', 'observation_portal.requestgroups.serializers.MaxAllowableIPPSerializer'),
     },
     'proposals': {
         'Proposal': os.getenv('PROPOSALS_PROPOSAL_SERIALIZER', 'observation_portal.proposals.serializers.ProposalSerializer'),

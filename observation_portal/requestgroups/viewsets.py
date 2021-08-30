@@ -194,7 +194,11 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
         serializer = import_string(settings.SERIALIZERS['requestgroups']['RequestGroup'])(data=request.data, context={'request': request})
         if serializer.is_valid():
             ipp_dict = get_max_ipp_for_requestgroup(serializer.validated_data)
-            return Response(ipp_dict)
+            serializer = import_string(settings.SERIALIZERS['requestgroups']['MaxAllowableIPP'])(data=ipp_dict)
+            if serializer.is_valid():
+                return Response(serializer.validate_data)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response({'errors': serializer.errors})
 
