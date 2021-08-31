@@ -8,7 +8,27 @@ class ObservationPortalSchema(AutoSchema):
         self.empty_request = empty_request
         self.is_list_view = is_list_view
 
+    def get_operation_id(self, path, method):
+        """
+        This method is used to determine the descriptive name of the endpoint displayed in the doucmentation.
+        Allow this to be overridden in the view - a view that defines get_endpoint_name can override the default
+        DRF naming scheme.
+        """
+        operation_id = super().get_operation_id(path, method)
+        if getattr(self.view, 'get_endpoint_name', None) is not None:
+            name_override = self.view.get_endpoint_name()
+            # For some viewsets, we may not have specified a name for an action - so guard against that
+            if name_override is not None:
+                operation_id = name_override
+
+        return operation_id
+
     def get_operation(self, path, method):
+        """
+        This method is used to determine, among other things, the request and response bodies for a particular endpoint.
+        We override this to support specifying our own request and response bodies. Any view that implements get_example_response
+        and/or get_example_request can provide their own custom request and response bodies to display in the OpenAPI docs.
+        """
         operations =  super().get_operation(path, method)
         # If the view has implemented get_example_response, then use it to present in the documentation
         if getattr(self.view, 'get_example_response', None) is not None:
@@ -27,6 +47,14 @@ class ObservationPortalSchema(AutoSchema):
             operations['requestBody'] = {}
 
         return operations
+
+    """
+    The following class methods are based off a change merged to master in the DRF repository
+    that allows for the specification of separate request and response serializers for view introspection.
+    See https://github.com/encode/django-rest-framework/pull/7424
+
+    These overrides can be removed once a new release containing these changes is available.
+    """
 
     def get_components(self, path, method):
         request_serializer = self.get_request_serializer(path, method)

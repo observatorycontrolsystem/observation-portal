@@ -45,24 +45,6 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
         DjangoFilterBackend
     )
     ordering = ('-id',)
-
-    def get_example_response(self):
-        if self.action == 'max_allowable_ipp':
-            return EXAMPLE_RESPONSES['max_allowable_ipp']
-
-    def get_request_serializer(self):
-        context = self.get_serializer_context()
-        if self.action == 'cadence':
-            return import_string(settings.SERIALIZERS['requestgroups']['CadenceRequestGroup'])(context=context)
-        else:
-            return import_string(settings.SERIALIZERS['requestgroups']['RequestGroup'])(context=context)
-    
-    def get_response_serializer(self):
-        context = self.get_serializer_context()
-        if self.action == 'cadence':
-            return import_string(settings.SERIALIZERS['requestgroups']['RequestGroup'])(context=context)
-        else:
-            return import_string(settings.SERIALIZERS['requestgroups']['RequestGroup'])(context=context)
     
     def get_throttles(self):
         actions_to_throttle = ['cancel', 'validate', 'create']
@@ -235,6 +217,28 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
             return Response(ret_data)
         else:
             return(Response(cadence_request_group_serializer.errors, status=status.HTTP_400_BAD_REQUEST))
+
+    def get_example_response(self):
+        if self.action == 'max_allowable_ipp':
+            return EXAMPLE_RESPONSES['max_allowable_ipp']
+
+    def get_endpoint_name(self):
+        if self.action == 'max_allowable_ipp':
+            return 'getMaxAllowableIPP'
+
+    def get_request_serializer(self):
+        context = self.get_serializer_context()
+        if self.action == 'cadence':
+            return import_string(settings.SERIALIZERS['requestgroups']['CadenceRequestGroup'])(context=context)
+        else:
+            return import_string(settings.SERIALIZERS['requestgroups']['RequestGroup'])(context=context)
+    
+    def get_response_serializer(self):
+        context = self.get_serializer_context()
+        if self.action == 'cadence':
+            return import_string(settings.SERIALIZERS['requestgroups']['RequestGroup'])(context=context)
+        else:
+            return import_string(settings.SERIALIZERS['requestgroups']['RequestGroup'])(context=context)
 
 
 class RequestViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):

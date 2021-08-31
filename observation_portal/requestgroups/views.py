@@ -100,12 +100,6 @@ class AirmassView(APIView, GetSerializerMixin):
     schema=ObservationPortalSchema(tags=['Requests'])
     serializer_class = import_string(settings.SERIALIZERS['requestgroups']['Request'])
 
-    def get_example_response(self):
-        return EXAMPLE_RESPONSES['airmass']
-
-    def get_request_serializer(self, *args, **kwargs):
-        return import_string(settings.SERIALIZERS['requestgroups']['Request'])(*args, **kwargs)
-
     def post(self, request):
         request_serializer = self.get_request_serializer(data=request.data)
         if request_serializer.is_valid():
@@ -113,6 +107,15 @@ class AirmassView(APIView, GetSerializerMixin):
             return Response(airmass_data)
         else:
             return Response(request_serializer.errors)
+
+    def get_request_serializer(self, *args, **kwargs):
+        return import_string(settings.SERIALIZERS['requestgroups']['Request'])(*args, **kwargs)
+
+    def get_example_response(self):
+        return EXAMPLE_RESPONSES['airmass']
+
+    def get_endpoint_name(self):
+        return 'getAirmass'
 
 
 class InstrumentsInformationView(APIView):
