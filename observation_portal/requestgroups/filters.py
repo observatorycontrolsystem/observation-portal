@@ -71,3 +71,10 @@ class TelescopeAvailabilityFilter(django_filters.FilterSet):
 
 class LastChangedFilter(django_filters.FilterSet):
     telescope_class = django_filters.MultipleChoiceFilter(choices=configdb.get_telescope_class_tuples())
+
+
+class InstrumentsInformationFilter(django_filters.FilterSet):
+    site = django_filters.MultipleChoiceFilter(choices=configdb.get_site_tuples(), label='Site code')
+    enclosure = django_filters.MultipleChoiceFilter(choices=configdb.get_enclosure_tuples(), label='Enclosure code')
+    telescope_class = django_filters.MultipleChoiceFilter(choices=configdb.get_telescope_class_tuples(), label='Telescope class')
+    telescope = django_filters.MultipleChoiceFilter(choices=configdb.get_telescope_tuples(), label='Telescope code')

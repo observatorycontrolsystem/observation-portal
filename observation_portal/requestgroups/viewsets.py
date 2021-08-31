@@ -221,6 +221,8 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
     def get_example_response(self):
         if self.action == 'max_allowable_ipp':
             return EXAMPLE_RESPONSES['max_allowable_ipp']
+        elif self.action == 'validate':
+            return EXAMPLE_RESPONSES['validate']
 
     def get_endpoint_name(self):
         if self.action == 'max_allowable_ipp':

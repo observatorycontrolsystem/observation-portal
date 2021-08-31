@@ -19,7 +19,7 @@ from observation_portal.common.configdb import configdb
 from observation_portal.common.telescope_states import ElasticSearchException, TelescopeStates
 from observation_portal.requestgroups.request_utils import get_airmasses_for_request_at_sites
 from observation_portal.requestgroups.contention import Contention, Pressure
-from observation_portal.requestgroups.filters import LastChangedFilter, TelescopeAvailabilityFilter, TelescopeStatesFilter
+from observation_portal.requestgroups.filters import InstrumentsInformationFilter, LastChangedFilter, TelescopeAvailabilityFilter, TelescopeStatesFilter
 from observation_portal.common.mixins import GetSerializerMixin
 from observation_portal.common.doc_examples import EXAMPLE_RESPONSES
 
@@ -120,7 +120,9 @@ class AirmassView(APIView, GetSerializerMixin):
 
 class InstrumentsInformationView(APIView):
     permission_classes = (AllowAny,)
-    schema=AutoSchema(tags=['Utility'])
+    schema=ObservationPortalSchema(tags=['Utility'])
+    filter_backends = (DjangoFilterBackend,)
+    filter_class = InstrumentsInformationFilter
 
     def get(self, request):
         info = {}
@@ -159,6 +161,12 @@ class InstrumentsInformationView(APIView):
                     }
                 }
         return Response(info)
+
+    def get_example_response(self):
+        return EXAMPLE_RESPONSES['instruments']
+
+    def get_endpoint_name(self):
+        return 'getInstruments'
 
 
 class ContentionView(APIView):

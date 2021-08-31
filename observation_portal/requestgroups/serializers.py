@@ -14,7 +14,6 @@ from django.utils import timezone
 from django.utils.module_loading import import_string
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
-from rest_framework.fields import DictField
 
 from observation_portal.proposals.models import TimeAllocation, Membership
 from observation_portal.requestgroups.models import (
@@ -965,4 +964,3 @@ class DraftRequestGroupSerializer(serializers.ModelSerializer):
 
 class LastChangedSerializer(serializers.Serializer):
     last_change_time = serializers.DateTimeField()
-
