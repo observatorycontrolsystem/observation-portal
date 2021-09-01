@@ -60,6 +60,7 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
     permission_classes = (IsAdminOrReadOnly | IsDirectUser,)
     http_method_names = ['get', 'post', 'head', 'options', 'patch']
     filter_class = ObservationFilter
+    serializer_class = import_string(settings.SERIALIZERS['observations']['Observation'])
     schema=ObservationPortalSchema(tags=['Observations'])
     filter_backends = (
         filters.OrderingFilter,
@@ -69,14 +70,6 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
 
     def get_queryset(self):
         return observations_queryset(self.request).prefetch_related('request__windows', 'request__location').distinct()
-
-    def get_serializer_class(self):
-        if self.action == 'cancel':
-            return import_string(settings.SERIALIZERS['observations']['Cancel'])
-        elif self.action == 'filters':
-            return import_string(settings.SERIALIZERS['observations']['ObservationFilters'])
-        else:
-            return import_string(settings.SERIALIZERS['observations']['Observation'])
 
     @action(detail=False, methods=['get'])
     def filters(self, request):
@@ -91,7 +84,12 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
                 })
             else:
                 obs_filter_options['fields'].append(filter_name)
-        return Response(obs_filter_options, status=200)
+
+        serializer = self.get_response_serializer(data=obs_filter_options)
+        if serializer.is_valid():
+            return Response(serializer.validated_data, status=200)
+        else:
+            return Response(serializer.errors, status=400)
 
     @action(detail=False, methods=['post'])
     def cancel(self, request):
@@ -99,31 +97,29 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
         Filters a set of observations based on the parameters provided, and then either deletes them if they are
         scheduled >72 hours in the future, cancels them if they are in the future, or aborts them if they are currently
         in progress.
-        :param request:
-        :return:
         """
-        cancel_serializer = import_string(settings.SERIALIZERS['observations']['Cancel'])(data=request.data)
-        if cancel_serializer.is_valid():
+        request_serializer = self.get_request_serializer(data=request.data)
+        if request_serializer.is_valid():
             observations = self.get_queryset()
-            if 'ids' in cancel_serializer.data:
-                observations = observations.filter(pk__in=cancel_serializer.data['ids'])
-            if 'start' in cancel_serializer.data:
-                observations = observations.filter(end__gt=cancel_serializer.data['start'])
-            if 'end' in cancel_serializer.data:
-                observations = observations.filter(start__lt=cancel_serializer.data['end'])
-            if 'site' in cancel_serializer.data:
-                observations = observations.filter(site=cancel_serializer.data['site'])
-            if 'enclosure' in cancel_serializer.data:
-                observations = observations.filter(enclosure=cancel_serializer.data['enclosure'])
-            if 'telescope' in cancel_serializer.data:
-                observations = observations.filter(telescope=cancel_serializer.data['telescope'])
-            if not cancel_serializer.data.get('include_normal', True):
+            if 'ids' in request_serializer.data:
+                observations = observations.filter(pk__in=request_serializer.data['ids'])
+            if 'start' in request_serializer.data:
+                observations = observations.filter(end__gt=request_serializer.data['start'])
+            if 'end' in request_serializer.data:
+                observations = observations.filter(start__lt=request_serializer.data['end'])
+            if 'site' in request_serializer.data:
+                observations = observations.filter(site=request_serializer.data['site'])
+            if 'enclosure' in request_serializer.data:
+                observations = observations.filter(enclosure=request_serializer.data['enclosure'])
+            if 'telescope' in request_serializer.data:
+                observations = observations.filter(telescope=request_serializer.data['telescope'])
+            if not request_serializer.data.get('include_normal', True):
                 observations = observations.exclude(
                     request__request_group__observation_type__in=[RequestGroup.TIME_CRITICAL, RequestGroup.NORMAL])
-            if not cancel_serializer.data.get('include_rr', False):
+            if not request_serializer.data.get('include_rr', False):
                 observations = observations.exclude(
                     request__request_group__observation_type=RequestGroup.RAPID_RESPONSE)
-            if not cancel_serializer.data.get('include_direct', False):
+            if not request_serializer.data.get('include_direct', False):
                 observations = observations.exclude(request__request_group__observation_type=RequestGroup.DIRECT)
             if request.user and not request.user.is_staff:
                 observations = observations.filter(request__request_group__proposal__direct_submission=True)
@@ -131,9 +127,13 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
             # Receive a list of observation id's to cancel
             num_canceled = Observation.cancel(observations)
 
-            return Response({'canceled': num_canceled}, status=200)
+            response_serializer = self.get_response_serializer(data={'canceled': num_canceled})
+            if response_serializer.is_valid():
+                return Response(response_serializer.validated_data, status=200)
+            else:
+                return Response(response_serializer.errors, status=400)
         else:
-            return Response(cancel_serializer.errors, status=400)
+            return Response(request_serializer.errors, status=400)
 
     def create(self, request, *args, **kwargs):
         """ This overrides the create mixin create method, but does the same thing minus the serializing of the
@@ -167,6 +167,25 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
             site = request.data[0]['site']
             cache.set(cache_key + f"_{site}", timezone.now(), None)
             return Response({'num_created': len(observations), 'errors': errors}, status=201)
+    
+    def get_request_serializer(self, *args, **kwargs):
+        request_serializers = {'cancel': import_string(settings.SERIALIZERS['observations']['Cancel'])}
+        
+        return request_serializers.get(self.action, 
+                                       import_string(settings.SERIALIZERS['observations']['Observation']))(*args, **kwargs)
+
+    def get_response_serializer(self, *args, **kwargs):
+        response_serializers = {'cancel': import_string(settings.SERIALIZERS['observations']['CancelResponse']),
+                                'filters': import_string(settings.SERIALIZERS['observations']['ObservationFilters'])}
+
+        return response_serializers.get(self.action,
+                                        import_string(settings.SERIALIZERS['observations']['Observation']))(*args, **kwargs)
+
+    def get_endpoint_name(self):
+        endpoint_names = {'cancel': 'cancelObservation',
+                          'filters': 'getObservationFilters'}
+
+        return endpoint_names.get(self.action)
 
 
 class ConfigurationStatusViewSet(viewsets.ModelViewSet):

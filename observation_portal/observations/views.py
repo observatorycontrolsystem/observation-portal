@@ -2,7 +2,6 @@ from datetime import timedelta
 
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAdminUser
-from rest_framework.schemas.openapi import AutoSchema
 from django.core.cache import cache
 from django.utils import timezone
 from rest_framework.response import Response
@@ -12,7 +11,7 @@ from django.utils.module_loading import import_string
 from observation_portal.common.configdb import configdb
 from observation_portal.common.mixins import GetSerializerMixin
 from observation_portal.observations.filters import LastScheduledFilter
-from observation_portal.observations.serializers import LastScheduledSerializer
+from observation_portal.common.schema import ObservationPortalSchema
 from observation_portal import settings
 
 
@@ -25,7 +24,7 @@ class LastScheduledView(APIView, GetSerializerMixin):
         not really care if the only change was removing things from it's schedule.
     """
     permission_classes = (IsAdminUser,)
-    schema=AutoSchema(tags=['Observations'])
+    schema=ObservationPortalSchema(tags=['Observations'])
     filter_backends = (DjangoFilterBackend,)
     filter_class = LastScheduledFilter
     serializer_class = import_string(settings.SERIALIZERS['observations']['LastScheduled'])
@@ -42,4 +41,11 @@ class LastScheduledView(APIView, GetSerializerMixin):
             cache_dict = cache.get_many(keys)
             last_schedule_time = max(list(cache_dict.values()) + [timezone.now() - timedelta(days=7)])
 
-        return Response(LastScheduledSerializer({'last_schedule_time': last_schedule_time}).data)    
+        response_serializer = self.serializer_class(data={'last_schedule_time': last_schedule_time})
+        if response_serializer.is_valid():
+            return Response(response_serializer.validated_data, status=200)
+        else:
+            return Response(response_serializer.errors, status=400)
+
+    def get_endpoint_name(self):
+        return 'getLastScheduled'
