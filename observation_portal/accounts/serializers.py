@@ -94,12 +94,15 @@ class UserSerializer(serializers.ModelSerializer):
 
 class AccountRemovalRequestSerializer(serializers.Serializer):
     reason = serializers.CharField(max_length=1000, write_only=True)
+
+
+class AccountRemovalResponseSerializer(serializers.Serializer):
     message = serializers.CharField(read_only=True, default='Account removal request successfully submitted.')
 
 
 class RevokeTokenSerializer(serializers.Serializer):
-    message = serializers.CharField(read_only=True, default='API token revoked.')
+    message = serializers.CharField(default='API token revoked.')
 
 
 class AcceptTermsSerializer(serializers.Serializer):
-    message = serializers.CharField(read_only=True, default='Terms accepted')
+    message = serializers.CharField(default='Terms accepted')
