@@ -1,6 +1,8 @@
 from math import radians, cos, sin, sqrt
 from copy import deepcopy
 
+from observation_portal import settings
+
 
 def expand_dither_pattern(expansion_details):
 
@@ -28,6 +30,14 @@ def expand_dither_pattern(expansion_details):
             final_instrument_configs.append(instrument_config_copy)
 
     configuration_dict['instrument_configs'] = final_instrument_configs
+    # Save some information about the dither pattern in the configuration extra params
+    saved_dither_params = expansion_details.copy()
+    saved_dither_params.pop('configuration', None)
+    dither_pattern = saved_dither_params.pop('pattern', settings.DITHER['custom_pattern_key'])
+    if 'extra_params' not in configuration_dict:
+        configuration_dict['extra_params'] = {}
+    configuration_dict['extra_params']['dither_pattern'] = dither_pattern
+    configuration_dict['extra_params']['dither_pattern_params'] = saved_dither_params
     return configuration_dict
 
 
@@ -54,11 +64,18 @@ def expand_mosaic_pattern(expansion_details):
         cos_dec = max(cos_dec, 10e-4)
         configuration_copy['target']['ra'] += (offset[0] / 3600.0 / cos_dec)
         extra_params = configuration_copy.get('extra_params', {})
-        extra_params['obs_recipe'] = 'Mosaic'
         configuration_copy['extra_params'] = extra_params
         configurations.append(configuration_copy)
 
     request_dict['configurations'] = configurations
+    # Save some information about the mosaic pattern inside the request
+    save_mosaic_params = expansion_details.copy()
+    save_mosaic_params.pop('request', None)
+    pattern = save_mosaic_params.pop('pattern', settings.MOSAIC['custom_pattern_key'])
+    if 'extra_params' not in request_dict:
+        request_dict['extra_params'] = {}
+    request_dict['extra_params']['mosaic_pattern'] = pattern
+    request_dict['extra_params']['mosaic_pattern_params'] = save_mosaic_params
     return request_dict
 
 

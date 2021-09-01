@@ -490,6 +490,22 @@ class TestUserPostRequestApi(SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json()['requests'][0]['acceptability_threshold'], 100)
 
+    def test_mosaic_pattern_value(self):
+        data = self.generic_payload.copy()
+        # Test that an invalid mosaic pattern is rejected
+        data['requests'][0]['extra_params'] = {}
+        data['requests'][0]['extra_params']['mosaic_pattern'] = 'swirl'
+        response = self.client.post(reverse('api:request_groups-list'), data=data)
+        self.assertEqual(response.status_code, 400)
+        # Then check that a valid pattern is accepted
+        data['requests'][0]['extra_params']['mosaic_pattern'] = 'line'
+        response = self.client.post(reverse('api:request_groups-list'), data=data)
+        self.assertEqual(response.status_code, 201)
+        # Then check that a custome mosaic key is accepted
+        data['requests'][0]['extra_params']['mosaic_pattern'] = 'custom'
+        response = self.client.post(reverse('api:request_groups-list'), data=data)
+        self.assertEqual(response.status_code, 201)
+
 
 class TestDisallowedMethods(APITestCase):
     def setUp(self):
@@ -927,6 +943,24 @@ class TestDitherApi(SetTimeMixin, APITestCase):
         self.assertEqual(offset_diff_ra, dither_data['point_spacing'])
         self.assertEqual(offset_diff_dec, dither_data['point_spacing'])
 
+    def test_expansion_saves_dither_params(self):
+        configuration = self.configuration.copy()
+        dither_data = {
+            'configuration': configuration,
+            'num_rows': 2,
+            'num_columns': 2,
+            'pattern': 'grid',
+            'point_spacing': 2,
+            'orientation': 90
+        }
+        response = self.client.post(reverse('api:configurations-dither'), data=dither_data)
+        self.assertEqual(response.status_code, 200)
+        expanded_configuration = response.json()
+        self.assertEqual(expanded_configuration['extra_params']['dither_pattern'], dither_data['pattern'])
+        self.assertTrue('configuration' not in expanded_configuration['extra_params']['dither_pattern_params'])
+        self.assertEqual(expanded_configuration['extra_params']['dither_pattern_params']['num_rows'], dither_data['num_rows'])
+        self.assertEqual(expanded_configuration['extra_params']['dither_pattern_params']['num_columns'], dither_data['num_columns'])
+
 
 class TestMosaicApi(SetTimeMixin, APITestCase):
     def setUp(self):
@@ -1108,6 +1142,24 @@ class TestMosaicApi(SetTimeMixin, APITestCase):
         self.assertEqual(target1['dec'], self.request['configurations'][0]['target']['dec'])
         self.assertEqual(target2['ra'], target1['ra'] + (ra_diff / 3600.0) / cos_dec)
         self.assertEqual(target2['dec'], target1['dec'] + (dec_diff / 3600.0))
+
+    def test_expansion_saves_mosaic_parameters(self):
+        request = self.request.copy()
+        mosaic_data = {
+            'request': request,
+            'num_points': 3,
+            'pattern': 'line',
+            'point_overlap_percent': 10.0,
+            'orientation': 90.0
+        }
+        response = self.client.post(reverse('api:requests-mosaic'), data=mosaic_data)
+        self.assertEqual(response.status_code, 200)
+        expanded_request = response.json()
+        self.assertEqual(len(expanded_request['configurations']), 3)
+        self.assertEqual(expanded_request['extra_params']['mosaic_pattern'], mosaic_data['pattern'])
+        self.assertTrue('request' not in expanded_request['extra_params']['mosaic_pattern_params'])
+        self.assertEqual(expanded_request['extra_params']['mosaic_pattern_params']['num_points'], mosaic_data['num_points'])
+        self.assertEqual(expanded_request['extra_params']['mosaic_pattern_params']['point_overlap_percent'], mosaic_data['point_overlap_percent'])
 
 
 class TestCadenceApi(SetTimeMixin, APITestCase):
@@ -1628,6 +1680,22 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertEqual(response.status_code, 400)
         self.assertIn('must have at least one instrument configuration', str(response.content))
+
+    def test_valid_dither_pattern(self):
+        data = self.generic_payload.copy()
+        data['requests'][0]['configurations'][0]['extra_params'] = {}
+        # First check that an invalid pattern is not accepted
+        data['requests'][0]['configurations'][0]['extra_params']['dither_pattern'] = 'mountain'
+        response = self.client.post(reverse('api:request_groups-list'), data=data)
+        self.assertEqual(response.status_code, 400)
+        # Then check that a valid pattern is accepted
+        data['requests'][0]['configurations'][0]['extra_params']['dither_pattern'] = 'line'
+        response = self.client.post(reverse('api:request_groups-list'), data=data)
+        self.assertEqual(response.status_code, 201)
+        # Then check that the custome dither pattern key is accepted
+        data['requests'][0]['configurations'][0]['extra_params']['dither_pattern'] = 'custom'
+        response = self.client.post(reverse('api:request_groups-list'), data=data)
+        self.assertEqual(response.status_code, 201)
 
     def test_extra_params_saved_as_float_not_string(self):
         good_data = self.generic_payload.copy()

@@ -1,6 +1,6 @@
 import json
 import logging
-from math import isnan, cos, sin, radians
+from math import cos, sin, radians
 from json import JSONDecodeError
 from abc import ABC, abstractmethod
 
@@ -24,7 +24,7 @@ from observation_portal.requestgroups.models import DraftRequestGroup
 from observation_portal.common.state_changes import debit_ipp_time, TimeAllocationError, validate_ipp
 from observation_portal.requestgroups.target_helpers import TARGET_TYPE_HELPER_MAP
 from observation_portal.common.mixins import ExtraParamsFormatter
-from observation_portal.common.configdb import configdb, ConfigDB, ConfigDBException
+from observation_portal.common.configdb import configdb, ConfigDB
 from observation_portal.requestgroups.duration_utils import (
     get_total_request_duration, get_requestgroup_duration, get_total_duration_dict,
     get_instrument_configuration_duration, get_semester_in
@@ -469,6 +469,14 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
                     'You may only specify a repeat_duration for REPEAT_* type configurations.'
                 ))
 
+        if 'extra_params' in data and 'dither_pattern' in data['extra_params']:
+            pattern = data['extra_params']['dither_pattern']
+            valid_patterns = list(settings.DITHER['valid_expansion_patterns']) + [settings.DITHER['custom_pattern_key']]
+            if pattern not in valid_patterns:
+                raise serializers.ValidationError(_(
+                    f'Invalid dither pattern {pattern} set in the configuration extra_params, choose from {", ".join(valid_patterns)}'
+                ))
+
         return data
 
 
@@ -617,6 +625,14 @@ class RequestSerializer(serializers.ModelSerializer):
                 [configdb.get_default_acceptability_threshold(configuration['instrument_type'])
                  for configuration in data['configurations']]
             )
+
+        if 'extra_params' in data and 'mosaic_pattern' in data['extra_params']:
+            pattern = data['extra_params']['mosaic_pattern']
+            valid_patterns = list(settings.MOSAIC['valid_expansion_patterns']) + [settings.MOSAIC['custom_pattern_key']]
+            if pattern not in valid_patterns:
+                raise serializers.ValidationError(_(
+                    f'Invalid mosaic pattern {pattern} set in the request extra_params, choose from {", ".join(valid_patterns)}'
+                ))
 
         # check that the requests window has enough rise_set visible time to accomodate the requests duration
         if data.get('windows'):
@@ -850,7 +866,7 @@ class RequestGroupSerializer(serializers.ModelSerializer):
 
 
 class PatternExpansionSerializer(serializers.Serializer):
-    pattern = serializers.ChoiceField(choices=('line', 'grid', 'spiral'), required=True)
+    pattern = serializers.ChoiceField(choices=settings.DITHER['valid_expansion_patterns'], required=True)
     num_points = serializers.IntegerField(required=False)
     point_spacing = serializers.FloatField(required=False)
     line_spacing = serializers.FloatField(required=False)
@@ -874,7 +890,7 @@ class PatternExpansionSerializer(serializers.Serializer):
 
 class MosaicSerializer(PatternExpansionSerializer):
     request = import_string(settings.SERIALIZERS['requestgroups']['Request'])()
-    pattern = serializers.ChoiceField(choices=('line', 'grid'), required=True)
+    pattern = serializers.ChoiceField(choices=settings.MOSAIC['valid_expansion_patterns'], required=True)
     point_overlap_percent = serializers.FloatField(required=False, validators=[MinValueValidator(0.0), MaxValueValidator(100.0)])
     line_overlap_percent = serializers.FloatField(required=False, validators=[MinValueValidator(0.0), MaxValueValidator(100.0)])
 
