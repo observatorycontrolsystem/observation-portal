@@ -469,13 +469,33 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
                     'You may only specify a repeat_duration for REPEAT_* type configurations.'
                 ))
 
+        # Validate dither pattern
+
+        # First check that any dither pattern that is set is valid
+        dither_pattern_is_set = False
         if 'extra_params' in data and 'dither_pattern' in data['extra_params']:
+            dither_pattern_is_set = True
             pattern = data['extra_params']['dither_pattern']
             valid_patterns = list(settings.DITHER['valid_expansion_patterns']) + [settings.DITHER['custom_pattern_key']]
             if pattern not in valid_patterns:
                 raise serializers.ValidationError(_(
                     f'Invalid dither pattern {pattern} set in the configuration extra_params, choose from {", ".join(valid_patterns)}'
                 ))
+
+        # Then, if a dither pattern is not yet set and there is at least one instrument_config in the configuration that has offsets applied,
+        # then it is part of a custom dither sequence and we need to set the custom dither pattern field.
+        if not dither_pattern_is_set:
+            is_dither_sequence = False
+            for instrument_config in data['instrument_configs']:
+                offset_ra = instrument_config.get('extra_params', {}).get('offset_ra', 0)
+                offset_dec = instrument_config.get('extra_params', {}).get('offset_dec', 0)
+                if offset_dec != 0 or offset_ra != 0:
+                    is_dither_sequence = True
+                    break
+            if is_dither_sequence:
+                if 'extra_params' not in data:
+                    data['extra_params'] = {}
+                data['extra_params']['dither_pattern'] = settings.DITHER['custom_pattern_key']
 
         return data
 

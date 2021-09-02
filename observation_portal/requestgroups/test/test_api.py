@@ -1697,6 +1697,36 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:request_groups-list'), data=data)
         self.assertEqual(response.status_code, 201)
 
+    def test_custom_dither_pattern_set(self):
+        data = self.generic_payload.copy()
+        # First check that the custom dither pattern is not set on a configuration that has no
+        # instrument configs with offsets applied.
+        data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params'] = {}
+        response = self.client.post(reverse('api:request_groups-list'), data=data)
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue('dither_pattern' not in response.json()['requests'][0]['configurations'][0]['extra_params'])
+        # The check that when the only offset is 0, the custom dither pattern is not set
+        data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params'] = {'offset_ra': 0, 'offset_dec': 0}
+        response = self.client.post(reverse('api:request_groups-list'), data=data)
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue('dither_pattern' not in response.json()['requests'][0]['configurations'][0]['extra_params'])
+        # Then check that when some offset is applied, the custom dither pattern is set
+        data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params'] = {'offset_ra': 1, 'offset_dec': 0}
+        response = self.client.post(reverse('api:request_groups-list'), data=data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()['requests'][0]['configurations'][0]['extra_params']['dither_pattern'], 'custom')
+        # Then check that when only 0 offsets are applied, the custom dither pattern is not set
+        data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params'] = {'offset_ra': 0, 'offset_dec': 0}
+        response = self.client.post(reverse('api:request_groups-list'), data=data)
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue('dither_pattern' not in response.json()['requests'][0]['configurations'][0]['extra_params'])
+        # Then check that if a valid pattern is already set, it is not overridden
+        valid_pattern = 'line'
+        data['requests'][0]['configurations'][0]['extra_params'] = {'dither_pattern': valid_pattern}
+        response = self.client.post(reverse('api:request_groups-list'), data=data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()['requests'][0]['configurations'][0]['extra_params']['dither_pattern'], valid_pattern)
+
     def test_extra_params_saved_as_float_not_string(self):
         good_data = self.generic_payload.copy()
         good_data['requests'][0]['configurations'][0]['extra_params'] = {'test_value': '1.15'}
