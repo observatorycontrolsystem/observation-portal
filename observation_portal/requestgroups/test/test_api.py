@@ -490,10 +490,10 @@ class TestUserPostRequestApi(SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json()['requests'][0]['acceptability_threshold'], 100)
 
-    def test_mosaic_pattern_value(self):
+    def test_mosaic_pattern_valid(self):
         data = self.generic_payload.copy()
-        # Test that an invalid mosaic pattern is rejected
         data['requests'][0]['extra_params'] = {}
+        # Test that an invalid mosaic pattern is rejected
         data['requests'][0]['extra_params']['mosaic_pattern'] = 'swirl'
         response = self.client.post(reverse('api:request_groups-list'), data=data)
         self.assertEqual(response.status_code, 400)
@@ -501,7 +501,7 @@ class TestUserPostRequestApi(SetTimeMixin, APITestCase):
         data['requests'][0]['extra_params']['mosaic_pattern'] = 'line'
         response = self.client.post(reverse('api:request_groups-list'), data=data)
         self.assertEqual(response.status_code, 201)
-        # Then check that a custome mosaic key is accepted
+        # Then check that the custom mosaic pattern key is accepted
         data['requests'][0]['extra_params']['mosaic_pattern'] = 'custom'
         response = self.client.post(reverse('api:request_groups-list'), data=data)
         self.assertEqual(response.status_code, 201)
@@ -1681,7 +1681,7 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('must have at least one instrument configuration', str(response.content))
 
-    def test_valid_dither_pattern(self):
+    def test_dither_pattern_valid(self):
         data = self.generic_payload.copy()
         data['requests'][0]['configurations'][0]['extra_params'] = {}
         # First check that an invalid pattern is not accepted
@@ -1692,7 +1692,7 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         data['requests'][0]['configurations'][0]['extra_params']['dither_pattern'] = 'line'
         response = self.client.post(reverse('api:request_groups-list'), data=data)
         self.assertEqual(response.status_code, 201)
-        # Then check that the custome dither pattern key is accepted
+        # Then check that the custom dither pattern key is accepted
         data['requests'][0]['configurations'][0]['extra_params']['dither_pattern'] = 'custom'
         response = self.client.post(reverse('api:request_groups-list'), data=data)
         self.assertEqual(response.status_code, 201)

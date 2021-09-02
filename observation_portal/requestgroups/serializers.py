@@ -866,7 +866,7 @@ class RequestGroupSerializer(serializers.ModelSerializer):
 
 
 class PatternExpansionSerializer(serializers.Serializer):
-    pattern = serializers.ChoiceField(choices=settings.DITHER['valid_expansion_patterns'], required=True)
+    pattern = serializers.ChoiceField(choices=('line', 'grid', 'spiral'), required=True)
     num_points = serializers.IntegerField(required=False)
     point_spacing = serializers.FloatField(required=False)
     line_spacing = serializers.FloatField(required=False)
@@ -946,6 +946,7 @@ class MosaicSerializer(PatternExpansionSerializer):
 
 class DitherSerializer(PatternExpansionSerializer):
     configuration = import_string(settings.SERIALIZERS['requestgroups']['Configuration'])()
+    pattern = serializers.ChoiceField(choices=settings.DITHER['valid_expansion_patterns'], required=True)
     point_spacing = serializers.FloatField(required=True)
 
 
