@@ -8,10 +8,12 @@ from django.utils.module_loading import import_string
 from observation_portal.accounts.tasks import send_mail
 from observation_portal.sciapplications.filters import ScienceApplicationFilter, CallFilter
 from observation_portal.sciapplications.models import ScienceApplication, Call
+from observation_portal.common.schema import ObservationPortalSchema
 
 
 class CallViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = (IsAuthenticated,)
+    schema = ObservationPortalSchema(tags=['Science Applications'])
     filter_class = CallFilter
     serializer_class = import_string(settings.SERIALIZERS['sciapplications']['Call'])
     filter_backends = (
@@ -28,6 +30,7 @@ class CallViewSet(viewsets.ReadOnlyModelViewSet):
 
 class ScienceApplicationViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated, )
+    schema = ObservationPortalSchema(tags=['Science Applications'])
     filter_class = ScienceApplicationFilter
     serializer_class = import_string(settings.SERIALIZERS['sciapplications']['ScienceApplication'])
     http_method_names = ('get', 'head', 'options', 'post', 'put', 'delete')

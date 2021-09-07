@@ -319,6 +319,7 @@ class DraftRequestGroupViewSet(viewsets.ModelViewSet):
 
 class ConfigurationViewSet(viewsets.GenericViewSet):
     permission_classes = (IsAuthenticated,)
+    schema = None
     serializer_class = import_string(settings.SERIALIZERS['requestgroups']['Dither'])
 
     @action(detail=False, methods=['post'])
