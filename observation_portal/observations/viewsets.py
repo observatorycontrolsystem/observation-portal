@@ -1,4 +1,3 @@
-from observation_portal.common.schema import ObservationPortalSchema
 from rest_framework import viewsets, filters
 from rest_framework.permissions import IsAdminUser
 from rest_framework.decorators import action
@@ -15,6 +14,7 @@ from observation_portal.observations.models import Observation, ConfigurationSta
 from observation_portal.observations.filters import ObservationFilter, ConfigurationStatusFilter
 from observation_portal.common.mixins import ListAsDictMixin, CreateListModelMixin
 from observation_portal.accounts.permissions import IsAdminOrReadOnly, IsDirectUser
+from observation_portal.common.schema import ObservationPortalSchema
 
 
 def observations_queryset(request):

@@ -10,10 +10,10 @@ from django.conf import settings
 from observation_portal.accounts.permissions import IsPrincipleInvestigator
 from observation_portal.common.mixins import ListAsDictMixin, DetailAsDictMixin
 from observation_portal.common.utils import get_queryset_field_values
-from observation_portal.common.schema import ObservationPortalSchema
-from observation_portal.common.doc_examples import EXAMPLE_RESPONSES
 from observation_portal.proposals.filters import SemesterFilter, ProposalFilter, MembershipFilter, ProposalInviteFilter
 from observation_portal.proposals.models import Proposal, Semester, ProposalNotification, Membership, ProposalInvite
+from observation_portal.common.schema import ObservationPortalSchema
+from observation_portal.common.doc_examples import EXAMPLE_RESPONSES
 
 
 class ProposalViewSet(DetailAsDictMixin, ListAsDictMixin, viewsets.ReadOnlyModelViewSet):

@@ -187,10 +187,10 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'])
     def cadence(self, request):
-        cadence_request_group_serializer = import_string(settings.SERIALIZERS['requestgroups']['CadenceRequestGroup'])(data=request.data, context={'request': request})
+        request_serializer = self.get_request_serializer(data=request.data, context={'request': request})
         expanded_requests = []
-        if cadence_request_group_serializer.is_valid():
-            for req in cadence_request_group_serializer.validated_data.get('requests', []):
+        if request_serializer.is_valid():
+            for req in request_serializer.validated_data.get('requests', []):
                 if isinstance(req, dict) and req.get('cadence'):
                     cadence_request_serializer = import_string(settings.SERIALIZERS['requestgroups']['CadenceRequest'])(data=req)
                     if cadence_request_serializer.is_valid():
@@ -211,41 +211,35 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
 
             if len(ret_data['requests']) > 1:
                 ret_data['operator'] = 'MANY'
-            request_group_serializer = import_string(settings.SERIALIZERS['requestgroups']['RequestGroup'])(data=ret_data, context={'request': request})
-            if not request_group_serializer.is_valid():
-                return Response(request_group_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            return Response(ret_data)
+            response_serializer = self.get_response_serializer(data=ret_data, context={'request': request})
+            if not response_serializer.is_valid():
+                return Response(response_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(ret_data, status=status.HTTP_200_OK)
         else:
-            return(Response(cadence_request_group_serializer.errors, status=status.HTTP_400_BAD_REQUEST))
+            return(Response(request_serializer.errors, status=status.HTTP_400_BAD_REQUEST))
 
     def get_example_response(self):
-        if self.action == 'max_allowable_ipp':
-            return EXAMPLE_RESPONSES['max_allowable_ipp']
-        elif self.action == 'validate':
-            return EXAMPLE_RESPONSES['validate']
+        return EXAMPLE_RESPONSES['requestgroups'].get(self.action)
 
     def get_endpoint_name(self):
-        if self.action == 'max_allowable_ipp':
-            return 'getMaxAllowableIPP'
+        endpoint_names = {'max_allowable_ipp': 'getMaxAllowableIPP'}
 
-    def get_request_serializer(self):
-        context = self.get_serializer_context()
-        if self.action == 'cadence':
-            return import_string(settings.SERIALIZERS['requestgroups']['CadenceRequestGroup'])(context=context)
-        else:
-            return import_string(settings.SERIALIZERS['requestgroups']['RequestGroup'])(context=context)
+        return endpoint_names.get(self.action)
+
+    def get_request_serializer(self, *args, **kwargs):
+        serializers = {'cadence': import_string(settings.SERIALIZERS['requestgroups']['CadenceRequestGroup'])}
+
+        return serializers.get(self.action, self.serializer_class)(*args, **kwargs)
     
-    def get_response_serializer(self):
-        context = self.get_serializer_context()
-        if self.action == 'cadence':
-            return import_string(settings.SERIALIZERS['requestgroups']['RequestGroup'])(context=context)
-        else:
-            return import_string(settings.SERIALIZERS['requestgroups']['RequestGroup'])(context=context)
+    def get_response_serializer(self, *args, **kwargs):
+        serializers = {'cadence': import_string(settings.SERIALIZERS['requestgroups']['RequestGroup'])}
+
+        return serializers.get(self.action, self.serializer_class)(*args, **kwargs)
 
 
 class RequestViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
     permission_classes = (IsAuthenticatedOrReadOnly,)
-    schema=AutoSchema(tags=['Requests'])
+    schema = ObservationPortalSchema(tags=['Requests'])
     serializer_class = import_string(settings.SERIALIZERS['requestgroups']['Request'])
     filter_class = RequestFilter
     filter_backends = (
@@ -254,12 +248,7 @@ class RequestViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
     )
     ordering = ('-id',)
     ordering_fields = ('id', 'state')
-
-    def get_serializer_class(self):
-        if self.action == 'mosaic':
-            return import_string(settings.SERIALIZERS['requestgroups']['Mosaic'])
-        else:
-            return import_string(settings.SERIALIZERS['requestgroups']['Request'])
+    undocumented_actions = ['observations', 'telescope_states', 'airmass']
 
     def get_queryset(self):
         if self.request.user.is_authenticated:
@@ -304,6 +293,11 @@ class RequestViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
         # Expand the configurations within the request based on the mosaic pattern specified
         request_dict = expand_mosaic_pattern(mosaic_serializer.validated_data)
         return Response(request_dict)
+
+    def get_request_serializer(self, *args, **kwargs):
+        serializers = {'mosaic': import_string(settings.SERIALIZERS['requestgroups']['Mosaic'])}
+
+        return serializers.get(self.action, self.serializer_class)(*args, **kwargs)
 
 
 class DraftRequestGroupViewSet(viewsets.ModelViewSet):

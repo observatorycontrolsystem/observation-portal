@@ -1,6 +1,32 @@
 from rest_framework import serializers
-from rest_framework.schemas.openapi import AutoSchema
+from rest_framework.schemas.openapi import AutoSchema, SchemaGenerator
 from rest_framework.schemas.utils import is_list_view
+from rest_framework.viewsets import GenericViewSet
+from setuptools_scm import get_version
+from setuptools_scm.version import ScmVersion
+
+
+def version_scheme(version: ScmVersion) -> str:
+    """Simply return the string representation of the version object tag, which is the latest git tag.
+    setuptools_scm does not provide a simple semantic versioning format without trying to guess the next release, or adding some metadata to the version.
+    """
+    return str(version.tag)
+
+
+class ObservationPortalSchemaGenerator(SchemaGenerator):
+    def get_schema(self, *args, **kwargs):
+        schema = super().get_schema(*args, **kwargs)
+        schema['info']['version'] = get_version(version_scheme=version_scheme, local_scheme='no-local-version')
+        return schema
+
+    def has_view_permissions(self, path, method, view):
+        # For viewsets, we'd like to be able to define actions that won't be listed in the API docs.
+        if isinstance(view, GenericViewSet):
+            # For each endpoint in a ViewSet, DRF generates a separate view with an action.
+            if view.action in getattr(view, 'undocumented_actions', []):
+                return False
+        return super().has_view_permissions(path, method, view)
+
 
 class ObservationPortalSchema(AutoSchema):
     def __init__(self, tags, operation_id_base=None, component_name=None, empty_request=False, is_list_view=True):

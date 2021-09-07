@@ -1,5 +1,4 @@
 from django.core.exceptions import ValidationError
-from observation_portal.common.schema import ObservationPortalSchema
 from django.core.cache import cache
 from django_filters.rest_framework.backends import DjangoFilterBackend
 from rest_framework.response import Response
@@ -22,6 +21,7 @@ from observation_portal.requestgroups.contention import Contention, Pressure
 from observation_portal.requestgroups.filters import InstrumentsInformationFilter, LastChangedFilter, TelescopeAvailabilityFilter, TelescopeStatesFilter
 from observation_portal.common.mixins import GetSerializerMixin
 from observation_portal.common.doc_examples import EXAMPLE_RESPONSES
+from observation_portal.common.schema import ObservationPortalSchema
 
 logger = logging.getLogger(__name__)
 

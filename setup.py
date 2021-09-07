@@ -52,6 +52,7 @@ setup(
         'PyPDF2>=1.26,<1.27',
         'redis==3.5.3',
         'requests>=2.22,<2.27',
+        'setuptools-scm==6.0.1',
         'time_intervals<2.0'
     ],
     extras_require={

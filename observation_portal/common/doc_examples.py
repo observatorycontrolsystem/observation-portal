@@ -1,13 +1,37 @@
 EXAMPLE_RESPONSES = {
-    'max_allowable_ipp': {
-        '2021B': {
-            'INSTRUMENT-TYPE-A': {
-            'ipp_time_available': 100.0,
-            'ipp_limit': 100.0,
-            'request_duration': 0.14722222222222223,
-            'max_allowable_ipp_value': 2.0,
-            'min_allowable_ipp_value': 0.5
-            }
+    'requestgroups': {
+        'max_allowable_ipp': {
+            '2021B': {
+                    'INSTRUMENT-TYPE-A': {
+                    'ipp_time_available': 100.0,
+                    'ipp_limit': 100.0,
+                    'request_duration': 0.14722222222222223,
+                    'max_allowable_ipp_value': 2.0,
+                    'min_allowable_ipp_value': 0.5
+                    }
+                }
+        },
+        'validate': {
+            'request_durations': {
+                'requests': [
+                {
+                    'duration': 178,
+                    'configurations': [
+                    {
+                        'instrument_configs': [
+                        {
+                            'duration': 70.0
+                        }
+                        ],
+                        'duration': 86.0
+                    }
+                    ],
+                    'largest_interval': 36969.77505
+                }
+                ],
+                'duration': 178
+            },
+            'errors': {}
         }
     },
     'airmass': {
@@ -35,28 +59,6 @@ EXAMPLE_RESPONSES = {
             },
             'airmass_limit': 3.19
         },
-    'validate': {
-        'request_durations': {
-            'requests': [
-            {
-                'duration': 178,
-                'configurations': [
-                {
-                    'instrument_configs': [
-                    {
-                        'duration': 70.0
-                    }
-                    ],
-                    'duration': 86.0
-                }
-                ],
-                'largest_interval': 36969.77505
-            }
-            ],
-            'duration': 178
-        },
-        'errors': {}
-    },
     'instruments': {
         'INSTRUMENT-TYPE-A': {
             'type': 'IMAGE',
