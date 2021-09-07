@@ -30,11 +30,10 @@ class SemesterSerializer(serializers.ModelSerializer):
 
 class ProposalInviteSerializer(serializers.ModelSerializer):
     emails = serializers.ListField(child=serializers.EmailField(), write_only=True)
-    message = serializers.CharField(read_only=True, default='5 Co Investigator(s) invited')
 
     class Meta:
         model = ProposalInvite
-        fields = ('id', 'role', 'email', 'sent', 'used', 'proposal', 'emails', 'message')
+        fields = ('id', 'role', 'email', 'sent', 'used', 'proposal', 'emails')
         read_only_fields = ('role', 'email', 'proposal')
 
     def validate_emails(self, emails):
@@ -48,6 +47,10 @@ class ProposalInviteSerializer(serializers.ModelSerializer):
         return emails
 
 
+class ProposalInviteResponseSerializer(serializers.Serializer):
+    message = serializers.CharField(default='Co Investigator(s) invited')
+
+
 class MembershipSerializer(serializers.ModelSerializer):
     class Meta:
         model = Membership
@@ -55,13 +58,15 @@ class MembershipSerializer(serializers.ModelSerializer):
 
 
 class ProposalNotificationSerializer(serializers.Serializer):
-    enabled = serializers.BooleanField(write_only=True)
-    message = serializers.CharField(read_only=True, default='Preferences saved')
+    enabled = serializers.BooleanField()
+
+
+class ProposalNotificationResponseSerializer(serializers.Serializer):
+    message = serializers.CharField(default='Preferences saved')
 
 
 class TimeLimitSerializer(serializers.Serializer):
-    time_limit_hours = serializers.FloatField(write_only=True)
-    message = serializers.CharField(read_only=True, default='All CI time limits set to 20 hours')
+    time_limit_hours = serializers.FloatField()
 
     def validate(self, data):
         membership = self.context.get('membership')
@@ -70,88 +75,5 @@ class TimeLimitSerializer(serializers.Serializer):
         return data
 
 
-class ProposalTagsSerializer(serializers.Serializer):
-    tags = serializers.SerializerMethodField()
-
-    def get_tags(self, obj):
-        return get_queryset_field_values(obj, 'tags')
-
-
-class SemesterProposalSerializer(serializers.ModelSerializer):
-    semesters = serializers.SerializerMethodField()
-    allocation = serializers.SerializerMethodField()
-    pis = serializers.SerializerMethodField()
-    sca_name = serializers.SerializerMethodField()
-    sca_id = serializers.SerializerMethodField()
-    class Meta:
-        model = Proposal
-        fields = ('id', 'title', 'abstract', 'allocation', 'semesters', 'pis', 'sca_id', 'sca_name')
-        read_only_fields = fields
-
-    def get_pis(self, obj):
-        return [
-            {
-                'first_name': mem.user.first_name,
-                'last_name': mem.user.last_name,
-                'institution': mem.user.profile.institution
-            } for mem in obj.membership_set.all() if mem.role == Membership.PI
-        ]
-    
-    def get_sca_name(self, obj):
-        return obj.sca.name
-    
-    def get_sca_id(self, obj):
-        return obj.sca.id
-
-    def get_allocation(self, obj):
-        return obj.allocation(semester=self.context.get('semester'))
-
-    def get_semesters(self, obj):
-        return obj.semester_set.distinct().values_list('id', flat=True)
-
-
-class ProposalTimeAllocationProposalDictSerializer(serializers.Serializer):
-    notes = serializers.SerializerMethodField()
-    id = serializers.SerializerMethodField()
-    tac_priority = serializers.SerializerMethodField()
-    num_users = serializers.SerializerMethodField()
-    pis = serializers.SerializerMethodField()
-
-    def get_notes(self, obj):
-        return obj.proposal.notes
-
-    def get_id(self, obj):
-        return obj.proposal.id
-
-    def get_tac_priority(self, obj):
-        return obj.proposal.tac_priority
-
-    def get_num_users(self, obj):
-        return obj.proposal.membership_set.count()
-
-    def get_pis(self, obj):
-        return [
-            {
-                'first_name': mem.user.first_name,
-                'last_name': mem.user.last_name
-            } for mem in obj.proposal.membership_set.all() if mem.role == Membership.PI
-        ]
-
-    
-class SemesterTimeAllocationSerializer(serializers.Serializer):
-    proposal = serializers.SerializerMethodField(read_only=True)
-    timeallocation_dict = serializers.SerializerMethodField(read_only=True)
-
-    # return the list of time allocations without the JSON field name
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        representation['timeallocation_dict']['proposal'] = representation['proposal']
-        del representation['proposal']
-        return representation['timeallocation_dict']
-
-    def get_proposal(self, obj):
-        return ProposalTimeAllocationProposalDictSerializer(obj).data
-
-    # TODO: Need to figure out how to get the JSON structure from as_dict()
-    def get_timeallocation_dict(self, obj):
-        return obj.as_dict(exclude=['proposal', 'semester'])    
+class TimeLimitResponseSerializer(serializers.Serializer):
+    message = serializers.CharField(default='All CI time limits set')

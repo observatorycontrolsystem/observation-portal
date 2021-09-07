@@ -105,5 +105,6 @@ EXAMPLE_RESPONSES = {
             'orientation': 0.0
             }
         }
-    }
+    },
+    'proposals': {'tags': ['tagA', 'tagB', 'tagC']}
 }

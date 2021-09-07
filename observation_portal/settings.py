@@ -339,14 +339,14 @@ SERIALIZERS = {
     'proposals': {
         'Proposal': os.getenv('PROPOSALS_PROPOSAL_SERIALIZER', 'observation_portal.proposals.serializers.ProposalSerializer'),
         'ProposalInvite': os.getenv('PROPOSALS_PROPOSALINVITE_SERIALIZER', 'observation_portal.proposals.serializers.ProposalInviteSerializer'),
+        'ProposalInviteResponse': os.getenv('PROPOSALS_PROPOSALINVITERESPONSE_SERIALIZER', 'observation_portal.proposals.serializers.ProposalInviteResponseSerializer'),
         'Semester': os.getenv('PROPOSALS_SEMESTER_SERIALIZER', 'observation_portal.proposals.serializers.SemesterSerializer'),
         'Membership': os.getenv('PROPOSALS_MEMBERSHIP_SERIALIZER', 'observation_portal.proposals.serializers.MembershipSerializer'),
         'ProposalNotification': os.getenv('PROPOSALS_PROPOSALNOTIFICATION_SERIALIZER', 'observation_portal.proposals.serializers.ProposalNotificationSerializer'),
+        'ProposalNotificationResponse': os.getenv('PROPOSALS_PROPOSALNOTIFICATIONRESPONSE_SERIALIZER', 'observation_portal.proposals.serializers.ProposalNotificationResponseSerializer'),
         'TimeLimit': os.getenv('PROPOSALS_TIMELIMIT_SERIALIZER', 'observation_portal.proposals.serializers.TimeLimitSerializer'),
+        'TimeLimitResponse': os.getenv('PROPOSALS_TIMELIMITRESPONSE_SERIALIZER', 'observation_portal.proposals.serializers.TimeLimitResponseSerializer'),
         'TimeAllocation': os.getenv('PROPOSALS_TIMEALLOCATION_SERIALIZER', 'observation_portal.proposals.serializers.TimeAllocationSerializer'),
-        'ProposalTags': os.getenv('PROPOSALS_TAGS_SERIALIZER', 'observation_portal.proposals.serializers.ProposalTagsSerializer'),
-        'SemesterProposals': os.getenv('PROPOSALS_SEMESTERPROPOSALS_SERIALIZER', 'observation_portal.proposals.serializers.SemesterProposalSerializer'),
-        'SemesterTimeAllocations': os.getenv('PROPOSALS_SEMESTERTIMEALLOCATIONS_SERIALIZER', 'observation_portal.proposals.serializers.SemesterTimeAllocationSerializer'),
     },
     'accounts': {
         'Profile': os.getenv('ACCOUNTS_PROFILE_SERIALIZER', 'observation_portal.accounts.serializers.ProfileSerializer'),
