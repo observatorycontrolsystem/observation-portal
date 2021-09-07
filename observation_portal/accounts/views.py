@@ -15,8 +15,8 @@ from observation_portal.common.schema import ObservationPortalSchema
 
 
 class ProfileApiView(RetrieveUpdateAPIView):
-    schema = ObservationPortalSchema(tags=['Accounts'])
     serializer_class = import_string(settings.SERIALIZERS['accounts']['User'])
+    schema = ObservationPortalSchema(tags=['Accounts'])
     permission_classes = [IsAuthenticated]
 
     #TODO: Docstrings on get_object are not plumbed into the description for the API endpoint - override this.
@@ -55,7 +55,7 @@ class AcceptTermsApiView(APIView, GetSerializerMixin):
 class RevokeApiTokenApiView(APIView, GetSerializerMixin):
     """View to revoke an API token."""
     permission_classes = [IsAuthenticated]
-    schema=ObservationPortalSchema(tags=['Accounts'], empty_request=True)
+    schema = ObservationPortalSchema(tags=['Accounts'], empty_request=True)
     serializer_class = import_string(settings.SERIALIZERS['accounts']['RevokeToken'])
 
     def post(self, request):
@@ -76,7 +76,7 @@ class RevokeApiTokenApiView(APIView, GetSerializerMixin):
 class AccountRemovalRequestApiView(APIView):
     """View to request account removal."""
     permission_classes = [IsAuthenticated]
-    schema=ObservationPortalSchema(tags=['Accounts'])
+    schema = ObservationPortalSchema(tags=['Accounts'])
 
     def post(self, request):
         request_serializer = self.get_request_serializer(data=request.data)

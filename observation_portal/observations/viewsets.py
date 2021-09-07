@@ -40,9 +40,9 @@ def observations_queryset(request):
 class ScheduleViewSet(ListAsDictMixin, CreateListModelMixin, viewsets.ModelViewSet):
     permission_classes = (IsAdminOrReadOnly | IsDirectUser,)
     http_method_names = ['get', 'post', 'head', 'options']
-    schema=ObservationPortalSchema(tags=['Observations'])
     serializer_class = import_string(settings.SERIALIZERS['observations']['Schedule'])
     filter_class = ObservationFilter
+    schema = ObservationPortalSchema(tags=['Observations'])
     filter_backends = (
         filters.OrderingFilter,
         DjangoFilterBackend
@@ -61,7 +61,7 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
     http_method_names = ['get', 'post', 'head', 'options', 'patch']
     filter_class = ObservationFilter
     serializer_class = import_string(settings.SERIALIZERS['observations']['Observation'])
-    schema=ObservationPortalSchema(tags=['Observations'])
+    schema = ObservationPortalSchema(tags=['Observations'])
     filter_backends = (
         filters.OrderingFilter,
         DjangoFilterBackend
@@ -191,9 +191,9 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
 class ConfigurationStatusViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAdminUser,)
     http_method_names = ['get', 'patch']
-    schema=ObservationPortalSchema(tags=['Observations'])
     serializer_class = import_string(settings.SERIALIZERS['observations']['ConfigurationStatus'])
     filter_class = ConfigurationStatusFilter
+    schema = ObservationPortalSchema(tags=['Observations'])
     filter_backends = (
         filters.OrderingFilter,
         DjangoFilterBackend

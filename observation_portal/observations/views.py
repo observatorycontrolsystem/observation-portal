@@ -24,7 +24,7 @@ class LastScheduledView(APIView, GetSerializerMixin):
         not really care if the only change was removing things from it's schedule.
     """
     permission_classes = (IsAdminUser,)
-    schema=ObservationPortalSchema(tags=['Observations'])
+    schema = ObservationPortalSchema(tags=['Observations'])
     filter_backends = (DjangoFilterBackend,)
     filter_class = LastScheduledFilter
     serializer_class = import_string(settings.SERIALIZERS['observations']['LastScheduled'])

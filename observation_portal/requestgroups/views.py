@@ -45,7 +45,7 @@ class TelescopeStatesView(APIView):
     Retrieves the telescope states for all telescopes between the start and end times
     """
     permission_classes = (AllowAny,)
-    schema=AutoSchema(tags=['Utility'])
+    schema = None
     filter_class = TelescopeStatesFilter
     filter_backends = (DjangoFilterBackend,)
 
@@ -67,7 +67,7 @@ class TelescopeAvailabilityView(APIView):
     Retrieves the nightly percent availability of each telescope between the start and end times
     """
     permission_classes = (AllowAny,)
-    schema=AutoSchema(tags=['Utility'])
+    schema = None
     filter_class = TelescopeAvailabilityFilter
     filter_backends = (DjangoFilterBackend,)
 
@@ -97,7 +97,7 @@ class AirmassView(APIView, GetSerializerMixin):
     Gets the airmasses for the request at available sites
     """
     permission_classes = (AllowAny,)
-    schema=ObservationPortalSchema(tags=['Requests'])
+    schema = ObservationPortalSchema(tags=['Requests'])
     serializer_class = import_string(settings.SERIALIZERS['requestgroups']['Request'])
 
     def post(self, request):
@@ -120,7 +120,7 @@ class AirmassView(APIView, GetSerializerMixin):
 
 class InstrumentsInformationView(APIView):
     permission_classes = (AllowAny,)
-    schema=ObservationPortalSchema(tags=['Utility'])
+    schema = ObservationPortalSchema(tags=['Utility'])
     filter_backends = (DjangoFilterBackend,)
     filter_class = InstrumentsInformationFilter
 
@@ -171,7 +171,7 @@ class InstrumentsInformationView(APIView):
 
 class ContentionView(APIView):
     permission_classes = (AllowAny,)
-    schema=AutoSchema(tags=['Utility'])
+    schema = None
 
     def get(self, request, instrument_type):
         if request.user.is_staff:
@@ -183,7 +183,7 @@ class ContentionView(APIView):
 
 class PressureView(APIView):
     permission_classes = (AllowAny,)
-    schema=AutoSchema(tags=['Utility'])
+    schema = None
 
     def get(self, request):
         instrument_type = request.GET.get('instrument')
@@ -200,7 +200,7 @@ class ObservationPortalLastChangedView(APIView, GetSerializerMixin):
         Returns the datetime of the last status of requests change or new requests addition
     '''
     permission_classes = (IsAdminUser,)
-    schema=ObservationPortalSchema(tags=['RequestGroups'], is_list_view=False)
+    schema = ObservationPortalSchema(tags=['RequestGroups'], is_list_view=False)
     filter_class = LastChangedFilter
     filter_backends = (DjangoFilterBackend,)
     serializer_class = import_string(settings.SERIALIZERS['requestgroups']['LastChanged'])
@@ -216,3 +216,6 @@ class ObservationPortalLastChangedView(APIView, GetSerializerMixin):
             return Response(serializer.validated_data)
         else:
             raise ValidationError(serializer.errors)
+
+    def get_endpoint_name(self):
+        return 'getLastChangedTime'

@@ -18,7 +18,7 @@ from observation_portal.common.doc_examples import EXAMPLE_RESPONSES
 
 class ProposalViewSet(DetailAsDictMixin, ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
     permission_classes = (IsAuthenticated,)
-    schema=ObservationPortalSchema(tags=['Proposals'])
+    schema = ObservationPortalSchema(tags=['Proposals'])
     serializer_class = import_string(settings.SERIALIZERS['proposals']['Proposal'])
     filter_class = ProposalFilter
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
@@ -118,12 +118,13 @@ class ProposalViewSet(DetailAsDictMixin, ListAsDictMixin, viewsets.ReadOnlyModel
 
 class SemesterViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = (AllowAny,)
-    schema = None
+    schema = ObservationPortalSchema(tags=['Requests'])
     serializer_class = import_string(settings.SERIALIZERS['proposals']['Semester'])
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
     filter_class = SemesterFilter
     ordering = ('-start',)
-    queryset = Semester.objects.all()        
+    queryset = Semester.objects.all()
+    undocumented_actions = ['proposals', 'timeallocations']
     
     @action(detail=True, methods=['get'])
     def proposals(self, request, pk=None):
@@ -181,7 +182,7 @@ class SemesterViewSet(viewsets.ReadOnlyModelViewSet):
 
 class MembershipViewSet(ListAsDictMixin, DetailAsDictMixin, mixins.DestroyModelMixin, viewsets.ReadOnlyModelViewSet):
     http_method_names = ('get', 'head', 'options', 'post', 'delete')
-    schema=ObservationPortalSchema(tags=['Proposals'])
+    schema = ObservationPortalSchema(tags=['Proposals'])
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
     filter_class = MembershipFilter
     serializer_class = import_string(settings.SERIALIZERS['proposals']['Membership'])
@@ -246,7 +247,7 @@ class MembershipViewSet(ListAsDictMixin, DetailAsDictMixin, mixins.DestroyModelM
 
 class ProposalInviteViewSet(mixins.DestroyModelMixin, viewsets.ReadOnlyModelViewSet):
     http_method_names = ('get', 'head', 'options', 'delete')
-    schema=ObservationPortalSchema(tags=['Proposals'])
+    schema = ObservationPortalSchema(tags=['Proposals'])
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
     filter_class = ProposalInviteFilter
     serializer_class = import_string(settings.SERIALIZERS['proposals']['ProposalInvite'])

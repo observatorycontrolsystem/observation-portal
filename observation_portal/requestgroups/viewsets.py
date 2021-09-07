@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
     permission_classes = (IsAuthenticatedOrReadOnly,)
     http_method_names = ['get', 'post', 'head', 'options']
-    schema=ObservationPortalSchema(tags=['RequestGroups'])
+    schema = ObservationPortalSchema(tags=['RequestGroups'])
     serializer_class = import_string(settings.SERIALIZERS['requestgroups']['RequestGroup'])
     filter_class = RequestGroupFilter
     filter_backends = (
@@ -45,6 +45,7 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
         DjangoFilterBackend
     )
     ordering = ('-id',)
+    undocumented_actions = ['schedulable_requests']
     
     def get_throttles(self):
         actions_to_throttle = ['cancel', 'validate', 'create']
@@ -222,7 +223,8 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
         return EXAMPLE_RESPONSES['requestgroups'].get(self.action)
 
     def get_endpoint_name(self):
-        endpoint_names = {'max_allowable_ipp': 'getMaxAllowableIPP'}
+        endpoint_names = {'max_allowable_ipp': 'getMaxAllowableIPP',
+                          'cadence': 'generateCadence'}
 
         return endpoint_names.get(self.action)
 
@@ -299,9 +301,14 @@ class RequestViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
 
         return serializers.get(self.action, self.serializer_class)(*args, **kwargs)
 
+    def get_endpoint_name(self):
+        endpoint_names = {'mosaic': 'expandMosaic'}
+
+        return endpoint_names.get(self.action)
+
 
 class DraftRequestGroupViewSet(viewsets.ModelViewSet):
-    schema=AutoSchema(tags=['RequestGroups'])
+    schema = ObservationPortalSchema(tags=['RequestGroups'])
     serializer_class = import_string(settings.SERIALIZERS['requestgroups']['DraftRequestGroup'])
     ordering = ('-modified',)
 
