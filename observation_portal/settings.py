@@ -352,8 +352,8 @@ SERIALIZERS = {
         'Profile': os.getenv('ACCOUNTS_PROFILE_SERIALIZER', 'observation_portal.accounts.serializers.ProfileSerializer'),
         'User': os.getenv('ACCOUNTS_USER_SERIALIZER', 'observation_portal.accounts.serializers.UserSerializer'),
         'AccountRemovalRequest': os.getenv('ACCOUNTS_ACCOUNTREMOVAL_SERIALIZER', 'observation_portal.accounts.serializers.AccountRemovalRequestSerializer'),
-        'AcceptTerms': os.getenv('ACCOUNTS_ACCEPTTERMS_SERIALIZER', 'observation_portal.accounts.serializers.AcceptTermsSerializer'),
-        'RevokeToken': os.getenv('ACCOUNTS_REVOKETOKEN_SERIALIZER', 'observation_portal.accounts.serializers.RevokeTokenSerializer'),
+        'AcceptTerms': os.getenv('ACCOUNTS_ACCEPTTERMS_SERIALIZER', 'observation_portal.accounts.serializers.AcceptTermsResponseSerializer'),
+        'RevokeToken': os.getenv('ACCOUNTS_REVOKETOKEN_SERIALIZER', 'observation_portal.accounts.serializers.RevokeTokenResponseSerializer'),
         'AccountRemovalRequest': os.getenv('ACCOUNTS_ACCOUNTREMOVALREQUEST_SERIALIZER', 'observation_portal.accounts.serializers.AccountRemovalRequestSerializer'),
         'AccountRemovalResponse': os.getenv('ACCOUNTS_ACCOUNTREMOVALRESPONSE_SERIALIZER', 'observation_portal.accounts.serializers.AccountRemovalResponseSerializer')
     },
