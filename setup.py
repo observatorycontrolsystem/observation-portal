@@ -53,7 +53,8 @@ setup(
         'redis==3.5.3',
         'requests>=2.22,<2.27',
         'setuptools-scm==6.0.1',
-        'time_intervals<2.0'
+        'time_intervals<2.0',
+        'uritemplate==3.0.1'
     ],
     extras_require={
         'test': ['responses==0.10.6', 'mixer==6.1.3', 'Faker==0.9.1']
