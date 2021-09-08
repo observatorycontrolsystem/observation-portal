@@ -23,13 +23,13 @@ jobs:
       run: |
         python manage.py generateschema_mocked --file observation-portal.yaml --generator_class=observation_portal.common.schema.ObservationPortalSchemaGenerator
         npx redoc-cli bundle observation-portal.yaml
-        mkdir docs; mv redoc-static.html docs/observation-portal.html
+        mkdir openapi; mv redoc-static.html openapi/observation-portal.html
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3 # https://github.com/peaceiris/actions-gh-pages
       with:
         personal_token: ${{ secrets.PERSONAL_TOKEN }}
         external_repository: mgdaily/observatorycontrolsystem.github.io
-        publish_dir: docs
+        publish_dir: openapi
         destination_dir: assets/html
         enable_jekyll: true
         publish_branch: update_drf_schema
