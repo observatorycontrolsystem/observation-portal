@@ -16,6 +16,7 @@ def version_scheme(version: ScmVersion) -> str:
 class ObservationPortalSchemaGenerator(SchemaGenerator):
     def get_schema(self, *args, **kwargs):
         schema = super().get_schema(*args, **kwargs)
+        schema['info']['title'] = 'Observation Portal'
         schema['info']['version'] = get_version(version_scheme=version_scheme, local_scheme='no-local-version')
         return schema
 
