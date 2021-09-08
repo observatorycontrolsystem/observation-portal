@@ -32,6 +32,6 @@ jobs:
         publish_dir: openapi
         destination_dir: assets/html
         enable_jekyll: true
-        publish_branch: update_drf_schema
+        publish_branch: main
         keep_files: true
         exclude_assets: '.github,openapi,.redocly.yaml,LICENSE,README.md,make.sh'
