@@ -6,7 +6,6 @@ from rest_framework.permissions import AllowAny, IsAdminUser
 from django.http import HttpResponseBadRequest
 from django.utils import timezone
 from django.utils.module_loading import import_string
-from django.conf import settings
 from dateutil.parser import parse
 from datetime import timedelta
 from rest_framework.views import APIView
@@ -218,7 +217,7 @@ class ObservationPortalLastChangedView(APIView, GetSerializerMixin):
             raise ValidationError(response_serializer.errors)
 
 
-    def get_response_serializer(*args, **kwargs):
+    def get_response_serializer(self, *args, **kwargs):
         return import_string(settings.SERIALIZERS['requestgroups']['LastChanged'])(*args, **kwargs)
 
 

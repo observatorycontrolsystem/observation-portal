@@ -23,7 +23,7 @@ class ProposalViewSet(DetailAsDictMixin, ListAsDictMixin, viewsets.ReadOnlyModel
     filter_class = ProposalFilter
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
     ordering = ('-id',)
-    
+
     def get_queryset(self):
         if self.request.user.is_staff and self.request.user.profile.staff_view:
             return Proposal.objects.all().prefetch_related(

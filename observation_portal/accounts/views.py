@@ -68,7 +68,7 @@ class RevokeApiTokenApiView(APIView, GetSerializerMixin):
         else:
             # TODO: Should this be a 500? It's technically not a erroneous request.
             return Response(serializer.errors, status=400)
-    
+
     def get_endpoint_name(self):
         return 'revokeApiToken'
 

@@ -45,7 +45,7 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
     )
     ordering = ('-id',)
     undocumented_actions = ['schedulable_requests']
-    
+
     def get_throttles(self):
         actions_to_throttle = ['cancel', 'validate', 'create']
         if self.action in actions_to_throttle:

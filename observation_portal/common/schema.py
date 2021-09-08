@@ -75,13 +75,13 @@ class ObservationPortalSchema(AutoSchema):
 
         return operations
 
-    """
-    The following class methods are based off a change merged to master in the DRF repository
-    that allows for the specification of separate request and response serializers for view introspection.
-    See https://github.com/encode/django-rest-framework/pull/7424
+    
+    # The following class methods are based off a change merged to master in the DRF repository
+    # that allows for the specification of separate request and response serializers for view introspection.
+    # See https://github.com/encode/django-rest-framework/pull/7424
 
-    These overrides can be removed once a new release containing these changes is available.
-    """
+    # These overrides can be removed once a new release containing these changes is available.
+    # TODO: Remove these when the next version of DRF is released
 
     def get_components(self, path, method):
         request_serializer = self.get_request_serializer(path, method)
@@ -178,7 +178,7 @@ class ObservationPortalSchema(AutoSchema):
                 'content': {
                     ct: {'schema': response_schema}
                     for ct in self.response_media_types
-                }, 
+                },
                 # description is a mandatory property,
                 # https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.2.md#responseObject
                 # TODO: put something meaningful into it

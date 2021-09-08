@@ -19,7 +19,6 @@ from django.urls import path
 from rest_framework.routers import DefaultRouter
 from rest_framework.authtoken.views import obtain_auth_token
 from rest_framework import permissions
-from rest_framework import authentication
 from rest_framework.schemas import get_schema_view
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.conf.urls.static import static

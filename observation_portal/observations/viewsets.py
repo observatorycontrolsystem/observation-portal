@@ -167,11 +167,11 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
             site = request.data[0]['site']
             cache.set(cache_key + f"_{site}", timezone.now(), None)
             return Response({'num_created': len(observations), 'errors': errors}, status=201)
-    
+
     def get_request_serializer(self, *args, **kwargs):
         request_serializers = {'cancel': import_string(settings.SERIALIZERS['observations']['Cancel'])}
         
-        return request_serializers.get(self.action, 
+        return request_serializers.get(self.action,
                                        import_string(settings.SERIALIZERS['observations']['Observation']))(*args, **kwargs)
 
     def get_response_serializer(self, *args, **kwargs):
