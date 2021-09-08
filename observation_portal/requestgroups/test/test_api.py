@@ -1183,7 +1183,7 @@ class TestCadenceApi(SetTimeMixin, APITestCase):
         bad_data['requests'][0]['cadence']['jitter'] = 'bug'
         response = self.client.post(reverse('api:request_groups-cadence'), data=bad_data)
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.json()['cadence']['jitter'], ['A valid number is required.'])
+        self.assertEqual(response.json()['requests'][0]['cadence']['jitter'], ['A valid number is required.'])
 
     def test_cadence_with_windows_invalid(self):
         bad_data = self.generic_payload.copy()
@@ -1196,7 +1196,7 @@ class TestCadenceApi(SetTimeMixin, APITestCase):
         bad_data['requests'][0]['cadence']['period'] = -666
         response = self.client.post(reverse('api:request_groups-cadence'), data=bad_data)
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.json()['cadence']['period'], ['Ensure this value is greater than or equal to 0.02.'])
+        self.assertEqual(response.json()['requests'][0]['cadence']['period'], ['Ensure this value is greater than or equal to 0.02.'])
 
     def test_post_requestgroup_after_valid_cadence(self):
         response = self.client.post(reverse('api:request_groups-cadence'), data=self.generic_payload)

@@ -46,7 +46,7 @@ class ProposalViewSet(DetailAsDictMixin, ListAsDictMixin, viewsets.ReadOnlyModel
 
             response_serializer = self.get_response_serializer(data={'message': 'Preferences saved'})
             if response_serializer.is_valid():
-                return Response(response_serializer.vaildated_data, status=200)
+                return Response(response_serializer.validated_data, status=200)
             else:
                 return Response(response_serializer.errors, status=400)
         else:
@@ -78,7 +78,7 @@ class ProposalViewSet(DetailAsDictMixin, ListAsDictMixin, viewsets.ReadOnlyModel
             time_limit_hours = request_serializer.validated_data['time_limit_hours']
             proposal.membership_set.filter(role=Membership.CI).update(time_limit=time_limit_hours * 3600)
 
-            response_serializer = self.get_response_serializer({'message': f'All CI time limits set to {time_limit_hours} hours'})
+            response_serializer = self.get_response_serializer(data={'message': f'All CI time limits set to {time_limit_hours} hours'})
             if response_serializer.is_valid():
                 return Response(response_serializer.validated_data, status=200)
             else:
@@ -214,7 +214,7 @@ class MembershipViewSet(ListAsDictMixin, DetailAsDictMixin, mixins.DestroyModelM
         membership = self.get_object()
         request_serializer = self.get_request_serializer(data=request.data, context={'membership': membership})
         if request_serializer.is_valid():
-            time_limit_hours = serializer.validated_data['time_limit_hours']
+            time_limit_hours = request_serializer.validated_data['time_limit_hours']
             membership.time_limit = time_limit_hours * 3600
             membership.save()
             message = (

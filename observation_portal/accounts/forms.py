@@ -27,7 +27,7 @@ class CustomRegistrationForm(RegistrationFormTermsOfService, RegistrationFormUni
         }
 
     def save(self, commit=True):
-        new_user_instance = super().save(commit)
+        new_user_instance = super().save(commit=True)
         Profile.objects.create(
             user=new_user_instance,
             title=self.cleaned_data['title'],

@@ -48,27 +48,6 @@ class RequestFilter(django_filters.FilterSet):
         fields = ('state',)
 
 
-class TelescopeStatesFilter(django_filters.FilterSet):
-    start = django_filters.DateTimeFilter()
-    end = django_filters.DateTimeFilter()
-    site = django_filters.MultipleChoiceFilter()
-    telescopes = django_filters.MultipleChoiceFilter()
-
-    class Meta:
-        fields = ('start', 'end', 'site', 'telescopes',)
-
-
-class TelescopeAvailabilityFilter(django_filters.FilterSet):
-    start = django_filters.DateTimeFilter()
-    end = django_filters.DateTimeFilter()
-    site = django_filters.MultipleChoiceFilter()
-    telescope = django_filters.MultipleChoiceFilter()
-    combine = django_filters.BooleanFilter()
-
-    class Meta:
-        fields = ('start', 'end', 'site', 'telescope', 'combine')
-
-
 class LastChangedFilter(django_filters.FilterSet):
     telescope_class = django_filters.MultipleChoiceFilter(choices=configdb.get_telescope_class_tuples())
 

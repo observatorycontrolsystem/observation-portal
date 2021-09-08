@@ -849,7 +849,7 @@ class RequestGroupSerializer(serializers.ModelSerializer):
         return value
 
 
-class CadenceRequestGroupSerializer(RequestGroupSerializer):
+class CadenceRequestGroupSerializer(serializers.Serializer):
     requests = import_string(settings.SERIALIZERS['requestgroups']['CadenceRequest'])(many=True)
 
 
