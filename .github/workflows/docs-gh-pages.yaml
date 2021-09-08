@@ -21,7 +21,7 @@ jobs:
         pip install .
     - name: Build docs
       run: |
-        python manage.py generateschema --file observation-portal.yaml --generator_class=configdb.schema.ObservationPortalSchemaGenerator
+        python manage.py generateschema_mocked --file observation-portal.yaml --generator_class=configdb.schema.ObservationPortalSchemaGenerator
         npx redoc-cli bundle observation-portal.yaml
         mkdir docs; mv redoc-static.html docs/observation-portal.html
     - name: Deploy to GitHub Pages
