@@ -93,14 +93,14 @@ class ProposalViewSet(DetailAsDictMixin, ListAsDictMixin, viewsets.ReadOnlyModel
 
     def get_request_serializer(self, *args, **kwargs):
         serializers = {'notification': import_string(settings.SERIALIZERS['proposals']['ProposalNotification']),
-                        'invite': import_string(settings.SERIALIZERS['proposals']['ProposalInvite']),
-                        'globallimit': import_string(settings.SERIALIZERS['proposals']['TimeLimit'])}
+                       'invite': import_string(settings.SERIALIZERS['proposals']['ProposalInvite']),
+                       'globallimit': import_string(settings.SERIALIZERS['proposals']['TimeLimit'])}
         return serializers.get(self.action, self.serializer_class)(*args, **kwargs)
 
     def get_response_serializer(self, *args, **kwargs):
         serializers = {'notification': import_string(settings.SERIALIZERS['proposals']['ProposalNotificationResponse']),
-                        'invite': import_string(settings.SERIALIZERS['proposals']['ProposalInviteResponse']),
-                        'globallimit': import_string(settings.SERIALIZERS['proposals']['TimeLimitResponse'])}
+                       'invite': import_string(settings.SERIALIZERS['proposals']['ProposalInviteResponse']),
+                       'globallimit': import_string(settings.SERIALIZERS['proposals']['TimeLimitResponse'])}
 
         return serializers.get(self.action, self.serializer_class)(*args, **kwargs)
 

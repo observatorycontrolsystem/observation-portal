@@ -85,11 +85,11 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
             else:
                 obs_filter_options['fields'].append(filter_name)
 
-        serializer = self.get_response_serializer(data=obs_filter_options)
-        if serializer.is_valid():
-            return Response(serializer.validated_data, status=200)
+        response_serializer = self.get_response_serializer(data=obs_filter_options)
+        if response_serializer.is_valid():
+            return Response(response_serializer.validated_data, status=200)
         else:
-            return Response(serializer.errors, status=400)
+            return Response(response_serializer.errors, status=400)
 
     @action(detail=False, methods=['post'])
     def cancel(self, request):

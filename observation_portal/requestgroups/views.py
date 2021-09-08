@@ -59,9 +59,9 @@ class TelescopeStatesView(APIView):
         telescopes = request.query_params.getlist('telescope')
         telescope_states = TelescopeStates(start, end, sites=sites, telescopes=telescopes).get()
         str_telescope_states = {str(k): v for k, v in telescope_states.items()}
-        
+
         return Response(str_telescope_states)
-        
+
 
 class TelescopeAvailabilityView(APIView):
     """
@@ -211,11 +211,16 @@ class ObservationPortalLastChangedView(APIView, GetSerializerMixin):
         for telescope_class in telescope_classes:
             most_recent_change_time = max(most_recent_change_time, cache.get(f"observation_portal_last_change_time_{telescope_class}", timezone.now() - timedelta(days=7)))
 
-        serializer = import_string(settings.SERIALIZERS['requestgroups']['LastChanged'])(data={'last_change_time': most_recent_change_time})
-        if serializer.is_valid():
-            return Response(serializer.validated_data)
+        response_serializer = self.get_response_serializer(data={'last_change_time': most_recent_change_time})
+        if response_serializer.is_valid():
+            return Response(response_serializer.validated_data)
         else:
-            raise ValidationError(serializer.errors)
+            raise ValidationError(response_serializer.errors)
+
+
+    def get_response_serializer(*args, **kwargs):
+        return import_string(settings.SERIALIZERS['requestgroups']['LastChanged'])(*args, **kwargs)
+
 
     def get_endpoint_name(self):
         return 'getLastChangedTime'
