@@ -169,17 +169,15 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
             return Response({'num_created': len(observations), 'errors': errors}, status=201)
 
     def get_request_serializer(self, *args, **kwargs):
-        request_serializers = {'cancel': import_string(settings.SERIALIZERS['observations']['Cancel'])}
+        serializers = {'cancel': import_string(settings.SERIALIZERS['observations']['Cancel'])}
         
-        return request_serializers.get(self.action,
-                                       import_string(settings.SERIALIZERS['observations']['Observation']))(*args, **kwargs)
+        return serializers.get(self.action, self.serializer_class)(*args, **kwargs)
 
     def get_response_serializer(self, *args, **kwargs):
-        response_serializers = {'cancel': import_string(settings.SERIALIZERS['observations']['CancelResponse']),
-                                'filters': import_string(settings.SERIALIZERS['observations']['ObservationFilters'])}
+        serializers = {'cancel': import_string(settings.SERIALIZERS['observations']['CancelResponse']),
+                       'filters': import_string(settings.SERIALIZERS['observations']['ObservationFilters'])}
 
-        return response_serializers.get(self.action,
-                                        import_string(settings.SERIALIZERS['observations']['Observation']))(*args, **kwargs)
+        return serializers.get(self.action, self.serializer_class)(*args, **kwargs)
 
     def get_endpoint_name(self):
         endpoint_names = {'cancel': 'cancelObservation',

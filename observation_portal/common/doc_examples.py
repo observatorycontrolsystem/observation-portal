@@ -32,9 +32,8 @@ EXAMPLE_RESPONSES = {
                 'duration': 178
             },
             'errors': {}
-        }
-    },
-    'airmass': {
+        },
+        'airmass': {
             'airmass_data': {
                 'site-A': {
                     'times': [
@@ -59,54 +58,57 @@ EXAMPLE_RESPONSES = {
             },
             'airmass_limit': 3.19
         },
-    'instruments': {
-        'INSTRUMENT-TYPE-A': {
-            'type': 'IMAGE',
-            'class': '2m0',
-            'name': '2.0 meter Instrument A',
-            'optical_elements': {
-            'filters': [
-                {
-                'name': 'Clear',
-                'code': 'air',
-                'schedulable': 'true',
-                'default': 'false'
-                }
-            ]
-            },
-            'modes': {
-            'readout': {
-                'type': 'readout',
-                'modes': [
-                {
-                    'name': 'Instrument A 2x2',
-                    'overhead': 0.0,
-                    'code': 'instrument_A_2',
+        'instruments': {
+            'INSTRUMENT-TYPE-A': {
+                'type': 'IMAGE',
+                'class': '2m0',
+                'name': '2.0 meter Instrument A',
+                'optical_elements': {
+                'filters': [
+                    {
+                    'name': 'Clear',
+                    'code': 'air',
                     'schedulable': 'true',
-                    'validation_schema': {}
+                    'default': 'false'
+                    }
+                ]
                 },
-                {
-                    'name': 'Instrument A 1x1',
-                    'overhead': 0.0,
-                    'code': 'instrument_A_1',
-                    'schedulable': 'true',
-                    'validation_schema': {}
+                'modes': {
+                'readout': {
+                    'type': 'readout',
+                    'modes': [
+                    {
+                        'name': 'Instrument A 2x2',
+                        'overhead': 0.0,
+                        'code': 'instrument_A_2',
+                        'schedulable': 'true',
+                        'validation_schema': {}
+                    },
+                    {
+                        'name': 'Instrument A 1x1',
+                        'overhead': 0.0,
+                        'code': 'instrument_A_1',
+                        'schedulable': 'true',
+                        'validation_schema': {}
+                    }
+                    ],
+                    'default': 'instrument_A_1'
                 }
-                ],
-                'default': 'instrument_A_1'
-            }
-            },
-            'default_acceptability_threshold': 90.0,
-            'configuration_types': {},
-            'camera_type': {
-            'science_field_of_view': 7.477913345312313,
-            'autoguider_field_of_view': 7.477913345312313,
-            'pixel_scale': 0.244,
-            'pixels_x': 1530,
-            'pixels_y': 1020,
-            'orientation': 0.0
+                },
+                'default_acceptability_threshold': 90.0,
+                'configuration_types': {},
+                'camera_type': {
+                'science_field_of_view': 7.477913345312313,
+                'autoguider_field_of_view': 7.477913345312313,
+                'pixel_scale': 0.244,
+                'pixels_x': 1530,
+                'pixels_y': 1020,
+                'orientation': 0.0
+                }
             }
         }
     },
-    'proposals': {'tags': ['tagA', 'tagB', 'tagC']}
+    'proposals': {
+        'tags': ['tagA', 'tagB', 'tagC']
+    }
 }

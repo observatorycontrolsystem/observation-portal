@@ -111,7 +111,7 @@ class AirmassView(APIView, GetSerializerMixin):
         return import_string(settings.SERIALIZERS['requestgroups']['Request'])(*args, **kwargs)
 
     def get_example_response(self):
-        return EXAMPLE_RESPONSES['airmass']
+        return EXAMPLE_RESPONSES['requestgroups'].get('airmass')
 
     def get_endpoint_name(self):
         return 'getAirmass'
@@ -162,7 +162,7 @@ class InstrumentsInformationView(APIView):
         return Response(info)
 
     def get_example_response(self):
-        return EXAMPLE_RESPONSES['instruments']
+        return EXAMPLE_RESPONSES['requestgroups'].get('instruments')
 
     def get_endpoint_name(self):
         return 'getInstruments'
