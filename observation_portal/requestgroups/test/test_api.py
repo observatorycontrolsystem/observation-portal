@@ -957,9 +957,6 @@ class TestDitherApi(SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 200)
         expanded_configuration = response.json()
         self.assertEqual(expanded_configuration['extra_params']['dither_pattern'], dither_data['pattern'])
-        self.assertTrue('configuration' not in expanded_configuration['extra_params']['dither_pattern_params'])
-        self.assertEqual(expanded_configuration['extra_params']['dither_pattern_params']['num_rows'], dither_data['num_rows'])
-        self.assertEqual(expanded_configuration['extra_params']['dither_pattern_params']['num_columns'], dither_data['num_columns'])
 
 
 class TestMosaicApi(SetTimeMixin, APITestCase):
@@ -1157,9 +1154,6 @@ class TestMosaicApi(SetTimeMixin, APITestCase):
         expanded_request = response.json()
         self.assertEqual(len(expanded_request['configurations']), 3)
         self.assertEqual(expanded_request['extra_params']['mosaic_pattern'], mosaic_data['pattern'])
-        self.assertTrue('request' not in expanded_request['extra_params']['mosaic_pattern_params'])
-        self.assertEqual(expanded_request['extra_params']['mosaic_pattern_params']['num_points'], mosaic_data['num_points'])
-        self.assertEqual(expanded_request['extra_params']['mosaic_pattern_params']['point_overlap_percent'], mosaic_data['point_overlap_percent'])
 
 
 class TestCadenceApi(SetTimeMixin, APITestCase):
@@ -1684,6 +1678,7 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
     def test_dither_pattern_valid(self):
         data = self.generic_payload.copy()
         data['requests'][0]['configurations'][0]['extra_params'] = {}
+        data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params']['offset_ra'] = 1
         # First check that an invalid pattern is not accepted
         data['requests'][0]['configurations'][0]['extra_params']['dither_pattern'] = 'mountain'
         response = self.client.post(reverse('api:request_groups-list'), data=data)
@@ -1715,17 +1710,42 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:request_groups-list'), data=data)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json()['requests'][0]['configurations'][0]['extra_params']['dither_pattern'], 'custom')
-        # Then check that when only 0 offsets are applied, the custom dither pattern is not set
-        data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params'] = {'offset_ra': 0, 'offset_dec': 0}
-        response = self.client.post(reverse('api:request_groups-list'), data=data)
-        self.assertEqual(response.status_code, 201)
-        self.assertTrue('dither_pattern' not in response.json()['requests'][0]['configurations'][0]['extra_params'])
         # Then check that if a valid pattern is already set, it is not overridden
         valid_pattern = 'line'
         data['requests'][0]['configurations'][0]['extra_params'] = {'dither_pattern': valid_pattern}
+        data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params'] = {'offset_ra': 1, 'offset_dec': 5}
         response = self.client.post(reverse('api:request_groups-list'), data=data)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json()['requests'][0]['configurations'][0]['extra_params']['dither_pattern'], valid_pattern)
+
+    def test_dither_pattern_only_allowed_for_dither_sequences(self):
+        data = self.generic_payload.copy()
+        dither_pattern = 'line'
+        data['requests'][0]['configurations'][0]['extra_params'] = {'dither_pattern': dither_pattern}
+        # Check that a valid dither pattern is not allowed when no offsets are supplied
+        data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params'] = {}
+        response = self.client.post(reverse('api:request_groups-list'), data=data)
+        self.assertEqual(response.status_code, 400)
+        # Then check that setting offsets allows this request to be submitted with the pattern
+        data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params'] = {'offset_ra': 1, 'offset_dec': 0}
+        response = self.client.post(reverse('api:request_groups-list'), data=data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()['requests'][0]['configurations'][0]['extra_params']['dither_pattern'], dither_pattern)
+
+    def test_dither_offsets_are_numbers(self):
+        data = self.generic_payload.copy()
+        data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params'] = {'offset_ra': '1', 'offset_dec': '5'}
+        response = self.client.post(reverse('api:request_groups-list'), data=data)
+        self.assertEqual(response.status_code, 201)
+        data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params'] = {'offset_ra': 1, 'offset_dec': 5}
+        response = self.client.post(reverse('api:request_groups-list'), data=data)
+        self.assertEqual(response.status_code, 201)
+        data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params'] = {'offset_ra': None, 'offset_dec': 5}
+        response = self.client.post(reverse('api:request_groups-list'), data=data)
+        self.assertEqual(response.status_code, 400)
+        data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params'] = {'offset_dec': ''}
+        response = self.client.post(reverse('api:request_groups-list'), data=data)
+        self.assertEqual(response.status_code, 400)
 
     def test_extra_params_saved_as_float_not_string(self):
         good_data = self.generic_payload.copy()

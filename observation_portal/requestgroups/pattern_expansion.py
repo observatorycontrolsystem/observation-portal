@@ -30,14 +30,10 @@ def expand_dither_pattern(expansion_details):
             final_instrument_configs.append(instrument_config_copy)
 
     configuration_dict['instrument_configs'] = final_instrument_configs
-    # Save some information about the dither pattern in the configuration extra params
-    saved_dither_params = expansion_details.copy()
-    saved_dither_params.pop('configuration', None)
-    dither_pattern = saved_dither_params.pop('pattern', settings.DITHER['custom_pattern_key'])
+    # Save the dither pattern in the configuration extra params
     if 'extra_params' not in configuration_dict:
         configuration_dict['extra_params'] = {}
-    configuration_dict['extra_params']['dither_pattern'] = dither_pattern
-    configuration_dict['extra_params']['dither_pattern_params'] = saved_dither_params
+    configuration_dict['extra_params']['dither_pattern'] = expansion_details.get('pattern', settings.DITHER['custom_pattern_key'])
     return configuration_dict
 
 
@@ -68,14 +64,10 @@ def expand_mosaic_pattern(expansion_details):
         configurations.append(configuration_copy)
 
     request_dict['configurations'] = configurations
-    # Save some information about the mosaic pattern inside the request
-    save_mosaic_params = expansion_details.copy()
-    save_mosaic_params.pop('request', None)
-    pattern = save_mosaic_params.pop('pattern', settings.MOSAIC['custom_pattern_key'])
+    # Save the mosaic pattern inside the request
     if 'extra_params' not in request_dict:
         request_dict['extra_params'] = {}
-    request_dict['extra_params']['mosaic_pattern'] = pattern
-    request_dict['extra_params']['mosaic_pattern_params'] = save_mosaic_params
+    request_dict['extra_params']['mosaic_pattern'] = expansion_details.get('pattern', settings.MOSAIC['custom_pattern_key'])
     return request_dict
 
 

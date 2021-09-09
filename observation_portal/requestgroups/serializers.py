@@ -471,31 +471,38 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
 
         # Validate dither pattern
 
-        # First check that any dither pattern that is set is valid
-        dither_pattern_is_set = False
-        if 'extra_params' in data and 'dither_pattern' in data['extra_params']:
-            dither_pattern_is_set = True
-            pattern = data['extra_params']['dither_pattern']
+        is_dither_sequence = False
+        for instrument_config in data['instrument_configs']:
+            offset_ra = instrument_config.get('extra_params', {}).get('offset_ra', 0)
+            offset_dec = instrument_config.get('extra_params', {}).get('offset_dec', 0)
+            if offset_dec != 0 or offset_ra != 0:
+                is_dither_sequence = True
+                break
+
+        dither_pattern_is_set = 'extra_params' in data and 'dither_pattern' in data['extra_params']
+        dither_pattern = data.get('extra_params', {}).get('dither_pattern', None)
+
+        # Check that if a dither pattern is set, this configuration is actually a dither sequence
+        if dither_pattern_is_set and not is_dither_sequence:
+            raise serializers.ValidationError(_(
+                f'You set a dither pattern of {dither_pattern} but did not supply any non-zero dither offsets. You must specify '
+                'offset_ra and/or offset_dec fields in the extra_params in one or more instrument_configs to create a '
+                'dither pattern.'
+            ))
+
+        # Check that any dither pattern that is set is valid
+        if dither_pattern_is_set:
             valid_patterns = list(settings.DITHER['valid_expansion_patterns']) + [settings.DITHER['custom_pattern_key']]
-            if pattern not in valid_patterns:
+            if dither_pattern not in valid_patterns:
                 raise serializers.ValidationError(_(
-                    f'Invalid dither pattern {pattern} set in the configuration extra_params, choose from {", ".join(valid_patterns)}'
+                    f'Invalid dither pattern {dither_pattern} set in the configuration extra_params, choose from {", ".join(valid_patterns)}'
                 ))
 
-        # Then, if a dither pattern is not yet set and there is at least one instrument_config in the configuration that has offsets applied,
-        # then it is part of a custom dither sequence and we need to set the custom dither pattern field.
-        if not dither_pattern_is_set:
-            is_dither_sequence = False
-            for instrument_config in data['instrument_configs']:
-                offset_ra = instrument_config.get('extra_params', {}).get('offset_ra', 0)
-                offset_dec = instrument_config.get('extra_params', {}).get('offset_dec', 0)
-                if offset_dec != 0 or offset_ra != 0:
-                    is_dither_sequence = True
-                    break
-            if is_dither_sequence:
-                if 'extra_params' not in data:
-                    data['extra_params'] = {}
-                data['extra_params']['dither_pattern'] = settings.DITHER['custom_pattern_key']
+        # If a dither pattern is not yet set and this is part of a dither sequence, set the custom dither pattern field.
+        if not dither_pattern_is_set and is_dither_sequence:
+            if 'extra_params' not in data:
+                data['extra_params'] = {}
+            data['extra_params']['dither_pattern'] = settings.DITHER['custom_pattern_key']
 
         return data
 
