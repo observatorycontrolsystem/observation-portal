@@ -75,7 +75,7 @@ class ObservationPortalSchema(AutoSchema):
 
         return operations
 
-    
+
     # The following class methods are based off a change merged to master in the DRF repository
     # that allows for the specification of separate request and response serializers for view introspection.
     # See https://github.com/encode/django-rest-framework/pull/7424

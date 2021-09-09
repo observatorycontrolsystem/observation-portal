@@ -960,7 +960,7 @@ class DraftRequestGroupSerializer(serializers.ModelSerializer):
         except JSONDecodeError:
             raise serializers.ValidationError('Content must be valid JSON')
         return data
-    
+
 
 class LastChangedSerializer(serializers.Serializer):
     last_change_time = serializers.DateTimeField()

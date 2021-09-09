@@ -231,7 +231,7 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
         serializers = {'cadence': import_string(settings.SERIALIZERS['requestgroups']['CadenceRequestGroup'])}
 
         return serializers.get(self.action, self.serializer_class)(*args, **kwargs)
-    
+
     def get_response_serializer(self, *args, **kwargs):
         serializers = {'cadence': import_string(settings.SERIALIZERS['requestgroups']['RequestGroup'])}
 

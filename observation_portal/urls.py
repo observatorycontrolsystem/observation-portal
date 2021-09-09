@@ -75,8 +75,6 @@ api_urlpatterns = ([
 
 schema_view = get_schema_view(
     title="Observation Portal API",
-    description="Test description",
-    version='3.0.0',
     generator_class=ObservationPortalSchemaGenerator,
     permission_classes=[permissions.AllowAny,],
     authentication_classes=[],

@@ -61,7 +61,7 @@ class ProposalViewSet(DetailAsDictMixin, ListAsDictMixin, viewsets.ReadOnlyModel
         )
         if request_serializer.is_valid():
             proposal.add_users(request_serializer.validated_data['emails'], Membership.CI)
-            
+
             response_serializer = self.get_response_serializer(data={'message': _('Co Investigator(s) invited')})
             if response_serializer.is_valid():
                 return Response(response_serializer.validated_data, status=200)

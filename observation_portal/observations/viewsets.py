@@ -170,7 +170,7 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
 
     def get_request_serializer(self, *args, **kwargs):
         serializers = {'cancel': import_string(settings.SERIALIZERS['observations']['Cancel'])}
-        
+    
         return serializers.get(self.action, self.serializer_class)(*args, **kwargs)
 
     def get_response_serializer(self, *args, **kwargs):
