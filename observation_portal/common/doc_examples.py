@@ -2,7 +2,7 @@ EXAMPLE_RESPONSES = {
     'requestgroups': {
         'max_allowable_ipp': {
             '2021B': {
-                    'INSTRUMENT-TYPE-A': {
+                    '2M0-INSTRUMENT-A': {
                     'ipp_time_available': 100.0,
                     'ipp_limit': 100.0,
                     'request_duration': 0.14722222222222223,
@@ -59,7 +59,7 @@ EXAMPLE_RESPONSES = {
             'airmass_limit': 3.19
         },
         'instruments': {
-            'INSTRUMENT-TYPE-A': {
+            '2M0-INSTRUMENT-A': {
                 'type': 'IMAGE',
                 'class': '2m0',
                 'name': '2.0 meter Instrument A',
