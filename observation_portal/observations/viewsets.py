@@ -93,12 +93,14 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
         cancel_serializer = import_string(settings.SERIALIZERS['observations']['Cancel'])(data=request.data)
         if cancel_serializer.is_valid():
             observations = self.get_queryset()
+            # Two modes of cancelling, by id or by start/end time range
             if 'ids' in cancel_serializer.data:
                 observations = observations.filter(pk__in=cancel_serializer.data['ids'])
-            if 'start' in cancel_serializer.data:
-                observations = observations.filter(end__gt=cancel_serializer.data['start'])
-            if 'end' in cancel_serializer.data:
-                observations = observations.filter(start__lt=cancel_serializer.data['end'])
+            else:
+                if 'start' in cancel_serializer.data:
+                    observations = observations.filter(end__gt=cancel_serializer.data['start'])
+                if 'end' in cancel_serializer.data:
+                    observations = observations.filter(start__lt=cancel_serializer.data['end'])
             if 'site' in cancel_serializer.data:
                 observations = observations.filter(site=cancel_serializer.data['site'])
             if 'enclosure' in cancel_serializer.data:
@@ -115,10 +117,13 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
                 observations = observations.exclude(request__request_group__observation_type=RequestGroup.DIRECT)
             if request.user and not request.user.is_staff:
                 observations = observations.filter(request__request_group__proposal__direct_submission=True)
+            # First check if we have an in_progress observation that overlaps with the time range and resource.
+            # If we do and preemption is not enabled in the call, return a 400 error without cancelling anything.
+            if observations.filter(state='IN_PROGRESS').count() > 0 and not cancel_serializer.data.get('preemption_enabled', False):
+                return Response({'error': 'Cannot cancel IN_PROGRESS observations unless preemption_enabled is True'}, status=400)
             observations = observations.filter(state__in=['PENDING', 'IN_PROGRESS'])
-            # Receive a list of observation id's to cancel
-            num_canceled = Observation.cancel(observations)
 
+            num_canceled = Observation.cancel(observations)
             return Response({'canceled': num_canceled}, status=200)
         else:
             return Response(cancel_serializer.errors, status=400)
