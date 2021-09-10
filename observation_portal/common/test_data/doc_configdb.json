@@ -1,2381 +1,389 @@
 {
-    "count": 9,
-    "next": null,
-    "previous": null,
-    "results": [
-      {
-        "code": "tst",
-        "elevation": 100,
-        "enclosure_set": [
-          {
-            "code": "doma",
-            "telescope_set": [
-              {
-                "code": "1m0a",
-                "name": "1 Meter",
-                "lat": -32.3805542,
-                "long": 20.8100352,
-                "horizon": 15.0,
-                "ha_limit_pos": 4.6,
-                "ha_limit_neg": -4.6,
-                "zenith_blind_spot": 0.0,
-                "slew_rate": 0.0,
-                "minimum_slew_overhead": 2.0,
-                "maximum_slew_overhead": 2.0,
-                "instrument_change_overhead": 0.0,
-                "instrument_set": [
-                  {
-                    "state": "SCHEDULABLE",
-                    "code": "xx01",
-                    "autoguider_camera": {
-                      "code": "ef01",
-                      "orientation": 0.0,
-                      "camera_type": {
-                        "code": "1M0-SCICAM-SBIG",
-                        "pixels_x": 240,
-                        "pixels_y": 180,
-                        "pscale": 1,
-                        "allow_self_guiding": true
-                      }
-                    },
-                    "instrument_type": {
-                      "code": "1M0-SCICAM-SBIG",
-                      "name": "1M0-SCICAM-SBIG",
-                      "instrument_category": "IMAGE",
-                      "allow_self_guiding": true,
-                      "configuration_types": [
-                        {
-                            "name": "Expose",
-                            "code": "EXPOSE",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": true,
-                            "force_acquisition_off": false,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Repeat Expose",
-                            "code": "REPEAT_EXPOSE",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": true,
-                            "force_acquisition_off": false,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Sky Flat",
-                            "code": "SKY_FLAT",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": true,
-                            "force_acquisition_off": false,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Script",
-                            "code": "SCRIPT",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": false,
-                            "force_acquisition_off": true,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Bias",
-                            "code": "BIAS",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": false,
-                            "force_acquisition_off": true,
-                            "schedulable": false
-                        },
-                        {
-                            "name": "Dark",
-                            "code": "DARK",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": false,
-                            "force_acquisition_off": true,
-                            "schedulable": false
-                        }
-                      ],
-                      "default_acceptability_threshold": 90,
-                      "config_front_padding": 16.0,
-                      "acquire_exposure_time": 0,
-                      "observation_front_padding": 90,
-                      "fixed_overhead_per_exposure": 1,
-                      "mode_types": [
-                        {
-                          "type": "readout",
-                          "default": "1m0_sbig_2",
-                          "modes": [
-                            {
-                              "code": "1m0_sbig_1",
-                              "overhead": 35.0,
-                              "schedulable": true,
-                              "validation_schema": {
-                                "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [1], "default": 1}, "bin_y": {"type": "integer", "allowed": [1], "default": 1}}, "default": {}, "required": true}
-                              }
-                            },
-                            {
-                              "code": "1m0_sbig_2",
-                              "overhead": 14.5,
-                              "schedulable": true,
-                              "validation_schema": {
-                                "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [2], "default": 2}, "bin_y": {"type": "integer", "allowed": [2], "default": 2}}, "default": {}, "required": true}
-                              }
-                            },
-                            {
-                              "code": "1m0_sbig_3",
-                              "overhead": 11.5,
-                              "schedulable": true,
-                              "validation_schema": {
-                                "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [3], "default": 3}, "bin_y": {"type": "integer", "allowed": [3], "default": 3}}, "default": {}, "required": true}
-                              }
-                            }
-                          ]
-                        },
-                        {
-                          "type": "acquisition",
-                          "default": "OFF",
-                          "modes": [
-                            {
-                              "code": "OFF",
-                              "overhead": 0.0,
-                              "schedulable": true,
-                              "validation_schema": {}
-                            }
-                          ]
-                        },
-                        {
-                          "type": "guiding",
-                          "default": "OFF",
-                          "modes": [
-                            {
-                              "code": "OFF",
-                              "overhead": 0.0,
-                              "schedulable": true,
-                              "validation_schema": {}
-                            },
-                            {
-                              "code": "ON",
-                              "overhead": 0.0,
-                              "schedulable": true,
-                              "validation_schema": {}
-                            }
-                          ]
-                        }
-                      ],
-                      "validation_schema": {"extra_params": {"type": "dict", "schema": {"defocus": {"type": "float", "min": -5.0, "max": 5.0}}}}
-                    },
-                    "science_cameras": [{
-                      "code": "xx01",
-                      "orientation": 0.0,
-                      "camera_type": {
-                        "code": "1M0-SCICAM-SBIG",
-                        "name": "1M0-SCICAM-SBIG",
-                        "pixels_x": 1000,
-                        "pixels_y": 1000,
-                        "pscale": 0.5,
-                        "max_rois": 1
-                      },
-                      "optical_element_groups": [
-                        {
-                          "type": "filters",
-                          "element_change_overhead": 2,
-                          "optical_elements": [
-                            {
-                              "name": "Air",
-                              "code": "air",
-                              "schedulable": false
-                            }
-                          ],
-                          "default": "air"
-                        }
-                      ]
-                    }],
-                    "__str__": "tst.doma.1m0a.xx01-xx01"
-                  },
-                  {
-                    "state": "DISABLED",
-                    "code": "xx06",
-                    "autoguider_camera": {
-                      "code": "xx07",
-                      "orientation": 0.0,
-                      "camera_type": {
-                        "code": "1M0-SCICAM-SBIG",
-                        "pixels_x": 240,
-                        "pixels_y": 180,
-                        "pscale": 1,
-                        "allow_self_guiding": true
-                      }
-                    },
-                    "instrument_type": {
-                      "code": "1M0-SCICAM-SBIG",
-                      "name": "1M0-SCICAM-SBIG",
-                      "instrument_category": "IMAGE",
-                      "allow_self_guiding": true,
-                      "configuration_types": [
-                        {
-                            "name": "Expose",
-                            "code": "EXPOSE",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": true,
-                            "force_acquisition_off": false,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Repeat Expose",
-                            "code": "REPEAT_EXPOSE",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": true,
-                            "force_acquisition_off": false,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Sky Flat",
-                            "code": "SKY_FLAT",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": true,
-                            "force_acquisition_off": false,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Script",
-                            "code": "SCRIPT",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": false,
-                            "force_acquisition_off": true,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Bias",
-                            "code": "BIAS",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": false,
-                            "force_acquisition_off": true,
-                            "schedulable": false
-                        },
-                        {
-                            "name": "Dark",
-                            "code": "DARK",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": false,
-                            "force_acquisition_off": true,
-                            "schedulable": false
-                        }
-                      ],
-                      "default_acceptability_threshold": 90,
-                      "config_front_padding": 16.0,
-                      "acquire_exposure_time": 0,
-                      "observation_front_padding": 90,
-                      "fixed_overhead_per_exposure": 1,
-                      "mode_types": [
-                        {
-                          "type": "readout",
-                          "default": "1m0_sbig_2",
-                          "modes": [
-                            {
-                              "code": "1m0_sbig_1",
-                              "overhead": 35.0,
-                              "schedulable": true,
-                              "validation_schema": {
-                                "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [1], "default": 1}, "bin_y": {"type": "integer", "allowed": [1], "default": 1}}, "default": {}, "required": true}
-                              }
-                            },
-                            {
-                              "code": "1m0_sbig_2",
-                              "overhead": 14.5,
-                              "schedulable": true,
-                              "validation_schema": {
-                                "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [2], "default": 2}, "bin_y": {"type": "integer", "allowed": [2], "default": 2}}, "default": {}, "required": true}
-                              }
-                            },
-                            {
-                              "code": "1m0_sbig_3",
-                              "overhead": 11.5,
-                              "schedulable": true,
-                              "validation_schema": {
-                                "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [3], "default": 3}, "bin_y": {"type": "integer", "allowed": [3], "default": 3}}, "default": {}, "required": true}
-                              }
-                            }
-                          ]
-                        },
-                        {
-                          "type": "acquisition",
-                          "default": "OFF",
-                          "modes": [
-                            {
-                              "code": "OFF",
-                              "overhead": 0.0,
-                              "schedulable": true,
-                              "validation_schema": {}
-                            }
-                          ]
-                        },
-                        {
-                          "type": "guiding",
-                          "default": "OFF",
-                          "modes": [
-                            {
-                              "code": "OFF",
-                              "overhead": 0.0,
-                              "schedulable": true,
-                              "validation_schema": {}
-                            },
-                            {
-                              "code": "ON",
-                              "overhead": 0.0,
-                              "schedulable": true,
-                              "validation_schema": {}
-                            }
-                          ]
-                        }
-                      ],
-                      "validation_schema": {"extra_params": {"type": "dict", "schema": {"defocus": {"type": "float", "min": -5.0, "max": 5.0}}}}
-                    },
-                    "science_cameras": [{
-                      "code": "xx06",
-                      "orientation": 0.0,
-                      "camera_type": {
-                        "code": "1M0-SCICAM-SBIG",
-                        "name": "1M0-SCICAM-SBIG",
-                        "pixels_x": 1000,
-                        "pixels_y": 1000,
-                        "pscale": 0.5,
-                        "max_rois": 1
-                      },
-                      "optical_element_groups": [
-                        {
-                          "type": "filters",
-                          "element_change_overhead": 2,
-                          "optical_elements": [
-                            {
-                              "name": "Air",
-                              "code": "air",
-                              "schedulable": false
-                            }
-                          ],
-                          "default": "air"
-                        }
-                      ]
-                    }],
-                    "__str__": "tst.doma.1m0a.xx06-xx07"
-                  },
-                  {
-                    "state": "MANUAL",
-                    "code": "xx08",
-                    "autoguider_camera": {
-                      "code": "xx09",
-                      "orientation": 0.0,
-                      "camera_type": {
-                        "code": "1M0-SCICAM-SBIG",
-                        "pixels_x": 240,
-                        "pixels_y": 180,
-                        "pscale": 1,
-                        "allow_self_guiding": true
-                      }
-                    },
-                    "instrument_type": {
-                      "code": "1M0-SCICAM-SBIG",
-                      "name": "1M0-SCICAM-SBIG",
-                      "instrument_category": "IMAGE",
-                      "allow_self_guiding": true,
-                      "configuration_types": [
-                        {
-                            "name": "Expose",
-                            "code": "EXPOSE",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": true,
-                            "force_acquisition_off": false,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Repeat Expose",
-                            "code": "REPEAT_EXPOSE",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": true,
-                            "force_acquisition_off": false,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Sky Flat",
-                            "code": "SKY_FLAT",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": true,
-                            "force_acquisition_off": false,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Script",
-                            "code": "SCRIPT",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": false,
-                            "force_acquisition_off": true,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Bias",
-                            "code": "BIAS",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": false,
-                            "force_acquisition_off": true,
-                            "schedulable": false
-                        },
-                        {
-                            "name": "Dark",
-                            "code": "DARK",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": false,
-                            "force_acquisition_off": true,
-                            "schedulable": false
-                        }
-                      ],
-                      "default_acceptability_threshold": 90,
-                      "config_front_padding": 16.0,
-                      "acquire_exposure_time": 0,
-                      "observation_front_padding": 90,
-                      "fixed_overhead_per_exposure": 1,
-                      "mode_types": [
-                        {
-                          "type": "readout",
-                          "default": "1m0_sbig_2",
-                          "modes": [
-                            {
-                              "code": "1m0_sbig_1",
-                              "overhead": 35.0,
-                              "schedulable": true,
-                              "validation_schema": {
-                                "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [1], "default": 1}, "bin_y": {"type": "integer", "allowed": [1], "default": 1}}, "default": {}, "required": true}
-                              }
-                            },
-                            {
-                              "code": "1m0_sbig_2",
-                              "overhead": 14.5,
-                              "schedulable": true,
-                              "validation_schema": {
-                                "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [2], "default": 2}, "bin_y": {"type": "integer", "allowed": [2], "default": 2}}, "default": {}, "required": true}
-                              }
-                            },
-                            {
-                              "code": "1m0_sbig_3",
-                              "overhead": 11.5,
-                              "schedulable": true,
-                              "validation_schema": {
-                                "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [3], "default": 3}, "bin_y": {"type": "integer", "allowed": [3], "default": 3}}, "default": {}, "required": true}
-                              }
-                            }
-                          ]
-                        },
-                        {
-                          "type": "acquisition",
-                          "default": "OFF",
-                          "modes": [
-                            {
-                              "code": "OFF",
-                              "overhead": 0.0,
-                              "schedulable": true,
-                              "validation_schema": {}
-                            }
-                          ]
-                        },
-                        {
-                          "type": "guiding",
-                          "default": "OFF",
-                          "modes": [
-                            {
-                              "code": "OFF",
-                              "overhead": 0.0,
-                              "schedulable": true,
-                              "validation_schema": {}
-                            },
-                            {
-                              "code": "ON",
-                              "overhead": 0.0,
-                              "schedulable": true,
-                              "validation_schema": {}
-                            }
-                          ]
-                        }
-                      ],
-                      "validation_schema": {"extra_params": {"type": "dict", "schema": {"defocus": {"type": "float", "min": -5.0, "max": 5.0}}}}
-                    },
-                    "science_cameras": [{
-                      "code": "xx08",
-                      "orientation": 0.0,
-                      "camera_type": {
-                        "code": "1M0-SCICAM-SBIG",
-                        "name": "1M0-SCICAM-SBIG",
-                        "pixels_x": 1000,
-                        "pixels_y": 1000,
-                        "pscale": 0.5,
-                        "max_rois": 1
-                      },
-                      "optical_element_groups": [
-                        {
-                          "type": "filters",
-                          "element_change_overhead": 2,
-                          "optical_elements": [
-                            {
-                              "name": "Air",
-                              "code": "air",
-                              "schedulable": false
-                            }
-                          ],
-                          "default": "air"
-                        }
-                      ]
-                    }],
-                    "__str__": "tst.doma.1m0a.xx08-xx09"
-                  }
-                ]
-              },
-              {
-                "code": "2m0a",
-                "name": "2 Meter",
-                "lat": -32.3805542,
-                "long": 20.8100352,
-                "horizon": 15.0,
-                "ha_limit_pos": 4.6,
-                "ha_limit_neg": -4.6,
-                "zenith_blind_spot": 0.0,
-                "slew_rate": 0.0,
-                "minimum_slew_overhead": 2.0,
-                "maximum_slew_overhead": 2.0,
-                "instrument_change_overhead": 0.0,
-                "instrument_set": [
-                  {
-                    "state": "SCHEDULABLE",
-                    "code": "xx02",
-                    "autoguider_camera": {
-                      "code": "ef02",
-                      "orientation": 0.0,
-                      "camera_type": {
-                        "code": "2M0-FLOYDS-AG",
-                        "pixels_x": 240,
-                        "pixels_y": 180,
-                        "pscale": 1,
-                        "allow_self_guiding": false
-                      }
-                    },
-                    "instrument_type": {
-                      "code": "2M0-FLOYDS-SCICAM",
-                      "name": "2M0-FLOYDS-SCICAM",
-                      "instrument_category": "SPECTRA",
-                      "allow_self_guiding": false,
-                      "config_front_padding": 16.0,
-                      "acquire_exposure_time": 30,
-                      "observation_front_padding": 240,
-                      "fixed_overhead_per_exposure": 0.5,
-                      "configuration_types": [
-                        {
-                            "name": "Spectrum",
-                            "code": "SPECTRUM",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": true,
-                            "force_acquisition_off": false,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Repeat Spectrum",
-                            "code": "REPEAT_SPECTRUM",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": true,
-                            "force_acquisition_off": false,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Lamp Flat",
-                            "code": "LAMP_FLAT",
-                            "config_change_overhead": 30.0,
-                            "requires_optical_elements": true,
-                            "force_acquisition_off": true,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Script",
-                            "code": "SCRIPT",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": false,
-                            "force_acquisition_off": true,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Arc",
-                            "code": "ARC",
-                            "config_change_overhead": 30.0,
-                            "requires_optical_elements": true,
-                            "force_acquisition_off": true,
-                            "schedulable": true
-                        }
-                      ],
-                      "default_acceptability_threshold": 100,
-                      "mode_types": [
-                        {
-                          "type": "readout",
-                          "default": "2m0_floyds_1",
-                          "modes": [
-                            {
-                              "code": "2m0_floyds_1",
-                              "overhead": 25.0,
-                              "schedulable": true,
-                              "validation_schema": {
-                                "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [1], "default": 1}, "bin_y": {"type": "integer", "allowed": [1], "default": 1}}, "default": {}, "required": true}
-                              }
-                            }
-                          ]
-                        },
-                        {
-                          "type": "acquisition",
-                          "default": "WCS",
-                          "modes": [
-                            {
-                              "code": "WCS",
-                              "overhead": 90.0,
-                              "schedulable": true,
-                              "validation_schema": {}
-                            },
-                            {
-                              "code": "BRIGHTEST",
-                              "overhead": 90.0,
-                              "schedulable": true,
-                              "validation_schema": {
-                                "extra_params": {"type": "dict", "schema": {
-                                  "acquire_radius": {"type": "float", "min": 0, "max": 15, "required": true}
-                                }}
-                              }
-                            }
-                          ]
-                        },
-                        {
-                          "type": "guiding",
-                          "default": "ON",
-                          "modes": [
-                            {
-                              "code": "ON",
-                              "overhead": 0.0,
-                              "schedulable": true,
-                              "validation_schema": {}
-                            }
-                          ]
-                        },
-                        {
-                          "type": "rotator",
-                          "default": "VFLOAT",
-                          "modes": [
-                            {
-                              "code": "VFLOAT",
-                              "overhead": 0.0,
-                              "schedulable": true,
-                              "validation_schema": {}
-                            },
-                            {
-                              "code": "SKY",
-                              "overhead": 0.0,
-                              "schedulable": true,
-                              "validation_schema": {
-                                "extra_params": {"type": "dict", "schema": {
-                                  "rotator_angle": {"type": "float", "min": 0, "max": 360}
-                                }}
-                              }
-                            }
-                          ]
-                        }
-                      ],
-                      "validation_schema": {"extra_params": {"type": "dict", "schema": {"defocus": {"type": "float", "min": -5.0, "max": 5.0}}}}
-                    },
-                    "science_cameras": [{
-                      "code": "xx02",
-                      "orientation": 80.0,
-                      "camera_type": {
-                        "code": "2M0-FLOYDS-SCICAM",
-                        "name": "2M0-FLOYDS-SCICAM",
-                        "pixels_x": 1000,
-                        "pixels_y": 1000,
-                        "pscale": 0.5,
-                        "max_rois": 0
-                      },
-                      "optical_element_groups": [
-                        {
-                          "type": "slits",
-                          "element_change_overhead": 0,
-                          "optical_elements": [
-                            {
-                              "name": "6.0As Slit",
-                              "code": "slit_6.0as",
-                              "schedulable": true
-                            },
-                            {
-                              "name": "2.0As Slit",
-                              "code": "slit_2.0as",
-                              "schedulable": true
-                            },
-                            {
-                              "name": "1.6As Slit",
-                              "code": "slit_1.6as",
-                              "schedulable": true
-                            },
-                            {
-                              "name": "1.2As Slit",
-                              "code": "slit_1.2as",
-                              "schedulable": true
-                            }
-                          ],
-                          "default": "slit_1.6as"
-                        }
-                      ]
-                    }],
-                    "__str__": "tst.doma.2m0a.xx02-xx02"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "code": "domb",
-            "telescope_set": [
-              {
-                "code": "1m0a",
-                "name": "1 Meter",
-                "lat": -32.3805542,
-                "long": 20.8100352,
-                "horizon": 15.0,
-                "ha_limit_pos": 4.6,
-                "ha_limit_neg": -4.6,
-                "zenith_blind_spot": 0.0,
-                "slew_rate": 0.0,
-                "minimum_slew_overhead": 2.0,
-                "maximum_slew_overhead": 2.0,
-                "instrument_change_overhead": 30.0,
-                "instrument_set": [
-                  {
-                    "state": "SCHEDULABLE",
-                    "code": "xx03",
-                    "autoguider_camera": {
-                      "code": "ef03",
-                      "orientation": 0.0,
-                      "camera_type": {
-                        "code": "1M0-SCICAM-AG",
-                        "pixels_x": 240,
-                        "pixels_y": 180,
-                        "pscale": 1,
-                        "allow_self_guiding": true
-                      }
-                    },
-                    "instrument_type": {
-                      "code": "1M0-SCICAM-SBIG",
-                      "name": "1M0-SCICAM-SBIG",
-                      "instrument_category": "IMAGE",
-                      "allow_self_guiding": true,
-                      "configuration_types": [
-                        {
-                            "name": "Expose",
-                            "code": "EXPOSE",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": true,
-                            "force_acquisition_off": false,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Repeat Expose",
-                            "code": "REPEAT_EXPOSE",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": true,
-                            "force_acquisition_off": false,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Sky Flat",
-                            "code": "SKY_FLAT",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": true,
-                            "force_acquisition_off": false,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Script",
-                            "code": "SCRIPT",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": false,
-                            "force_acquisition_off": true,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Bias",
-                            "code": "BIAS",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": false,
-                            "force_acquisition_off": true,
-                            "schedulable": false
-                        },
-                        {
-                            "name": "Dark",
-                            "code": "DARK",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": false,
-                            "force_acquisition_off": true,
-                            "schedulable": false
-                        }
-                      ],
-                      "default_acceptability_threshold": 100,
-                      "config_front_padding": 16.0,
-                      "acquire_exposure_time": 0,
-                      "observation_front_padding": 90,
-                      "fixed_overhead_per_exposure": 1,
-                      "mode_types": [
-                        {
-                          "type": "readout",
-                          "default": "1m0_sbig_2",
-                          "modes": [
-                            {
-                              "code": "1m0_sbig_1",
-                              "overhead": 35.0,
-                              "schedulable": true,
-                              "validation_schema": {
-                                "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [1], "default": 1}, "bin_y": {"type": "integer", "allowed": [1], "default": 1}}, "default": {}, "required": true}
-                              }
-                            },
-                            {
-                              "code": "1m0_sbig_2",
-                              "overhead": 14.5,
-                              "schedulable": true,
-                              "validation_schema": {
-                                "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [2], "default": 2}, "bin_y": {"type": "integer", "allowed": [2], "default": 2}}, "default": {}, "required": true}
-                              }
-                            },
-                            {
-                              "code": "1m0_sbig_3",
-                              "overhead": 11.5,
-                              "schedulable": true,
-                              "validation_schema": {
-                                "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [3], "default": 3}, "bin_y": {"type": "integer", "allowed": [3], "default": 3}}, "default": {}, "required": true}
-                              }
-                            }
-                          ]
-                        },
-                        {
-                          "type": "acquisition",
-                          "default": "OFF",
-                          "modes": [
-                            {
-                              "code": "OFF",
-                              "overhead": 0.0,
-                              "schedulable": true,
-                              "validation_schema": {}
-                            }
-                          ]
-                        },
-                        {
-                          "type": "guiding",
-                          "default": "OFF",
-                          "modes": [
-                            {
-                              "code": "OFF",
-                              "overhead": 0.0,
-                              "schedulable": true,
-                              "validation_schema": {}
-                            },
-                            {
-                              "code": "ON",
-                              "overhead": 0.0,
-                              "schedulable": true,
-                              "validation_schema": {}
-                            }
-                          ]
-                        }
-                      ],
-                      "validation_schema": {"extra_params": {"type": "dict", "schema": {"defocus": {"type": "float", "min": -5.0, "max": 5.0}}}}
-                    },
-                    "science_cameras": [{
-                      "code": "xx03",
-                      "orientation": 0.0,
-                      "camera_type": {
-                        "code": "1M0-SCICAM-SBIG",
-                        "name": "1M0-SCICAM-SBIG",
-                        "pixels_x": 1000,
-                        "pixels_y": 1000,
-                        "pscale": 0.5,
-                        "max_rois": 0
-                      },
-                      "optical_element_groups": [
-                        {
-                          "type": "filters",
-                          "element_change_overhead": 2,
-                          "optical_elements": [
-                            {
-                              "name": "Air",
-                              "code": "air",
-                              "schedulable": false
-                            }
-                          ],
-                          "default": "air"
-                        }
-                      ]
-                    }],
-                    "__str__": "tst.domb.1m0a.xx01-xx01"
-                  },
-                  {
-                    "state": "SCHEDULABLE",
-                    "code": "nres02",
-                    "autoguider_camera": {
-                      "code": "ak02",
-                      "orientation": 0.0,
-                      "camera_type": {
-                        "code": "1M0-NRES-AG",
-                        "pixels_x": 240,
-                        "pixels_y": 180,
-                        "pscale": 1,
-                        "allow_self_guiding": false
-                      }
-                    },
-                    "instrument_type": {
-                      "code": "1M0-NRES-SCICAM",
-                      "name": "1M0-NRES-SCICAM",
-                      "instrument_category": "SPECTRA",
-                      "allow_self_guiding": false,
-                      "configuration_types": [
-                        {
-                            "name": "NRES Spectrum",
-                            "code": "NRES_SPECTRUM",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": true,
-                            "force_acquisition_off": false,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "NRES Repeat Spectrum",
-                            "code": "NRES_REPEAT_SPECTRUM",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": true,
-                            "force_acquisition_off": false,
-                            "schedulable": true
-                        },
-                        {
-                          "name": "NRES Expose",
-                          "code": "NRES_EXPOSE",
+  "count": 2,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "code": "tst",
+      "elevation": 100,
+      "enclosure_set": [
+        {
+          "code": "doma",
+          "telescope_set": [
+            {
+              "code": "1m0a",
+              "name": "1 Meter",
+              "instrument_set": [
+                {
+                  "code": "ia01",
+                  "state" : "SCHEDULABLE",
+                  "instrument_type": {
+                    "code": "1M0-INSTRUMENT-A",
+                    "configuration_types": [
+                      {
+                          "name": "Expose",
+                          "code": "EXPOSE",
                           "config_change_overhead": 0.0,
                           "requires_optical_elements": true,
                           "force_acquisition_off": false,
                           "schedulable": true
-                        },
-                        {
-                          "name": "NRES Test",
-                          "code": "NRES_TEST",
-                          "config_change_overhead": 0.0,
-                          "requires_optical_elements": true,
-                          "force_acquisition_off": false,
-                          "schedulable": true
-                        },
-                        {
-                            "name": "Lamp Flat",
-                            "code": "LAMP_FLAT",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": true,
-                            "force_acquisition_off": true,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Script",
-                            "code": "SCRIPT",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": false,
-                            "force_acquisition_off": true,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Arc",
-                            "code": "ARC",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": true,
-                            "force_acquisition_off": true,
-                            "schedulable": true
-                        }
-                      ],
-                      "default_acceptability_threshold": 100,
-                      "config_front_padding": 16.0,
-                      "acquire_exposure_time": 10,
-                      "observation_front_padding": 270,
-                      "fixed_overhead_per_exposure": 1,
-                      "mode_types": [
-                        {
-                          "type": "readout",
-                          "modes": [
-                            {
-                              "code": "1m0_nres_1",
-                              "overhead": 35.0,
-                              "schedulable": true,
-                              "validation_schema": {
-                                "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [1], "default": 1}, "bin_y": {"type": "integer", "allowed": [1], "default": 1}}, "default": {}, "required": true}
-                              }
-                            },
-                            {
-                              "code": "1m0_nres_2",
-                              "overhead": 90.5,
-                              "schedulable": true,
-                              "validation_schema": {
-                                "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [2], "default": 2}, "bin_y": {"type": "integer", "allowed": [2], "default": 2}}, "default": {}, "required": true}
-                              }
-                            }
-                          ]
-                        },
-                        {
-                          "type": "acquisition",
-                          "default": "WCS",
-                          "modes": [
-                            {
-                              "code": "WCS",
-                              "overhead": 400.0,
-                              "schedulable": true,
-                              "validation_schema": {}
-                            },
-                            {
-                              "code": "MYMODE",
-                              "overhead": 400.0,
-                              "schedulable": true,
-                              "validation_schema": {
-                                "extra_params": {"type": "dict", "schema": {
-                                  "field1": {"type": "string", "required": true},
-                                  "field2": {"type": "string", "required": true},
-                                  "field3": {"type": "string", "required": true}
-                                }}
-                              }
-                            }
-                          ]
-                        },
-                        {
-                          "type": "guiding",
-                          "default": "ON",
-                          "modes": [
-                            {
-                              "code": "ON",
-                              "overhead": 0.0,
-                              "schedulable": true,
-                              "validation_schema": {}
-                            },
-                            {
-                              "code": "NRES_SPECIAL",
-                              "overhead": 90.0,
-                              "schedulable": false,
-                              "validation_schema": {}
-                            }
-                          ]
-                        }
-                      ],
-                      "validation_schema": {"extra_params": {"type": "dict", "schema": {"defocus": {"type": "float", "min": -5.0, "max": 5.0}}}}
-                    },
-                    "science_cameras": [{
-                      "code": "nres02",
-                      "orientation": 90.0,
-                      "camera_type": {
-                        "code": "1M0-NRES-SCICAM",
-                        "name": "1M0-NRES-SCICAM",
-                        "pixels_x": 1000,
-                        "pixels_y": 5000,
-                        "pscale": 0.5,
-                        "max_rois": 0
                       },
-                      "optical_element_groups": []
-                    }],
-                    "__str__": "tst.domb.1m0a.nres02-nres02"
-                  }
-                ]
-              },
-              {
-                "code": "2m0a",
-                "name": "2 Meter",
-                "lat": -32.3805542,
-                "long": 20.8100352,
-                "horizon": 15.0,
-                "ha_limit_pos": 4.6,
-                "ha_limit_neg": -4.6,
-                "zenith_blind_spot": 0.0,
-                "slew_rate": 0.0,
-                "minimum_slew_overhead": 2.0,
-                "maximum_slew_overhead": 2.0,
-                "instrument_change_overhead": 0.0,
-                "instrument_set": [
-                  {
-                    "state": "SCHEDULABLE",
-                    "code": "xx04",
-                    "autoguider_camera": {
-                      "code": "ef04",
-                      "orientation": 0.0,
-                      "camera_type": {
-                        "code": "2M0-FLOYDS-AG",
-                        "pixels_x": 240,
-                        "pixels_y": 180,
-                        "pscale": 1,
-                        "allow_self_guiding": false
-                      }
-                    },
-                    "instrument_type": {
-                      "code": "2M0-FLOYDS-SCICAM",
-                      "name": "2M0-FLOYDS-SCICAM",
-                      "instrument_category": "SPECTRA",
-                      "allow_self_guiding": false,
-                      "config_front_padding": 16.0,
-                      "acquire_exposure_time": 30,
-                      "observation_front_padding": 240,
-                      "fixed_overhead_per_exposure": 0.5,
-                      "configuration_types": [
-                        {
-                            "name": "Spectrum",
-                            "code": "SPECTRUM",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": true,
-                            "force_acquisition_off": false,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Repeat Spectrum",
-                            "code": "REPEAT_SPECTRUM",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": true,
-                            "force_acquisition_off": false,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Lamp Flat",
-                            "code": "LAMP_FLAT",
-                            "config_change_overhead": 30.0,
-                            "requires_optical_elements": true,
-                            "force_acquisition_off": true,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Script",
-                            "code": "SCRIPT",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": false,
-                            "force_acquisition_off": true,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Arc",
-                            "code": "ARC",
-                            "config_change_overhead": 30.0,
-                            "requires_optical_elements": true,
-                            "force_acquisition_off": true,
-                            "schedulable": true
-                        }
-                      ],
-                      "default_acceptability_threshold": 100,
-                      "mode_types": [
-                        {
-                          "type": "readout",
-                          "modes": [
-                            {
-                              "code": "2m0_floyds_1",
-                              "overhead": 25.0,
-                              "schedulable": true,
-                              "validation_schema": {
-                                "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [1], "default": 1}, "bin_y": {"type": "integer", "allowed": [1], "default": 1}}, "default": {}, "required": true}
-                              }
-                            }
-                          ]
-                        },
-                        {
-                          "type": "acquisition",
-                          "default": "WCS",
-                          "modes": [
-                            {
-                              "code": "WCS",
-                              "overhead": 90.0,
-                              "schedulable": true,
-                              "validation_schema": {}
-                            },
-                            {
-                              "code": "BRIGHTEST",
-                              "overhead": 90.0,
-                              "schedulable": true,
-                              "validation_schema": {
-                                "extra_params": {"type": "dict", "schema": {
-                                  "acquire_radius": {"type": "float", "min": 0, "max": 15, "required": true}
-                                }}
-                              }
-                            }
-                          ]
-                        },
-                        {
-                          "type": "guiding",
-                          "default": "ON",
-                          "modes": [
-                            {
-                              "code": "ON",
-                              "overhead": 0.0,
-                              "schedulable": true,
-                              "validation_schema": {}
-                            }
-                          ]
-                        },
-                        {
-                          "type": "rotator",
-                          "default": "VFLOAT",
-                          "modes": [
-                            {
-                              "code": "VFLOAT",
-                              "overhead": 0.0,
-                              "schedulable": true,
-                              "validation_schema": {}
-                            },
-                            {
-                              "code": "SKY",
-                              "overhead": 0.0,
-                              "schedulable": true,
-                              "validation_schema": {
-                                "extra_params": {"type": "dict", "schema": {
-                                  "rotator_angle": {"type": "float", "min": 0, "max": 360}
-                                }}
-                              }
-                            }
-                          ]
-                        }
-                      ],
-                      "validation_schema": {"extra_params": {"type": "dict", "schema": {"defocus": {"type": "float", "min": -5.0, "max": 5.0}}}}
-                    },
-                    "science_cameras": [{
-                      "code": "xx04",
-                      "orientation": 100.0,
-                      "camera_type": {
-                        "code": "2M0-FLOYDS-SCICAM",
-                        "name": "2M0-FLOYDS-SCICAM",
-                        "pixels_x": 1000,
-                        "pixels_y": 1000,
-                        "pscale": 0.5,
-                        "max_rois": 0
-                      },
-                      "optical_element_groups": [
-                        {
-                          "type": "slits",
-                          "element_change_overhead": 0,
-                          "optical_elements": [
-                            {
-                              "name": "6.0As Slit",
-                              "code": "slit_6.0as",
-                              "schedulable": true
-                            },
-                            {
-                              "name": "2.0As Slit",
-                              "code": "slit_2.0as",
-                              "schedulable": true
-                            },
-                            {
-                              "name": "1.6As Slit",
-                              "code": "slit_1.6as",
-                              "schedulable": true
-                            },
-                            {
-                              "name": "1.2As Slit",
-                              "code": "slit_1.2as",
-                              "schedulable": true
-                            }
-                          ],
-                          "default": "slit_1.6as"
-                        }
-                      ]
-                    }],
-                    "__str__": "tst.domb.2m0a.xx02-xx02"
-                  },
-                  {
-                    "code": "mc03",
-                    "state": "SCHEDULABLE",
-                    "instrument_type": {
-                      "code": "2M0-SCICAM-MUSCAT",
-                      "name": "2.0 meter Muscat",
-                      "instrument_category": "IMAGE",
-                      "fixed_overhead_per_exposure": 1.0,
-                      "observation_front_padding": 90.0,
-                      "filter_change_time": 0.0,
-                      "config_front_padding": 16.0,
-                      "acquire_exposure_time": 0.0,
-                      "acquire_processing_time": 0.0,
-                      "mode_types": [
-                        {
-                          "type": "acquisition",
-                          "modes": [
-                            {
-                              "name": "Acquire Off",
-                              "overhead": 0.0,
-                              "schedulable": true,
-                              "code": "OFF",
-                              "validation_schema": {}
-                            }
-                          ],
-                          "default": "OFF"
-                        },
-                        {
-                          "type": "readout",
-                          "modes": [
-                            {
-                              "name": "Muscat Slow Readout",
-                              "overhead": 10.0,
-                              "schedulable": true,
-                              "code": "MUSCAT_SLOW",
-                              "validation_schema": {
-                                "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [1], "default": 1}, "bin_y": {"type": "integer", "allowed": [1], "default": 1}}, "default": {}, "required": true}
-                              }
-                            }
-                          ],
-                          "default": "MUSCAT_SLOW"
-                        },
-                        {
-                          "type": "exposure",
-                          "modes": [
-                            {
-                              "name": "Muscat Synchronous Exposure Mode",
-                              "overhead": 0.0,
-                              "schedulable": true,
-                              "code": "SYNCHRONOUS",
-                              "validation_schema": {
-                                "extra_params": {"type": "dict", "schema": {
-                                  "exposure_time_g": {"type": "float", "min": 0, "required": true},
-                                  "exposure_time_r": {"type": "float", "min": 0, "required": true},
-                                  "exposure_time_i": {"type": "float", "min": 0, "required": true},
-                                  "exposure_time_z": {"type": "float", "min": 0, "required": true},
-                                  "exposure_mode": {"type": "string", "allowed": ["SYNCHRONOUS"], "required": true}
-                                }}
-                              }
-                            },
-                            {
-                              "name": "Muscat Asynchronous Exposure Mode",
-                              "overhead": 0.0,
-                              "schedulable": true,
-                              "code": "ASYNCHRONOUS",
-                              "validation_schema": {
-                                "extra_params": {"type": "dict", "schema": {
-                                  "exposure_time_g": {"type": "float", "min": 0, "required": true},
-                                  "exposure_time_r": {"type": "float", "min": 0, "required": true},
-                                  "exposure_time_i": {"type": "float", "min": 0, "required": true},
-                                  "exposure_time_z": {"type": "float", "min": 0, "required": true},
-                                  "exposure_mode": {"type": "string", "allowed": ["ASYNCHRONOUS"], "required": true}
-                                }}
-                              }
-                            }
-                          ],
-                          "default": "SYNCHRONOUS"
-                        },
-                        {
-                          "type": "guiding",
-                          "modes": [
-                            {
-                              "name": "On",
-                              "overhead": 0.0,
-                              "schedulable": true,
-                              "code": "ON",
-                              "validation_schema": {}
-                            }
-                          ],
-                          "default": "ON"
-                        }
-                      ],
-                      "validation_schema": {"extra_params": {"type": "dict", "schema": {"defocus": {"type": "float", "min": -5.0, "max": 5.0}}}},
-                      "default_acceptability_threshold": 90.0,
-                      "allow_self_guiding": true,
-                      "configuration_types": [
-                        {
-                            "name": "Expose",
-                            "code": "EXPOSE",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": true,
-                            "force_acquisition_off": false,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Repeat Expose",
-                            "code": "REPEAT_EXPOSE",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": true,
-                            "force_acquisition_off": false,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Sky Flat",
-                            "code": "SKY_FLAT",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": true,
-                            "force_acquisition_off": false,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Script",
-                            "code": "SCRIPT",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": false,
-                            "force_acquisition_off": true,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Bias",
-                            "code": "BIAS",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": false,
-                            "force_acquisition_off": true,
-                            "schedulable": false
-                        },
-                        {
-                            "name": "Dark",
-                            "code": "DARK",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": false,
-                            "force_acquisition_off": true,
-                            "schedulable": false
-                        },
-                        {
-                          "name": "Standard",
-                          "code": "STANDARD",
+                      {
+                          "name": "Bias",
+                          "code": "BIAS",
                           "config_change_overhead": 0.0,
-                          "requires_optical_elements": true,
-                          "force_acquisition_off": false,
-                          "schedulable": true
-                        },
-                        {
-                          "name": "Auto Focus",
-                          "code": "AUTO_FOCUS",
-                          "config_change_overhead": 0.0,
-                          "requires_optical_elements": true,
+                          "requires_optical_elements": false,
                           "force_acquisition_off": true,
                           "schedulable": false
-                        },
-                        {
-                          "name": "Engineering",
-                          "code": "ENGINEERING",
+                      },
+                      {
+                          "name": "Dark",
+                          "code": "DARK",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      },
+                      {
+                        "name": "Sky Flat",
+                        "code": "SKY_FLAT",
+                        "config_change_overhead": 0.0,
+                        "requires_optical_elements": true,
+                        "force_acquisition_off": false,
+                        "schedulable": true
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "code": "2m0a",
+              "name": "2 Meter",
+              "instrument_set": [
+                {
+                  "code": "ia02",
+                  "state" : "SCHEDULABLE",
+                  "instrument_type": {
+                    "code": "2M0-INSTRUMENT-A",
+                    "configuration_types": [
+                      {
+                          "name": "Expose",
+                          "code": "EXPOSE",
                           "config_change_overhead": 0.0,
                           "requires_optical_elements": true,
                           "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                        "name": "Repeat Expose",
+                        "code": "REPEAT_EXPOSE",
+                        "config_change_overhead": 0.0,
+                        "requires_optical_elements": true,
+                        "force_acquisition_off": false,
+                        "schedulable": true
+                      },
+                      {
+                          "name": "Bias",
+                          "code": "BIAS",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
                           "schedulable": false
-                        }
-                      ]
-                    },
-                    "science_cameras": [
-                      {
-                        "code": "mc03g",
-                        "orientation": 45.0,
-                        "camera_type": {
-                          "pscale": 1.0,
-                          "name": "2.0 meter Muscat G Camera",
-                          "code": "2M0-PIXIS-G",
-                          "pixels_x": 2048,
-                          "pixels_y": 2048,
-                          "max_rois": 0
-                        },
-                        "optical_elements": {
-                          "diffuser_g_positions": "in,out"
-                        },
-                        "optical_element_groups": [
-                          {
-                            "name": "Diffuser g'",
-                            "type": "diffuser_g_positions",
-                            "optical_elements": [
-                              {
-                                "name": "In Beam",
-                                "code": "in",
-                                "schedulable": true
-                              },
-                              {
-                                "name": "Out of Beam",
-                                "code": "out",
-                                "schedulable": true
-                              }
-                            ],
-                            "element_change_overhead": 0.0,
-                            "default": "out"
-                          }
-                        ]
                       },
                       {
-                        "code": "mc03r",
-                        "orientation": 45.0,
-                        "camera_type": {
-                          "pscale": 1.0,
-                          "name": "2.0 meter Muscat R Camera",
-                          "code": "2M0-PIXIS-R",
-                          "pixels_x": 2048,
-                          "pixels_y": 2048,
-                          "max_rois": 0
-                        },
-                        "optical_elements": {
-                          "diffuser_r_positions": "in,out"
-                        },
-                        "optical_element_groups": [
-                          {
-                            "name": "Diffuser r'",
-                            "type": "diffuser_r_positions",
-                            "optical_elements": [
-                              {
-                                "name": "In Beam",
-                                "code": "in",
-                                "schedulable": true
-                              },
-                              {
-                                "name": "Out of Beam",
-                                "code": "out",
-                                "schedulable": true
-                              }
-                            ],
-                            "element_change_overhead": 0.0,
-                            "default": "out"
-                          }
-                        ]
+                          "name": "Dark",
+                          "code": "DARK",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
                       },
                       {
-                        "code": "mc03i",
-                        "orientation": 45.0,
-                        "camera_type": {
-                          "pscale": 1.0,
-                          "name": "2.0 meter Muscat I Camera",
-                          "code": "2M0-PIXIS-I",
-                          "pixels_x": 2048,
-                          "pixels_y": 2048,
-                          "max_rois": 0
-                        },
-                        "optical_elements": {
-                          "diffuser_i_positions": "in,out"
-                        },
-                        "optical_element_groups": [
-                          {
-                            "name": "Diffuser i'",
-                            "type": "diffuser_i_positions",
-                            "optical_elements": [
-                              {
-                                "name": "In Beam",
-                                "code": "in",
-                                "schedulable": true
-                              },
-                              {
-                                "name": "Out of Beam",
-                                "code": "out",
-                                "schedulable": true
-                              }
-                            ],
-                            "element_change_overhead": 0.0,
-                            "default": "out"
-                          }
-                        ]
+                        "name": "Sky Flat",
+                        "code": "SKY_FLAT",
+                        "config_change_overhead": 0.0,
+                        "requires_optical_elements": true,
+                        "force_acquisition_off": false,
+                        "schedulable": true
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "domb",
+          "telescope_set": [
+            {
+              "code": "1m0a",
+              "name": "1 Meter",
+              "instrument_set": [
+                {
+                  "code": "ia01",
+                  "state" : "SCHEDULABLE",
+                  "instrument_type": {
+                    "code": "1M0-INSTRUMENT-A",
+                    "configuration_types": [
+                      {
+                          "name": "Expose",
+                          "code": "EXPOSE",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
                       },
                       {
-                        "code": "mc03z",
-                        "orientation": 45.0,
-                        "camera_type": {
-                          "pscale": 1.0,
-                          "name": "2.0 meter Muscat Z Camera",
-                          "code": "2M0-PIXIS-Z",
-                          "pixels_x": 2048,
-                          "pixels_y": 2048,
-                          "max_rois": 0
-                        },
-                        "optical_elements": {
-                          "diffuser_z_positions": "in,out"
-                        },
-                        "optical_element_groups": [
-                          {
-                            "name": "Diffuser z'",
-                            "type": "diffuser_z_positions",
-                            "optical_elements": [
-                              {
-                                "name": "In Beam",
-                                "code": "in",
-                                "schedulable": true
-                              },
-                              {
-                                "name": "Out of Beam",
-                                "code": "out",
-                                "schedulable": true
-                              }
-                            ],
-                            "element_change_overhead": 0.0,
-                            "default": "out"
-                          }
-                        ]
+                          "name": "Bias",
+                          "code": "BIAS",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      },
+                      {
+                          "name": "Dark",
+                          "code": "DARK",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      },
+                      {
+                        "name": "Sky Flat",
+                        "code": "SKY_FLAT",
+                        "config_change_overhead": 0.0,
+                        "requires_optical_elements": true,
+                        "force_acquisition_off": false,
+                        "schedulable": true
                       }
-                    ],
-                    "autoguider_camera": {
-                      "code": "mc03g",
-                      "orientation": 0.0,
-                      "camera_type": {
-                        "pscale": 1.0,
-                        "name": "2.0 meter Muscat G Camera",
-                        "code": "2M0-PIXIS-G",
-                        "pixels_x": 2048,
-                        "pixels_y": 2048,
-                        "max_rois": 0
-                      },
-                      "optical_elements": {
-                        "diffuser_g_positions": "in,out"
-                      },
-                      "optical_element_groups": [
-                        {
-                          "name": "Diffuser g'",
-                          "type": "diffuser_g_positions",
-                          "optical_elements": [
-                            {
-                              "name": "In Beam",
-                              "code": "in",
-                              "schedulable": true
-                            },
-                            {
-                              "name": "Out of Beam",
-                              "code": "out",
-                              "schedulable": true
-                            }
-                          ],
-                          "element_change_overhead": 0.0,
-                          "default": "out"
-                        }
-                      ]
-                    },
-                    "__str__": "tst.domb.2m0a.mc03-mc03"
+                    ]
                   }
-                ]
-              }
-            ]
-          },
-          {
-            "code": "domc",
-            "telescope_set": [
-              {
-                "code": "1m0a",
-                "name": "1 Meter",
-                "lat": -32.3805542,
-                "long": 20.8100352,
-                "horizon": 15.0,
-                "ha_limit_pos": 4.6,
-                "ha_limit_neg": -4.6,
-                "zenith_blind_spot": 0.0,
-                "slew_rate": 0.0,
-                "minimum_slew_overhead": 2.0,
-                "maximum_slew_overhead": 2.0,
-                "instrument_change_overhead": 30.0,
-                "instrument_set": [
-                  {
-                    "state": "MANUAL",
-                    "code": "xx11",
-                    "autoguider_camera": {
-                      "code": "ef11",
-                      "orientation": 0.0,
-                      "camera_type": {
-                        "code": "1M0-SCICAM-AG",
-                        "pixels_x": 240,
-                        "pixels_y": 180,
-                        "pscale": 1,
-                        "allow_self_guiding": true
-                      }
-                    },
-                    "instrument_type": {
-                      "code": "1M0-SCICAM-SBIG",
-                      "name": "1M0-SCICAM-SBIG",
-                      "instrument_category": "IMAGE",
-                      "allow_self_guiding": true,
-                      "configuration_types": [
-                        {
-                            "name": "Expose",
-                            "code": "EXPOSE",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": true,
-                            "force_acquisition_off": false,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Repeat Expose",
-                            "code": "REPEAT_EXPOSE",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": true,
-                            "force_acquisition_off": false,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Sky Flat",
-                            "code": "SKY_FLAT",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": true,
-                            "force_acquisition_off": false,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Script",
-                            "code": "SCRIPT",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": false,
-                            "force_acquisition_off": true,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Bias",
-                            "code": "BIAS",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": false,
-                            "force_acquisition_off": true,
-                            "schedulable": false
-                        },
-                        {
-                            "name": "Dark",
-                            "code": "DARK",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": false,
-                            "force_acquisition_off": true,
-                            "schedulable": false
-                        }
-                      ],
-                      "default_acceptability_threshold": 100,
-                      "config_front_padding": 16.0,
-                      "acquire_exposure_time": 0,
-                      "observation_front_padding": 90,
-                      "fixed_overhead_per_exposure": 1,
-                      "mode_types": [
-                        {
-                          "type": "readout",
-                          "default": "1m0_sbig_2",
-                          "modes": [
-                            {
-                              "code": "1m0_sbig_1",
-                              "overhead": 35.0,
-                              "schedulable": true,
-                              "validation_schema": {
-                                "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [1], "default": 1}, "bin_y": {"type": "integer", "allowed": [1], "default": 1}}, "default": {}, "required": true}
-                              }
-                            },
-                            {
-                              "code": "1m0_sbig_2",
-                              "overhead": 14.5,
-                              "schedulable": true,
-                              "validation_schema": {
-                                "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [2], "default": 2}, "bin_y": {"type": "integer", "allowed": [2], "default": 2}}, "default": {}, "required": true}
-                              }
-                            },
-                            {
-                              "code": "1m0_sbig_3",
-                              "overhead": 11.5,
-                              "schedulable": true,
-                              "validation_schema": {
-                                "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [3], "default": 3}, "bin_y": {"type": "integer", "allowed": [3], "default": 3}}, "default": {}, "required": true}
-                              }
-                            }
-                          ]
-                        },
-                        {
-                          "type": "acquisition",
-                          "default": "OFF",
-                          "modes": [
-                            {
-                              "code": "OFF",
-                              "overhead": 0.0,
-                              "schedulable": true,
-                              "validation_schema": {}
-                            }
-                          ]
-                        },
-                        {
-                          "type": "guiding",
-                          "default": "OFF",
-                          "modes": [
-                            {
-                              "code": "OFF",
-                              "overhead": 0.0,
-                              "schedulable": true,
-                              "validation_schema": {}
-                            },
-                            {
-                              "code": "ON",
-                              "overhead": 0.0,
-                              "schedulable": true,
-                              "validation_schema": {}
-                            }
-                          ]
-                        }
-                      ],
-                      "validation_schema": {"extra_params": {"type": "dict", "schema": {"defocus": {"type": "float", "min": -5.0, "max": 5.0}}}}
-                    },
-                    "science_cameras": [{
-                      "code": "xx11",
-                      "orientation": 0.0,
-                      "camera_type": {
-                        "code": "1M0-SCICAM-SBIG",
-                        "name": "1M0-SCICAM-SBIG",
-                        "pixels_x": 1000,
-                        "pixels_y": 1000,
-                        "pscale": 0.5,
-                        "max_rois": 0
+                }
+              ]
+            },
+            {
+              "code": "2m0a",
+              "name": "2 Meter",
+              "instrument_set": [
+                {
+                  "code": "ia02",
+                  "state" : "SCHEDULABLE",
+                  "instrument_type": {
+                    "code": "2M0-INSTRUMENT-A",
+                    "configuration_types": [
+                      {
+                          "name": "Expose",
+                          "code": "EXPOSE",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
                       },
-                      "optical_element_groups": [
-                        {
-                          "type": "filters",
-                          "element_change_overhead": 2,
-                          "optical_elements": [
-                            {
-                              "name": "Air",
-                              "code": "air",
-                              "schedulable": false
-                            }
-                          ],
-                          "default": "air"
-                        }
-                      ]
-                    }],
-                    "__str__": "tst.domc.1m0a.xx11-xx11"
-                  },
-                  {
-                    "state": "MANUAL",
-                    "code": "xx12",
-                    "autoguider_camera": {
-                      "code": "ef12",
-                      "orientation": 0.0,
-                      "camera_type": {
-                        "code": "1M0-SCICAM-AG",
-                        "pixels_x": 240,
-                        "pixels_y": 180,
-                        "pscale": 1,
-                        "allow_self_guiding": true
-                      }
-                    },
-                    "instrument_type": {
-                      "code": "1M0-SCICAM-SBXX",
-                      "name": "1M0-SCICAM-SBXX",
-                      "instrument_category": "IMAGE",
-                      "allow_self_guiding": true,
-                      "configuration_types": [
-                        {
-                            "name": "Expose",
-                            "code": "EXPOSE",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": true,
-                            "force_acquisition_off": false,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Repeat Expose",
-                            "code": "REPEAT_EXPOSE",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": true,
-                            "force_acquisition_off": false,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Sky Flat",
-                            "code": "SKY_FLAT",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": true,
-                            "force_acquisition_off": false,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Script",
-                            "code": "SCRIPT",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": false,
-                            "force_acquisition_off": true,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Bias",
-                            "code": "BIAS",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": false,
-                            "force_acquisition_off": true,
-                            "schedulable": false
-                        },
-                        {
-                            "name": "Dark",
-                            "code": "DARK",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": false,
-                            "force_acquisition_off": true,
-                            "schedulable": false
-                        }
-                      ],
-                      "default_acceptability_threshold": 100,
-                      "config_front_padding": 16.0,
-                      "acquire_exposure_time": 0,
-                      "observation_front_padding": 90,
-                      "fixed_overhead_per_exposure": 1,
-                      "mode_types": [
-                        {
-                          "type": "readout",
-                          "default": "1m0_sbig_2",
-                          "modes": [
-                            {
-                              "code": "1m0_sbig_1",
-                              "overhead": 35.0,
-                              "schedulable": true,
-                              "validation_schema": {
-                                "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [1], "default": 1}, "bin_y": {"type": "integer", "allowed": [1], "default": 1}}, "default": {}, "required": true}
-                              }
-                            },
-                            {
-                              "code": "1m0_sbig_2",
-                              "overhead": 14.5,
-                              "schedulable": true,
-                              "validation_schema": {
-                                "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [2], "default": 2}, "bin_y": {"type": "integer", "allowed": [2], "default": 2}}, "default": {}, "required": true}
-                              }
-                            },
-                            {
-                              "code": "1m0_sbig_3",
-                              "overhead": 11.5,
-                              "schedulable": true,
-                              "validation_schema": {
-                                "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [3], "default": 3}, "bin_y": {"type": "integer", "allowed": [3], "default": 3}}, "default": {}, "required": true}
-                              }
-                            }
-                          ]
-                        },
-                        {
-                          "type": "acquisition",
-                          "default": "OFF",
-                          "modes": [
-                            {
-                              "code": "OFF",
-                              "overhead": 0.0,
-                              "schedulable": true,
-                              "validation_schema": {}
-                            }
-                          ]
-                        },
-                        {
-                          "type": "guiding",
-                          "default": "OFF",
-                          "modes": [
-                            {
-                              "code": "OFF",
-                              "overhead": 0.0,
-                              "schedulable": true,
-                              "validation_schema": {}
-                            },
-                            {
-                              "code": "ON",
-                              "overhead": 0.0,
-                              "schedulable": true,
-                              "validation_schema": {}
-                            }
-                          ]
-                        }
-                      ],
-                      "validation_schema": {"extra_params": {"type": "dict", "schema": {"defocus": {"type": "float", "min": -5.0, "max": 5.0}}}}
-                    },
-                    "science_cameras": [{
-                      "code": "xx12",
-                      "orientation": 0.0,
-                      "camera_type": {
-                        "code": "1M0-SCICAM-SBXX",
-                        "name": "1M0-SCICAM-SBXX",
-                        "pixels_x": 1000,
-                        "pixels_y": 1000,
-                        "pscale": 0.5,
-                        "max_rois": 0
+                      {
+                        "name": "Repeat Expose",
+                        "code": "REPEAT_EXPOSE",
+                        "config_change_overhead": 0.0,
+                        "requires_optical_elements": true,
+                        "force_acquisition_off": false,
+                        "schedulable": true
                       },
-                      "optical_element_groups": [
-                        {
-                          "type": "filters",
-                          "element_change_overhead": 2,
-                          "optical_elements": [
-                            {
-                              "name": "Air",
-                              "code": "air",
-                              "schedulable": false
-                            }
-                          ],
-                          "default": "air"
-                        }
-                      ]
-                    }],
-                    "__str__": "tst.domc.1m0a.xx12-xx12"
+                      {
+                          "name": "Bias",
+                          "code": "BIAS",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      },
+                      {
+                          "name": "Dark",
+                          "code": "DARK",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      },
+                      {
+                        "name": "Sky Flat",
+                        "code": "SKY_FLAT",
+                        "config_change_overhead": 0.0,
+                        "requires_optical_elements": true,
+                        "force_acquisition_off": false,
+                        "schedulable": true
+                      }
+                    ]
                   }
-                ]
-              }
-            ]
-          },
-          {
-            "code": "domd",
-            "telescope_set": [
-              {
-                "code": "1m0a",
-                "name": "1 Meter",
-                "lat": -32.3805542,
-                "long": 20.8100352,
-                "horizon": 15.0,
-                "ha_limit_pos": 4.6,
-                "ha_limit_neg": -4.6,
-                "zenith_blind_spot": 0.0,
-                "slew_rate": 0.0,
-                "minimum_slew_overhead": 2.0,
-                "maximum_slew_overhead": 2.0,
-                "instrument_change_overhead": 30.0,
-                "instrument_set": [
-                  {
-                    "state": "MANUAL",
-                    "code": "xy01",
-                    "autoguider_camera": {
-                      "code": "ey01",
-                      "orientation": 0.0,
-                      "camera_type": {
-                        "code": "1M0-SCICAM-AG",
-                        "pixels_x": 240,
-                        "pixels_y": 180,
-                        "pscale": 1,
-                        "allow_self_guiding": true
-                      }
-                    },
-                    "instrument_type": {
-                      "code": "1M0-SCICAM-SBAG",
-                      "name": "1M0-SCICAM-SBAG",
-                      "instrument_category": "IMAGE",
-                      "allow_self_guiding": true,
-                      "configuration_types": [
-                        {
-                            "name": "Expose",
-                            "code": "EXPOSE",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": true,
-                            "force_acquisition_off": false,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Repeat Expose",
-                            "code": "REPEAT_EXPOSE",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": true,
-                            "force_acquisition_off": false,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Sky Flat",
-                            "code": "SKY_FLAT",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": true,
-                            "force_acquisition_off": false,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Script",
-                            "code": "SCRIPT",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": false,
-                            "force_acquisition_off": true,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Bias",
-                            "code": "BIAS",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": false,
-                            "force_acquisition_off": true,
-                            "schedulable": false
-                        },
-                        {
-                            "name": "Dark",
-                            "code": "DARK",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": false,
-                            "force_acquisition_off": true,
-                            "schedulable": false
-                        }
-                      ],
-                      "default_acceptability_threshold": 100,
-                      "config_front_padding": 16.0,
-                      "acquire_exposure_time": 0,
-                      "observation_front_padding": 90,
-                      "fixed_overhead_per_exposure": 1,
-                      "mode_types": [
-                        {
-                          "type": "readout",
-                          "default": "1m0_sbag_2",
-                          "modes": [
-                            {
-                              "code": "1m0_sbag_1",
-                              "overhead": 35.0,
-                              "schedulable": true,
-                              "validation_schema": {
-                                "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [1], "default": 1}, "bin_y": {"type": "integer", "allowed": [1], "default": 1}}, "default": {}, "required": true}
-                              }
-                            },
-                            {
-                              "code": "1m0_sbag_2",
-                              "overhead": 14.5,
-                              "schedulable": true,
-                              "validation_schema": {
-                                "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [2], "default": 2}, "bin_y": {"type": "integer", "allowed": [2], "default": 2}}, "default": {}, "required": true}
-                              }
-                            },
-                            {
-                              "code": "1m0_sbag_3",
-                              "overhead": 11.5,
-                              "schedulable": true,
-                              "validation_schema": {
-                                "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [3], "default": 3}, "bin_y": {"type": "integer", "allowed": [3], "default": 3}}, "default": {}, "required": true}
-                              }
-                            }
-                          ]
-                        },
-                        {
-                          "type": "acquisition",
-                          "default": "OFF",
-                          "modes": [
-                            {
-                              "code": "OFF",
-                              "overhead": 0.0,
-                              "schedulable": true,
-                              "validation_schema": {}
-                            }
-                          ]
-                        },
-                        {
-                          "type": "guiding",
-                          "default": "OFF",
-                          "modes": [
-                            {
-                              "code": "OFF",
-                              "overhead": 0.0,
-                              "schedulable": true,
-                              "validation_schema": {}
-                            },
-                            {
-                              "code": "ON",
-                              "overhead": 0.0,
-                              "schedulable": true,
-                              "validation_schema": {}
-                            }
-                          ]
-                        }
-                      ],
-                      "validation_schema": {"extra_params": {"type": "dict", "schema": {"defocus": {"type": "float", "min": -5.0, "max": 5.0}}}}
-                    },
-                    "science_cameras": [{
-                      "code": "xy01",
-                      "orientation": 0.0,
-                      "camera_type": {
-                        "code": "1M0-SCICAM-SBAG",
-                        "name": "1M0-SCICAM-SBAG",
-                        "pixels_x": 1000,
-                        "pixels_y": 1000,
-                        "pscale": 0.5,
-                        "max_rois": 0
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "domc",
+          "telescope_set": [
+            {
+              "code": "1m0a",
+              "name": "1 Meter",
+              "instrument_set": [
+                {
+                  "code": "ib01",
+                  "state" : "SCHEDULABLE",
+                  "instrument_type": {
+                    "code": "1M0-INSTRUMENT-B",
+                    "configuration_types": [
+                      {
+                          "name": "Expose",
+                          "code": "EXPOSE",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
                       },
-                      "optical_element_groups": [
-                        {
-                          "type": "filters",
-                          "element_change_overhead": 2,
-                          "optical_elements": [
-                            {
-                              "name": "Air",
-                              "code": "air",
-                              "schedulable": false
-                            }
-                          ],
-                          "default": "air"
-                        }
-                      ]
-                    }],
-                    "__str__": "tst.domd.1m0a.xy01-xy01"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "code": "domf",
-            "telescope_set": [
-              {
-                "code": "1m0a",
-                "name": "1 Meter",
-                "lat": -32.3805542,
-                "long": 20.8100352,
-                "horizon": 15.0,
-                "ha_limit_pos": 4.6,
-                "ha_limit_neg": -4.6,
-                "zenith_blind_spot": 0.0,
-                "slew_rate": 0.0,
-                "minimum_slew_overhead": 2.0,
-                "maximum_slew_overhead": 2.0,
-                "instrument_change_overhead": 30.0,
-                "instrument_set": [
-                  {
-                    "state": "SCHEDULABLE",
-                    "code": "os01",
-                    "autoguider_camera": {
-                      "code": "sx01",
-                      "orientation": 0.0,
-                      "camera_type": {
-                        "code": "1M0-SCICAM-AG",
-                        "pixels_x": 240,
-                        "pixels_y": 180,
-                        "pscale": 1,
-                        "allow_self_guiding": true
-                      }
-                    },
-                    "instrument_type": {
-                      "code": "1M0-SCICAM-SOAR",
-                      "name": "1M0-SCICAM-SOAR",
-                      "instrument_category": "IMAGE",
-                      "allow_self_guiding": true,
-                      "configuration_types": [
-                        {
-                            "name": "Expose",
-                            "code": "EXPOSE",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": true,
-                            "force_acquisition_off": false,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Repeat Expose",
-                            "code": "REPEAT_EXPOSE",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": true,
-                            "force_acquisition_off": false,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Sky Flat",
-                            "code": "SKY_FLAT",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": true,
-                            "force_acquisition_off": false,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Script",
-                            "code": "SCRIPT",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": false,
-                            "force_acquisition_off": true,
-                            "schedulable": true
-                        },
-                        {
-                            "name": "Bias",
-                            "code": "BIAS",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": false,
-                            "force_acquisition_off": true,
-                            "schedulable": false
-                        },
-                        {
-                            "name": "Dark",
-                            "code": "DARK",
-                            "config_change_overhead": 0.0,
-                            "requires_optical_elements": false,
-                            "force_acquisition_off": true,
-                            "schedulable": false
-                        }
-                      ],
-                      "default_acceptability_threshold": 100,
-                      "config_front_padding": 16.0,
-                      "acquire_exposure_time": 0,
-                      "observation_front_padding": 90,
-                      "fixed_overhead_per_exposure": 1,
-                      "mode_types": [
-                        {
-                          "type": "readout",
-                          "default": "1m0_soar_2",
-                          "modes": [
-                            {
-                              "code": "1m0_soar_1",
-                              "overhead": 35.0,
-                              "schedulable": true,
-                              "validation_schema": {
-                                "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [1], "default": 1}, "bin_y": {"type": "integer", "allowed": [1], "default": 1}}, "default": {}, "required": true}
-                              }
-                            },
-                            {
-                              "code": "1m0_soar_2",
-                              "overhead": 14.5,
-                              "schedulable": true,
-                              "validation_schema": {
-                                "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [2], "default": 2}, "bin_y": {"type": "integer", "allowed": [2], "default": 2}}, "default": {}, "required": true}
-                              }
-                            },
-                            {
-                              "code": "1m0_soar_3",
-                              "overhead": 11.5,
-                              "schedulable": true,
-                              "validation_schema": {
-                                "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [3], "default": 3}, "bin_y": {"type": "integer", "allowed": [3], "default": 3}}, "default": {}, "required": true}
-                              }
-                            }
-                          ]
-                        },
-                        {
-                          "type": "acquisition",
-                          "default": "OFF",
-                          "modes": [
-                            {
-                              "code": "OFF",
-                              "overhead": 0.0,
-                              "schedulable": true,
-                              "validation_schema": {}
-                            }
-                          ]
-                        },
-                        {
-                          "type": "guiding",
-                          "default": "OFF",
-                          "modes": [
-                            {
-                              "code": "OFF",
-                              "overhead": 0.0,
-                              "schedulable": true,
-                              "validation_schema": {}
-                            },
-                            {
-                              "code": "ON",
-                              "overhead": 0.0,
-                              "schedulable": true,
-                              "validation_schema": {}
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    "science_cameras": [{
-                      "code": "so01",
-                      "orientation": 60.0,
-                      "camera_type": {
-                        "code": "1M0-SCICAM-SOAR",
-                        "name": "1M0-SCICAM-SOAR",
-                        "pixels_x": 1000,
-                        "pixels_y": 1000,
-                        "pscale": 0.5,
-                        "max_rois": 0
+                      {
+                          "name": "Bias",
+                          "code": "BIAS",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
                       },
-                      "optical_element_groups": [
-                        {
-                          "type": "filters",
-                          "element_change_overhead": 2,
-                          "optical_elements": [
-                            {
-                              "name": "Air",
-                              "code": "air",
-                              "schedulable": false
-                            }
-                          ],
-                          "default": "air"
-                        }
-                      ]
-                    }],
-                    "__str__": "tst.dome.1m0a.so01-os01"
+                      {
+                          "name": "Dark",
+                          "code": "DARK",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      },
+                      {
+                        "name": "Sky Flat",
+                        "code": "SKY_FLAT",
+                        "config_change_overhead": 0.0,
+                        "requires_optical_elements": true,
+                        "force_acquisition_off": false,
+                        "schedulable": true
+                      }
+                    ]
                   }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "code": "lco",
-        "elevation": 10,
-        "enclosure_set": [
-          {
-            "code": "doma",
-            "telescope_set": [
-              {
-                "code": "1m0a",
-                "name": "1 Meter",
-                "lat": -32.3805542,
-                "long": 20.8100352,
-                "horizon": 15.0,
-                "ha_limit_pos": 4.6,
-                "ha_limit_neg": -4.6,
-                "zenith_blind_spot": 0.0,
-                "slew_rate": 0.0,
-                "minimum_slew_overhead": 2.0,
-                "maximum_slew_overhead": 2.0,
-                "instrument_change_overhead": 0.0,
-                "instrument_set": []
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "domd",
+          "telescope_set": [
+            {
+              "code": "1m0a",
+              "name": "1 Meter",
+              "instrument_set": [
+                {
+                  "code": "ib01",
+                  "state" : "SCHEDULABLE",
+                  "instrument_type": {
+                    "code": "1M0-INSTRUMENT-B",
+                    "configuration_types": [
+                      {
+                          "name": "Expose",
+                          "code": "EXPOSE",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Bias",
+                          "code": "BIAS",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      },
+                      {
+                          "name": "Dark",
+                          "code": "DARK",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      },
+                      {
+                        "name": "Sky Flat",
+                        "code": "SKY_FLAT",
+                        "config_change_overhead": 0.0,
+                        "requires_optical_elements": true,
+                        "force_acquisition_off": false,
+                        "schedulable": true
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "mba",
+      "elevation": 384,
+      "enclosure_set": [
+        {
+          "code": "doma",
+          "telescope_set": [
+            {
+              "code": "1m0a",
+              "name": "1 Meter",
+              "instrument_set": [
+                {
+                  "code": "ia01",
+                  "state" : "SCHEDULABLE",
+                  "instrument_type": {
+                    "code": "1M0-INSTRUMENT-A",
+                    "configuration_types": [
+                      {
+                          "name": "Expose",
+                          "code": "EXPOSE",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Bias",
+                          "code": "BIAS",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      },
+                      {
+                          "name": "Dark",
+                          "code": "DARK",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      },
+                      {
+                        "name": "Sky Flat",
+                        "code": "SKY_FLAT",
+                        "config_change_overhead": 0.0,
+                        "requires_optical_elements": true,
+                        "force_acquisition_off": false,
+                        "schedulable": true
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
