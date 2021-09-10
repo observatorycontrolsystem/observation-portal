@@ -131,7 +131,7 @@ class ObservationPortalSchema(AutoSchema):
 
         self.request_media_types = self.map_parsers(path, method)
 
-        serializer = self.get_response_serializer(path, method)
+        serializer = self.get_request_serializer(path, method)
 
         if not isinstance(serializer, serializers.Serializer):
             item_schema = {}
@@ -155,7 +155,7 @@ class ObservationPortalSchema(AutoSchema):
 
         self.response_media_types = self.map_renderers(path, method)
 
-        serializer = self.get_request_serializer(path, method)
+        serializer = self.get_response_serializer(path, method)
 
         if not isinstance(serializer, serializers.Serializer):
             item_schema = {}
