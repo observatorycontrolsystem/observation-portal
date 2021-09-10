@@ -43,6 +43,7 @@ setup(
         'django-registration-redux>=2.6,<3.0',
         'django-storages>=1.11,<1.12',
         'dramatiq[redis, watch]>=1.11,<1.12',
+        'drf-yasg>=1.20,<1.21'
         'elasticsearch>=5,<6',
         'gunicorn[gevent]>=19,<21',
         'lcogt-logging==0.3.2',
