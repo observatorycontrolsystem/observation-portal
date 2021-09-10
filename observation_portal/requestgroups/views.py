@@ -47,7 +47,6 @@ class TelescopeStatesView(APIView):
     """
     permission_classes = (AllowAny,)
     schema = None
-    filter_backends = (DjangoFilterBackend,)
 
     def get(self, request):
         try:
