@@ -19,6 +19,7 @@ from django.urls import path
 from rest_framework.routers import DefaultRouter
 from rest_framework.authtoken.views import obtain_auth_token
 from rest_framework import permissions
+from drf_yasg import openapi
 from rest_framework.schemas import get_schema_view
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.conf.urls.static import static
@@ -74,11 +75,16 @@ api_urlpatterns = ([
 ], 'api')
 
 schema_view = get_schema_view(
+  openapi.Info(
     title="Observation Portal API",
-    generator_class=ObservationPortalSchemaGenerator,
-    permission_classes=[permissions.AllowAny,],
-    authentication_classes=[],
-    public=True
+    default_version='v1',
+    terms_of_service="https://lco.global/policies/terms/",
+    contact=openapi.Contact(email="ocs@lco.global"),
+    license=openapi.License(name="GPL 3.0 License"),
+  ),
+  permission_classes=(permissions.AllowAny,),
+  generator_class=ObservationPortalSchemaGenerator,
+  public=True,
 )
 
 urlpatterns = [
