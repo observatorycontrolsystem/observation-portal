@@ -104,18 +104,6 @@ class ObservationPortalSchema(AutoSchema):
     def get_request_serializer(self, path, method):
         view = self.view
 
-        if not hasattr(view, 'get_response_serializer'):
-            try:
-                return view.get_serializer()
-            except AttributeError:
-                # If this view doesn't have a serializer, then we can't auto-document this endpoint
-                return None
-        else:
-            return view.get_response_serializer()
-
-    def get_response_serializer(self, path, method):
-        view = self.view
-
         if not hasattr(view, 'get_request_serializer'):
             try:
                 return view.get_serializer()
@@ -124,6 +112,18 @@ class ObservationPortalSchema(AutoSchema):
                 return None
         else:
             return view.get_request_serializer()
+
+    def get_response_serializer(self, path, method):
+        view = self.view
+
+        if not hasattr(view, 'get_response_serializer'):
+            try:
+                return view.get_serializer()
+            except AttributeError:
+                # If this view doesn't have a serializer, then we can't auto-document this endpoint
+                return None
+        else:
+            return view.get_response_serializer()
 
     def get_request_body(self, path, method):
         if method not in ('PUT', 'PATCH', 'POST'):
