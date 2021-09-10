@@ -849,8 +849,13 @@ class RequestGroupSerializer(serializers.ModelSerializer):
         return value
 
 
-class CadenceRequestGroupSerializer(serializers.Serializer):
+class CadenceRequestGroupSerializer(RequestGroupSerializer):
     requests = import_string(settings.SERIALIZERS['requestgroups']['CadenceRequest'])(many=True)
+
+    # override the validate method from the RequestGroupSerializer and use the Cadence Request serializer to
+    # validate all of the Cadence Requests
+    def validate(self, data):
+        return data
 
 
 class PatternExpansionSerializer(serializers.Serializer):
