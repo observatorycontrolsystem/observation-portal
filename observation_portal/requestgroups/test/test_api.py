@@ -251,6 +251,15 @@ class TestUserPostRequestApi(SetTimeMixin, APITestCase):
         self.assertIn('You do not belong', str(response.content))
         self.assertEqual(response.status_code, 400)
 
+    def test_post_requestgroup_inactive_proposal(self):
+        proposal = mixer.blend(Proposal, active=False)
+        mixer.blend(Membership, user=self.user, proposal=proposal)
+        bad_data = self.generic_payload.copy()
+        bad_data['proposal'] = proposal.id
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertIn('currently inactive', str(response.content))
+        self.assertEqual(response.status_code, 400)
+
     def test_post_requestgroup_missing_data(self):
         bad_data = self.generic_payload.copy()
         del bad_data['requests']
