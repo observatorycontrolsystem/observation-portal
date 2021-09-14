@@ -8,3 +8,5 @@ Data may be downloaded here:
 Thank you,
 
 {{ organization_name }}
+
+* You received this message because you opted to have notifications enabled. You can disable notifications globally here: {{ observation_portal_base_url }}/accounts/profile, or individually by proposal here: {{ observation_portal_base_url }}/proposals/{{ requestgroup.proposal }}
