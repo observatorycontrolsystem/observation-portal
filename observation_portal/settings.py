@@ -244,6 +244,14 @@ REQUESTGROUP_DATA_DOWNLOAD_URL = os.getenv('REQUESTGROUP_DATA_DOWNLOAD_URL', '')
 REQUEST_DETAIL_URL = os.getenv('REQUEST_DETAIL_URL', '')  # use {request_id} to have it substituted in
 SCIENCE_APPLICATION_DETAIL_URL = os.getenv('SCIENCE_APPLICATION_DETAIL_URL', '')  # use {scicapp_id} to have it substituted in
 MAX_FAILURES_PER_REQUEST = int(os.getenv('MAX_FAILURES_PER_REQUEST', 0))  # 0 means unlimited / no max
+DITHER = {
+    'custom_pattern_key': 'custom', # Key used to indicate a custom dither pattern was created
+    'valid_expansion_patterns': ('line', 'grid', 'spiral', )
+}
+MOSAIC = {
+    'custom_pattern_key': 'custom', # Key used to indicate a custom mosaic pattern was created
+    'valid_expansion_patterns': ('line', 'grid', )
+}
 
 REST_FRAMEWORK = {
     'TEST_REQUEST_DEFAULT_FORMAT': 'json',

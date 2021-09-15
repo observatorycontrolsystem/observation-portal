@@ -6,7 +6,6 @@ from django.core.cache import cache
 from django.utils import timezone
 from django.urls import reverse
 from django.forms.models import model_to_dict
-from django.utils.functional import lazy
 from django.utils.module_loading import import_string
 from django.conf import settings
 import logging
@@ -265,6 +264,12 @@ class Request(models.Model):
                   'rescheduling. The percentage should be set to the lowest value for which the amount of data is '
                   'acceptable to meet the science goal of the Request. Defaults to 100 for FLOYDS observations and '
                   '90 for all other observations.'
+    )
+    extra_params = models.JSONField(
+        default=dict,
+        blank=True,
+        verbose_name='extra parameters',
+        help_text='Extra Request parameters'
     )
 
     class Meta:

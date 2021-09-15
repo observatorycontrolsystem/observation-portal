@@ -640,6 +640,43 @@ class TestPostObservationApi(TestObservationApiBase):
         observation_obj = Observation.objects.first()
         self.assertEqual(observation_obj.state, 'ABORTED')
 
+    def test_cancel_current_in_progress_observation_fails(self):
+        self.window.start = datetime(2016, 8, 28, tzinfo=timezone.utc)
+        self.window.save()
+        observation = self._generate_observation_data(self.requestgroup.requests.first().id,
+                                                      [self.requestgroup.requests.first().configurations.first().id])
+        observation['start'] = "2016-08-31T23:35:39Z"
+        observation['end'] = "2016-09-01T01:35:39Z"
+        self._create_observation(observation)
+        obs = Observation.objects.first()
+        obs.state = 'IN_PROGRESS'
+        obs.save()
+        cancel_dict = {'start': "2016-09-01T00:00:00Z", 'end': "2016-09-18T00:00:00Z"}
+        response = self.client.post(reverse('api:observations-cancel'), data=cancel_dict)
+        self.assertContains(response, 'Cannot cancel IN_PROGRESS observations', status_code=400)
+        obs.refresh_from_db()
+        self.assertEqual(obs.state, 'IN_PROGRESS')
+
+    def test_cancel_current_in_progress_observation_succeeds_with_preemption(self):
+        self.window.start = datetime(2016, 8, 28, tzinfo=timezone.utc)
+        self.window.save()
+        observation = self._generate_observation_data(self.requestgroup.requests.first().id,
+                                                      [self.requestgroup.requests.first().configurations.first().id])
+        observation['start'] = "2016-08-31T23:35:39Z"
+        observation['end'] = "2016-09-01T01:35:39Z"
+        self._create_observation(observation)
+        obs = Observation.objects.first()
+        obs.state = 'IN_PROGRESS'
+        obs.save()
+        cancel_dict = {'start': "2016-09-01T00:00:00Z", 'end': "2016-09-18T00:00:00Z", 'preemption_enabled': True}
+        response = self.client.post(reverse('api:observations-cancel'), data=cancel_dict)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['canceled'], 1)
+        self.assertEqual(len(Observation.objects.all()), 1)
+        self.assertEqual(len(ConfigurationStatus.objects.all()), 1)
+        obs.refresh_from_db()
+        self.assertEqual(obs.state, 'ABORTED')
+
     def test_cancel_by_time_range_observations_succeeds(self):
         observation = self._generate_observation_data(self.requestgroup.requests.first().id,
                                                       [self.requestgroup.requests.first().configurations.first().id])

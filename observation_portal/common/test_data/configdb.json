@@ -160,7 +160,16 @@
                         ]
                       }
                     ],
-                    "validation_schema": {"extra_params": {"type": "dict", "schema": {"defocus": {"type": "float", "min": -5.0, "max": 5.0}}}}
+                    "validation_schema": {
+                      "extra_params": {
+                        "type": "dict",
+                        "schema": {
+                          "defocus": {"type": "float", "min": -5.0, "max": 5.0},
+                          "offset_ra": {"type": "float"},
+                          "offset_dec": {"type": "float"}
+                        }
+                      }
+                    }
                   },
                   "science_cameras": [{
                     "code": "xx01",
@@ -326,7 +335,16 @@
                         ]
                       }
                     ],
-                    "validation_schema": {"extra_params": {"type": "dict", "schema": {"defocus": {"type": "float", "min": -5.0, "max": 5.0}}}}
+                    "validation_schema": {
+                      "extra_params": {
+                        "type": "dict",
+                        "schema": {
+                          "defocus": {"type": "float", "min": -5.0, "max": 5.0},
+                          "offset_ra": {"type": "float"},
+                          "offset_dec": {"type": "float"}
+                        }
+                      }
+                    }
                   },
                   "science_cameras": [{
                     "code": "xx06",
@@ -492,7 +510,16 @@
                         ]
                       }
                     ],
-                    "validation_schema": {"extra_params": {"type": "dict", "schema": {"defocus": {"type": "float", "min": -5.0, "max": 5.0}}}}
+                    "validation_schema": {
+                      "extra_params": {
+                        "type": "dict",
+                        "schema": {
+                          "defocus": {"type": "float", "min": -5.0, "max": 5.0},
+                          "offset_ra": {"type": "float"},
+                          "offset_dec": {"type": "float"}
+                        }
+                      }
+                    }
                   },
                   "science_cameras": [{
                     "code": "xx08",
@@ -676,7 +703,16 @@
                         ]
                       }
                     ],
-                    "validation_schema": {"extra_params": {"type": "dict", "schema": {"defocus": {"type": "float", "min": -5.0, "max": 5.0}}}}
+                    "validation_schema": {
+                      "extra_params": {
+                        "type": "dict",
+                        "schema": {
+                          "defocus": {"type": "float", "min": -5.0, "max": 5.0},
+                          "offset_ra": {"type": "float"},
+                          "offset_dec": {"type": "float"}
+                        }
+                      }
+                    }
                   },
                   "science_cameras": [{
                     "code": "xx02",
@@ -878,7 +914,16 @@
                         ]
                       }
                     ],
-                    "validation_schema": {"extra_params": {"type": "dict", "schema": {"defocus": {"type": "float", "min": -5.0, "max": 5.0}}}}
+                    "validation_schema": {
+                      "extra_params": {
+                        "type": "dict",
+                        "schema": {
+                          "defocus": {"type": "float", "min": -5.0, "max": 5.0},
+                          "offset_ra": {"type": "float"},
+                          "offset_dec": {"type": "float"}
+                        }
+                      }
+                    }
                   },
                   "science_cameras": [{
                     "code": "xx03",
@@ -1055,7 +1100,16 @@
                         ]
                       }
                     ],
-                    "validation_schema": {"extra_params": {"type": "dict", "schema": {"defocus": {"type": "float", "min": -5.0, "max": 5.0}}}}
+                    "validation_schema": {
+                      "extra_params": {
+                        "type": "dict",
+                        "schema": {
+                          "defocus": {"type": "float", "min": -5.0, "max": 5.0},
+                          "offset_ra": {"type": "float"},
+                          "offset_dec": {"type": "float"}
+                        }
+                      }
+                    }
                   },
                   "science_cameras": [{
                     "code": "nres02",
@@ -1225,7 +1279,16 @@
                         ]
                       }
                     ],
-                    "validation_schema": {"extra_params": {"type": "dict", "schema": {"defocus": {"type": "float", "min": -5.0, "max": 5.0}}}}
+                    "validation_schema": {
+                      "extra_params": {
+                        "type": "dict",
+                        "schema": {
+                          "defocus": {"type": "float", "min": -5.0, "max": 5.0},
+                          "offset_ra": {"type": "float"},
+                          "offset_dec": {"type": "float"}
+                        }
+                      }
+                    }
                   },
                   "science_cameras": [{
                     "code": "xx04",
@@ -1362,7 +1425,16 @@
                         "default": "ON"
                       }
                     ],
-                    "validation_schema": {"extra_params": {"type": "dict", "schema": {"defocus": {"type": "float", "min": -5.0, "max": 5.0}}}},
+                    "validation_schema": {
+                      "extra_params": {
+                        "type": "dict",
+                        "schema": {
+                          "defocus": {"type": "float", "min": -5.0, "max": 5.0},
+                          "offset_ra": {"type": "float"},
+                          "offset_dec": {"type": "float"}
+                        }
+                      }
+                    },
                     "default_acceptability_threshold": 90.0,
                     "allow_self_guiding": true,
                     "configuration_types": [
@@ -1776,7 +1848,16 @@
                         ]
                       }
                     ],
-                    "validation_schema": {"extra_params": {"type": "dict", "schema": {"defocus": {"type": "float", "min": -5.0, "max": 5.0}}}}
+                    "validation_schema": {
+                      "extra_params": {
+                        "type": "dict",
+                        "schema": {
+                          "defocus": {"type": "float", "min": -5.0, "max": 5.0},
+                          "offset_ra": {"type": "float"},
+                          "offset_dec": {"type": "float"}
+                        }
+                      }
+                    }
                   },
                   "science_cameras": [{
                     "code": "xx11",
@@ -1942,7 +2023,16 @@
                         ]
                       }
                     ],
-                    "validation_schema": {"extra_params": {"type": "dict", "schema": {"defocus": {"type": "float", "min": -5.0, "max": 5.0}}}}
+                    "validation_schema": {
+                      "extra_params": {
+                        "type": "dict",
+                        "schema": {
+                          "defocus": {"type": "float", "min": -5.0, "max": 5.0},
+                          "offset_ra": {"type": "float"},
+                          "offset_dec": {"type": "float"}
+                        }
+                      }
+                    }
                   },
                   "science_cameras": [{
                     "code": "xx12",
@@ -2129,7 +2219,16 @@
                         ]
                       }
                     ],
-                    "validation_schema": {"extra_params": {"type": "dict", "schema": {"defocus": {"type": "float", "min": -5.0, "max": 5.0}}}}
+                    "validation_schema": {
+                      "extra_params": {
+                        "type": "dict",
+                        "schema": {
+                          "defocus": {"type": "float", "min": -5.0, "max": 5.0},
+                          "offset_ra": {"type": "float"},
+                          "offset_dec": {"type": "float"}
+                        }
+                      }
+                    }
                   },
                   "science_cameras": [{
                     "code": "xy01",

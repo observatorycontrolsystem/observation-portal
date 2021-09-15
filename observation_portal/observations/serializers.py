@@ -401,6 +401,7 @@ class CancelObservationsSerializer(serializers.Serializer):
     include_normal = serializers.BooleanField(required=False, default=True)
     include_rr = serializers.BooleanField(required=False, default=False)
     include_direct = serializers.BooleanField(required=False, default=False)
+    preemption_enabled = serializers.BooleanField(required=False, default=False)
 
     def validate(self, data):
         if 'ids' not in data and ('start' not in data or 'end' not in data):
