@@ -267,6 +267,12 @@ class Request(models.Model):
                   'acceptable to meet the science goal of the Request. Defaults to 100 for FLOYDS observations and '
                   '90 for all other observations.'
     )
+    extra_params = JSONField(
+        default=dict,
+        blank=True,
+        verbose_name='extra parameters',
+        help_text='Extra Request parameters'
+    )
 
     class Meta:
         ordering = ('id',)
