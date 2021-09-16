@@ -1,4 +1,3 @@
-from observation_portal.common.mixins import GetSerializerMixin
 from django.utils import timezone
 from django.contrib.auth.models import User
 from django.utils.module_loading import import_string
@@ -8,10 +7,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework import status
 
 from observation_portal.accounts.models import Profile
 from observation_portal.accounts.tasks import send_mail
 from observation_portal.common.schema import ObservationPortalSchema
+from observation_portal.common.mixins import GetSerializerMixin
 
 
 class ProfileApiView(RetrieveUpdateAPIView):
@@ -46,7 +47,7 @@ class AcceptTermsApiView(APIView, GetSerializerMixin):
         if serializer.is_valid():
             return Response(serializer.data)
         else:
-            return Response(serializer.errors, status=400)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get_endpoint_name(self):
         return 'acceptTerms'
@@ -66,8 +67,7 @@ class RevokeApiTokenApiView(APIView, GetSerializerMixin):
         if serializer.is_valid():
             return Response(serializer.validated_data)
         else:
-            # TODO: Should this be a 500? It's technically not a erroneous request.
-            return Response(serializer.errors, status=400)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get_endpoint_name(self):
         return 'revokeApiToken'
@@ -91,9 +91,9 @@ class AccountRemovalRequestApiView(APIView):
             if response_serializer.is_valid():
                 return Response(response_serializer.validated_data)
             else:
-                return Response(response_serializer.errors, status=400)
+                return Response(response_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         else:
-            return Response(request_serializer.errors, status=400)
+            return Response(request_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get_request_serializer(self, *args, **kwargs):
         return import_string(settings.SERIALIZERS['accounts']['AccountRemovalRequest'])(*args, **kwargs)
