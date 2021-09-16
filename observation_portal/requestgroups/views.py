@@ -21,7 +21,6 @@ from observation_portal.common.telescope_states import (
 from observation_portal.requestgroups.request_utils import get_airmasses_for_request_at_sites
 from observation_portal.requestgroups.contention import Contention, Pressure
 from observation_portal.requestgroups.filters import InstrumentsInformationFilter, LastChangedFilter
-from observation_portal.common.mixins import GetSerializerMixin
 from observation_portal.common.doc_examples import EXAMPLE_RESPONSES
 from observation_portal.common.schema import ObservationPortalSchema
 
@@ -91,13 +90,12 @@ class TelescopeAvailabilityView(APIView):
         return Response(str_telescope_availability)
 
 
-class AirmassView(APIView, GetSerializerMixin):
+class AirmassView(APIView):
     """
     Gets the airmasses for the request at available sites
     """
     permission_classes = (AllowAny,)
     schema = ObservationPortalSchema(tags=['Requests'])
-    serializer_class = import_string(settings.SERIALIZERS['requestgroups']['Request'])
 
     def post(self, request):
         request_serializer = self.get_request_serializer(data=request.data)
@@ -194,7 +192,7 @@ class PressureView(APIView):
         return Response(pressure.data())
 
 
-class ObservationPortalLastChangedView(APIView, GetSerializerMixin):
+class ObservationPortalLastChangedView(APIView):
     '''
         Returns the datetime of the last status of requests change or new requests addition
     '''
@@ -202,7 +200,6 @@ class ObservationPortalLastChangedView(APIView, GetSerializerMixin):
     schema = ObservationPortalSchema(tags=['RequestGroups'], is_list_view=False)
     filter_class = LastChangedFilter
     filter_backends = (DjangoFilterBackend,)
-    serializer_class = import_string(settings.SERIALIZERS['requestgroups']['LastChanged'])
 
     def get(self, request):
         telescope_classes = request.GET.getlist('telescope_class', ['all'])
@@ -216,10 +213,8 @@ class ObservationPortalLastChangedView(APIView, GetSerializerMixin):
         else:
             raise ValidationError(response_serializer.errors)
 
-
     def get_response_serializer(self, *args, **kwargs):
         return import_string(settings.SERIALIZERS['requestgroups']['LastChanged'])(*args, **kwargs)
-
 
     def get_endpoint_name(self):
         return 'getLastChangedTime'

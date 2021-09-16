@@ -12,7 +12,6 @@ from rest_framework import status
 from observation_portal.accounts.models import Profile
 from observation_portal.accounts.tasks import send_mail
 from observation_portal.common.schema import ObservationPortalSchema
-from observation_portal.common.mixins import GetSerializerMixin
 
 
 class ProfileApiView(RetrieveUpdateAPIView):
@@ -29,10 +28,9 @@ class ProfileApiView(RetrieveUpdateAPIView):
         return qs.first()
 
 
-class AcceptTermsApiView(APIView, GetSerializerMixin):
+class AcceptTermsApiView(APIView):
     permission_classes = [IsAuthenticated]
     schema=ObservationPortalSchema(tags=['Accounts'], empty_request=True)
-    serializer_class = import_string(settings.SERIALIZERS['accounts']['AcceptTerms'])
 
     def post(self, request):
         """A simple POST request (empty request body) with user authentication information in the HTTP header will accept the terms of use for the Observation Portal."""
@@ -43,31 +41,36 @@ class AcceptTermsApiView(APIView, GetSerializerMixin):
 
         profile.terms_accepted = timezone.now()
         profile.save()
-        serializer = self.serializer_class(data={'message': 'Terms accepted'})
+        serializer = self.get_response_serializer(data={'message': 'Terms accepted'})
         if serializer.is_valid():
             return Response(serializer.data)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    def get_response_serializer(self, *args, **kwargs):
+        return import_string(settings.SERIALIZERS['accounts']['AcceptTerms'])(*args, **kwargs)
+
     def get_endpoint_name(self):
         return 'acceptTerms'
 
 
-class RevokeApiTokenApiView(APIView, GetSerializerMixin):
+class RevokeApiTokenApiView(APIView):
     """View to revoke an API token."""
     permission_classes = [IsAuthenticated]
     schema = ObservationPortalSchema(tags=['Accounts'], empty_request=True)
-    serializer_class = import_string(settings.SERIALIZERS['accounts']['RevokeToken'])
 
     def post(self, request):
         """A simple POST request (empty request body) with user authentication information in the HTTP header will revoke a user's API Token."""
         request.user.auth_token.delete()
         Token.objects.create(user=request.user)
-        serializer = self.serializer_class(data={'message': 'API token revoked.'})
+        serializer = self.get_response_serializer(data={'message': 'API token revoked.'})
         if serializer.is_valid():
             return Response(serializer.validated_data)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def get_response_serializer(self, *args, **kwargs):
+        return import_string(settings.SERIALIZERS['accounts']['RevokeToken'])(*args, **kwargs)
 
     def get_endpoint_name(self):
         return 'revokeApiToken'
