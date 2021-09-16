@@ -219,7 +219,9 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
             return(Response(request_serializer.errors, status=status.HTTP_400_BAD_REQUEST))
 
     def get_example_response(self):
-        return Response(EXAMPLE_RESPONSES['requestgroups'].get(self.action), status=status.HTTP_200_OK)
+        example_data = {'max_allowable_ipp': Response(data=EXAMPLE_RESPONSES['requestgroups']['max_allowable_ipp'], status=status.HTTP_200_OK)}
+
+        return example_data.get(self.action)
 
     def get_endpoint_name(self):
         endpoint_names = {'max_allowable_ipp': 'getMaxAllowableIPP',
@@ -325,16 +327,32 @@ class DraftRequestGroupViewSet(viewsets.ModelViewSet):
 
 class ConfigurationViewSet(viewsets.GenericViewSet):
     permission_classes = (IsAuthenticated,)
-    schema = None
+    schema = ObservationPortalSchema(tags=['RequestGroups'])
     serializer_class = import_string(settings.SERIALIZERS['requestgroups']['Dither'])
 
     @action(detail=False, methods=['post'])
     def dither(self, request):
         # Check that the dither parameters specified are valid
-        dither_serializer = self.get_serializer(data=request.data)
-        if not dither_serializer.is_valid():
-            return Response(dither_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        request_serializer = self.get_request_serializer(data=request.data)
+        if not request_serializer.is_valid():
+            return Response(request_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         # Expand the instrument_configs within the configuration based on the dither pattern specified
-        configuration_dict = expand_dither_pattern(dither_serializer.validated_data)
+        configuration_dict = expand_dither_pattern(request_serializer.validated_data)
+
         return Response(configuration_dict)
+
+    def get_request_serializer(self, *args, **kwargs):
+        request_serializers = {'dither': import_string(settings.SERIALIZERS['requestgroups']['Dither'])}
+
+        return request_serializers.get(self.action)(*args, **kwargs)
+
+    def get_example_response(self):
+        example_data = {'dither': Response(data=EXAMPLE_RESPONSES['requestgroups']['dither'], status=status.HTTP_200_OK)}
+        
+        return example_data.get(self.action)
+
+    def get_endpoint_name(self):
+        endpoint_names = {'dither': 'expandDitherPattern'}
+        
+        return endpoint_names.get(self.action)

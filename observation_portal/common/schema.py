@@ -44,7 +44,7 @@ class ObservationPortalSchema(AutoSchema):
         operation_id = super().get_operation_id(path, method)
         if getattr(self.view, 'get_endpoint_name', None) is not None:
             name_override = self.view.get_endpoint_name()
-            # For some viewsets, we may not have specified a name for an action - so guard against that
+            # For some viewsets, we may not have specified a name for an action - guard against that
             if name_override is not None:
                 operation_id = name_override
 
@@ -60,9 +60,10 @@ class ObservationPortalSchema(AutoSchema):
         # If the view has implemented get_example_response, then use it to present in the documentation
         if getattr(self.view, 'get_example_response', None) is not None:
             example_response = self.view.get_example_response()
-            status_code = example_response.status_code
-            example_data = example_response.data
-            if example_data is not None:
+            # For viewsets, not all actions may have example responses defined, so this method may return None
+            if example_response is not None:
+                status_code = example_response.status_code
+                example_data = example_response.data
                 operations['responses'] = {status_code: {'content': {'application/json': {'example': example_data}}}}
 
         # If the view has implemented get_example_request, then use it to present in the documentation

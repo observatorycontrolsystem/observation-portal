@@ -106,7 +106,9 @@ class ProposalViewSet(DetailAsDictMixin, ListAsDictMixin, viewsets.ReadOnlyModel
         return serializers.get(self.action, self.serializer_class)(*args, **kwargs)
 
     def get_example_response(self):
-        return Response(EXAMPLE_RESPONSES['proposals'].get(self.action), status=status.HTTP_200_OK)
+        example_data = {'tags': Response(data=EXAMPLE_RESPONSES['proposals']['tags'], status=status.HTTP_200_OK)}
+        
+        return example_data.get(self.action)
 
     def get_endpoint_name(self):
         endpoint_names = {'notification': 'createProposalNotification',
