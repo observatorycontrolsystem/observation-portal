@@ -107,11 +107,11 @@ class ObservationPortalSchema(AutoSchema):
         view = self.view
 
         if not hasattr(view, 'get_request_serializer'):
-            try:
-                return view.get_serializer()
-            except AttributeError:
+            if not hasattr(view, 'get_serializer'):
                 # If this view doesn't have a serializer, then we can't auto-document this endpoint
                 return None
+            else:
+                return view.get_serializer()
         else:
             return view.get_request_serializer()
 
@@ -119,11 +119,11 @@ class ObservationPortalSchema(AutoSchema):
         view = self.view
 
         if not hasattr(view, 'get_response_serializer'):
-            try:
-                return view.get_serializer()
-            except AttributeError:
+            if not hasattr(view, 'get_serializer'):
                 # If this view doesn't have a serializer, then we can't auto-document this endpoint
                 return None
+            else:
+                return view.get_serializer()
         else:
             return view.get_response_serializer()
 
