@@ -37,7 +37,7 @@ class ObservationPortalSchema(AutoSchema):
 
     def get_operation_id(self, path, method):
         """
-        This method is used to determine the descriptive name of the endpoint displayed in the doucmentation.
+        This method is used to determine the descriptive name of the endpoint displayed in the documentation.
         Allow this to be overridden in the view - a view that defines get_endpoint_name can override the default
         DRF naming scheme.
         """
@@ -60,9 +60,10 @@ class ObservationPortalSchema(AutoSchema):
         # If the view has implemented get_example_response, then use it to present in the documentation
         if getattr(self.view, 'get_example_response', None) is not None:
             example_response = self.view.get_example_response()
-            status_code = '201' if method == 'POST' else '200'
-            if example_response is not None:
-                operations['responses'] = {status_code: {'content': {'application/json': {'example': example_response}}}}
+            status_code = example_response.status_code
+            example_data = example_response.data
+            if example_data is not None:
+                operations['responses'] = {status_code: {'content': {'application/json': {'example': example_data}}}}
 
         # If the view has implemented get_example_request, then use it to present in the documentation
         if getattr(self.view, 'get_example_request', None) is not None:

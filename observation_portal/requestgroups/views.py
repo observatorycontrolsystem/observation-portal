@@ -9,6 +9,7 @@ from django.utils.module_loading import import_string
 from dateutil.parser import parse
 from datetime import timedelta
 from rest_framework.views import APIView
+from rest_framework import status
 import logging
 
 from observation_portal import settings
@@ -110,7 +111,7 @@ class AirmassView(APIView, GetSerializerMixin):
         return import_string(settings.SERIALIZERS['requestgroups']['Request'])(*args, **kwargs)
 
     def get_example_response(self):
-        return EXAMPLE_RESPONSES['requestgroups'].get('airmass')
+        return Response(EXAMPLE_RESPONSES['requestgroups'].get('airmass'), status=status.HTTP_200_OK)
 
     def get_endpoint_name(self):
         return 'getAirmass'
@@ -161,7 +162,7 @@ class InstrumentsInformationView(APIView):
         return Response(info)
 
     def get_example_response(self):
-        return EXAMPLE_RESPONSES['requestgroups'].get('instruments')
+        return Response(EXAMPLE_RESPONSES['requestgroups'].get('instruments'), status=status.HTTP_200_OK)
 
     def get_endpoint_name(self):
         return 'getInstruments'

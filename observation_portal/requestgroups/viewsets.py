@@ -219,7 +219,7 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
             return(Response(request_serializer.errors, status=status.HTTP_400_BAD_REQUEST))
 
     def get_example_response(self):
-        return EXAMPLE_RESPONSES['requestgroups'].get(self.action)
+        return Response(EXAMPLE_RESPONSES['requestgroups'].get(self.action), status=status.HTTP_200_OK)
 
     def get_endpoint_name(self):
         endpoint_names = {'max_allowable_ipp': 'getMaxAllowableIPP',

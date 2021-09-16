@@ -72,8 +72,9 @@ class ExtraParamsFormatter(object):
                         pass
         return data
 
-class GetSerializerMixin(object):
+class GetSerializerMixin():
     """ A mixin to allow for serializer introspection by DRF OpenAPI schema generation.
+    This mixin should be used for DRF view classes that don't implement get_serializer_class()
     """
     def get_serializer(self, *args, **kwargs):
         """

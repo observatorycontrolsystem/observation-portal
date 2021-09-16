@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from django.utils.translation import ugettext as _
 from django.utils.module_loading import import_string
 from django.conf import settings
+from rest_framework import status
 
 from observation_portal.accounts.permissions import IsPrincipleInvestigator
 from observation_portal.common.mixins import ListAsDictMixin, DetailAsDictMixin
@@ -105,7 +106,7 @@ class ProposalViewSet(DetailAsDictMixin, ListAsDictMixin, viewsets.ReadOnlyModel
         return serializers.get(self.action, self.serializer_class)(*args, **kwargs)
 
     def get_example_response(self):
-        return EXAMPLE_RESPONSES['proposals'].get(self.action)
+        return Response(EXAMPLE_RESPONSES['proposals'].get(self.action), status=status.HTTP_200_OK)
 
     def get_endpoint_name(self):
         endpoint_names = {'notification': 'createProposalNotification',
