@@ -320,7 +320,7 @@ SERIALIZERS = {
         'Schedule': os.getenv('OBSERVATIONS_SCHEDULE_SERIALIZER', 'observation_portal.observations.serializers.ScheduleSerializer'),
         'Observation': os.getenv('OBSERVATIONS_OBSERVATION_SERIALIZER', 'observation_portal.observations.serializers.ObservationSerializer'),
         'Cancel': os.getenv('OBSERVATIONS_CANCEL_SERIALIZER', 'observation_portal.observations.serializers.CancelObservationsSerializer'),
-        'CancelResponse': os.getenv('OBSERVATIONS_CANCELRESPONSE_SERIALIZER', 'observation_portal.observations.serializers.CancelObservationsResponseSerializer'),
+        'CancelResponse': os.getenv('OBSERVATIONS_CANCEL_RESPONSE_SERIALIZER', 'observation_portal.observations.serializers.CancelObservationsResponseSerializer'),
         'LastScheduled': os.getenv('OBSERVATIONS_LAST_SCHEDULED_SERIALIZER', 'observation_portal.observations.serializers.LastScheduledSerializer'),
         'ObservationFilters': os.getenv('OBSERVATIONS_OBSERVATIONFILTERS_SERIALIZER', 'observation_portal.observations.serializers.ObservationFiltersSerializer'),
     },

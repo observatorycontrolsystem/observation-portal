@@ -41,11 +41,8 @@ class AcceptTermsApiView(APIView):
 
         profile.terms_accepted = timezone.now()
         profile.save()
-        serializer = self.get_response_serializer(data={'message': 'Terms accepted'})
-        if serializer.is_valid():
-            return Response(serializer.data)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.get_response_serializer({'message': 'Terms accepted'})
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def get_response_serializer(self, *args, **kwargs):
         return import_string(settings.SERIALIZERS['accounts']['AcceptTerms'])(*args, **kwargs)
@@ -63,11 +60,8 @@ class RevokeApiTokenApiView(APIView):
         """A simple POST request (empty request body) with user authentication information in the HTTP header will revoke a user's API Token."""
         request.user.auth_token.delete()
         Token.objects.create(user=request.user)
-        serializer = self.get_response_serializer(data={'message': 'API token revoked.'})
-        if serializer.is_valid():
-            return Response(serializer.validated_data)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.get_response_serializer({'message': 'API token revoked.'})
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def get_response_serializer(self, *args, **kwargs):
         return import_string(settings.SERIALIZERS['accounts']['RevokeToken'])(*args, **kwargs)
@@ -90,11 +84,8 @@ class AccountRemovalRequestApiView(APIView):
             send_mail.send(
                 'Account removal request submitted', message, settings.ORGANIZATION_EMAIL, [settings.ORGANIZATION_SUPPORT_EMAIL]
             )
-            response_serializer = self.get_response_serializer(data={'message': 'Account removal request successfully submitted.'})
-            if response_serializer.is_valid():
-                return Response(response_serializer.validated_data)
-            else:
-                return Response(response_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            response_serializer = self.get_response_serializer({'message': 'Account removal request successfully submitted.'})
+            return Response(response_serializer.data, status=status.HTTP_200_OK)
         else:
             return Response(request_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

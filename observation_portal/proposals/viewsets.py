@@ -45,13 +45,10 @@ class ProposalViewSet(DetailAsDictMixin, ListAsDictMixin, viewsets.ReadOnlyModel
             else:
                 ProposalNotification.objects.filter(user=request.user, proposal=proposal).delete()
 
-            response_serializer = self.get_response_serializer(data={'message': 'Preferences saved'})
-            if response_serializer.is_valid():
-                return Response(response_serializer.validated_data, status=200)
-            else:
-                return Response(response_serializer.errors, status=400)
+            response_serializer = self.get_response_serializer({'message': 'Preferences saved'})
+            return Response(response_serializer.data, status=status.HTTP_200_OK)
         else:
-            return Response({'errors': request_serializer.errors}, 400)
+            return Response({'errors': request_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['post'], permission_classes=(IsPrincipleInvestigator,))
     def invite(self, request, pk=None):
@@ -63,13 +60,10 @@ class ProposalViewSet(DetailAsDictMixin, ListAsDictMixin, viewsets.ReadOnlyModel
         if request_serializer.is_valid():
             proposal.add_users(request_serializer.validated_data['emails'], Membership.CI)
 
-            response_serializer = self.get_response_serializer(data={'message': _('Co Investigator(s) invited')})
-            if response_serializer.is_valid():
-                return Response(response_serializer.validated_data, status=200)
-            else:
-                return Response(response_serializer.errors, status=400)
+            response_serializer = self.get_response_serializer({'message': _('Co Investigator(s) invited')})
+            return Response(response_serializer.data, status=status.HTTP_200_OK)
         else:
-            return Response(request_serializer.errors, status=400)
+            return Response(request_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['post'], permission_classes=(IsPrincipleInvestigator,))
     def globallimit(self, request, pk=None):
@@ -79,13 +73,10 @@ class ProposalViewSet(DetailAsDictMixin, ListAsDictMixin, viewsets.ReadOnlyModel
             time_limit_hours = request_serializer.validated_data['time_limit_hours']
             proposal.membership_set.filter(role=Membership.CI).update(time_limit=time_limit_hours * 3600)
 
-            response_serializer = self.get_response_serializer(data={'message': f'All CI time limits set to {time_limit_hours} hours'})
-            if response_serializer.is_valid():
-                return Response(response_serializer.validated_data, status=200)
-            else:
-                return Response(response_serializer.errors, status=400)
+            response_serializer = self.get_response_serializer({'message': f'All CI time limits set to {time_limit_hours} hours'})
+            return Response(response_serializer.data, status=status.HTTP_200_OK)
         else:
-            return Response({'errors': request_serializer.errors}, status=400)
+            return Response({'errors': request_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['get'])
     def tags(self, request, pk=None):
@@ -121,7 +112,7 @@ class ProposalViewSet(DetailAsDictMixin, ListAsDictMixin, viewsets.ReadOnlyModel
 
 class SemesterViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = (AllowAny,)
-    schema = ObservationPortalSchema(tags=['Requests'])
+    schema = ObservationPortalSchema(tags=['Proposals'])
     serializer_class = import_string(settings.SERIALIZERS['proposals']['Semester'])
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
     filter_class = SemesterFilter
@@ -225,13 +216,10 @@ class MembershipViewSet(ListAsDictMixin, DetailAsDictMixin, mixins.DestroyModelM
                 f'to {time_limit_hours} hours'
             )
 
-            response_serializer = self.get_response_serializer(data={'message': message})
-            if response_serializer.is_valid():
-                return Response(response_serializer.validated_data, 200)
-            else:
-                return Response(response_serializer.errors, 400)
+            response_serializer = self.get_response_serializer({'message': message})
+            return Response(response_serializer.data, status=status.HTTP_200_OK)
         else:
-            return Response({'errors': request_serializer.errors}, 400)
+            return Response({'errors': request_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     def perform_destroy(self, instance):
         if instance.role == Membership.CI:

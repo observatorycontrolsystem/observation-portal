@@ -1,4 +1,4 @@
-from rest_framework import viewsets, filters
+from rest_framework import viewsets, filters, status
 from rest_framework.permissions import IsAdminUser
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -87,9 +87,9 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
 
         response_serializer = self.get_response_serializer(data=obs_filter_options)
         if response_serializer.is_valid():
-            return Response(response_serializer.validated_data, status=200)
+            return Response(response_serializer.validated_data, status=status.HTTP_200_OK)
         else:
-            return Response(response_serializer.errors, status=400)
+            return Response(response_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['post'])
     def cancel(self, request):
@@ -128,17 +128,14 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
             # First check if we have an in_progress observation that overlaps with the time range and resource.
             # If we do and preemption is not enabled in the call, return a 400 error without cancelling anything.
             if observations.filter(state='IN_PROGRESS').count() > 0 and not request_serializer.data.get('preemption_enabled', False):
-                return Response({'error': 'Cannot cancel IN_PROGRESS observations unless preemption_enabled is True'}, status=400)
+                return Response({'error': 'Cannot cancel IN_PROGRESS observations unless preemption_enabled is True'}, status=status.HTTP_400_BAD_REQUEST)
             observations = observations.filter(state__in=['PENDING', 'IN_PROGRESS'])
 
             num_canceled = Observation.cancel(observations)
-            response_serializer = self.get_response_serializer(data={'canceled': num_canceled})
-            if response_serializer.is_valid():
-                return Response(response_serializer.validated_data, status=200)
-            else:
-                return Response(response_serializer.errors, status=400)
+            response_serializer = self.get_response_serializer({'canceled': num_canceled})
+            return Response(response_serializer.data, status=status.HTTP_200_OK)
         else:
-            return Response(request_serializer.errors, status=400)
+            return Response(request_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def create(self, request, *args, **kwargs):
         """ This overrides the create mixin create method, but does the same thing minus the serializing of the
@@ -171,7 +168,7 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
                             errors[i] = individual_serializer.error
             site = request.data[0]['site']
             cache.set(cache_key + f"_{site}", timezone.now(), None)
-            return Response({'num_created': len(observations), 'errors': errors}, status=201)
+            return Response({'num_created': len(observations), 'errors': errors}, status=status.HTTP_201_CREATED)
 
     def get_request_serializer(self, *args, **kwargs):
         serializers = {'cancel': import_string(settings.SERIALIZERS['observations']['Cancel'])}

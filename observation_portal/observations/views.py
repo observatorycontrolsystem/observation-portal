@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from rest_framework.views import APIView
+from rest_framework import status
 from rest_framework.permissions import IsAdminUser
 from django.core.cache import cache
 from django.utils import timezone
@@ -39,11 +40,8 @@ class LastScheduledView(APIView):
             cache_dict = cache.get_many(keys)
             last_schedule_time = max(list(cache_dict.values()) + [timezone.now() - timedelta(days=7)])
 
-        response_serializer = self.get_response_serializer(data={'last_schedule_time': last_schedule_time})
-        if response_serializer.is_valid():
-            return Response(response_serializer.validated_data, status=200)
-        else:
-            return Response(response_serializer.errors, status=400)
+        response_serializer = self.get_response_serializer({'last_schedule_time': last_schedule_time})
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
 
     def get_response_serializer(self, *args, **kwargs):
         return import_string(settings.SERIALIZERS['observations']['LastScheduled'])(*args, **kwargs)
