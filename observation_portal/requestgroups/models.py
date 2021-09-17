@@ -307,7 +307,19 @@ class Request(models.Model):
 
     @property
     def semester(self):
-        return get_semester_in(self.min_window_time, self.max_window_time)
+        # Get the semester that contains the request windows. This should return a semester since requests are validated on
+        # submission to have all windows be in the same semester, but some old requests might have windows that span multiple semesters.
+        semester = get_semester_in(self.min_window_time, self.max_window_time)
+        # If the request windows do not fit within any single semester, use the semester that contains
+        # the start time of any of the associated observations.
+        if semester is None:
+            observation = self.observation_set.first()
+            if observation:
+                semester = get_semester_in(observation.start, observation.start)
+        # Fall back to using the semester that contains the first window start time.
+        if semester is None:
+            semester = get_semester_in(self.min_window_time, self.min_window_time)
+        return semester
 
     @property
     def time_allocation_keys(self):
