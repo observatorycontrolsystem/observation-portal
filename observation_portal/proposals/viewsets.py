@@ -106,7 +106,7 @@ class ProposalViewSet(DetailAsDictMixin, ListAsDictMixin, viewsets.ReadOnlyModel
                           'invite': 'createProposalInvite',
                           'globallimit': 'setTimeLimit',
                           'tags': 'getProposalTags'}
-        
+
         return endpoint_names.get(self.action)
 
 

@@ -352,5 +352,5 @@ class ConfigurationViewSet(viewsets.GenericViewSet):
 
     def get_endpoint_name(self):
         endpoint_names = {'dither': 'expandDitherPattern'}
-        
+
         return endpoint_names.get(self.action)
