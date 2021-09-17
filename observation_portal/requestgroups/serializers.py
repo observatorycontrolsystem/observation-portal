@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 from cerberus import Validator
 from rest_framework import serializers
 from django.utils.translation import ugettext as _
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.cache import cache
 from django.db import transaction
 from django.utils import timezone
@@ -898,6 +898,9 @@ class CadenceRequestGroupSerializer(RequestGroupSerializer):
     # override the validate method from the RequestGroupSerializer and use the Cadence Request serializer to
     # validate all of the Cadence Requests
     def validate(self, data):
+        if len(data['requests']) > 1:
+            raise ValidationError('Cadence requestgroups may only contain a single request')
+
         return data
 
 

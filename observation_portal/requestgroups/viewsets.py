@@ -190,16 +190,14 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
         request_serializer = self.get_request_serializer(data=request.data, context={'request': request})
         expanded_requests = []
         if request_serializer.is_valid():
-            for req in request_serializer.validated_data.get('requests', []):
-                if isinstance(req, dict) and req.get('cadence'):
-                    cadence_request_serializer = import_string(settings.SERIALIZERS['requestgroups']['CadenceRequest'])(data=req)
-                    if cadence_request_serializer.is_valid():
-                        expanded_requests.extend(expand_cadence_request(cadence_request_serializer.validated_data,
-                                                                        request.user.is_staff))
-                    else:
-                        return Response(cadence_request_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            cadence_request = request_serializer.validated_data.get('requests')[0]
+            if isinstance(cadence_request, dict) and cadence_request.get('cadence'):
+                cadence_request_serializer = import_string(settings.SERIALIZERS['requestgroups']['CadenceRequest'])(data=cadence_request)
+                if cadence_request_serializer.is_valid():
+                    expanded_requests.extend(expand_cadence_request(cadence_request_serializer.validated_data,
+                                                                    request.user.is_staff))
                 else:
-                    expanded_requests.append(req)
+                    return Response(cadence_request_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
             # if we couldn't find any valid cadence requests, return that as an error
             if not expanded_requests:

@@ -1267,6 +1267,13 @@ class TestCadenceApi(SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('No visible requests within cadence window parameters', str(response.content))
 
+    def test_post_cadence_multiple_requests_invalid(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'].append(bad_data['requests'][0])
+        response = self.client.post(reverse('api:request_groups-cadence'), data=self.generic_payload)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Cadence requestgroups may only contain a single request', str(response.content))
+
 
 class TestICRSTarget(SetTimeMixin, APITestCase):
     def setUp(self):
