@@ -8,6 +8,8 @@ from django.core.cache import caches
 from django.utils.translation import ugettext as _
 from django.conf import settings
 
+from observation_portal.common.utils import cache_function
+
 logger = logging.getLogger(__name__)
 
 
@@ -28,6 +30,7 @@ class ConfigDB(object):
     """Class to retrieve and process configuration data."""
 
     @staticmethod
+    @cache_function(duration=900)
     def _get_configdb_data(resource: str):
         """Return all configuration data.
 
@@ -43,21 +46,16 @@ class ConfigDB(object):
             'ConfigDB connection is currently down, please wait a few minutes and try again. If this problem '
             'persists then please contact support.'
         ))
-        data = caches['locmem'].get(resource)
-        if not data:
-            try:
-                r = requests.get(settings.CONFIGDB_URL + f'/{resource}/')
-                r.raise_for_status()
-            except (requests.exceptions.RequestException, requests.exceptions.HTTPError) as e:
-                msg = f'{e.__class__.__name__}: {error_message}'
-                raise ConfigDBException(msg)
-            try:
-                data = r.json()['results']
-            except KeyError:
-                raise ConfigDBException(error_message)
-            # Cache the results for 15 minutes.
-            caches['locmem'].set(resource, data, 900)
-        return data
+        try:
+            r = requests.get(settings.CONFIGDB_URL + f'/{resource}/')
+            r.raise_for_status()
+        except (requests.exceptions.RequestException, requests.exceptions.HTTPError) as e:
+            msg = f'{e.__class__.__name__}: {error_message}'
+            raise ConfigDBException(msg)
+        try:
+            return r.json()['results']
+        except KeyError:
+            raise ConfigDBException(error_message)
 
     def get_site_data(self):
         """Return ConfigDB sites data."""
@@ -360,6 +358,7 @@ class ConfigDB(object):
                 instrument_telescopes.add(instrument['telescope_key'])
         return instrument_telescopes
 
+    @cache_function()
     def get_configuration_types(self, instrument_type_code: str) -> dict:
         """Get the available configuration types for an instrument_type.
 
@@ -373,6 +372,7 @@ class ConfigDB(object):
             return {config_type['code']: config_type for config_type in instrument_types[instrument_type_code.upper()]['configuration_types']}
         return {}
 
+    @cache_function()
     def get_optical_elements(self, instrument_type_code: str) -> dict:
         """Get the available optical elements.
 
@@ -397,6 +397,7 @@ class ConfigDB(object):
                                 optical_elements[optical_element_group['type']].append(element)
         return optical_elements
 
+    @cache_function()
     def get_modes_by_type(self, instrument_type_code: str, mode_type: str = '') -> dict:
         """Get the set of available modes.
 
@@ -419,6 +420,7 @@ class ConfigDB(object):
                             return {mode_type: mode_group}
         return {}
 
+    @cache_function()
     def get_instrument_type_by_code(self, instrument_type_code: str) -> dict:
         """Get an instrument type by its code.
 
@@ -433,6 +435,7 @@ class ConfigDB(object):
 
         raise ConfigDBException(f'No instrument type found for instrument type code {instrument_type_code}')
 
+    @cache_function()
     def get_mode_with_code(self, instrument_type, code, mode_type=''):
         modes_by_type = self.get_modes_by_type(instrument_type, mode_type)
         for _, mode_group in modes_by_type.items():
@@ -517,6 +520,7 @@ class ConfigDB(object):
                 return instrument['__str__'].split('.')[2][0:3]
         return instrument_type_code[0:3]
 
+    @cache_function()
     def get_instrument_type_codes(self, location: dict, only_schedulable: bool = False) -> set:
         """Get the available instrument_types.
 
@@ -555,6 +559,7 @@ class ConfigDB(object):
                     return True
         return False
 
+    @cache_function()
     def get_exposure_overhead(self, instrument_type_code, readout_mode):
         # using the instrument type code, build an instrument with the correct configdb parameters
         for instrument in self.get_instruments():
@@ -573,9 +578,9 @@ class ConfigDB(object):
             if not default_mode:
                 raise ConfigDBException(f'No readout mode named {readout_mode} found for instrument type {instrument_type_code} and no default readout mode set.')
             return default_mode['overhead'] + instrument_type['fixed_overhead_per_exposure']
-
         raise ConfigDBException(f'Instruments of type {instrument_type_code} not found in configdb.')
 
+    @cache_function()
     def get_request_overheads(self, instrument_type_code: str) -> dict:
         """Get the set of overheads needed to compute the duration of a request.
 
