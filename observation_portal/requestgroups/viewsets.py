@@ -347,7 +347,7 @@ class ConfigurationViewSet(viewsets.GenericViewSet):
 
     def get_example_response(self):
         example_data = {'dither': Response(data=EXAMPLE_RESPONSES['requestgroups']['dither'], status=status.HTTP_200_OK)}
-        
+
         return example_data.get(self.action)
 
     def get_endpoint_name(self):

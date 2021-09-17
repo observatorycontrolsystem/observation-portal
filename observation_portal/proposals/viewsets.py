@@ -98,7 +98,7 @@ class ProposalViewSet(DetailAsDictMixin, ListAsDictMixin, viewsets.ReadOnlyModel
 
     def get_example_response(self):
         example_data = {'tags': Response(data=EXAMPLE_RESPONSES['proposals']['tags'], status=status.HTTP_200_OK)}
-        
+
         return example_data.get(self.action)
 
     def get_endpoint_name(self):
