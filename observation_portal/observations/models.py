@@ -161,7 +161,7 @@ class Observation(models.Model):
         observations = Observation.objects.filter(start__lt=cutoff, end__lt=cutoff, state='CANCELED').exclude(
             configuration_statuses__state__in=['ATTEMPTED', 'FAILED', 'COMPLETED']
         )
-        logger.warning('There are {} observations to be deleted. Only the first 100,000 will be deleted this run'.format(len(observations)))
+        logger.warning('There are {} observations to be deleted. Only the first 100,000 will be deleted this run'.format(observations.count()))
         total_deleted = 0
         total_obs_deleted = 0
         total_cs_deleted = 0
