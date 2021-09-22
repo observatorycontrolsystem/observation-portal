@@ -32,6 +32,10 @@ CACHES = {
     'locmem': {
         'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
         'LOCATION': 'locmem-cache'
+    },
+    'testlocmem': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'test-locmem-cache'
     }
 }
 

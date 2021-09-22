@@ -1,5 +1,4 @@
 from django.db import models
-from django.contrib.postgres.fields import JSONField
 from django.forms.models import model_to_dict
 from django.utils import timezone
 from django.core.cache import cache
@@ -110,7 +109,9 @@ class Observation(models.Model):
     def cancel(observations):
         now = timezone.now()
 
-        _, deleted_observations = observations.filter(start__gte=now + timedelta(hours=72)).delete()
+        observation_ids_to_delete = [observation.id for observation in observations if
+                                     observation.start >= now + timedelta(hours=72)]
+        _, deleted_observations = Observation.objects.filter(id__in=observation_ids_to_delete).delete()
 
         observation_ids_to_cancel = [observation.id for observation in observations if
                                      now < observation.start < now + timedelta(hours=72)]
@@ -160,7 +161,7 @@ class Observation(models.Model):
         observations = Observation.objects.filter(start__lt=cutoff, end__lt=cutoff, state='CANCELED').exclude(
             configuration_statuses__state__in=['ATTEMPTED', 'FAILED', 'COMPLETED']
         )
-        logger.warning('There are {} observations to be deleted. Only the first 100,000 will be deleted this run'.format(len(observations)))
+        logger.warning('There are {} observations to be deleted. Only the first 100,000 will be deleted this run'.format(observations.count()))
         total_deleted = 0
         total_obs_deleted = 0
         total_cs_deleted = 0
@@ -264,7 +265,7 @@ class Summary(models.Model):
     time_completed = models.FloatField(
         help_text='The seconds of exposure time completed for this configuration'
     )
-    events = JSONField(
+    events = models.JSONField(
         default=list, blank=True,
         help_text='Raw set of telescope events during this observation, in json format'
     )

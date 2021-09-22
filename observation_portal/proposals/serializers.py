@@ -21,7 +21,7 @@ class ProposalSerializer(serializers.ModelSerializer):
         exclude = ('direct_submission', )
 
 
-class SemesterSerialzer(serializers.ModelSerializer):
+class SemesterSerializer(serializers.ModelSerializer):
     class Meta:
         model = Semester
         fields = ('id', 'start', 'end')
@@ -46,6 +46,10 @@ class ProposalInviteSerializer(serializers.ModelSerializer):
         return emails
 
 
+class ProposalInviteResponseSerializer(serializers.Serializer):
+    message = serializers.CharField(default='Co Investigator(s) invited')
+
+
 class MembershipSerializer(serializers.ModelSerializer):
     class Meta:
         model = Membership
@@ -56,6 +60,10 @@ class ProposalNotificationSerializer(serializers.Serializer):
     enabled = serializers.BooleanField()
 
 
+class ProposalNotificationResponseSerializer(serializers.Serializer):
+    message = serializers.CharField(default='Preferences saved')
+
+
 class TimeLimitSerializer(serializers.Serializer):
     time_limit_hours = serializers.FloatField()
 
@@ -64,3 +72,7 @@ class TimeLimitSerializer(serializers.Serializer):
         if membership and membership.role == Membership.PI:
             raise serializers.ValidationError(_('You cannot set the limit on a PI membership'))
         return data
+
+
+class TimeLimitResponseSerializer(serializers.Serializer):
+    message = serializers.CharField(default='All CI time limits set')

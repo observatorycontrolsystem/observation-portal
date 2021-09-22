@@ -18,7 +18,7 @@ from observation_portal.requestgroups.contention import Pressure
 from observation_portal.accounts.test_utils import blend_user
 
 from django.urls import reverse
-from django.core import cache
+from django.core.cache import caches
 from django.conf import settings
 from dateutil.parser import parse as datetime_parser
 from rest_framework.test import APITestCase
@@ -1229,7 +1229,7 @@ class TestCadenceApi(SetTimeMixin, APITestCase):
         bad_data['requests'][0]['cadence']['jitter'] = 'bug'
         response = self.client.post(reverse('api:request_groups-cadence'), data=bad_data)
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.json()['cadence']['jitter'], ['A valid number is required.'])
+        self.assertEqual(response.json()['requests'][0]['cadence']['jitter'], ['A valid number is required.'])
 
     def test_cadence_with_windows_invalid(self):
         bad_data = self.generic_payload.copy()
@@ -1242,7 +1242,7 @@ class TestCadenceApi(SetTimeMixin, APITestCase):
         bad_data['requests'][0]['cadence']['period'] = -666
         response = self.client.post(reverse('api:request_groups-cadence'), data=bad_data)
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.json()['cadence']['period'], ['Ensure this value is greater than or equal to 0.02.'])
+        self.assertEqual(response.json()['requests'][0]['cadence']['period'], ['Ensure this value is greater than or equal to 0.02.'])
 
     def test_post_requestgroup_after_valid_cadence(self):
         response = self.client.post(reverse('api:request_groups-cadence'), data=self.generic_payload)
@@ -1266,6 +1266,20 @@ class TestCadenceApi(SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:request_groups-cadence'), data=bad_data)
         self.assertEqual(response.status_code, 400)
         self.assertIn('No visible requests within cadence window parameters', str(response.content))
+
+    def test_post_cadence_multiple_requests_invalid(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'].append(bad_data['requests'][0])
+        response = self.client.post(reverse('api:request_groups-cadence'), data=bad_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Cadence requestgroups may only contain a single request', str(response.content))
+
+    def test_post_cadence_empty_request_list_invalid(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'] = []
+        response = self.client.post(reverse('api:request_groups-cadence'), data=bad_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('You must specify at least 1 request', str(response.content))
 
 
 class TestICRSTarget(SetTimeMixin, APITestCase):
@@ -3122,7 +3136,7 @@ class TestLastChanged(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
         # Mock the cache with a real one for these tests
-        self.locmem_cache = cache._create_cache('django.core.cache.backends.locmem.LocMemCache')
+        self.locmem_cache = caches.create_connection('testlocmem')
         self.locmem_cache.clear()
         self.patch1 = patch.object(views, 'cache', self.locmem_cache)
         self.patch1.start()

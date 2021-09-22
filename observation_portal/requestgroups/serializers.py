@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 from cerberus import Validator
 from rest_framework import serializers
 from django.utils.translation import ugettext as _
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.cache import cache
 from django.db import transaction
 from django.utils import timezone
@@ -892,6 +892,18 @@ class RequestGroupSerializer(serializers.ModelSerializer):
         return value
 
 
+class CadenceRequestGroupSerializer(RequestGroupSerializer):
+    requests = import_string(settings.SERIALIZERS['requestgroups']['CadenceRequest'])(many=True)
+
+    # override the validate method from the RequestGroupSerializer and use the Cadence Request serializer to
+    # validate the cadence request
+    def validate(self, data):
+        if len(data['requests']) > 1:
+            raise ValidationError('Cadence requestgroups may only contain a single request')
+
+        return data
+
+
 class PatternExpansionSerializer(serializers.Serializer):
     pattern = serializers.ChoiceField(choices=('line', 'grid', 'spiral'), required=True)
     num_points = serializers.IntegerField(required=False)
@@ -1000,3 +1012,7 @@ class DraftRequestGroupSerializer(serializers.ModelSerializer):
         except JSONDecodeError:
             raise serializers.ValidationError('Content must be valid JSON')
         return data
+
+
+class LastChangedSerializer(serializers.Serializer):
+    last_change_time = serializers.DateTimeField()

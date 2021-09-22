@@ -65,7 +65,6 @@ INSTALLED_APPS = [
     'registration',  # must come before admin to use custom templates
     'django.contrib.admin',
     'rest_framework',
-    'drf_yasg',
     'django_filters',
     'rest_framework.authtoken',
     'bootstrap4',
@@ -134,9 +133,12 @@ DATABASES = {
    }
 }
 
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
 OAUTH2_PROVIDER_ACCESS_TOKEN_MODEL = 'oauth2_provider.AccessToken'
 OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
 OAUTH2_PROVIDER_REFRESH_TOKEN_MODEL = 'oauth2_provider.RefreshToken'
+OAUTH2_PROVIDER_ID_TOKEN_MODEL = 'oauth2_provider.IDToken'
 MIGRATION_MODULES = {
     'oauth2_provider': 'observation_portal.accounts.oauth2_migrations'
 }
@@ -318,10 +320,14 @@ SERIALIZERS = {
         'Schedule': os.getenv('OBSERVATIONS_SCHEDULE_SERIALIZER', 'observation_portal.observations.serializers.ScheduleSerializer'),
         'Observation': os.getenv('OBSERVATIONS_OBSERVATION_SERIALIZER', 'observation_portal.observations.serializers.ObservationSerializer'),
         'Cancel': os.getenv('OBSERVATIONS_CANCEL_SERIALIZER', 'observation_portal.observations.serializers.CancelObservationsSerializer'),
+        'CancelResponse': os.getenv('OBSERVATIONS_CANCEL_RESPONSE_SERIALIZER', 'observation_portal.observations.serializers.CancelObservationsResponseSerializer'),
+        'LastScheduled': os.getenv('OBSERVATIONS_LAST_SCHEDULED_SERIALIZER', 'observation_portal.observations.serializers.LastScheduledSerializer'),
+        'ObservationFilters': os.getenv('OBSERVATIONS_OBSERVATIONFILTERS_SERIALIZER', 'observation_portal.observations.serializers.ObservationFiltersSerializer'),
     },
     'requestgroups': {
         'Cadence': os.getenv('REQUESTGROUPS_CADENCE_SERIALIZER', 'observation_portal.requestgroups.serializers.CadenceSerializer'),
         'CadenceRequest': os.getenv('REQUESTGROUPS_CADENCEREQUEST_SERIALIZER', 'observation_portal.requestgroups.serializers.CadenceRequestSerializer'),
+        'CadenceRequestGroup': os.getenv('REQUESTGROUPS_CADENCEREQUESTGROUP_SERIALIZER', 'observation_portal.requestgroups.serializers.CadenceRequestGroupSerializer'),
         'Constraints': os.getenv('REQUESTGROUPS_CONSTRAINTS_SERIALIZER', 'observation_portal.requestgroups.serializers.ConstraintsSerializer'),
         'RegionOfInterest': os.getenv('REQUESTGROUPS_REGIONOFINTEREST_SERIALIZER', 'observation_portal.requestgroups.serializers.RegionOfInterestSerializer'),
         'InstrumentConfig': os.getenv('REQUESTGROUPS_INSTRUMENTCONFIG_SERIALIZER', 'observation_portal.requestgroups.serializers.InstrumentConfigSerializer'),
@@ -336,20 +342,27 @@ SERIALIZERS = {
         'DraftRequestGroup': os.getenv('REQUESTGROUPS_DRAFTREQUESTGROUP_SERIALIZER', 'observation_portal.requestgroups.serializers.DraftRequestGroupSerializer'),
         'Mosaic': os.getenv('REQUESTGROUPS_MOSAIC_SERIALIZER', 'observation_portal.requestgroups.serializers.MosaicSerializer'),
         'Dither': os.getenv('REQUESTGROUPS_DITHER_SERIALIZER', 'observation_portal.requestgroups.serializers.DitherSerializer'),
+        'LastChanged': os.getenv('REQUESTGROUPS_LAST_CHANGED_SERIALIZER', 'observation_portal.requestgroups.serializers.LastChangedSerializer'),
     },
     'proposals': {
         'Proposal': os.getenv('PROPOSALS_PROPOSAL_SERIALIZER', 'observation_portal.proposals.serializers.ProposalSerializer'),
         'ProposalInvite': os.getenv('PROPOSALS_PROPOSALINVITE_SERIALIZER', 'observation_portal.proposals.serializers.ProposalInviteSerializer'),
-        'Semester': os.getenv('PROPOSALS_SEMESTER_SERIALIZER', 'observation_portal.proposals.serializers.SemesterSerialzer'),
+        'ProposalInviteResponse': os.getenv('PROPOSALS_PROPOSALINVITE_RESPONSE_SERIALIZER', 'observation_portal.proposals.serializers.ProposalInviteResponseSerializer'),
+        'Semester': os.getenv('PROPOSALS_SEMESTER_SERIALIZER', 'observation_portal.proposals.serializers.SemesterSerializer'),
         'Membership': os.getenv('PROPOSALS_MEMBERSHIP_SERIALIZER', 'observation_portal.proposals.serializers.MembershipSerializer'),
         'ProposalNotification': os.getenv('PROPOSALS_PROPOSALNOTIFICATION_SERIALIZER', 'observation_portal.proposals.serializers.ProposalNotificationSerializer'),
+        'ProposalNotificationResponse': os.getenv('PROPOSALS_PROPOSALNOTIFICATION_RESPONSE_SERIALIZER', 'observation_portal.proposals.serializers.ProposalNotificationResponseSerializer'),
         'TimeLimit': os.getenv('PROPOSALS_TIMELIMIT_SERIALIZER', 'observation_portal.proposals.serializers.TimeLimitSerializer'),
+        'TimeLimitResponse': os.getenv('PROPOSALS_TIMELIMIT_RESPONSE_SERIALIZER', 'observation_portal.proposals.serializers.TimeLimitResponseSerializer'),
         'TimeAllocation': os.getenv('PROPOSALS_TIMEALLOCATION_SERIALIZER', 'observation_portal.proposals.serializers.TimeAllocationSerializer'),
     },
     'accounts': {
         'Profile': os.getenv('ACCOUNTS_PROFILE_SERIALIZER', 'observation_portal.accounts.serializers.ProfileSerializer'),
         'User': os.getenv('ACCOUNTS_USER_SERIALIZER', 'observation_portal.accounts.serializers.UserSerializer'),
-        'AccountRemoval': os.getenv('ACCOUNTS_ACCOUNTREMOVAL_SERIALIZER', 'observation_portal.accounts.serializers.AccountRemovalSerializer'),
+        'AccountRemovalRequest': os.getenv('ACCOUNTS_ACCOUNTREMOVAL_SERIALIZER', 'observation_portal.accounts.serializers.AccountRemovalRequestSerializer'),
+        'AcceptTerms': os.getenv('ACCOUNTS_ACCEPTTERMS_SERIALIZER', 'observation_portal.accounts.serializers.AcceptTermsResponseSerializer'),
+        'RevokeToken': os.getenv('ACCOUNTS_REVOKETOKEN_SERIALIZER', 'observation_portal.accounts.serializers.RevokeTokenResponseSerializer'),
+        'AccountRemovalResponse': os.getenv('ACCOUNTS_ACCOUNTREMOVAL_RESPONSE_SERIALIZER', 'observation_portal.accounts.serializers.AccountRemovalResponseSerializer')
     },
     'sciapplications': {
         'Call': os.getenv('SCIAPPLICATIONS_CALL_SERIALIZER', 'observation_portal.sciapplications.serializers.CallSerializer'),
