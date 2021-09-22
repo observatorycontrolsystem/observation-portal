@@ -119,7 +119,7 @@ class SemesterViewSet(viewsets.ReadOnlyModelViewSet):
     ordering = ('-start',)
     queryset = Semester.objects.all()
     undocumented_actions = ['proposals', 'timeallocations']
-    
+
     @action(detail=True, methods=['get'])
     def proposals(self, request, pk=None):
         semester = self.get_object()
