@@ -1270,9 +1270,16 @@ class TestCadenceApi(SetTimeMixin, APITestCase):
     def test_post_cadence_multiple_requests_invalid(self):
         bad_data = self.generic_payload.copy()
         bad_data['requests'].append(bad_data['requests'][0])
-        response = self.client.post(reverse('api:request_groups-cadence'), data=self.generic_payload)
+        response = self.client.post(reverse('api:request_groups-cadence'), data=bad_data)
         self.assertEqual(response.status_code, 400)
         self.assertIn('Cadence requestgroups may only contain a single request', str(response.content))
+
+    def test_post_cadence_empty_request_list_invalid(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'] = []
+        response = self.client.post(reverse('api:request_groups-cadence'), data=bad_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('You must specify at least 1 request', str(response.content))
 
 
 class TestICRSTarget(SetTimeMixin, APITestCase):

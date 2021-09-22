@@ -896,7 +896,7 @@ class CadenceRequestGroupSerializer(RequestGroupSerializer):
     requests = import_string(settings.SERIALIZERS['requestgroups']['CadenceRequest'])(many=True)
 
     # override the validate method from the RequestGroupSerializer and use the Cadence Request serializer to
-    # validate all of the Cadence Requests
+    # validate the cadence request
     def validate(self, data):
         if len(data['requests']) > 1:
             raise ValidationError('Cadence requestgroups may only contain a single request')
