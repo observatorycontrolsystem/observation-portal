@@ -103,6 +103,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: .
+          no-cache: true
           pull: true
           push: true
           tags: ${{ env.DOCKER_REPOSITORY }}:${{ env.DOCKER_IMAGE_TAG }}
