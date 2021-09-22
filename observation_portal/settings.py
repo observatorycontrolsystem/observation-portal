@@ -347,13 +347,13 @@ SERIALIZERS = {
     'proposals': {
         'Proposal': os.getenv('PROPOSALS_PROPOSAL_SERIALIZER', 'observation_portal.proposals.serializers.ProposalSerializer'),
         'ProposalInvite': os.getenv('PROPOSALS_PROPOSALINVITE_SERIALIZER', 'observation_portal.proposals.serializers.ProposalInviteSerializer'),
-        'ProposalInviteResponse': os.getenv('PROPOSALS_PROPOSALINVITERESPONSE_SERIALIZER', 'observation_portal.proposals.serializers.ProposalInviteResponseSerializer'),
+        'ProposalInviteResponse': os.getenv('PROPOSALS_PROPOSALINVITE_RESPONSE_SERIALIZER', 'observation_portal.proposals.serializers.ProposalInviteResponseSerializer'),
         'Semester': os.getenv('PROPOSALS_SEMESTER_SERIALIZER', 'observation_portal.proposals.serializers.SemesterSerializer'),
         'Membership': os.getenv('PROPOSALS_MEMBERSHIP_SERIALIZER', 'observation_portal.proposals.serializers.MembershipSerializer'),
         'ProposalNotification': os.getenv('PROPOSALS_PROPOSALNOTIFICATION_SERIALIZER', 'observation_portal.proposals.serializers.ProposalNotificationSerializer'),
-        'ProposalNotificationResponse': os.getenv('PROPOSALS_PROPOSALNOTIFICATIONRESPONSE_SERIALIZER', 'observation_portal.proposals.serializers.ProposalNotificationResponseSerializer'),
+        'ProposalNotificationResponse': os.getenv('PROPOSALS_PROPOSALNOTIFICATION_RESPONSE_SERIALIZER', 'observation_portal.proposals.serializers.ProposalNotificationResponseSerializer'),
         'TimeLimit': os.getenv('PROPOSALS_TIMELIMIT_SERIALIZER', 'observation_portal.proposals.serializers.TimeLimitSerializer'),
-        'TimeLimitResponse': os.getenv('PROPOSALS_TIMELIMITRESPONSE_SERIALIZER', 'observation_portal.proposals.serializers.TimeLimitResponseSerializer'),
+        'TimeLimitResponse': os.getenv('PROPOSALS_TIMELIMIT_RESPONSE_SERIALIZER', 'observation_portal.proposals.serializers.TimeLimitResponseSerializer'),
         'TimeAllocation': os.getenv('PROPOSALS_TIMEALLOCATION_SERIALIZER', 'observation_portal.proposals.serializers.TimeAllocationSerializer'),
     },
     'accounts': {
@@ -362,7 +362,7 @@ SERIALIZERS = {
         'AccountRemovalRequest': os.getenv('ACCOUNTS_ACCOUNTREMOVAL_SERIALIZER', 'observation_portal.accounts.serializers.AccountRemovalRequestSerializer'),
         'AcceptTerms': os.getenv('ACCOUNTS_ACCEPTTERMS_SERIALIZER', 'observation_portal.accounts.serializers.AcceptTermsResponseSerializer'),
         'RevokeToken': os.getenv('ACCOUNTS_REVOKETOKEN_SERIALIZER', 'observation_portal.accounts.serializers.RevokeTokenResponseSerializer'),
-        'AccountRemovalResponse': os.getenv('ACCOUNTS_ACCOUNTREMOVALRESPONSE_SERIALIZER', 'observation_portal.accounts.serializers.AccountRemovalResponseSerializer')
+        'AccountRemovalResponse': os.getenv('ACCOUNTS_ACCOUNTREMOVAL_RESPONSE_SERIALIZER', 'observation_portal.accounts.serializers.AccountRemovalResponseSerializer')
     },
     'sciapplications': {
         'Call': os.getenv('SCIAPPLICATIONS_CALL_SERIALIZER', 'observation_portal.sciapplications.serializers.CallSerializer'),
