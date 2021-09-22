@@ -2,11 +2,12 @@ name: Build docs
 on:
   push:
     branches:
-      - update_drf_schema
+      - main
   # Run this workflow when a tag or branch is created
   create:
 jobs:
   build:
+    if: github.event_name == 'create' && github.event.ref_type == 'tag' && github.event.repository.fork == false
     runs-on: ubuntu-latest
     env:
       SECRET_KEY: fakesecretkey
@@ -28,7 +29,7 @@ jobs:
       uses: peaceiris/actions-gh-pages@v3 # https://github.com/peaceiris/actions-gh-pages
       with:
         personal_token: ${{ secrets.PERSONAL_TOKEN }}
-        external_repository: mgdaily/observatorycontrolsystem.github.io
+        external_repository: observatorycontrolsystem/observatorycontrolsystem.github.io
         publish_dir: openapi
         destination_dir: assets/html
         enable_jekyll: true
