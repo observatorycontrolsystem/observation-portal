@@ -795,7 +795,7 @@ class RequestGroupSerializer(serializers.ModelSerializer):
 
         if not user.proposal_set.filter(id=data['proposal'], active=True).exists():
             raise serializers.ValidationError(
-                _('The proposal your are trying to submit with is currently inactive')
+                _('The proposal you are trying to submit with is currently inactive')
             )
 
         # Validate that the ipp_value is within the min/max range
