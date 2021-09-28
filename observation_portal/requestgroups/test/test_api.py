@@ -18,7 +18,7 @@ from observation_portal.requestgroups.contention import Pressure
 from observation_portal.accounts.test_utils import blend_user
 
 from django.urls import reverse
-from django.core import cache
+from django.core.cache import caches
 from django.conf import settings
 from dateutil.parser import parse as datetime_parser
 from rest_framework.test import APITestCase
@@ -490,6 +490,22 @@ class TestUserPostRequestApi(SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json()['requests'][0]['acceptability_threshold'], 100)
 
+    def test_mosaic_pattern_valid(self):
+        data = self.generic_payload.copy()
+        data['requests'][0]['extra_params'] = {}
+        # Test that an invalid mosaic pattern is rejected
+        data['requests'][0]['extra_params']['mosaic_pattern'] = 'swirl'
+        response = self.client.post(reverse('api:request_groups-list'), data=data)
+        self.assertEqual(response.status_code, 400)
+        # Then check that a valid pattern is accepted
+        data['requests'][0]['extra_params']['mosaic_pattern'] = 'line'
+        response = self.client.post(reverse('api:request_groups-list'), data=data)
+        self.assertEqual(response.status_code, 201)
+        # Then check that the custom mosaic pattern key is accepted
+        data['requests'][0]['extra_params']['mosaic_pattern'] = 'custom'
+        response = self.client.post(reverse('api:request_groups-list'), data=data)
+        self.assertEqual(response.status_code, 201)
+
 
 class TestDisallowedMethods(APITestCase):
     def setUp(self):
@@ -927,6 +943,21 @@ class TestDitherApi(SetTimeMixin, APITestCase):
         self.assertEqual(offset_diff_ra, dither_data['point_spacing'])
         self.assertEqual(offset_diff_dec, dither_data['point_spacing'])
 
+    def test_expansion_saves_dither_params(self):
+        configuration = self.configuration.copy()
+        dither_data = {
+            'configuration': configuration,
+            'num_rows': 2,
+            'num_columns': 2,
+            'pattern': 'grid',
+            'point_spacing': 2,
+            'orientation': 90
+        }
+        response = self.client.post(reverse('api:configurations-dither'), data=dither_data)
+        self.assertEqual(response.status_code, 200)
+        expanded_configuration = response.json()
+        self.assertEqual(expanded_configuration['extra_params']['dither_pattern'], dither_data['pattern'])
+
 
 class TestMosaicApi(SetTimeMixin, APITestCase):
     def setUp(self):
@@ -1109,6 +1140,21 @@ class TestMosaicApi(SetTimeMixin, APITestCase):
         self.assertEqual(target2['ra'], target1['ra'] + (ra_diff / 3600.0) / cos_dec)
         self.assertEqual(target2['dec'], target1['dec'] + (dec_diff / 3600.0))
 
+    def test_expansion_saves_mosaic_parameters(self):
+        request = self.request.copy()
+        mosaic_data = {
+            'request': request,
+            'num_points': 3,
+            'pattern': 'line',
+            'point_overlap_percent': 10.0,
+            'orientation': 90.0
+        }
+        response = self.client.post(reverse('api:requests-mosaic'), data=mosaic_data)
+        self.assertEqual(response.status_code, 200)
+        expanded_request = response.json()
+        self.assertEqual(len(expanded_request['configurations']), 3)
+        self.assertEqual(expanded_request['extra_params']['mosaic_pattern'], mosaic_data['pattern'])
+
 
 class TestCadenceApi(SetTimeMixin, APITestCase):
     def setUp(self):
@@ -1183,7 +1229,7 @@ class TestCadenceApi(SetTimeMixin, APITestCase):
         bad_data['requests'][0]['cadence']['jitter'] = 'bug'
         response = self.client.post(reverse('api:request_groups-cadence'), data=bad_data)
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.json()['cadence']['jitter'], ['A valid number is required.'])
+        self.assertEqual(response.json()['requests'][0]['cadence']['jitter'], ['A valid number is required.'])
 
     def test_cadence_with_windows_invalid(self):
         bad_data = self.generic_payload.copy()
@@ -1196,7 +1242,7 @@ class TestCadenceApi(SetTimeMixin, APITestCase):
         bad_data['requests'][0]['cadence']['period'] = -666
         response = self.client.post(reverse('api:request_groups-cadence'), data=bad_data)
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.json()['cadence']['period'], ['Ensure this value is greater than or equal to 0.02.'])
+        self.assertEqual(response.json()['requests'][0]['cadence']['period'], ['Ensure this value is greater than or equal to 0.02.'])
 
     def test_post_requestgroup_after_valid_cadence(self):
         response = self.client.post(reverse('api:request_groups-cadence'), data=self.generic_payload)
@@ -1220,6 +1266,20 @@ class TestCadenceApi(SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:request_groups-cadence'), data=bad_data)
         self.assertEqual(response.status_code, 400)
         self.assertIn('No visible requests within cadence window parameters', str(response.content))
+
+    def test_post_cadence_multiple_requests_invalid(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'].append(bad_data['requests'][0])
+        response = self.client.post(reverse('api:request_groups-cadence'), data=bad_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Cadence requestgroups may only contain a single request', str(response.content))
+
+    def test_post_cadence_empty_request_list_invalid(self):
+        bad_data = self.generic_payload.copy()
+        bad_data['requests'] = []
+        response = self.client.post(reverse('api:request_groups-cadence'), data=bad_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('You must specify at least 1 request', str(response.content))
 
 
 class TestICRSTarget(SetTimeMixin, APITestCase):
@@ -1628,6 +1688,78 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertEqual(response.status_code, 400)
         self.assertIn('must have at least one instrument configuration', str(response.content))
+
+    def test_dither_pattern_valid(self):
+        data = self.generic_payload.copy()
+        data['requests'][0]['configurations'][0]['extra_params'] = {}
+        data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params']['offset_ra'] = 1
+        # First check that an invalid pattern is not accepted
+        data['requests'][0]['configurations'][0]['extra_params']['dither_pattern'] = 'mountain'
+        response = self.client.post(reverse('api:request_groups-list'), data=data)
+        self.assertEqual(response.status_code, 400)
+        # Then check that a valid pattern is accepted
+        data['requests'][0]['configurations'][0]['extra_params']['dither_pattern'] = 'line'
+        response = self.client.post(reverse('api:request_groups-list'), data=data)
+        self.assertEqual(response.status_code, 201)
+        # Then check that the custom dither pattern key is accepted
+        data['requests'][0]['configurations'][0]['extra_params']['dither_pattern'] = 'custom'
+        response = self.client.post(reverse('api:request_groups-list'), data=data)
+        self.assertEqual(response.status_code, 201)
+
+    def test_custom_dither_pattern_set(self):
+        data = self.generic_payload.copy()
+        # First check that the custom dither pattern is not set on a configuration that has no
+        # instrument configs with offsets applied.
+        data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params'] = {}
+        response = self.client.post(reverse('api:request_groups-list'), data=data)
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue('dither_pattern' not in response.json()['requests'][0]['configurations'][0]['extra_params'])
+        # The check that when the only offset is 0, the custom dither pattern is not set
+        data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params'] = {'offset_ra': 0, 'offset_dec': 0}
+        response = self.client.post(reverse('api:request_groups-list'), data=data)
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue('dither_pattern' not in response.json()['requests'][0]['configurations'][0]['extra_params'])
+        # Then check that when some offset is applied, the custom dither pattern is set
+        data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params'] = {'offset_ra': 1, 'offset_dec': 0}
+        response = self.client.post(reverse('api:request_groups-list'), data=data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()['requests'][0]['configurations'][0]['extra_params']['dither_pattern'], 'custom')
+        # Then check that if a valid pattern is already set, it is not overridden
+        valid_pattern = 'line'
+        data['requests'][0]['configurations'][0]['extra_params'] = {'dither_pattern': valid_pattern}
+        data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params'] = {'offset_ra': 1, 'offset_dec': 5}
+        response = self.client.post(reverse('api:request_groups-list'), data=data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()['requests'][0]['configurations'][0]['extra_params']['dither_pattern'], valid_pattern)
+
+    def test_dither_pattern_only_allowed_for_dither_sequences(self):
+        data = self.generic_payload.copy()
+        dither_pattern = 'line'
+        data['requests'][0]['configurations'][0]['extra_params'] = {'dither_pattern': dither_pattern}
+        # Check that a valid dither pattern is not allowed when no offsets are supplied
+        data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params'] = {}
+        response = self.client.post(reverse('api:request_groups-list'), data=data)
+        self.assertEqual(response.status_code, 400)
+        # Then check that setting offsets allows this request to be submitted with the pattern
+        data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params'] = {'offset_ra': 1, 'offset_dec': 0}
+        response = self.client.post(reverse('api:request_groups-list'), data=data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()['requests'][0]['configurations'][0]['extra_params']['dither_pattern'], dither_pattern)
+
+    def test_dither_offsets_are_numbers(self):
+        data = self.generic_payload.copy()
+        data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params'] = {'offset_ra': '1', 'offset_dec': '5'}
+        response = self.client.post(reverse('api:request_groups-list'), data=data)
+        self.assertEqual(response.status_code, 201)
+        data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params'] = {'offset_ra': 1, 'offset_dec': 5}
+        response = self.client.post(reverse('api:request_groups-list'), data=data)
+        self.assertEqual(response.status_code, 201)
+        data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params'] = {'offset_ra': None, 'offset_dec': 5}
+        response = self.client.post(reverse('api:request_groups-list'), data=data)
+        self.assertEqual(response.status_code, 400)
+        data['requests'][0]['configurations'][0]['instrument_configs'][0]['extra_params'] = {'offset_dec': ''}
+        response = self.client.post(reverse('api:request_groups-list'), data=data)
+        self.assertEqual(response.status_code, 400)
 
     def test_extra_params_saved_as_float_not_string(self):
         good_data = self.generic_payload.copy()
@@ -3004,7 +3136,7 @@ class TestLastChanged(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
         # Mock the cache with a real one for these tests
-        self.locmem_cache = cache._create_cache('django.core.cache.backends.locmem.LocMemCache')
+        self.locmem_cache = caches.create_connection('testlocmem')
         self.locmem_cache.clear()
         self.patch1 = patch.object(views, 'cache', self.locmem_cache)
         self.patch1.start()

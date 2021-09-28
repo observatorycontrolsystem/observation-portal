@@ -1,15 +1,18 @@
+from django.core.exceptions import ValidationError
 from django.core.cache import cache
+from django_filters.rest_framework.backends import DjangoFilterBackend
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAdminUser
 from django.http import HttpResponseBadRequest
 from django.utils import timezone
 from django.utils.module_loading import import_string
-from django.conf import settings
 from dateutil.parser import parse
 from datetime import timedelta
 from rest_framework.views import APIView
+from rest_framework import status
 import logging
 
+from observation_portal import settings
 from observation_portal.common.configdb import configdb
 from observation_portal.common.telescope_states import (
     TelescopeStates, get_telescope_availability_per_day, combine_telescope_availabilities_by_site_and_class,
@@ -17,6 +20,9 @@ from observation_portal.common.telescope_states import (
 )
 from observation_portal.requestgroups.request_utils import get_airmasses_for_request_at_sites
 from observation_portal.requestgroups.contention import Contention, Pressure
+from observation_portal.requestgroups.filters import InstrumentsInformationFilter, LastChangedFilter
+from observation_portal.common.doc_examples import EXAMPLE_RESPONSES
+from observation_portal.common.schema import ObservationPortalSchema
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +46,7 @@ class TelescopeStatesView(APIView):
     Retrieves the telescope states for all telescopes between the start and end times
     """
     permission_classes = (AllowAny,)
+    schema = None
 
     def get(self, request):
         try:
@@ -59,6 +66,7 @@ class TelescopeAvailabilityView(APIView):
     Retrieves the nightly percent availability of each telescope between the start and end times
     """
     permission_classes = (AllowAny,)
+    schema = None
 
     def get(self, request):
         try:
@@ -87,19 +95,31 @@ class AirmassView(APIView):
     Gets the airmasses for the request at available sites
     """
     permission_classes = (AllowAny,)
+    schema = ObservationPortalSchema(tags=['Requests'])
 
     def post(self, request):
-        serializer = import_string(settings.SERIALIZERS['requestgroups']['Request'])(data=request.data)
-        if serializer.is_valid():
-            return Response(get_airmasses_for_request_at_sites(
-                serializer.validated_data, is_staff=request.user.is_staff
-            ))
+        request_serializer = self.get_request_serializer(data=request.data)
+        if request_serializer.is_valid():
+            airmass_data = get_airmasses_for_request_at_sites(request_serializer.validated_data, is_staff=request.user.is_staff)
+            return Response(airmass_data)
         else:
-            return Response(serializer.errors)
+            return Response(request_serializer.errors)
+
+    def get_request_serializer(self, *args, **kwargs):
+        return import_string(settings.SERIALIZERS['requestgroups']['Request'])(*args, **kwargs)
+
+    def get_example_response(self):
+        return Response(EXAMPLE_RESPONSES['requestgroups'].get('airmass'), status=status.HTTP_200_OK)
+
+    def get_endpoint_name(self):
+        return 'getAirmass'
 
 
 class InstrumentsInformationView(APIView):
     permission_classes = (AllowAny,)
+    schema = ObservationPortalSchema(tags=['Utility'])
+    filter_backends = (DjangoFilterBackend,)
+    filter_class = InstrumentsInformationFilter
 
     def get(self, request):
         info = {}
@@ -139,9 +159,16 @@ class InstrumentsInformationView(APIView):
                 }
         return Response(info)
 
+    def get_example_response(self):
+        return Response(EXAMPLE_RESPONSES['requestgroups'].get('instruments'), status=status.HTTP_200_OK)
+
+    def get_endpoint_name(self):
+        return 'getInstruments'
+
 
 class ContentionView(APIView):
     permission_classes = (AllowAny,)
+    schema = None
 
     def get(self, request, instrument_type):
         if request.user.is_staff:
@@ -153,6 +180,7 @@ class ContentionView(APIView):
 
 class PressureView(APIView):
     permission_classes = (AllowAny,)
+    schema = None
 
     def get(self, request):
         instrument_type = request.GET.get('instrument')
@@ -169,6 +197,9 @@ class ObservationPortalLastChangedView(APIView):
         Returns the datetime of the last status of requests change or new requests addition
     '''
     permission_classes = (IsAdminUser,)
+    schema = ObservationPortalSchema(tags=['RequestGroups'], is_list_view=False)
+    filter_class = LastChangedFilter
+    filter_backends = (DjangoFilterBackend,)
 
     def get(self, request):
         telescope_classes = request.GET.getlist('telescope_class', ['all'])
@@ -176,4 +207,14 @@ class ObservationPortalLastChangedView(APIView):
         for telescope_class in telescope_classes:
             most_recent_change_time = max(most_recent_change_time, cache.get(f"observation_portal_last_change_time_{telescope_class}", timezone.now() - timedelta(days=7)))
 
-        return Response({'last_change_time': most_recent_change_time})
+        response_serializer = self.get_response_serializer(data={'last_change_time': most_recent_change_time})
+        if response_serializer.is_valid():
+            return Response(response_serializer.validated_data)
+        else:
+            raise ValidationError(response_serializer.errors)
+
+    def get_response_serializer(self, *args, **kwargs):
+        return import_string(settings.SERIALIZERS['requestgroups']['LastChanged'])(*args, **kwargs)
+
+    def get_endpoint_name(self):
+        return 'getLastChangedTime'

@@ -6,16 +6,20 @@ from rest_framework.response import Response
 from django.utils.translation import ugettext as _
 from django.utils.module_loading import import_string
 from django.conf import settings
+from rest_framework import status
 
 from observation_portal.accounts.permissions import IsPrincipleInvestigator
 from observation_portal.common.mixins import ListAsDictMixin, DetailAsDictMixin
 from observation_portal.common.utils import get_queryset_field_values
 from observation_portal.proposals.filters import SemesterFilter, ProposalFilter, MembershipFilter, ProposalInviteFilter
 from observation_portal.proposals.models import Proposal, Semester, ProposalNotification, Membership, ProposalInvite
+from observation_portal.common.schema import ObservationPortalSchema
+from observation_portal.common.doc_examples import EXAMPLE_RESPONSES
 
 
 class ProposalViewSet(DetailAsDictMixin, ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
     permission_classes = (IsAuthenticated,)
+    schema = ObservationPortalSchema(tags=['Proposals'])
     serializer_class = import_string(settings.SERIALIZERS['proposals']['Proposal'])
     filter_class = ProposalFilter
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
@@ -34,53 +38,87 @@ class ProposalViewSet(DetailAsDictMixin, ListAsDictMixin, viewsets.ReadOnlyModel
     @action(detail=True, methods=['post'])
     def notification(self, request, pk=None):
         proposal = self.get_object()
-        serializer = import_string(settings.SERIALIZERS['proposals']['ProposalNotification'])(data=request.data)
-        if serializer.is_valid():
-            if serializer.validated_data['enabled']:
+        request_serializer = self.get_request_serializer(data=request.data)
+        if request_serializer.is_valid():
+            if request_serializer.validated_data['enabled']:
                 ProposalNotification.objects.get_or_create(user=request.user, proposal=proposal)
             else:
                 ProposalNotification.objects.filter(user=request.user, proposal=proposal).delete()
-            return Response({'message': 'Preferences saved'})
+
+            response_serializer = self.get_response_serializer({'message': 'Preferences saved'})
+            return Response(response_serializer.data, status=status.HTTP_200_OK)
         else:
-            return Response({'errors': serializer.errors}, 400)
+            return Response({'errors': request_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['post'], permission_classes=(IsPrincipleInvestigator,))
     def invite(self, request, pk=None):
         proposal = self.get_object()
-        serializer = import_string(settings.SERIALIZERS['proposals']['ProposalInvite'])(
+        request_serializer = self.get_request_serializer(
             data=request.data,
             context={'user': self.request.user, 'proposal': proposal}
         )
-        if serializer.is_valid():
-            proposal.add_users(serializer.validated_data['emails'], Membership.CI)
-            return Response({'message': _('Co Investigator(s) invited')})
+        if request_serializer.is_valid():
+            proposal.add_users(request_serializer.validated_data['emails'], Membership.CI)
+
+            response_serializer = self.get_response_serializer({'message': _('Co Investigator(s) invited')})
+            return Response(response_serializer.data, status=status.HTTP_200_OK)
         else:
-            return Response(serializer.errors, status=400)
+            return Response(request_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['post'], permission_classes=(IsPrincipleInvestigator,))
     def globallimit(self, request, pk=None):
         proposal = self.get_object()
-        serializer = import_string(settings.SERIALIZERS['proposals']['TimeLimit'])(data=request.data)
-        if serializer.is_valid():
-            time_limit_hours = serializer.validated_data['time_limit_hours']
+        request_serializer = self.get_request_serializer(data=request.data)
+        if request_serializer.is_valid():
+            time_limit_hours = request_serializer.validated_data['time_limit_hours']
             proposal.membership_set.filter(role=Membership.CI).update(time_limit=time_limit_hours * 3600)
-            return Response({'message': f'All CI time limits set to {time_limit_hours} hours'})
+
+            response_serializer = self.get_response_serializer({'message': f'All CI time limits set to {time_limit_hours} hours'})
+            return Response(response_serializer.data, status=status.HTTP_200_OK)
         else:
-            return Response({'errors': serializer.errors}, status=400)
+            return Response({'errors': request_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['get'])
     def tags(self, request, pk=None):
         proposal_tags = get_queryset_field_values(self.get_queryset(), 'tags')
         return Response(list(proposal_tags))
 
+    def get_request_serializer(self, *args, **kwargs):
+        serializers = {'notification': import_string(settings.SERIALIZERS['proposals']['ProposalNotification']),
+                       'invite': import_string(settings.SERIALIZERS['proposals']['ProposalInvite']),
+                       'globallimit': import_string(settings.SERIALIZERS['proposals']['TimeLimit'])}
+        return serializers.get(self.action, self.serializer_class)(*args, **kwargs)
+
+    def get_response_serializer(self, *args, **kwargs):
+        serializers = {'notification': import_string(settings.SERIALIZERS['proposals']['ProposalNotificationResponse']),
+                       'invite': import_string(settings.SERIALIZERS['proposals']['ProposalInviteResponse']),
+                       'globallimit': import_string(settings.SERIALIZERS['proposals']['TimeLimitResponse'])}
+
+        return serializers.get(self.action, self.serializer_class)(*args, **kwargs)
+
+    def get_example_response(self):
+        example_data = {'tags': Response(data=EXAMPLE_RESPONSES['proposals']['tags'], status=status.HTTP_200_OK)}
+
+        return example_data.get(self.action)
+
+    def get_endpoint_name(self):
+        endpoint_names = {'notification': 'createProposalNotification',
+                          'invite': 'createProposalInvite',
+                          'globallimit': 'setTimeLimit',
+                          'tags': 'getProposalTags'}
+
+        return endpoint_names.get(self.action)
+
 
 class SemesterViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = (AllowAny,)
+    schema = ObservationPortalSchema(tags=['Proposals'])
     serializer_class = import_string(settings.SERIALIZERS['proposals']['Semester'])
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
     filter_class = SemesterFilter
     ordering = ('-start',)
     queryset = Semester.objects.all()
+    undocumented_actions = ['proposals', 'timeallocations']
 
     @action(detail=True, methods=['get'])
     def proposals(self, request, pk=None):
@@ -138,6 +176,7 @@ class SemesterViewSet(viewsets.ReadOnlyModelViewSet):
 
 class MembershipViewSet(ListAsDictMixin, DetailAsDictMixin, mixins.DestroyModelMixin, viewsets.ReadOnlyModelViewSet):
     http_method_names = ('get', 'head', 'options', 'post', 'delete')
+    schema = ObservationPortalSchema(tags=['Proposals'])
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
     filter_class = MembershipFilter
     serializer_class = import_string(settings.SERIALIZERS['proposals']['Membership'])
@@ -167,26 +206,39 @@ class MembershipViewSet(ListAsDictMixin, DetailAsDictMixin, mixins.DestroyModelM
     @action(detail=True, methods=['post'])
     def limit(self, request, pk=None):
         membership = self.get_object()
-        serializer = import_string(settings.SERIALIZERS['proposals']['TimeLimit'])(data=request.data, context={'membership': membership})
-        if serializer.is_valid():
-            time_limit_hours = serializer.validated_data['time_limit_hours']
+        request_serializer = self.get_request_serializer(data=request.data, context={'membership': membership})
+        if request_serializer.is_valid():
+            time_limit_hours = request_serializer.validated_data['time_limit_hours']
             membership.time_limit = time_limit_hours * 3600
             membership.save()
             message = (
                 f'Time limit for {membership.user.first_name} {membership.user.last_name} set '
                 f'to {time_limit_hours} hours'
             )
-            return Response({'message': message})
+
+            response_serializer = self.get_response_serializer({'message': message})
+            return Response(response_serializer.data, status=status.HTTP_200_OK)
         else:
-            return Response({'errors': serializer.errors}, 400)
+            return Response({'errors': request_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     def perform_destroy(self, instance):
         if instance.role == Membership.CI:
             instance.delete()
 
+    def get_request_serializer(self, *args, **kwargs):
+        serializers = {'limit': import_string(settings.SERIALIZERS['proposals']['TimeLimit'])}
+
+        return serializers.get(self.action, self.serializer_class)(*args, **kwargs)
+
+    def get_response_serializer(self, *args, **kwargs):
+        serializers = {'limit': import_string(settings.SERIALIZERS['proposals']['TimeLimitResponse'])}
+
+        return serializers.get(self.action, self.serializer_class)(*args, **kwargs)
+
 
 class ProposalInviteViewSet(mixins.DestroyModelMixin, viewsets.ReadOnlyModelViewSet):
     http_method_names = ('get', 'head', 'options', 'delete')
+    schema = ObservationPortalSchema(tags=['Proposals'])
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
     filter_class = ProposalInviteFilter
     serializer_class = import_string(settings.SERIALIZERS['proposals']['ProposalInvite'])

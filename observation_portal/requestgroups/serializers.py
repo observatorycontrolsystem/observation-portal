@@ -1,13 +1,13 @@
 import json
 import logging
-from math import isnan, cos, sin, radians
+from math import cos, sin, radians
 from json import JSONDecodeError
 from abc import ABC, abstractmethod
 
 from cerberus import Validator
 from rest_framework import serializers
 from django.utils.translation import ugettext as _
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.cache import cache
 from django.db import transaction
 from django.utils import timezone
@@ -24,7 +24,7 @@ from observation_portal.requestgroups.models import DraftRequestGroup
 from observation_portal.common.state_changes import debit_ipp_time, TimeAllocationError, validate_ipp
 from observation_portal.requestgroups.target_helpers import TARGET_TYPE_HELPER_MAP
 from observation_portal.common.mixins import ExtraParamsFormatter
-from observation_portal.common.configdb import configdb, ConfigDB, ConfigDBException
+from observation_portal.common.configdb import configdb, ConfigDB
 from observation_portal.requestgroups.duration_utils import (
     get_total_request_duration, get_requestgroup_duration, get_total_duration_dict,
     get_instrument_configuration_duration, get_semester_in
@@ -469,6 +469,41 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
                     'You may only specify a repeat_duration for REPEAT_* type configurations.'
                 ))
 
+        # Validate dither pattern
+
+        is_dither_sequence = False
+        for instrument_config in data['instrument_configs']:
+            offset_ra = instrument_config.get('extra_params', {}).get('offset_ra', 0)
+            offset_dec = instrument_config.get('extra_params', {}).get('offset_dec', 0)
+            if offset_dec != 0 or offset_ra != 0:
+                is_dither_sequence = True
+                break
+
+        dither_pattern_is_set = 'extra_params' in data and 'dither_pattern' in data['extra_params']
+        dither_pattern = data.get('extra_params', {}).get('dither_pattern', None)
+
+        # Check that if a dither pattern is set, this configuration is actually a dither sequence
+        if dither_pattern_is_set and not is_dither_sequence:
+            raise serializers.ValidationError(_(
+                f'You set a dither pattern of {dither_pattern} but did not supply any non-zero dither offsets. You must specify '
+                'offset_ra and/or offset_dec fields in the extra_params in one or more instrument_configs to create a '
+                'dither pattern.'
+            ))
+
+        # Check that any dither pattern that is set is valid
+        if dither_pattern_is_set:
+            valid_patterns = list(settings.DITHER['valid_expansion_patterns']) + [settings.DITHER['custom_pattern_key']]
+            if dither_pattern not in valid_patterns:
+                raise serializers.ValidationError(_(
+                    f'Invalid dither pattern {dither_pattern} set in the configuration extra_params, choose from {", ".join(valid_patterns)}'
+                ))
+
+        # If a dither pattern is not yet set and this is part of a dither sequence, set the custom dither pattern field.
+        if not dither_pattern_is_set and is_dither_sequence:
+            if 'extra_params' not in data:
+                data['extra_params'] = {}
+            data['extra_params']['dither_pattern'] = settings.DITHER['custom_pattern_key']
+
         return data
 
 
@@ -617,6 +652,14 @@ class RequestSerializer(serializers.ModelSerializer):
                 [configdb.get_default_acceptability_threshold(configuration['instrument_type'])
                  for configuration in data['configurations']]
             )
+
+        if 'extra_params' in data and 'mosaic_pattern' in data['extra_params']:
+            pattern = data['extra_params']['mosaic_pattern']
+            valid_patterns = list(settings.MOSAIC['valid_expansion_patterns']) + [settings.MOSAIC['custom_pattern_key']]
+            if pattern not in valid_patterns:
+                raise serializers.ValidationError(_(
+                    f'Invalid mosaic pattern {pattern} set in the request extra_params, choose from {", ".join(valid_patterns)}'
+                ))
 
         # check that the requests window has enough rise_set visible time to accomodate the requests duration
         if data.get('windows'):
@@ -849,6 +892,18 @@ class RequestGroupSerializer(serializers.ModelSerializer):
         return value
 
 
+class CadenceRequestGroupSerializer(RequestGroupSerializer):
+    requests = import_string(settings.SERIALIZERS['requestgroups']['CadenceRequest'])(many=True)
+
+    # override the validate method from the RequestGroupSerializer and use the Cadence Request serializer to
+    # validate the cadence request
+    def validate(self, data):
+        if len(data['requests']) > 1:
+            raise ValidationError('Cadence requestgroups may only contain a single request')
+
+        return data
+
+
 class PatternExpansionSerializer(serializers.Serializer):
     pattern = serializers.ChoiceField(choices=('line', 'grid', 'spiral'), required=True)
     num_points = serializers.IntegerField(required=False)
@@ -874,7 +929,7 @@ class PatternExpansionSerializer(serializers.Serializer):
 
 class MosaicSerializer(PatternExpansionSerializer):
     request = import_string(settings.SERIALIZERS['requestgroups']['Request'])()
-    pattern = serializers.ChoiceField(choices=('line', 'grid'), required=True)
+    pattern = serializers.ChoiceField(choices=settings.MOSAIC['valid_expansion_patterns'], required=True)
     point_overlap_percent = serializers.FloatField(required=False, validators=[MinValueValidator(0.0), MaxValueValidator(100.0)])
     line_overlap_percent = serializers.FloatField(required=False, validators=[MinValueValidator(0.0), MaxValueValidator(100.0)])
 
@@ -930,6 +985,7 @@ class MosaicSerializer(PatternExpansionSerializer):
 
 class DitherSerializer(PatternExpansionSerializer):
     configuration = import_string(settings.SERIALIZERS['requestgroups']['Configuration'])()
+    pattern = serializers.ChoiceField(choices=settings.DITHER['valid_expansion_patterns'], required=True)
     point_spacing = serializers.FloatField(required=True)
 
 
@@ -956,3 +1012,7 @@ class DraftRequestGroupSerializer(serializers.ModelSerializer):
         except JSONDecodeError:
             raise serializers.ValidationError('Content must be valid JSON')
         return data
+
+
+class LastChangedSerializer(serializers.Serializer):
+    last_change_time = serializers.DateTimeField()

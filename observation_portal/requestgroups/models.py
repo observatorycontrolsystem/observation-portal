@@ -1,13 +1,11 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.contrib.postgres.fields import JSONField
 from django.utils.functional import cached_property
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.core.cache import cache
 from django.utils import timezone
 from django.urls import reverse
 from django.forms.models import model_to_dict
-from django.utils.functional import lazy
 from django.utils.module_loading import import_string
 from django.conf import settings
 import logging
@@ -267,6 +265,12 @@ class Request(models.Model):
                   'acceptable to meet the science goal of the Request. Defaults to 100 for FLOYDS observations and '
                   '90 for all other observations.'
     )
+    extra_params = models.JSONField(
+        default=dict,
+        blank=True,
+        verbose_name='extra parameters',
+        help_text='Extra Request parameters'
+    )
 
     class Meta:
         ordering = ('id',)
@@ -301,7 +305,19 @@ class Request(models.Model):
 
     @property
     def semester(self):
-        return get_semester_in(self.min_window_time, self.max_window_time)
+        # Get the semester that contains the request windows. This should return a semester since requests are validated on
+        # submission to have all windows be in the same semester, but some old requests might have windows that span multiple semesters.
+        semester = get_semester_in(self.min_window_time, self.max_window_time)
+        # If the request windows do not fit within any single semester, use the semester that contains
+        # the start time of any of the associated observations.
+        if semester is None:
+            observation = self.observation_set.first()
+            if observation:
+                semester = get_semester_in(observation.start, observation.start)
+        # Fall back to using the semester that contains the first window start time.
+        if semester is None:
+            semester = get_semester_in(self.min_window_time, self.min_window_time)
+        return semester
 
     @property
     def time_allocation_keys(self):
@@ -461,7 +477,7 @@ class Configuration(models.Model):
                   'possible given its visibility within the observing window.'
     )
 
-    extra_params = JSONField(
+    extra_params = models.JSONField(
         default=dict,
         blank=True,
         verbose_name='extra parameters',
@@ -649,7 +665,7 @@ class Target(models.Model):
         help_text='Epoch of perihelion (MJD)'
     )
 
-    extra_params = JSONField(
+    extra_params = models.JSONField(
         default=dict,
         blank=True,
         verbose_name='extra parameters',
@@ -677,7 +693,7 @@ class InstrumentConfig(models.Model):
         Configuration, related_name='instrument_configs', on_delete=models.CASCADE,
         help_text='The Configuration to which this InstrumentConfig belongs'
     )
-    optical_elements = JSONField(
+    optical_elements = models.JSONField(
         default=dict,
         blank=True,
         help_text='Specification of optical elements used for this InstrumentConfig'
@@ -700,7 +716,7 @@ class InstrumentConfig(models.Model):
         help_text='(Spectrograph only) How the slit is positioned on the sky. If set to VFLOAT, atmospheric '
                   'dispersion is along the slit.'
     )
-    extra_params = JSONField(
+    extra_params = models.JSONField(
         default=dict,
         blank=True,
         verbose_name='extra parameters',
@@ -766,7 +782,7 @@ class GuidingConfig(models.Model):
         max_length=50, default='', blank=True,
         help_text='Guiding mode to use for the observations'
     )
-    optical_elements = JSONField(
+    optical_elements = models.JSONField(
         default=dict,
         blank=True,
         help_text='Optical Element specification for this GuidingConfig'
@@ -775,7 +791,7 @@ class GuidingConfig(models.Model):
         validators=[MinValueValidator(0.0), MaxValueValidator(120.0)],
         help_text='Guiding exposure time'
     )
-    extra_params = JSONField(
+    extra_params = models.JSONField(
         default=dict,
         blank=True,
         verbose_name='extra parameters',
@@ -805,7 +821,7 @@ class AcquisitionConfig(models.Model):
         validators=[MinValueValidator(0.0), MaxValueValidator(60.0)],
         help_text='Acquisition exposure time'
     )
-    extra_params = JSONField(
+    extra_params = models.JSONField(
         default=dict,
         blank=True,
         verbose_name='extra parameters',
@@ -850,7 +866,7 @@ class Constraints(models.Model):
         verbose_name='minimum transparency', null=True, blank=True,
         help_text='Minimum acceptable transparency'
     )
-    extra_params = JSONField(
+    extra_params = models.JSONField(
         default=dict,
         blank=True,
         verbose_name='extra parameters',

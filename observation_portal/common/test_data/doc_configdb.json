@@ -1,0 +1,389 @@
+{
+  "count": 2,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "code": "tst",
+      "elevation": 100,
+      "enclosure_set": [
+        {
+          "code": "doma",
+          "telescope_set": [
+            {
+              "code": "1m0a",
+              "name": "1 Meter",
+              "instrument_set": [
+                {
+                  "code": "ia01",
+                  "state" : "SCHEDULABLE",
+                  "instrument_type": {
+                    "code": "1M0-INSTRUMENT-A",
+                    "configuration_types": [
+                      {
+                          "name": "Expose",
+                          "code": "EXPOSE",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Bias",
+                          "code": "BIAS",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      },
+                      {
+                          "name": "Dark",
+                          "code": "DARK",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      },
+                      {
+                        "name": "Sky Flat",
+                        "code": "SKY_FLAT",
+                        "config_change_overhead": 0.0,
+                        "requires_optical_elements": true,
+                        "force_acquisition_off": false,
+                        "schedulable": true
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "code": "2m0a",
+              "name": "2 Meter",
+              "instrument_set": [
+                {
+                  "code": "ia02",
+                  "state" : "SCHEDULABLE",
+                  "instrument_type": {
+                    "code": "2M0-INSTRUMENT-A",
+                    "configuration_types": [
+                      {
+                          "name": "Expose",
+                          "code": "EXPOSE",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                        "name": "Repeat Expose",
+                        "code": "REPEAT_EXPOSE",
+                        "config_change_overhead": 0.0,
+                        "requires_optical_elements": true,
+                        "force_acquisition_off": false,
+                        "schedulable": true
+                      },
+                      {
+                          "name": "Bias",
+                          "code": "BIAS",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      },
+                      {
+                          "name": "Dark",
+                          "code": "DARK",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      },
+                      {
+                        "name": "Sky Flat",
+                        "code": "SKY_FLAT",
+                        "config_change_overhead": 0.0,
+                        "requires_optical_elements": true,
+                        "force_acquisition_off": false,
+                        "schedulable": true
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "domb",
+          "telescope_set": [
+            {
+              "code": "1m0a",
+              "name": "1 Meter",
+              "instrument_set": [
+                {
+                  "code": "ia01",
+                  "state" : "SCHEDULABLE",
+                  "instrument_type": {
+                    "code": "1M0-INSTRUMENT-A",
+                    "configuration_types": [
+                      {
+                          "name": "Expose",
+                          "code": "EXPOSE",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Bias",
+                          "code": "BIAS",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      },
+                      {
+                          "name": "Dark",
+                          "code": "DARK",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      },
+                      {
+                        "name": "Sky Flat",
+                        "code": "SKY_FLAT",
+                        "config_change_overhead": 0.0,
+                        "requires_optical_elements": true,
+                        "force_acquisition_off": false,
+                        "schedulable": true
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "code": "2m0a",
+              "name": "2 Meter",
+              "instrument_set": [
+                {
+                  "code": "ia02",
+                  "state" : "SCHEDULABLE",
+                  "instrument_type": {
+                    "code": "2M0-INSTRUMENT-A",
+                    "configuration_types": [
+                      {
+                          "name": "Expose",
+                          "code": "EXPOSE",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                        "name": "Repeat Expose",
+                        "code": "REPEAT_EXPOSE",
+                        "config_change_overhead": 0.0,
+                        "requires_optical_elements": true,
+                        "force_acquisition_off": false,
+                        "schedulable": true
+                      },
+                      {
+                          "name": "Bias",
+                          "code": "BIAS",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      },
+                      {
+                          "name": "Dark",
+                          "code": "DARK",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      },
+                      {
+                        "name": "Sky Flat",
+                        "code": "SKY_FLAT",
+                        "config_change_overhead": 0.0,
+                        "requires_optical_elements": true,
+                        "force_acquisition_off": false,
+                        "schedulable": true
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "domc",
+          "telescope_set": [
+            {
+              "code": "1m0a",
+              "name": "1 Meter",
+              "instrument_set": [
+                {
+                  "code": "ib01",
+                  "state" : "SCHEDULABLE",
+                  "instrument_type": {
+                    "code": "1M0-INSTRUMENT-B",
+                    "configuration_types": [
+                      {
+                          "name": "Expose",
+                          "code": "EXPOSE",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Bias",
+                          "code": "BIAS",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      },
+                      {
+                          "name": "Dark",
+                          "code": "DARK",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      },
+                      {
+                        "name": "Sky Flat",
+                        "code": "SKY_FLAT",
+                        "config_change_overhead": 0.0,
+                        "requires_optical_elements": true,
+                        "force_acquisition_off": false,
+                        "schedulable": true
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "domd",
+          "telescope_set": [
+            {
+              "code": "1m0a",
+              "name": "1 Meter",
+              "instrument_set": [
+                {
+                  "code": "ib01",
+                  "state" : "SCHEDULABLE",
+                  "instrument_type": {
+                    "code": "1M0-INSTRUMENT-B",
+                    "configuration_types": [
+                      {
+                          "name": "Expose",
+                          "code": "EXPOSE",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Bias",
+                          "code": "BIAS",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      },
+                      {
+                          "name": "Dark",
+                          "code": "DARK",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      },
+                      {
+                        "name": "Sky Flat",
+                        "code": "SKY_FLAT",
+                        "config_change_overhead": 0.0,
+                        "requires_optical_elements": true,
+                        "force_acquisition_off": false,
+                        "schedulable": true
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "mba",
+      "elevation": 384,
+      "enclosure_set": [
+        {
+          "code": "doma",
+          "telescope_set": [
+            {
+              "code": "1m0a",
+              "name": "1 Meter",
+              "instrument_set": [
+                {
+                  "code": "ia01",
+                  "state" : "SCHEDULABLE",
+                  "instrument_type": {
+                    "code": "1M0-INSTRUMENT-A",
+                    "configuration_types": [
+                      {
+                          "name": "Expose",
+                          "code": "EXPOSE",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      },
+                      {
+                          "name": "Bias",
+                          "code": "BIAS",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      },
+                      {
+                          "name": "Dark",
+                          "code": "DARK",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": false,
+                          "force_acquisition_off": true,
+                          "schedulable": false
+                      },
+                      {
+                        "name": "Sky Flat",
+                        "code": "SKY_FLAT",
+                        "config_change_overhead": 0.0,
+                        "requires_optical_elements": true,
+                        "force_acquisition_off": false,
+                        "schedulable": true
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

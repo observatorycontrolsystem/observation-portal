@@ -2,7 +2,7 @@ from django.utils import timezone
 from django.test import TestCase
 from mixer.backend.django import mixer
 from rest_framework.serializers import ValidationError
-from datetime import datetime
+from datetime import datetime, timedelta
 from unittest.mock import patch
 import math
 import copy
@@ -17,6 +17,7 @@ from observation_portal.common.test_helpers import SetTimeMixin
 from observation_portal.requestgroups.duration_utils import PER_CONFIGURATION_STARTUP_TIME
 from observation_portal.requestgroups.serializers import InstrumentTypeValidationHelper, ModeValidationHelper
 from observation_portal.requestgroups.test.test_api import generic_payload
+from observation_portal.observations.models import Observation
 
 
 class TestRequestGroupTotalDuration(SetTimeMixin, TestCase):
@@ -544,3 +545,32 @@ class TestValidationHelper(TestCase):
         with self.assertRaises(ValidationError) as e:
             validation_helper.validate(instrument_config)
         self.assertIn('exposure_mode', str(e.exception))
+
+
+class TestRequestSemester(SetTimeMixin, TestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.semester_1 = mixer.blend(Semester, start=datetime(2016, 1, 1, 0, 0, 0, tzinfo=timezone.utc), end=datetime(2016, 1, 31, 23, 59, 59, tzinfo=timezone.utc))
+        self.semester_2 = mixer.blend(Semester, start=datetime(2016, 2, 1, 0, 0, 0, tzinfo=timezone.utc), end=datetime(2016, 2, 29, 23, 59, 59, tzinfo=timezone.utc))
+        self.request = mixer.blend(Request)
+
+    def test_get_semester(self):
+        mixer.blend(Window, request=self.request, start=self.semester_1.start + timedelta(days=1), end=self.semester_1.end - timedelta(days=1))
+        mixer.blend(Window, request=self.request, start=self.semester_1.start + timedelta(days=2), end=self.semester_1.end - timedelta(days=2))
+        semester = self.request.semester
+        self.assertEqual(semester.id, self.semester_1.id)
+
+    def test_get_semester_for_request_without_observations_when_windows_span_multiple_semesters(self):
+        mixer.blend(Window, request=self.request, start=self.semester_1.start + timedelta(days=1), end=self.semester_1.end - timedelta(days=1))
+        mixer.blend(Window, request=self.request, start=self.semester_2.start - timedelta(days=1), end=self.semester_2.start + timedelta(days=1))
+        semester = self.request.semester
+        # Should fall into the semester with the earliest window start time
+        self.assertEqual(semester.id, self.semester_1.id)
+
+    def test_get_semester_for_request_with_observations_when_windows_span_multiple_semesters(self):
+        mixer.blend(Window, request=self.request, start=self.semester_1.start + timedelta(days=1), end=self.semester_1.end - timedelta(days=1))
+        mixer.blend(Window, request=self.request, start=self.semester_2.start - timedelta(days=1), end=self.semester_2.start + timedelta(days=1))
+        mixer.blend(Observation, request=self.request, start=self.semester_2.start + timedelta(hours=1), end=self.semester_2.start + timedelta(hours=2))
+        semester = self.request.semester
+        # Should fall into the semester that contains any observation
+        self.assertEqual(semester.id, self.semester_2.id)

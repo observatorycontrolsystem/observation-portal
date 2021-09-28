@@ -28,7 +28,7 @@ class ProposalFilter(django_filters.FilterSet):
         fields = ('active', 'semester', 'id', 'tac_rank', 'tac_priority', 'public', 'title')
 
     def filter_has_tag(self, queryset, name, value):
-        return queryset.filter(tags__overlap=[value])
+        return queryset.filter(tags__overlap=value)
 
 
 class SemesterFilter(django_filters.FilterSet):

@@ -1,6 +1,6 @@
 import django_filters
 from observation_portal.requestgroups.models import RequestGroup, Request
-
+from observation_portal.common.configdb import configdb
 
 class RequestGroupFilter(django_filters.FilterSet):
     created_after = django_filters.DateTimeFilter(field_name='created', lookup_expr='gte', label='Submitted after')
@@ -29,7 +29,8 @@ class RequestGroupFilter(django_filters.FilterSet):
         field_labels={
             'requests__windows__end': 'End of window',
             'modified': 'Last Update'
-        }
+        },
+        label='RequestGroup ordering'
     )
     request_id = django_filters.NumberFilter(field_name='requests__id')
 
@@ -45,3 +46,14 @@ class RequestFilter(django_filters.FilterSet):
     class Meta:
         model = Request
         fields = ('state',)
+
+
+class LastChangedFilter(django_filters.FilterSet):
+    telescope_class = django_filters.MultipleChoiceFilter(choices=configdb.get_telescope_class_tuples())
+
+
+class InstrumentsInformationFilter(django_filters.FilterSet):
+    site = django_filters.MultipleChoiceFilter(choices=configdb.get_site_tuples(), label='Site code')
+    enclosure = django_filters.MultipleChoiceFilter(choices=configdb.get_enclosure_tuples(), label='Enclosure code')
+    telescope_class = django_filters.MultipleChoiceFilter(choices=configdb.get_telescope_class_tuples(), label='Telescope class')
+    telescope = django_filters.MultipleChoiceFilter(choices=configdb.get_telescope_tuples(), label='Telescope code')

@@ -70,7 +70,8 @@ class ObservationFilter(mixins.CustomIsoDateTimeFilterMixin, django_filters.Filt
         field_name='configuration_statuses__configuration__type'
     )
     ordering = django_filters.OrderingFilter(
-        fields=['start', 'end', 'modified', 'created', 'state']
+        fields=['start', 'end', 'modified', 'created', 'state'],
+        label='Observation ordering'
     )
 
     class Meta:
@@ -86,3 +87,11 @@ class ConfigurationStatusFilter(django_filters.FilterSet):
     class Meta:
         model = ConfigurationStatus
         fields = ('guide_camera_name',)
+
+
+class LastScheduledFilter(django_filters.FilterSet):
+    site = django_filters.ChoiceFilter(choices=configdb.get_site_tuples(),
+                                       label='Site to retrieve last scheduled time for')
+
+    class Meta:
+        fields = ('site',)
