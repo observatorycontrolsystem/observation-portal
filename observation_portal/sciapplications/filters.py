@@ -33,7 +33,7 @@ class ScienceApplicationFilter(django_filters.FilterSet):
             return queryset
 
     def filter_has_tag(self, queryset, name, value):
-        return queryset.filter(tags__overlap=[value])
+        return queryset.filter(tags__overlap=value)
 
 
 class CallFilter(django_filters.FilterSet):

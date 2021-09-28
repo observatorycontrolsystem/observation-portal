@@ -1,7 +1,9 @@
 from math import cos, radians
 from collections import defaultdict
 from datetime import datetime, timedelta
+from django.core.serializers.json import DjangoJSONEncoder
 import json
+import hashlib
 
 from time_intervals.intervals import Intervals
 from rise_set.astrometry import (
@@ -12,7 +14,7 @@ from rise_set.angle import Angle
 from rise_set.rates import ProperMotion
 from rise_set.visibility import Visibility
 from rise_set.exceptions import MovingViolation
-from django.core.cache import cache
+from django.core.cache import cache, caches
 
 from observation_portal.common.configdb import configdb, ConfigDB
 from observation_portal.common.downtimedb import DowntimeDB
@@ -50,6 +52,9 @@ def get_rise_set_intervals_by_site(request: dict, only_schedulable: bool = False
         if request.get('id'):
             cache_key = '{}.{}.rsi'.format(request['id'], site)
             intervals_by_site[site] = cache.get(cache_key, None)
+        else:
+            cache_key = 'rise_set_intervals_' + site + '_' + str(hashlib.sha1(json.dumps(request, sort_keys=True, cls=DjangoJSONEncoder).encode()).hexdigest())
+            intervals_by_site[site] = caches['locmem'].get(cache_key, None)
 
         if intervals_by_site[site] is None:
             # There is no cached rise_set intervals for this request and site, so recalculate it now
@@ -84,6 +89,8 @@ def get_rise_set_intervals_by_site(request: dict, only_schedulable: bool = False
 
             if request.get('id'):
                 cache.set(cache_key, intervals_by_site[site], 86400 * 30)  # cache for 30 days
+            else:
+                caches['locmem'].set(cache_key, intervals_by_site[site], 300) # cache for 5 minutes
     return intervals_by_site
 
 

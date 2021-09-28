@@ -3,10 +3,10 @@ from math import ceil, floor
 from collections import defaultdict
 from django.utils import timezone
 from django.conf import settings
-from django.core.cache import caches
 import logging
 
 from observation_portal.proposals.models import TimeAllocationKey, Proposal, Semester
+from observation_portal.common.utils import cache_function
 from observation_portal.common.configdb import configdb
 from observation_portal.common.rise_set_utils import (get_filtered_rise_set_intervals_by_site, get_largest_interval,
                                                       get_distance_between, get_rise_set_target)
@@ -17,11 +17,9 @@ logger = logging.getLogger(__name__)
 PER_CONFIGURATION_STARTUP_TIME = 16.0   # per-configuration startup time, which encompasses initial pointing
 
 
+@cache_function(duration=60)
 def get_semesters():
-    semesters = caches['locmem'].get('semesters')
-    if not semesters:
-        semesters = list(Semester.objects.all().order_by('-start'))
-        caches['locmem'].set('semesters', semesters, 60)
+    semesters = list(Semester.objects.all().order_by('-start'))
     return semesters
 
 
@@ -246,16 +244,19 @@ def get_total_request_duration(request_dict):
     return total_duration
 
 
+@cache_function()
 def get_request_duration_by_instrument_type(request_dict):
     # calculate the total time needed by the request, based on its instrument and exposures
     durations_by_instrument_type = defaultdict(float)
     start_time = (min([window['start'] for window in request_dict['windows']])
                   if 'windows' in request_dict and request_dict['windows'] else timezone.now())
     try:
-        configurations = sorted(request_dict['configurations'], key=lambda x: x['priority'])
+        configurations = sorted(
+            request_dict['configurations'], key=lambda x: x['priority'])
     except KeyError:
         configurations = request_dict['configurations']
-    durations_by_instrument_type = get_complete_configurations_duration_by_instrument_type(configurations, start_time)
+    durations_by_instrument_type = get_complete_configurations_duration_by_instrument_type(
+        configurations, start_time)
 
     # Add in the front_padding proportionally by instrument_type here
     # TODO: We should move front_padding to the telescope level rather than instrument_type so we don't need to

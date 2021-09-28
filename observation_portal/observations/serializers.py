@@ -408,3 +408,17 @@ class CancelObservationsSerializer(serializers.Serializer):
             raise serializers.ValidationError("Must include either an observation id list or a start and end time")
 
         return data
+
+
+class CancelObservationsResponseSerializer(serializers.Serializer):
+    canceled = serializers.IntegerField()
+
+
+class LastScheduledSerializer(serializers.Serializer):
+    last_schedule_time = serializers.DateTimeField()
+
+
+# TODO: See if we can get some example data in the docs
+class ObservationFiltersSerializer(serializers.Serializer):
+    fields = serializers.ListField(child=serializers.CharField())
+    choice_fields = serializers.ListField(child=serializers.DictField())
