@@ -1,5 +1,10 @@
 version: "2.4"
 
+# This docker-compose file brings up a full Observation Portal stack with Task Scheduler,
+# Task Worker, and Example Frontend. There is also an associated container of redis for
+# caching and task scheduling. You will want to modify the DB_* environment variables to
+# connect to your db backend, and modify the *_URL environment variables to point to the
+# location where you have the associated services running, like CONFIGDB.
 services:
     redis:
         image: redis:3.2
@@ -20,6 +25,8 @@ services:
         ports:
             - "8000:8000"
         environment:
+            # Note that 172.17.0.1 works for localhost on linux, but for mac you will
+            # need to use `host.docker.internal` instead to point to localhost.
             - DB_HOST=172.17.0.1
             - DB_PORT=5432
             - DB_NAME=observationportal
@@ -106,6 +113,8 @@ services:
             redis:
                 condition: service_healthy
 
+    # This provides a simple example frontend that can view and schedule Requests using
+    # the Observation Portal API backend and components from the ocs-component-lib.
     obs_portal_frontend:
         image: observatorycontrolsystem/ocs-example-frontend:0.1.0
         ports:
