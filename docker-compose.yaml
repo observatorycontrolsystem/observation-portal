@@ -1,0 +1,115 @@
+version: "2.4"
+
+services:
+  redis:
+    image: redis:3.2
+    command: ["redis-server", "--appendonly", "yes"]
+    restart: always
+    healthcheck:
+        test: ["CMD", "redis-cli", "ping"]
+        interval: 10s
+        timeout: 5s
+        retries: 30
+    ports:
+        -  6373:6379
+    volumes:
+        -  ./data/redis:/data
+
+  observation_portal:
+    image: observatorycontrolsystem/observation-portal
+    ports:
+        - "8000:8000"
+    environment:
+        - DB_HOST=http://127.0.0.1:5432
+        - DB_NAME=observationportal
+        - DB_USER=postgres
+        - DB_PASS=postgres
+        - SECRET_KEY=obs_portal_secret_key
+        - CONFIGDB_URL=http://127.0.0.1:7000
+        - DOWNTIMEDB_URL=http://127.0.0.1:7500
+        - ELASTICSEARCH_URL=
+        - DRAMATIQ_BROKER_HOST=redis
+        - REQUESTGROUP_DATA_DOWNLOAD_URL=http://127.0.0.1:8000/requestgroups/{requestgroup_id}/
+        - REQUEST_DETAIL_URL=http://127.0.0.1:8000/requests/{request_id}/
+        - SCIENCE_APPLICATION_DETAIL_URL=http://127.0.0.1:8000/apply/{sciapp_id}/
+        - OBSERVATION_PORTAL_BASE_URL=http://127.0.0.1:8000/
+        - ORGANIZATION_EMAIL={my_organization_email}
+        - ORGANIZATION_NAME={my_organization_name}
+        - ORGANIZATION_DDT_EMAIL={my_organization_directors_email}
+        - ORGANIZATION_SUPPORT_EMAIL={my_organization_support_email}
+        - ORGANIZATION_ADMIN_EMAIL={my_organization_web_admin_email}
+        - DRAMATIQ_BROKER_HOST=redis
+        - DRAMATIQ_BROKER_PORT=6379
+        - MAX_FAILURES_PER_REQUEST=3
+        - CORS_ALLOW_CREDENTIALS=true
+        - CORS_ORIGIN_WHITELIST=http://localhost:8080,http://127.0.0.1:8080
+        - CSRF_TRUSTED_ORIGINS=localhost:8080,127.0.0.1:8080       
+    mem_limit: "512m"
+    restart: always
+    command: >
+        sh -c "python manage.py migrate
+        && python manage.py collectstatic --no-input
+        && python manage.py runserver 0.0.0.0:8000"
+    depends_on:
+      redis:
+          condition: service_healthy
+
+
+  dramatiq_task_scheduler:
+      image: observatorycontrolsystem/observation-portal
+      environment:
+          - DB_HOST=http://127.0.0.1:5432
+          - DB_NAME=observationportal
+          - DB_USER=postgres
+          - DB_PASSWORD=postgres
+          - SECRET_KEY=obs_portal_secret_key
+          - CONFIGDB_URL=http://configdb:7000
+          - DOWNTIMEDB_URL=http://downtime:7500
+          - ELASTICSEARCH_URL=
+          - CORS_ALLOW_CREDENTIALS=true
+          - CORS_ORIGIN_WHITELIST=http://localhost:8080,http://127.0.0.1:8080
+          - CSRF_TRUSTED_ORIGINS=localhost:8080,127.0.0.1:8080
+          - DRAMATIQ_BROKER_HOST=redis
+          - DRAMATIQ_BROKER_PORT=6379
+      mem_limit: "512m"
+      restart: always
+      command: >
+          sh -c "python manage.py runscript observation_portal.task_scheduler"
+      depends_on:
+          redis:
+              condition: service_healthy
+
+  dramatiq_worker:
+      image: observatorycontrolsystem/observation-portal
+      environment:
+          - DB_HOST=http://127.0.0.1:5432
+          - DB_NAME=observationportal
+          - DB_USER=postgres
+          - DB_PASSWORD=postgres
+          - DEBUG=true
+          - SECRET_KEY=obs_portal_secret_key
+          - CONFIGDB_URL=http://configdb:7000
+          - DOWNTIMEDB_URL=http://downtime:7500
+          - ELASTICSEARCH_URL=
+          - CORS_ALLOW_CREDENTIALS=true
+          - CORS_ORIGIN_WHITELIST=http://localhost:8080,http://127.0.0.1:8080
+          - CSRF_TRUSTED_ORIGINS=localhost:8080,127.0.0.1:8080
+          - DRAMATIQ_BROKER_HOST=redis
+          - DRAMATIQ_BROKER_PORT=6379
+      mem_limit: "512m"
+      restart: always
+      command: >
+          sh -c "python manage.py rundramatiq --processes 2 --threads 4"
+      depends_on:
+          redis:
+              condition: service_healthy
+
+  obs_portal_frontend:
+    image: observatorycontrolsystem/ocs-example-frontend
+    ports:
+        - "8080:8080"
+    restart: always
+    environment:
+        -  VUE_APP_OBSERVATION_PORTAL_API_URL=http://127.0.0.1:8000
+        -  INTERNAL_OBSERVATION_PORTAL_API_URL=http://127.0.0.1:8000
+    entrypoint: /entrypoint.sh
