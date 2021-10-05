@@ -140,6 +140,7 @@ class TestProposalNotifications(DramatiqTestCase):
 
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn(self.requestgroup.name, str(mail.outbox[0].message()))
+        self.assertIn('You can disable notifications', str(mail.outbox[0].message()))
         self.assertEqual(mail.outbox[0].to, [self.user.email])
 
     def test_user_loves_notifications(self):
