@@ -22,6 +22,7 @@ def request_notifications(request):
                 'request': request,
                 'detail_url': settings.REQUEST_DETAIL_URL.format(request_id=request.id),
                 'max_failure_limit': settings.MAX_FAILURES_PER_REQUEST,
+                'observation_portal_base_url': settings.OBSERVATION_PORTAL_BASE_URL,
                 'organization_name': settings.ORGANIZATION_NAME
             }
         )
@@ -45,6 +46,7 @@ def requestgroup_notifications(requestgroup):
             {
                 'requestgroup': requestgroup,
                 'download_url': settings.REQUESTGROUP_DATA_DOWNLOAD_URL.format(requestgroup_id=requestgroup.id),
+                'observation_portal_base_url': settings.OBSERVATION_PORTAL_BASE_URL,
                 'organization_name': settings.ORGANIZATION_NAME
             }
         )

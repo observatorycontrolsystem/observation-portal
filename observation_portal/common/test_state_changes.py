@@ -444,7 +444,8 @@ class TestStateFromConfigurationStatuses(SetTimeMixin, DramatiqTestCase):
         self.worker.join()
 
         self.assertEqual(len(mail.outbox), 1)
-        self.assertIn(str(self.request.id), str(mail.outbox[0].subject))
+        self.assertIn(f'Request #{self.request.id} has failed', str(mail.outbox[0].subject))
+        self.assertIn('You can disable notifications', str(mail.outbox[0].message()))
         self.assertIn(f"Request url: test_url/{self.request.id}", str(mail.outbox[0].message()))
         self.assertEqual(mail.outbox[0].to, [self.user.email])
 

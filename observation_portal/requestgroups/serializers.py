@@ -790,7 +790,12 @@ class RequestGroupSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         if data['proposal'] not in user.proposal_set.all():
             raise serializers.ValidationError(
-                _('You do not belong to the proposal you are trying to submit')
+                _('You do not belong to the proposal you are trying to submit with')
+            )
+
+        if not user.proposal_set.filter(id=data['proposal'], active=True).exists():
+            raise serializers.ValidationError(
+                _('The proposal you are trying to submit with is currently inactive')
             )
 
         # Validate that the ipp_value is within the min/max range
