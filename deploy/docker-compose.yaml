@@ -1,0 +1,76 @@
+version: '3.7'
+
+# This docker-compose file brings up a full Observation Portal stack with Task Scheduler,
+# Task Worker, and Example Frontend. There is also an associated container of redis for
+# caching and task scheduling. You will want to modify the DB_* environment variables to
+# connect to your db backend, and modify the *_URL environment variables to point to the
+# location where you have the associated services running, like CONFIGDB.
+services:
+    redis:
+        image: redis:3.2
+        command: ["redis-server", "--appendonly", "yes"]
+        restart: always
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 10s
+            timeout: 5s
+            retries: 30
+        expose:
+            -  "6379"
+        volumes:
+            -  ./data/redis:/data
+
+    nginx:
+        image: nginx:1.19.0-alpine
+        ports:
+            - 8000:80
+        volumes:
+            - ./nginx.conf:/etc/nginx/conf.d/default.conf
+            - static_volume:/static
+        depends_on:
+            - observation_portal
+
+    observation_portal:
+        image: observatorycontrolsystem/observation-portal:3.5.4
+        expose:
+            - "8001"
+        mem_limit: "512m"
+        restart: always
+        env_file:
+            - .env
+        volumes:
+            - static_volume:/static
+        command: >
+            sh -c "python manage.py migrate
+            && python manage.py collectstatic --no-input
+            && gunicorn --bind=0.0.0.0:8001 --worker-class=gevent --workers=4 --access-logfile=- --error-logfile=- observation_portal.wsgi:application --timeout=300"
+        depends_on:
+            redis:
+                condition: service_healthy
+
+    dramatiq_task_scheduler:
+        image: observatorycontrolsystem/observation-portal:3.5.4
+        env_file:
+            - .env
+        mem_limit: "512m"
+        restart: always
+        command: >
+            sh -c "python manage.py runscript observation_portal.task_scheduler"
+        depends_on:
+            redis:
+                condition: service_healthy
+
+    dramatiq_worker:
+        image: observatorycontrolsystem/observation-portal:3.5.4
+        env_file:
+            - .env
+        mem_limit: "512m"
+        restart: always
+        command: >
+            sh -c "python manage.py rundramatiq --processes 2 --threads 4"
+        depends_on:
+            redis:
+                condition: service_healthy
+
+volumes:
+    static_volume:
