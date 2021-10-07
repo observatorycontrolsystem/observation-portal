@@ -1,8 +1,9 @@
 version: '3.7'
 
 # This docker-compose file brings up a full Observation Portal stack with Task Scheduler,
-# Task Worker, and Example Frontend. There is also an associated container of redis for
-# caching and task scheduling. You will want to modify the DB_* environment variables to
+# and a Task Worker. There is also an associated container of redis for
+# caching and task scheduling. The environment variables are stored within the .env file
+# for re-use. You will want to modify the DB_* environment variables to
 # connect to your db backend, and modify the *_URL environment variables to point to the
 # location where you have the associated services running, like CONFIGDB.
 services:
@@ -31,7 +32,7 @@ services:
             - observation_portal
 
     observation_portal:
-        image: observatorycontrolsystem/observation-portal:3.5.4
+        image: ${IMAGE_NAME}:${IMAGE_TAG}
         expose:
             - "8001"
         mem_limit: "512m"
@@ -49,7 +50,7 @@ services:
                 condition: service_healthy
 
     dramatiq_task_scheduler:
-        image: observatorycontrolsystem/observation-portal:3.5.4
+        image: ${IMAGE_NAME}:${IMAGE_TAG}
         env_file:
             - .env
         mem_limit: "512m"
@@ -61,7 +62,7 @@ services:
                 condition: service_healthy
 
     dramatiq_worker:
-        image: observatorycontrolsystem/observation-portal:3.5.4
+        image: ${IMAGE_NAME}:${IMAGE_TAG}
         env_file:
             - .env
         mem_limit: "512m"
