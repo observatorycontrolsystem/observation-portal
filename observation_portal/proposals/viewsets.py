@@ -118,7 +118,6 @@ class SemesterViewSet(viewsets.ReadOnlyModelViewSet):
     filter_class = SemesterFilter
     ordering = ('-start',)
     queryset = Semester.objects.all()
-    undocumented_actions = ['proposals', 'timeallocations']
 
     @action(detail=True, methods=['get'])
     def proposals(self, request, pk=None):
@@ -172,6 +171,12 @@ class SemesterViewSet(viewsets.ReadOnlyModelViewSet):
             }
             results.append(timeallocation_dict)
         return Response(results)
+
+    def get_example_response(self):
+        example_responses = {'proposals': Response(data=EXAMPLE_RESPONSES['semesters']['proposals'], status=status.HTTP_200_OK),
+                             'timeallocations': Response(data=EXAMPLE_RESPONSES['semesters']['timeallocations'], status=status.HTTP_200_OK)}
+
+        return example_responses.get(self.action)
 
 
 class MembershipViewSet(ListAsDictMixin, DetailAsDictMixin, mixins.DestroyModelMixin, viewsets.ReadOnlyModelViewSet):

@@ -28,7 +28,7 @@ from observation_portal.requestgroups.request_utils import (
 )
 from observation_portal.common.mixins import ListAsDictMixin
 from observation_portal.common.schema import ObservationPortalSchema
-from observation_portal.common.doc_examples import EXAMPLE_RESPONSES
+from observation_portal.common.doc_examples import EXAMPLE_RESPONSES, QUERY_PARAMETERS
 
 logger = logging.getLogger(__name__)
 
@@ -249,7 +249,7 @@ class RequestViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
     )
     ordering = ('-id',)
     ordering_fields = ('id', 'state')
-    undocumented_actions = ['observations', 'telescope_states', 'airmass']
+    undocumented_actions = ['telescope_states']
 
     def get_queryset(self):
         if self.request.user.is_authenticated:
@@ -299,6 +299,21 @@ class RequestViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
         serializers = {'mosaic': import_string(settings.SERIALIZERS['requestgroups']['Mosaic'])}
 
         return serializers.get(self.action, self.serializer_class)(*args, **kwargs)
+
+    def get_response_serializer(self, *args, **kwargs):
+        serializers = {'observations': import_string(settings.SERIALIZERS['observations']['Observation'])}
+
+        return serializers.get(self.action, self.serializer_class)(*args, **kwargs)
+
+    def get_example_response(self):
+        example_data = {'airmass': Response(data=EXAMPLE_RESPONSES['requests']['airmass'], status=status.HTTP_200_OK)}
+
+        return example_data.get(self.action)
+
+    def get_query_parameters(self):
+        query_parameters = {'observations': QUERY_PARAMETERS['requests']['observations']}
+
+        return query_parameters.get(self.action)
 
     def get_endpoint_name(self):
         endpoint_names = {'mosaic': 'expandMosaic'}
