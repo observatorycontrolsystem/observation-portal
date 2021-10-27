@@ -300,13 +300,9 @@ class RequestViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
 
         return serializers.get(self.action, self.serializer_class)(*args, **kwargs)
 
-    def get_response_serializer(self, *args, **kwargs):
-        serializers = {'observations': import_string(settings.SERIALIZERS['observations']['Observation'])}
-
-        return serializers.get(self.action, self.serializer_class)(*args, **kwargs)
-
     def get_example_response(self):
-        example_data = {'airmass': Response(data=EXAMPLE_RESPONSES['requests']['airmass'], status=status.HTTP_200_OK)}
+        example_data = {'airmass': Response(data=EXAMPLE_RESPONSES['requests']['airmass'], status=status.HTTP_200_OK),
+                        'observations': Response(data=EXAMPLE_RESPONSES['requests']['observations'], status=status.HTTP_200_OK)}
 
         return example_data.get(self.action)
 
@@ -316,7 +312,9 @@ class RequestViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
         return query_parameters.get(self.action)
 
     def get_endpoint_name(self):
-        endpoint_names = {'mosaic': 'expandMosaic'}
+        endpoint_names = {'mosaic': 'expandMosaic',
+                          'observations': 'observationsForRequest',
+                          'airmass': 'airmassForRequest'}
 
         return endpoint_names.get(self.action)
 

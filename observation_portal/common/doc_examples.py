@@ -706,7 +706,38 @@ EXAMPLE_RESPONSES = {
                 }
             },
             'airmass_limit': 2.0
-        }
+        },
+        'observations': [{
+            "site": "string",
+            "enclosure": "string",
+            "telescope": "string",
+            "start": "2019-08-24T14:15:22Z",
+            "end": "2019-08-24T14:15:22Z",
+            "priority": 2147483647,
+            "configuration_statuses": [
+                {
+                    "id": 0,
+                    "summary": {
+                        "start": "2019-08-24T14:15:22Z",
+                        "end": "2019-08-24T14:15:22Z",
+                        "state": "string",
+                        "reason": "string",
+                        "time_completed": 0,
+                        "events": {}
+                    },
+                    "instrument_name": "string",
+                    "guide_camera_name": "string",
+                    "end": "2019-08-24T14:15:22Z",
+                    "exposures_start_at": "2019-08-24T14:15:22Z",
+                    "state": "PENDING",
+                    "configuration": 0
+                }
+            ],
+            "request": 0,
+            "state": "PENDING",
+            "modified": "2019-08-24T14:15:22Z",
+            "created": "2019-08-24T14:15:22Z"
+        }]
     },
     'proposals': {
         'tags': ['tagA', 'tagB', 'tagC']
