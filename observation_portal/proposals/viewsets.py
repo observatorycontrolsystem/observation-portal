@@ -37,6 +37,8 @@ class ProposalViewSet(DetailAsDictMixin, ListAsDictMixin, viewsets.ReadOnlyModel
 
     @action(detail=True, methods=['post'])
     def notification(self, request, pk=None):
+        """ Subscribe to notifications
+        """
         proposal = self.get_object()
         request_serializer = self.get_request_serializer(data=request.data)
         if request_serializer.is_valid():
@@ -52,6 +54,8 @@ class ProposalViewSet(DetailAsDictMixin, ListAsDictMixin, viewsets.ReadOnlyModel
 
     @action(detail=True, methods=['post'], permission_classes=(IsPrincipleInvestigator,))
     def invite(self, request, pk=None):
+        """ Invite a Co-Investigator to the proposal. Must be a Principle Investigator.
+        """
         proposal = self.get_object()
         request_serializer = self.get_request_serializer(
             data=request.data,
@@ -67,6 +71,8 @@ class ProposalViewSet(DetailAsDictMixin, ListAsDictMixin, viewsets.ReadOnlyModel
 
     @action(detail=True, methods=['post'], permission_classes=(IsPrincipleInvestigator,))
     def globallimit(self, request, pk=None):
+        """ Set global time limit for Co-Investigators. Must be a Principle Investigator
+        """
         proposal = self.get_object()
         request_serializer = self.get_request_serializer(data=request.data)
         if request_serializer.is_valid():
@@ -80,6 +86,8 @@ class ProposalViewSet(DetailAsDictMixin, ListAsDictMixin, viewsets.ReadOnlyModel
 
     @action(detail=False, methods=['get'])
     def tags(self, request, pk=None):
+        """ Get tags for a proposal
+        """
         proposal_tags = get_queryset_field_values(self.get_queryset(), 'tags')
         return Response(list(proposal_tags))
 
@@ -121,6 +129,8 @@ class SemesterViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=True, methods=['get'])
     def proposals(self, request, pk=None):
+        """ Get proposals in a given semester.
+        """
         semester = self.get_object()
         proposals = semester.proposals.filter(
             active=True, non_science=False
@@ -150,6 +160,8 @@ class SemesterViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=True, methods=['get'], permission_classes=(IsAdminUser,))
     def timeallocations(self, request, pk=None):
+        """ Get TimeAllocations for a given semester.
+        """
         timeallocations = self.get_object().timeallocation_set.prefetch_related(
             'proposal', 'proposal__membership_set', 'proposal__membership_set__user'
         ).distinct()
@@ -210,6 +222,8 @@ class MembershipViewSet(ListAsDictMixin, DetailAsDictMixin, mixins.DestroyModelM
 
     @action(detail=True, methods=['post'])
     def limit(self, request, pk=None):
+        """ Set time limit for a member of a proposal.
+        """
         membership = self.get_object()
         request_serializer = self.get_request_serializer(data=request.data, context={'membership': membership})
         if request_serializer.is_valid():

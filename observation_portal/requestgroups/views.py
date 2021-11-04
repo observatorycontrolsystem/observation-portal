@@ -42,8 +42,7 @@ def get_start_end_parameters(request, default_days_back):
 
 
 class TelescopeStatesView(APIView):
-    """
-    Retrieves the telescope states for all telescopes between the start and end times
+    """Retrieves the telescope states for all telescopes between the start and end times
     """
     permission_classes = (AllowAny,)
     schema = None
@@ -62,8 +61,7 @@ class TelescopeStatesView(APIView):
 
 
 class TelescopeAvailabilityView(APIView):
-    """
-    Retrieves the nightly percent availability of each telescope between the start and end times
+    """Retrieves the nightly percent availability of each telescope between the start and end times
     """
     permission_classes = (AllowAny,)
     schema = None
@@ -91,8 +89,7 @@ class TelescopeAvailabilityView(APIView):
 
 
 class AirmassView(APIView):
-    """
-    Gets the airmasses for the request at available sites
+    """Gets the airmasses for the request at available sites
     """
     permission_classes = (AllowAny,)
     schema = ObservationPortalSchema(tags=['Requests'])
@@ -116,6 +113,8 @@ class AirmassView(APIView):
 
 
 class InstrumentsInformationView(APIView):
+    """ Gets information about current instruments from the ConfigDB.
+    """
     permission_classes = (AllowAny,)
     schema = ObservationPortalSchema(tags=['Utility'])
     filter_backends = (DjangoFilterBackend,)
@@ -167,8 +166,7 @@ class InstrumentsInformationView(APIView):
 
 
 class ContentionView(APIView):
-    """
-    Retrieve the contention for a given instrument type binned by RA hour. For every RA hour, the time currently requested
+    """Retrieve the contention for a given instrument type binned by RA hour. For every RA hour, the time currently requested
     on this instrument type for the next 24 hours is returned.
     """
     permission_classes = (AllowAny,)
@@ -189,8 +187,7 @@ class ContentionView(APIView):
 
 
 class PressureView(APIView):
-    """
-    Retrieves the pressure for a given site and instrument for the next 24 hours, binned into 15-minute intervals. The pressure
+    """Retrieves the pressure for a given site and instrument for the next 24 hours, binned into 15-minute intervals. The pressure
     for an observation is defined as its length divided by the total length of time during which it is visible.
     """
     permission_classes = (AllowAny,)
@@ -216,9 +213,8 @@ class PressureView(APIView):
 
 
 class ObservationPortalLastChangedView(APIView):
-    '''
-        Returns the datetime of the last status of requests change or new requests addition
-    '''
+    """Returns the datetime of the last status of requests change or new requests addition
+    """
     permission_classes = (IsAdminUser,)
     schema = ObservationPortalSchema(tags=['RequestGroups'], is_list_view=False)
     filter_class = LastChangedFilter
