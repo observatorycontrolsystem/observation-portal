@@ -181,7 +181,7 @@ class ContentionView(APIView):
 
     def get_example_response(self):
         return Response(data=EXAMPLE_RESPONSES['requestgroups']['contention'], status=status.HTTP_200_OK)
-    
+
     def get_endpoint_name(self):
         return 'getContention'
 
