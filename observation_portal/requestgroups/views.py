@@ -178,12 +178,12 @@ class ContentionView(APIView):
         else:
             contention = Contention(instrument_type)
         return Response(contention.data())
-    
+
     def get_example_response(self):
         return Response(data=EXAMPLE_RESPONSES['requestgroups']['contention'], status=status.HTTP_200_OK)
     
     def get_endpoint_name(self):
-        return 'getContention'   
+        return 'getContention'
 
 
 class PressureView(APIView):
@@ -209,7 +209,7 @@ class PressureView(APIView):
         return QUERY_PARAMETERS['requestgroups']['pressure']
 
     def get_endpoint_name(self):
-        return 'getPressure'   
+        return 'getPressure'
 
 
 class ObservationPortalLastChangedView(APIView):
