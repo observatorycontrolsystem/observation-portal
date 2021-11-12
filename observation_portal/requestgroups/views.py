@@ -148,6 +148,7 @@ class InstrumentsInformationView(APIView):
                     'modes': configdb.get_modes_by_type(instrument_type),
                     'default_acceptability_threshold': configdb.get_default_acceptability_threshold(instrument_type),
                     'configuration_types': configdb.get_configuration_types(instrument_type),
+                    'default_configuration_type': configdb.get_default_configuration_type(instrument_type),
                     'camera_type': {
                         'science_field_of_view': configdb.get_diagonal_ccd_fov(instrument_type, autoguider=False),
                         'autoguider_field_of_view': configdb.get_diagonal_ccd_fov(instrument_type, autoguider=True),

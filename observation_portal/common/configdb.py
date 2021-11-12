@@ -373,6 +373,20 @@ class ConfigDB(object):
         return {}
 
     @cache_function()
+    def get_default_configuration_type(self, instrument_type_code: str) -> str:
+        """Get the default configuration types for an instrument_type is it exists.
+
+        Parameters:
+            instrument_type_code: Instrument type for which to get the configuration types
+        Returns:
+             str code of default configuration type or empty string
+        """
+        instrument_types = self.get_instrument_types()
+        if instrument_type_code.upper() in instrument_types and instrument_types[instrument_type_code.upper()]['default_configuration_type']:
+            return instrument_types[instrument_type_code.upper()]['default_configuration_type']
+        return ''
+
+    @cache_function()
     def get_optical_elements(self, instrument_type_code: str) -> dict:
         """Get the available optical elements.
 

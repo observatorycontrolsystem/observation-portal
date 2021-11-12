@@ -43,6 +43,7 @@
                     "name": "1M0-SCICAM-SBIG",
                     "instrument_category": "IMAGE",
                     "allow_self_guiding": true,
+                    "default_configuration_type": "EXPOSE",
                     "configuration_types": [
                       {
                           "name": "Expose",
@@ -218,6 +219,7 @@
                     "name": "1M0-SCICAM-SBIG",
                     "instrument_category": "IMAGE",
                     "allow_self_guiding": true,
+                    "default_configuration_type": "EXPOSE",
                     "configuration_types": [
                       {
                           "name": "Expose",
@@ -393,6 +395,7 @@
                     "name": "1M0-SCICAM-SBIG",
                     "instrument_category": "IMAGE",
                     "allow_self_guiding": true,
+                    "default_configuration_type": "EXPOSE",
                     "configuration_types": [
                       {
                           "name": "Expose",
@@ -588,6 +591,7 @@
                     "acquire_exposure_time": 30,
                     "observation_front_padding": 240,
                     "fixed_overhead_per_exposure": 0.5,
+                    "default_configuration_type": "SPECTRUM",
                     "configuration_types": [
                       {
                           "name": "Spectrum",
@@ -797,6 +801,7 @@
                     "name": "1M0-SCICAM-SBIG",
                     "instrument_category": "IMAGE",
                     "allow_self_guiding": true,
+                    "default_configuration_type": "EXPOSE",
                     "configuration_types": [
                       {
                           "name": "Expose",
@@ -972,6 +977,7 @@
                     "name": "1M0-NRES-SCICAM",
                     "instrument_category": "SPECTRA",
                     "allow_self_guiding": false,
+                    "default_configuration_type": "NRES_SPECTRUM",
                     "configuration_types": [
                       {
                           "name": "NRES Spectrum",
@@ -1165,6 +1171,7 @@
                     "acquire_exposure_time": 30,
                     "observation_front_padding": 240,
                     "fixed_overhead_per_exposure": 0.5,
+                    "default_configuration_type": "SPECTRUM",
                     "configuration_types": [
                       {
                           "name": "Spectrum",
@@ -1437,6 +1444,7 @@
                     },
                     "default_acceptability_threshold": 90.0,
                     "allow_self_guiding": true,
+                    "default_configuration_type": "EXPOSE",
                     "configuration_types": [
                       {
                           "name": "Expose",
@@ -1731,6 +1739,7 @@
                     "name": "1M0-SCICAM-SBIG",
                     "instrument_category": "IMAGE",
                     "allow_self_guiding": true,
+                    "default_configuration_type": "EXPOSE",
                     "configuration_types": [
                       {
                           "name": "Expose",
@@ -1906,6 +1915,7 @@
                     "name": "1M0-SCICAM-SBXX",
                     "instrument_category": "IMAGE",
                     "allow_self_guiding": true,
+                    "default_configuration_type": "EXPOSE",
                     "configuration_types": [
                       {
                           "name": "Expose",
@@ -2102,6 +2112,7 @@
                     "name": "1M0-SCICAM-SBAG",
                     "instrument_category": "IMAGE",
                     "allow_self_guiding": true,
+                    "default_configuration_type": "EXPOSE",
                     "configuration_types": [
                       {
                           "name": "Expose",
@@ -2298,6 +2309,7 @@
                     "name": "1M0-SCICAM-SOAR",
                     "instrument_category": "IMAGE",
                     "allow_self_guiding": true,
+                    "default_configuration_type": "EXPOSE",
                     "configuration_types": [
                       {
                           "name": "Expose",
