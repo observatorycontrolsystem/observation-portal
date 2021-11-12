@@ -177,9 +177,628 @@ EXAMPLE_RESPONSES = {
             'extra_params': {
                 'dither_pattern': 'line'
             }
+        },
+        'contention': {
+            'ra_hours': [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23
+            ],
+            'instrument_type': '2M0-INSTRUMENT-A',
+            'time_calculated': '2021-10-26T23:14:30.275247Z',
+            'contention_data': [
+                {
+                    'All Proposals': 0
+                },
+                {
+                    'All Proposals': 2262.0
+                },
+                {
+                    'All Proposals': 0
+                },
+                {
+                    'All Proposals': 0
+                },
+                {
+                    'All Proposals': 0
+                },
+                {
+                    'All Proposals': 0
+                },
+                {
+                    'All Proposals': 0
+                },
+                {
+                    'All Proposals': 0
+                },
+                {
+                    'All Proposals': 0
+                },
+                {
+                    'All Proposals': 839.0
+                },
+                {
+                    'All Proposals': 0
+                },
+                {
+                    'All Proposals': 0
+                },
+                {
+                    'All Proposals': 0
+                },
+                {
+                    'All Proposals': 0
+                },
+                {
+                    'All Proposals': 0
+                },
+                {
+                    'All Proposals': 135.0
+                },
+                {
+                    'All Proposals': 1480.0
+                },
+                {
+                    'All Proposals': 4752.0
+                },
+                {
+                    'All Proposals': 1645.0
+                },
+                {
+                    'All Proposals': 470.0
+                },
+                {
+                    'All Proposals': 1058.0
+                },
+                {
+                    'All Proposals': 0
+                },
+                {
+                    'All Proposals': 0
+                },
+                {
+                    'All Proposals': 0
+                }
+            ]
+        },
+        'pressure': {
+            "site_nights": [
+                {
+                    "name": "mba",
+                    "start": 0.29388888888888887,
+                    "stop": 9.322222222222223
+                }
+            ],
+            "time_bins": [
+                "2021-10-26T23:38:24.763467Z",
+                "2021-10-26T23:53:24.763467Z",
+                "2021-10-27T00:08:24.763467Z",
+                "2021-10-27T00:23:24.763467Z",
+                "2021-10-27T00:38:24.763467Z",
+                "2021-10-27T00:53:24.763467Z",
+                "2021-10-27T01:08:24.763467Z",
+                "2021-10-27T01:23:24.763467Z",
+                "2021-10-27T01:38:24.763467Z",
+                "2021-10-27T01:53:24.763467Z",
+                "2021-10-27T02:08:24.763467Z",
+                "2021-10-27T02:23:24.763467Z",
+                "2021-10-27T02:38:24.763467Z",
+                "2021-10-27T02:53:24.763467Z",
+                "2021-10-27T03:08:24.763467Z",
+                "2021-10-27T03:23:24.763467Z",
+                "2021-10-27T03:38:24.763467Z",
+                "2021-10-27T03:53:24.763467Z",
+                "2021-10-27T04:08:24.763467Z",
+                "2021-10-27T04:23:24.763467Z",
+                "2021-10-27T04:38:24.763467Z",
+                "2021-10-27T04:53:24.763467Z",
+                "2021-10-27T05:08:24.763467Z",
+                "2021-10-27T05:23:24.763467Z",
+                "2021-10-27T05:38:24.763467Z",
+                "2021-10-27T05:53:24.763467Z",
+                "2021-10-27T06:08:24.763467Z",
+                "2021-10-27T06:23:24.763467Z",
+                "2021-10-27T06:38:24.763467Z",
+                "2021-10-27T06:53:24.763467Z",
+                "2021-10-27T07:08:24.763467Z",
+                "2021-10-27T07:23:24.763467Z",
+                "2021-10-27T07:38:24.763467Z",
+                "2021-10-27T07:53:24.763467Z",
+                "2021-10-27T08:08:24.763467Z",
+                "2021-10-27T08:23:24.763467Z",
+                "2021-10-27T08:38:24.763467Z",
+                "2021-10-27T08:53:24.763467Z",
+                "2021-10-27T09:08:24.763467Z",
+                "2021-10-27T09:23:24.763467Z",
+                "2021-10-27T09:38:24.763467Z",
+                "2021-10-27T09:53:24.763467Z",
+                "2021-10-27T10:08:24.763467Z",
+                "2021-10-27T10:23:24.763467Z",
+                "2021-10-27T10:38:24.763467Z",
+                "2021-10-27T10:53:24.763467Z",
+                "2021-10-27T11:08:24.763467Z",
+                "2021-10-27T11:23:24.763467Z",
+                "2021-10-27T11:38:24.763467Z",
+                "2021-10-27T11:53:24.763467Z",
+                "2021-10-27T12:08:24.763467Z",
+                "2021-10-27T12:23:24.763467Z",
+                "2021-10-27T12:38:24.763467Z",
+                "2021-10-27T12:53:24.763467Z",
+                "2021-10-27T13:08:24.763467Z",
+                "2021-10-27T13:23:24.763467Z",
+                "2021-10-27T13:38:24.763467Z",
+                "2021-10-27T13:53:24.763467Z",
+                "2021-10-27T14:08:24.763467Z",
+                "2021-10-27T14:23:24.763467Z",
+                "2021-10-27T14:38:24.763467Z",
+                "2021-10-27T14:53:24.763467Z",
+                "2021-10-27T15:08:24.763467Z",
+                "2021-10-27T15:23:24.763467Z",
+                "2021-10-27T15:38:24.763467Z",
+                "2021-10-27T15:53:24.763467Z",
+                "2021-10-27T16:08:24.763467Z",
+                "2021-10-27T16:23:24.763467Z",
+                "2021-10-27T16:38:24.763467Z",
+                "2021-10-27T16:53:24.763467Z",
+                "2021-10-27T17:08:24.763467Z",
+                "2021-10-27T17:23:24.763467Z",
+                "2021-10-27T17:38:24.763467Z",
+                "2021-10-27T17:53:24.763467Z",
+                "2021-10-27T18:08:24.763467Z",
+                "2021-10-27T18:23:24.763467Z",
+                "2021-10-27T18:38:24.763467Z",
+                "2021-10-27T18:53:24.763467Z",
+                "2021-10-27T19:08:24.763467Z",
+                "2021-10-27T19:23:24.763467Z",
+                "2021-10-27T19:38:24.763467Z",
+                "2021-10-27T19:53:24.763467Z",
+                "2021-10-27T20:08:24.763467Z",
+                "2021-10-27T20:23:24.763467Z",
+                "2021-10-27T20:38:24.763467Z",
+                "2021-10-27T20:53:24.763467Z",
+                "2021-10-27T21:08:24.763467Z",
+                "2021-10-27T21:23:24.763467Z",
+                "2021-10-27T21:38:24.763467Z",
+                "2021-10-27T21:53:24.763467Z",
+                "2021-10-27T22:08:24.763467Z",
+                "2021-10-27T22:23:24.763467Z",
+                "2021-10-27T22:38:24.763467Z",
+                "2021-10-27T22:53:24.763467Z",
+                "2021-10-27T23:08:24.763467Z",
+                "2021-10-27T23:23:24.763467Z"
+            ],
+            "instrument_type": "2M0-INSTRUMENT-A",
+            "site": "mba",
+            "time_calculated": "2021-10-26T23:38:24.763467Z",
+            "pressure_data": [
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 1.4521305933539395
+                },
+                {
+                    "All Proposals": 1.3516829487014748
+                },
+                {
+                    "All Proposals": 1.3980128087678538
+                },
+                {
+                    "All Proposals": 1.0867136316882635
+                },
+                {
+                    "All Proposals": 0.6674214059137314
+                },
+                {
+                    "All Proposals": 0.5243110660214052
+                },
+                {
+                    "All Proposals": 0.4918441257569274
+                },
+                {
+                    "All Proposals": 0.47695347894445644
+                },
+                {
+                    "All Proposals": 0.47695347894445644
+                },
+                {
+                    "All Proposals": 0.506330508764356
+                },
+                {
+                    "All Proposals": 0.506330508764356
+                },
+                {
+                    "All Proposals": 0.506330508764356
+                },
+                {
+                    "All Proposals": 0.7958022978140535
+                },
+                {
+                    "All Proposals": 0.9573661563395153
+                },
+                {
+                    "All Proposals": 0.8718269406532408
+                },
+                {
+                    "All Proposals": 0.8718269406532408
+                },
+                {
+                    "All Proposals": 0.9397849317447369
+                },
+                {
+                    "All Proposals": 0.9077210657586094
+                },
+                {
+                    "All Proposals": 0.8820800401175837
+                },
+                {
+                    "All Proposals": 0.9205329423293274
+                },
+                {
+                    "All Proposals": 0.867174324075846
+                },
+                {
+                    "All Proposals": 0.867174324075846
+                },
+                {
+                    "All Proposals": 0.8701191211096724
+                },
+                {
+                    "All Proposals": 0.8869993486198404
+                },
+                {
+                    "All Proposals": 1.0116810671421042
+                },
+                {
+                    "All Proposals": 0.9287946434065444
+                },
+                {
+                    "All Proposals": 0.8429179228799135
+                },
+                {
+                    "All Proposals": 0.8429179228799135
+                },
+                {
+                    "All Proposals": 0.6608858271558946
+                },
+                {
+                    "All Proposals": 0.6694562852050703
+                },
+                {
+                    "All Proposals": 0.64951003510009
+                },
+                {
+                    "All Proposals": 0.6244228113087624
+                },
+                {
+                    "All Proposals": 0.4354579504104918
+                },
+                {
+                    "All Proposals": 0.5021348869271227
+                },
+                {
+                    "All Proposals": 0.5021348869271227
+                },
+                {
+                    "All Proposals": 0.4727578571072232
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                },
+                {
+                    "All Proposals": 0
+                }
+            ]
         }
+    },
+    'requests': {
+        'airmass': {
+            'airmass_data': {
+                'site-A': {
+                    'times': [
+                        '2021-09-14T10:56',
+                        '2021-09-14T11:06',
+                        '2021-09-14T11:16',
+                        '2021-09-14T11:26',
+                        '2021-09-14T11:36',
+                        '2021-09-14T11:46'
+                    ],
+                    'airmasses': [
+                        1.0099357638834783,
+                        1.0144828689796268,
+                        1.0204314519662752,
+                        1.027818652396446,
+                        1.0366912094413503,
+                        1.0471061694171302
+                    ]
+                }
+            },
+            'airmass_limit': 2.0
+        },
+        'observations': [{
+            "site": "string",
+            "enclosure": "string",
+            "telescope": "string",
+            "start": "2019-08-24T14:15:22Z",
+            "end": "2019-08-24T14:15:22Z",
+            "priority": 2147483647,
+            "configuration_statuses": [
+                {
+                    "id": 0,
+                    "summary": {
+                        "start": "2019-08-24T14:15:22Z",
+                        "end": "2019-08-24T14:15:22Z",
+                        "state": "string",
+                        "reason": "string",
+                        "time_completed": 0,
+                        "events": {}
+                    },
+                    "instrument_name": "string",
+                    "guide_camera_name": "string",
+                    "end": "2019-08-24T14:15:22Z",
+                    "exposures_start_at": "2019-08-24T14:15:22Z",
+                    "state": "PENDING",
+                    "configuration": 0
+                }
+            ],
+            "request": 0,
+            "state": "PENDING",
+            "modified": "2019-08-24T14:15:22Z",
+            "created": "2019-08-24T14:15:22Z"
+        }]
     },
     'proposals': {
         'tags': ['tagA', 'tagB', 'tagC']
+    },
+    'semesters': {
+        'proposals': [
+            {
+                'id': 'PROPOSAL-A-2021',
+                'title': '2021 Proposal A',
+                'abstract': 'Proposal A Abstract',
+                'allocation': {
+                    '2M0-INSTRUMENT-A': {
+                        'std': 87.9,
+                        'rr': 0.0,
+                        'tc': 0.0
+                    },
+                },
+                'pis': [
+                    {
+                        'first_name': 'Eleanor',
+                        'last_name': 'Arroway',
+                        'institution': 'International Institute for Astrophysics'
+                    }
+                ],
+                'sca_id': 'IIA',
+                'sca_name': 'International Institute for Astrophysics',
+                'semesters': [
+                    '2021B'
+                ]
+            }],
+        'timeallocations': [
+            {
+                'id': 3523,
+                'ipp_limit': 4.0,
+                'ipp_time_available': 2.0,
+                'std_allocation': 40.0,
+                'std_time_used': 0.0,
+                'rr_allocation': 0.0,
+                'rr_time_used': 0.0,
+                'tc_allocation': 0.0,
+                'tc_time_used': 0.0,
+                'instrument_types': [
+                    '2M0-INSTRUMENT-A'
+                ],
+                'proposal': {
+                    'notes': '',
+                    'id': 'PROPOSAL-A-2021',
+                    'tac_priority': 20,
+                    'num_users': 5,
+                    'pis': [
+                        {
+                            'first_name': 'Eleanor',
+                            'last_name': 'Arroway'
+                        }
+                    ]
+                }
+            }]
     }
 }
+
+
+QUERY_PARAMETERS = {'requests': {'observations': [{'in': 'query', 'name': 'exclude_canceled', 'required': False, 'schema': {'type': 'boolean', 'default': False}, 'description': 'Exclude canceled observations'}]},
+                    'requestgroups': {'pressure': [{'in': 'query', 'name': 'site', 'required': True, 'schema': {'type': 'string'}, 'description': 'Site'},
+                                                   {'in': 'query', 'name': 'instrument', 'required': True, 'schema': {'type': 'string'}, 'description': 'Instrument Type'}]}}
