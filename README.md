@@ -17,7 +17,7 @@ Within an observatory control system, the observation portal provides modules fo
 
 Optional prerequisites can be skipped for reduced functionality.
 
--   Python >= 3.6
+-   Python >= 3.7
 -   PostgreSQL >= 9.6
 -   A running [Configuration Database](https://github.com/observatorycontrolsystem/configdb) 
 -   (Optional) A running [Downtime Database](https://github.com/observatorycontrolsystem/downtime)
