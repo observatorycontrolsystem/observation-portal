@@ -6,7 +6,7 @@ from django.core.cache import cache
 from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from observation_portal.observations.models import Observation
 from observation_portal.proposals.models import TimeAllocation

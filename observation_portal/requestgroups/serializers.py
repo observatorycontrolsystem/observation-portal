@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 
 from cerberus import Validator
 from rest_framework import serializers
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.cache import cache
 from django.db import transaction

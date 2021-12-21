@@ -8,6 +8,7 @@ from django.db.models.signals import post_save
 from django.core import mail
 from django_dramatiq.test import DramatiqTestCase
 
+from observation_portal.accounts.test_utils import blend_user
 from observation_portal.observations.signals.handlers import cb_configurationstatus_post_save
 import observation_portal.observations.signals.handlers  # noqa
 import observation_portal.requestgroups.signals.handlers  # noqa
@@ -30,8 +31,7 @@ class TestStateChanges(SetTimeMixin, TestCase):
     def setUp(self):
         super().setUp()
         self.proposal = dmixer.blend(Proposal)
-        self.user = dmixer.blend(User)
-        dmixer.blend(Profile, user=self.user)
+        self.user = blend_user()
         self.client.force_login(self.user)
         now = timezone.now()
         # Create a requestgroup with 3 requests, each request has 3 configurations with current windows and observations
@@ -347,9 +347,8 @@ class TestStateFromConfigurationStatuses(SetTimeMixin, DramatiqTestCase):
     def setUp(self):
         super().setUp()
         self.proposal = dmixer.blend(Proposal)
-        self.user = dmixer.blend(User)
+        self.user = blend_user(profile_params={'notifications_enabled': True})
         dmixer.blend(Membership, user=self.user, proposal=self.proposal)
-        dmixer.blend(Profile, user=self.user, notifications_enabled=True)
         self.client.force_login(self.user)
         self.now = timezone.now()
         self.window = dmixer.blend(Window, start=self.now - timedelta(days=1), end=self.now + timedelta(days=1))
@@ -544,8 +543,7 @@ class TestRequestState(SetTimeMixin, TestCase):
     def setUp(self):
         super().setUp()
         self.proposal = dmixer.blend(Proposal)
-        self.user = dmixer.blend(User)
-        dmixer.blend(Profile, user=self.user)
+        self.user = blend_user()
         self.client.force_login(self.user)
         self.now = timezone.now()
         self.window = dmixer.blend(Window, start=self.now - timedelta(days=1), end=self.now + timedelta(days=1))

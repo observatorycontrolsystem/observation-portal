@@ -89,8 +89,7 @@ class TestPostScheduleApi(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
         self.proposal = mixer.blend(Proposal, direct_submission=True)
-        self.user = mixer.blend(User, is_admin=True, is_superuser=True, is_staff=True)
-        mixer.blend(Profile, user=self.user)
+        self.user = blend_user(user_params={'is_admin': True, 'is_superuser': True, 'is_staff': True})
         self.client.force_login(self.user)
         self.semester = mixer.blend(
             Semester, id='2016B', start=datetime(2016, 9, 1, tzinfo=timezone.utc),
@@ -102,13 +101,13 @@ class TestPostScheduleApi(SetTimeMixin, APITestCase):
         self.observation['proposal'] = self.proposal.id
 
     def test_post_observation_user_not_logged_in(self):
-        other_user = mixer.blend(User)
+        other_user = blend_user()
         self.client.force_login(other_user)
         response = self.client.post(reverse('api:schedule-list'), data=self.observation)
         self.assertEqual(response.status_code, 403)
 
     def test_post_observation_user_not_on_proposal(self):
-        other_user = mixer.blend(User, is_staff=True)
+        other_user = blend_user(user_params={'is_staff': True})
         self.client.force_login(other_user)
         response = self.client.post(reverse('api:schedule-list'), data=self.observation)
         self.assertEqual(response.status_code, 400)
@@ -362,8 +361,7 @@ class TestPostScheduleMultiConfigApi(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
         self.proposal = mixer.blend(Proposal, direct_submission=True)
-        self.user = mixer.blend(User, is_admin=True, is_superuser=True, is_staff=True)
-        mixer.blend(Profile, user=self.user)
+        self.user = blend_user(user_params={'is_admin': True, 'is_superuser': True, 'is_staff': True})
         self.client.force_login(self.user)
         self.semester = mixer.blend(
             Semester, id='2016B', start=datetime(2016, 9, 1, tzinfo=timezone.utc),
@@ -422,8 +420,7 @@ class TestObservationApiBase(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
         self.proposal = mixer.blend(Proposal, direct_submission=False)
-        self.user = mixer.blend(User, is_admin=True, is_superuser=True, is_staff=True)
-        mixer.blend(Profile, user=self.user)
+        self.user = blend_user(user_params={'is_admin': True, 'is_superuser': True, 'is_staff': True})
         self.client.force_login(self.user)
         self.semester = mixer.blend(
             Semester, id='2016B', start=datetime(2016, 9, 1, tzinfo=timezone.utc),

@@ -2,6 +2,7 @@ from django.test import TestCase
 from django.contrib.auth.models import User
 from mixer.backend.django import mixer
 
+from observation_portal.accounts.test_utils import blend_user
 from observation_portal.sciapplications.models import ScienceApplication, Call, TimeRequest, CoInvestigator, Instrument
 from observation_portal.proposals.models import Semester, Membership, ProposalInvite, ScienceCollaborationAllocation
 
@@ -9,7 +10,7 @@ from observation_portal.proposals.models import Semester, Membership, ProposalIn
 class TestSciAppToProposal(TestCase):
     def setUp(self):
         self.semester = mixer.blend(Semester)
-        self.user = mixer.blend(User)
+        self.user = blend_user()
         self.client.force_login(self.user)
         self.call = mixer.blend(
             Call, semester=self.semester,
@@ -37,7 +38,7 @@ class TestSciAppToProposal(TestCase):
         self.assertTrue(ProposalInvite.objects.filter(proposal=proposal, role=Membership.PI).exists())
 
     def test_create_proposal_with_supplied_existant_pi(self):
-        user = mixer.blend(User)
+        user = blend_user()
         app = mixer.blend(ScienceApplication, submitter=self.user, pi=user.email)
         tr = mixer.blend(TimeRequest, approved=True, science_application=app)
         proposal = app.convert_to_proposal()
@@ -47,7 +48,7 @@ class TestSciAppToProposal(TestCase):
         self.assertFalse(ProposalInvite.objects.filter(proposal=proposal).exists())
 
     def test_create_proposal_with_tags(self):
-        user = mixer.blend(User)
+        user = blend_user()
         app = mixer.blend(ScienceApplication, submitter=self.user, pi=user.email)
         tr = mixer.blend(TimeRequest, approved=True, science_application=app)
         proposal = app.convert_to_proposal()
@@ -70,8 +71,8 @@ class TestSciAppToProposal(TestCase):
 
     def test_create_proposal_with_existant_cois(self):
         app = mixer.blend(ScienceApplication, submitter=self.user, pi='')
-        coi1 = mixer.blend(User, email='1@example.com')
-        coi2 = mixer.blend(User, email='2@example.com')
+        coi1 = blend_user(user_params={'email': '1@example.com'})
+        coi2 = blend_user(user_params={'email': '2@example.com'})
         mixer.blend(CoInvestigator, email='1@example.com', science_application=app)
         mixer.blend(CoInvestigator, email='2@example.com', science_application=app)
         mixer.blend(CoInvestigator, email='3@example.com', science_application=app)
@@ -103,8 +104,8 @@ class TestSciAppToProposal(TestCase):
         self.assertEqual(proposal.timeallocation_set.get(semester=other_semester).instrument_types[0], it2.code)
 
     def test_create_collab_proposal(self):
-        pi = mixer.blend(User)
-        submitter = mixer.blend(User)
+        pi = blend_user()
+        submitter = blend_user()
         sca = mixer.blend(ScienceCollaborationAllocation, admin=submitter)
         app = mixer.blend(ScienceApplication, submitter=submitter, pi=pi.email)
         tr = mixer.blend(TimeRequest, approved=True, science_application=app)

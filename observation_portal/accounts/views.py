@@ -1,3 +1,4 @@
+import json
 from django.utils import timezone
 from django.contrib.auth.models import User
 from django.utils.module_loading import import_string
@@ -10,7 +11,7 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from observation_portal.accounts.models import Profile
-from observation_portal.accounts.tasks import send_mail
+from observation_portal.accounts.tasks import send_mail, update_or_create_client_applications_user
 from observation_portal.common.schema import ObservationPortalSchema
 
 
@@ -58,9 +59,14 @@ class RevokeApiTokenApiView(APIView):
 
     def post(self, request):
         """A simple POST request (empty request body) with user authentication information in the HTTP header will revoke a user's API Token."""
+        old_token = request.user.auth_token.key
         request.user.auth_token.delete()
-        Token.objects.create(user=request.user)
+        new_token = Token.objects.create(user=request.user)
+        # The Oauth Client applications must have their api_token updated as well
+        user_json = json.dumps(import_string(settings.SERIALIZERS['accounts']['User'])(request.user).data)
+        update_or_create_client_applications_user.send(user_json)
         serializer = self.get_response_serializer({'message': 'API token revoked.'})
+
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def get_response_serializer(self, *args, **kwargs):

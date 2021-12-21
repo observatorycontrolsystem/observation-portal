@@ -307,6 +307,13 @@ LOGGING = {
 MAX_IPP_VALUE = float(os.getenv('MAX_IPP_VALUE', 2.0))  # the maximum allowed value of ipp
 MIN_IPP_VALUE = float(os.getenv('MIN_IPP_VALUE', 0.5))  # the minimum allowed value of ipp
 PROPOSAL_TIME_OVERUSE_ALLOWANCE = float(os.getenv('PROPOSAL_TIME_OVERUSE_ALLOWANCE', 1.1))  # amount of leeway in a proposals timeallocation before rejecting that request
+
+## This is a list of base URLs for each OAuth Client application which we want this Oauth server
+## to update the token of a user in when the token is revoked and created.
+OAUTH_CLIENT_APPS_BASE_URLS = get_list_from_env('OAUTH_CLIENT_APPS_BASE_URLS', '')
+## This key must match the key setup in the Oauth Client applications to authenticate this as the server
+OAUTH_SERVER_KEY = os.getenv('OAUTH_SERVER_KEY', '')
+
 ## Serializer setup - used to allow overriding of serializers
 SERIALIZERS = {
     'observations': {
