@@ -39,6 +39,25 @@ class Profile(models.Model):
             )
         )
 
+    @property
+    def archive_bearer_token(self):
+        # During testing, you will probably have to copy access tokens from prod for this to work
+        try:
+            app = Application.objects.get(name='Archive')
+        except Application.DoesNotExist:
+            logger.error('Archive application not found. Oauth applications need to be populated.')
+            return ''
+        access_token = AccessToken.objects.filter(user=self.user, application=app, expires__gt=timezone.now()).last()
+        if not access_token:
+            access_token = AccessToken(
+                user=self.user,
+                application=app,
+                token=uuid.uuid4().hex,
+                expires=timezone.now() + timedelta(days=30)
+            )
+            access_token.save()
+        return access_token.token
+
     @cached_property
     def current_proposals(self):
         return Proposal.current_proposals().filter(active=True, membership__user=self.user).distinct()

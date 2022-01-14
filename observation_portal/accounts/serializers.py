@@ -68,6 +68,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_tokens(self, obj):
         return {
+            'archive': obj.profile.archive_bearer_token,
             'api_token': obj.profile.api_token.key
         }
 
