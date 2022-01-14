@@ -10,7 +10,6 @@ from django.contrib.auth.models import User
 from django.core.management import call_command
 from django.urls import reverse
 from mixer.backend.django import mixer
-from oauth2_provider.models import Application, AccessToken
 from rest_framework.authtoken.models import Token
 from django.core import mail
 from django_dramatiq.test import DramatiqTestCase

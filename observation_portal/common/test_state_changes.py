@@ -3,7 +3,6 @@ from mixer.backend.django import mixer as dmixer
 from django.utils import timezone
 from datetime import timedelta
 from unittest.mock import patch
-from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.core import mail
 from django_dramatiq.test import DramatiqTestCase
@@ -17,7 +16,6 @@ from observation_portal.common.test_helpers import (
     disconnect_signal
 )
 from observation_portal.proposals.models import Proposal, Membership
-from observation_portal.accounts.models import Profile
 from observation_portal.observations.models import Observation, ConfigurationStatus, Summary
 from observation_portal.requestgroups.models import Request, RequestGroup, Window, Location
 from observation_portal.common.state_changes import (

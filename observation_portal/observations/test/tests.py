@@ -4,7 +4,6 @@ from io import StringIO
 from rest_framework.test import APITestCase
 from django.utils import timezone
 from mixer.backend.django import mixer
-from django.contrib.auth.models import User
 from dateutil.parser import parse
 from django.urls import reverse
 from django.core.cache import caches
@@ -15,7 +14,6 @@ from observation_portal.requestgroups.models import RequestGroup, Window, Locati
 from observation_portal.observations.time_accounting import configuration_time_used
 from observation_portal.observations.models import Observation, ConfigurationStatus, Summary
 from observation_portal.proposals.models import Proposal, Membership, Semester, TimeAllocation
-from observation_portal.accounts.models import Profile
 from observation_portal.common.test_helpers import create_simple_requestgroup, create_simple_configuration
 from observation_portal.accounts.test_utils import blend_user
 from observation_portal.observations import views

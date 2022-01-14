@@ -1,5 +1,4 @@
 from django.test import TestCase
-from django.contrib.auth.models import User
 from mixer.backend.django import mixer
 
 from observation_portal.accounts.test_utils import blend_user

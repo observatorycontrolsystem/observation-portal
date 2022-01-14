@@ -11,7 +11,6 @@ from django_dramatiq.test import DramatiqTestCase
 from observation_portal.proposals.models import ProposalInvite, Proposal, Membership, ProposalNotification, TimeAllocation, Semester
 from observation_portal.requestgroups.models import RequestGroup, Configuration, InstrumentConfig, Window
 from observation_portal.accounts.test_utils import blend_user
-from observation_portal.accounts.models import Profile
 from observation_portal.common.test_helpers import create_simple_requestgroup
 from observation_portal.proposals.tasks import time_allocation_reminder
 from observation_portal.requestgroups.signals import handlers  # DO NOT DELETE, needed to active signals
