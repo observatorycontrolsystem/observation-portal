@@ -7,7 +7,6 @@ from django.conf import settings
 from oauth2_provider.models import AccessToken
 from urllib.parse import urljoin
 import logging
-import json
 import requests
 
 
@@ -22,7 +21,7 @@ def update_or_create_client_applications_user(user_json):
     """
     for base_url in settings.OAUTH_CLIENT_APPS_BASE_URLS:
         url = urljoin(base_url, '/authprofile/addupdateuser/')
-        logger.warning(f"Updating user details at {url}")
+        logger.info(f"Updating user details at {url}")
         header = {'Authorization': f"Server {settings.OAUTH_SERVER_KEY}"}
         response = requests.post(url, data=user_json, headers=header)
         response.raise_for_status()

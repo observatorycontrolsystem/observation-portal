@@ -1,6 +1,5 @@
 from mixer.backend.django import mixer
 from django.utils import timezone
-from django.db.models import signals
 from django.db.models.signals import post_save
 
 from observation_portal.accounts.models import User, Profile

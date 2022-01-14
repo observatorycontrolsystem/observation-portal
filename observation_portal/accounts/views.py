@@ -59,9 +59,8 @@ class RevokeApiTokenApiView(APIView):
 
     def post(self, request):
         """A simple POST request (empty request body) with user authentication information in the HTTP header will revoke a user's API Token."""
-        old_token = request.user.auth_token.key
         request.user.auth_token.delete()
-        new_token = Token.objects.create(user=request.user)
+        Token.objects.create(user=request.user)
         # The Oauth Client applications must have their api_token updated as well
         user_json = json.dumps(import_string(settings.SERIALIZERS['accounts']['User'])(request.user).data)
         update_or_create_client_applications_user.send(user_json)

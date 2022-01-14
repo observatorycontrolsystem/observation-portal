@@ -29,8 +29,8 @@ class Command(BaseCommand):
                 data = import_string(settings.SERIALIZERS['accounts']['User'])(user).data
                 response = requests.post(url, data=json.dumps(data), headers=header)
                 response.raise_for_status()
-            except Exception as e:
-                logger.error(f"Failed to update client user details, please run this command again", exc_info=1)
+            except Exception:
+                logger.error("Failed to update client user details, please run this command again", exc_info=1)
                 sys.exit(1)
-        
+
         logger.info("Finished updating client user details.")
