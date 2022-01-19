@@ -15,6 +15,7 @@ from observation_portal.observations.filters import ObservationFilter, Configura
 from observation_portal.common.mixins import ListAsDictMixin, CreateListModelMixin
 from observation_portal.accounts.permissions import IsAdminOrReadOnly, IsDirectUser
 from observation_portal.common.schema import ObservationPortalSchema
+from observation_portal.common.doc_examples import EXAMPLE_RESPONSES
 
 
 def observations_queryset(request):
@@ -54,6 +55,9 @@ class ScheduleViewSet(ListAsDictMixin, CreateListModelMixin, viewsets.ModelViewS
 
     def get_queryset(self):
         return observations_queryset(self.request)
+
+    def get_example_response(self):
+        return {'list': Response(EXAMPLE_RESPONSES['observations']['list_schedule'], status=200)}.get(self.action)
 
 
 class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelViewSet):
