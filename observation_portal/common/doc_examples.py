@@ -1,185 +1,182 @@
 EXAMPLE_RESPONSES = {
-    'requestgroups': {
-        'max_allowable_ipp': {
-            '2021B': {
-                '2M0-INSTRUMENT-A': {
-                    'ipp_time_available': 100.0,
-                    'ipp_limit': 100.0,
-                    'request_duration': 0.14722222222222223,
-                    'max_allowable_ipp_value': 2.0,
-                    'min_allowable_ipp_value': 0.5
+    "requestgroups": {
+        "max_allowable_ipp": {
+            "2021B": {
+                "2M0-INSTRUMENT-A": {
+                    "ipp_time_available": 100.0,
+                    "ipp_limit": 100.0,
+                    "request_duration": 0.14722222222222223,
+                    "max_allowable_ipp_value": 2.0,
+                    "min_allowable_ipp_value": 0.5,
                 }
             }
         },
-        'validate': {
-            'request_durations': {
-                'requests': [
+        "schedulable_requests": {
+            "results": {
+                "id": 0,
+                "requests": [],
+                "submitter": "string",
+                "name": "string",
+                "observation_type": "NORMAL",
+                "operator": "SINGLE",
+                "ipp_value": 0,
+                "created": "2019-08-24T14:15:22Z",
+                "state": "PENDING",
+                "modified": "2019-08-24T14:15:22Z",
+                "proposal": "string",
+                "is_staff": False,
+            }
+        },
+        "validate": {
+            "request_durations": {
+                "requests": [
                     {
-                        'duration': 178,
-                        'configurations': [
+                        "duration": 178,
+                        "configurations": [
                             {
-                                'instrument_configs': [
-                                    {
-                                        'duration': 70.0
-                                    }
-                                ],
-                                'duration': 86.0
+                                "instrument_configs": [{"duration": 70.0}],
+                                "duration": 86.0,
                             }
                         ],
-                        'largest_interval': 36969.77505
+                        "largest_interval": 36969.77505,
                     }
                 ],
-                'duration': 178
+                "duration": 178,
             },
-            'errors': {}
+            "errors": {},
         },
-        'airmass': {
-            'airmass_data': {
-                'site-A': {
-                    'times': [
-                        '2021-08-11T08:33',
-                        '2021-08-11T08:43',
+        "airmass": {
+            "airmass_data": {
+                "site-A": {
+                    "times": [
+                        "2021-08-11T08:33",
+                        "2021-08-11T08:43",
                     ],
-                    'airmasses': [
+                    "airmasses": [
                         3.1578956971395766,
                         2.900041850251779,
-                    ]
-                },
-                'site-B': {
-                    'times': [
-                        '2021-08-11T08:00',
-                        '2021-08-11T08:10',
                     ],
-                    'airmasses': [
+                },
+                "site-B": {
+                    "times": [
+                        "2021-08-11T08:00",
+                        "2021-08-11T08:10",
+                    ],
+                    "airmasses": [
                         2.1578856971695766,
                         1.900041850251779,
-                    ]
-                }
+                    ],
+                },
             },
-            'airmass_limit': 3.19
+            "airmass_limit": 3.19,
         },
-        'instruments': {
-            '2M0-INSTRUMENT-A': {
-                'type': 'IMAGE',
-                'class': '2m0',
-                'name': '2.0 meter Instrument A',
-                'optical_elements': {
-                    'filters': [
+        "instruments": {
+            "2M0-INSTRUMENT-A": {
+                "type": "IMAGE",
+                "class": "2m0",
+                "name": "2.0 meter Instrument A",
+                "optical_elements": {
+                    "filters": [
                         {
-                            'name': 'Clear',
-                            'code': 'air',
-                            'schedulable': 'true',
-                            'default': 'false'
+                            "name": "Clear",
+                            "code": "air",
+                            "schedulable": "true",
+                            "default": "false",
                         }
                     ]
                 },
-                'modes': {
-                    'readout': {
-                        'type': 'readout',
-                        'modes': [
+                "modes": {
+                    "readout": {
+                        "type": "readout",
+                        "modes": [
                             {
-                                'name': 'Instrument A 2x2',
-                                'overhead': 0.0,
-                                'code': 'instrument_A_2',
-                                'schedulable': 'true',
-                                'validation_schema': {}
+                                "name": "Instrument A 2x2",
+                                "overhead": 0.0,
+                                "code": "instrument_A_2",
+                                "schedulable": "true",
+                                "validation_schema": {},
                             },
                             {
-                                'name': 'Instrument A 1x1',
-                                'overhead': 0.0,
-                                'code': 'instrument_A_1',
-                                'schedulable': 'true',
-                                'validation_schema': {}
-                            }
+                                "name": "Instrument A 1x1",
+                                "overhead": 0.0,
+                                "code": "instrument_A_1",
+                                "schedulable": "true",
+                                "validation_schema": {},
+                            },
                         ],
-                        'default': 'instrument_A_1'
+                        "default": "instrument_A_1",
                     }
                 },
-                'default_acceptability_threshold': 90.0,
-                'configuration_types': {},
-                'camera_type': {
-                    'science_field_of_view': 7.477913345312313,
-                    'autoguider_field_of_view': 7.477913345312313,
-                    'pixel_scale': 0.244,
-                    'pixels_x': 1530,
-                    'pixels_y': 1020,
-                    'orientation': 0.0
-                }
+                "default_acceptability_threshold": 90.0,
+                "configuration_types": {},
+                "camera_type": {
+                    "science_field_of_view": 7.477913345312313,
+                    "autoguider_field_of_view": 7.477913345312313,
+                    "pixel_scale": 0.244,
+                    "pixels_x": 1530,
+                    "pixels_y": 1020,
+                    "orientation": 0.0,
+                },
             }
         },
-        'dither': {
-            'constraints': {
-                'max_airmass': 1.6,
-                'min_lunar_distance': 30.0
-            },
-            'instrument_configs': [
+        "dither": {
+            "constraints": {"max_airmass": 1.6, "min_lunar_distance": 30.0},
+            "instrument_configs": [
                 {
-                    'optical_elements': {
-                        'filter': 'V'
+                    "optical_elements": {"filter": "V"},
+                    "mode": "1m0_a_instrument_mode_1",
+                    "exposure_time": 30.0,
+                    "exposure_count": 1,
+                    "extra_params": {
+                        "bin_x": 1,
+                        "bin_y": 1,
+                        "offset_ra": 0,
+                        "offset_dec": 0,
                     },
-                    'mode': '1m0_a_instrument_mode_1',
-                    'exposure_time': 30.0,
-                    'exposure_count': 1,
-                    'extra_params': {
-                        'bin_x': 1,
-                        'bin_y': 1,
-                        'offset_ra': 0,
-                        'offset_dec': 0
-                    }
                 },
                 {
-                    'optical_elements': {
-                        'filter': 'V'
+                    "optical_elements": {"filter": "V"},
+                    "mode": "1m0_a_instrument_mode_1",
+                    "exposure_time": 30.0,
+                    "exposure_count": 1,
+                    "extra_params": {
+                        "bin_x": 1,
+                        "bin_y": 1,
+                        "offset_ra": 0,
+                        "offset_dec": 5,
                     },
-                    'mode': '1m0_a_instrument_mode_1',
-                    'exposure_time': 30.0,
-                    'exposure_count': 1,
-                    'extra_params': {
-                        'bin_x': 1,
-                        'bin_y': 1,
-                        'offset_ra': 0,
-                        'offset_dec': 5
-                    }
                 },
                 {
-                    'optical_elements': {
-                        'filter': 'V'
+                    "optical_elements": {"filter": "V"},
+                    "mode": "1m0_a_instrument_mode_1",
+                    "exposure_time": 30.0,
+                    "exposure_count": 1,
+                    "extra_params": {
+                        "bin_x": 1,
+                        "bin_y": 1,
+                        "offset_ra": 0,
+                        "offset_dec": 10,
                     },
-                    'mode': '1m0_a_instrument_mode_1',
-                    'exposure_time': 30.0,
-                    'exposure_count': 1,
-                    'extra_params': {
-                        'bin_x': 1,
-                        'bin_y': 1,
-                        'offset_ra': 0,
-                        'offset_dec': 10
-                    }
-                }
+                },
             ],
-            'acquisition_config': {
-                'mode': 'OFF'
+            "acquisition_config": {"mode": "OFF"},
+            "guiding_config": {"mode": "ON"},
+            "target": {
+                "name": "m33",
+                "type": "ICRS",
+                "ra": 23.4621,
+                "dec": 30.659942,
+                "proper_motion_ra": 0.0,
+                "proper_motion_dec": 0.0,
+                "epoch": 2000.0,
+                "parallax": 0.0,
             },
-            'guiding_config': {
-                'mode': 'ON'
-            },
-            'target': {
-                'name': 'm33',
-                'type': 'ICRS',
-                'ra': 23.4621,
-                'dec': 30.659942,
-                'proper_motion_ra': 0.0,
-                'proper_motion_dec': 0.0,
-                'epoch': 2000.0,
-                'parallax': 0.0
-            },
-            'instrument_type': '1M0-INSTRUMENT-A',
-            'type': 'EXPOSE',
-            'extra_params': {
-                'dither_pattern': 'line'
-            }
+            "instrument_type": "1M0-INSTRUMENT-A",
+            "type": "EXPOSE",
+            "extra_params": {"dither_pattern": "line"},
         },
-        'contention': {
-            'ra_hours': [
+        "contention": {
+            "ra_hours": [
                 0,
                 1,
                 2,
@@ -203,92 +200,40 @@ EXAMPLE_RESPONSES = {
                 20,
                 21,
                 22,
-                23
+                23,
             ],
-            'instrument_type': '2M0-INSTRUMENT-A',
-            'time_calculated': '2021-10-26T23:14:30.275247Z',
-            'contention_data': [
-                {
-                    'All Proposals': 0
-                },
-                {
-                    'All Proposals': 2262.0
-                },
-                {
-                    'All Proposals': 0
-                },
-                {
-                    'All Proposals': 0
-                },
-                {
-                    'All Proposals': 0
-                },
-                {
-                    'All Proposals': 0
-                },
-                {
-                    'All Proposals': 0
-                },
-                {
-                    'All Proposals': 0
-                },
-                {
-                    'All Proposals': 0
-                },
-                {
-                    'All Proposals': 839.0
-                },
-                {
-                    'All Proposals': 0
-                },
-                {
-                    'All Proposals': 0
-                },
-                {
-                    'All Proposals': 0
-                },
-                {
-                    'All Proposals': 0
-                },
-                {
-                    'All Proposals': 0
-                },
-                {
-                    'All Proposals': 135.0
-                },
-                {
-                    'All Proposals': 1480.0
-                },
-                {
-                    'All Proposals': 4752.0
-                },
-                {
-                    'All Proposals': 1645.0
-                },
-                {
-                    'All Proposals': 470.0
-                },
-                {
-                    'All Proposals': 1058.0
-                },
-                {
-                    'All Proposals': 0
-                },
-                {
-                    'All Proposals': 0
-                },
-                {
-                    'All Proposals': 0
-                }
-            ]
+            "instrument_type": "2M0-INSTRUMENT-A",
+            "time_calculated": "2021-10-26T23:14:30.275247Z",
+            "contention_data": [
+                {"All Proposals": 0},
+                {"All Proposals": 2262.0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 839.0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 135.0},
+                {"All Proposals": 1480.0},
+                {"All Proposals": 4752.0},
+                {"All Proposals": 1645.0},
+                {"All Proposals": 470.0},
+                {"All Proposals": 1058.0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+            ],
         },
-        'pressure': {
+        "pressure": {
             "site_nights": [
-                {
-                    "name": "mba",
-                    "start": 0.29388888888888887,
-                    "stop": 9.322222222222223
-                }
+                {"name": "mba", "start": 0.29388888888888887, "stop": 9.322222222222223}
             ],
             "time_bins": [
                 "2021-10-26T23:38:24.763467Z",
@@ -386,419 +331,334 @@ EXAMPLE_RESPONSES = {
                 "2021-10-27T22:38:24.763467Z",
                 "2021-10-27T22:53:24.763467Z",
                 "2021-10-27T23:08:24.763467Z",
-                "2021-10-27T23:23:24.763467Z"
+                "2021-10-27T23:23:24.763467Z",
             ],
             "instrument_type": "2M0-INSTRUMENT-A",
             "site": "mba",
             "time_calculated": "2021-10-26T23:38:24.763467Z",
             "pressure_data": [
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 1.4521305933539395
-                },
-                {
-                    "All Proposals": 1.3516829487014748
-                },
-                {
-                    "All Proposals": 1.3980128087678538
-                },
-                {
-                    "All Proposals": 1.0867136316882635
-                },
-                {
-                    "All Proposals": 0.6674214059137314
-                },
-                {
-                    "All Proposals": 0.5243110660214052
-                },
-                {
-                    "All Proposals": 0.4918441257569274
-                },
-                {
-                    "All Proposals": 0.47695347894445644
-                },
-                {
-                    "All Proposals": 0.47695347894445644
-                },
-                {
-                    "All Proposals": 0.506330508764356
-                },
-                {
-                    "All Proposals": 0.506330508764356
-                },
-                {
-                    "All Proposals": 0.506330508764356
-                },
-                {
-                    "All Proposals": 0.7958022978140535
-                },
-                {
-                    "All Proposals": 0.9573661563395153
-                },
-                {
-                    "All Proposals": 0.8718269406532408
-                },
-                {
-                    "All Proposals": 0.8718269406532408
-                },
-                {
-                    "All Proposals": 0.9397849317447369
-                },
-                {
-                    "All Proposals": 0.9077210657586094
-                },
-                {
-                    "All Proposals": 0.8820800401175837
-                },
-                {
-                    "All Proposals": 0.9205329423293274
-                },
-                {
-                    "All Proposals": 0.867174324075846
-                },
-                {
-                    "All Proposals": 0.867174324075846
-                },
-                {
-                    "All Proposals": 0.8701191211096724
-                },
-                {
-                    "All Proposals": 0.8869993486198404
-                },
-                {
-                    "All Proposals": 1.0116810671421042
-                },
-                {
-                    "All Proposals": 0.9287946434065444
-                },
-                {
-                    "All Proposals": 0.8429179228799135
-                },
-                {
-                    "All Proposals": 0.8429179228799135
-                },
-                {
-                    "All Proposals": 0.6608858271558946
-                },
-                {
-                    "All Proposals": 0.6694562852050703
-                },
-                {
-                    "All Proposals": 0.64951003510009
-                },
-                {
-                    "All Proposals": 0.6244228113087624
-                },
-                {
-                    "All Proposals": 0.4354579504104918
-                },
-                {
-                    "All Proposals": 0.5021348869271227
-                },
-                {
-                    "All Proposals": 0.5021348869271227
-                },
-                {
-                    "All Proposals": 0.4727578571072232
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                },
-                {
-                    "All Proposals": 0
-                }
-            ]
-        }
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 1.4521305933539395},
+                {"All Proposals": 1.3516829487014748},
+                {"All Proposals": 1.3980128087678538},
+                {"All Proposals": 1.0867136316882635},
+                {"All Proposals": 0.6674214059137314},
+                {"All Proposals": 0.5243110660214052},
+                {"All Proposals": 0.4918441257569274},
+                {"All Proposals": 0.47695347894445644},
+                {"All Proposals": 0.47695347894445644},
+                {"All Proposals": 0.506330508764356},
+                {"All Proposals": 0.506330508764356},
+                {"All Proposals": 0.506330508764356},
+                {"All Proposals": 0.7958022978140535},
+                {"All Proposals": 0.9573661563395153},
+                {"All Proposals": 0.8718269406532408},
+                {"All Proposals": 0.8718269406532408},
+                {"All Proposals": 0.9397849317447369},
+                {"All Proposals": 0.9077210657586094},
+                {"All Proposals": 0.8820800401175837},
+                {"All Proposals": 0.9205329423293274},
+                {"All Proposals": 0.867174324075846},
+                {"All Proposals": 0.867174324075846},
+                {"All Proposals": 0.8701191211096724},
+                {"All Proposals": 0.8869993486198404},
+                {"All Proposals": 1.0116810671421042},
+                {"All Proposals": 0.9287946434065444},
+                {"All Proposals": 0.8429179228799135},
+                {"All Proposals": 0.8429179228799135},
+                {"All Proposals": 0.6608858271558946},
+                {"All Proposals": 0.6694562852050703},
+                {"All Proposals": 0.64951003510009},
+                {"All Proposals": 0.6244228113087624},
+                {"All Proposals": 0.4354579504104918},
+                {"All Proposals": 0.5021348869271227},
+                {"All Proposals": 0.5021348869271227},
+                {"All Proposals": 0.4727578571072232},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+                {"All Proposals": 0},
+            ],
+        },
     },
-    'requests': {
-        'airmass': {
-            'airmass_data': {
-                'site-A': {
-                    'times': [
-                        '2021-09-14T10:56',
-                        '2021-09-14T11:06',
-                        '2021-09-14T11:16',
-                        '2021-09-14T11:26',
-                        '2021-09-14T11:36',
-                        '2021-09-14T11:46'
+    "requests": {
+        "airmass": {
+            "airmass_data": {
+                "site-A": {
+                    "times": [
+                        "2021-09-14T10:56",
+                        "2021-09-14T11:06",
+                        "2021-09-14T11:16",
+                        "2021-09-14T11:26",
+                        "2021-09-14T11:36",
+                        "2021-09-14T11:46",
                     ],
-                    'airmasses': [
+                    "airmasses": [
                         1.0099357638834783,
                         1.0144828689796268,
                         1.0204314519662752,
                         1.027818652396446,
                         1.0366912094413503,
-                        1.0471061694171302
-                    ]
+                        1.0471061694171302,
+                    ],
                 }
             },
-            'airmass_limit': 2.0
+            "airmass_limit": 2.0,
         },
-        'observations': [{
-            "site": "string",
-            "enclosure": "string",
-            "telescope": "string",
-            "start": "2019-08-24T14:15:22Z",
-            "end": "2019-08-24T14:15:22Z",
-            "priority": 2147483647,
-            "configuration_statuses": [
-                {
-                    "id": 0,
-                    "summary": {
-                        "start": "2019-08-24T14:15:22Z",
-                        "end": "2019-08-24T14:15:22Z",
-                        "state": "string",
-                        "reason": "string",
-                        "time_completed": 0,
-                        "events": {}
-                    },
-                    "instrument_name": "string",
-                    "guide_camera_name": "string",
-                    "end": "2019-08-24T14:15:22Z",
-                    "exposures_start_at": "2019-08-24T14:15:22Z",
-                    "state": "PENDING",
-                    "configuration": 0
-                }
-            ],
-            "request": 0,
-            "state": "PENDING",
-            "modified": "2019-08-24T14:15:22Z",
-            "created": "2019-08-24T14:15:22Z"
-        }]
-    },
-    'proposals': {
-        'tags': ['tagA', 'tagB', 'tagC']
-    },
-    'semesters': {
-        'proposals': [
+        "observations": [
             {
-                'id': 'PROPOSAL-A-2021',
-                'title': '2021 Proposal A',
-                'abstract': 'Proposal A Abstract',
-                'allocation': {
-                    '2M0-INSTRUMENT-A': {
-                        'std': 87.9,
-                        'rr': 0.0,
-                        'tc': 0.0
-                    },
-                },
-                'pis': [
+                "site": "string",
+                "enclosure": "string",
+                "telescope": "string",
+                "start": "2019-08-24T14:15:22Z",
+                "end": "2019-08-24T14:15:22Z",
+                "priority": 2147483647,
+                "configuration_statuses": [
                     {
-                        'first_name': 'Eleanor',
-                        'last_name': 'Arroway',
-                        'institution': 'International Institute for Astrophysics'
+                        "id": 0,
+                        "summary": {
+                            "start": "2019-08-24T14:15:22Z",
+                            "end": "2019-08-24T14:15:22Z",
+                            "state": "string",
+                            "reason": "string",
+                            "time_completed": 0,
+                            "events": {},
+                        },
+                        "instrument_name": "string",
+                        "guide_camera_name": "string",
+                        "end": "2019-08-24T14:15:22Z",
+                        "exposures_start_at": "2019-08-24T14:15:22Z",
+                        "state": "PENDING",
+                        "configuration": 0,
                     }
                 ],
-                'sca_id': 'IIA',
-                'sca_name': 'International Institute for Astrophysics',
-                'semesters': [
-                    '2021B'
-                ]
-            }],
-        'timeallocations': [
+                "request": 0,
+                "state": "PENDING",
+                "modified": "2019-08-24T14:15:22Z",
+                "created": "2019-08-24T14:15:22Z",
+            }
+        ],
+    },
+    "proposals": {"tags": ["tagA", "tagB", "tagC"]},
+    "semesters": {
+        "proposals": [
             {
-                'id': 3523,
-                'ipp_limit': 4.0,
-                'ipp_time_available': 2.0,
-                'std_allocation': 40.0,
-                'std_time_used': 0.0,
-                'rr_allocation': 0.0,
-                'rr_time_used': 0.0,
-                'tc_allocation': 0.0,
-                'tc_time_used': 0.0,
-                'instrument_types': [
-                    '2M0-INSTRUMENT-A'
+                "id": "PROPOSAL-A-2021",
+                "title": "2021 Proposal A",
+                "abstract": "Proposal A Abstract",
+                "allocation": {
+                    "2M0-INSTRUMENT-A": {"std": 87.9, "rr": 0.0, "tc": 0.0},
+                },
+                "pis": [
+                    {
+                        "first_name": "Eleanor",
+                        "last_name": "Arroway",
+                        "institution": "International Institute for Astrophysics",
+                    }
                 ],
-                'proposal': {
-                    'notes': '',
-                    'id': 'PROPOSAL-A-2021',
-                    'tac_priority': 20,
-                    'num_users': 5,
-                    'pis': [
-                        {
-                            'first_name': 'Eleanor',
-                            'last_name': 'Arroway'
-                        }
-                    ]
+                "sca_id": "IIA",
+                "sca_name": "International Institute for Astrophysics",
+                "semesters": ["2021B"],
+            }
+        ],
+        "timeallocations": [
+            {
+                "id": 3523,
+                "ipp_limit": 4.0,
+                "ipp_time_available": 2.0,
+                "std_allocation": 40.0,
+                "std_time_used": 0.0,
+                "rr_allocation": 0.0,
+                "rr_time_used": 0.0,
+                "tc_allocation": 0.0,
+                "tc_time_used": 0.0,
+                "instrument_types": ["2M0-INSTRUMENT-A"],
+                "proposal": {
+                    "notes": "",
+                    "id": "PROPOSAL-A-2021",
+                    "tac_priority": 20,
+                    "num_users": 5,
+                    "pis": [{"first_name": "Eleanor", "last_name": "Arroway"}],
+                },
+            }
+        ],
+    },
+    "observations": {
+        "list_schedule": {
+            "results": [
+                {
+                    "id": 333978933,
+                    "request": {
+                        "id": 2722445,
+                        "observation_note": "",
+                        "state": "PENDING",
+                        "acceptability_threshold": 90,
+                        "extra_params": {},
+                        "modified": "2021-12-03T04:49:26.941078Z",
+                        "duration": 10799,
+                        "configurations": [
+                            {
+                                "id": 7011091,
+                                "instrument_type": "2M0-INSTRUMENT-A",
+                                "type": "EXPOSE",
+                                "extra_params": {},
+                                "priority": 1,
+                                "instrument_configs": [
+                                    {
+                                        "optical_elements": {"filter": "U"},
+                                        "mode": "FAST",
+                                        "exposure_time": 120,
+                                        "exposure_count": 1,
+                                        "rotator_mode": "",
+                                        "extra_params": {
+                                            "bin_x": 1,
+                                            "bin_y": 1,
+                                            "defocus": 0,
+                                        },
+                                        "rois": [],
+                                    }
+                                ],
+                                "constraints": {
+                                    "max_airmass": 2,
+                                    "min_lunar_distance": 20,
+                                    "extra_params": {},
+                                },
+                                "acquisition_config": {
+                                    "mode": "OFF",
+                                    "extra_params": {},
+                                },
+                                "guiding_config": {
+                                    "optional": False,
+                                    "mode": "ON",
+                                    "optical_elements": {},
+                                    "exposure_time": None,
+                                    "extra_params": {},
+                                },
+                                "target": {
+                                    "type": "ICRS",
+                                    "name": "K2-22",
+                                    "ra": 169.4978489167,
+                                    "dec": 2.6100554444,
+                                    "proper_motion_ra": -27.108,
+                                    "proper_motion_dec": -4.712,
+                                    "parallax": 4.0729,
+                                    "epoch": 2000,
+                                    "hour_angle": None,
+                                    "extra_params": {},
+                                },
+                                "configuration_status": 443418393,
+                                "state": "PENDING",
+                                "instrument_name": "ab12",
+                                "guide_camera_name": "kb09",
+                                "summary": {},
+                            }
+                        ],
+                    },
+                    "site": "mba",
+                    "enclosure": "clma",
+                    "telescope": "2m0a",
+                    "start": "2022-01-19T12:25:00Z",
+                    "end": "2022-01-19T15:24:59Z",
+                    "priority": 10,
+                    "state": "PENDING",
+                    "proposal": "PROPOSAL-A-2021",
+                    "submitter": "ellie_arroway",
+                    "name": "test_observation",
+                    "ipp_value": 1.05,
+                    "observation_type": "NORMAL",
+                    "request_group_id": 1350420,
+                    "created": "2022-01-19T02:02:57.875036Z",
+                    "modified": "2022-01-19T02:02:57.875028Z",
                 }
-            }]
-    }
+            ]
+        }
+    },
 }
 
 
-QUERY_PARAMETERS = {'requests': {'observations': [{'in': 'query', 'name': 'exclude_canceled', 'required': False, 'schema': {'type': 'boolean', 'default': False}, 'description': 'Exclude canceled observations'}]},
-                    'requestgroups': {'pressure': [{'in': 'query', 'name': 'site', 'required': True, 'schema': {'type': 'string'}, 'description': 'Site'},
-                                                   {'in': 'query', 'name': 'instrument', 'required': True, 'schema': {'type': 'string'}, 'description': 'Instrument Type'}]}}
+QUERY_PARAMETERS = {
+    "requests": {
+        "observations": [
+            {
+                "in": "query",
+                "name": "exclude_canceled",
+                "required": False,
+                "schema": {"type": "boolean", "default": False},
+                "description": "Exclude canceled observations",
+            }
+        ]
+    },
+    "requestgroups": {
+        "pressure": [
+            {
+                "in": "query",
+                "name": "site",
+                "required": True,
+                "schema": {"type": "string"},
+                "description": "Site",
+            },
+            {
+                "in": "query",
+                "name": "instrument",
+                "required": True,
+                "schema": {"type": "string"},
+                "description": "Instrument Type",
+            },
+        ]
+    },
+}

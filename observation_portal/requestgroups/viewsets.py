@@ -44,7 +44,6 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
         DjangoFilterBackend
     )
     ordering = ('-id',)
-    undocumented_actions = ['schedulable_requests']
 
     def get_throttles(self):
         actions_to_throttle = ['cancel', 'validate', 'create']
@@ -76,7 +75,7 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], permission_classes=(IsAdminUser,))
     def schedulable_requests(self, request):
         """
-            Gets the set of schedulable User requests for the scheduler, should be called right after isDirty finishes
+            Gets the set of schedulable User requests for the scheduler.
             Needs a start and end time specified as the range of time to get requests in. Usually this is the entire
             semester for a scheduling run.
         """
@@ -226,13 +225,15 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
             return(Response(request_serializer.errors, status=status.HTTP_400_BAD_REQUEST))
 
     def get_example_response(self):
-        example_data = {'max_allowable_ipp': Response(data=EXAMPLE_RESPONSES['requestgroups']['max_allowable_ipp'], status=status.HTTP_200_OK)}
+        example_data = {'max_allowable_ipp': Response(data=EXAMPLE_RESPONSES['requestgroups']['max_allowable_ipp'], status=status.HTTP_200_OK),
+                        'schedulable_requests': Response(data=EXAMPLE_RESPONSES['requestgroups']['schedulable_requests'], status=status.HTTP_200_OK)}
 
         return example_data.get(self.action)
 
     def get_endpoint_name(self):
         endpoint_names = {'max_allowable_ipp': 'getMaxAllowableIPP',
-                          'cadence': 'generateCadence'}
+                          'cadence': 'generateCadence',
+                          'schedulable_requests': 'listSchedulableRequests'}
 
         return endpoint_names.get(self.action)
 
