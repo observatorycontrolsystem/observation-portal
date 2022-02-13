@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.utils.module_loading import import_string
 from django.conf import settings
 

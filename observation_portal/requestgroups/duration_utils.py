@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from math import ceil, floor
 from collections import defaultdict
 from django.utils import timezone
