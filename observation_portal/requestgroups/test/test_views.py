@@ -66,10 +66,10 @@ class TestInstrumentInformation(TestCase):
     def test_camera_type_info_for_specific_instrument_type(self):
         response = self.client.get(reverse('api:instruments_information') + '?instrument_type=2M0-FLOYDS-SCICAM')
         instruments = response.json()
-        self.assertEquals(instruments['2M0-FLOYDS-SCICAM']['camera_type']['orientation'], 90.0)
-        self.assertEquals(instruments['2M0-FLOYDS-SCICAM']['camera_type']['pixel_scale'], 0.5)
-        self.assertEquals(instruments['2M0-FLOYDS-SCICAM']['camera_type']['pixels_x'], 1000.0)
-        self.assertEquals(instruments['2M0-FLOYDS-SCICAM']['camera_type']['pixels_y'], 1000.0)
+        self.assertEqual(instruments['2M0-FLOYDS-SCICAM']['camera_type']['orientation'], 90.0)
+        self.assertEqual(instruments['2M0-FLOYDS-SCICAM']['camera_type']['pixel_scale'], 0.5)
+        self.assertEqual(instruments['2M0-FLOYDS-SCICAM']['camera_type']['pixels_x'], 1000.0)
+        self.assertEqual(instruments['2M0-FLOYDS-SCICAM']['camera_type']['pixels_y'], 1000.0)
 
     def test_non_staff_user_can_only_see_schedulable(self):
         response = self.client.get(reverse('api:instruments_information') + '?only_schedulable=false')
