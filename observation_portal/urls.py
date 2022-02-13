@@ -14,7 +14,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.conf.urls import url, include
+from django.urls import re_path, include
 from django.urls import path
 from rest_framework.routers import DefaultRouter
 from rest_framework.authtoken.views import obtain_auth_token
@@ -58,20 +58,20 @@ router.register(r'schedule', ScheduleViewSet, 'schedule')
 router.register(r'configurationstatus', ConfigurationStatusViewSet, 'configurationstatus')
 
 api_urlpatterns = ([
-    url(r'^', include(router.urls)),
-    url(r'^api-token-auth/', obtain_auth_token, name='api-token-auth'),
-    url(r'^telescope_states/', TelescopeStatesView.as_view(), name='telescope_states'),
-    url(r'^telescope_availability/', TelescopeAvailabilityView.as_view(), name='telescope_availability'),
-    url(r'profile/accept_terms/', AcceptTermsApiView.as_view(), name='accept_terms'),
-    url(r'profile/', ProfileApiView.as_view(), name='profile'),
-    url(r'revoke_token/', RevokeApiTokenApiView.as_view(), name='revoke_api_token'),
-    url(r'account_removal_request/', AccountRemovalRequestApiView.as_view(), name='account_removal_request'),
-    url(r'airmass/', AirmassView.as_view(), name='airmass'),
-    url(r'instruments/', InstrumentsInformationView.as_view(), name='instruments_information'),
-    url(r'contention/(?P<instrument_type>.+)/', ContentionView.as_view(), name='contention'),
-    url(r'pressure/', PressureView.as_view(), name='pressure'),
-    url(r'last_changed/', ObservationPortalLastChangedView.as_view(), name='last_changed'),
-    url(r'last_scheduled/', LastScheduledView.as_view(), name='last_scheduled')
+    re_path(r'^', include(router.urls)),
+    re_path(r'^api-token-auth/', obtain_auth_token, name='api-token-auth'),
+    re_path(r'^telescope_states/', TelescopeStatesView.as_view(), name='telescope_states'),
+    re_path(r'^telescope_availability/', TelescopeAvailabilityView.as_view(), name='telescope_availability'),
+    re_path(r'profile/accept_terms/', AcceptTermsApiView.as_view(), name='accept_terms'),
+    re_path(r'profile/', ProfileApiView.as_view(), name='profile'),
+    re_path(r'revoke_token/', RevokeApiTokenApiView.as_view(), name='revoke_api_token'),
+    re_path(r'account_removal_request/', AccountRemovalRequestApiView.as_view(), name='account_removal_request'),
+    re_path(r'airmass/', AirmassView.as_view(), name='airmass'),
+    re_path(r'instruments/', InstrumentsInformationView.as_view(), name='instruments_information'),
+    re_path(r'contention/(?P<instrument_type>.+)/', ContentionView.as_view(), name='contention'),
+    re_path(r'pressure/', PressureView.as_view(), name='pressure'),
+    re_path(r'last_changed/', ObservationPortalLastChangedView.as_view(), name='last_changed'),
+    re_path(r'last_scheduled/', LastScheduledView.as_view(), name='last_scheduled')
 ], 'api')
 
 schema_view = get_schema_view(
@@ -88,9 +88,9 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
-    url(r'^accounts/', include(accounts_urls)),
-    url(r'^api/', include(api_urlpatterns)),
-    url(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
+    re_path(r'^accounts/', include(accounts_urls)),
+    re_path(r'^api/', include(api_urlpatterns)),
+    re_path(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
     path('admin/', admin.site.urls),
     path('openapi/', schema_view, name='openapi-schema'),
     path('redoc/', TemplateView.as_view(
