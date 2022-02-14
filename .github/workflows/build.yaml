@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: [3.8, 3.9, 3.10]
     services:
       postgres:
         image: postgres
@@ -40,17 +40,19 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -U coverage 'coveralls<3.3' 'numpy>=1.16,<1.17'
-        pip install .[test]
+        python -m pip install poetry
+        poetry install
     - name: Run tests
-      run: coverage run manage.py test --settings=observation_portal.test_settings
+      run: poetry run coverage run manage.py test --settings=observation_portal.test_settings
       env:
         DB_USER: postgres
         DB_PASS: postgres
         DB_HOST: localhost
         DB_PORT: 5432
     - name: Generate and send coveralls report
-      run: coveralls --service=github
+      run: |
+        pip install 'coveralls<3.3'
+        coveralls --service=github
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -78,7 +80,7 @@ jobs:
       run: |
         python setup.py sdist bdist_wheel
         twine upload dist/*
-      
+
 
   build_and_publish_image:
     # Only run this job if the run_tests job has succeeded, the new version was pushed to pypi,
