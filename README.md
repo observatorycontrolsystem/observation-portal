@@ -17,8 +17,8 @@ Within an observatory control system, the observation portal provides modules fo
 
 Optional prerequisites can be skipped for reduced functionality.
 
--   Python >= 3.7
--   PostgreSQL >= 9.6
+-   Python >= 3.10
+-   PostgreSQL >= 10
 -   A running [Configuration Database](https://github.com/observatorycontrolsystem/configdb) 
 -   (Optional) A running [Downtime Database](https://github.com/observatorycontrolsystem/downtime)
 -   (Optional) A running Elasticsearch
@@ -133,14 +133,28 @@ Optional prerequisites can be skipped for reduced functionality.
 
 Please refer to the [Configuration Database](https://github.com/observatorycontrolsystem/configdb) and [Downtime Database](https://github.com/observatorycontrolsystem/downtime) projects for instructions on how to get those running, as well as the [Elasticsearch documentation](https://www.elastic.co/guide/en/elasticsearch/reference/5.6/install-elasticsearch.html) for options on how to run Elasticsearch.
 
-### **Set up a [virtual environment](https://docs.python.org/3/tutorial/venv.html)**
 
-Using a virtual environment is highly recommended. Run the following commands from the base of this project. `(env)`
-is used to denote commands that should be run using your virtual environment.
+### **Poetry**
 
-    python3 -m venv env
-    source env/bin/activate
-    (env) pip install numpy && pip install -e .[test]
+We use Poetry for package management. If you already have Poetry installed, you
+can skip this section.
+
+You can install Poetry using one of the many options listed at https://python-poetry.org/docs/#installation.
+One simple option is using Pipx:
+
+    python3 -m pip install --user pipx
+    python3 -m pipx ensurepath
+    pipx install poetry
+
+### **Install**
+
+Install the project and its Python dependencies:
+
+    poetry install
+
+This will install the project in a Poetry managed virtual environment. To run
+commands in that environment either use `poetry run ...` or start a shell in
+that environment with `poetry shell`
 
 ### **Set up the database**
 
@@ -150,14 +164,14 @@ This example uses the [PostgreSQL Docker image](https://hub.docker.com/_/postgre
 
 After creating the database, migrations must be applied to set up the tables in the database.
 
-    (env) python manage.py migrate
+    poetry run python manage.py migrate
 
 ### **Run the tests**
 
-    (env) python manage.py test --settings=observation_portal.test_settings
+    poetry run python manage.py test --settings=observation_portal.test_settings
 
 ### **Run the portal**
 
-    (env) python manage.py runserver
+    poetry run python manage.py runserver
 
 The observation portal should now be accessible from <http://127.0.0.1:8000>!
