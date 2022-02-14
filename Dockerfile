@@ -61,8 +61,6 @@ RUN useradd appuser
 # switch to non-root user
 USER appuser
 
-ENTRYPOINT ["gunicorn", "observation_portal.wsgi"]
-
-CMD ["--bind=0.0.0.0:8080", "--worker-class=gevent", "--workers=4", "--timeout=300"]
+CMD ["gunicorn", "observation_portal.wsgi", "--bind=0.0.0.0:8080", "--worker-class=gevent", "--workers=4", "--timeout=300"]
 
 EXPOSE 8080/tcp
