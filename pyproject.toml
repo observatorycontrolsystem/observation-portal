@@ -28,7 +28,7 @@ packages = [
 ]
 
 [tool.poetry.scripts]
-django-manage = "manage:main"
+ocs-django-manage = "manage:main"
 
 [tool.poetry.dependencies]
 python = "^3.8"
