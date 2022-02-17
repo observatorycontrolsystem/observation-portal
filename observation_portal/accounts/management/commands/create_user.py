@@ -34,10 +34,11 @@ class Command(BaseCommand):
         except IntegrityError:
             user = User.objects.get(username=options['user'])
             logging.warning(f"user {options['user']} already exists")
-        Profile.objects.get_or_create(user=user)
 
         token, _ = Token.objects.get_or_create(user=user)
         if options['token']:
             # Need to set the api token to some expected value
             token.delete()
             Token.objects.create(user=user, key=options['token'])
+
+        Profile.objects.get_or_create(user=user)
