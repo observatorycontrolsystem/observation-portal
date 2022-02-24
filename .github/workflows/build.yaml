@@ -72,14 +72,12 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install setuptools wheel twine
+        python -m pip install poetry
     - name: Build package and publish to PyPI
-      env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.PYPI_OBS_PORTAL_API_TOKEN }}
       run: |
-        python setup.py sdist bdist_wheel
-        twine upload dist/*
+        poetry build -f wheel
+        poetry build -f sdist
+        poetry publish -u "__token__" -p "${{ secrets.PYPI_OBS_PORTAL_API_TOKEN }}"
 
 
   build_and_publish_image:
