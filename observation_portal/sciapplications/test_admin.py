@@ -7,6 +7,7 @@ from django.utils import timezone
 from mixer.backend.django import mixer
 from django_dramatiq.test import DramatiqTestCase
 
+from observation_portal.accounts.test_utils import blend_user
 from observation_portal.proposals.models import Semester, Proposal
 from observation_portal.sciapplications.models import ScienceApplication, Call, Instrument, TimeRequest
 
@@ -28,7 +29,7 @@ def order_mail_invite_then_approval(mailbox):
 class TestSciAppAdmin(DramatiqTestCase):
     def setUp(self):
         self.semester = mixer.blend(Semester)
-        self.user = mixer.blend(User)
+        self.user = blend_user()
         self.admin_user = User.objects.create_superuser('admin', 'admin@example.com', 'password')
         self.client.force_login(self.admin_user)
         self.call = mixer.blend(
@@ -99,7 +100,7 @@ class TestSciAppAdmin(DramatiqTestCase):
         self.assertIn(ScienceApplication.objects.get(pk=app_id_to_port).call.semester.id, str(mail.outbox[0].message()))
 
     def test_email_pi_on_successful_port_when_registered_pi_is_not_submitter(self):
-        other_user = mixer.blend(User)
+        other_user = blend_user()
         app_id_to_port = self.apps[0].id
         ScienceApplication.objects.filter(pk=app_id_to_port).update(status=ScienceApplication.ACCEPTED)
         ScienceApplication.objects.filter(pk=app_id_to_port).update(pi=other_user.email)
