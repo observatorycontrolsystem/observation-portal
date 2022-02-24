@@ -4,7 +4,6 @@ from io import StringIO
 from rest_framework.test import APITestCase
 from django.utils import timezone
 from mixer.backend.django import mixer
-from django.contrib.auth.models import User
 from dateutil.parser import parse
 from django.urls import reverse
 from django.core.cache import caches
@@ -15,7 +14,6 @@ from observation_portal.requestgroups.models import RequestGroup, Window, Locati
 from observation_portal.observations.time_accounting import configuration_time_used
 from observation_portal.observations.models import Observation, ConfigurationStatus, Summary
 from observation_portal.proposals.models import Proposal, Membership, Semester, TimeAllocation
-from observation_portal.accounts.models import Profile
 from observation_portal.common.test_helpers import create_simple_requestgroup, create_simple_configuration
 from observation_portal.accounts.test_utils import blend_user
 from observation_portal.observations import views
@@ -89,8 +87,7 @@ class TestPostScheduleApi(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
         self.proposal = mixer.blend(Proposal, direct_submission=True)
-        self.user = mixer.blend(User, is_admin=True, is_superuser=True, is_staff=True)
-        mixer.blend(Profile, user=self.user)
+        self.user = blend_user(user_params={'is_admin': True, 'is_superuser': True, 'is_staff': True})
         self.client.force_login(self.user)
         self.semester = mixer.blend(
             Semester, id='2016B', start=datetime(2016, 9, 1, tzinfo=timezone.utc),
@@ -102,13 +99,13 @@ class TestPostScheduleApi(SetTimeMixin, APITestCase):
         self.observation['proposal'] = self.proposal.id
 
     def test_post_observation_user_not_logged_in(self):
-        other_user = mixer.blend(User)
+        other_user = blend_user()
         self.client.force_login(other_user)
         response = self.client.post(reverse('api:schedule-list'), data=self.observation)
         self.assertEqual(response.status_code, 403)
 
     def test_post_observation_user_not_on_proposal(self):
-        other_user = mixer.blend(User, is_staff=True)
+        other_user = blend_user(user_params={'is_staff': True})
         self.client.force_login(other_user)
         response = self.client.post(reverse('api:schedule-list'), data=self.observation)
         self.assertEqual(response.status_code, 400)
@@ -362,8 +359,7 @@ class TestPostScheduleMultiConfigApi(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
         self.proposal = mixer.blend(Proposal, direct_submission=True)
-        self.user = mixer.blend(User, is_admin=True, is_superuser=True, is_staff=True)
-        mixer.blend(Profile, user=self.user)
+        self.user = blend_user(user_params={'is_admin': True, 'is_superuser': True, 'is_staff': True})
         self.client.force_login(self.user)
         self.semester = mixer.blend(
             Semester, id='2016B', start=datetime(2016, 9, 1, tzinfo=timezone.utc),
@@ -422,8 +418,7 @@ class TestObservationApiBase(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
         self.proposal = mixer.blend(Proposal, direct_submission=False)
-        self.user = mixer.blend(User, is_admin=True, is_superuser=True, is_staff=True)
-        mixer.blend(Profile, user=self.user)
+        self.user = blend_user(user_params={'is_admin': True, 'is_superuser': True, 'is_staff': True})
         self.client.force_login(self.user)
         self.semester = mixer.blend(
             Semester, id='2016B', start=datetime(2016, 9, 1, tzinfo=timezone.utc),

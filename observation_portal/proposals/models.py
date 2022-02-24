@@ -4,7 +4,7 @@ from django.utils.functional import cached_property
 from django.forms import model_to_dict
 from django.db import models
 from django.utils import timezone
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.html import strip_tags

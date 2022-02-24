@@ -1,6 +1,6 @@
 import requests
 from django.core.cache import caches
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.conf import settings
 from django.utils import timezone
 import logging

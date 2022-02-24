@@ -1,7 +1,7 @@
 import os
 from collections import defaultdict
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django.utils import timezone
 from django.db import transaction
 from PyPDF2 import PdfFileReader

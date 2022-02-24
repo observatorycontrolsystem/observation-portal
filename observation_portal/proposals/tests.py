@@ -10,7 +10,7 @@ from django_dramatiq.test import DramatiqTestCase
 
 from observation_portal.proposals.models import ProposalInvite, Proposal, Membership, ProposalNotification, TimeAllocation, Semester
 from observation_portal.requestgroups.models import RequestGroup, Configuration, InstrumentConfig, Window
-from observation_portal.accounts.models import Profile
+from observation_portal.accounts.test_utils import blend_user
 from observation_portal.common.test_helpers import create_simple_requestgroup
 from observation_portal.proposals.tasks import time_allocation_reminder
 from observation_portal.requestgroups.signals import handlers  # DO NOT DELETE, needed to active signals
@@ -20,7 +20,7 @@ from observation_portal.proposals.forms import TimeAllocationForm
 class TestProposal(DramatiqTestCase):
     def test_add_existing_user(self):
         proposal = mixer.blend(Proposal)
-        user = mixer.blend(User, email='email1@example.com')
+        user = blend_user(user_params={'email': 'email1@example.com'})
         emails = ['email1@example.com']
         proposal.add_users(emails, Membership.CI)
 
@@ -47,14 +47,14 @@ class TestProposal(DramatiqTestCase):
 
     def test_no_dual_membership(self):
         proposal = mixer.blend(Proposal)
-        user = mixer.blend(User)
+        user = blend_user()
         Membership.objects.create(user=user, proposal=proposal, role=Membership.PI)
         with self.assertRaises(IntegrityError):
             Membership.objects.create(user=user, proposal=proposal, role=Membership.CI)
 
     def test_user_already_member(self):
         proposal = mixer.blend(Proposal)
-        user = mixer.blend(User)
+        user = blend_user()
         mixer.blend(Membership, proposal=proposal, user=user, role=Membership.CI)
         proposal.add_users([user.email], Membership.CI)
         self.assertIn(proposal, user.proposal_set.all())
@@ -92,7 +92,7 @@ class TestProposalInvitation(DramatiqTestCase):
 
     def test_accept(self):
         invitation = mixer.blend(ProposalInvite)
-        user = mixer.blend(User)
+        user = blend_user()
         invitation.accept(user)
         self.assertIn(invitation.proposal, user.proposal_set.all())
 
@@ -100,13 +100,14 @@ class TestProposalInvitation(DramatiqTestCase):
 class TestProposalNotifications(DramatiqTestCase):
     def setUp(self):
         self.proposal = mixer.blend(Proposal)
-        self.user = mixer.blend(User)
+        self.user = blend_user()
         mixer.blend(Membership, user=self.user, proposal=self.proposal)
         self.requestgroup = mixer.blend(RequestGroup, proposal=self.proposal, submitter=self.user, state='PENDING',
                                         observation_type=RequestGroup.NORMAL)
 
     def test_all_proposal_notification(self):
-        mixer.blend(Profile, user=self.user, notifications_enabled=True)
+        self.user.profile.notifications_enabled = True
+        self.user.profile.save()
         download_urls = ['http://download_data/?requestgroup={requestgroup_id}', 'http://download_data/', '']
         for download_url in download_urls:
             download_url_is_in_email = download_url != ''
@@ -130,7 +131,8 @@ class TestProposalNotifications(DramatiqTestCase):
                     self.assertEqual(mail.outbox[0].to, [self.user.email])
 
     def test_single_proposal_notification(self):
-        mixer.blend(Profile, user=self.user, notifications_enabled=False)
+        self.user.profile.notifications_enabled = False
+        self.user.profile.save()
         mixer.blend(ProposalNotification, user=self.user, proposal=self.proposal)
         self.requestgroup.state = 'COMPLETED'
         self.requestgroup.save()
@@ -144,7 +146,8 @@ class TestProposalNotifications(DramatiqTestCase):
         self.assertEqual(mail.outbox[0].to, [self.user.email])
 
     def test_user_loves_notifications(self):
-        mixer.blend(Profile, user=self.user, notifications_enabled=True)
+        self.user.profile.notifications_enabled = True
+        self.user.profile.save()
         mixer.blend(ProposalNotification, user=self.user, proposal=self.proposal)
         self.requestgroup.state = 'COMPLETED'
         self.requestgroup.save()
@@ -157,7 +160,9 @@ class TestProposalNotifications(DramatiqTestCase):
         self.assertEqual(mail.outbox[0].to, [self.user.email])
 
     def test_notifications_only_authored(self):
-        mixer.blend(Profile, user=self.user, notifications_enabled=True, notifications_on_authored_only=True)
+        self.user.profile.notifications_enabled = True
+        self.user.profile.notifications_on_authored_only = True
+        self.user.profile.save()
         self.requestgroup.submitter = self.user
         self.requestgroup.state = 'COMPLETED'
         self.requestgroup.save()
@@ -170,8 +175,10 @@ class TestProposalNotifications(DramatiqTestCase):
         self.assertEqual(mail.outbox[0].to, [self.user.email])
 
     def test_no_notifications_only_authored(self):
-        mixer.blend(Profile, user=self.user, notifications_enabled=True, notifications_on_authored_only=True)
-        self.requestgroup.submitter = mixer.blend(User)
+        self.user.profile.notifications_enabled = True
+        self.user.profile.notifications_on_authored_only = True
+        self.user.profile.save()
+        self.requestgroup.submitter = blend_user()
         self.requestgroup.state = 'COMPLETED'
         self.requestgroup.save()
 
@@ -193,8 +200,8 @@ class TestProposalNotifications(DramatiqTestCase):
 class TestTimeAllocationEmail(DramatiqTestCase):
     def setUp(self):
         super().setUp()
-        self.pi = mixer.blend(User)
-        self.coi = mixer.blend(User)
+        self.pi = blend_user()
+        self.coi = blend_user()
         self.proposal = mixer.blend(Proposal, active=True)
         mixer.blend(Membership, user=self.pi, proposal=self.proposal, role='PI')
         mixer.blend(Membership, user=self.coi, proposal=self.proposal, role='CI')
@@ -254,8 +261,7 @@ class TestProposalUserLimits(TestCase):
         self.proposal = mixer.blend(Proposal)
         semester = mixer.blend(Semester, start=timezone.now(), end=timezone.now() + datetime.timedelta(days=180))
         mixer.blend(TimeAllocation, proposal=self.proposal, semester=semester, instrument_types=['1M0-SCICAM-SBIG'])
-        self.user = mixer.blend(User)
-        mixer.blend(Profile, user=self.user)
+        self.user = blend_user()
         mixer.blend(Membership, user=self.user, proposal=self.proposal, role=Membership.CI)
 
     def test_time_used_for_user(self):
@@ -327,7 +333,7 @@ class TestProposalAdmin(TestCase):
         self.proposals = mixer.cycle(3).blend(Proposal, active=False)
         self.proposal = self.proposals[0]
         now = timezone.now()
-        self.user = mixer.blend(User)
+        self.user = blend_user()
         self.current_semester = mixer.blend(
             Semester, start=now, end=now + datetime.timedelta(days=30))
         self.time_allocation = mixer.blend(TimeAllocation, proposal=self.proposal, semester=self.current_semester, instrument_types=['1M0-SCICAM-SBIG'])

@@ -1,6 +1,7 @@
 from datetime import timedelta
 from unittest.mock import patch
 import copy
+import responses
 
 from django.test import TestCase
 from rest_framework.test import APITestCase
@@ -9,7 +10,6 @@ from django.contrib.auth.models import User
 from django.core.management import call_command
 from django.urls import reverse
 from mixer.backend.django import mixer
-from oauth2_provider.models import Application, AccessToken
 from rest_framework.authtoken.models import Token
 from django.core import mail
 from django_dramatiq.test import DramatiqTestCase
@@ -19,42 +19,10 @@ from observation_portal.accounts.models import Profile
 from observation_portal.proposals.models import Proposal, Membership, TimeAllocation
 
 
-class TestArchiveBearerToken(TestCase):
-    def setUp(self):
-        self.profile = mixer.blend(Profile)
-
-    def test_no_archive_app(self):
-        self.assertEqual(self.profile.archive_bearer_token, '')
-
-    def test_new_token(self):
-        mixer.blend(Application, name='Archive')
-        self.assertTrue(self.profile.archive_bearer_token)
-
-    def test_existing_token(self):
-        app = mixer.blend(Application, name='Archive')
-        at = mixer.blend(
-            AccessToken,
-            application=app,
-            user=self.profile.user,
-            expires=timezone.now() + timedelta(days=30)
-        )
-        self.assertEqual(self.profile.archive_bearer_token, at.token)
-
-    def test_expired_token(self):
-        app = mixer.blend(Application, name='Archive')
-        at = mixer.blend(
-            AccessToken,
-            application=app,
-            user=self.profile.user,
-            expires=timezone.now() - timedelta(days=1)
-        )
-        self.assertNotEqual(self.profile.archive_bearer_token, at.token)
-
-
 class TestAPIQuota(TestCase):
     def setUp(self):
-        user = mixer.blend(User)
-        self.profile = mixer.blend(Profile, user=user)
+        user = blend_user()
+        self.profile = user.profile
 
     def test_quota_is_zero(self):
         self.assertEqual(self.profile.api_quota['used'], 0)
@@ -234,7 +202,7 @@ class TestProfileAPI(APITestCase):
 
     def test_unique_email(self):
         duplicate_email = 'first@example.com'
-        mixer.blend(User, email=duplicate_email)
+        blend_user(user_params={'email': duplicate_email})
         bad_data = copy.deepcopy(self.data)
         bad_data['email'] = duplicate_email
         response = self.client.patch(reverse('api:profile'), data=bad_data)
@@ -270,3 +238,67 @@ class TestProfileAPI(APITestCase):
             Token.objects.get(user=self.user)
         self.client.get(reverse('api:profile'))
         self.assertTrue(Token.objects.get(user=self.user))
+
+
+class TestClientUserUpdates(DramatiqTestCase):
+    def setUp(self):
+        super().setUp()
+        self.user = blend_user()
+        self.api_token = self.user.profile.api_token.key  # This triggers creating the api_token if it doesn't exist
+        self.profile = self.user.profile
+        self.client.force_login(self.user)
+
+    def test_user_update_triggers_client_user_update(self):
+        with self.settings(OAUTH_CLIENT_APPS_BASE_URLS=['http://test1.lco.global', 'http://test2.lco.global']):
+            responses.add(responses.POST, 'http://test1.lco.global/authprofile/addupdateuser/',
+                    json={'message': 'User account updated'}, status=200)
+
+            responses.add(responses.POST, 'http://test2.lco.global/authprofile/addupdateuser/',
+                    json={'message': 'User account updated'}, status=200)
+
+            self.user.is_staff = not self.user.is_staff
+            self.user.save()
+
+            self.broker.join('default')
+            self.worker.join()
+
+            self.assertGreaterEqual(len(responses.calls), 2)
+            self.assertEqual(responses.calls[-2].request.url, 'http://test1.lco.global/authprofile/addupdateuser/')
+            self.assertEqual(responses.calls[-2].response.text, '{"message": "User account updated"}')
+            self.assertEqual(responses.calls[-1].request.url, 'http://test2.lco.global/authprofile/addupdateuser/')
+            self.assertEqual(responses.calls[-1].response.text, '{"message": "User account updated"}')
+
+    def test_profile_update_triggers_client_user_update(self):
+        with self.settings(OAUTH_CLIENT_APPS_BASE_URLS=['http://test1.lco.global', 'http://test2.lco.global']):
+            responses.add(responses.POST, 'http://test1.lco.global/authprofile/addupdateuser/',
+                    json={'message': 'User account updated'}, status=200)
+
+            responses.add(responses.POST, 'http://test2.lco.global/authprofile/addupdateuser/',
+                    json={'message': 'User account updated'}, status=200)
+
+            self.profile.staff_view = not self.profile.staff_view
+            self.profile.save()
+
+            self.broker.join('default')
+            self.worker.join()
+
+            self.assertGreaterEqual(len(responses.calls), 2)
+            self.assertEqual(responses.calls[-2].request.url, 'http://test1.lco.global/authprofile/addupdateuser/')
+            self.assertEqual(responses.calls[-2].response.text, '{"message": "User account updated"}')
+            self.assertEqual(responses.calls[-1].request.url, 'http://test2.lco.global/authprofile/addupdateuser/')
+            self.assertEqual(responses.calls[-1].response.text, '{"message": "User account updated"}')
+
+    def test_revoking_token_triggers_client_user_update(self):
+        with self.settings(OAUTH_CLIENT_APPS_BASE_URLS=['http://test1.lco.global']):
+            responses.add(responses.POST, 'http://test1.lco.global/authprofile/addupdateuser/',
+                    json={'message': 'User account updated'}, status=200)
+
+            response = self.client.post(reverse('api:revoke_api_token'))
+            self.assertContains(response, 'API token revoked', status_code=200)
+
+            self.broker.join('default')
+            self.worker.join()
+
+            self.assertGreaterEqual(len(responses.calls), 1)
+            self.assertEqual(responses.calls[-1].request.url, 'http://test1.lco.global/authprofile/addupdateuser/')
+            self.assertEqual(responses.calls[-1].response.text, '{"message": "User account updated"}')
