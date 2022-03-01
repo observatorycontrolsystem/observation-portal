@@ -6,7 +6,7 @@ FROM python:3.10-slim as base
 # use bash
 SHELL ["/bin/bash", "-c"]
 
-# install any secruity updates
+# install any security updates
 RUN apt-get update && apt-get -y upgrade
 
 # install system dependencies
