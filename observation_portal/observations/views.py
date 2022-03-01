@@ -26,7 +26,7 @@ class LastScheduledView(APIView):
     permission_classes = (IsAdminUser,)
     schema = ObservationPortalSchema(tags=['Observations'])
     filter_backends = (DjangoFilterBackend,)
-    filter_class = LastScheduledFilter
+    filterset_class = LastScheduledFilter
 
     def get(self, request):
         site = request.query_params.get('site')

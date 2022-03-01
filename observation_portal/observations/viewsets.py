@@ -42,7 +42,7 @@ class ScheduleViewSet(ListAsDictMixin, CreateListModelMixin, viewsets.ModelViewS
     permission_classes = (IsAdminOrReadOnly | IsDirectUser,)
     http_method_names = ['get', 'post', 'head', 'options']
     serializer_class = import_string(settings.SERIALIZERS['observations']['Schedule'])
-    filter_class = ObservationFilter
+    filterset_class = ObservationFilter
     schema = ObservationPortalSchema(tags=['Observations'])
     filter_backends = (
         filters.OrderingFilter,
@@ -63,7 +63,7 @@ class ScheduleViewSet(ListAsDictMixin, CreateListModelMixin, viewsets.ModelViewS
 class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelViewSet):
     permission_classes = (IsAdminOrReadOnly | IsDirectUser,)
     http_method_names = ['get', 'post', 'head', 'options', 'patch']
-    filter_class = ObservationFilter
+    filterset_class = ObservationFilter
     serializer_class = import_string(settings.SERIALIZERS['observations']['Observation'])
     schema = ObservationPortalSchema(tags=['Observations'])
     filter_backends = (
@@ -80,7 +80,7 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
         """ Endpoint for querying the currently available observation filters
         """
         obs_filter_options = {'fields': [], 'choice_fields': []}
-        for filter_name, filter_field in self.filter_class.get_filters().items():
+        for filter_name, filter_field in self.filterset_class.get_filters().items():
             if hasattr(filter_field.field, 'choices'):
                 obs_filter_options['choice_fields'].append({
                     'name': filter_name,
@@ -196,7 +196,7 @@ class ConfigurationStatusViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAdminUser,)
     http_method_names = ['get', 'patch']
     serializer_class = import_string(settings.SERIALIZERS['observations']['ConfigurationStatus'])
-    filter_class = ConfigurationStatusFilter
+    filterset_class = ConfigurationStatusFilter
     schema = ObservationPortalSchema(tags=['Observations'])
     filter_backends = (
         filters.OrderingFilter,

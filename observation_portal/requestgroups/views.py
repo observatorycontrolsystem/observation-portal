@@ -118,7 +118,7 @@ class InstrumentsInformationView(APIView):
     permission_classes = (AllowAny,)
     schema = ObservationPortalSchema(tags=['Utility'])
     filter_backends = (DjangoFilterBackend,)
-    filter_class = InstrumentsInformationFilter
+    filterset_class = InstrumentsInformationFilter
 
     def get(self, request):
         info = {}
@@ -218,7 +218,7 @@ class ObservationPortalLastChangedView(APIView):
     """
     permission_classes = (IsAdminUser,)
     schema = ObservationPortalSchema(tags=['RequestGroups'], is_list_view=False)
-    filter_class = LastChangedFilter
+    filterset_class = LastChangedFilter
     filter_backends = (DjangoFilterBackend,)
 
     def get(self, request):

@@ -14,7 +14,7 @@ from observation_portal.common.schema import ObservationPortalSchema
 class CallViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = (IsAuthenticated,)
     schema = ObservationPortalSchema(tags=['Science Applications'])
-    filter_class = CallFilter
+    filterset_class = CallFilter
     serializer_class = import_string(settings.SERIALIZERS['sciapplications']['Call'])
     filter_backends = (
         filters.OrderingFilter,
@@ -31,7 +31,7 @@ class CallViewSet(viewsets.ReadOnlyModelViewSet):
 class ScienceApplicationViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated, )
     schema = ObservationPortalSchema(tags=['Science Applications'])
-    filter_class = ScienceApplicationFilter
+    filterset_class = ScienceApplicationFilter
     serializer_class = import_string(settings.SERIALIZERS['sciapplications']['ScienceApplication'])
     http_method_names = ('get', 'head', 'options', 'post', 'put', 'delete')
     filter_backends = (

@@ -1,23 +1,15 @@
+from importlib import metadata
 from rest_framework import serializers
 from rest_framework.schemas.openapi import AutoSchema, SchemaGenerator
 from rest_framework.schemas.utils import is_list_view
 from rest_framework.viewsets import GenericViewSet
-from setuptools_scm import get_version
-from setuptools_scm.version import ScmVersion
-
-
-def version_scheme(version: ScmVersion) -> str:
-    """Simply return the string representation of the version object tag, which is the latest git tag.
-    setuptools_scm does not provide a simple semantic versioning format without trying to guess the next release, or adding some metadata to the version.
-    """
-    return str(version.tag)
 
 
 class ObservationPortalSchemaGenerator(SchemaGenerator):
     def get_schema(self, *args, **kwargs):
         schema = super().get_schema(*args, **kwargs)
         schema['info']['title'] = 'Observation Portal'
-        schema['info']['version'] = get_version(version_scheme=version_scheme, local_scheme='no-local-version')
+        schema['info']['version'] = metadata.version("django-ocs-observation-portal")
         return schema
 
     def has_view_permissions(self, path, method, view):

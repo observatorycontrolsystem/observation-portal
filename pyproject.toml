@@ -1,0 +1,72 @@
+[tool.poetry]
+name = "django-ocs-observation-portal"
+version = "3.6.10"
+description = "The Observatory Control System (OCS) Observation Portal django apps"
+license = "GPL-3.0-only"
+authors = ["Observatory Control System Project <ocs@lco.global>"]
+readme = "README.md"
+homepage = "https://observatorycontrolsystem.github.io"
+repository = "https://github.com/observatorycontrolsystem/observation-portal"
+keywords = [
+    "observations",
+    "astronomy",
+    "astrophysics",
+    "cosmology",
+    "science",
+]
+classifiers=[
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Topic :: Scientific/Engineering :: Astronomy",
+    "Topic :: Scientific/Engineering :: Physics"
+]
+packages = [
+    { include = "observation_portal" }
+]
+
+[tool.poetry.scripts]
+ocs-django-manage = "manage:main"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+apscheduler = ">=3.7,<3.8"
+boto3 = "<2.0"
+cerberus = ">1.0,<2.0"
+django = "^4"
+djangorestframework = "^3.13"
+django-bootstrap4 = "<4.0"
+django-cors-headers = "^3.11"
+django-dramatiq = ">=0.10,<0.11"
+django-extensions = "^3.1"
+django-filter = "21.1"
+django-oauth-toolkit = "~1.6" # >= 1.7: https://github.com/jazzband/django-oauth-toolkit/pull/1070 is not compatible with django-dramtiq
+django-redis-cache = "^3"
+django-registration-redux = "^2.9"
+django-storages = "^1.12"
+dramatiq = { version = "^1.12", extras = [ "redis", "watch" ] }
+drf-yasg = "^1.20"
+elasticsearch = ">=5,<6"
+gunicorn = { version = "^20.1", extras = [ "gevent" ] }
+lcogt-logging = "0.3.2"
+numpy = "^1.16"
+ocs-rise-set = "0.5.1"
+psycopg2-binary = "^2.9.3"
+PyPDF2 = ">=1.26,<1.27"
+redis = "^3"
+requests = "^2.27.1"
+time_intervals = "^1"
+uritemplate = "^4.1.1"
+PyYAML = "^6.0"
+
+[tool.poetry.dev-dependencies]
+responses = "0.18.0"
+mixer = "7.2.1"
+Faker = "^12"
+coverage = "^6.3.1"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

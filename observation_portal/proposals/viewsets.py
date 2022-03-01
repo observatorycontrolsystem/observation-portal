@@ -21,7 +21,7 @@ class ProposalViewSet(DetailAsDictMixin, ListAsDictMixin, viewsets.ReadOnlyModel
     permission_classes = (IsAuthenticated,)
     schema = ObservationPortalSchema(tags=['Proposals'])
     serializer_class = import_string(settings.SERIALIZERS['proposals']['Proposal'])
-    filter_class = ProposalFilter
+    filterset_class = ProposalFilter
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
     ordering = ('-id',)
 
@@ -123,7 +123,7 @@ class SemesterViewSet(viewsets.ReadOnlyModelViewSet):
     schema = ObservationPortalSchema(tags=['Proposals'])
     serializer_class = import_string(settings.SERIALIZERS['proposals']['Semester'])
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
-    filter_class = SemesterFilter
+    filterset_class = SemesterFilter
     ordering = ('-start',)
     queryset = Semester.objects.all()
 
@@ -195,7 +195,7 @@ class MembershipViewSet(ListAsDictMixin, DetailAsDictMixin, mixins.DestroyModelM
     http_method_names = ('get', 'head', 'options', 'post', 'delete')
     schema = ObservationPortalSchema(tags=['Proposals'])
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
-    filter_class = MembershipFilter
+    filterset_class = MembershipFilter
     serializer_class = import_string(settings.SERIALIZERS['proposals']['Membership'])
 
     def get_queryset(self):
@@ -259,7 +259,7 @@ class ProposalInviteViewSet(mixins.DestroyModelMixin, viewsets.ReadOnlyModelView
     http_method_names = ('get', 'head', 'options', 'delete')
     schema = ObservationPortalSchema(tags=['Proposals'])
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter,)
-    filter_class = ProposalInviteFilter
+    filterset_class = ProposalInviteFilter
     serializer_class = import_string(settings.SERIALIZERS['proposals']['ProposalInvite'])
 
     def get_queryset(self):

@@ -38,7 +38,7 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'head', 'options']
     schema = ObservationPortalSchema(tags=['RequestGroups'])
     serializer_class = import_string(settings.SERIALIZERS['requestgroups']['RequestGroup'])
-    filter_class = RequestGroupFilter
+    filterset_class = RequestGroupFilter
     filter_backends = (
         filters.OrderingFilter,
         DjangoFilterBackend
@@ -252,7 +252,7 @@ class RequestViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
     permission_classes = (IsAuthenticatedOrReadOnly,)
     schema = ObservationPortalSchema(tags=['Requests'])
     serializer_class = import_string(settings.SERIALIZERS['requestgroups']['Request'])
-    filter_class = RequestFilter
+    filterset_class = RequestFilter
     filter_backends = (
         filters.OrderingFilter,
         DjangoFilterBackend
