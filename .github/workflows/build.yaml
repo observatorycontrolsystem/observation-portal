@@ -77,7 +77,7 @@ jobs:
       run: |
         poetry build -f wheel
         poetry build -f sdist
-        poetry publish -u "__token__" -p "${{ secrets.PYPI_OBS_PORTAL_API_TOKEN }}"
+        poetry publish -u "__token__" -p '${{ secrets.PYPI_OBS_PORTAL_API_TOKEN }}'
 
 
   build_and_publish_image:
