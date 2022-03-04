@@ -1,6 +1,5 @@
 from django.conf import settings
-from elasticsearch import Elasticsearch
-from elasticsearch import exceptions as es_exceptions
+from opensearchpy import OpenSearch, ConnectionError
 from datetime import timedelta
 from django.core.exceptions import ImproperlyConfigured
 from django.utils import timezone
@@ -17,7 +16,7 @@ logger = logging.getLogger(__name__)
 ES_STRING_FORMATTER = "%Y-%m-%d %H:%M:%S"
 
 
-class ElasticSearchException(Exception):
+class OpenSearchException(Exception):
     pass
 
 
@@ -36,12 +35,12 @@ class TelescopeStates(object):
 
     def __init__(self, start, end, telescopes=None, sites=None, instrument_types=None, location_dict=None, only_schedulable=True):
         try:
-            if not settings.ELASTICSEARCH_URL:
-                raise ImproperlyConfigured("ELASTICSEARCH_URL")
-            self.es = Elasticsearch([settings.ELASTICSEARCH_URL])
+            if not settings.OPENSEARCH_URL:
+                raise ImproperlyConfigured("OPENSEARCH_URL")
+            self.es = OpenSearch(settings.OPENSEARCH_URL, http_compress=True)
         except Exception:
             self.es = None
-            logger.exception('Could not connect to Elasticsearch host. Make sure ELASTICSEARCH_URL is set properly. For now, it will be ignored.')
+            logger.exception('Could not connect to OpenSearch host. Make sure OPENSEARCH_URL is set properly. For now, it will be ignored.')
 
         self.instrument_types = instrument_types
         self.only_schedulable = only_schedulable
@@ -53,7 +52,7 @@ class TelescopeStates(object):
 
         self.start = start.replace(tzinfo=timezone.utc).replace(microsecond=0)
         self.end = end.replace(tzinfo=timezone.utc).replace(microsecond=0)
-        self.event_data = self._get_es_data(sites, telescopes)
+        self.event_data = self._get_os_data(sites, telescopes)
 
     def _get_available_telescopes(self, location_dict=None):
         telescope_to_instruments = configdb.get_instrument_types_per_telescope(location=location_dict,
@@ -65,7 +64,7 @@ class TelescopeStates(object):
                                     any(inst in insts for inst in self.instrument_types)]
         return available_telescopes
 
-    def _get_es_data(self, sites, telescopes):
+    def _get_os_data(self, sites, telescopes):
         event_data = []
         if self.es:
             lower_query_time = min(self.start, timezone.now())
@@ -110,8 +109,8 @@ class TelescopeStates(object):
                     _source=['timestamp', 'telescope', 'observatory', 'site', 'value_string'],
                     sort=['site', 'observatory', 'telescope', 'timestamp']
                 )
-            except es_exceptions.ConnectionError:
-                raise ElasticSearchException
+            except ConnectionError:
+                raise OpenSearchException
 
             event_data.extend(data['hits']['hits'])
             total_events = data['hits']['total']

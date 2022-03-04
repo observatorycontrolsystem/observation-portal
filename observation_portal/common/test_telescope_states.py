@@ -92,7 +92,7 @@ class TelescopeStatesFakeInput(TestCase):
         self.tk1 = TelescopeKey('tst', 'doma', '1m0a')
         self.tk2 = TelescopeKey('tst', 'domb', '1m0a')
 
-        self.es_patcher = patch('observation_portal.common.telescope_states.TelescopeStates._get_es_data')
+        self.es_patcher = patch('observation_portal.common.telescope_states.TelescopeStates._get_os_data')
         self.mock_es = self.es_patcher.start()
         self.mock_es.return_value = self.es_output
 
@@ -253,7 +253,7 @@ class TelescopeStatesFromFile(TestCase):
         self.end = datetime(2016, 10, 10, tzinfo=timezone.utc)
         self.short_end = datetime(2016, 10, 4, tzinfo=timezone.utc)
 
-        self.es_patcher = patch('observation_portal.common.telescope_states.TelescopeStates._get_es_data')
+        self.es_patcher = patch('observation_portal.common.telescope_states.TelescopeStates._get_os_data')
         self.mock_es = self.es_patcher.start()
         self.mock_es.return_value = self.es_output
 
@@ -353,7 +353,7 @@ class TestTelescopeStatesFromFile(TelescopeStatesFromFile):
                             'start': datetime(2016, 10, 8, 10, 28, 36, tzinfo=timezone.utc),
                             'telescope': 'lsc.domb.1m0a'}]
         # looked in depth at lsc.domb.1m0a in the date range to verify correctness of this
-        # data is available on the telescope_events index of elasticsearch
+        # data is available on the telescope_events index of opensearch
         self.assertEqual(telescope_states[tak], expected_events)
 
     def test_states_no_enclosure_interlock(self):
