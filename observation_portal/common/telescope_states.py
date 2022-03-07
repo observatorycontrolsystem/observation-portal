@@ -113,7 +113,7 @@ class TelescopeStates(object):
                 raise OpenSearchException
 
             event_data.extend(data['hits']['hits'])
-            total_events = data['hits']['total']
+            total_events = data['hits']['total']['value']
             events_read = min(query_size, total_events)
             scroll_id = data.get('_scroll_id', 0)
             while events_read < total_events:
