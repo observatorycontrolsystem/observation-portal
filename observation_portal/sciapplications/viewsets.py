@@ -1,9 +1,13 @@
 from rest_framework import viewsets, filters
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework import status
 from django_filters.rest_framework import DjangoFilterBackend
 from django.template.loader import render_to_string
 from django.conf import settings
 from django.utils.module_loading import import_string
+from django.core.files.base import ContentFile
 
 from observation_portal.accounts.tasks import send_mail
 from observation_portal.sciapplications.filters import ScienceApplicationFilter, CallFilter
@@ -42,6 +46,32 @@ class ScienceApplicationViewSet(viewsets.ModelViewSet):
         ('call__semester', 'semester'),
         ('tac_rank', 'tac_rank')
     )
+
+    @action(detail=True, methods=['post'])
+    def copy(self):
+        """
+        Copy a science application's information for a new call
+        """
+        # get science application from ID in request
+        sci_app = self.get_object()
+        
+        # first check that there's an open call during this time, with the correct proposal type
+        active_calls = Call.open_calls().filter(proposal_type=sci_app.call.proposal_type)
+        if not active_calls:
+            return Response({'errors': [f'No open call at this time for proposal type {sci_app.call.proposal_type}']}, 
+                            status=status.HTTP_400_BAD_REQUEST)
+        else:
+            sci_app_copy = sci_app.copy()
+            sci_app_copy.status = 'DRAFT'
+            # make sure we auto-generate a primary key: https://docs.djangoproject.com/en/3.2/topics/db/queries/#copying-model-instances
+            sci_app_copy.pk = None
+            sci_app_copy._state.adding = True
+            sci_app_copy.call = active_calls[0]
+            # generate new PDF
+            sci_app_copy.pdf = ContentFile(sci_app_copy.pdf.read(), 
+                                           name=sci_app_copy.pdf.name)
+            sci_app_copy.save()
+            return Response(status=status.HTTP_200_OK)
 
     def get_queryset(self):
         if self.request.user.is_staff and self.request.user.profile.staff_view:
