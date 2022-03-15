@@ -1,3 +1,5 @@
+import os
+
 from rest_framework import viewsets, filters
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
@@ -52,7 +54,6 @@ class ScienceApplicationViewSet(viewsets.ModelViewSet):
         """
         Copy a science application's information for a new call
         """
-        # get science application from ID in request
         sci_app = self.get_object()
         
         # first check that there's an open call during this time, with the correct proposal type
@@ -61,16 +62,17 @@ class ScienceApplicationViewSet(viewsets.ModelViewSet):
             return Response({'errors': [f'No open call at this time for proposal type {sci_app.call.proposal_type}']}, 
                             status=status.HTTP_400_BAD_REQUEST)
         else:
-            sci_app_copy = sci_app.copy()
-            sci_app_copy.status = 'DRAFT'
             # make sure we auto-generate a primary key: https://docs.djangoproject.com/en/3.2/topics/db/queries/#copying-model-instances
-            sci_app_copy.pk = None
-            sci_app_copy._state.adding = True
-            sci_app_copy.call = active_calls[0]
-            # generate new PDF
-            sci_app_copy.pdf = ContentFile(sci_app_copy.pdf.read(), 
-                                           name=sci_app_copy.pdf.name)
-            sci_app_copy.save()
+            sci_app.pk = None
+            sci_app._state.adding = True
+            sci_app.status = 'DRAFT'
+            sci_app.call = active_calls[0]
+            # save the model to generate a new primary key
+            sci_app.save()
+            # now generate new PDF, this uses the primary key of the new sciapp
+            sci_app.pdf = ContentFile(sci_app.pdf.read(), 
+                                      name=os.path.basename(sci_app.pdf.name))
+            sci_app.save()
             return Response(status=status.HTTP_200_OK)
 
     def get_queryset(self):
