@@ -20,7 +20,7 @@ ORGANIZATION_DDT_EMAIL = 'test@example.com'
 ORGANIZATION_SUPPORT_EMAIL = 'test@example.com'
 ORGANIZATION_ADMIN_EMAIL = 'test@example.com'
 
-ELASTICSEARCH_URL = os.getenv('ELASTICSEARCH_URL', 'http://elasticsearchdevfake')
+OPENSEARCH_URL = os.getenv('OPENSEARCH_URL', 'http://opensearchdevfake')
 CONFIGDB_URL = os.getenv('CONFIGDB_URL', 'http://configdbfake')
 DOWNTIMEDB_URL = os.getenv('DOWNTIMEDB_URL', 'http://downtimedbfake')
 

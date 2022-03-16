@@ -4,7 +4,7 @@ from django.utils import timezone
 from unittest.mock import patch
 
 from observation_portal.accounts.test_utils import blend_user
-from observation_portal.common.telescope_states import ElasticSearchException
+from observation_portal.common.telescope_states import OpenSearchException
 from observation_portal.common.test_telescope_states import TelescopeStatesFromFile
 
 
@@ -33,8 +33,8 @@ class TestTelescopeStates(TelescopeStatesFromFile):
         response = self.client.get(reverse('api:telescope_states'))
         self.assertContains(response, str(timezone.now().date()))
 
-    @patch('observation_portal.common.telescope_states.TelescopeStates._get_es_data', side_effect=ElasticSearchException)
-    def test_elasticsearch_down(self, es_patch):
+    @patch('observation_portal.common.telescope_states.TelescopeStates._get_os_data', side_effect=OpenSearchException)
+    def test_opensearch_down(self, os_patch):
         response = self.client.get(reverse('api:telescope_availability') +
                                    '?start=2016-10-1T1:23:44&end=2016-10-10T22:22:2')
         self.assertContains(response, 'ConnectionError')

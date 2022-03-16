@@ -159,7 +159,7 @@ autodoc_mock_imports = [
     'django',
     'dramatiq',
     'rise_set',
-    'elasticsearch',
+    'opensearch-py',
     'dateutil',
     'time_intervals'
 ]

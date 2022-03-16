@@ -235,7 +235,7 @@ EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
 DEFAULT_FROM_EMAIL = ORGANIZATION_EMAIL
 SERVER_EMAIL = ORGANIZATION_EMAIL
 
-ELASTICSEARCH_URL = os.getenv('ELASTICSEARCH_URL', 'http://localhost')
+OPENSEARCH_URL = os.getenv('OPENSEARCH_URL', 'http://localhost')
 CONFIGDB_URL = os.getenv('CONFIGDB_URL', 'http://localhost')
 DOWNTIMEDB_URL = os.getenv('DOWNTIMEDB_URL', 'http://localhost')
 
