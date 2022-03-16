@@ -16,7 +16,7 @@ from observation_portal import settings
 from observation_portal.common.configdb import configdb
 from observation_portal.common.telescope_states import (
     TelescopeStates, get_telescope_availability_per_day, combine_telescope_availabilities_by_site_and_class,
-    ElasticSearchException
+    OpenSearchException
 )
 from observation_portal.requestgroups.request_utils import get_airmasses_for_request_at_sites
 from observation_portal.requestgroups.contention import Contention, Pressure
@@ -78,8 +78,8 @@ class TelescopeAvailabilityView(APIView):
             telescope_availability = get_telescope_availability_per_day(
                 start, end, sites=sites, telescopes=telescopes
             )
-        except ElasticSearchException:
-            logger.warning('Error connecting to ElasticSearch. Is SBA reachable?')
+        except OpenSearchException:
+            logger.warning('Error connecting to OpenSearch. Is the cluster reachable?')
             return Response('ConnectionError')
         if combine:
             telescope_availability = combine_telescope_availabilities_by_site_and_class(telescope_availability)
