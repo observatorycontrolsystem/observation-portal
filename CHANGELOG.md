@@ -7,6 +7,15 @@ This project adheres to semantic versioning.
 ### Changed
 ### Removed
 
+## [4.1.0] - 2022-03-16
+
+We've switched from using elasticsearch to opensearch.
+This just affects the telescope telemetry / status endpoints.
+
+### Changed
+- elasticsearch 5.x support updated to opensearch 1.x support
+- ELASTICSEARCH_* environment variables renamed to OPENSEARCH_*
+
 ## [4.0.0] - 2022-03-01
 
 Although this is a major version change, this should be regarded as a 
