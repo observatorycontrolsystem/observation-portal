@@ -13,7 +13,7 @@ from django.core.files.base import ContentFile
 
 from observation_portal.accounts.tasks import send_mail
 from observation_portal.sciapplications.filters import ScienceApplicationFilter, CallFilter
-from observation_portal.sciapplications.models import ScienceApplication, Call
+from observation_portal.sciapplications.models import CoInvestigator, ScienceApplication, Call, TimeRequest
 from observation_portal.common.schema import ObservationPortalSchema
 
 
@@ -63,12 +63,34 @@ class ScienceApplicationViewSet(viewsets.ModelViewSet):
                             status=status.HTTP_400_BAD_REQUEST)
         else:
             # make sure we auto-generate a primary key: https://docs.djangoproject.com/en/3.2/topics/db/queries/#copying-model-instances
+            cois = sci_app.coinvestigator_set.all()
+            time_requests = sci_app.timerequest_set.all()
             sci_app.pk = None
             sci_app._state.adding = True
             sci_app.status = 'DRAFT'
             sci_app.call = active_calls[0]
             # save the model to generate a new primary key
             sci_app.save()
+            # Now add copies of the COIs and Time Requests in the new Semester
+            for coi in cois:
+                CoInvestigator.objects.create(
+                    science_application=sci_app,
+                    email=coi.email,
+                    first_name=coi.first_name,
+                    last_name=coi.last_name,
+                    institution=coi.institution
+                )
+            for time_request in time_requests:
+                tr = TimeRequest.objects.create(
+                    science_application=sci_app,
+                    semester=active_calls[0].semester,
+                    std_time=time_request.std_time,
+                    rr_time=time_request.rr_time,
+                    tc_time=time_request.tc_time
+                )
+                for instrument in time_request.instrument_types.all():
+                    tr.instrument_types.add(instrument)
+                tr.save()
             # now generate new PDF, this uses the primary key of the new sciapp
             if sci_app.pdf:
                 sci_app.pdf = ContentFile(sci_app.pdf.read(),
