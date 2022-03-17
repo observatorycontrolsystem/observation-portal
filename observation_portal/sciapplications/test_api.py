@@ -1121,6 +1121,7 @@ class TestCopySciApp(DramatiqTestCase):
 
         assert response.status_code == 200
         assert science_applications.count() == 2
+        assert science_applications[0].status == ScienceApplication.DRAFT
         assert science_applications[0].pdf.name != science_applications[1].pdf.name
         assert science_applications[0].call.id ==  self.current_sci_call.id
         assert science_applications[0].call.semester.id == self.current_sci_call.semester.id
