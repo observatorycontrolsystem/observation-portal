@@ -1097,7 +1097,7 @@ class TestCopySciApp(DramatiqTestCase):
             deadline=timezone.now() + timedelta(days=7),
             proposal_type=Call.SCI_PROPOSAL, instruments=(self.instrument, )
         )
-        
+
         self.old_sci_app = mixer.blend(
             ScienceApplication,
             submitter=self.user,
@@ -1117,10 +1117,10 @@ class TestCopySciApp(DramatiqTestCase):
     def test_copy_with_current_call(self):
         response = self.client.post(reverse('api:scienceapplications-copy', kwargs={'pk': self.old_sci_app.id}))
         
-        assert response.status_code == 200
         science_applications = ScienceApplication.objects.filter(title=self.old_sci_app.title)
 
+        assert response.status_code == 200
         assert science_applications.count() == 2
         assert science_applications[0].pdf.name != science_applications[1].pdf.name
-
-
+        assert science_applications[0].call.id ==  self.current_sci_call.id
+        assert science_applications[0].call.semester.id == self.current_sci_call.semester.id
