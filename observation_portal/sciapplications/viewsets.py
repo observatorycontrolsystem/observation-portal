@@ -50,7 +50,7 @@ class ScienceApplicationViewSet(viewsets.ModelViewSet):
     )
 
     @action(detail=True, methods=['post'])
-    def copy(self):
+    def copy(self, request, pk=None):
         """
         Copy a science application's information for a new call
         """
@@ -70,9 +70,10 @@ class ScienceApplicationViewSet(viewsets.ModelViewSet):
             # save the model to generate a new primary key
             sci_app.save()
             # now generate new PDF, this uses the primary key of the new sciapp
-            sci_app.pdf = ContentFile(sci_app.pdf.read(), 
-                                      name=os.path.basename(sci_app.pdf.name))
-            sci_app.save()
+            if sci_app.pdf:
+                sci_app.pdf = ContentFile(sci_app.pdf.read(),
+                                        name=os.path.basename(sci_app.pdf.name))
+                sci_app.save()
             return Response(status=status.HTTP_200_OK)
 
     def get_queryset(self):
