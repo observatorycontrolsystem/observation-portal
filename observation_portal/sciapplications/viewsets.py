@@ -55,11 +55,11 @@ class ScienceApplicationViewSet(viewsets.ModelViewSet):
         Copy a science application's information for a new call
         """
         sci_app = self.get_object()
-        
+
         # first check that there's an open call during this time, with the correct proposal type
         active_calls = Call.open_calls().filter(proposal_type=sci_app.call.proposal_type)
         if not active_calls:
-            return Response({'errors': [f'No open call at this time for proposal type {sci_app.call.proposal_type}']}, 
+            return Response({'errors': [f'No open call at this time for proposal type {sci_app.call.proposal_type}']},
                             status=status.HTTP_400_BAD_REQUEST)
         else:
             cois = sci_app.coinvestigator_set.all()

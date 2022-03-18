@@ -1113,7 +1113,7 @@ class TestCopySciApp(DramatiqTestCase):
             **generate_coinvestigator_data(0),
             **generate_time_request_data(0, self.instrument, self.old_semester)
         )
-    
+
     def test_copy_with_current_call(self):
         response = self.client.post(reverse('api:scienceapplications-copy', kwargs={'pk': self.old_sci_app.id}))
         
