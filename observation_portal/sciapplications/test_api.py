@@ -1118,10 +1118,32 @@ class TestCopySciApp(DramatiqTestCase):
         response = self.client.post(reverse('api:scienceapplications-copy', kwargs={'pk': self.old_sci_app.id}))
         
         science_applications = ScienceApplication.objects.filter(title=self.old_sci_app.title)
+        sci_app_copy = science_applications[0]
+        old_sci_app = science_applications[1]
 
-        assert response.status_code == 200
-        assert science_applications.count() == 2
-        assert science_applications[0].status == ScienceApplication.DRAFT
-        assert science_applications[0].pdf.name != science_applications[1].pdf.name
-        assert science_applications[0].call.id ==  self.current_sci_call.id
-        assert science_applications[0].call.semester.id == self.current_sci_call.semester.id
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(science_applications.count(), 2)
+        self.assertEqual(sci_app_copy.status, ScienceApplication.DRAFT)
+        self.assertNotEqual(sci_app_copy.pdf.name, science_applications[1].pdf.name)
+        self.assertEqual(sci_app_copy.call.id, self.current_sci_call.id)
+        self.assertEqual(sci_app_copy.call.semester.id, self.current_sci_call.semester.id)
+
+        self.assertQuerysetEqual(sci_app_copy.coinvestigator_set.all(), old_sci_app.coinvestigator_set.all())
+        self.assertQuerysetEqual(sci_app_copy.timerequest_set.all(), old_sci_app.timerequest_set.all())
+
+    def test_copy_fails_no_current_call(self):
+        self.current_sci_call.delete()
+
+        response = self.client.post(reverse('api:scienceapplications-copy', kwargs={'pk': self.old_sci_app.id}))
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('No open call at this time for proposal type SCI', response.json()['errors'][0])
+
+    def test_copy_fails_not_correct_call(self):
+        self.old_sci_app.call.proposal_type = Call.KEY_PROPOSAL
+        self.old_sci_app.call.save()
+
+        response = self.client.post(reverse('api:scienceapplications-copy', kwargs={'pk': self.old_sci_app.id}))
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('No open call at this time for proposal type KEY', response.json()['errors'][0])

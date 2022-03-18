@@ -62,9 +62,9 @@ class ScienceApplicationViewSet(viewsets.ModelViewSet):
             return Response({'errors': [f'No open call at this time for proposal type {sci_app.call.proposal_type}']}, 
                             status=status.HTTP_400_BAD_REQUEST)
         else:
-            # make sure we auto-generate a primary key: https://docs.djangoproject.com/en/3.2/topics/db/queries/#copying-model-instances
             cois = sci_app.coinvestigator_set.all()
             time_requests = sci_app.timerequest_set.all()
+            # make sure we auto-generate a primary key: https://docs.djangoproject.com/en/3.2/topics/db/queries/#copying-model-instances
             sci_app.pk = None
             sci_app._state.adding = True
             sci_app.status = 'DRAFT'
