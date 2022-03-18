@@ -81,16 +81,18 @@ class ScienceApplicationViewSet(viewsets.ModelViewSet):
                     institution=coi.institution
                 )
             for time_request in time_requests:
-                tr = TimeRequest.objects.create(
-                    science_application=sci_app,
-                    semester=active_calls[0].semester,
-                    std_time=time_request.std_time,
-                    rr_time=time_request.rr_time,
-                    tc_time=time_request.tc_time
-                )
-                for instrument in time_request.instrument_types.all():
-                    tr.instrument_types.add(instrument)
-                tr.save()
+                instrument_types = time_request.instrument_types.all().intersection(active_calls[0].instruments.all())
+                if instrument_types:
+                    tr = TimeRequest.objects.create(
+                        science_application=sci_app,
+                        semester=active_calls[0].semester,
+                        std_time=time_request.std_time,
+                        rr_time=time_request.rr_time,
+                        tc_time=time_request.tc_time
+                    )
+                    for instrument in instrument_types:
+                        tr.instrument_types.add(instrument)
+                    tr.save()
             # now generate new PDF, this uses the primary key of the new sciapp
             if sci_app.pdf:
                 sci_app.pdf = ContentFile(sci_app.pdf.read(),
