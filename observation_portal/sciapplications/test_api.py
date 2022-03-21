@@ -1073,3 +1073,77 @@ class TestPostUpdateSciApp(DramatiqTestCase):
         sciapp.refresh_from_db()
         self.assertEqual(sciapp.tags, [])
         self.assertIsNone(sciapp.submitted)
+
+
+@patch('observation_portal.sciapplications.serializers.PdfFileReader', new=MockPDFFileReader)
+class TestCopySciApp(DramatiqTestCase):
+    def setUp(self):
+        self.upcoming_semester = mixer.blend(
+            Semester, start=timezone.now() + timedelta(days=1), end=timezone.now() + timedelta(days=365)
+        )
+        self.old_semester = mixer.blend(
+            Semester, start=timezone.now() - timedelta(days=365), end=timezone.now()
+        )
+        self.user = blend_user()
+        self.client.force_login(self.user)
+        self.instrument = mixer.blend(Instrument)
+        self.old_sci_call = mixer.blend(
+            Call, semester=self.old_semester,
+            deadline=timezone.now() - timedelta(days=365),
+            proposal_type=Call.SCI_PROPOSAL, instruments=(self.instrument, )
+        )
+        self.current_sci_call = mixer.blend(
+            Call, semester=self.upcoming_semester,
+            deadline=timezone.now() + timedelta(days=7),
+            proposal_type=Call.SCI_PROPOSAL, instruments=(self.instrument, )
+        )
+
+        self.old_sci_app = mixer.blend(
+            ScienceApplication,
+            submitter=self.user,
+            call=self.old_sci_call,
+            title=fake.text(max_nb_chars=50),
+            status=ScienceApplication.ACCEPTED,
+            pi=fake.email(),
+            pi_first_name=fake.first_name(),
+            pi_last_name=fake.last_name(),
+            pi_institution=fake.company(),
+            abstract=fake.text(),
+            pdf=SimpleUploadedFile('sci.pdf', b'ab'),
+            **generate_coinvestigator_data(0),
+            **generate_time_request_data(0, self.instrument, self.old_semester)
+        )
+
+    def test_copy_with_current_call(self):
+        response = self.client.post(reverse('api:scienceapplications-copy', kwargs={'pk': self.old_sci_app.id}))
+
+        science_applications = ScienceApplication.objects.filter(title=self.old_sci_app.title)
+        sci_app_copy = science_applications[0]
+        old_sci_app = science_applications[1]
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(science_applications.count(), 2)
+        self.assertEqual(sci_app_copy.status, ScienceApplication.DRAFT)
+        self.assertNotEqual(sci_app_copy.pdf.name, science_applications[1].pdf.name)
+        self.assertEqual(sci_app_copy.call.id, self.current_sci_call.id)
+        self.assertEqual(sci_app_copy.call.semester.id, self.current_sci_call.semester.id)
+
+        self.assertQuerysetEqual(sci_app_copy.coinvestigator_set.all(), old_sci_app.coinvestigator_set.all())
+        self.assertQuerysetEqual(sci_app_copy.timerequest_set.all(), old_sci_app.timerequest_set.all())
+
+    def test_copy_fails_no_current_call(self):
+        self.current_sci_call.delete()
+
+        response = self.client.post(reverse('api:scienceapplications-copy', kwargs={'pk': self.old_sci_app.id}))
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('No open call at this time for proposal type SCI', response.json()['errors'][0])
+
+    def test_copy_fails_not_correct_call(self):
+        self.old_sci_app.call.proposal_type = Call.KEY_PROPOSAL
+        self.old_sci_app.call.save()
+
+        response = self.client.post(reverse('api:scienceapplications-copy', kwargs={'pk': self.old_sci_app.id}))
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('No open call at this time for proposal type KEY', response.json()['errors'][0])
