@@ -7,6 +7,14 @@ This project adheres to semantic versioning.
 ### Changed
 ### Removed
 
+## [4.2.0] - 2022-03-16
+
+Add ability to copy previous science applications for use in a new call.
+
+### Changed
+- Added copy action to ScienceApplicationViewset (`/api/scienceapplications/<pk>/copy`)
+- When copying a science application, a call of the same proposal type must be open. A new draft science application will be created.
+
 ## [4.1.0] - 2022-03-16
 
 We've switched from using elasticsearch to opensearch.
