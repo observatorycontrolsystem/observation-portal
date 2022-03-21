@@ -1116,7 +1116,7 @@ class TestCopySciApp(DramatiqTestCase):
 
     def test_copy_with_current_call(self):
         response = self.client.post(reverse('api:scienceapplications-copy', kwargs={'pk': self.old_sci_app.id}))
-        
+
         science_applications = ScienceApplication.objects.filter(title=self.old_sci_app.title)
         sci_app_copy = science_applications[0]
         old_sci_app = science_applications[1]
