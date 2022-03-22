@@ -1124,9 +1124,12 @@ class TestCopySciApp(DramatiqTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(science_applications.count(), 2)
         self.assertEqual(sci_app_copy.status, ScienceApplication.DRAFT)
-        self.assertNotEqual(sci_app_copy.pdf.name, science_applications[1].pdf.name)
+        self.assertNotEqual(sci_app_copy.pdf.name, old_sci_app.pdf.name)
         self.assertEqual(sci_app_copy.call.id, self.current_sci_call.id)
         self.assertEqual(sci_app_copy.call.semester.id, self.current_sci_call.semester.id)
+        self.assertEqual(sci_app_copy.tac_rank, 0)
+        self.assertEqual(sci_app_copy.tac_priority, 0)
+        self.assertEqual(sci_app_copy.proposal, None)
 
         self.assertQuerysetEqual(sci_app_copy.coinvestigator_set.all(), old_sci_app.coinvestigator_set.all())
         self.assertQuerysetEqual(sci_app_copy.timerequest_set.all(), old_sci_app.timerequest_set.all())
