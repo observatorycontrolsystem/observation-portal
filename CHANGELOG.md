@@ -7,7 +7,14 @@ This project adheres to semantic versioning.
 ### Changed
 ### Removed
 
-## [4.2.0] - 2022-03-16
+## [4.2.1] - 2022-03-22
+
+Fix issue when copying a science application which has been assigned a TAC ranking
+
+### Changed
+- Set TAC ranking, TAC priority and proposal to their default values when copying a Science Application to a new draft
+
+## [4.2.0] - 2022-03-21
 
 Add ability to copy previous science applications for use in a new call.
 
