@@ -69,6 +69,9 @@ class ScienceApplicationViewSet(viewsets.ModelViewSet):
             sci_app._state.adding = True
             sci_app.status = 'DRAFT'
             sci_app.call = active_calls[0]
+            sci_app.proposal = None
+            sci_app.tac_rank = 0
+            sci_app.tac_priority = 0
             # save the model to generate a new primary key
             sci_app.save()
             # Now add copies of the COIs and Time Requests in the new Semester
