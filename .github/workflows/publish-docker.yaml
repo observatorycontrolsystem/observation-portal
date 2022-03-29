@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - "main"
-      - "jsohi/chore/deps/django-4" #TODO: remove after testing
     # Publish semver tags as releases.
     tags:
       - "*.*.*"
