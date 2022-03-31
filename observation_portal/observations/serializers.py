@@ -46,6 +46,8 @@ class ConfigurationStatusSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(_('Updated exposure start time must be after the observation start time'))
             if 'end' in data and 'exposures_start_at' in data:
                 raise serializers.ValidationError(_('Cannot specify both an end time and an exposures_start_at time'))
+            if 'current_repeat' in data and data['current_repeat'] < 1 or data['current_repeat'] > self.instance.observation.request.configuration_repeats:
+                raise serializers.ValidationError(_(f'The current configuration repeat must be between 1 and {self.instance.observation.request.configuration_repeats}'))
             return data
 
         if ('guide_camera_name' in data and
@@ -76,14 +78,15 @@ class ConfigurationStatusSerializer(serializers.ModelSerializer):
                               }
                 )
 
+        current_repeat = validated_data.get('current_repeat', 1)
         if 'end' in validated_data:
             obs_end_time = validated_data['end']
-            obs_end_time += timedelta(seconds=instance.observation.request.get_remaining_duration(instance.configuration.priority))
+            obs_end_time += timedelta(seconds=instance.observation.request.get_remaining_duration(instance.configuration.priority, current_repeat=current_repeat))
             instance.observation.update_end_time(obs_end_time)
 
         if 'exposures_start_at' in validated_data:
             obs_end_time = validated_data['exposures_start_at']
-            obs_end_time += timedelta(seconds=instance.observation.request.get_remaining_duration(instance.configuration.priority, include_current=True))
+            obs_end_time += timedelta(seconds=instance.observation.request.get_remaining_duration(instance.configuration.priority, include_current=True, current_repeat=current_repeat))
             instance.observation.update_end_time(obs_end_time)
 
         return instance

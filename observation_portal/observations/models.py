@@ -5,6 +5,8 @@ from django.core.cache import cache
 from django.utils.module_loading import import_string
 from django.conf import settings
 from datetime import timedelta
+from collections import defaultdict
+import copy
 
 from observation_portal.requestgroups.models import Request, RequestGroup, Configuration, Location
 import logging
@@ -26,18 +28,23 @@ def observation_as_dict(instance, no_request=False):
         ret_dict['request_group_id'] = instance.request.request_group.id
         ret_dict['created'] = instance.created
         ret_dict['modified'] = instance.modified
-        configuration_status_by_config = {config_status.configuration.id: config_status
-                                        for config_status in instance.configuration_statuses.all()}
-        for configuration in ret_dict['request']['configurations']:
-            config_status = configuration_status_by_config[configuration['id']]
-            configuration['configuration_status'] = config_status.id
-            configuration['state'] = config_status.state
-            configuration['instrument_name'] = config_status.instrument_name
-            configuration['guide_camera_name'] = config_status.guide_camera_name
-            if hasattr(config_status, 'summary'):
-                configuration['summary'] = config_status.summary.as_dict()
-            else:
-                configuration['summary'] = {}
+        expanded_configurations = []
+        configuration_status_by_config = defaultdict(list)
+        for config_status in instance.configuration_statuses.all():
+            configuration_status_by_config[config_status.configuration.id].append(config_status)
+        for i in range(instance.request.configuration_repeats):
+            for configuration in ret_dict['request']['configurations']:
+                expanded_configurations.append(copy.deepcopy(configuration))
+                config_status = configuration_status_by_config[configuration['id']][i]
+                expanded_configurations[-1]['configuration_status'] = config_status.id
+                expanded_configurations[-1]['state'] = config_status.state
+                expanded_configurations[-1]['instrument_name'] = config_status.instrument_name
+                expanded_configurations[-1]['guide_camera_name'] = config_status.guide_camera_name
+                if hasattr(config_status, 'summary'):
+                    expanded_configurations[-1]['summary'] = config_status.summary.as_dict()
+                else:
+                    expanded_configurations[-1]['summary'] = {}
+        ret_dict['request']['configurations'] = expanded_configurations
     return ret_dict
 
 
