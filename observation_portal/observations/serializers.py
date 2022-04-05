@@ -46,7 +46,7 @@ class ConfigurationStatusSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(_('Updated exposure start time must be after the observation start time'))
             if 'end' in data and 'exposures_start_at' in data:
                 raise serializers.ValidationError(_('Cannot specify both an end time and an exposures_start_at time'))
-            if 'current_repeat' in data and data['current_repeat'] < 1 or data['current_repeat'] > self.instance.observation.request.configuration_repeats:
+            if 'current_repeat' in data and (data['current_repeat'] < 1 or data['current_repeat'] > self.instance.observation.request.configuration_repeats):
                 raise serializers.ValidationError(_(f'The current configuration repeat must be between 1 and {self.instance.observation.request.configuration_repeats}'))
             return data
 

@@ -294,7 +294,8 @@ class Request(models.Model):
         cached_duration = cache.get('request_duration_{}'.format(self.id))
         if not cached_duration:
             duration = get_total_request_duration({'configurations': [c.as_dict() for c in self.configurations.all()],
-                                                  'windows': [w.as_dict() for w in self.windows.all()]})
+                                                  'windows': [w.as_dict() for w in self.windows.all()],
+                                                  'configuration_repeats': self.configuration_repeats})
             cache.set('request_duration_{}'.format(self.id), duration, 86400 * 30 * 6)
             return duration
         else:

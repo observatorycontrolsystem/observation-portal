@@ -261,7 +261,7 @@ def get_request_duration_by_instrument_type(request_dict):
     total_duration = 0.0
     for instrument_type in durations_by_instrument_type.keys():
         # First multiply the configuration durations by the configuration_repeats count
-        durations_by_instrument_type[instrument_type] *= request_dict['configuration_repeats']
+        durations_by_instrument_type[instrument_type] *= request_dict.get('configuration_repeats', 1)
         total_duration += durations_by_instrument_type[instrument_type]
     for instrument_type in durations_by_instrument_type.keys():
         # Then add in the front_padding proportionally by instrument_type here
