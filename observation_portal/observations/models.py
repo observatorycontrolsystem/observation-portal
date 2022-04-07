@@ -187,6 +187,16 @@ class Observation(models.Model):
     def as_dict(self, no_request=False):
         return import_string(settings.AS_DICT['observations']['Observation'])(self, no_request=no_request)
 
+    # Returns the current configuration repeat we are within the request for this configuration status
+    def get_current_repeat(self, configuration_status_id):
+        num_configurations = self.request.configurations.count()
+        configuration_status_index = 0
+        for cs in self.configuration_statuses.all():
+            if cs.id == configuration_status_id:
+                break
+            configuration_status_index += 1
+        return (configuration_status_index // num_configurations) + 1
+
     @property
     def instrument_types(self):
         return set(self.request.configurations.values_list('instrument_type', flat=True))
@@ -234,7 +244,6 @@ class ConfigurationStatus(models.Model):
         return import_string(settings.AS_DICT['observations']['ConfigurationStatus'])(self)
 
     class Meta:
-        unique_together = ('configuration', 'observation')
         verbose_name_plural = 'Configuration statuses'
         ordering = ['id']
 
