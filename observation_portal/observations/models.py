@@ -28,24 +28,35 @@ def observation_as_dict(instance, no_request=False):
         ret_dict['request_group_id'] = instance.request.request_group.id
         ret_dict['created'] = instance.created
         ret_dict['modified'] = instance.modified
-        expanded_configurations = []
-        configuration_status_by_config = defaultdict(list)
-        for config_status in instance.configuration_statuses.all():
-            configuration_status_by_config[config_status.configuration.id].append(config_status)
-        for i in range(instance.request.configuration_repeats):
-            for configuration in ret_dict['request']['configurations']:
-                expanded_configurations.append(copy.deepcopy(configuration))
-                config_status = configuration_status_by_config[configuration['id']][i]
-                expanded_configurations[-1]['configuration_status'] = config_status.id
-                expanded_configurations[-1]['state'] = config_status.state
-                expanded_configurations[-1]['instrument_name'] = config_status.instrument_name
-                expanded_configurations[-1]['guide_camera_name'] = config_status.guide_camera_name
-                if hasattr(config_status, 'summary'):
-                    expanded_configurations[-1]['summary'] = config_status.summary.as_dict()
-                else:
-                    expanded_configurations[-1]['summary'] = {}
-        ret_dict['request']['configurations'] = expanded_configurations
+        ret_dict['request']['configurations'] = get_expanded_configurations(instance, ret_dict['request']['configurations'])
     return ret_dict
+
+
+def get_expanded_configurations(observation, configurations):
+    ''' Gets set of expanded configurations with configuration details filled in for a given observation
+    '''
+    expanded_configurations = []
+    configuration_status_by_config = defaultdict(list)
+    # First arrange the configuration statuses by Configuration they apply to in the order they apply
+    for config_status in observation.configuration_statuses.all():
+        configuration_status_by_config[config_status.configuration.id].append(config_status)
+    # Loop over configuration_repeats and then over each Configuration in order to add that configuration to
+    # the return set with the configuration_status fields added in.
+    for repeat_index in range(observation.request.configuration_repeats):
+        for configuration in configurations:
+            # First deepcopy the configuration details - these will be modified
+            expanded_configurations.append(copy.deepcopy(configuration))
+            # Fill in some extra fields on the configuration using the configuration status
+            config_status = configuration_status_by_config[configuration['id']][repeat_index]
+            expanded_configurations[-1]['configuration_status'] = config_status.id
+            expanded_configurations[-1]['state'] = config_status.state
+            expanded_configurations[-1]['instrument_name'] = config_status.instrument_name
+            expanded_configurations[-1]['guide_camera_name'] = config_status.guide_camera_name
+            if hasattr(config_status, 'summary'):
+                expanded_configurations[-1]['summary'] = config_status.summary.as_dict()
+            else:
+                expanded_configurations[-1]['summary'] = {}
+    return expanded_configurations
 
 
 def configurationstatus_as_dict(instance):
