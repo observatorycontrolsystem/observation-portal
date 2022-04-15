@@ -26,6 +26,7 @@ class Profile(models.Model):
     view_authored_requests_only = models.BooleanField(default=False)
     staff_view = models.BooleanField(default=False)
     terms_accepted = models.DateTimeField(blank=True, null=True)
+    password_expiration = models.DateTimeField(blank=True, null=True)
 
     def time_used_in_proposal(self, proposal):
         if not proposal.current_semester:

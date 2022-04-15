@@ -1,11 +1,15 @@
-from django.urls import re_path, include
+from django.urls import re_path, include, path
 from django.views.generic.base import TemplateView
 from registration.backends.default.views import RegistrationView
 
 from observation_portal.accounts.forms import CustomRegistrationForm
 
+from .views import CustomLoginView, CustomPasswordChangeView
+
 urlpatterns = [
     re_path(r'^register/$', RegistrationView.as_view(form_class=CustomRegistrationForm), name='registration_register'),
     re_path(r'^loggedinstate/$', TemplateView.as_view(template_name='auth/logged_in_state.html'), name='logged-in-state'),
+    path("login/", CustomLoginView.as_view(), name="auth_login"),
+    path("password/change/", CustomPasswordChangeView.as_view(), name="auth_password_change"),
     re_path(r'', include('registration.backends.default.urls')),
 ]

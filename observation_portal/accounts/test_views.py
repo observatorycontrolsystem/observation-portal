@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth.models import User
@@ -58,6 +58,41 @@ class TestIndex(TestCase):
         )
         user = auth.get_user(self.client)
         self.assertFalse(user.is_authenticated)
+
+    def test_login_password_expired_redirect_change(self):
+        self.user.profile.password_expiration = timezone.now()
+        self.user.profile.save()
+
+        resp = self.client.post(
+            reverse('auth_login'),
+            {'username': 'doge', 'password': 'sopassword'},
+            follow=True,
+        )
+
+        user = auth.get_user(self.client)
+        self.assertTrue(user.is_authenticated)
+        self.assertRedirects(resp, expected_url=reverse("auth_password_change"))
+        self.assertContains(resp, "Change password", count=1)
+
+    def test_password_change_expiration_time_reset(self):
+        self.user.profile.password_expiration = old_exp = timezone.now() - timedelta(days=1)
+        self.user.profile.save()
+        self.client.force_login(self.user)
+
+        resp = self.client.post(
+            reverse("auth_password_change"),
+            data={
+                "old_password": "sopassword",
+                "new_password1": "evenmorepassword",
+                "new_password2": "evenmorepassword",
+            },
+            follow=True,
+        )
+
+        self.user.refresh_from_db()
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertGreater(self.user.profile.password_expiration, old_exp)
 
 
 class TestRegistration(TestCase):
