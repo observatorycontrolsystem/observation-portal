@@ -3,7 +3,7 @@ from datetime import timedelta
 
 from django.utils import timezone
 from django.contrib.auth.models import User
-from django.contrib.auth.views import LoginView, PasswordChangeView
+from django.contrib.auth.views import LoginView, PasswordChangeView, PasswordResetConfirmView
 from django.utils.module_loading import import_string
 from django.conf import settings
 from django.urls import reverse_lazy
@@ -132,8 +132,7 @@ class CustomLoginView(LoginView):
         return super().get_success_url()
 
 
-class CustomPasswordChangeView(PasswordChangeView):
-    success_url = reverse_lazy("auth_password_change_done")
+class ResetPasswordExpirationFormMixin:
 
     def form_valid(self, form):
         u = form.user
@@ -145,3 +144,11 @@ class CustomPasswordChangeView(PasswordChangeView):
                 u.profile.save(update_fields=["password_expiration"])
 
         return super().form_valid(form)
+
+
+class CustomPasswordChangeView(ResetPasswordExpirationFormMixin, PasswordChangeView):
+    success_url = reverse_lazy("auth_password_change_done")
+
+
+class CustomPasswordResetConfirmView(ResetPasswordExpirationFormMixin, PasswordResetConfirmView):
+    success_url = reverse_lazy("auth_password_reset_complete")
