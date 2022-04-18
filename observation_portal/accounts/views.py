@@ -19,6 +19,8 @@ from observation_portal.accounts.serializers import BulkCreateUsersSerializer
 from observation_portal.accounts.tasks import send_mail, update_or_create_client_applications_user
 from observation_portal.common.schema import ObservationPortalSchema
 
+from .permissions import IsPrincipleInvestigatorOfAnyProposal
+
 
 class ProfileApiView(RetrieveUpdateAPIView):
     serializer_class = import_string(settings.SERIALIZERS['accounts']['User'])
@@ -112,7 +114,7 @@ class AccountRemovalRequestApiView(APIView):
 class BulkCreateUsersApiView(CreateAPIView):
     """API endpoint to create users in bulk"""
 
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminUser | IsPrincipleInvestigatorOfAnyProposal]
     serializer_class = BulkCreateUsersSerializer
     schema = ObservationPortalSchema(tags=['Accounts'])
 

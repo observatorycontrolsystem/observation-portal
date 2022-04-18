@@ -649,3 +649,26 @@ class TestBulkCreateUsersApi(APITestCase):
         resp = self.client.post(url, data)
 
         self.assertEqual(resp.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_as_PI(self):
+        url = reverse("api:users-bulk")
+        data = {
+            "users": [
+                {
+                    "username": "user1",
+                    "email": "user1@domain.example",
+                    "first_name": "user1",
+                    "last_name": "user1",
+                    "institution": "na",
+                    "title": "na"
+                },
+            ]
+        }
+        proposal = mixer.blend(Proposal, active=True)
+        mixer.blend(Membership, role=Membership.PI, proposal=proposal, user=self.existing_user)
+
+        self.client.force_authenticate(user=self.existing_user)
+
+        resp = self.client.post(url, data)
+
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
