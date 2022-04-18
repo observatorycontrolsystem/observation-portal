@@ -179,7 +179,7 @@ class BulkCreateUsersSerializer(serializers.Serializer):
 
         return data
 
-    def create_user(self, validated_data):
+    def create_user(self, validated_data, created_by):
         password = validated_data.pop("password", None)
 
         if password is None:
@@ -199,15 +199,16 @@ class BulkCreateUsersSerializer(serializers.Serializer):
         Profile.objects.create(
             user=user,
             password_expiration=timezone.now(),
+            created_by=created_by,
             **validated_data
         )
 
         return password, user
 
-    def create_users(self, validated_data):
+    def create_users(self, validated_data, created_by):
         res = []
         for user in validated_data:
-            res.append(self.create_user(user))
+            res.append(self.create_user(user, created_by))
         return res
 
     def save(self):
@@ -216,8 +217,10 @@ class BulkCreateUsersSerializer(serializers.Serializer):
 
         users = validated_data.get("users") or []
 
+        created_by = self.context["request"].user
+
         with transaction.atomic():
-            saved_users = self.create_users(users)
+            saved_users = self.create_users(users, created_by)
 
         # send out emails
         for password, user in saved_users:

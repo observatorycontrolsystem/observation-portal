@@ -500,6 +500,15 @@ class TestBulkCreateUsersApi(APITestCase):
             }]}
         )
         self.make_rand_pass_mock.assert_called_once_with(length=12, allowed_chars=ANY)
+        self.assertEqual(
+            self.staff_user,
+            User.objects.get(username="user1").profile.created_by
+        )
+        self.assertEqual(self.staff_user.created_profiles.count(), 1)
+        self.assertEqual(
+            self.staff_user.created_profiles.first().user,
+            User.objects.get(username="user1")
+        )
 
     def test_override_default(self):
         url = reverse("api:users-bulk")
@@ -589,6 +598,17 @@ class TestBulkCreateUsersApi(APITestCase):
             self.send_mail_mock.send.call_args_list,
             [call(ANY, ANY, ANY, ["user1@domain.example"]), call(ANY, ANY, ANY, ["user2@domain.example"])]
         )
+
+        self.assertEqual(self.staff_user.created_profiles.count(), 2)
+        for u in ["user1", "user2"]:
+            self.assertEqual(
+                self.staff_user,
+                User.objects.get(username=u).profile.created_by
+            )
+            self.assertEqual(
+                self.staff_user.created_profiles.get(user__username=u).user,
+                User.objects.get(username=u)
+            )
 
     def test_as_non_auth(self):
         url = reverse("api:users-bulk")
