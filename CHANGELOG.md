@@ -7,6 +7,11 @@ This project adheres to semantic versioning.
 ### Changed
 ### Removed
 
+## [4.2.2] - 2022-04-19
+
+### Added
+- Add `configuration_repeats` to Request model to allow for repeated configuration blocks for things like nodding between targets.
+
 ## [4.2.1] - 2022-03-22
 
 Fix issue when copying a science application which has been assigned a TAC ranking
