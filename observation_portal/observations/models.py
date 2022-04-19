@@ -5,6 +5,8 @@ from django.core.cache import cache
 from django.utils.module_loading import import_string
 from django.conf import settings
 from datetime import timedelta
+from collections import defaultdict
+import copy
 
 from observation_portal.requestgroups.models import Request, RequestGroup, Configuration, Location
 import logging
@@ -26,19 +28,35 @@ def observation_as_dict(instance, no_request=False):
         ret_dict['request_group_id'] = instance.request.request_group.id
         ret_dict['created'] = instance.created
         ret_dict['modified'] = instance.modified
-        configuration_status_by_config = {config_status.configuration.id: config_status
-                                        for config_status in instance.configuration_statuses.all()}
-        for configuration in ret_dict['request']['configurations']:
-            config_status = configuration_status_by_config[configuration['id']]
-            configuration['configuration_status'] = config_status.id
-            configuration['state'] = config_status.state
-            configuration['instrument_name'] = config_status.instrument_name
-            configuration['guide_camera_name'] = config_status.guide_camera_name
-            if hasattr(config_status, 'summary'):
-                configuration['summary'] = config_status.summary.as_dict()
-            else:
-                configuration['summary'] = {}
+        ret_dict['request']['configurations'] = get_expanded_configurations(instance, ret_dict['request']['configurations'])
     return ret_dict
+
+
+def get_expanded_configurations(observation, configurations):
+    ''' Gets set of expanded configurations with configuration details filled in for a given observation
+    '''
+    expanded_configurations = []
+    configuration_status_by_config = defaultdict(list)
+    # First arrange the configuration statuses by Configuration they apply to in the order they apply
+    for config_status in observation.configuration_statuses.all():
+        configuration_status_by_config[config_status.configuration.id].append(config_status)
+    # Loop over configuration_repeats and then over each Configuration in order to add that configuration to
+    # the return set with the configuration_status fields added in.
+    for repeat_index in range(observation.request.configuration_repeats):
+        for configuration in configurations:
+            # First deepcopy the configuration details - these will be modified
+            expanded_configurations.append(copy.deepcopy(configuration))
+            # Fill in some extra fields on the configuration using the configuration status
+            config_status = configuration_status_by_config[configuration['id']][repeat_index]
+            expanded_configurations[-1]['configuration_status'] = config_status.id
+            expanded_configurations[-1]['state'] = config_status.state
+            expanded_configurations[-1]['instrument_name'] = config_status.instrument_name
+            expanded_configurations[-1]['guide_camera_name'] = config_status.guide_camera_name
+            if hasattr(config_status, 'summary'):
+                expanded_configurations[-1]['summary'] = config_status.summary.as_dict()
+            else:
+                expanded_configurations[-1]['summary'] = {}
+    return expanded_configurations
 
 
 def configurationstatus_as_dict(instance):
@@ -180,6 +198,16 @@ class Observation(models.Model):
     def as_dict(self, no_request=False):
         return import_string(settings.AS_DICT['observations']['Observation'])(self, no_request=no_request)
 
+    # Returns the current configuration repeat we are within the request for this configuration status
+    def get_current_repeat(self, configuration_status_id):
+        num_configurations = self.request.configurations.count()
+        configuration_status_index = 0
+        for cs in self.configuration_statuses.all():
+            if cs.id == configuration_status_id:
+                break
+            configuration_status_index += 1
+        return (configuration_status_index // num_configurations) + 1
+
     @property
     def instrument_types(self):
         return set(self.request.configurations.values_list('instrument_type', flat=True))
@@ -227,7 +255,6 @@ class ConfigurationStatus(models.Model):
         return import_string(settings.AS_DICT['observations']['ConfigurationStatus'])(self)
 
     class Meta:
-        unique_together = ('configuration', 'observation')
         verbose_name_plural = 'Configuration statuses'
         ordering = ['id']
 
