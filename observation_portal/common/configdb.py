@@ -144,6 +144,7 @@ class ConfigDB(object):
                                     telescope=telescope_code,
                                     telescope_class=self.convert_telescope_aperture_to_string(telescope['aperture'])
                                 )
+        return TelescopeKey(site=site_code, enclosure=enclosure_code, telescope=telescope_code, telescope_class='N/A')
 
     def get_telescope_class_tuples(self):
         telescope_classes = set()
