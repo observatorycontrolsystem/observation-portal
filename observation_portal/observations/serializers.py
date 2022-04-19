@@ -355,7 +355,7 @@ class ObservationSerializer(serializers.ModelSerializer):
             data['request'].location.site and data['request'].location.site != data['site'] or
             data['request'].location.enclosure and data['request'].location.enclosure != data['enclosure'] or
             data['request'].location.telescope and data['request'].location.telescope != data['telescope'] or
-            data['request'].location.telescope_class != data['telescope'][0:3]
+            data['request'].location.telescope_class != configdb.get_telescope_key(site_code=data['site'], enclosure_code=data['enclosure'], telescope_code=data['telescope']).telescope_class
         ):
             raise serializers.ValidationError(_('{}.{}.{} does not match the request location'.format(
                 data['site'], data['enclosure'], data['telescope']

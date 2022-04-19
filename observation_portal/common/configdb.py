@@ -1,7 +1,7 @@
 import logging
 from typing import Union
 from collections import namedtuple, defaultdict
-from math import sqrt
+from math import sqrt, floor
 
 import requests
 from django.core.cache import caches
@@ -18,7 +18,7 @@ class ConfigDBException(Exception):
     pass
 
 
-class TelescopeKey(namedtuple('TelescopeKey', ['site', 'enclosure', 'telescope'])):
+class TelescopeKey(namedtuple('TelescopeKey', ['site', 'enclosure', 'telescope', 'telescope_class'])):
     """Generate the key of a telescope."""
     __slots__ = ()
 
@@ -121,12 +121,36 @@ class ConfigDB(object):
             telescopes.append(('', ''))
         return telescopes
 
+    def convert_telescope_aperture_to_string(self, aperture):
+        ''' This takes in a float aperture and converts it to a string of the form #m#
+            where the first # is the left side of the decimal point, and the second number
+            is the rounded right side of the decimal.
+        '''
+        left_side = floor(aperture)
+        right_side = round((aperture - left_side) * 10.0)
+        return f'{left_side}m{right_side}'
+
+    @cache_function()
+    def get_telescope_key(self, site_code='', enclosure_code='', telescope_code=''):
+        for site in self.get_site_data():
+            if not site_code or site['code'].lower() == site_code.lower():
+                for enclosure in site['enclosure_set']:
+                    if not enclosure_code or enclosure['code'].lower() == enclosure_code.lower():
+                        for telescope in enclosure['telescope_set']:
+                            if not telescope_code or telescope['code'].lower() == telescope_code.lower():
+                                return TelescopeKey(
+                                    site=site_code,
+                                    enclosure=enclosure_code,
+                                    telescope=telescope_code,
+                                    telescope_class=self.convert_telescope_aperture_to_string(telescope['aperture'])
+                                )
+
     def get_telescope_class_tuples(self):
         telescope_classes = set()
         for site in self.get_site_data():
             for enclosure in site['enclosure_set']:
                 for telescope in enclosure['telescope_set']:
-                    telescope_classes.add(telescope['code'][:-1])
+                    telescope_classes.add(self.convert_telescope_aperture_to_string(telescope['aperture']))
         return [(telescope_class, telescope_class) for telescope_class in telescope_classes]
 
     def get_telescope_name_tuples(self):
@@ -253,7 +277,8 @@ class ConfigDB(object):
                             telescope_key = TelescopeKey(
                                 site=site['code'],
                                 enclosure=enclosure['code'],
-                                telescope=telescope['code']
+                                telescope=telescope['code'],
+                                telescope_class=self.convert_telescope_aperture_to_string(telescope['aperture'])
                             )
                             instrument['telescope_key'] = telescope_key
                             instrument['telescope_name'] = telescope['name'].strip().lower()
@@ -289,10 +314,10 @@ class ConfigDB(object):
         telescope_instrument_types = {}
         for instrument in self.get_instruments(exclude_states=exclude_states):
             split_string = instrument['__str__'].lower().split('.')
-            if (location.get('site', '').lower() in split_string[0]
-                    and location.get('enclosure', '').lower() in split_string[1]
-                    and location.get('telescope_class', '').lower() in split_string[2]
-                    and location.get('telescope', '').lower() in split_string[2]):
+            if (location.get('site', '').lower() in instrument['telescope_key'].site
+                    and location.get('enclosure', '').lower() in instrument['telescope_key'].enclosure
+                    and location.get('telescope_class', '').lower() in instrument['telescope_key'].telescope_class
+                    and location.get('telescope', '').lower() in instrument['telescope_key'].telescope):
                 if instrument['telescope_key'] not in telescope_instrument_types:
                     telescope_instrument_types[instrument['telescope_key']] = []
                 instrument_type_code = instrument['instrument_type']['code'].upper()
@@ -531,8 +556,8 @@ class ConfigDB(object):
     def get_instrument_type_telescope_class(self, instrument_type_code: str) -> str:
         for instrument in self.get_instruments():
             if instrument_type_code.upper() == instrument['instrument_type']['code'].upper():
-                return instrument['__str__'].split('.')[2][0:3]
-        return instrument_type_code[0:3]
+                return instrument['telescope_key'].telescope_class
+        return 'None'
 
     @cache_function()
     def get_instrument_type_codes(self, location: dict, only_schedulable: bool = False) -> set:
@@ -548,11 +573,10 @@ class ConfigDB(object):
         if only_schedulable:
             exclude_states = ['DISABLED', 'ENABLED', 'MANUAL', 'COMMISSIONING', 'STANDBY']
         for instrument in self.get_instruments(exclude_states=exclude_states):
-            split_string = instrument['__str__'].lower().split('.')
-            if (location.get('site', '').lower() in split_string[0]
-                    and location.get('enclosure', '').lower() in split_string[1]
-                    and location.get('telescope_class', '').lower() in split_string[2]
-                    and location.get('telescope', '').lower() in split_string[2]):
+            if (location.get('site', '').lower() in instrument['telescope_key'].site
+                    and location.get('enclosure', '') in instrument['telescope_key'].enclosure
+                    and location.get('telescope_class', '').lower() in instrument['telescope_key'].telescope_class
+                    and location.get('telescope', '').lower() in instrument['telescope_key'].telescope):
                 instrument_types.add(instrument['instrument_type']['code'].upper())
         return instrument_types
 
