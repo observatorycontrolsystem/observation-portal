@@ -15,7 +15,6 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from observation_portal.accounts.models import Profile
-from observation_portal.accounts.serializers import BulkCreateUsersSerializer
 from observation_portal.accounts.tasks import send_mail, update_or_create_client_applications_user
 from observation_portal.common.schema import ObservationPortalSchema
 
@@ -115,7 +114,7 @@ class BulkCreateUsersApiView(CreateAPIView):
     """API endpoint to create users in bulk"""
 
     permission_classes = [IsAdminUser | IsPrincipleInvestigatorOfAnyProposal]
-    serializer_class = BulkCreateUsersSerializer
+    serializer_class = import_string(settings.SERIALIZERS["accounts"]["BulkCreateUsersSerializer"])
     schema = ObservationPortalSchema(tags=['Accounts'])
 
     def get_endpoint_name(self):

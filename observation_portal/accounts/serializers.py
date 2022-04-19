@@ -160,7 +160,10 @@ class CreateUserSerializer(serializers.Serializer):
 
 
 class BulkCreateUsersSerializer(serializers.Serializer):
-    users = serializers.ListField(child=CreateUserSerializer(), max_length=50)
+    users = serializers.ListField(
+        child=import_string(settings.SERIALIZERS["accounts"]["CreateUserSerializer"])(),
+        max_length=50
+    )
 
     def validate_users(self, data):
         """Make sure usernames & emails are unique within the request payload"""
