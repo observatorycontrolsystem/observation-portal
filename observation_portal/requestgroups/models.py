@@ -265,6 +265,11 @@ class Request(models.Model):
                   'acceptable to meet the science goal of the Request. Defaults to 100 for FLOYDS observations and '
                   '90 for all other observations.'
     )
+    configuration_repeats = models.PositiveIntegerField(
+        default=1, validators=[MinValueValidator(1)],
+        help_text='The number of times to repeat the set of Configurations in this Request. This is normally used '
+                  'to nod between two or more separate Targets. This field must be set to a value greater than 0.'
+    )
     extra_params = models.JSONField(
         default=dict,
         blank=True,
@@ -289,7 +294,8 @@ class Request(models.Model):
         cached_duration = cache.get('request_duration_{}'.format(self.id))
         if not cached_duration:
             duration = get_total_request_duration({'configurations': [c.as_dict() for c in self.configurations.all()],
-                                                  'windows': [w.as_dict() for w in self.windows.all()]})
+                                                  'windows': [w.as_dict() for w in self.windows.all()],
+                                                  'configuration_repeats': self.configuration_repeats})
             cache.set('request_duration_{}'.format(self.id), duration, 86400 * 30 * 6)
             return duration
         else:
@@ -334,7 +340,7 @@ class Request(models.Model):
             instrument_types__overlap=list({conf.instrument_type for conf in self.configurations.all()})
         )
 
-    def get_remaining_duration(self, configurations_after_priority, include_current=False):
+    def get_remaining_duration(self, configurations_after_priority, include_current=False, current_repeat=1):
         request_dict = self.as_dict()
         start_time = (min([window['start'] for window in request_dict['windows']])
                       if 'windows' in request_dict and request_dict['windows'] else timezone.now())
@@ -347,6 +353,14 @@ class Request(models.Model):
             start_time,
             configurations_after_priority
         )
+        if self.configuration_repeats > current_repeat:
+            # We have configuration repeats left, so add multiples of the total configuration duration
+            config_duration = get_total_complete_configurations_duration(
+                configurations,
+                start_time
+            )
+            repeats_left = self.configuration_repeats - current_repeat
+            duration += (repeats_left * config_duration)
         if include_current:
             previous_optical_elements = {}
             for configuration_dict in configurations:

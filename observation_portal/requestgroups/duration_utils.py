@@ -258,13 +258,15 @@ def get_request_duration_by_instrument_type(request_dict):
     durations_by_instrument_type = get_complete_configurations_duration_by_instrument_type(
         configurations, start_time)
 
-    # Add in the front_padding proportionally by instrument_type here
-    # TODO: We should move front_padding to the telescope level rather than instrument_type so we don't need to
-    # assign it's value proportionally to observation time used per instrument_type
     total_duration = 0.0
-    for duration in durations_by_instrument_type.values():
-        total_duration += duration
     for instrument_type in durations_by_instrument_type.keys():
+        # First multiply the configuration durations by the configuration_repeats count
+        durations_by_instrument_type[instrument_type] *= request_dict.get('configuration_repeats', 1)
+        total_duration += durations_by_instrument_type[instrument_type]
+    for instrument_type in durations_by_instrument_type.keys():
+        # Then add in the front_padding proportionally by instrument_type here
+        # TODO: We should move front_padding to the telescope level rather than instrument_type so we don't need to
+        # assign it's value proportionally to observation time used per instrument_type
         request_overheads = configdb.get_request_overheads(instrument_type)
         durations_by_instrument_type[instrument_type] += (durations_by_instrument_type[instrument_type] / total_duration) * request_overheads['observation_front_padding']
 

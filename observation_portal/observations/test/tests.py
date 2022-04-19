@@ -993,6 +993,64 @@ class TestPostObservationApi(TestObservationApiBase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('xx03 is not a valid guide camera for xx01', str(response.content))
 
+    def test_get_current_repeat_from_configuration_status_id(self):
+        requestgroup = self._generate_requestgroup()
+        request = requestgroup.requests.first()
+        create_simple_configuration(request, priority=request.configurations.first().priority + 1)
+        create_simple_configuration(request, priority=request.configurations.first().priority + 2)
+        request.configuration_repeats = 5
+        request.save()
+        configurations = list(request.configurations.all())
+
+        observation = self._generate_observation_data(
+            request.id,
+            [
+                configurations[0].id, configurations[1].id, configurations[2].id,
+                configurations[0].id, configurations[1].id, configurations[2].id,
+                configurations[0].id, configurations[1].id, configurations[2].id,
+                configurations[0].id, configurations[1].id, configurations[2].id,
+                configurations[0].id, configurations[1].id, configurations[2].id
+            ]
+        )
+        self._create_observation(observation)
+        observation = Observation.objects.first()
+        configuration_statuses = observation.configuration_statuses.all()
+        self.assertEqual(observation.get_current_repeat(configuration_statuses[2].id), 1)
+        self.assertEqual(observation.get_current_repeat(configuration_statuses[3].id), 2)
+        self.assertEqual(observation.get_current_repeat(configuration_statuses[7].id), 3)
+        self.assertEqual(observation.get_current_repeat(configuration_statuses[10].id), 4)
+        self.assertEqual(observation.get_current_repeat(configuration_statuses[14].id), 5)
+
+    def test_get_all_configurations_from_schedule_endpoint_with_repeat_configurations(self):
+        requestgroup = self._generate_requestgroup()
+        request = requestgroup.requests.first()
+        create_simple_configuration(request, priority=request.configurations.first().priority + 1)
+        create_simple_configuration(request, priority=request.configurations.first().priority + 2)
+        request.configuration_repeats = 5
+        request.save()
+        configurations = list(request.configurations.all())
+        expected_configuration_ids = [
+            configurations[0].id, configurations[1].id, configurations[2].id,
+            configurations[0].id, configurations[1].id, configurations[2].id,
+            configurations[0].id, configurations[1].id, configurations[2].id,
+            configurations[0].id, configurations[1].id, configurations[2].id,
+            configurations[0].id, configurations[1].id, configurations[2].id
+        ]
+        observation = self._generate_observation_data(
+            request.id,
+            expected_configuration_ids
+        )
+        self._create_observation(observation)
+        response = self.client.get(reverse('api:schedule-list'))
+        observation = response.json()['results'][0]
+
+        # Ensure configurations are repeated, and configuration statuses are ascending
+        previous_configuration_status_id = 0
+        for i, configuration in enumerate(observation['request']['configurations']):
+            self.assertEqual(expected_configuration_ids[i], configuration['id'])
+            self.assertGreater(configuration['configuration_status'], previous_configuration_status_id)
+            previous_configuration_status_id = configuration['configuration_status']
+
 
 class TestUpdateConfigurationStatusApi(TestObservationApiBase):
     def setUp(self):
@@ -1176,6 +1234,80 @@ class TestUpdateConfigurationStatusApi(TestObservationApiBase):
         observation = Observation.objects.first()
         self.assertEqual(observation.end, new_end)
 
+    def test_update_configuration_status_end_time_with_repeat_configurations_succeeds(self):
+        requestgroup = self._generate_requestgroup()
+        request = requestgroup.requests.first()
+        create_simple_configuration(request, priority=request.configurations.first().priority + 1)
+        request.configuration_repeats = 3
+        request.save()
+        configurations = list(request.configurations.all())
+        configuration_1_duration = configurations[0].duration
+        configuration_2_duration = configurations[1].duration
+
+        observation = self._generate_observation_data(
+            request.id,
+            [configurations[0].id, configurations[1].id, configurations[0].id, configurations[1].id, configurations[0].id, configurations[1].id]
+        )
+        self._create_observation(observation)
+        configuration_statuses = ConfigurationStatus.objects.all()
+        new_config_end = datetime(2016, 9, 5, 23, 47, 22).replace(tzinfo=timezone.utc)
+        update_data = {"end": datetime.strftime(new_config_end, '%Y-%m-%dT%H:%M:%SZ')}
+        self.client.patch(reverse('api:configurationstatus-detail', args=(configuration_statuses[0].id,)), update_data)
+        observation = Observation.objects.first()
+        slew_and_oe_switching_time = 10 # 3 * minimum slew of 2s + 2 * oe change time of 2s
+        new_observation_end = new_config_end + timedelta(seconds=(configuration_1_duration*2 + configuration_2_duration*3 + slew_and_oe_switching_time))
+        self.assertEqual(observation.end, new_observation_end)
+
+    def test_update_configuration_status_end_time_with_repeat_configurations_mid_repeat_succeeds(self):
+        requestgroup = self._generate_requestgroup()
+        request = requestgroup.requests.first()
+        create_simple_configuration(request, priority=request.configurations.first().priority + 1)
+        request.configuration_repeats = 3
+        request.save()
+        configurations = list(request.configurations.all())
+        configuration_1_duration = configurations[0].duration
+        configuration_2_duration = configurations[1].duration
+
+        observation = self._generate_observation_data(
+            request.id,
+            [configurations[0].id, configurations[1].id, configurations[0].id, configurations[1].id, configurations[0].id, configurations[1].id]
+        )
+        self._create_observation(observation)
+        configuration_statuses = ConfigurationStatus.objects.all()
+        new_config_end = datetime(2016, 9, 5, 23, 47, 22).replace(tzinfo=timezone.utc)
+        update_data = {"end": datetime.strftime(new_config_end, '%Y-%m-%dT%H:%M:%SZ')}
+        # Updating configuration status 2, so there should be 3 left to add to end time
+        self.client.patch(reverse('api:configurationstatus-detail', args=(configuration_statuses[2].id,)), update_data)
+        observation = Observation.objects.first()
+        slew_and_oe_switching_time = 6 # 2 * minimum slew of 2s + 1 * oe change time of 2s
+        new_observation_end = new_config_end + timedelta(seconds=(configuration_1_duration*1 + configuration_2_duration*2 + slew_and_oe_switching_time))
+        self.assertEqual(observation.end, new_observation_end)
+
+    def test_update_configuration_status_update_start_time_with_repeat_configurations_last_repeat_succeeds(self):
+        requestgroup = self._generate_requestgroup()
+        request = requestgroup.requests.first()
+        create_simple_configuration(request, priority=request.configurations.first().priority + 1)
+        request.configuration_repeats = 3
+        request.save()
+        configurations = list(request.configurations.all())
+        configuration_1_duration = configurations[0].duration
+        configuration_2_duration = configurations[1].duration
+
+        observation = self._generate_observation_data(
+            request.id,
+            [configurations[0].id, configurations[1].id, configurations[0].id, configurations[1].id, configurations[0].id, configurations[1].id]
+        )
+        self._create_observation(observation)
+        configuration_statuses = ConfigurationStatus.objects.all()
+        new_config_start = datetime(2016, 9, 5, 23, 47, 22).replace(tzinfo=timezone.utc)
+        update_data = {"exposures_start_at": datetime.strftime(new_config_start, '%Y-%m-%dT%H:%M:%SZ')}
+        # Updating configuration status 2, so there should be 3 left to add to end time
+        self.client.patch(reverse('api:configurationstatus-detail', args=(configuration_statuses[4].id,)), update_data)
+        observation = Observation.objects.first()
+        config_front_padding = 14  # not used for the current configuration 16s front padding - 2s oe change time
+        new_observation_end = new_config_start + timedelta(seconds=(configuration_1_duration*1 + configuration_2_duration*1 - config_front_padding))
+        self.assertEqual(observation.end, new_observation_end)
+
     def test_update_configuration_status_exposure_start_time_succeeds(self):
         observation = self._generate_observation_data(
             self.requestgroup.requests.first().id, [self.requestgroup.requests.first().configurations.first().id]
@@ -1253,6 +1385,31 @@ class TestUpdateConfigurationStatusApi(TestObservationApiBase):
         new_obs_end = exposure_start + timedelta(seconds=self.requestgroup.requests.first().get_remaining_duration(
             configuration_status.configuration.priority, include_current=True))
         self.assertEqual(observation.end, new_obs_end)
+
+    def test_shorten_first_configuration_status_exposure_start_with_repeat_configurations_multiple_configs(self):
+        requestgroup = self._generate_requestgroup()
+        request = requestgroup.requests.first()
+        create_simple_configuration(request, priority=request.configurations.first().priority + 1)
+        request.configuration_repeats = 3
+        request.save()
+        configurations = list(request.configurations.all())
+        configuration_1_duration = configurations[0].duration
+        configuration_2_duration = configurations[1].duration
+
+        observation = self._generate_observation_data(
+            request.id,
+            [configurations[0].id, configurations[1].id, configurations[0].id, configurations[1].id, configurations[0].id, configurations[1].id]
+        )
+        self._create_observation(observation)
+        configuration_statuses = ConfigurationStatus.objects.all()
+        new_config_start = datetime(2016, 9, 5, 22, 35, 45).replace(tzinfo=timezone.utc)
+        update_data = {"exposures_start_at": datetime.strftime(new_config_start, '%Y-%m-%dT%H:%M:%SZ')}
+        # Updating configuration status 1, so there should be 4 left to add to end time
+        self.client.patch(reverse('api:configurationstatus-detail', args=(configuration_statuses[1].id,)), update_data)
+        observation = Observation.objects.first()
+        config_front_padding = 8  # not used for the current configuration 16s front padding - 2*2s minimum slew and 2*2s oe change time
+        new_observation_end = new_config_start + timedelta(seconds=(configuration_1_duration*2 + configuration_2_duration*3 - config_front_padding))
+        self.assertEqual(observation.end, new_observation_end)
 
     def test_configuration_status_exposure_start_cant_be_before_observation_start(self):
         observation = self._generate_observation_data(self.requestgroup.requests.first().id,
