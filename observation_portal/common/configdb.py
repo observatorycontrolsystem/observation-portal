@@ -211,7 +211,7 @@ class ConfigDB(object):
                                     ):
                                         instrument_names.add(instrument['code'].lower())
                                         instrument_types.add(
-                                            instrument['instrument_type']['code'].lower()
+                                            instrument['instrument_type']['code'].upper()
                                         )
         return {'names': instrument_names, 'types': instrument_types}
 
@@ -345,7 +345,7 @@ class ConfigDB(object):
                     instrument['telescope_key'].site.lower() == site_code.lower()
                     and instrument['telescope_key'].enclosure.lower() == enclosure_code.lower()
                     and instrument['telescope_key'].telescope.lower() == telescope_code.lower()
-                    and instrument['instrument_type']['code'].lower() == instrument_type_code.lower()
+                    and instrument['instrument_type']['code'].upper() == instrument_type_code.upper()
             ):
                 instrument_names.add(instrument['code'].lower())
         return instrument_names
@@ -380,7 +380,7 @@ class ConfigDB(object):
             exclude_states = ['DISABLED', 'ENABLED', 'MANUAL', 'COMMISSIONING', 'STANDBY']
         instrument_telescopes = set()
         for instrument in self.get_instruments(exclude_states=exclude_states):
-            if instrument['instrument_type']['code'].upper() == instrument_type_code:
+            if instrument['instrument_type']['code'].upper() == instrument_type_code.upper():
                 instrument_telescopes.add(instrument['telescope_key'])
         return instrument_telescopes
 
@@ -429,7 +429,7 @@ class ConfigDB(object):
                     for optical_element_group in science_camera['optical_element_groups']:
                         for element in optical_element_group['optical_elements']:
                             if element['code'] not in optical_elements_tracker[optical_element_group['type']]:
-                                if optical_element_group['default'].upper() == element['code'].upper():
+                                if optical_element_group['default'].lower() == element['code'].lower():
                                     element['default'] = True
                                 else:
                                     element['default'] = False

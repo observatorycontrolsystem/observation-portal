@@ -123,13 +123,13 @@ class Pressure(object):
         for site in site_intervals:
             for interval in site_intervals[site]:
                 if interval[0] <= time < interval[1]:
-                    n_telescopes += sum([1 for t in self._telescopes(instrument_type) if t.site == site])
+                    n_telescopes += sum([1 for t in self._telescopes(instrument_type) if t.site.lower() == site.lower()])
         return n_telescopes
 
     def _visible_intervals(self, request):
         visible_intervals = {}
         for site in self.sites:
-            if not request.location.site or request.location.site == site['code']:
+            if not request.location.site or request.location.site.lower() == site['code'].lower():
                 intervals = get_filtered_rise_set_intervals_by_site(
                     request.as_dict(), site['code']
                 ).get(site['code'], [])

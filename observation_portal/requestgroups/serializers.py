@@ -308,7 +308,7 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
         request_context = self.context.get('request')
         if request_context:
             is_staff = request_context.user.is_staff
-        if value and value not in configdb.get_instrument_type_codes({}, only_schedulable=(not is_staff)):
+        if value and value.upper() not in configdb.get_instrument_type_codes({}, only_schedulable=(not is_staff)):
             raise serializers.ValidationError(
                 _('Invalid instrument type {}. Valid instruments may include: {}').format(
                     value, ', '.join(configdb.get_instrument_type_codes({}, only_schedulable=(not is_staff)))
@@ -632,7 +632,7 @@ class RequestSerializer(serializers.ModelSerializer):
             valid_instruments = configdb.get_instrument_type_codes(data.get('location', {}),
                                                               only_schedulable=only_schedulable)
             for configuration in data['configurations']:
-                if configuration['instrument_type'] not in valid_instruments:
+                if configuration['instrument_type'].upper() not in valid_instruments:
                     msg = _("Invalid instrument type '{}' at site={}, enc={}, tel={}. \n").format(
                         configuration['instrument_type'],
                         data.get('location', {}).get('site', 'Any'),

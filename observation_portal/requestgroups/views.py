@@ -137,7 +137,7 @@ class InstrumentsInformationView(APIView):
             'telescope': request.query_params.get('telescope', ''),
         }
         for instrument_type in configdb.get_instrument_type_codes(location=location, only_schedulable=only_schedulable):
-            if not requested_instrument_type or requested_instrument_type.lower() == instrument_type.lower():
+            if not requested_instrument_type or requested_instrument_type.upper() == instrument_type.upper():
                 ccd_size = configdb.get_ccd_size(instrument_type)
                 info[instrument_type] = {
                     'type': configdb.get_instrument_type_category(instrument_type),

@@ -193,7 +193,7 @@ class ScheduleSerializer(serializers.ModelSerializer):
             data['site'], data['enclosure'], data['telescope']
         )
         for configuration in data['request']['configurations']:
-            if configuration['instrument_type'].lower() not in allowable_instruments['types']:
+            if configuration['instrument_type'].upper() not in allowable_instruments['types']:
                 raise serializers.ValidationError(_("instrument type {} is not available at {}.{}.{}".format(
                     configuration['instrument_type'], data['site'], data['enclosure'], data['telescope']
                 )))
@@ -368,7 +368,7 @@ class ObservationSerializer(serializers.ModelSerializer):
             data['site'], data['enclosure'], data['telescope'], only_schedulable=False
         )
         for configuration in data['request'].configurations.all():
-            if configuration.instrument_type.lower() not in available_instruments['types']:
+            if configuration.instrument_type.upper() not in available_instruments['types']:
                 raise serializers.ValidationError(_('Instrument type {} not available at {}.{}.{}'.format(
                     configuration.instrument_type, data['site'], data['enclosure'], data['telescope']
                 )))
