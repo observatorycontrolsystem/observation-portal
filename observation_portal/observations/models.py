@@ -52,6 +52,7 @@ def get_expanded_configurations(observation, configurations):
             expanded_configurations[-1]['state'] = config_status.state
             expanded_configurations[-1]['instrument_name'] = config_status.instrument_name
             expanded_configurations[-1]['guide_camera_name'] = config_status.guide_camera_name
+            expanded_configurations[-1]['priority'] += (repeat_index * len(configurations))
             if hasattr(config_status, 'summary'):
                 expanded_configurations[-1]['summary'] = config_status.summary.as_dict()
             else:
