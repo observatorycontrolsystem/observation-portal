@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "django-ocs-observation-portal"
-version = "4.2.2"
+version = "4.2.3"
 description = "The Observatory Control System (OCS) Observation Portal django apps"
 license = "GPL-3.0-only"
 authors = ["Observatory Control System Project <ocs@lco.global>"]

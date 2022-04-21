@@ -7,7 +7,7 @@ This project adheres to semantic versioning.
 ### Changed
 ### Removed
 
-## [4.2.2] - 2022-04-19
+## [4.2.3] - 2022-04-21
 
 ### Added
 - Add `configuration_repeats` to Request model to allow for repeated configuration blocks for things like nodding between targets.
