@@ -436,6 +436,68 @@ class TestRequestDuration(SetTimeMixin, TestCase):
 
         self.assertEqual(duration, (exp_s_duration + exp_a_duration + exp_l_duration + num_configurations*(PER_CONFIGURATION_STARTUP_TIME)))
 
+    def test_configuration_repeats_single_configuration_request_duration(self):
+        self.configuration_expose.request = self.request
+        self.configuration_expose.save()
+        self.request.configuration_repeats = 3
+        self.request.save()
+
+        self.instrument_config_expose.configuration = self.configuration_expose
+        self.instrument_config_expose.save()
+
+        duration = self.request.duration
+        exp_count = self.instrument_config_expose.exposure_count
+        exp_time = self.instrument_config_expose.exposure_time
+
+        configuration_duration = exp_count*(exp_time + self.sbig_readout_time2 + self.sbig_fixed_overhead_per_exposure) + self.sbig_filter_optical_element_change_overhead + PER_CONFIGURATION_STARTUP_TIME + self.instrument_change_overhead_1m + self.minimum_slew_time
+        self.assertEqual(duration, math.ceil( self.request.configuration_repeats * configuration_duration + self.sbig_front_padding))
+
+    def test_configuration_repeats_multi_configuration_request_duration(self):
+        self.configuration_expose.request = self.request
+        self.configuration_expose.save()
+        self.instrument_config_expose_1.configuration = self.configuration_expose
+        self.instrument_config_expose_1.save()
+        self.instrument_config_expose_2.configuration = self.configuration_expose
+        self.instrument_config_expose_2.save()
+        self.instrument_config_expose_3.configuration = self.configuration_expose
+        self.instrument_config_expose_3.save()
+
+        self.request.configuration_repeats = 3
+        self.request.save()
+
+        duration = self.request.duration
+
+        exp_time1 = self.instrument_config_expose_1.exposure_time
+        exp_count1 = self.instrument_config_expose_1.exposure_count
+        exp_time2 = self.instrument_config_expose_2.exposure_time
+        exp_count2 = self.instrument_config_expose_2.exposure_count
+        exp_time3 = self.instrument_config_expose_3.exposure_time
+        exp_count3 = self.instrument_config_expose_3.exposure_count
+
+        exp_1_duration = exp_count1*(exp_time1 + self.sbig_readout_time2 + self.sbig_fixed_overhead_per_exposure)
+        exp_2_duration = exp_count2*(exp_time2 + self.sbig_readout_time2 + self.sbig_fixed_overhead_per_exposure)
+        exp_3_duration = exp_count3*(exp_time3 + self.sbig_readout_time2 + self.sbig_fixed_overhead_per_exposure)
+
+        num_filter_changes = 2
+        configuration_duration = exp_1_duration + exp_2_duration + exp_3_duration + num_filter_changes*self.sbig_filter_optical_element_change_overhead + (PER_CONFIGURATION_STARTUP_TIME + self.minimum_slew_time)
+
+        self.assertEqual(duration, math.ceil(self.request.configuration_repeats * configuration_duration + self.sbig_front_padding))
+
+    def test_configuration_repeats_repeat_configuration_request_duration(self):
+        self.configuration_repeat_expose.request = self.request
+        self.configuration_repeat_expose.save()
+        self.request.configuration_repeats = 2
+        self.request.save()
+
+        configuration_duration = self.configuration_repeat_expose.repeat_duration
+        self.assertEqual(configuration_duration, self.configuration_repeat_expose.duration)
+
+        # Add the non-repeat parts back to the configuration duration
+        configuration_duration += + self.sbig_filter_optical_element_change_overhead + self.instrument_change_overhead_1m + self.minimum_slew_time
+
+        duration = self.request.duration
+        self.assertEqual(duration, math.ceil( self.request.configuration_repeats * configuration_duration + self.sbig_front_padding))
+
     def test_get_duration_from_non_existent_camera(self):
         self.configuration_expose.instrument_type = 'FAKE-CAMERA'
         self.configuration_expose.save()
