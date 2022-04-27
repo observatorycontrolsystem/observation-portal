@@ -197,7 +197,8 @@ class Proposal(models.Model):
         logger.info('Users added to proposal {0}: {1}'.format(self, emails))
 
     def send_time_allocation_reminder(self):
-        if self.pi:
+        # Only send reminders to non-education users
+        if self.pi and not self.pi.profile.education_user:
             subject = _(f'Your {settings.ORGANIZATION_NAME} Time Allocation Summary')
             message = render_to_string(
                 'proposals/timeallocationreminder.html',

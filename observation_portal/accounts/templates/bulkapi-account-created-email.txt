@@ -1,0 +1,13 @@
+Hello {% firstof user.first_name user.username  %},
+
+An account has been created for you at {{ org }}.
+
+You may login at https://{{site.domain}}{% url 'auth_login' %} with the following
+credentials:
+
+Username: {{ user.username }}
+Password: {{ password }}
+
+We highly recommend changing your password once you do.
+
+Happy observing!

@@ -1,10 +1,13 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth.models import User
 from django.contrib import auth
 from mixer.backend.django import mixer
 from django.utils import timezone
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 
 from observation_portal.accounts.test_utils import blend_user
 from observation_portal.proposals.models import ProposalInvite, Membership, Proposal
@@ -58,6 +61,73 @@ class TestIndex(TestCase):
         )
         user = auth.get_user(self.client)
         self.assertFalse(user.is_authenticated)
+
+    def test_login_password_expired_redirect_change(self):
+        self.user.profile.password_expiration = timezone.now()
+        self.user.profile.save()
+
+        resp = self.client.post(
+            reverse('auth_login'),
+            {'username': 'doge', 'password': 'sopassword'},
+            follow=True,
+        )
+
+        user = auth.get_user(self.client)
+        self.assertTrue(user.is_authenticated)
+        self.assertRedirects(resp, expected_url=reverse("auth_password_change"))
+        self.assertContains(resp, "Change password", count=1)
+
+    def test_password_change_expiration_time_reset(self):
+        self.user.profile.password_expiration = old_exp = timezone.now() - timedelta(days=1)
+        self.user.profile.save()
+        self.client.force_login(self.user)
+
+        resp = self.client.post(
+            reverse("auth_password_change"),
+            data={
+                "old_password": "sopassword",
+                "new_password1": "evenmorepassword",
+                "new_password2": "evenmorepassword",
+            },
+            follow=True,
+        )
+
+        self.user.refresh_from_db()
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertGreater(self.user.profile.password_expiration, old_exp)
+
+    def test_password_reset_confirm_expiration_time_reset(self):
+        self.user.profile.password_expiration = old_exp = timezone.now() - timedelta(days=1)
+        self.user.profile.save()
+        self.client.force_login(self.user)
+        uidb64 = urlsafe_base64_encode(force_bytes(self.user.pk))
+        token = default_token_generator.make_token(self.user)
+
+
+        # going to this url sets some session cookies that the next request needs
+        resp1 = self.client.get(
+            reverse(
+                "auth_password_reset_confirm",
+                kwargs={"uidb64": uidb64, "token": token}
+            ),
+            follow=True
+        )
+
+        resp2 = self.client.post(
+            resp1.redirect_chain[-1][0],
+            data={
+                "new_password1": "evenmorepassword",
+                "new_password2": "evenmorepassword",
+            },
+            follow=True,
+        )
+
+        self.user.refresh_from_db()
+
+        self.assertEqual(resp2.status_code, 200)
+        self.assertContains(resp2, "Your password has been reset", count=1)
+        self.assertGreater(self.user.profile.password_expiration, old_exp)
 
 
 class TestRegistration(TestCase):
