@@ -3,6 +3,15 @@
 This project adheres to semantic versioning.
 
 ## [Unreleased]
+
+### Added
+
+### Changed
+
+### Removed
+
+## [4.3.0] - 2022-04-28
+
 ### Added
 - New API endpoint (`/api/users-bulk/`) to create users in bulk. This should
   come in handy when you want to speed up the account creation process for a
