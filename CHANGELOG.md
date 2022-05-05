@@ -3,11 +3,26 @@
 This project adheres to semantic versioning.
 
 ## [Unreleased]
+
 ### Added
+
 ### Changed
+
 ### Removed
 
-## [4.2.2] - 2022-04-19
+## [4.3.0] - 2022-04-28
+
+### Added
+- New API endpoint (`/api/users-bulk/`) to create users in bulk. This should
+  come in handy when you want to speed up the account creation process for a
+  known set of new users (e.g. educational users).
+
+### Changed
+-  Only send time allocation reminder email to non-educational users.
+
+### Removed
+
+## [4.2.3] - 2022-04-21
 
 ### Added
 - Add `configuration_repeats` to Request model to allow for repeated configuration blocks for things like nodding between targets.

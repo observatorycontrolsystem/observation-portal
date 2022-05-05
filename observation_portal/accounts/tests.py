@@ -1,5 +1,5 @@
 from datetime import timedelta
-from unittest.mock import patch
+from unittest.mock import patch, ANY, call
 import copy
 import responses
 
@@ -13,6 +13,7 @@ from mixer.backend.django import mixer
 from rest_framework.authtoken.models import Token
 from django.core import mail
 from django_dramatiq.test import DramatiqTestCase
+from rest_framework import status
 
 from observation_portal.accounts.test_utils import blend_user
 from observation_portal.accounts.models import Profile
@@ -302,3 +303,372 @@ class TestClientUserUpdates(DramatiqTestCase):
             self.assertGreaterEqual(len(responses.calls), 1)
             self.assertEqual(responses.calls[-1].request.url, 'http://test1.lco.global/authprofile/addupdateuser/')
             self.assertEqual(responses.calls[-1].response.text, '{"message": "User account updated"}')
+
+
+class TestBulkCreateUsersApi(APITestCase):
+
+    def setUp(self):
+        super().setUp()
+
+        send_mail_patcher = patch("observation_portal.accounts.serializers.send_mail")
+        self.addCleanup(send_mail_patcher.stop)
+        self.send_mail_mock = send_mail_patcher.start()
+
+        make_rand_pass_patcher = patch("observation_portal.accounts.serializers.User.objects.make_random_password")
+        self.addCleanup(make_rand_pass_patcher.stop)
+        self.make_rand_pass_mock = make_rand_pass_patcher.start()
+        self.make_rand_pass_mock.return_value = "mockpass"
+
+        self.staff_user = blend_user(
+            user_params={
+                "username": "staff",
+                "is_staff": True,
+            }
+        )
+        self.existing_user = blend_user(
+            user_params={
+                "username": "existing",
+                "email": "existing@domain.example",
+                "is_staff": False,
+            }
+        )
+
+        self.client.force_authenticate(self.staff_user)
+
+    def test_duplicate_usernames_error(self):
+        url = reverse("api:users-bulk")
+        data = {
+            "users": [
+                {
+                    "username": "same",
+                    "email": "user1@domain.example",
+                    "first_name": "user1",
+                    "last_name": "user1",
+                    "institution": "na",
+                    "title": "na"
+                },
+                {
+                    "username": "same",
+                    "email": "user2@domain.example",
+                    "first_name": "user2",
+                    "last_name": "user2",
+                    "institution": "na",
+                    "title": "na"
+                },
+            ]
+        }
+
+        resp = self.client.post(url, data)
+
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            resp.data,
+            {"users": ["username 'same' provided multiple times"]}
+        )
+
+    def test_duplicate_emails_error(self):
+        url = reverse("api:users-bulk")
+        data = {
+            "users": [
+                {
+                    "username": "user1",
+                    "email": "same@domain.example",
+                    "first_name": "user1",
+                    "last_name": "user1",
+                    "institution": "na",
+                    "title": "na"
+                },
+                {
+                    "username": "user2",
+                    "email": "same@domain.example",
+                    "first_name": "user2",
+                    "last_name": "user2",
+                    "institution": "na",
+                    "title": "na"
+                },
+            ]
+        }
+
+        resp = self.client.post(url, data)
+
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            resp.data,
+            {"users": ["email 'same@domain.example' provided multiple times"]}
+        )
+
+    def test_exisiting_username_error(self):
+        url = reverse("api:users-bulk")
+        data = {
+            "users": [
+                {
+                    "username": "existing",
+                    "email": "new@domain.example",
+                    "first_name": "user1",
+                    "last_name": "user1",
+                    "institution": "na",
+                    "title": "na"
+                },
+            ]
+        }
+
+        resp = self.client.post(url, data)
+
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            resp.data,
+            {"users": {0: {"username": ["username already exists"]}}}
+        )
+
+    def test_existing_email_error(self):
+        url = reverse("api:users-bulk")
+        data = {
+            "users": [
+                {
+                    "username": "new_username",
+                    "email": "existing@domain.example",
+                    "first_name": "user1",
+                    "last_name": "user1",
+                    "institution": "na",
+                    "title": "na"
+                },
+            ]
+        }
+
+        resp = self.client.post(url, data)
+
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            resp.data,
+            {"users": {0: {"email": ["user with email already exists"]}}}
+        )
+
+    def test_existing_username_and_email_error(self):
+        url = reverse("api:users-bulk")
+        data = {
+            "users": [
+                {
+                    "username": "existing",
+                    "email": "existing@domain.example",
+                    "first_name": "user1",
+                    "last_name": "user1",
+                    "institution": "na",
+                    "title": "na"
+                },
+            ]
+        }
+
+        resp = self.client.post(url, data)
+
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            resp.data,
+            {"users": {0: {
+                "email": ["user with email already exists"],
+                "username": ["username already exists"],
+            }}}
+        )
+
+    def test_default(self):
+        url = reverse("api:users-bulk")
+        data = {
+            "users": [
+                {
+                    "username": "user1",
+                    "email": "user1@domain.example",
+                    "first_name": "user1",
+                    "last_name": "user1",
+                    "institution": "na",
+                    "title": "na"
+                },
+            ]
+        }
+
+        resp = self.client.post(url, data)
+
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            resp.data,
+            {"users": [{
+                "username": "user1",
+                "email": "user1@domain.example",
+                "first_name": "user1",
+                "last_name": "user1",
+                "institution": "na",
+                "title": "na",
+                "education_user": True,
+            }]}
+        )
+        self.make_rand_pass_mock.assert_called_once_with(length=12, allowed_chars=ANY)
+        self.assertEqual(
+            self.staff_user,
+            User.objects.get(username="user1").profile.created_by
+        )
+        self.assertEqual(self.staff_user.created_profiles.count(), 1)
+        self.assertEqual(
+            self.staff_user.created_profiles.first().user,
+            User.objects.get(username="user1")
+        )
+
+    def test_override_default(self):
+        url = reverse("api:users-bulk")
+        data = {
+            "users": [
+                {
+                    "username": "user1",
+                    "password": "inputpass",
+                    "email": "user1@domain.example",
+                    "first_name": "user1",
+                    "last_name": "user1",
+                    "institution": "na",
+                    "title": "na",
+                    "education_user": False,
+                },
+            ]
+        }
+
+        resp = self.client.post(url, data)
+
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            resp.data,
+            {"users": [{
+                "username": "user1",
+                "email": "user1@domain.example",
+                "first_name": "user1",
+                "last_name": "user1",
+                "institution": "na",
+                "title": "na",
+                "education_user": False,
+            }]}
+        )
+        self.make_rand_pass_mock.assert_not_called()
+        self.send_mail_mock.send.assert_called_once_with(ANY, ANY, ANY, ["user1@domain.example"])
+
+    def test_many(self):
+        url = reverse("api:users-bulk")
+        data = {
+            "users": [
+                {
+                    "username": "user1",
+                    "email": "user1@domain.example",
+                    "first_name": "user1",
+                    "last_name": "user1",
+                    "institution": "na",
+                    "title": "na"
+                },
+                {
+                    "username": "user2",
+                    "email": "user2@domain.example",
+                    "first_name": "user2",
+                    "last_name": "user2",
+                    "institution": "na",
+                    "title": "na"
+                },
+            ]
+        }
+
+        resp = self.client.post(url, data)
+
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(
+            resp.data,
+            {"users": [
+                {
+                  "username": "user1",
+                  "email": "user1@domain.example",
+                  "first_name": "user1",
+                  "last_name": "user1",
+                  "institution": "na",
+                  "title": "na",
+                  "education_user": True,
+                },
+                {
+                  "username": "user2",
+                  "email": "user2@domain.example",
+                  "first_name": "user2",
+                  "last_name": "user2",
+                  "institution": "na",
+                  "title": "na",
+                  "education_user": True,
+                }
+            ]}
+        )
+        self.assertEqual(
+            self.send_mail_mock.send.call_args_list,
+            [call(ANY, ANY, ANY, ["user1@domain.example"]), call(ANY, ANY, ANY, ["user2@domain.example"])]
+        )
+
+        self.assertEqual(self.staff_user.created_profiles.count(), 2)
+        for u in ["user1", "user2"]:
+            self.assertEqual(
+                self.staff_user,
+                User.objects.get(username=u).profile.created_by
+            )
+            self.assertEqual(
+                self.staff_user.created_profiles.get(user__username=u).user,
+                User.objects.get(username=u)
+            )
+
+    def test_as_non_auth(self):
+        url = reverse("api:users-bulk")
+        data = {
+            "users": [
+                {
+                    "username": "user1",
+                    "email": "user1@domain.example",
+                    "first_name": "user1",
+                    "last_name": "user1",
+                    "institution": "na",
+                    "title": "na"
+                },
+            ]
+        }
+
+        self.client.force_authenticate(user=None)
+        resp = self.client.post(url, data)
+
+        self.assertEqual(resp.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_as_non_staff(self):
+        url = reverse("api:users-bulk")
+        data = {
+            "users": [
+                {
+                    "username": "user1",
+                    "email": "user1@domain.example",
+                    "first_name": "user1",
+                    "last_name": "user1",
+                    "institution": "na",
+                    "title": "na"
+                },
+            ]
+        }
+
+        self.client.force_authenticate(user=self.existing_user)
+        resp = self.client.post(url, data)
+
+        self.assertEqual(resp.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_as_PI(self):
+        url = reverse("api:users-bulk")
+        data = {
+            "users": [
+                {
+                    "username": "user1",
+                    "email": "user1@domain.example",
+                    "first_name": "user1",
+                    "last_name": "user1",
+                    "institution": "na",
+                    "title": "na"
+                },
+            ]
+        }
+        proposal = mixer.blend(Proposal, active=True)
+        mixer.blend(Membership, role=Membership.PI, proposal=proposal, user=self.existing_user)
+
+        self.client.force_authenticate(user=self.existing_user)
+
+        resp = self.client.post(url, data)
+
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)

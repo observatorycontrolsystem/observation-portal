@@ -31,6 +31,8 @@ class UserProfileInline(admin.StackedInline):
     model = Profile
     max_num = 1
     can_delete = False
+    fk_name = "user"
+
 
 
 class UserAdmin(AuthUserAdmin):

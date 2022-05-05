@@ -1,10 +1,14 @@
 import json
+from datetime import timedelta
+
 from django.utils import timezone
 from django.contrib.auth.models import User
+from django.contrib.auth.views import LoginView, PasswordChangeView, PasswordResetConfirmView
 from django.utils.module_loading import import_string
 from django.conf import settings
-from rest_framework.generics import RetrieveUpdateAPIView
-from rest_framework.permissions import IsAuthenticated
+from django.urls import reverse_lazy
+from rest_framework.generics import CreateAPIView, RetrieveUpdateAPIView
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -13,6 +17,8 @@ from rest_framework import status
 from observation_portal.accounts.models import Profile
 from observation_portal.accounts.tasks import send_mail, update_or_create_client_applications_user
 from observation_portal.common.schema import ObservationPortalSchema
+
+from .permissions import IsPrincipleInvestigatorOfAnyProposal
 
 
 class ProfileApiView(RetrieveUpdateAPIView):
@@ -102,3 +108,48 @@ class AccountRemovalRequestApiView(APIView):
 
     def get_endpoint_name(self):
         return 'requestAccountRemoval'
+
+
+class BulkCreateUsersApiView(CreateAPIView):
+    """API endpoint to create users in bulk"""
+
+    permission_classes = [IsAdminUser | IsPrincipleInvestigatorOfAnyProposal]
+    serializer_class = import_string(settings.SERIALIZERS["accounts"]["BulkCreateUsersSerializer"])
+    schema = ObservationPortalSchema(tags=['Accounts'])
+
+    def get_endpoint_name(self):
+        return 'createUsersBulk'
+
+
+class CustomLoginView(LoginView):
+
+    def get_success_url(self):
+        u = self.request.user
+        if hasattr(u, "profile"):
+            exp = u.profile.password_expiration
+            if exp is not None and timezone.now() > exp:
+                return reverse_lazy("auth_password_change")
+
+        return super().get_success_url()
+
+
+class ResetPasswordExpirationFormMixin:
+
+    def form_valid(self, form):
+        u = form.user
+        if hasattr(u, "profile"):
+            exp = u.profile.password_expiration
+            if exp is not None:
+                new_exp = timezone.now() + timedelta(days=365)
+                u.profile.password_expiration = new_exp
+                u.profile.save(update_fields=["password_expiration"])
+
+        return super().form_valid(form)
+
+
+class CustomPasswordChangeView(ResetPasswordExpirationFormMixin, PasswordChangeView):
+    success_url = reverse_lazy("auth_password_change_done")
+
+
+class CustomPasswordResetConfirmView(ResetPasswordExpirationFormMixin, PasswordResetConfirmView):
+    success_url = reverse_lazy("auth_password_reset_complete")

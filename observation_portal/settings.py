@@ -368,7 +368,9 @@ SERIALIZERS = {
         'AccountRemovalRequest': os.getenv('ACCOUNTS_ACCOUNTREMOVAL_SERIALIZER', 'observation_portal.accounts.serializers.AccountRemovalRequestSerializer'),
         'AcceptTerms': os.getenv('ACCOUNTS_ACCEPTTERMS_SERIALIZER', 'observation_portal.accounts.serializers.AcceptTermsResponseSerializer'),
         'RevokeToken': os.getenv('ACCOUNTS_REVOKETOKEN_SERIALIZER', 'observation_portal.accounts.serializers.RevokeTokenResponseSerializer'),
-        'AccountRemovalResponse': os.getenv('ACCOUNTS_ACCOUNTREMOVAL_RESPONSE_SERIALIZER', 'observation_portal.accounts.serializers.AccountRemovalResponseSerializer')
+        'AccountRemovalResponse': os.getenv('ACCOUNTS_ACCOUNTREMOVAL_RESPONSE_SERIALIZER', 'observation_portal.accounts.serializers.AccountRemovalResponseSerializer'),
+        'CreateUserSerializer': os.getenv('ACCOUNTS_CREATEUSER_SERIALIZER', 'observation_portal.accounts.serializers.CreateUserSerializer'),
+        'BulkCreateUsersSerializer': os.getenv('ACCOUNTS_BULKCREATEUSERS_SERIALIZER', 'observation_portal.accounts.serializers.BulkCreateUsersSerializer'),
     },
     'sciapplications': {
         'Call': os.getenv('SCIAPPLICATIONS_CALL_SERIALIZER', 'observation_portal.sciapplications.serializers.CallSerializer'),

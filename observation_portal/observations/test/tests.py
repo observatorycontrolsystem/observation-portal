@@ -1046,9 +1046,12 @@ class TestPostObservationApi(TestObservationApiBase):
 
         # Ensure configurations are repeated, and configuration statuses are ascending
         previous_configuration_status_id = 0
+        previous_priority = 0
         for i, configuration in enumerate(observation['request']['configurations']):
             self.assertEqual(expected_configuration_ids[i], configuration['id'])
             self.assertGreater(configuration['configuration_status'], previous_configuration_status_id)
+            self.assertGreater(configuration['priority'], previous_priority)
+            previous_priority = configuration['priority']
             previous_configuration_status_id = configuration['configuration_status']
 
 

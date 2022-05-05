@@ -14,8 +14,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import re_path, include
-from django.urls import path
+from django.urls import re_path, include, path
 from rest_framework.routers import DefaultRouter
 from rest_framework.authtoken.views import obtain_auth_token
 from rest_framework import permissions
@@ -30,7 +29,8 @@ from observation_portal.requestgroups.views import TelescopeStatesView, Telescop
 from observation_portal.requestgroups.views import InstrumentsInformationView, ObservationPortalLastChangedView
 from observation_portal.requestgroups.views import ContentionView, PressureView
 from observation_portal.accounts.views import (
-    ProfileApiView, RevokeApiTokenApiView, AccountRemovalRequestApiView, AcceptTermsApiView
+    ProfileApiView, RevokeApiTokenApiView, AccountRemovalRequestApiView,
+    AcceptTermsApiView, BulkCreateUsersApiView
 )
 from observation_portal.proposals.viewsets import (
     ProposalViewSet, SemesterViewSet, MembershipViewSet, ProposalInviteViewSet
@@ -60,6 +60,7 @@ router.register(r'configurationstatus', ConfigurationStatusViewSet, 'configurati
 api_urlpatterns = ([
     re_path(r'^', include(router.urls)),
     re_path(r'^api-token-auth/', obtain_auth_token, name='api-token-auth'),
+    path('users-bulk/', BulkCreateUsersApiView.as_view(), name='users-bulk'),
     re_path(r'^telescope_states/', TelescopeStatesView.as_view(), name='telescope_states'),
     re_path(r'^telescope_availability/', TelescopeAvailabilityView.as_view(), name='telescope_availability'),
     re_path(r'profile/accept_terms/', AcceptTermsApiView.as_view(), name='accept_terms'),
