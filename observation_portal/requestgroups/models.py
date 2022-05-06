@@ -869,8 +869,9 @@ class Constraints(models.Model):
         help_text='Minimum acceptable angular separation between the target and the moon in decimal degrees'
     )
     max_lunar_phase = models.FloatField(
-        verbose_name='Maximum lunar phase', null=True, blank=True,
-        help_text='Maximum acceptable lunar phase'
+        verbose_name='maximum lunar phase', default=1.0,
+        validators=[MinValueValidator(0.0), MaxValueValidator(1.0)],
+        help_text='Maximum acceptable lunar phase fraction from 0.0 to 1.0 (full moon)'
     )
     max_seeing = models.FloatField(
         verbose_name='maximum seeing', null=True, blank=True,
@@ -895,8 +896,9 @@ class Constraints(models.Model):
         return import_string(settings.AS_DICT['requestgroups']['Constraints'])(self)
 
     def __str__(self):
-        return 'Constraints {}: {} max airmass, {} min_lunar_distance'.format(self.id, self.max_airmass,
-                                                                              self.min_lunar_distance)
+        return 'Constraints {}: {} max airmass, {} min_lunar_distance, {} max_lunar_phase'.format(
+            self.id, self.max_airmass, self.min_lunar_distance, self.max_lunar_phase
+        )
 
 
 class DraftRequestGroup(models.Model):

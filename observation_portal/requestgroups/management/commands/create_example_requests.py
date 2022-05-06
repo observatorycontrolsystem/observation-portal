@@ -32,6 +32,7 @@ base_requestgroup = {
 base_constraints = {
     'max_airmass': 2.0,
     'min_lunar_distance': 0.0,
+    'max_lunar_phase': 1.0,
 }
 
 base_instrument_config = {
@@ -152,7 +153,8 @@ class Command(BaseCommand):
                         intervals_by_site[site].extend(visibility.get_observable_intervals(
                             rise_set_target,
                             airmass=2.0,
-                            moon_distance=Angle(degrees=0.0)
+                            moon_distance=Angle(degrees=0.0),
+                            moon_phase=1.0
                         ))
                     except MovingViolation:
                         pass

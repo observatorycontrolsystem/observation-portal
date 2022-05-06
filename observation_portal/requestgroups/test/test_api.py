@@ -65,6 +65,7 @@ generic_payload = {
             'constraints': {
                 'max_airmass': 2.0,
                 'min_lunar_distance': 30.0,
+                'max_lunar_phase': 1.0,
             }
         }],
         'windows': [{
@@ -460,6 +461,7 @@ class TestUserPostRequestApi(SetTimeMixin, APITestCase):
         good_data['requests'][0]['configurations'][0]['target']['ra'] = 50.0
         del good_data['requests'][0]['configurations'][0]['constraints']['max_airmass']
         del good_data['requests'][0]['configurations'][0]['constraints']['min_lunar_distance']
+        del good_data['requests'][0]['configurations'][0]['constraints']['max_lunar_phase']
         response = self.client.post(reverse('api:request_groups-list'), data=good_data)
         self.assertEqual(response.status_code, 201)
 
@@ -2536,6 +2538,7 @@ class TestAirmassApi(SetTimeMixin, APITestCase):
                 'constraints': {
                     'max_airmass': 2.0,
                     'min_lunar_distance': 30.0,
+                    'max_lunar_phase': 1.0,
                 },
                 'target': {
                     'name': 'fake target',
@@ -2670,7 +2673,7 @@ class TestSchedulableRequestsApi(SetTimeMixin, APITestCase):
                 mixer.blend(GuidingConfig, configuration=conf, )
                 mixer.blend(Target, configuration=conf, type='ICRS', dec=20, ra=34.4)
                 mixer.blend(Location, request=req, telescope_class='1m0')
-                mixer.blend(Constraints, configuration=conf, max_airmass=2.0, min_lunar_distance=30.0)
+                mixer.blend(Constraints, configuration=conf, max_airmass=2.0, min_lunar_distance=30.0, max_lunar_phase=1.0)
 
         self.client.force_login(self.user)
 
@@ -2709,7 +2712,7 @@ class TestSchedulableRequestsApi(SetTimeMixin, APITestCase):
             mixer.blend(GuidingConfig, configuration=conf, )
             mixer.blend(Target, configuration=conf, type='ICRS', dec=20, ra=34.4)
             mixer.blend(Location, request=req, telescope_class='2m0')
-            mixer.blend(Constraints, configuration=conf, max_airmass=2.0, min_lunar_distance=30.0)
+            mixer.blend(Constraints, configuration=conf, max_airmass=2.0, min_lunar_distance=30.0, max_lunar_phase=1.0)
         # Now get the requests filtered by each telescope_class and ensure its filtered properly
         rg_ids_numbers_1m0 = [rg.id for rg in self.rgs]        
         rg_ids_numbers_2m0 = [rg.id for rg in rgs_2m0]

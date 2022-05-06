@@ -75,7 +75,8 @@ def get_rise_set_intervals_by_site(request: dict, only_schedulable: bool = False
                             airmass=constraints['max_airmass'],
                             moon_distance=Angle(
                                 degrees=constraints['min_lunar_distance']
-                            )
+                            ),
+                            moon_phase=constraints.get('max_lunar_phase', 1.0)
                         )
                         # We only want times when all targets are visible to keep things simple
                         if first_target:

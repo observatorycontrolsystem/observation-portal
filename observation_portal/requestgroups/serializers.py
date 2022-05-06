@@ -205,6 +205,9 @@ class ConstraintsSerializer(serializers.ModelSerializer):
     min_lunar_distance = serializers.FloatField(
         default=30.0, validators=[MinValueValidator(0.0), MaxValueValidator(180.0)]  # Duplicated in models.py
     )
+    max_lunar_phase = serializers.FloatField(
+        default=1.0, validators=[MinValueValidator(0.0), MaxValueValidator(1.0)]  # Duplicated in models.py
+    )
 
     class Meta:
         model = Constraints
