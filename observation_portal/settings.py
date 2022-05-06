@@ -22,6 +22,19 @@ def get_list_from_env(variable, default=None):
     return value_as_list
 
 
+def get_dramqtiq_broker_url():
+    url = os.getenv("DRAMATIQ_BROKER_URL", "redis://redis:6379/0")
+    # return URL as is if it exists and not a empty string
+    if url:
+        return url
+
+    # construct a URL for backwards-compatibility
+    return "redis://%s:%s" % (
+        os.getenv("DRAMATIQ_BROKER_HOST", "redis"),
+        os.getenv("DRAMATIQ_BROKER_PORT", 6379)
+    )
+
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -409,8 +422,7 @@ AS_DICT = {
 DRAMATIQ_BROKER = {
     "BROKER": "dramatiq.brokers.redis.RedisBroker",
     "OPTIONS": {
-        "url": "redis://" + os.getenv("DRAMATIQ_BROKER_HOST", "redis") + ":" +
-               str(os.getenv("DRAMATIQ_BROKER_PORT", 6379)),
+        "url": get_dramqtiq_broker_url()
     },
     "MIDDLEWARE": [
         "dramatiq.middleware.Prometheus",
