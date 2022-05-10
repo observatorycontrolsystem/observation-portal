@@ -18,6 +18,17 @@ from observation_portal.common.schema import ObservationPortalSchema
 from observation_portal.common.doc_examples import EXAMPLE_RESPONSES
 
 
+def get_sites_from_request(request):
+    sites = set()
+    if isinstance(request.data, list):
+        # request could be a list of data or a dict, if its a list we need to get all sites
+        for req in request.data:
+            sites.add(req['site'])
+    else:
+        sites.add(request.data['site'])
+    return sites
+
+
 def observations_queryset(request):
     if request.user.is_authenticated:
         if request.user.profile.staff_view and request.user.is_staff:
@@ -55,6 +66,16 @@ class ScheduleViewSet(ListAsDictMixin, CreateListModelMixin, viewsets.ModelViewS
 
     def get_queryset(self):
         return observations_queryset(self.request)
+
+    def create(self, request, *args, **kwargs):
+        """ This sets the last scheduled time on a site when any directly submitted request is submitted for that site
+        """
+        cache_key = 'observation_portal_last_schedule_time'
+        created_obs = super().create(request, args, kwargs)
+        sites = get_sites_from_request(request)
+        for site in sites:
+            cache.set(cache_key + f"_{site}", timezone.now(), None)
+        return created_obs
 
     def get_example_response(self):
         return {'list': Response(EXAMPLE_RESPONSES['observations']['list_schedule'], status=200)}.get(self.action)
@@ -170,8 +191,9 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
                             observations.append(individual_serializer.save())
                         else:
                             errors[i] = individual_serializer.error
-            site = request.data[0]['site']
-            cache.set(cache_key + f"_{site}", timezone.now(), None)
+            sites = get_sites_from_request(request)
+            for site in sites:
+                cache.set(cache_key + f"_{site}", timezone.now(), None)
             return Response({'num_created': len(observations), 'errors': errors}, status=status.HTTP_201_CREATED)
 
     def get_request_serializer(self, *args, **kwargs):

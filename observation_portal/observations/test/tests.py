@@ -418,7 +418,7 @@ class TestPostScheduleMultiConfigApi(SetTimeMixin, APITestCase):
 class TestObservationApiBase(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
-        self.proposal = mixer.blend(Proposal, direct_submission=False)
+        self.proposal = mixer.blend(Proposal, id='auto_focus', direct_submission=False)
         self.user = blend_user(user_params={'is_admin': True, 'is_superuser': True, 'is_staff': True})
         self.client.force_login(self.user)
         self.semester = mixer.blend(
@@ -1660,6 +1660,8 @@ class TestUpdateObservationApi(TestObservationApiBase):
 class TestLastScheduled(TestObservationApiBase):
     def setUp(self):
         super().setUp()
+        self.proposal.direct_submission = True
+        self.proposal.save()
         # Mock the cache with a real one for these tests
         self.locmem_cache = caches.create_connection('testlocmem')
         self.locmem_cache.clear()
@@ -1710,6 +1712,26 @@ class TestLastScheduled(TestObservationApiBase):
         self._create_observation(observations)
 
         response = self.client.get(reverse('api:last_scheduled'))
+        last_schedule = response.json()['last_schedule_time']
+        self.assertAlmostEqual(parse(last_schedule), timezone.now(), delta=timedelta(minutes=1))
+
+    def test_last_schedule_date_is_updated_when_single_direct_submission_is_submitted(self):
+        last_schedule_cached = self.locmem_cache.get('observation_portal_last_schedule_time_tst')
+        self.assertIsNone(last_schedule_cached)
+        direct_submission = copy.deepcopy(observation)
+        response = self.client.post(reverse('api:schedule-list'), data=direct_submission)
+        self.assertEqual(response.status_code, 201)
+        response = self.client.get(reverse('api:last_scheduled') + "?site=tst")
+        last_schedule = response.json()['last_schedule_time']
+        self.assertAlmostEqual(parse(last_schedule), timezone.now(), delta=timedelta(minutes=1))
+
+    def test_last_schedule_date_is_updated_when_multiple_direct_submissions_are_submitted(self):
+        last_schedule_cached = self.locmem_cache.get('observation_portal_last_schedule_time_tst')
+        self.assertIsNone(last_schedule_cached)
+        direct_submissions = [copy.deepcopy(observation), copy.deepcopy(observation), copy.deepcopy(observation)]
+        response = self.client.post(reverse('api:schedule-list'), data=direct_submissions)
+        self.assertEqual(response.status_code, 201)
+        response = self.client.get(reverse('api:last_scheduled') + "?site=tst")
         last_schedule = response.json()['last_schedule_time']
         self.assertAlmostEqual(parse(last_schedule), timezone.now(), delta=timedelta(minutes=1))
 
