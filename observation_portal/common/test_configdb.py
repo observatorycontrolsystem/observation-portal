@@ -16,15 +16,15 @@ class TestConfigdb(TestCase):
         expected_telescope_class3 = '2m1'
         telescope_class3 = configdb.convert_telescope_aperture_to_string(2.124)
         self.assertEqual(expected_telescope_class3, telescope_class3)
-        
+
         expected_telescope_class4 = '33m2'
         telescope_class4 = configdb.convert_telescope_aperture_to_string(33.16)
         self.assertEqual(expected_telescope_class4, telescope_class4)
-        
+
         expected_telescope_class5 = '0m0'
         telescope_class5 = configdb.convert_telescope_aperture_to_string(0.0)
         self.assertEqual(expected_telescope_class5, telescope_class5)
-    
+
     def test_get_telescope_key(self):
         expected_key1 = TelescopeKey('tst', 'doma', '2m0a', '2m0')
         key1 = configdb.get_telescope_key('tst', 'doma', '2m0a')
