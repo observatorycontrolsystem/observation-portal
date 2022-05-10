@@ -12,7 +12,7 @@ class TestConfigdb(TestCase):
         expected_telescope_class2 = '0m4'
         telescope_class2 = configdb.convert_telescope_aperture_to_string(0.44)
         self.assertEqual(expected_telescope_class2, telescope_class2)
-        
+
         expected_telescope_class3 = '2m1'
         telescope_class3 = configdb.convert_telescope_aperture_to_string(2.124)
         self.assertEqual(expected_telescope_class3, telescope_class3)
