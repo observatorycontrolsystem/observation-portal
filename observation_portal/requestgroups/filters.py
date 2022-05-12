@@ -9,10 +9,9 @@ class RequestGroupFilter(django_filters.FilterSet):
     state = django_filters.MultipleChoiceFilter(choices=RequestGroup.STATE_CHOICES)
     user = django_filters.CharFilter(field_name='submitter__username', lookup_expr='icontains', label='Username contains')
     exclude_state = django_filters.MultipleChoiceFilter(field_name='state', choices=RequestGroup.STATE_CHOICES, label='Exclude State', exclude=True)
-    # TODO: Fill in telescope_class choices from configdb
-    # telescope_class = django_filters.ChoiceFilter(
-    #     choices=Location.TELESCOPE_CLASSES, field_name='requests__location__telescope_class', distinct=True,
-    # )
+    telescope_class = django_filters.MultipleChoiceFilter(
+        choices=configdb.get_telescope_class_tuples(), field_name='requests__location__telescope_class', distinct=True,
+    )
     target = django_filters.CharFilter(
         field_name='requests__configurations__target__name', lookup_expr='icontains', label='Target name contains',
         distinct=True

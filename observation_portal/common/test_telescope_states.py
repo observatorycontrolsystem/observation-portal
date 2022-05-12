@@ -11,6 +11,16 @@ from unittest.mock import patch
 import json
 
 
+def configdb_telescope_key_se(*args, **kwargs):
+    telescope_class = kwargs.get('telescope_code', '1m0a')[:3]
+    return TelescopeKey(
+        kwargs['site_code'],
+        kwargs['enclosure_code'],
+        kwargs['telescope_code'],
+        telescope_class
+    )
+
+
 class TelescopeStatesFakeInput(TestCase):
     def setUp(self):
         super().setUp()
@@ -89,8 +99,8 @@ class TelescopeStatesFakeInput(TestCase):
             },
         ]
 
-        self.tk1 = TelescopeKey('tst', 'doma', '1m0a')
-        self.tk2 = TelescopeKey('tst', 'domb', '1m0a')
+        self.tk1 = TelescopeKey('tst', 'doma', '1m0a', '1m0')
+        self.tk2 = TelescopeKey('tst', 'domb', '1m0a', '1m0')
 
         self.es_patcher = patch('observation_portal.common.telescope_states.TelescopeStates._get_os_data')
         self.mock_es = self.es_patcher.start()
@@ -207,7 +217,7 @@ class TestTelescopeStates(TelescopeStatesFakeInput):
         self.assertIn(self.tk2, telescope_availability)
 
         combined_telescope_availability = combine_telescope_availabilities_by_site_and_class(telescope_availability)
-        combined_key = TelescopeKey(self.tk1.site, '', self.tk1.telescope[:-1])
+        combined_key = TelescopeKey(self.tk1.site, '', '', self.tk1.telescope_class)
 
         self.assertIn(combined_key, combined_telescope_availability)
 
@@ -229,21 +239,24 @@ class TelescopeStatesFromFile(TestCase):
         self.configdb_null_patcher = patch('observation_portal.common.configdb.ConfigDB._get_configdb_data')
         mock_configdb_null = self.configdb_null_patcher.start()
         mock_configdb_null.return_value = {}
+        self.configdb_tk_patcher = patch('observation_portal.common.configdb.ConfigDB.get_telescope_key')
+        self.mock_configdb_tk = self.configdb_tk_patcher.start()
+        self.mock_configdb_tk.side_effect = configdb_telescope_key_se
         self.configdb_patcher = patch('observation_portal.common.configdb.ConfigDB.get_instrument_types_per_telescope')
         self.mock_configdb = self.configdb_patcher.start()
         self.mock_configdb.return_value = {
-            TelescopeKey(site='coj', enclosure='clma', telescope='2m0a'): ['2M0-FLOYDS-SCICAM',
+            TelescopeKey(site='coj', enclosure='clma', telescope='2m0a', telescope_class='2m0'): ['2M0-FLOYDS-SCICAM',
                                                                              '2M0-SCICAM-SPECTRAL'],
-            TelescopeKey(site='coj', enclosure='doma', telescope='1m0a'): ['1M0-SCICAM-SINISTRO'],
-            TelescopeKey(site='coj', enclosure='domb', telescope='1m0a'): ['1M0-SCICAM-SINISTRO'],
-            TelescopeKey(site='cpt', enclosure='domb', telescope='1m0a'): ['1M0-SCICAM-SINISTRO'],
-            TelescopeKey(site='cpt', enclosure='domc', telescope='1m0a'): ['1M0-SCICAM-SINISTRO'],
-            TelescopeKey(site='elp', enclosure='doma', telescope='1m0a'): ['1M0-SCICAM-SINISTRO'],
-            TelescopeKey(site='lsc', enclosure='domb', telescope='1m0a'): ['1M0-SCICAM-SINISTRO'],
-            TelescopeKey(site='lsc', enclosure='domc', telescope='1m0a'): ['1M0-SCICAM-SINISTRO'],
-            TelescopeKey(site='ogg', enclosure='clma', telescope='0m4b'): ['0M4-SCICAM-SBIG'],
-            TelescopeKey(site='ogg', enclosure='clma', telescope='2m0a'): ['2M0-FLOYDS-SCICAM'],
-            TelescopeKey(site='sqa', enclosure='doma', telescope='0m8a'): ['0M8-SCICAM-SBIG',
+            TelescopeKey(site='coj', enclosure='doma', telescope='1m0a', telescope_class='1m0'): ['1M0-SCICAM-SINISTRO'],
+            TelescopeKey(site='coj', enclosure='domb', telescope='1m0a', telescope_class='1m0'): ['1M0-SCICAM-SINISTRO'],
+            TelescopeKey(site='cpt', enclosure='domb', telescope='1m0a', telescope_class='1m0'): ['1M0-SCICAM-SINISTRO'],
+            TelescopeKey(site='cpt', enclosure='domc', telescope='1m0a', telescope_class='1m0'): ['1M0-SCICAM-SINISTRO'],
+            TelescopeKey(site='elp', enclosure='doma', telescope='1m0a', telescope_class='1m0'): ['1M0-SCICAM-SINISTRO'],
+            TelescopeKey(site='lsc', enclosure='domb', telescope='1m0a', telescope_class='1m0'): ['1M0-SCICAM-SINISTRO'],
+            TelescopeKey(site='lsc', enclosure='domc', telescope='1m0a', telescope_class='1m0'): ['1M0-SCICAM-SINISTRO'],
+            TelescopeKey(site='ogg', enclosure='clma', telescope='0m4b', telescope_class='0m4'): ['0M4-SCICAM-SBIG'],
+            TelescopeKey(site='ogg', enclosure='clma', telescope='2m0a', telescope_class='2m0'): ['2M0-FLOYDS-SCICAM'],
+            TelescopeKey(site='sqa', enclosure='doma', telescope='0m8a', telescope_class='0m8'): ['0M8-SCICAM-SBIG',
                                                                              '0M8-NRES-SCICAM']}
 
         with open('observation_portal/common/test_data/es_telescope_states_data.txt', 'r') as input_file:
@@ -259,6 +272,7 @@ class TelescopeStatesFromFile(TestCase):
 
     def tearDown(self):
         self.configdb_patcher.stop()
+        self.configdb_tk_patcher.stop()
         self.configdb_null_patcher.stop()
         self.es_patcher.stop()
 
@@ -266,7 +280,7 @@ class TelescopeStatesFromFile(TestCase):
 class TestTelescopeStatesFromFile(TelescopeStatesFromFile):
     def test_one_telescope_correctness(self):
         telescope_states = TelescopeStates(self.start, self.end).get()
-        tak = TelescopeKey(site='lsc', enclosure='domb', telescope='1m0a')
+        tak = TelescopeKey(site='lsc', enclosure='domb', telescope='1m0a', telescope_class='1m0')
         expected_events = [{'end': datetime(2016, 10, 3, 10, 25, 5, tzinfo=timezone.utc),
                             'event_reason': 'Available for scheduling',
                             'event_type': 'AVAILABLE',
