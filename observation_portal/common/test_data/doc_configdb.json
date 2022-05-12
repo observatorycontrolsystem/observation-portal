@@ -13,6 +13,7 @@
             {
               "code": "1m0a",
               "name": "1 Meter",
+              "aperture": 1.0,
               "instrument_set": [
                 {
                   "code": "ia01",
@@ -60,6 +61,7 @@
             {
               "code": "2m0a",
               "name": "2 Meter",
+              "aperture": 2.0,
               "instrument_set": [
                 {
                   "code": "ia02",
@@ -120,6 +122,7 @@
             {
               "code": "1m0a",
               "name": "1 Meter",
+              "aperture": 1.0,
               "instrument_set": [
                 {
                   "code": "ia01",
@@ -167,6 +170,7 @@
             {
               "code": "2m0a",
               "name": "2 Meter",
+              "aperture": 2.0,
               "instrument_set": [
                 {
                   "code": "ia02",
@@ -227,6 +231,7 @@
             {
               "code": "1m0a",
               "name": "1 Meter",
+              "aperture": 1.0,
               "instrument_set": [
                 {
                   "code": "ib01",
@@ -279,6 +284,7 @@
             {
               "code": "1m0a",
               "name": "1 Meter",
+              "aperture": 1.0,
               "instrument_set": [
                 {
                   "code": "ib01",
@@ -337,6 +343,7 @@
             {
               "code": "1m0a",
               "name": "1 Meter",
+              "aperture": 1.0,
               "instrument_set": [
                 {
                   "code": "ia01",
