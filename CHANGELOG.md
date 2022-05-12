@@ -10,6 +10,12 @@ This project adheres to semantic versioning.
 
 ### Removed
 
+## [4.3.2] - 2022-05-12
+
+### Changed
+- Update to work with configdb 3.0.1 changes with new telescope aperture field.
+- Fix bug in configdb caching function that failed with kwargs
+
 ## [4.3.0] - 2022-04-28
 
 ### Added
