@@ -31,7 +31,7 @@ def cache_function(cache_name='locmem', duration=300):
             for kwarg in kwargs.values():
                 if isinstance(kwarg, dict):
                     cache_key += '_' + hashlib.sha1(json.dumps(kwarg, sort_keys=True, cls=DjangoJSONEncoder).encode()).hexdigest()
-                elif isinstance(arg, (int, float, bool, str, list, set)):
+                elif isinstance(kwarg, (int, float, bool, str, list, set)):
                     cache_key += '_' + str(kwarg)
             cached_output = caches[cache_name].get(cache_key, None)
             if cached_output:

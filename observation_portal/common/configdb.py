@@ -314,7 +314,6 @@ class ConfigDB(object):
             exclude_states = ['DISABLED', 'ENABLED', 'MANUAL', 'COMMISSIONING', 'STANDBY']
         telescope_instrument_types = {}
         for instrument in self.get_instruments(exclude_states=exclude_states):
-            split_string = instrument['__str__'].lower().split('.')
             if (location.get('site', '').lower() in instrument['telescope_key'].site
                     and location.get('enclosure', '').lower() in instrument['telescope_key'].enclosure
                     and location.get('telescope_class', '').lower() in instrument['telescope_key'].telescope_class
