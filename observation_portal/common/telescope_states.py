@@ -128,7 +128,11 @@ class TelescopeStates(object):
         current_lump = {'telescope': None}
 
         for event in self.event_data:
-            telcode = self._telescope(event['_source'])
+            telcode = configdb.get_telescope_key(
+                site_code=event['_source']['site'],
+                enclosure_code=event['_source']['observatory'],
+                telescope_code=event['_source']['telescope']
+            )
             if telcode not in self.available_telescopes:
                 if current_lump['telescope']:
                     self._save_lump(telescope_states, current_lump, self.end)
@@ -194,14 +198,6 @@ class TelescopeStates(object):
                     return self.EVENT_CATEGORIES[key], reason
 
         return "NOT_AVAILABLE", "Unknown"
-
-    @staticmethod
-    def _telescope(event_source):
-        return TelescopeKey(
-            site=event_source['site'],
-            enclosure=event_source['observatory'],
-            telescope=event_source['telescope']
-        )
 
 
 def filter_telescope_states_by_intervals(telescope_states, sites_intervals, start, end):
@@ -289,13 +285,13 @@ def get_telescope_availability_per_day(start, end, telescopes=None, sites=None, 
 
 
 def combine_telescope_availabilities_by_site_and_class(telescope_availabilities):
-    combined_keys = {TelescopeKey(tk.site, '', tk.telescope[:-1]) for tk in telescope_availabilities.keys()}
+    combined_keys = {TelescopeKey(tk.site, '', '', tk.telescope_class) for tk in telescope_availabilities.keys()}
     combined_availabilities = {}
     for key in combined_keys:
         num_groups = 0
         total_availability = []
         for telescope_key, availabilities in telescope_availabilities.items():
-            if telescope_key.site == key.site and telescope_key.telescope[:-1] == key.telescope:
+            if telescope_key.site == key.site and telescope_key.telescope_class == key.telescope_class:
                 num_groups += 1
                 if not total_availability:
                     total_availability = availabilities

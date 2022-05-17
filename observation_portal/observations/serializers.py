@@ -193,7 +193,7 @@ class ScheduleSerializer(serializers.ModelSerializer):
             data['site'], data['enclosure'], data['telescope']
         )
         for configuration in data['request']['configurations']:
-            if configuration['instrument_type'].lower() not in allowable_instruments['types']:
+            if configuration['instrument_type'].upper() not in allowable_instruments['types']:
                 raise serializers.ValidationError(_("instrument type {} is not available at {}.{}.{}".format(
                     configuration['instrument_type'], data['site'], data['enclosure'], data['telescope']
                 )))
@@ -357,7 +357,7 @@ class ObservationSerializer(serializers.ModelSerializer):
             data['request'].location.site and data['request'].location.site != data['site'] or
             data['request'].location.enclosure and data['request'].location.enclosure != data['enclosure'] or
             data['request'].location.telescope and data['request'].location.telescope != data['telescope'] or
-            data['request'].location.telescope_class != data['telescope'][0:3]
+            data['request'].location.telescope_class != configdb.get_telescope_key(site_code=data['site'], enclosure_code=data['enclosure'], telescope_code=data['telescope']).telescope_class
         ):
             raise serializers.ValidationError(_('{}.{}.{} does not match the request location'.format(
                 data['site'], data['enclosure'], data['telescope']
@@ -368,7 +368,7 @@ class ObservationSerializer(serializers.ModelSerializer):
             data['site'], data['enclosure'], data['telescope'], only_schedulable=False
         )
         for configuration in data['request'].configurations.all():
-            if configuration.instrument_type.lower() not in available_instruments['types']:
+            if configuration.instrument_type.upper() not in available_instruments['types']:
                 raise serializers.ValidationError(_('Instrument type {} not available at {}.{}.{}'.format(
                     configuration.instrument_type, data['site'], data['enclosure'], data['telescope']
                 )))

@@ -13,6 +13,7 @@
             {
               "code": "1m0a",
               "name": "1 Meter",
+              "aperture": 1.0,
               "lat": -32.3805542,
               "long": 20.8100352,
               "horizon": 15.0,
@@ -557,6 +558,7 @@
             {
               "code": "2m0a",
               "name": "2 Meter",
+              "aperture": 2.0,
               "lat": -32.3805542,
               "long": 20.8100352,
               "horizon": 15.0,
@@ -771,6 +773,7 @@
             {
               "code": "1m0a",
               "name": "1 Meter",
+              "aperture": 1.0,
               "lat": -32.3805542,
               "long": 20.8100352,
               "horizon": 15.0,
@@ -1137,6 +1140,7 @@
             {
               "code": "2m0a",
               "name": "2 Meter",
+              "aperture": 2.0,
               "lat": -32.3805542,
               "long": 20.8100352,
               "horizon": 15.0,
@@ -1709,6 +1713,7 @@
             {
               "code": "1m0a",
               "name": "1 Meter",
+              "aperture": 1.0,
               "lat": -32.3805542,
               "long": 20.8100352,
               "horizon": 15.0,
@@ -2082,6 +2087,7 @@
             {
               "code": "1m0a",
               "name": "1 Meter",
+              "aperture": 1.0,
               "lat": -32.3805542,
               "long": 20.8100352,
               "horizon": 15.0,
@@ -2279,6 +2285,7 @@
             {
               "code": "1m0a",
               "name": "1 Meter",
+              "aperture": 1.0,
               "lat": -32.3805542,
               "long": 20.8100352,
               "horizon": 15.0,
@@ -2472,6 +2479,7 @@
             {
               "code": "1m0a",
               "name": "1 Meter",
+              "aperture": 1.0,
               "lat": -32.3805542,
               "long": 20.8100352,
               "horizon": 15.0,
