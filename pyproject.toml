@@ -52,7 +52,7 @@ opensearch-py = ">=1.0,<2.0"
 gunicorn = { version = "^20.1", extras = [ "gevent" ] }
 lcogt-logging = "0.3.2"
 numpy = "^1.16"
-ocs-rise-set = "0.5.2"
+ocs-rise-set = "^0.5.2"
 psycopg2-binary = "^2.9.3"
 PyPDF2 = ">=1.26,<1.27"
 redis = "^3"

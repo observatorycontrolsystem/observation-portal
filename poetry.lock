@@ -565,7 +565,7 @@ signedtoken = ["cryptography (>=3.0.0)", "pyjwt (>=2.0.0,<3)"]
 
 [[package]]
 name = "ocs-rise-set"
-version = "0.5.1"
+version = "0.5.2"
 description = "Routines for accurate rise/set/transit calculations"
 category = "main"
 optional = false
@@ -900,7 +900,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "74a05f1570d3702422cfc702effd775cd4e0f2bc42247034883a856aa252332d"
+content-hash = "d643afd7529e72499e9fcba8b8acdfb9452debf9723b6be1d85809b57ba38ea6"
 
 [metadata.files]
 apscheduler = [
@@ -1334,9 +1334,8 @@ oauthlib = [
     {file = "oauthlib-3.2.0.tar.gz", hash = "sha256:23a8208d75b902797ea29fd31fa80a15ed9dc2c6c16fe73f5d346f83f6fa27a2"},
 ]
 ocs-rise-set = [
-    {file = "ocs-rise-set-0.5.1.tar.gz", hash = "sha256:539af45dda27c90895bb2af6512cb736739eba1242f55ad760eb82f9bc21d8b7"},
-    {file = "ocs_rise_set-0.5.1-py2-none-any.whl", hash = "sha256:7fec10fc9bbe38ccb6b0ac1fca179552ef38b6f46dbb70c8bed34b8932b0f345"},
-    {file = "ocs_rise_set-0.5.1-py3-none-any.whl", hash = "sha256:311989b8d76f3eb7abb5e20e360e5073aa56f0845180cfe947da6b53cd81e43c"},
+    {file = "ocs-rise-set-0.5.2.tar.gz", hash = "sha256:5e237d6d9ce81393e0c5b0eecfa3750fce9df604169b9079b185f3261e5a1915"},
+    {file = "ocs_rise_set-0.5.2-py3-none-any.whl", hash = "sha256:d7fb16dbc0ec6b9c9065752c3e731939a2523dc5d493ecc802a827bf3fca8531"},
 ]
 opensearch-py = [
     {file = "opensearch-py-1.0.0.tar.gz", hash = "sha256:fa952836cabfa1b2fb05f852edc1a373342494345e89fd52b7124daf4d296bb4"},
