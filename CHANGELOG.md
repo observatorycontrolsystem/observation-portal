@@ -10,6 +10,14 @@ This project adheres to semantic versioning.
 
 ### Removed
 
+## [4.3.3] - 2022-05-31
+
+### Added
+- Added max_lunar_phase to constraints with a range of 0 to 1
+
+### Changed
+- last_scheduled timestamp is now updated on direct submissions to a site
+
 ## [4.3.2] - 2022-05-12
 
 ### Changed
