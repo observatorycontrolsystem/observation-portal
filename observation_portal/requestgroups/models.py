@@ -871,7 +871,7 @@ class Constraints(models.Model):
     max_lunar_phase = models.FloatField(
         verbose_name='maximum lunar phase', default=1.0,
         validators=[MinValueValidator(0.0), MaxValueValidator(1.0)],
-        help_text='Maximum acceptable lunar phase fraction from 0.0 to 1.0 (full moon)'
+        help_text='Maximum acceptable lunar phase fraction from 0.0 (new moon) to 1.0 (full moon)'
     )
     max_seeing = models.FloatField(
         verbose_name='maximum seeing', null=True, blank=True,

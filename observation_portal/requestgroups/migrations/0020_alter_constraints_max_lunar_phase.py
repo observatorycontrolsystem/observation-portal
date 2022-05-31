@@ -14,6 +14,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='constraints',
             name='max_lunar_phase',
-            field=models.FloatField(default=1.0, help_text='Maximum acceptable lunar phase fraction from 0.0 to 1.0 (full moon)', validators=[django.core.validators.MinValueValidator(0.0), django.core.validators.MaxValueValidator(1.0)], verbose_name='maximum lunar phase'),
+            field=models.FloatField(default=1.0, help_text='Maximum acceptable lunar phase fraction from 0.0 (new moon) to 1.0 (full moon)', validators=[django.core.validators.MinValueValidator(0.0), django.core.validators.MaxValueValidator(1.0)], verbose_name='maximum lunar phase'),
         ),
     ]

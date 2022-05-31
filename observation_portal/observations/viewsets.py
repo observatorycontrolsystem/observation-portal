@@ -74,7 +74,7 @@ class ScheduleViewSet(ListAsDictMixin, CreateListModelMixin, viewsets.ModelViewS
         created_obs = super().create(request, args, kwargs)
         sites = get_sites_from_request(request)
         for site in sites:
-            cache.set(cache_key + f"_{site}", timezone.now(), None)
+            cache.set(f"{cache_key}_{site}", timezone.now(), None)
         return created_obs
 
     def get_example_response(self):
