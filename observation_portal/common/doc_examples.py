@@ -120,7 +120,7 @@ EXAMPLE_RESPONSES = {
             }
         },
         "dither": {
-            "constraints": {"max_airmass": 1.6, "min_lunar_distance": 30.0},
+            "constraints": {"max_airmass": 1.6, "min_lunar_distance": 30.0, "max_lunar_phase": 1.0},
             "instrument_configs": [
                 {
                     "optical_elements": {"filter": "V"},
@@ -576,6 +576,7 @@ EXAMPLE_RESPONSES = {
                                 "constraints": {
                                     "max_airmass": 2,
                                     "min_lunar_distance": 20,
+                                    "max_lunar_phase": 0.8,
                                     "extra_params": {},
                                 },
                                 "acquisition_config": {
