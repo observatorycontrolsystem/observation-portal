@@ -672,3 +672,83 @@ class TestBulkCreateUsersApi(APITestCase):
         resp = self.client.post(url, data)
 
         self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+
+    def test_accept_pending_proposal_invites_on_account_creation(self):
+        # as a PI
+        proposal1 = mixer.blend(Proposal, active=True)
+        mixer.blend(Membership, role=Membership.PI, proposal=proposal1, user=self.existing_user)
+
+        proposal2 = mixer.blend(Proposal, active=True)
+        mixer.blend(Membership, role=Membership.PI, proposal=proposal2, user=self.existing_user)
+
+        self.client.force_authenticate(user=self.existing_user)
+
+        # create proposal invites for users
+        resp = self.client.post(
+            reverse("api:proposals-invite", args=[proposal1.pk]),
+            {
+                "emails": ["user1@domain.example", "user2@domain.example"]
+            }
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        resp = self.client.post(
+            reverse("api:proposals-invite", args=[proposal2.pk]),
+            {
+                "emails": ["user1@domain.example", "user3@domain.example"]
+            }
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        # they should be in pending state
+        resp = self.client.get(
+            f"{reverse('api:invitations-list')}?pending=true&proposal={proposal1.pk}"
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(resp.data["results"]), 2)
+
+        resp = self.client.get(
+            f"{reverse('api:invitations-list')}?pending=true&proposal={proposal2.pk}"
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(resp.data["results"]), 2)
+
+        # create users
+        resp = self.client.post(
+            reverse("api:users-bulk"),
+            data = {
+                "users": [
+                    {
+                        "username": "user1",
+                        "email": "user1@domain.example",
+                        "first_name": "user1",
+                        "last_name": "user1",
+                        "institution": "na",
+                        "title": "na"
+                    },
+                    {
+                        "username": "user2",
+                        "email": "user2@domain.example",
+                        "first_name": "user2",
+                        "last_name": "user2",
+                        "institution": "na",
+                        "title": "na"
+                    },
+                ]
+            }
+        )
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+
+        # there should be no pending for created users
+        resp = self.client.get(
+            f"{reverse('api:invitations-list')}?pending=true&proposal={proposal1.pk}"
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(resp.data["results"]), 0)
+
+        resp = self.client.get(
+            f"{reverse('api:invitations-list')}?pending=true&proposal={proposal2.pk}"
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(resp.data["results"]), 1)
+        self.assertEqual(resp.data["results"][0]["email"], "user3@domain.example")
