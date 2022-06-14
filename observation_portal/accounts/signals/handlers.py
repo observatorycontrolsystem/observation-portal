@@ -7,7 +7,6 @@ from django.conf import settings
 
 from observation_portal.accounts.tasks import update_or_create_client_applications_user
 from observation_portal.accounts.models import Profile
-from observation_portal.proposals.models import ProposalInvite
 
 
 @receiver(post_save, sender=User)
