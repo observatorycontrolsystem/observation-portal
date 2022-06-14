@@ -322,6 +322,8 @@ class ProposalInvite(models.Model):
             user=user,
         )
         mem.role = self.role
+        mem.save()
+
         self.used = timezone.now()
         self.save()
 
