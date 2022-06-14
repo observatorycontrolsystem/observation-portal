@@ -317,11 +317,13 @@ class ProposalInvite(models.Model):
         return 'Invitation for {} token {}'.format(self.proposal, self.email)
 
     def accept(self, user):
-        Membership.objects.create(
+        mem, _ = Membership.objects.get_or_create(
             proposal=self.proposal,
-            role=self.role,
             user=user,
         )
+        mem.role = self.role
+        mem.save()
+
         self.used = timezone.now()
         self.save()
 
