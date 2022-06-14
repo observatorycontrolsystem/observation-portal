@@ -644,11 +644,11 @@ diagrams = ["jinja2", "railroad-diagrams"]
 
 [[package]]
 name = "pypdf2"
-version = "1.26.0"
-description = "PDF toolkit"
+version = "1.27.5"
+description = "A pure-python PDF library capable of splitting, merging, cropping, and transforming PDF files"
 category = "main"
 optional = false
-python-versions = "*"
+python-versions = ">=2.7"
 
 [[package]]
 name = "pyslalib"
@@ -900,7 +900,7 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "d643afd7529e72499e9fcba8b8acdfb9452debf9723b6be1d85809b57ba38ea6"
+content-hash = "bc57c11389a4b89571ffe8d5919c1917f9c4c6658d25520680804ca066171b53"
 
 [metadata.files]
 apscheduler = [
@@ -1416,7 +1416,8 @@ pyparsing = [
     {file = "pyparsing-3.0.7.tar.gz", hash = "sha256:18ee9022775d270c55187733956460083db60b37d0d0fb357445f3094eed3eea"},
 ]
 pypdf2 = [
-    {file = "PyPDF2-1.26.0.tar.gz", hash = "sha256:e28f902f2f0a1603ea95ebe21dff311ef09be3d0f0ef29a3e44a932729564385"},
+    {file = "PyPDF2-1.27.5-py3-none-any.whl", hash = "sha256:9c81fc06be50fbf2e6199e8c2eac05f3eaafae4b3905ecca41200f5b02ac43d7"},
+    {file = "PyPDF2-1.27.5.tar.gz", hash = "sha256:7c18c1d48e56547b1c33f772dc15d6adbd1f4020b62e64bb4a0bc0ee2ab94511"},
 ]
 pyslalib = [
     {file = "pySLALIB-1.0.4.tar.gz", hash = "sha256:21d0e1ae6fc73ade9c90ec9e956b2da33163383388cc84e5ec58994bf66c8b35"},
