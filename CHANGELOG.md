@@ -10,6 +10,11 @@ This project adheres to semantic versioning.
 
 ### Removed
 
+## [4.3.4] - 2022-06-23
+
+### Added
+- Added range filters for /api/observations `created_time` field
+
 ## [4.3.3] - 2022-05-31
 
 ### Added
