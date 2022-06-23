@@ -45,6 +45,18 @@ class ObservationFilter(mixins.CustomIsoDateTimeFilterMixin, django_filters.Filt
         label='Modified After (Inclusive)',
         widget=forms.TextInput(attrs={'class': 'input', 'type': 'date'})
     )
+    created_after = django_filters.IsoDateTimeFilter(
+        field_name='created',
+        lookup_expr='gte',
+        label='Created After (Inclusive)',
+        widget=forms.TextInput(attrs={'class': 'input', 'type': 'date'})
+    )
+    created_before = django_filters.IsoDateTimeFilter(
+        field_name='created',
+        lookup_expr='lt',
+        label='Created Before',
+        widget=forms.TextInput(attrs={'class': 'input', 'type': 'date'})
+    )
     request_id = django_filters.NumberFilter(field_name='request__id')
     request_group_id = django_filters.NumberFilter(field_name='request__request_group__id', label='Request Group ID')
     state = django_filters.MultipleChoiceFilter(choices=Observation.STATE_CHOICES, field_name='state')
