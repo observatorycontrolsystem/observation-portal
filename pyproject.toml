@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "django-ocs-observation-portal"
-version = "4.3.3"
+version = "4.4.0"
 description = "The Observatory Control System (OCS) Observation Portal django apps"
 license = "GPL-3.0-only"
 authors = ["Observatory Control System Project <ocs@lco.global>"]
@@ -54,7 +54,7 @@ lcogt-logging = "0.3.2"
 numpy = "^1.16"
 ocs-rise-set = "^0.5.2"
 psycopg2-binary = "^2.9.3"
-PyPDF2 = ">=1.26,<1.27"
+PyPDF2 = ">=1.26,<1.28"
 redis = "^3"
 requests = "^2.27.1"
 time_intervals = "^1"

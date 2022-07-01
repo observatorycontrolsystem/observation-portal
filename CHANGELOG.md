@@ -10,6 +10,16 @@ This project adheres to semantic versioning.
 
 ### Removed
 
+## [4.4.1] - 2022-06-23
+
+### Added
+- Added range filters for /api/observations `created` datetime field
+
+## [4.4.0] - 2022-06-14
+
+### Changed
+- Fix: accept pending proposal invites on bulk user creation
+
 ## [4.3.3] - 2022-05-31
 
 ### Added

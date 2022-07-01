@@ -13,6 +13,7 @@ from django.contrib.sites.shortcuts import get_current_site
 
 from observation_portal.accounts.models import Profile
 from observation_portal.accounts.tasks import send_mail
+from observation_portal.proposals.models import ProposalInvite
 
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -206,6 +207,13 @@ class BulkCreateUsersSerializer(serializers.Serializer):
             **validated_data
         )
 
+        # accept all pending proposal invites
+        for invite in ProposalInvite.objects.filter(
+            email__iexact=user.email,
+            used__isnull=True,
+        ).order_by("sent"):
+            invite.accept(user)
+
         return password, user
 
     def create_users(self, validated_data, created_by):
@@ -243,3 +251,4 @@ class BulkCreateUsersSerializer(serializers.Serializer):
                 settings.ORGANIZATION_EMAIL,
                 [user.email]
             )
+
