@@ -10,6 +10,11 @@ This project adheres to semantic versioning.
 
 ### Removed
 
+## [4.4.2] - 2022-07-25
+
+### Added
+- Override for duration_per_exposure calculation for an instrument configuration dict of a given instrument type
+
 ## [4.4.1] - 2022-06-23
 
 ### Added
