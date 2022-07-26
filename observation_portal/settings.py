@@ -419,6 +419,11 @@ AS_DICT = {
     }
 }
 
+# Overrides for Duration calculation functions
+DURATION = {
+    'instrument_configuration_duration_per_exposure': os.getenv('INSTRUMENT_CONFIGURATION_PER_EXPOSURE_DURATION', 'observation_portal.requestgroups.duration_utils.get_instrument_configuration_duration_per_exposure')
+}
+
 DRAMATIQ_BROKER = {
     "BROKER": "dramatiq.brokers.redis.RedisBroker",
     "OPTIONS": {
