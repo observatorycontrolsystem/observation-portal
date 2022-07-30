@@ -2,6 +2,7 @@ from django.utils.translation import gettext as _
 from math import ceil, floor
 from collections import defaultdict
 from django.utils import timezone
+from django.utils.module_loading import import_string
 from django.conf import settings
 import logging
 
@@ -32,15 +33,16 @@ def get_semester_in(start_date, end_date):
     return None
 
 
-def get_instrument_configuration_duration_per_exposure(instrument_configuration_dict, instrument_name):
-    total_overhead_per_exp = configdb.get_exposure_overhead(instrument_name,
+def get_instrument_configuration_duration_per_exposure(instrument_configuration_dict, instrument_type):
+    total_overhead_per_exp = configdb.get_exposure_overhead(instrument_type,
                                                             instrument_configuration_dict['mode'])
     duration_per_exp = instrument_configuration_dict['exposure_time'] + total_overhead_per_exp
     return duration_per_exp
 
 
-def get_instrument_configuration_duration(instrument_config_dict, instrument_name):
-    duration_per_exposure = get_instrument_configuration_duration_per_exposure(instrument_config_dict, instrument_name)
+def get_instrument_configuration_duration(instrument_config_dict, instrument_type):
+    duration_per_exposure_function = import_string(settings.DURATION['instrument_configuration_duration_per_exposure'])
+    duration_per_exposure = duration_per_exposure_function(instrument_config_dict, instrument_type)
     return instrument_config_dict['exposure_count'] * duration_per_exposure
 
 
@@ -117,15 +119,6 @@ def get_requestgroup_duration(requestgroup_dict):
                 duration_sum[tak] = 0
             duration_sum[tak] += duration
     return duration_sum
-
-
-def get_num_exposures(instrument_config_dict, instrument_name,  time_available):
-    duration_per_exp = get_instrument_configuration_duration_per_exposure(instrument_config_dict, instrument_name)
-    exposure_time = time_available.total_seconds()
-    num_exposures = exposure_time // duration_per_exp
-    if exposure_time % duration_per_exp == 0:
-        num_exposures -= 1
-    return max(1, num_exposures)
 
 
 # TODO: implement this (distance between two targets in arcsec)
