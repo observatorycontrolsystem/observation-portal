@@ -202,7 +202,7 @@ dev = ["tox", "bump2version (<1)", "sphinx (<2)", "importlib-metadata (<3)", "im
 
 [[package]]
 name = "django"
-version = "4.0.4"
+version = "4.0.6"
 description = "A high-level Python web framework that encourages rapid development and clean, pragmatic design."
 category = "main"
 optional = false
@@ -254,7 +254,7 @@ django = ">=1.11"
 dramatiq = ">=0.18.0"
 
 [package.extras]
-dev = ["bumpversion", "flake8", "flake8-quotes", "isort", "pytest", "pytest-cov", "pytest-django", "tox", "twine"]
+dev = ["twine", "tox", "pytest-django", "pytest-cov", "pytest", "isort", "flake8-quotes", "flake8", "bumpversion"]
 
 [[package]]
 name = "django-extensions"
@@ -589,9 +589,9 @@ certifi = "*"
 urllib3 = ">=1.21.1,<2"
 
 [package.extras]
-async = ["aiohttp (>=3,<4)"]
-develop = ["requests (>=2.0.0,<3.0.0)", "coverage", "mock", "pyyaml", "pytest", "pytest-cov", "black", "jinja2"]
 requests = ["requests (>=2.4.0,<3.0.0)"]
+develop = ["jinja2", "black", "pytest-cov", "pytest", "pyyaml", "mock", "coverage", "requests (>=2.0.0,<3.0.0)"]
+async = ["aiohttp (>=3,<4)"]
 
 [[package]]
 name = "packaging"
@@ -1082,8 +1082,8 @@ deprecated = [
     {file = "Deprecated-1.2.13.tar.gz", hash = "sha256:43ac5335da90c31c24ba028af536a91d41d53f9e6901ddb021bcc572ce44e38d"},
 ]
 django = [
-    {file = "Django-4.0.4-py3-none-any.whl", hash = "sha256:07c8638e7a7f548dc0acaaa7825d84b7bd42b10e8d22268b3d572946f1e9b687"},
-    {file = "Django-4.0.4.tar.gz", hash = "sha256:4e8177858524417563cc0430f29ea249946d831eacb0068a1455686587df40b5"},
+    {file = "Django-4.0.6-py3-none-any.whl", hash = "sha256:ca54ebedfcbc60d191391efbf02ba68fb52165b8bf6ccd6fe71f098cac1fe59e"},
+    {file = "Django-4.0.6.tar.gz", hash = "sha256:a67a793ff6827fd373555537dca0da293a63a316fe34cb7f367f898ccca3c3ae"},
 ]
 django-bootstrap4 = [
     {file = "django-bootstrap4-3.0.1.tar.gz", hash = "sha256:c5c97fb473bb56e3a91b4f4be52b74a3fc384ec3baae50dd0807fa922a55ec2b"},
