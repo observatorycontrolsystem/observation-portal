@@ -237,6 +237,11 @@ class Request(models.Model):
         ('CANCELED', 'CANCELED'),
     )
 
+    OPTIMIZATION_TYPES = (
+        ('TIME', 'TIME'),
+        ('AIRMASS', 'AIRMASS'),
+    )
+
     SERIALIZER_EXCLUDE = ('request_group',)
 
     request_group = models.ForeignKey(
@@ -246,6 +251,12 @@ class Request(models.Model):
     observation_note = models.CharField(
         max_length=255, default='', blank=True,
         help_text='Text describing this Request'
+    )
+    optimization_type = models.CharField(
+        max_length=40,
+        choices=OPTIMIZATION_TYPES,
+        default=OPTIMIZATION_TYPES[0][0],
+        help_text='Optimization emphasis, either TIME for as soon as possible, or AIRMASS for best airmass'
     )
     state = models.CharField(
         max_length=40, choices=STATE_CHOICES, default=STATE_CHOICES[0][0],
