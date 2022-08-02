@@ -10,6 +10,11 @@ This project adheres to semantic versioning.
 
 ### Removed
 
+## [4.4.3] - 2022-08-01
+
+### Added
+- optimization_type field within the Request model for emphasizing TIME or AIRMASS based scheduling optimization for that request
+
 ## [4.4.2] - 2022-07-25
 
 ### Added
