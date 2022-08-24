@@ -886,6 +886,7 @@ class Constraints(models.Model):
     )
     max_seeing = models.FloatField(
         verbose_name='maximum seeing', null=True, blank=True,
+        validators=[MinValueValidator(0.0)],
         help_text='Maximum acceptable seeing'
     )
     min_transparency = models.FloatField(
