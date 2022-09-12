@@ -10,6 +10,11 @@ This project adheres to semantic versioning.
 
 ### Removed
 
+## [4.4.4] - 2022-09-12
+
+### Added
+- Add minimum value validator for max_seeing constraint
+
 ## [4.4.3] - 2022-08-01
 
 ### Added
