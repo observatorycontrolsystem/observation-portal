@@ -102,6 +102,9 @@ def on_request_state_change(old_request_state, new_request):
             ipp_value = new_request.request_group.ipp_value
             if ipp_value >= 1.0:
                 modify_ipp_time_from_request(ipp_value, new_request, 'credit')
+    if new_request.state == 'CANCELED':
+        # Ensure its pending Observations are cancelled here
+        Observation.cancel(new_request.observation_set.filter(state='PENDING'))
 
 
 def on_requestgroup_state_change(old_requestgroup_state, new_requestgroup):

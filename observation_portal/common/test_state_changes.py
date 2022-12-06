@@ -224,7 +224,10 @@ class TestStateChanges(SetTimeMixin, TestCase):
         request = self.requestgroup.requests.first()
         request.state = 'CANCELED'
         request.save()
+        # Reset the Observation state to PENDING since it will have been cancelled now...
         observation = request.observation_set.first()
+        observation.state = 'PENDING'
+        observation.save()
         for cs in observation.configuration_statuses.all():
             summary = cs.summary
             summary.time_completed = 1000
