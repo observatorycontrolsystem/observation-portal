@@ -10,6 +10,11 @@ This project adheres to semantic versioning.
 
 ### Removed
 
+## [4.4.5] - 2022-12-12
+
+### Changed
+- Canceling a Request now cancels or deletes all pending Observations for that Request that are scheduled in the future
+
 ## [4.4.4] - 2022-09-12
 
 ### Added
