@@ -2630,6 +2630,84 @@ class TestCancelRequestGroupApi(SetTimeMixin, APITestCase):
         self.assertEqual(Request.objects.get(pk=expired_r.id).state, 'WINDOW_EXPIRED')
         self.assertEqual(Request.objects.get(pk=completed_r.id).state, 'COMPLETED')
 
+    def test_cancel_request_cancels_pending_observations_in_near_future(self, modify_mock):
+        requestgroup = mixer.blend(RequestGroup, state='PENDING', proposal=self.proposal,
+                                   observation_type=RequestGroup.NORMAL)
+        requests = mixer.cycle(3).blend(Request, state='PENDING', request_group=requestgroup)
+        observation_start = timezone.now() + timedelta(days=1)
+        for request in requests:
+            mixer.blend(Location, request=request)
+            configuration = mixer.blend(Configuration, request=request, type='EXPOSE', instrument_type='1M0-SCICAM-SBIG')
+            observation = mixer.blend(Observation, request=request, state='PENDING', start=observation_start)
+            mixer.blend(ConfigurationStatus, observation=observation, configuration=configuration, state='PENDING')
+
+        response = self.client.post(reverse('api:request_groups-cancel', kwargs={'pk': requestgroup.id}))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(RequestGroup.objects.get(pk=requestgroup.id).state, 'CANCELED')
+        for request in requests:
+            self.assertEqual(Request.objects.get(pk=request.id).state, 'CANCELED')
+            for observation in request.observation_set.all():
+                self.assertEqual(observation.state, 'CANCELED')
+
+    def test_cancel_request_deletes_pending_observations_in_far_future(self, modify_mock):
+        requestgroup = mixer.blend(RequestGroup, state='PENDING', proposal=self.proposal,
+                                   observation_type=RequestGroup.DIRECT)
+        requests = mixer.cycle(3).blend(Request, state='PENDING', request_group=requestgroup)
+        observation_start = timezone.now() + timedelta(days=5)
+        for request in requests:
+            mixer.blend(Location, request=request)
+            configuration = mixer.blend(Configuration, request=request, type='EXPOSE', instrument_type='1M0-SCICAM-SBIG')
+            observation = mixer.blend(Observation, request=request, state='PENDING', start=observation_start)
+            mixer.blend(ConfigurationStatus, observation=observation, configuration=configuration, state='PENDING')
+
+        response = self.client.post(reverse('api:request_groups-cancel', kwargs={'pk': requestgroup.id}))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(RequestGroup.objects.get(pk=requestgroup.id).state, 'CANCELED')
+        for request in requests:
+            self.assertEqual(Request.objects.get(pk=request.id).state, 'CANCELED')
+            self.assertEqual(request.observation_set.count(), 0)
+
+    def test_cancel_request_aborts_pending_observations_that_should_be_in_progress(self, modify_mock):
+        requestgroup = mixer.blend(RequestGroup, state='PENDING', proposal=self.proposal,
+                                   observation_type=RequestGroup.DIRECT)
+        requests = mixer.cycle(3).blend(Request, state='PENDING', request_group=requestgroup)
+        observation_start = timezone.now()
+        observation_end = timezone.now() + timedelta(minutes=10)
+        for request in requests:
+            mixer.blend(Location, request=request)
+            configuration = mixer.blend(Configuration, request=request, type='EXPOSE', instrument_type='1M0-SCICAM-SBIG')
+            observation = mixer.blend(Observation, request=request, state='PENDING', start=observation_start, end=observation_end)
+            mixer.blend(ConfigurationStatus, observation=observation, configuration=configuration, state='PENDING')
+
+        response = self.client.post(reverse('api:request_groups-cancel', kwargs={'pk': requestgroup.id}))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(RequestGroup.objects.get(pk=requestgroup.id).state, 'CANCELED')
+        for request in requests:
+            self.assertEqual(Request.objects.get(pk=request.id).state, 'CANCELED')
+            for observation in request.observation_set.all():
+                self.assertEqual(observation.state, 'ABORTED')
+
+    def test_cancel_request_does_nothing_to_non_pending_observations(self, modify_mock):
+        requestgroup = mixer.blend(RequestGroup, state='PENDING', proposal=self.proposal,
+                                   observation_type=RequestGroup.DIRECT)
+        requests = mixer.cycle(3).blend(Request, state='PENDING', request_group=requestgroup)
+        observation_states = ['IN_PROGRESS', 'FAILED', 'COMPLETED']
+        config_states = ['ATTEMPTED', 'FAILED', 'COMPLETED']
+        observation_start = timezone.now() + timedelta(days=1)
+        for i, request in enumerate(requests):
+            mixer.blend(Location, request=request)
+            configuration = mixer.blend(Configuration, request=request, type='EXPOSE', instrument_type='1M0-SCICAM-SBIG')
+            observation = mixer.blend(Observation, request=request, state=observation_states[i], start=observation_start)
+            mixer.blend(ConfigurationStatus, observation=observation, configuration=configuration, state=config_states[i])
+
+        response = self.client.post(reverse('api:request_groups-cancel', kwargs={'pk': requestgroup.id}))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(RequestGroup.objects.get(pk=requestgroup.id).state, 'CANCELED')
+        for i, request in enumerate(requests):
+            self.assertEqual(Request.objects.get(pk=request.id).state, 'CANCELED')
+            for observation in request.observation_set.all():
+                self.assertEqual(observation.state, observation_states[i])
+
 
 @patch('observation_portal.common.state_changes.modify_ipp_time_from_request')
 class TestSchedulableRequestsApi(SetTimeMixin, APITestCase):
