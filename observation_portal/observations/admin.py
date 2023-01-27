@@ -1,7 +1,7 @@
 from django.contrib import admin, messages
 from django.http import HttpResponseRedirect
 from observation_portal.observations.models import Observation, ConfigurationStatus, Summary
-from observation_portal.observations.forms import ObservationForm, RefundTimeForm
+from observation_portal.observations.forms import ObservationForm
 from observation_portal.observations.time_accounting import refund_observation_time, refund_configuration_status_time
 
 class SummaryInline(admin.TabularInline):
