@@ -1,0 +1,10 @@
+{% extends 'admin/change_form.html' %}
+
+{% block submit_buttons_bottom %}
+    {{ block.super }}
+    <div class="submit-row">
+        <label for="refund-percent">Refund Percent:</label> 
+        <input type="number" min="0" max="100" value="100" step ="1" id="refund-percent" name="refund-percent" style="width:50px;height:16px;">
+        <input type="submit" value="Refund Time" name="refund-time">
+    </div>
+{% endblock %}

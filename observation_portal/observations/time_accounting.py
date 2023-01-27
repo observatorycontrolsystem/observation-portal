@@ -1,3 +1,5 @@
+import logging
+from math import isclose
 from datetime import timedelta
 from django.db import transaction
 from django.db.models import F
@@ -6,7 +8,6 @@ from observation_portal.requestgroups.models import RequestGroup
 from observation_portal.common.configdb import configdb
 from observation_portal.proposals.models import TimeAllocation
 
-import logging
 
 logger = logging.getLogger()
 
@@ -24,27 +25,66 @@ def on_summary_update_time_accounting(current, instance):
     new_config_time = configuration_time_used(instance, observation_type)
     time_difference = (new_config_time - current_config_time).total_seconds() / 3600.0
 
+    debit_time(instance.configuration_status, observation_type, time_difference, new_config_time.total_seconds() / 3600.0)
+
+
+def debit_time(configuration_status, observation_type, time_difference, new_time_charged):
     if time_difference:
-        time_allocations = instance.configuration_status.observation.request.timeallocations
+        time_allocations = configuration_status.observation.request.timeallocations
         for time_allocation in time_allocations:
-            if instance.configuration_status.configuration.instrument_type in time_allocation.instrument_types:
+            if configuration_status.configuration.instrument_type in time_allocation.instrument_types:
                 if observation_type == RequestGroup.NORMAL:
                     with transaction.atomic():
                         TimeAllocation.objects.select_for_update().filter(
                             id=time_allocation.id).update(std_time_used=F('std_time_used') + time_difference)
+                        configuration_status.time_charged = new_time_charged
+                        configuration_status.save()
                 elif observation_type == RequestGroup.RAPID_RESPONSE:
                     with transaction.atomic():
                         TimeAllocation.objects.select_for_update().filter(
                             id=time_allocation.id).update(rr_time_used=F('rr_time_used') + time_difference)
+                        configuration_status.time_charged = new_time_charged
+                        configuration_status.save()
                 elif observation_type == RequestGroup.TIME_CRITICAL:
                     with transaction.atomic():
                         TimeAllocation.objects.select_for_update().filter(
                             id=time_allocation.id).update(tc_time_used=F('tc_time_used') + time_difference)
+                        configuration_status.time_charged = new_time_charged
+                        configuration_status.save()
                 else:
-                    logger.warning('Failed to perform time accounting on configuration_status {}. Observation Type'
-                                   '{} was not valid'.format(instance.configuration_status.id, observation_type))
+                    logger.warning(f'Failed to perform time accounting on configuration_status {configuration_status.id}. Observation Type'
+                                   '{observation_type} was not valid')
                     continue
 
+
+
+def refund_observation_time(observation, percentage_refund):
+    """ Refunds a percentage of an observations time used back to its TimeAllocations.
+        Returns the total time refunded in hours
+    """
+    hours_refunded = 0
+    for configuration_status in observation.configuration_statuses.all():
+        hours_refunded += refund_configuration_status_time(configuration_status, percentage_refund)
+    return hours_refunded
+
+
+def refund_configuration_status_time(configuration_status, percentage_refund):
+    """ Refunds a percentage of a configuration_statuses time used back to its TimeAllocations.
+        Time can only be refunded if it was charged for this observation, i.e. no double refunds.
+        Returns the time refunded in hours (0.0 if no refund occured).
+    """
+    has_summary = hasattr(configuration_status, 'summary')
+    if configuration_status.state == 'PENDING' or not has_summary or configuration_status.time_charged == 0.0:
+        return 0.0
+    observation_type = configuration_status.observation.request.request_group.observation_type
+    config_time = configuration_time_used(configuration_status.summary, observation_type).total_seconds() / 3600.0
+    refunded_time_charged = config_time - (config_time * percentage_refund)
+    if refunded_time_charged < configuration_status.time_charged:
+        # The time_difference here should be negative, which means time is added to the TimeAllocation
+        time_difference = refunded_time_charged - configuration_status.time_charged
+        debit_time(configuration_status, observation_type, time_difference, refunded_time_charged)
+        return abs(time_difference)
+    return 0.0
 
 def configuration_time_used(summary, observation_type):
     """ Calculates the observation bounded time completed for time accounting purposes """

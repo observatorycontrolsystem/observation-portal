@@ -34,7 +34,7 @@ class ConfigurationStatusSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ConfigurationStatus
-        exclude = ('observation', 'modified', 'created')
+        exclude = ('observation', 'modified', 'created', 'time_charged')
 
     def validate(self, data):
         data = super().validate(data)

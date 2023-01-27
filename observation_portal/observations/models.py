@@ -215,7 +215,7 @@ class Observation(models.Model):
 
 
 class ConfigurationStatus(models.Model):
-    SERIALIZER_EXCLUDE = ('modified', 'created', 'observation')
+    SERIALIZER_EXCLUDE = ('modified', 'created', 'observation', 'time_charged')
 
     STATE_CHOICES = (
         ('PENDING', 'PENDING'),
@@ -242,6 +242,11 @@ class ConfigurationStatus(models.Model):
     state = models.CharField(
         max_length=40, choices=STATE_CHOICES, default=STATE_CHOICES[0][0],
         help_text='Current state of this Configuration Status'
+    )
+    time_charged = models.FloatField(
+        default=0.0,
+        blank=True,
+        help_text='Time in fractional hours that was debitted from a TimeAllocation for this configuration'
     )
     modified = models.DateTimeField(
         auto_now=True,

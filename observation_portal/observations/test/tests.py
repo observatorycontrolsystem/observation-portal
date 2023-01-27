@@ -11,7 +11,7 @@ from django.core.management import call_command
 
 from observation_portal.common.test_helpers import SetTimeMixin
 from observation_portal.requestgroups.models import RequestGroup, Window, Location, Request
-from observation_portal.observations.time_accounting import configuration_time_used
+from observation_portal.observations.time_accounting import configuration_time_used, refund_configuration_status_time, refund_observation_time
 from observation_portal.observations.models import Observation, ConfigurationStatus, Summary
 from observation_portal.proposals.models import Proposal, Membership, Semester, TimeAllocation
 from observation_portal.common.test_helpers import create_simple_requestgroup, create_simple_configuration
@@ -1745,7 +1745,7 @@ class TestLastScheduled(TestObservationApiBase):
                                delta=timedelta(minutes=1))
 
 
-class TestTimeAccounting(TestObservationApiBase):
+class TestTimeAccountingBase(TestObservationApiBase):
     def setUp(self):
         super().setUp()
         self.time_allocation = mixer.blend(TimeAllocation, instrument_types=['1M0-SCICAM-SBIG'], semester=self.semester,
@@ -1776,6 +1776,7 @@ class TestTimeAccounting(TestObservationApiBase):
                                                                                      tzinfo=timezone.utc),
                                                                       end=datetime(2019, 9, 5, 23, tzinfo=timezone.utc),
                                                                       config_state=config_status_state)
+        self.assertEqual(config_status.time_charged, 0)
         summary = mixer.blend(Summary, configuration_status=config_status, start=config_start, end=config_end)
         self.time_allocation.refresh_from_db()
         time_used = configuration_time_used(summary, observation_type).total_seconds() / 3600.0
@@ -1791,9 +1792,12 @@ class TestTimeAccounting(TestObservationApiBase):
             self.assertAlmostEqual(self.time_allocation.tc_time_used, time_used, 5)
             self.assertEqual(self.time_allocation.rr_time_used, 0)
             self.assertEqual(self.time_allocation.std_time_used, 0)
-
+        config_status.refresh_from_db()
+        self.assertAlmostEqual(config_status.time_charged, time_used, 5)
         return config_status, summary
 
+
+class TestTimeAccounting(TestTimeAccountingBase):
     def test_attempted_configuration_status_affects_normal_time_accounting(self):
         self._helper_test_summary_save(config_status_state='ATTEMPTED')
 
@@ -1834,6 +1838,18 @@ class TestTimeAccounting(TestObservationApiBase):
 
         time_used = (new_end_time - config_start).total_seconds() / 3600.0
         self.assertAlmostEqual(self.time_allocation.std_time_used, time_used, 5)
+        config_status.refresh_from_db()
+        self.assertAlmostEqual(config_status.time_charged, time_used)
+
+        new_end_time = datetime(2019, 9, 5, 22, 59, 33, tzinfo=timezone.utc)
+        summary.end = new_end_time
+        summary.save()
+        self.time_allocation.refresh_from_db()
+
+        time_used = (new_end_time - config_start).total_seconds() / 3600.0
+        self.assertAlmostEqual(self.time_allocation.std_time_used, time_used, 5)
+        config_status.refresh_from_db()
+        self.assertAlmostEqual(config_status.time_charged, time_used)
 
     def test_multiple_requests_leads_to_consistent_time_accounting(self):
         self._helper_test_summary_save(
@@ -1842,7 +1858,7 @@ class TestTimeAccounting(TestObservationApiBase):
             config_end=datetime(2019, 9, 5, 22, 58, 24, tzinfo=timezone.utc)
         )
         self.time_allocation.refresh_from_db()
-        time_used = self.time_allocation.std_time_used
+        total_time_used = self.time_allocation.std_time_used
 
         window = mixer.blend(
             Window, start=datetime(2016, 9, 3, tzinfo=timezone.utc), end=datetime(2016, 9, 6, tzinfo=timezone.utc)
@@ -1866,8 +1882,124 @@ class TestTimeAccounting(TestObservationApiBase):
         config_end = datetime(2019, 9, 6, 23, 40, 24, tzinfo=timezone.utc)
         mixer.blend(Summary, configuration_status=second_config_status, start=config_start, end=config_end)
         self.time_allocation.refresh_from_db()
-        time_used += (config_end - config_start).total_seconds() / 3600.0
-        self.assertAlmostEqual(self.time_allocation.std_time_used, time_used, 5)
+        time_used = (config_end - config_start).total_seconds() / 3600.0
+        total_time_used += time_used
+        self.assertAlmostEqual(self.time_allocation.std_time_used, total_time_used, 5)
+        second_config_status.refresh_from_db()
+        self.assertAlmostEqual(second_config_status.time_charged, time_used, 5)
+
+
+class TestRefundTime(TestTimeAccountingBase):
+    def test_refund_pending_configuration_status_does_nothing(self):
+        config_status, summary = self._helper_test_summary_save(config_status_state='PENDING')
+        time_refunded = refund_configuration_status_time(config_status, 1.0)
+        self.assertEqual(time_refunded, 0.0)
+    
+    def test_refund_configuration_status_with_no_summary_does_nothing(self):
+        observation, config_status = self._create_observation_and_config_status(self.requestgroup,
+                                                                      start=datetime(2019, 9, 5, 22, 20,
+                                                                                     tzinfo=timezone.utc),
+                                                                      end=datetime(2019, 9, 5, 23, tzinfo=timezone.utc),
+                                                                      config_state='ATTEMPTED')
+        self.assertEqual(config_status.time_charged, 0)
+        time_refunded = refund_configuration_status_time(config_status, 1.0)
+        self.assertEqual(time_refunded, 0.0)
+        time_refunded = refund_observation_time(observation, 1.0)
+        self.assertEqual(time_refunded, 0.0)
+
+    def test_refund_configuration_status_100_percent_succeeds(self):
+        config_start = datetime(2019, 9, 5, 22, 20, tzinfo=timezone.utc)
+        config_end = datetime(2019, 9, 5, 23, tzinfo=timezone.utc)
+        time_charged = (config_end - config_start).total_seconds() / 3600.0
+        config_status, summary = self._helper_test_summary_save(
+            config_status_state='COMPLETED',
+            config_start=config_start,
+            config_end=config_end
+        )
+        self.assertAlmostEqual(config_status.time_charged, time_charged, 5)
+        time_refunded = refund_configuration_status_time(config_status, 1.0)
+        self.assertAlmostEqual(time_refunded, time_charged, 5)
+        config_status.refresh_from_db()
+        self.assertAlmostEqual(config_status.time_charged, 0.0, 5)
+
+    def test_refund_configuration_status_50_percent_succeeds(self):
+        config_start = datetime(2019, 9, 5, 22, 20, tzinfo=timezone.utc)
+        config_end = datetime(2019, 9, 5, 23, tzinfo=timezone.utc)
+        time_charged = (config_end - config_start).total_seconds() / 3600.0
+        config_status, summary = self._helper_test_summary_save(
+            config_status_state='COMPLETED',
+            config_start=config_start,
+            config_end=config_end
+        )
+        refund_ratio = 0.5
+        self.assertAlmostEqual(config_status.time_charged, time_charged, 5)
+        time_refunded = refund_configuration_status_time(config_status, refund_ratio)
+        self.assertAlmostEqual(time_refunded, time_charged * refund_ratio, 5)
+        config_status.refresh_from_db()
+        self.assertAlmostEqual(config_status.time_charged, time_charged * refund_ratio, 5)
+
+    def test_refund_configuration_status_cant_refund_beyond_time_charged(self):
+        config_start = datetime(2019, 9, 5, 22, 20, tzinfo=timezone.utc)
+        config_end = datetime(2019, 9, 5, 23, tzinfo=timezone.utc)
+        time_charged = (config_end - config_start).total_seconds() / 3600.0
+        config_status, summary = self._helper_test_summary_save(
+            config_status_state='COMPLETED',
+            config_start=config_start,
+            config_end=config_end
+        )
+        refund_ratio_1 = 0.6
+        self.assertAlmostEqual(config_status.time_charged, time_charged, 5)
+        time_refunded = refund_configuration_status_time(config_status, refund_ratio_1)
+        self.assertAlmostEqual(time_refunded, time_charged * refund_ratio_1, 5)
+        config_status.refresh_from_db()
+        self.assertAlmostEqual(config_status.time_charged, time_charged * (1-refund_ratio_1), 5)
+
+        # Already refunded 60% of time, so refunding 25% of time will do nothing
+        refund_ratio_2 = 0.25
+        time_refunded = refund_configuration_status_time(config_status, refund_ratio_2)
+        self.assertAlmostEqual(time_refunded, 0.0, 5)
+        config_status.refresh_from_db()
+        self.assertAlmostEqual(config_status.time_charged, time_charged * (1-refund_ratio_1), 5)
+
+        # Now refunding 100% of the time will just refund the rest of the time, not an additional 100%
+        refund_ratio_3 = 1.0
+        time_refunded = refund_configuration_status_time(config_status, refund_ratio_3)
+        self.assertAlmostEqual(time_refunded, time_charged * (1-refund_ratio_1), 5)
+        config_status.refresh_from_db()
+        self.assertAlmostEqual(config_status.time_charged, 0.0, 5)
+
+    def test_refund_observation_refunds_all_configuration_status_within_it(self):
+        observation, config_status_1 = self._create_observation_and_config_status(
+            self.requestgroup,
+            start=datetime(2019, 9, 5, 22, 20, tzinfo=timezone.utc),
+            end=datetime(2019, 9, 5, 22, 31, tzinfo=timezone.utc),
+            config_state='ATTEMPTED'
+        )
+        original_std_time_used = self.time_allocation.std_time_used
+        summary_1 = mixer.blend(Summary, configuration_status=config_status_1, start=datetime(2019, 9, 5, 22, 20, tzinfo=timezone.utc), end=datetime(2019, 9, 5, 22, 25, tzinfo=timezone.utc))
+        config_status_2 = mixer.blend(ConfigurationStatus, observation=observation,
+                                      configuration=config_status_1.configuration,
+                                      instrument_name='xx03', guide_camera_name='xx03', state='COMPLETED')
+        summary_2 = mixer.blend(Summary, configuration_status=config_status_2, start=datetime(2019, 9, 5, 22, 25, tzinfo=timezone.utc), end=datetime(2019, 9, 5, 22, 31, tzinfo=timezone.utc))
+        self.time_allocation.refresh_from_db()
+        std_time_used = self.time_allocation.std_time_used
+        # Verify initial time charged is correct
+        time_used_1 = configuration_time_used(summary_1, 'NORMAL').total_seconds() / 3600.0
+        time_used_2 = configuration_time_used(summary_2, 'NORMAL').total_seconds() / 3600.0
+        config_status_1.refresh_from_db()
+        self.assertAlmostEqual(config_status_1.time_charged, time_used_1)
+        config_status_2.refresh_from_db()
+        self.assertAlmostEqual(config_status_2.time_charged, time_used_2)
+        # Now refund the entire observation and see that each configuration is refunded
+        total_refunded = refund_observation_time(observation, 1.0)
+        self.assertAlmostEqual(total_refunded, (time_used_1 + time_used_2))
+        config_status_1.refresh_from_db()
+        self.assertAlmostEqual(config_status_1.time_charged, 0.0)
+        config_status_2.refresh_from_db()
+        self.assertAlmostEqual(config_status_2.time_charged, 0.0)
+        self.time_allocation.refresh_from_db()
+        self.assertGreater(std_time_used, self.time_allocation.std_time_used)
+        self.assertAlmostEqual(self.time_allocation.std_time_used, original_std_time_used)
 
 
 class TestTimeAccountingCommand(TestObservationApiBase):
