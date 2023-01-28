@@ -27,7 +27,6 @@ class ObservationAdmin(admin.ModelAdmin):
         if "refund-time" in request.POST:
             refund_percent = int(request.POST['refund-percent'])
             time_refunded = refund_observation_time(obj, refund_percent / 100.0)
-            print(f"Attempting to refund {refund_percent} percent of time charged")
             messages.info(request, f"Refunded {time_refunded} hours back to the TimeAllocation")
             return HttpResponseRedirect(".")
         return super().response_change(request, obj)
@@ -44,7 +43,6 @@ class ConfigurationStatusAdmin(admin.ModelAdmin):
         if "refund-time" in request.POST:
             refund_percent = int(request.POST['refund-percent'])
             time_refunded = refund_configuration_status_time(obj, refund_percent / 100.0)
-            print(f"Attempting to refund {refund_percent} percent of time charged")
             messages.info(request, f"Refunded {time_refunded} hours back to the TimeAllocation")
             return HttpResponseRedirect(".")
         return super().response_change(request, obj)

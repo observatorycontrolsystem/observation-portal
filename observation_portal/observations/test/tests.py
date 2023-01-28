@@ -1891,10 +1891,10 @@ class TestTimeAccounting(TestTimeAccountingBase):
 
 class TestRefundTime(TestTimeAccountingBase):
     def test_refund_pending_configuration_status_does_nothing(self):
-        config_status, summary = self._helper_test_summary_save(config_status_state='PENDING')
+        config_status, _ = self._helper_test_summary_save(config_status_state='PENDING')
         time_refunded = refund_configuration_status_time(config_status, 1.0)
         self.assertEqual(time_refunded, 0.0)
-    
+
     def test_refund_configuration_status_with_no_summary_does_nothing(self):
         observation, config_status = self._create_observation_and_config_status(self.requestgroup,
                                                                       start=datetime(2019, 9, 5, 22, 20,
@@ -1911,7 +1911,7 @@ class TestRefundTime(TestTimeAccountingBase):
         config_start = datetime(2019, 9, 5, 22, 20, tzinfo=timezone.utc)
         config_end = datetime(2019, 9, 5, 23, tzinfo=timezone.utc)
         time_charged = (config_end - config_start).total_seconds() / 3600.0
-        config_status, summary = self._helper_test_summary_save(
+        config_status, _ = self._helper_test_summary_save(
             config_status_state='COMPLETED',
             config_start=config_start,
             config_end=config_end
@@ -1926,7 +1926,7 @@ class TestRefundTime(TestTimeAccountingBase):
         config_start = datetime(2019, 9, 5, 22, 20, tzinfo=timezone.utc)
         config_end = datetime(2019, 9, 5, 23, tzinfo=timezone.utc)
         time_charged = (config_end - config_start).total_seconds() / 3600.0
-        config_status, summary = self._helper_test_summary_save(
+        config_status, _ = self._helper_test_summary_save(
             config_status_state='COMPLETED',
             config_start=config_start,
             config_end=config_end
@@ -1942,7 +1942,7 @@ class TestRefundTime(TestTimeAccountingBase):
         config_start = datetime(2019, 9, 5, 22, 20, tzinfo=timezone.utc)
         config_end = datetime(2019, 9, 5, 23, tzinfo=timezone.utc)
         time_charged = (config_end - config_start).total_seconds() / 3600.0
-        config_status, summary = self._helper_test_summary_save(
+        config_status, _ = self._helper_test_summary_save(
             config_status_state='COMPLETED',
             config_start=config_start,
             config_end=config_end
@@ -1976,11 +1976,15 @@ class TestRefundTime(TestTimeAccountingBase):
             config_state='ATTEMPTED'
         )
         original_std_time_used = self.time_allocation.std_time_used
-        summary_1 = mixer.blend(Summary, configuration_status=config_status_1, start=datetime(2019, 9, 5, 22, 20, tzinfo=timezone.utc), end=datetime(2019, 9, 5, 22, 25, tzinfo=timezone.utc))
+        summary_1 = mixer.blend(Summary, configuration_status=config_status_1,
+                                start=datetime(2019, 9, 5, 22, 20, tzinfo=timezone.utc),
+                                end=datetime(2019, 9, 5, 22, 25, tzinfo=timezone.utc))
         config_status_2 = mixer.blend(ConfigurationStatus, observation=observation,
                                       configuration=config_status_1.configuration,
                                       instrument_name='xx03', guide_camera_name='xx03', state='COMPLETED')
-        summary_2 = mixer.blend(Summary, configuration_status=config_status_2, start=datetime(2019, 9, 5, 22, 25, tzinfo=timezone.utc), end=datetime(2019, 9, 5, 22, 31, tzinfo=timezone.utc))
+        summary_2 = mixer.blend(Summary, configuration_status=config_status_2,
+                                start=datetime(2019, 9, 5, 22, 25, tzinfo=timezone.utc),
+                                end=datetime(2019, 9, 5, 22, 31, tzinfo=timezone.utc))
         self.time_allocation.refresh_from_db()
         std_time_used = self.time_allocation.std_time_used
         # Verify initial time charged is correct
