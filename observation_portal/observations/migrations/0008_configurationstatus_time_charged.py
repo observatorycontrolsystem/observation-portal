@@ -32,7 +32,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='configurationstatus',
             name='time_charged',
-            field=models.FloatField(blank=True, default=0.0, help_text='Time in fractional hours that was subtracted from a TimeAllocation for this configuration'),
+            field=models.FloatField(blank=True, default=0.0, help_text='Time in fractional hours that was debited from a TimeAllocation for this configuration'),
         ),
         migrations.RunPython(forward)
     ]

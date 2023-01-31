@@ -246,7 +246,7 @@ class ConfigurationStatus(models.Model):
     time_charged = models.FloatField(
         default=0.0,
         blank=True,
-        help_text='Time in fractional hours that was debitted from a TimeAllocation for this configuration'
+        help_text='Time in fractional hours that was debited from a TimeAllocation for this configuration'
     )
     modified = models.DateTimeField(
         auto_now=True,
