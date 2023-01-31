@@ -11,7 +11,7 @@ logger = logging.getLogger()
 def forward(apps, schema_editor):
     # Fill in the time_charged field for all existing configuration statuses here based on their Summary time used.
     ConfigurationStatus = apps.get_model('observations', 'ConfigurationStatus')
-    for configuration_status in ConfigurationStatus.objects.exclude(state='PENDING'):
+    for configuration_status in ConfigurationStatus.objects.exclude(state='PENDING').iterator():
         try:
             has_summary = hasattr(configuration_status, 'summary')
             if has_summary:

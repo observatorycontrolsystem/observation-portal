@@ -10,7 +10,7 @@ This project adheres to semantic versioning.
 
 ### Removed
 
-## [4.4.6] - 2023-01-31
+## [4.4.7] - 2023-01-31
 
 ### Added
 - time_charged field added to Configuration Status model to keep track of time charged and refunds
