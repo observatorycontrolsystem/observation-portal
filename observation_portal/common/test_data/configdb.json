@@ -6,13 +6,16 @@
     {
       "code": "tst",
       "elevation": 100,
+      "active": true,
       "enclosure_set": [
         {
           "code": "doma",
+          "active": true,
           "telescope_set": [
             {
               "code": "1m0a",
               "name": "1 Meter",
+              "active": true,
               "aperture": 1.0,
               "lat": -32.3805542,
               "long": 20.8100352,
@@ -558,6 +561,7 @@
             {
               "code": "2m0a",
               "name": "2 Meter",
+              "active": true,
               "aperture": 2.0,
               "lat": -32.3805542,
               "long": 20.8100352,
@@ -769,10 +773,12 @@
         },
         {
           "code": "domb",
+          "active": true,
           "telescope_set": [
             {
               "code": "1m0a",
               "name": "1 Meter",
+              "active": true,
               "aperture": 1.0,
               "lat": -32.3805542,
               "long": 20.8100352,
@@ -1140,6 +1146,7 @@
             {
               "code": "2m0a",
               "name": "2 Meter",
+              "active": true,
               "aperture": 2.0,
               "lat": -32.3805542,
               "long": 20.8100352,
@@ -1709,10 +1716,12 @@
         },
         {
           "code": "domc",
+          "active": true,
           "telescope_set": [
             {
               "code": "1m0a",
               "name": "1 Meter",
+              "active": true,
               "aperture": 1.0,
               "lat": -32.3805542,
               "long": 20.8100352,
@@ -2083,10 +2092,12 @@
         },
         {
           "code": "domd",
+          "active": true,
           "telescope_set": [
             {
               "code": "1m0a",
               "name": "1 Meter",
+              "active": true,
               "aperture": 1.0,
               "lat": -32.3805542,
               "long": 20.8100352,
@@ -2281,10 +2292,12 @@
         },
         {
           "code": "domf",
+          "active": true,
           "telescope_set": [
             {
               "code": "1m0a",
               "name": "1 Meter",
+              "active": true,
               "aperture": 1.0,
               "lat": -32.3805542,
               "long": 20.8100352,
@@ -2471,14 +2484,17 @@
     },
     {
       "code": "lco",
+      "active": true,
       "elevation": 10,
       "enclosure_set": [
         {
           "code": "doma",
+          "active": true,
           "telescope_set": [
             {
               "code": "1m0a",
               "name": "1 Meter",
+              "active": true,
               "aperture": 1.0,
               "lat": -32.3805542,
               "long": 20.8100352,
