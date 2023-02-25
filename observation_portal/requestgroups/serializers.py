@@ -180,6 +180,24 @@ class ModeValidationHelper(ValidationHelper):
         return ''
 
 
+class ConfigurationTypeValidationHelper(ValidationHelper):
+    """Class used to validate config based on configuration type"""
+    def __init__(self, instrument_type: str, configuration_type: str):
+        self._instrument_type = instrument_type.lower()
+        self._configuration_type = configuration_type
+
+    def validate(self, config_dict: dict) -> dict:
+        configuration_type_properties = configdb.get_configuration_types(self._instrument_type)[self._configuration_type]
+        validation_schema = configuration_type_properties.get('validation_schema', {})
+        validator, validated_config_dict = self._validate_document(config_dict, validation_schema)
+        if validator.errors:
+            raise serializers.ValidationError(_(
+                f'Invalid configuration: {self._cerberus_validation_error_to_str(validator.errors)}'
+            ))
+
+        return validated_config_dict
+
+
 class CadenceSerializer(serializers.Serializer):
     start = serializers.DateTimeField()
     end = serializers.DateTimeField()
