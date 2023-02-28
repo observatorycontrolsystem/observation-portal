@@ -384,6 +384,9 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
             instrument_type_validation_helper = InstrumentTypeValidationHelper(instrument_type)
             instrument_config = instrument_type_validation_helper.validate(instrument_config)
 
+            configuration_type_validation_helper = ConfigurationTypeValidationHelper(data['instrument_type'], data['type'])
+            instrument_config = configuration_type_validation_helper.validate(instrument_config)
+
             data['instrument_configs'][i] = instrument_config
 
             # Validate the rotator modes

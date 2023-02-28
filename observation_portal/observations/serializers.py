@@ -9,6 +9,7 @@ from django.conf import settings
 from observation_portal.common.configdb import configdb
 from observation_portal.observations.models import Observation, ConfigurationStatus, Summary
 from observation_portal.requestgroups.models import RequestGroup, AcquisitionConfig, GuidingConfig, Target
+from observation_portal.requestgroups.serializers import ConfigurationTypeValidationHelper
 from observation_portal.proposals.models import Proposal
 
 import logging
@@ -121,6 +122,12 @@ class ObservationConfigurationSerializer(import_string(settings.SERIALIZERS['req
             target_serializer = import_string(settings.SERIALIZERS['requestgroups']['Target'])(data=validated_data['target'])
             if not target_serializer.is_valid():
                 raise serializers.ValidationError(target_serializer.errors)
+
+        for i, instrument_config in enumerate(validated_data['instrument_configs']):
+            configuration_type_validation_helper = ConfigurationTypeValidationHelper(data['instrument_type'], data['type'])
+            instrument_config = configuration_type_validation_helper.validate(instrument_config)
+            validated_data['instrument_configs'][i] = instrument_config
+
         return validated_data
 
 
