@@ -14,7 +14,7 @@ This project adheres to semantic versioning.
 
 ### Added
 - Support for validating instrument configurations via validation schema defined in the Configuration Database's ConfigurationTypeProperties.
-This allows for specific per-instrument type/per-configuration type validation of instrument configs submitted directly or via the /api/requestgroups/ endpoint.
+This allows for specific per-instrument type/per-configuration type validation of instrument configs within direct submissions to /api/schedule or via the /api/requestgroups/ endpoint.
 
 
 ## [4.4.8] - 2023-01-31
