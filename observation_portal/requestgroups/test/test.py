@@ -15,7 +15,7 @@ from observation_portal.proposals.models import Proposal, TimeAllocation, Semest
 from observation_portal.common.configdb import ConfigDBException, configdb
 from observation_portal.common.test_helpers import SetTimeMixin
 from observation_portal.requestgroups.duration_utils import PER_CONFIGURATION_STARTUP_TIME
-from observation_portal.requestgroups.serializers import InstrumentTypeValidationHelper, ModeValidationHelper
+from observation_portal.requestgroups.serializers import ConfigurationTypeValidationHelper, InstrumentTypeValidationHelper, ModeValidationHelper
 from observation_portal.requestgroups.test.test_api import generic_payload
 from observation_portal.observations.models import Observation
 
@@ -518,6 +518,14 @@ class TestValidationHelper(TestCase):
                                                                                                    'max': 5.0}}},
                                                            'exposure_time': {'type': 'integer', 'min': 0}}}
 
+        self.mock_configuration_type_properties = {'SKY_FLAT': {
+            "validation_schema": {
+                "exposure_time": {
+                    "type": "float",
+                    "default": 2.0
+                }
+            }
+        }}
         self.generic_payload = copy.deepcopy(generic_payload)
         self.request_instrument_type = self.generic_payload['requests'][0]['configurations'][0]['instrument_type']
         self.instrument_config = self.generic_payload['requests'][0]['configurations'][0]['instrument_configs'][0]
@@ -607,6 +615,17 @@ class TestValidationHelper(TestCase):
         with self.assertRaises(ValidationError) as e:
             validation_helper.validate(instrument_config)
         self.assertIn('exposure_mode', str(e.exception))
+
+    @patch('observation_portal.requestgroups.serializers.configdb.get_configuration_types')
+    def test_validate_exposure_time_no_exposure_time_set(self, mock_configuration_type_properties):
+        instrument_config = self.instrument_config.copy()
+        mock_configuration_type_properties.return_value = self.mock_configuration_type_properties
+        del instrument_config['exposure_time']
+
+        validation_helper = ConfigurationTypeValidationHelper('FAKE-CAMERA', 'SKY_FLAT')
+        validated_instrument_config = validation_helper.validate(instrument_config)
+
+        self.assertEqual(validated_instrument_config['exposure_time'], 2.0)
 
 
 class TestRequestSemester(SetTimeMixin, TestCase):
