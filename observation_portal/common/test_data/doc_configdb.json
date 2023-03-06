@@ -6,13 +6,16 @@
     {
       "code": "tst",
       "elevation": 100,
+      "active": true,
       "enclosure_set": [
         {
           "code": "doma",
+          "active": true,
           "telescope_set": [
             {
               "code": "1m0a",
               "name": "1 Meter",
+              "active": true,
               "aperture": 1.0,
               "instrument_set": [
                 {
@@ -61,6 +64,7 @@
             {
               "code": "2m0a",
               "name": "2 Meter",
+              "active": true,
               "aperture": 2.0,
               "instrument_set": [
                 {
@@ -118,10 +122,12 @@
         },
         {
           "code": "domb",
+          "active": true,
           "telescope_set": [
             {
               "code": "1m0a",
               "name": "1 Meter",
+              "active": true,
               "aperture": 1.0,
               "instrument_set": [
                 {
@@ -170,6 +176,7 @@
             {
               "code": "2m0a",
               "name": "2 Meter",
+              "active": true,
               "aperture": 2.0,
               "instrument_set": [
                 {
@@ -227,10 +234,12 @@
         },
         {
           "code": "domc",
+          "active": true,
           "telescope_set": [
             {
               "code": "1m0a",
               "name": "1 Meter",
+              "active": true,
               "aperture": 1.0,
               "instrument_set": [
                 {
@@ -280,10 +289,12 @@
         },
         {
           "code": "domd",
+          "active": true,
           "telescope_set": [
             {
               "code": "1m0a",
               "name": "1 Meter",
+              "active": true,
               "aperture": 1.0,
               "instrument_set": [
                 {
@@ -335,14 +346,17 @@
     },
     {
       "code": "mba",
+      "active": true,
       "elevation": 384,
       "enclosure_set": [
         {
           "code": "doma",
+          "active": true,
           "telescope_set": [
             {
               "code": "1m0a",
               "name": "1 Meter",
+              "active": true,
               "aperture": 1.0,
               "instrument_set": [
                 {

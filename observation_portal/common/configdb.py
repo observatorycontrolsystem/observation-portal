@@ -265,25 +265,28 @@ class ConfigDB(object):
                             return True
         return False
 
-    def get_instruments(self, exclude_states=None):
+    def get_instruments(self, exclude_states=None, include_inactive=False):
         if not exclude_states:
             exclude_states = []
         site_data = self.get_site_data()
         instruments = []
         for site in site_data:
-            for enclosure in site['enclosure_set']:
-                for telescope in enclosure['telescope_set']:
-                    for instrument in telescope['instrument_set']:
-                        if instrument['state'].upper() not in exclude_states:
-                            telescope_key = TelescopeKey(
-                                site=site['code'],
-                                enclosure=enclosure['code'],
-                                telescope=telescope['code'],
-                                telescope_class=self.convert_telescope_aperture_to_string(telescope['aperture'])
-                            )
-                            instrument['telescope_key'] = telescope_key
-                            instrument['telescope_name'] = telescope['name'].strip().lower()
-                            instruments.append(instrument)
+            if include_inactive or site['active']:
+                for enclosure in site['enclosure_set']:
+                    if include_inactive or enclosure['active']:
+                        for telescope in enclosure['telescope_set']:
+                            if include_inactive or telescope['active']:
+                                for instrument in telescope['instrument_set']:
+                                    if instrument['state'].upper() not in exclude_states:
+                                        telescope_key = TelescopeKey(
+                                            site=site['code'],
+                                            enclosure=enclosure['code'],
+                                            telescope=telescope['code'],
+                                            telescope_class=self.convert_telescope_aperture_to_string(telescope['aperture'])
+                                        )
+                                        instrument['telescope_key'] = telescope_key
+                                        instrument['telescope_name'] = telescope['name'].strip().lower()
+                                        instruments.append(instrument)
         return instruments
 
     def get_instrument_types(self) -> dict:
