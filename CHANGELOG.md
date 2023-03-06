@@ -10,6 +10,15 @@ This project adheres to semantic versioning.
 
 ### Removed
 
+
+## [4.4.10] - 2023-03-06
+
+### Changed
+- Add a flag for internal calls using configdb instruments to ignore instruments from 
+telescopes, enclosures, or sites that are marked as active:false in ConfigDB.
+- Change telescope_states api endpoint to include non-schedulable instruments in response.
+
+
 ## [4.4.9] - 2023-02-28
 
 ### Added
