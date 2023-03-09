@@ -603,7 +603,7 @@ class ConfigDB(object):
     @cache_function()
     def get_exposure_overhead(self, instrument_type_code, readout_mode):
         # using the instrument type code, build an instrument with the correct configdb parameters
-        for instrument in self.get_instruments():
+        for instrument in self.get_instruments(include_inactive=True):
             if instrument['instrument_type']['code'].upper() == instrument_type_code.upper():
                 instrument_type = instrument['instrument_type']
 
