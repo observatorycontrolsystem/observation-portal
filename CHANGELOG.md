@@ -11,7 +11,7 @@ This project adheres to semantic versioning.
 ### Removed
 
 
-## [4.4.11] - 2023-03-09
+## [4.4.12] - 2023-03-09
 
 ### Changed
 - Fixed a bug from last release causing old instrument types associated with inactive telescopes to not find their exposure parameters

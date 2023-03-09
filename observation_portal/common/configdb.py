@@ -449,7 +449,7 @@ class ConfigDB(object):
         Returns:
             Available modes by type
         """
-        for instrument in self.get_instruments():
+        for instrument in self.get_instruments(include_inactive=True):
             if instrument_type_code.upper() == instrument['instrument_type']['code'].upper():
                 if not mode_type:
                     return {
