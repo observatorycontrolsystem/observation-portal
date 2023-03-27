@@ -533,6 +533,7 @@ EXAMPLE_RESPONSES = {
                     "id": "PROPOSAL-A-2021",
                     "tac_priority": 20,
                     "num_users": 5,
+                    "tags": ['student'],
                     "pis": [{"first_name": "Eleanor", "last_name": "Arroway"}],
                 },
             }
