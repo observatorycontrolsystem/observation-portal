@@ -11,6 +11,12 @@ This project adheres to semantic versioning.
 ### Removed
 
 
+## [4.5.0] - 2023-03-28
+
+### Changed
+- Add proposal tags to response from semesters timeallocation action 
+
+
 ## [4.4.12] - 2023-03-09
 
 ### Changed
