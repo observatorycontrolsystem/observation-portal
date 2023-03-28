@@ -686,7 +686,7 @@ class Target(models.Model):
     )
     epochofperih = models.FloatField(
         verbose_name='epoch of perihelion', null=True, blank=True,
-        validators=[MinValueValidator(10000), MaxValueValidator(100000)],
+        validators=[MinValueValidator(361), MaxValueValidator(240000)],
         help_text='Epoch of perihelion (MJD)'
     )
 
