@@ -174,6 +174,7 @@ class SemesterViewSet(viewsets.ReadOnlyModelViewSet):
                 'id': timeallocation.proposal.id,
                 'tac_priority': timeallocation.proposal.tac_priority,
                 'num_users': memberships.count(),
+                'tags': timeallocation.proposal.tags,
                 'pis': [
                     {
                         'first_name': mem.user.first_name,
