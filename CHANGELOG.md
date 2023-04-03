@@ -11,6 +11,12 @@ This project adheres to semantic versioning.
 ### Removed
 
 
+## [4.5.1] - 2023-04-03
+
+### Changed
+- Expanded validation range for epoch_of_perih to allow minor planets with low values to be accepted
+
+
 ## [4.5.0] - 2023-03-28
 
 ### Changed
