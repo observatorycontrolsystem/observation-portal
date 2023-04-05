@@ -81,7 +81,7 @@ class ProposalAdmin(admin.ModelAdmin):
     inlines = [TimeAllocationAdminInline]
     search_fields = ['id', 'title', 'abstract']
     readonly_fields = []
-    actions = ['activate_selected']
+    actions = ['activate_selected', 'deactivate_selected']
 
     def semesters(self, obj):
         return [semester.id for semester in obj.semester_set.all().distinct()]
@@ -91,6 +91,11 @@ class ProposalAdmin(admin.ModelAdmin):
         activated = queryset.filter(active=False).update(active=True)
         self.message_user(request, 'Successfully activated {} proposal(s)'.format(activated))
     activate_selected.short_description = 'Activate selected inactive proposals'
+
+    @admin.action(description='Deactivate selected proposals')
+    def deactivate_selected(self, request, queryset):
+        deactivated = queryset.update(active=False)
+        self.message_user(request, 'Successfully deactivated {} proposal(s)'.format(deactivated))
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
