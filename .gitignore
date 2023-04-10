@@ -127,3 +127,8 @@ yarn-error.log*
 *.njsproj
 *.sln
 *.sw*
+
+# Devenv
+.devenv*
+devenv.local.nix
+

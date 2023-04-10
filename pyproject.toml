@@ -31,7 +31,7 @@ packages = [
 ocs-django-manage = "manage:main"
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = ">=3.8,<3.11"
 apscheduler = ">=3.7,<3.8"
 boto3 = "<2.0"
 cerberus = ">1.0,<2.0"
@@ -52,7 +52,7 @@ opensearch-py = ">=1.0,<2.0"
 gunicorn = { version = "^20.1", extras = [ "gevent" ] }
 lcogt-logging = "0.3.2"
 numpy = "^1.16"
-ocs-rise-set = "^0.5.2"
+ocs-rise-set = "0.6.2"
 psycopg2-binary = "^2.9.3"
 PyPDF2 = ">=1.26,<1.28"
 redis = "^3"
