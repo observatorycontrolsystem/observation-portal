@@ -13,7 +13,7 @@ RUN apt-get update && apt-get -y upgrade
 RUN apt-get install -y gfortran
 
 # upgrade pip and install poetry
-RUN pip install --upgrade pip && pip install poetry
+RUN pip install --upgrade pip && pip install "poetry>=1.4.2"
 
 WORKDIR /src
 

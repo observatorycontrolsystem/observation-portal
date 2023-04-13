@@ -65,6 +65,9 @@ class Semester(models.Model):
     end = models.DateTimeField()
     proposals = models.ManyToManyField("Proposal", through="TimeAllocation")
 
+    class Meta:
+        ordering = ["-start", "id"]
+
     @classmethod
     def current_semesters(cls, future=False):
         semesters = cls.objects.filter(end__gte=timezone.now())
