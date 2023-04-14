@@ -30,6 +30,9 @@ class Instrument(models.Model):
     code = models.CharField(max_length=50)
     display = models.CharField(max_length=50)
 
+    class Meta:
+        ordering = ["code"]
+
     @cached_property
     def telescope_name(self):
         instrument_type_to_telescope_name = configdb.get_telescope_name_by_instrument_types(exclude_states=['DISABLED'])
