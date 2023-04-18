@@ -1,4 +1,5 @@
 from django import forms
+from django.forms.widgets import SelectMultiple
 
 from observation_portal.common.configdb import configdb
 from observation_portal.requestgroups.models import RequestGroup
@@ -26,7 +27,9 @@ class TimeAllocationForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['instrument_types'] = forms.MultipleChoiceField(choices=sorted(configdb.get_instrument_type_tuples(exclude_disabled=True)))
+        self.fields['instrument_types'] = forms.MultipleChoiceField(
+            choices=configdb.get_instrument_type_tuples_state_grouped(),
+        )
 
     def clean(self):
         cleaned_data = super().clean()
