@@ -26,7 +26,7 @@ class TimeAllocationForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['instrument_types'] = forms.MultipleChoiceField(choices=configdb.get_instrument_type_tuples())
+        self.fields['instrument_types'] = forms.MultipleChoiceField(choices=sorted(configdb.get_instrument_type_tuples(exclude_disabled=True)))
 
     def clean(self):
         cleaned_data = super().clean()

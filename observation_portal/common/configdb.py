@@ -162,12 +162,14 @@ class ConfigDB(object):
                     telescope_names.add(telescope['name'].strip().lower())
         return [(telescope_name, telescope_name) for telescope_name in telescope_names]
 
-    def get_instrument_type_tuples(self):
+    def get_instrument_type_tuples(self, exclude_disabled=False):
         instrument_types = set()
         for site in self.get_site_data():
             for enclosure in site['enclosure_set']:
                 for telescope in enclosure['telescope_set']:
                     for instrument in telescope['instrument_set']:
+                        if exclude_disabled and instrument.get('state', '') == 'DISABLED':
+                            continue
                         instrument_types.add(instrument['instrument_type']['code'].upper())
         return [(instrument_type, instrument_type) for instrument_type in instrument_types]
 
