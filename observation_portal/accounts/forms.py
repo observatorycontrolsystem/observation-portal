@@ -26,6 +26,12 @@ class CustomRegistrationForm(RegistrationFormTermsOfService, RegistrationFormUni
             'username': 'Will be present under the USERID fits header.',
         }
 
+    def __init__(self, email=None, *args, **kwargs):
+        kwargs.update(initial={'email': email})
+        super().__init__(*args, **kwargs)
+        if email is not None:
+            self.fields['email'].widget.attrs['readonly'] = True
+
     def save(self, commit=True):
         new_user_instance = super().save(commit=True)
         Profile.objects.create(
