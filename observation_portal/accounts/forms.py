@@ -30,6 +30,7 @@ class CustomRegistrationForm(RegistrationFormTermsOfService, RegistrationFormUni
         kwargs.update(initial={'email': email})
         super().__init__(*args, **kwargs)
         if email is not None:
+            # make email in form read-only if it has been provided from the view
             self.fields['email'].widget.attrs['readonly'] = True
 
     def save(self, commit=True):
