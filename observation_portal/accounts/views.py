@@ -157,7 +157,7 @@ class CustomPasswordResetConfirmView(ResetPasswordExpirationFormMixin, PasswordR
 
 
 class CustomRegistrationView(RegistrationView):
-    # Pass url parameters from the view to the form  
+    # Pass url parameters from the view to the form
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs.update({'email': self.request.GET.get('email')})
