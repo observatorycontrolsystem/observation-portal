@@ -11,7 +11,7 @@ from .views import (
 )
 
 urlpatterns = [
-    re_path(r'^register/(?P<email>.*)/?', CustomRegistrationView.as_view(form_class=CustomRegistrationForm), name='registration_register'),
+    re_path(r'^register/$', CustomRegistrationView.as_view(form_class=CustomRegistrationForm), name='registration_register'),
     re_path(r'^loggedinstate/$', TemplateView.as_view(template_name='auth/logged_in_state.html'), name='logged-in-state'),
     path("login/", CustomLoginView.as_view(), name="auth_login"),
     path("password/change/", CustomPasswordChangeView.as_view(), name="auth_password_change"),

@@ -7,7 +7,6 @@ from django.contrib.auth.views import LoginView, PasswordChangeView, PasswordRes
 from django.utils.module_loading import import_string
 from django.conf import settings
 from django.urls import reverse_lazy
-from django.http import HttpResponseRedirect
 from rest_framework.generics import CreateAPIView, RetrieveUpdateAPIView
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.authtoken.models import Token
@@ -158,7 +157,7 @@ class CustomPasswordResetConfirmView(ResetPasswordExpirationFormMixin, PasswordR
 
 
 class CustomRegistrationView(RegistrationView):
-    # Pass url parameters from the view to the form
+    # Pass url parameters from the view to the form  
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs.update({'email': self.request.GET.get('email')})
