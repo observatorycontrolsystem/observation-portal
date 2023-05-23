@@ -11,6 +11,8 @@ from django.utils.html import strip_tags
 from django.utils.module_loading import import_string
 from django.conf import settings
 from collections import namedtuple
+
+from urllib.parse import urljoin
 import logging
 
 from observation_portal.accounts.tasks import send_mail
@@ -336,7 +338,7 @@ class ProposalInvite(models.Model):
             'proposals/invitation.txt',
             {
                 'proposal': self.proposal,
-                'url': reverse('registration_register'),
+                'url': urljoin(reverse('registration_register'), f'/?email={self.email}'),
                 'organization_name': settings.ORGANIZATION_NAME,
                 'observation_portal_base_url': settings.OBSERVATION_PORTAL_BASE_URL
             }

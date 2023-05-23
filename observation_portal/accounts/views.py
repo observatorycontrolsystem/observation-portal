@@ -13,6 +13,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from registration.backends.default.views import RegistrationView
 
 from observation_portal.accounts.models import Profile
 from observation_portal.accounts.tasks import send_mail, update_or_create_client_applications_user
@@ -153,3 +154,11 @@ class CustomPasswordChangeView(ResetPasswordExpirationFormMixin, PasswordChangeV
 
 class CustomPasswordResetConfirmView(ResetPasswordExpirationFormMixin, PasswordResetConfirmView):
     success_url = reverse_lazy("auth_password_reset_complete")
+
+
+class CustomRegistrationView(RegistrationView):
+    # Pass url parameters from the view to the form
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({'email': self.request.GET.get('email')})
+        return kwargs
