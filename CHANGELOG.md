@@ -10,6 +10,11 @@ This project adheres to semantic versioning.
 
 ### Removed
 
+## [4.7.2] - 2023-05-23
+
+### Changed
+- Updated invitation email to include email address in URL param
+- Plumb email param for /accounts/register to registration form
 
 ## [4.5.1] - 2023-04-03
 
