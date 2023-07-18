@@ -130,6 +130,8 @@ class ProposalNotificationAdmin(admin.ModelAdmin):
     model = ProposalNotification
     raw_id_fields = ['proposal', 'user']
 
+class TimeAllocationAdmin(admin.ModelAdmin):
+    form = TimeAllocationForm
 
 admin.site.register(Semester, SemesterAdmin)
 admin.site.register(ScienceCollaborationAllocation, ScienceCollaborationAllocationAdmin)
@@ -137,3 +139,4 @@ admin.site.register(Proposal, ProposalAdmin)
 admin.site.register(Membership, MembershipAdmin)
 admin.site.register(ProposalInvite, ProposalInviteAdmin)
 admin.site.register(ProposalNotification, ProposalNotificationAdmin)
+admin.site.register(TimeAllocation, TimeAllocationAdmin)
