@@ -43,6 +43,7 @@ class TimeAllocationAdminInline(admin.TabularInline):
     form = TimeAllocationForm
     formset = TimeAllocationFormSet
     extra = 0
+    show_change_link = True
 
 
 class ProposalTagListFilter(admin.SimpleListFilter):
