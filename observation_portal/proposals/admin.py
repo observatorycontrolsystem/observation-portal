@@ -19,6 +19,7 @@ class SemesterAdmin(admin.ModelAdmin):
     list_display = ('id', 'start', 'end')
     list_filter = ('start', 'end')
     raw_id_fields = ('proposals',)
+    search_fields = ['id']
 
 
 class CollaborationAllocationAdminInline(admin.TabularInline):
@@ -150,6 +151,7 @@ class TimeAllocationInstrumentTypesFilter(admin.SimpleListFilter):
 class TimeAllocationAdmin(admin.ModelAdmin):
     list_display = ['semester', 'proposal', 'instrument_types']
     list_filter = [TimeAllocationInstrumentTypesFilter, 'semester', 'proposal']
+    autocomplete_fields = ['semester', 'proposal']
 
     form = TimeAllocationForm
 
