@@ -149,7 +149,7 @@ class TimeAllocationInstrumentTypesFilter(admin.SimpleListFilter):
 
 class TimeAllocationAdmin(admin.ModelAdmin):
     list_display = ['semester', 'proposal', 'instrument_types']
-    list_filter = ['semester', 'proposal', TimeAllocationInstrumentTypesFilter]
+    list_filter = [TimeAllocationInstrumentTypesFilter, 'semester', 'proposal']
 
     form = TimeAllocationForm
 
