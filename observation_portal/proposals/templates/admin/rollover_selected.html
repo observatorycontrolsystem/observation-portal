@@ -1,0 +1,46 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<form action="" method="post">
+    {% csrf_token %}
+This action will roll over remaining time from the current semester to the next semester, for all instruments.<br/>
+The following proposals will be affected:
+<br/><br/>
+Rollover time allocations from <strong>{{currentsemester.id}}</strong> to <strong>{{nextsemester.id}}</strong>?
+
+
+{% for proposal in proposals %}
+<ul>
+  <li>{{ proposal.id }} - {{proposal.title}}</li>
+</ul>
+<input type="hidden" name="_selected_action" value="{{ proposal.pk }}" />
+{% endfor %}
+
+
+<input type="hidden" name="action" value="rollover_selected" />
+<input type="submit" name="apply" value="Rollover Hours?"/>
+</form>
+
+{% if rejects or updated %}
+<h2>No rollover for the following:</h2>
+{% endif %}
+
+{% if rejects %}
+These proposals will not be updated because they do not have any time allocations in the current semester:
+{% for proposal in rejects %}
+<ul>
+  <li>{{ proposal.id }} - {{proposal.title}}</li>
+</ul>
+{% endfor %}
+{% endif %}
+
+{% if updated %}
+These proposals will not be updated because they already have time allocations for next semester:
+{% for proposal in updated %}
+<ul>
+  <li>{{ proposal.id }} - {{proposal.title}}</li>
+</ul>
+{% endfor %}
+{% endif %}
+
+{% endblock %}

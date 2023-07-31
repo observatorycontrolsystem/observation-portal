@@ -53,7 +53,7 @@ class ProposalInviteResponseSerializer(serializers.Serializer):
 class MembershipSerializer(serializers.ModelSerializer):
     class Meta:
         model = Membership
-        fields = ('id', 'proposal', 'role', 'user', 'time_limit')
+        fields = ('id', 'proposal', 'role', 'user', 'time_limit','active')
 
 
 class ProposalNotificationSerializer(serializers.Serializer):
