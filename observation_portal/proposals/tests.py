@@ -408,3 +408,4 @@ class TestProposalAdmin(TestCase):
                 self.assertEqual(TimeAllocation.objects.filter(proposal=proposal, semester=self.future_semester).count(), 1)
             else:
                 self.assertEqual(TimeAllocation.objects.filter(proposal=proposal, semester=self.future_semester).count(), 0)
+                
