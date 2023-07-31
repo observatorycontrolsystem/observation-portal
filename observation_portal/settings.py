@@ -199,13 +199,8 @@ OAUTH2_PROVIDER = {
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
 CORS_URLS_REGEX = r'^/(api|accounts|media)/.*$|^/o/.*'
-CORS_ALLOW_CREDENTIALS = True
-CORS_ORIGIN_WHITELIST = [
-    'https://127.0.0.1:8080'
-]
-CSRF_TRUSTED_ORIGINS = [
-    'https://127.0.0.1:8080'
-]
+CORS_ORIGIN_WHITELIST = get_list_from_env('CORS_ORIGIN_WHITELIST')
+CSRF_TRUSTED_ORIGINS = get_list_from_env('CSRF_TRUSTED_ORIGINS')
 LOGIN_REDIRECT_URL = '/accounts/loggedinstate/'
 
 # Internationalization
@@ -447,7 +442,7 @@ DRAMATIQ_BROKER = {
 TEST_RUNNER = 'observation_portal.test_runner.MyDiscoverRunner'
 
 try:
-    from .local_settings import *  # noqa
+    from local_settings import *  # noqa
 except ImportError:
     pass
 
