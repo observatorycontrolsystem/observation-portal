@@ -22,6 +22,7 @@ class SemesterAdmin(admin.ModelAdmin):
     list_display = ('id', 'start', 'end')
     list_filter = ('start', 'end')
     raw_id_fields = ('proposals',)
+    search_fields = ['id']
 
 
 class CollaborationAllocationAdminInline(admin.TabularInline):
@@ -174,7 +175,27 @@ class ProposalNotificationAdmin(admin.ModelAdmin):
     model = ProposalNotification
     raw_id_fields = ['proposal', 'user']
 
+
+class TimeAllocationInstrumentTypesFilter(admin.SimpleListFilter):
+    title = "Instrument Type"
+    parameter_name = "instrument_type"
+
+    def lookups(self, request, model_admin):
+        inst_types = TimeAllocation.objects.values_list("instrument_types", flat=True)
+        inst_types = [(inst, inst) for sublist in inst_types for inst in sublist if inst]
+        return sorted(set(inst_types))
+
+    def queryset(self, request, queryset):
+        lookup_value = self.value()
+        if lookup_value:
+            queryset = queryset.filter(instrument_types__contains=[lookup_value])
+        return queryset
+
 class TimeAllocationAdmin(admin.ModelAdmin):
+    list_display = ['semester', 'proposal', 'instrument_types']
+    list_filter = [TimeAllocationInstrumentTypesFilter, 'semester', 'proposal']
+    autocomplete_fields = ['semester', 'proposal']
+
     form = TimeAllocationForm
 
 admin.site.register(Semester, SemesterAdmin)
