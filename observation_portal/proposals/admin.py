@@ -127,13 +127,13 @@ class ProposalAdmin(admin.ModelAdmin):
         if 'apply' in request.POST:
             for obj in queryset:
                 allocations = obj.timeallocation_set.filter(semester=currentsemester)
-                if obj.timeallocation_set.filter(semester=nextsemester):
+                if obj.timeallocation_set.filter(semester=nextsemester).exists():
                     continue
                 for allocation in allocations:
                     newtime = TimeAllocation.objects.create(semester=nextsemester, proposal=obj, instrument_types=allocation.instrument_types)
-                    newtime.std_allocation = allocation.std_allocation - allocation.std_time_used
-                    newtime.rr_allocation = allocation.rr_allocation - allocation.rr_time_used
-                    newtime.tc_allocation = allocation.tc_allocation - allocation.tc_time_used
+                    newtime.std_allocation = max(allocation.std_allocation - allocation.std_time_used,0)
+                    newtime.rr_allocation = max(allocation.rr_allocation - allocation.rr_time_used,0)
+                    newtime.tc_allocation = max(allocation.tc_allocation - allocation.tc_time_used,0)
                     newtime.ipp_limit = newtime.std_allocation/10
                     newtime.ipp_time_available = newtime.ipp_limit/2
                     newtime.save()
@@ -145,9 +145,9 @@ class ProposalAdmin(admin.ModelAdmin):
         rejects = []
         updated = []
         for obj in queryset:
-            if not obj.timeallocation_set.filter(semester=currentsemester):
+            if not obj.timeallocation_set.filter(semester=currentsemester).exists():
                 rejects.append(obj)
-            elif obj.timeallocation_set.filter(semester=nextsemester):
+            elif obj.timeallocation_set.filter(semester=nextsemester).exists():
                 updated.append(obj)
             else:
                 proposals.append(obj)         
