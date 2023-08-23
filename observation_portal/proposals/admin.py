@@ -140,7 +140,7 @@ class ProposalAdmin(admin.ModelAdmin):
 
             self.message_user(request, 'Successfully rolled over time for {} proposal(s)'.format(queryset.count()))
             return HttpResponseRedirect(request.get_full_path())
-        
+  
         proposals = []
         rejects = []
         updated = []
@@ -150,7 +150,7 @@ class ProposalAdmin(admin.ModelAdmin):
             elif obj.timeallocation_set.filter(semester=nextsemester).exists():
                 updated.append(obj)
             else:
-                proposals.append(obj)         
+                proposals.append(obj)
         return render(request, 'admin/rollover_selected.html', context={'proposals':proposals, 'rejects':rejects, 'updated':updated, 'nextsemester':nextsemester, 'currentsemester':currentsemester})
                 
 
