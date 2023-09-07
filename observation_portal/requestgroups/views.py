@@ -11,6 +11,7 @@ from datetime import timedelta
 from rest_framework.views import APIView
 from rest_framework import status
 import logging
+from http import HTTPStatus
 
 from observation_portal import settings
 from observation_portal.common.configdb import configdb
@@ -54,7 +55,12 @@ class TelescopeStatesView(APIView):
             return HttpResponseBadRequest(str(e))
         sites = request.query_params.getlist('site')
         telescopes = request.query_params.getlist('telescope')
-        telescope_states = TelescopeStates(start, end, sites=sites, telescopes=telescopes, only_schedulable=False).get()
+        try:
+            telescope_states = TelescopeStates(start, end, sites=sites, telescopes=telescopes, only_schedulable=False).get()
+        except OpenSearchException:
+            logger.warning('Error connecting to OpenSearch. Is the cluster reachable?')
+            return Response('ConnectionError - Error retrieving telescope states', HTTPStatus.BAD_GATEWAY)
+
         str_telescope_states = {str(k): v for k, v in telescope_states.items()}
 
         return Response(str_telescope_states)
@@ -80,7 +86,7 @@ class TelescopeAvailabilityView(APIView):
             )
         except OpenSearchException:
             logger.warning('Error connecting to OpenSearch. Is the cluster reachable?')
-            return Response('ConnectionError')
+            return Response('ConnectionError - Error retrieving telescope availability', HTTPStatus.BAD_GATEWAY)
         if combine:
             telescope_availability = combine_telescope_availabilities_by_site_and_class(telescope_availability)
         str_telescope_availability = {str(k): v for k, v in telescope_availability.items()}
