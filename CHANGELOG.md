@@ -10,6 +10,11 @@ This project adheres to semantic versioning.
 
 ### Removed
 
+## [4.8.0] - 2023-09-07
+
+### Changed
+- Fix /api/telescope_states to return a useful error message and 502 when no connection to OpenSearch is available.
+
 ## [4.7.2] - 2023-05-23
 
 ### Changed
