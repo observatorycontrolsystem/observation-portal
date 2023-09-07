@@ -37,7 +37,7 @@ class TestTelescopeStates(TelescopeStatesFromFile):
     def test_opensearch_down(self, os_patch):
         response = self.client.get(reverse('api:telescope_availability') +
                                    '?start=2016-10-1T1:23:44&end=2016-10-10T22:22:2')
-        self.assertContains(response, 'ConnectionError')
+        self.assertContains(response, 'ConnectionError', status_code=502)
 
 
 class TestInstrumentInformation(TestCase):
