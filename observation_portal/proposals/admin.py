@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 from django.contrib import admin
+from django.shortcuts import render
+from django.utils import timezone
+from django.http import HttpResponseRedirect
 
 from observation_portal.proposals.forms import TimeAllocationForm, TimeAllocationFormSet, CollaborationAllocationForm
 from observation_portal.common.utils import get_queryset_field_values
@@ -83,7 +86,7 @@ class ProposalAdmin(admin.ModelAdmin):
     inlines = [TimeAllocationAdminInline]
     search_fields = ['id', 'title', 'abstract']
     readonly_fields = []
-    actions = ['activate_selected', 'deactivate_selected']
+    actions = ['activate_selected', 'deactivate_selected', 'makepublic_selected', 'rollover_selected']
 
     def semesters(self, obj):
         return [semester.id for semester in obj.semester_set.all().distinct()]
@@ -110,6 +113,46 @@ class ProposalAdmin(admin.ModelAdmin):
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
+
+    @admin.action(description='Make proposals Public')
+    def makepublic_selected(self, request, queryset):
+        public = queryset.update(public=True)
+        self.message_user(request, 'Successfully made {} proposal(s) public'.format(public))
+
+    @admin.action(description='Rollover time allocation for selected proposals')
+    def rollover_selected(self, request, queryset):
+        now = timezone.now()
+        currentsemester = Semester.objects.filter(start__lte=now, end__gte=now).first()
+        nextsemester = Semester.objects.filter(start__gte=currentsemester.end).order_by('start').first()
+        if 'apply' in request.POST:
+            for obj in queryset:
+                allocations = obj.timeallocation_set.filter(semester=currentsemester)
+                if obj.timeallocation_set.filter(semester=nextsemester).exists():
+                    continue
+                for allocation in allocations:
+                    newtime = TimeAllocation.objects.create(semester=nextsemester, proposal=obj, instrument_types=allocation.instrument_types)
+                    newtime.std_allocation = max(allocation.std_allocation - allocation.std_time_used,0)
+                    newtime.rr_allocation = max(allocation.rr_allocation - allocation.rr_time_used,0)
+                    newtime.tc_allocation = max(allocation.tc_allocation - allocation.tc_time_used,0)
+                    newtime.ipp_limit = newtime.std_allocation/10
+                    newtime.ipp_time_available = newtime.ipp_limit/2
+                    newtime.save()
+
+            self.message_user(request, 'Successfully rolled over time for {} proposal(s)'.format(queryset.count()))
+            return HttpResponseRedirect(request.get_full_path())
+  
+        proposals = []
+        rejects = []
+        updated = []
+        for obj in queryset:
+            if not obj.timeallocation_set.filter(semester=currentsemester).exists():
+                rejects.append(obj)
+            elif obj.timeallocation_set.filter(semester=nextsemester).exists():
+                updated.append(obj)
+            else:
+                proposals.append(obj)
+        return render(request, 'admin/rollover_selected.html', context={'proposals':proposals, 'rejects':rejects, 'updated':updated, 'nextsemester':nextsemester, 'currentsemester':currentsemester})
+                
 
 
 class MembershipAdmin(admin.ModelAdmin):

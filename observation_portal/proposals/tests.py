@@ -396,3 +396,16 @@ class TestProposalAdmin(TestCase):
         taf = TimeAllocationForm(data=ta_dict, instance=time_allocation2)
         self.assertFalse(taf.is_valid())
         self.assertIn("must be unique", taf.non_field_errors()[0])
+
+    def test_rollover_selected(self):
+        self.client.post(
+            reverse('admin:proposals_proposal_changelist'),
+            data={'action': 'rollover_selected', 'apply':'Apply', '_selected_action': [str(proposal.pk) for proposal in self.proposals]},
+            follow=True
+        )
+        for proposal in self.proposals:
+            if proposal == self.proposal:
+                self.assertEqual(TimeAllocation.objects.filter(proposal=proposal, semester=self.future_semester).count(), 1)
+            else:
+                self.assertEqual(TimeAllocation.objects.filter(proposal=proposal, semester=self.future_semester).count(), 0)
+                
