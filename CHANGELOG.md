@@ -10,6 +10,14 @@ This project adheres to semantic versioning.
 
 ### Removed
 
+## [4.8.1] - 2023-09-20
+
+### Added
+- Proposal admin actions to make proposals public in bulk or extend their unused time allocations to next semester
+
+### Changed
+- Swapped out muscat diffusers for narrowband in test classes
+
 ## [4.8.0] - 2023-09-07
 
 ### Changed
