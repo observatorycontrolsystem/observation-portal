@@ -1544,12 +1544,12 @@
                         "max_rois": 0
                       },
                       "optical_elements": {
-                        "diffuser_g_positions": "in,out"
+                        "narrowband_g_positions": "in,out"
                       },
                       "optical_element_groups": [
                         {
-                          "name": "Diffuser g'",
-                          "type": "diffuser_g_positions",
+                          "name": "Narrow Band g'",
+                          "type": "narrowband_g_positions",
                           "optical_elements": [
                             {
                               "name": "In Beam",
@@ -1579,12 +1579,12 @@
                         "max_rois": 0
                       },
                       "optical_elements": {
-                        "diffuser_r_positions": "in,out"
+                        "narrowband_r_positions": "in,out"
                       },
                       "optical_element_groups": [
                         {
-                          "name": "Diffuser r'",
-                          "type": "diffuser_r_positions",
+                          "name": "Narrow Band r'",
+                          "type": "narrowband_r_positions",
                           "optical_elements": [
                             {
                               "name": "In Beam",
@@ -1614,12 +1614,12 @@
                         "max_rois": 0
                       },
                       "optical_elements": {
-                        "diffuser_i_positions": "in,out"
+                        "narrowband_i_positions": "in,out"
                       },
                       "optical_element_groups": [
                         {
-                          "name": "Diffuser i'",
-                          "type": "diffuser_i_positions",
+                          "name": "Narrow Band i'",
+                          "type": "narrowband_i_positions",
                           "optical_elements": [
                             {
                               "name": "In Beam",
@@ -1649,12 +1649,12 @@
                         "max_rois": 0
                       },
                       "optical_elements": {
-                        "diffuser_z_positions": "in,out"
+                        "narrowband_z_positions": "in,out"
                       },
                       "optical_element_groups": [
                         {
-                          "name": "Diffuser z'",
-                          "type": "diffuser_z_positions",
+                          "name": "Narrow Band z'",
+                          "type": "narrowband_z_positions",
                           "optical_elements": [
                             {
                               "name": "In Beam",
@@ -1685,12 +1685,12 @@
                       "max_rois": 0
                     },
                     "optical_elements": {
-                      "diffuser_g_positions": "in,out"
+                      "narrowband_g_positions": "in,out"
                     },
                     "optical_element_groups": [
                       {
-                        "name": "Diffuser g'",
-                        "type": "diffuser_g_positions",
+                        "name": "Narrow Band g'",
+                        "type": "narrowband_g_positions",
                         "optical_elements": [
                           {
                             "name": "In Beam",
