@@ -53,8 +53,14 @@ jobs:
       uses: coverallsapp/github-action@v2
       with:
         parallel: true
-        flag-name: run-${{ matrix.python-version }}
-
+  finish:
+    runs-on: ubuntu-latest
+    needs: run_tests
+    steps:
+      - name: Close parallel build
+        uses: coverallsapp/github-action@v1
+        with:
+          parallel-finished: true
 
   publish_to_pypi:
     # Only run this job if the run_tests job has succeeded, and if
@@ -107,11 +113,3 @@ jobs:
           pull: true
           push: true
           tags: ${{ env.DOCKER_REPOSITORY }}:${{ env.DOCKER_IMAGE_TAG }}
-
-finish:
-  runs-on: ubuntu-latest
-  steps:
-    - name: Close parallel build
-      uses: coverallsapp/github-action@v1
-      with:
-        parallel-finished: true
