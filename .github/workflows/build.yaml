@@ -50,11 +50,17 @@ jobs:
         DB_HOST: localhost
         DB_PORT: 5432
     - name: Generate and send coveralls report
-      run: |
-        pip install 'coveralls<3.3'
-        coveralls --service=github
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: coverallsapp/github-action@v2
+      with:
+        parallel: true
+  finish:
+    runs-on: ubuntu-latest
+    needs: run_tests
+    steps:
+      - name: Close parallel build
+        uses: coverallsapp/github-action@v1
+        with:
+          parallel-finished: true
 
   publish_to_pypi:
     # Only run this job if the run_tests job has succeeded, and if

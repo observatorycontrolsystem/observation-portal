@@ -89,6 +89,7 @@ class TestProposalInvitation(DramatiqTestCase):
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn(invitation.proposal.id, str(mail.outbox[0].message()))
         self.assertEqual(mail.outbox[0].to, [invitation.email])
+        self.assertIn(reverse('registration_register'), str(mail.outbox[0].message()))
 
     def test_accept(self):
         invitation = mixer.blend(ProposalInvite)

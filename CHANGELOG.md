@@ -10,6 +10,11 @@ This project adheres to semantic versioning.
 
 ### Removed
 
+## [4.8.2] - 2023-11-09
+
+### Changed
+- Fixed URL generation for proposal invites
+
 ## [4.8.1] - 2023-09-20
 
 ### Added

@@ -338,7 +338,7 @@ class ProposalInvite(models.Model):
             'proposals/invitation.txt',
             {
                 'proposal': self.proposal,
-                'url': urljoin(reverse('registration_register'), f'/?email={self.email}'),
+                'url': urljoin(reverse('registration_register'), f'?email={self.email}'),
                 'organization_name': settings.ORGANIZATION_NAME,
                 'observation_portal_base_url': settings.OBSERVATION_PORTAL_BASE_URL
             }
