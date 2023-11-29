@@ -9,6 +9,10 @@ This project adheres to semantic versioning.
 ### Changed
 
 ### Removed
+## [4.8.3] - 2023-11-29
+
+### Changed
+- Dependabot security updates
 
 ## [4.8.2] - 2023-11-09
 
