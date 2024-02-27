@@ -61,9 +61,12 @@ ORGANIZATION_SUPPORT_EMAIL = os.getenv('ORGANIZATION_SUPPORT_EMAIL', '')  # Orga
 ORGANIZATION_ADMIN_EMAIL = os.getenv('ORGANIZATION_ADMIN_EMAIL', '')  # Admin email address to receive 500 error emails
 OBSERVATION_PORTAL_BASE_URL = os.getenv('OBSERVATION_PORTAL_BASE_URL', 'http://localhost')
 
-ADMINS = [
-    ('Admins', ORGANIZATION_ADMIN_EMAIL)
-]
+ADMINS = []
+
+# Enabled by default
+if bool(int(os.getenv('SEND_ADMIN_ERROR_EMAILS', '1'))):
+    ADMINS.append(('Admins', ORGANIZATION_ADMIN_EMAIL))
+
 
 # Application definition
 
