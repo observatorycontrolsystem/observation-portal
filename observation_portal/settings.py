@@ -202,6 +202,7 @@ CORS_URLS_REGEX = r'^/(api|accounts|media)/.*$|^/o/.*'
 CORS_ORIGIN_WHITELIST = get_list_from_env('CORS_ORIGIN_WHITELIST')
 CSRF_TRUSTED_ORIGINS = get_list_from_env('CSRF_TRUSTED_ORIGINS')
 LOGIN_REDIRECT_URL = '/accounts/loggedinstate/'
+LOGOUT_REDIRECT_URL = '/'
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.1/topics/i18n/
