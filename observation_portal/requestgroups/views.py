@@ -56,10 +56,12 @@ class TelescopeStatesView(APIView):
         sites = request.query_params.getlist('site')
         telescopes = request.query_params.getlist('telescope')
         try:
-            telescope_states = TelescopeStates(start, end, sites=sites, telescopes=telescopes, only_schedulable=False).get()
+            telescope_states_getter = TelescopeStates(start, end, sites=sites, telescopes=telescopes, only_schedulable=False)
         except OpenSearchException:
             logger.warning('Error connecting to OpenSearch. Is the cluster reachable?')
             return Response('ConnectionError - Error retrieving telescope states', HTTPStatus.BAD_GATEWAY)
+
+        telescope_states = telescope_states_getter.get()
 
         str_telescope_states = {str(k): v for k, v in telescope_states.items()}
 
