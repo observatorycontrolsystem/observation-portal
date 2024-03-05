@@ -9,6 +9,13 @@ This project adheres to semantic versioning.
 ### Changed
 
 ### Removed
+
+## [4.8.4] - 2024-03-05
+
+### Changed
+- Fixed logout redirect issues
+- Fixed issue with registration email url
+
 ## [4.8.3] - 2023-11-29
 
 ### Changed
