@@ -1,0 +1,126 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone/deployment-apps-v1.json
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  labels:
+    app.kubernetes.io/component: api
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: api
+    spec:
+      securityContext:
+        fsGroup: 1000
+
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 32Mi
+
+      initContainers:
+        - name: check-db-ready
+          image: postgres:14-alpine
+          command:
+            - sh
+            - -c
+            - |
+              until pg_isready --username=$DB_USER --dbname=$DB_NAME --host=$DB_HOST --port=$DB_PORT;
+                do echo waiting for database;
+                sleep 1;
+                done;
+
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            readOnlyRootFilesystem: true
+
+          envFrom:
+            - configMapRef:
+                name: env
+                optional: false
+            - secretRef:
+                name: env
+                optional: false
+
+          resources:
+            requests:
+              cpu: 50m
+              memory: 16Mi
+            limits:
+              cpu: 50m
+              memory: 16Mi
+
+        - name: django-migrate
+          image: observation-portal
+          command:
+            - python
+            - manage.py
+            - migrate
+            - --no-input
+
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            readOnlyRootFilesystem: true
+
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+
+          envFrom:
+            - configMapRef:
+                name: env
+                optional: false
+            - secretRef:
+                name: env
+                optional: false
+
+      containers:
+        - name: default
+          image: observation-portal
+          command:
+            - gunicorn
+            - --bind=0.0.0.0:8080
+            - --worker-class=gevent
+            - --workers=$(GUNICORN_WORKERS)
+            - --timeout=$(GUNICORN_TIMEOUT)
+            - --access-logfile=-
+            - --error-logfile=-
+            - observation_portal.wsgi:application
+
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            readOnlyRootFilesystem: true
+
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+
+          ports:
+            - name: api
+              containerPort: 8080
+              protocol: TCP
+
+          envFrom:
+            - configMapRef:
+                name: env
+                optional: false
+            - secretRef:
+                name: env
+                optional: false
+
+          env:
+            - name: GUNICORN_WORKERS
+              value: "4"
+            - name: GUNICORN_TIMEOUT
+              value: "30"

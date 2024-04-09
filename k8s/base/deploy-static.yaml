@@ -1,0 +1,147 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone/deployment-apps-v1.json
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: static
+  labels:
+    app.kubernetes.io/component: static
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: static
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/component: static
+    spec:
+      securityContext:
+        fsGroup: 1000
+
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 32Mi
+
+        - name: static
+          emptyDir:
+            sizeLimit: 128Mi
+
+      initContainers:
+        - name: check-db-ready
+          image: postgres:14-alpine
+          command:
+            - sh
+            - -c
+            - |
+              until pg_isready --username=$DB_USER --dbname=$DB_NAME --host=$DB_HOST --port=$DB_PORT;
+                do echo waiting for database;
+                sleep 1;
+                done;
+
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            readOnlyRootFilesystem: true
+
+          envFrom:
+            - configMapRef:
+                name: env
+                optional: false
+            - secretRef:
+                name: env
+                optional: false
+
+          resources:
+            requests:
+              cpu: 50m
+              memory: 16Mi
+            limits:
+              cpu: 50m
+              memory: 16Mi
+
+        - name: django-collectstatic
+          image: observation-portal
+          command:
+            - python
+            - manage.py
+            - collectstatic
+            - --no-input
+
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            readOnlyRootFilesystem: true
+
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+
+            - name: static
+              mountPath: /static
+
+          envFrom:
+            - configMapRef:
+                name: env
+                optional: false
+            - secretRef:
+                name: env
+                optional: false
+
+      containers:
+        - name: default
+          image: ghcr.io/static-web-server/static-web-server:2
+          command:
+            - /static-web-server
+            - --root=/static
+            - --health
+            - --port=8000
+            - --host=0.0.0.0
+
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            readOnlyRootFilesystem: true
+
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+
+            - name: static
+              mountPath: /static
+
+          ports:
+            - name: static
+              containerPort: 8000
+              protocol: TCP
+
+          envFrom:
+            - configMapRef:
+                name: env
+                optional: false
+            - secretRef:
+                name: env
+                optional: false
+
+          livenessProbe:
+            initialDelaySeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 4
+            successThreshold: 1
+            periodSeconds: 30
+            httpGet:
+              path: /health
+              port: static
+
+          readinessProbe:
+            initialDelaySeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+            successThreshold: 1
+            periodSeconds: 30
+            httpGet:
+              path: /health
+              port: static

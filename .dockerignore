@@ -1,15 +1,14 @@
-celerybeat-schedule
-celerybeat.pid
-static/bundles/
-node_modules/
-local_settings.py
-db.sqlite3
-scratch/
-media/
-.tox/
-.git/
-.venv/
-.env/
+# first ignore everything
+**/*
+
+# now add things to include
+!./README.md
+!./pyproject.toml
+!./poetry.lock
+!./observation_portal/
+!./manage.py
+
+# but stil ignore the following recursively
 **/*.swp
 **/*.pyc
-**/__pycache__
+**/*__pycache__

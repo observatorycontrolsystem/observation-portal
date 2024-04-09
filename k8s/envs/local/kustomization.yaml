@@ -1,0 +1,70 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base/
+  - ./ns.yaml
+
+namespace: observation-portal
+
+configMapGenerator:
+  - name: env
+    behavior: merge
+    envs:
+      - ./settings.env
+
+secretGenerator:
+  - name: env
+    behavior: merge
+    envs:
+      - ./secrets.env
+
+patches:
+  - target:
+      kind: Deployment
+      name: api
+    patch: |-
+      - op: add
+        path: /spec/template/spec/initContainers/-
+        value:
+          name: create-superuser
+          image: observation-portal
+          command:
+            - python
+            - manage.py
+            - shell
+            - -c
+            - |
+                # Doing this as a custom script for idempotency
+
+                import sys
+
+                from os import environ
+                from django.contrib.auth import get_user_model
+                from observation_portal.accounts.models import Profile
+
+                username = environ.get("DJANGO_SUPERUSER_USERNAME", "admin")
+                email = environ.get("DJANGO_SUPERUSER_EMAIL", "admin@example.invalid")
+                password = environ.get("DJANGO_SUPERUSER_PASSWORD", "admin")
+
+                User = get_user_model()
+                u, _ = User.objects.get_or_create(username=username)
+
+                # Creating a user ends up hitting a bunch of random code-paths (hooks, serializers, cache, oauth, ...)
+                p, _ = Profile.objects.get_or_create(user=u)
+
+                u.email = email
+                u.is_staff = True
+                u.is_superuser = True
+                u.set_password(password)
+
+                p.save()
+                u.save()
+
+          envFrom:
+            - configMapRef:
+                name: env
+                optional: false
+            - secretRef:
+                name: env
+                optional: false
