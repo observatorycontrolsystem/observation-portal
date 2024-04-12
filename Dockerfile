@@ -35,9 +35,6 @@ COPY ./ ./
 # install our app
 RUN pip install .
 
-# collect all static assets into one place: /static
-RUN mkdir -p static && python manage.py collectstatic --noinput
-
 ENV PYTHONUNBUFFERED=1 PYTHONFAULTHANDLER=1
 
 

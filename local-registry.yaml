@@ -1,0 +1,4 @@
+apiVersion: ctlptl.dev/v1alpha1
+kind: Registry
+name: lco-local
+port: 12315

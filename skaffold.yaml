@@ -1,0 +1,51 @@
+apiVersion: skaffold/v4beta10
+kind: Config
+metadata:
+  name: app
+build:
+  tagPolicy:
+    gitCommit:
+      variant: Tags
+  artifacts:
+    - image: observation-portal
+      docker:
+        dockerfile: Dockerfile
+manifests:
+  kustomize:
+    paths:
+      - k8s/envs/local/
+deploy:
+  kubectl: {}
+  logs:
+    prefix: podAndContainer
+---
+
+apiVersion: skaffold/v4beta10
+kind: Config
+metadata:
+  name: deps
+deploy:
+  helm:
+    releases:
+      - name: postgresql
+        remoteChart: oci://registry-1.docker.io/bitnamicharts/postgresql
+        version: 12.12.10
+        namespace: observation-portal-pg
+        createNamespace: true
+        setValues:
+          architecture: standalone
+          primary.persistence.size: 2Gi
+          auth:
+            database: observationportal
+            username: observationportal
+            password: observationportal
+
+      - name: redis
+        remoteChart: oci://registry-1.docker.io/bitnamicharts/redis
+        version: 19.1.0
+        namespace: observation-portal-redis
+        createNamespace: true
+        setValues:
+          architecture: standalone
+          auth.password: observationportal
+          master.persistence.enabled: false
