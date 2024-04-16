@@ -6,7 +6,8 @@ from django.conf import settings
 
 from .models import (
     Instrument, Call, ScienceApplication, TimeRequest, CoInvestigator,
-    NoTimeAllocatedError, MultipleTimesAllocatedError
+    NoTimeAllocatedError, MultipleTimesAllocatedError, ScienceApplicationReviewProcess,
+    ScienceApplicationUserReview
 )
 from observation_portal.proposals.models import Proposal
 from observation_portal.common.utils import get_queryset_field_values
@@ -55,7 +56,6 @@ class ScienceApplicationTagListFilter(admin.SimpleListFilter):
             return queryset.filter(tags__contains=[value])
         else:
             return queryset
-
 
 class ScienceApplicationAdmin(admin.ModelAdmin):
     inlines = [CoInvestigatorInline, TimeRequestAdminInline]
@@ -129,3 +129,25 @@ class ScienceApplicationAdmin(admin.ModelAdmin):
                     return
 
 admin.site.register(ScienceApplication, ScienceApplicationAdmin)
+
+
+class ScienceApplicationUserReviewInline(admin.TabularInline):
+    model = ScienceApplicationUserReview
+    fk_name = "review_process"
+    fields = ["user", "primary", "completed", "grade", "rank"]
+    extra = 0
+    show_change_link = True
+
+
+@admin.register(ScienceApplicationReviewProcess)
+class ScienceApplicationReviewProcessAdmin(admin.ModelAdmin):
+    inlines = [
+        ScienceApplicationUserReviewInline,
+    ]
+
+    list_display = ["science_application"]
+
+
+@admin.register(ScienceApplicationUserReview)
+class ScienceApplicationUserReviewAdmin(admin.ModelAdmin):
+    pass

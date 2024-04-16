@@ -5,11 +5,12 @@ from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import User
 from django.urls import reverse
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy as _
 from django.contrib.postgres.fields import ArrayField
 from django.template.loader import render_to_string
 from django.utils.functional import cached_property
 from django.conf import settings
+from django.db.models import Q
 
 from observation_portal.common.configdb import configdb
 from observation_portal.accounts.tasks import send_mail
@@ -280,3 +281,58 @@ class CoInvestigator(models.Model):
 
     def __str__(self):
         return '{0} {1} <{2}> ({3})'.format(self.first_name, self.last_name, self.email, self.institution)
+
+
+class ScienceApplicationReviewProcess(models.Model):
+    science_application = models.OneToOneField(ScienceApplication, primary_key=True, on_delete=models.CASCADE, related_name="review_process")
+
+    class ScienceCategory(models.TextChoices):
+        EXPLOSIVE_TRANSIENTS = "EXPLOSIVE_TRANSIENTS", _("Explosive Transients")
+        ACTIVE_GALAXIES = "ACTIVE_GALAXIES", _("Active Galaxies")
+        STARS_STELLAR_ACTIVITY = "STARS_STELLAR_ACTIVITY", _("Stars and Stellar Activity")
+        SOLAR_SYSTEM_SMALL_BODIES = "SOLAR_SYSTEM_SMALL_BODIES", _("Solar System Small Bodies")
+        MISCELLANEOUS = "MISC", _("Miscellaneous")
+
+    science_category = models.CharField(choices=ScienceCategory.choices, default=ScienceCategory.MISCELLANEOUS, max_length=255)
+
+    technical_review = models.TextField(blank=True, default="")
+
+    class Status(models.TextChoices):
+        UNDER_REVIEW = "UNDER_REVIEW", _("Under Review")
+        ACCEPTED = "ACCEPTED", _("Accepted")
+        REJECTED = "REJECTED", _("Rejected")
+
+    status = models.CharField(choices=Status.choices, default=Status.UNDER_REVIEW, max_length=255)
+
+    def __str__(self):
+        return f"{self.science_application!s} review"
+
+
+class ScienceApplicationUserReview(models.Model):
+    review_process = models.ForeignKey(ScienceApplicationReviewProcess, on_delete=models.CASCADE, related_name="reviews")
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="sciapplication_reviews")
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["review_process", "user"], name="%(app_label)s_%(class)s_primary_key"),
+            models.UniqueConstraint(
+                fields=["review_process"],
+                condition=Q(primary=True),
+                name="%(app_label)s_%(class)s_is_primary",
+                violation_error_message="Only one user review can be marked as the primary",
+            )
+        ]
+
+    primary = models.BooleanField(default=False)
+
+    comments = models.TextField(blank=True, default="")
+
+    completed = models.BooleanField(default=False)
+
+    grade = models.PositiveSmallIntegerField(blank=True, null=True, default=None)
+
+    rank = models.PositiveSmallIntegerField(blank=True, null=True, default=None)
+
+    def __str__(self):
+        return f"{self.user!s} {self.review_process!s}"
