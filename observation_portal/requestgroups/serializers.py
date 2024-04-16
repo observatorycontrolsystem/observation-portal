@@ -11,6 +11,7 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.cache import cache
 from django.db import transaction
 from django.utils import timezone
+from django.utils.functional import lazy
 from django.utils.module_loading import import_string
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -532,10 +533,19 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
 
 
 class LocationSerializer(serializers.ModelSerializer):
-    site = serializers.ChoiceField(choices=configdb.get_site_tuples(), required=False)
-    enclosure = serializers.ChoiceField(choices=configdb.get_enclosure_tuples(), required=False)
-    telescope = serializers.ChoiceField(choices=configdb.get_telescope_tuples(), required=False)
-    telescope_class = serializers.ChoiceField(choices=configdb.get_telescope_class_tuples(), required=True)
+    site = serializers.ChoiceField(choices=[], required=False)
+    enclosure = serializers.ChoiceField(choices=[], required=False)
+    telescope = serializers.ChoiceField(choices=[], required=False)
+    telescope_class = serializers.ChoiceField(choices=[], required=True)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Can't even make migrations without connecting to ConfigDB :(
+        self.fields["site"].choices = configdb.get_site_tuples()
+        self.fields["enclosure"].choices = configdb.get_enclosure_tuples()
+        self.fields["telescope"].choices = configdb.get_telescope_tuples()
+        self.fields["telescope_class"].choices = configdb.get_telescope_class_tuples()
 
     class Meta:
         model = Location
@@ -601,7 +611,7 @@ class WindowSerializer(serializers.ModelSerializer):
 
 
 class RequestSerializer(serializers.ModelSerializer):
-    location = import_string(settings.SERIALIZERS['requestgroups']['Location'])()
+    location = lazy(lambda: import_string(settings.SERIALIZERS['requestgroups']['Location'])(), object)()
     configurations = import_string(settings.SERIALIZERS['requestgroups']['Configuration'])(many=True)
     windows = import_string(settings.SERIALIZERS['requestgroups']['Window'])(many=True)
     cadence = import_string(settings.SERIALIZERS['requestgroups']['Cadence'])(required=False, write_only=True)

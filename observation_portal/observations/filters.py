@@ -8,9 +8,9 @@ from observation_portal.common import mixins
 
 
 class ObservationFilter(mixins.CustomIsoDateTimeFilterMixin, django_filters.FilterSet):
-    site = django_filters.MultipleChoiceFilter(choices=sorted(configdb.get_site_tuples()))
-    enclosure = django_filters.MultipleChoiceFilter(choices=sorted(configdb.get_enclosure_tuples()))
-    telescope = django_filters.MultipleChoiceFilter(choices=sorted(configdb.get_telescope_tuples()))
+    site = django_filters.MultipleChoiceFilter(choices=lambda: sorted(configdb.get_site_tuples()))
+    enclosure = django_filters.MultipleChoiceFilter(choices=lambda: sorted(configdb.get_enclosure_tuples()))
+    telescope = django_filters.MultipleChoiceFilter(choices=lambda: sorted(configdb.get_telescope_tuples()))
     time_span = django_filters.DateRangeFilter(
         field_name='start',
         label='Time Span'
@@ -72,12 +72,12 @@ class ObservationFilter(mixins.CustomIsoDateTimeFilterMixin, django_filters.Filt
     )
     proposal = django_filters.CharFilter(field_name='request__request_group__proposal__id', label='Proposal')
     instrument_type = django_filters.MultipleChoiceFilter(
-        choices=sorted(configdb.get_instrument_type_tuples()),
+        choices=lambda: sorted(configdb.get_instrument_type_tuples()),
         label='Instrument Type',
         field_name='configuration_statuses__configuration__instrument_type'
     )
     configuration_type = django_filters.MultipleChoiceFilter(
-        choices=sorted(configdb.get_configuration_type_tuples()),
+        choices=lambda: sorted(configdb.get_configuration_type_tuples()),
         label='Configuration Type',
         field_name='configuration_statuses__configuration__type'
     )
@@ -92,9 +92,9 @@ class ObservationFilter(mixins.CustomIsoDateTimeFilterMixin, django_filters.Filt
 
 
 class ConfigurationStatusFilter(django_filters.FilterSet):
-    instrument_name = django_filters.ChoiceFilter(choices=configdb.get_instrument_name_tuples())
+    instrument_name = django_filters.ChoiceFilter(choices=lambda: configdb.get_instrument_name_tuples())
     state = django_filters.MultipleChoiceFilter(choices=ConfigurationStatus.STATE_CHOICES)
-    site = django_filters.ChoiceFilter(choices=configdb.get_site_tuples(), field_name='observation__site')
+    site = django_filters.ChoiceFilter(choices=lambda: configdb.get_site_tuples(), field_name='observation__site')
 
     class Meta:
         model = ConfigurationStatus
@@ -102,7 +102,7 @@ class ConfigurationStatusFilter(django_filters.FilterSet):
 
 
 class LastScheduledFilter(django_filters.FilterSet):
-    site = django_filters.ChoiceFilter(choices=configdb.get_site_tuples(),
+    site = django_filters.ChoiceFilter(choices=lambda: configdb.get_site_tuples(),
                                        label='Site to retrieve last scheduled time for')
 
     class Meta:
