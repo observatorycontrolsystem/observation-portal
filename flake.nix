@@ -41,9 +41,10 @@
 
           # https://devenv.sh/packages/
           packages = [
-            pkgs.python3
+            pkgs.gcc
+            pkgs.gfortran
             pkgs.poetry
-
+            pkgs.python310
           ];
 
           # https://devenv.sh/reference/options/#entershell
@@ -55,6 +56,10 @@
             echo "This is done to sandbox Kuberenetes tools (kubectl, skaffold, etc) to the local K8s cluster for this project."
 
             touch "$DEVENV_ROOT/k8s/envs/local/secrets.env"
+
+            echo
+            poetry env use python3.10
+            poetry shell
           '';
         };
       };
