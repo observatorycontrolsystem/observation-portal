@@ -3,6 +3,7 @@ from django.contrib import admin
 from django.utils.html import format_html_join
 from django.urls import reverse
 from django.conf import settings
+from django.forms.models import ModelForm
 
 from .models import (
     Instrument, Call, ScienceApplication, TimeRequest, CoInvestigator,
@@ -57,8 +58,20 @@ class ScienceApplicationTagListFilter(admin.SimpleListFilter):
         else:
             return queryset
 
+class AlwaysChangedModelForm(ModelForm):
+    def has_changed(self):
+        return True
+
+
+class ScienceApplicationReviewProcessInline(admin.TabularInline):
+    model = ScienceApplicationReviewProcess
+    form = AlwaysChangedModelForm
+    extra = 0
+    show_change_link = True
+
+
 class ScienceApplicationAdmin(admin.ModelAdmin):
-    inlines = [CoInvestigatorInline, TimeRequestAdminInline]
+    inlines = [CoInvestigatorInline, TimeRequestAdminInline, ScienceApplicationReviewProcessInline]
     list_display = (
         'title',
         'call',
