@@ -47,7 +47,7 @@ class Profile(models.Model):
         try:
             app = Application.objects.get(name='Archive')
         except Application.DoesNotExist:
-            logger.error('Archive application not found. Oauth applications need to be populated.')
+            logger.warn('Archive application not found. Oauth applications need to be populated.')
             return ''
         access_token = AccessToken.objects.filter(user=self.user, application=app, expires__gt=timezone.now()).last()
         if not access_token:
