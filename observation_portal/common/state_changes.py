@@ -59,7 +59,7 @@ def on_configuration_status_state_change(instance):
     if instance.observation.state not in TERMINAL_OBSERVATION_STATES:
         update_observation_state(instance.observation)
 
-    if instance.observation.request.request_group.observation_type == RequestGroup.DIRECT:
+    if instance.observation.request.request_group.observation_type in RequestGroup.NON_SCHEDULED_TYPES:
         request_group_is_expired = False
     else:
         request_group_is_expired = instance.observation.request.request_group.max_window_time < timezone.now()
@@ -321,7 +321,7 @@ def update_request_states_for_window_expiration():
     any_states_changed = False
     for request_group in RequestGroup.objects.exclude(state__in=TERMINAL_REQUEST_STATES):
         request_states_changed = False
-        if request_group.observation_type != RequestGroup.DIRECT:
+        if request_group.observation_type not in RequestGroup.NON_SCHEDULED_TYPES:
             for request in request_group.requests.filter(state='PENDING').prefetch_related('windows'):
                 request_state_changed = False
                 if request.max_window_time < now:
@@ -338,7 +338,7 @@ def update_request_states_for_window_expiration():
             for request in request_group.requests.all().prefetch_related('observation_set'):
                 request_state_changed = False
                 if request.observation_set.first().end < now:
-                    logger.info(f'Expiring DIRECT request {request.id}', extra={'tags': {'request_num': request.id}})
+                    logger.info(f'Expiring Non-scheduled request {request.id}', extra={'tags': {'request_num': request.id}})
                     with transaction.atomic():
                         if Request.objects.select_for_update().filter(pk=request.id, state='PENDING').update(
                                 state='WINDOW_EXPIRED', modified=timezone.now()):

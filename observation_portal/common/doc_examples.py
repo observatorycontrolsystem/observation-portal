@@ -622,7 +622,32 @@ EXAMPLE_RESPONSES = {
                     "submitter": "ellie_arroway",
                     "name": "test_observation",
                     "ipp_value": 1.05,
-                    "observation_type": "NORMAL",
+                    "observation_type": "DIRECT",
+                    "request_group_id": 1350420,
+                    "created": "2022-01-19T02:02:57.875036Z",
+                    "modified": "2022-01-19T02:02:57.875028Z",
+                }
+            ]
+        },
+        "list_real_time": {
+            "results": [
+                {
+                    "id": 333978933,
+                    "request": {
+                        "id": 234521234,
+                    },
+                    "site": "mba",
+                    "enclosure": "clma",
+                    "telescope": "2m0a",
+                    "start": "2022-01-19T12:25:00Z",
+                    "end": "2022-01-19T15:24:59Z",
+                    "priority": 10,
+                    "state": "PENDING",
+                    "proposal": "PROPOSAL-A-2021",
+                    "submitter": "ellie_arroway",
+                    "name": "test_observation",
+                    "ipp_value": 1.05,
+                    "observation_type": "REAL_TIME",
                     "request_group_id": 1350420,
                     "created": "2022-01-19T02:02:57.875036Z",
                     "modified": "2022-01-19T02:02:57.875028Z",

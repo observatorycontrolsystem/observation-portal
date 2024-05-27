@@ -49,6 +49,26 @@ def observations_queryset(request):
     ).distinct()
 
 
+class RealTimeViewSet(CreateListModelMixin, viewsets.ModelViewSet):
+    permission_classes = (IsAdminUser,)
+    http_method_names = ['post',]
+    serializer_class = import_string(settings.SERIALIZERS['observations']['RealTime'])
+    schema = ObservationPortalSchema(tags=['Observations'])
+
+    def create(self, request, *args, **kwargs):
+        """ This sets the last scheduled time on a site when any directly submitted request is submitted for that site
+        """
+        cache_key = 'observation_portal_last_schedule_time'
+        created_obs = super().create(request, args, kwargs)
+        sites = get_sites_from_request(request)
+        for site in sites:
+            cache.set(f"{cache_key}_{site}", timezone.now(), None)
+        return created_obs
+
+    def get_example_response(self):
+        return {'list': Response(EXAMPLE_RESPONSES['observations']['list_real_time'], status=200)}.get(self.action)
+
+
 class ScheduleViewSet(ListAsDictMixin, CreateListModelMixin, viewsets.ModelViewSet):
     permission_classes = (IsAdminOrReadOnly | IsDirectUser,)
     http_method_names = ['get', 'post', 'head', 'options']
@@ -147,7 +167,7 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
                 observations = observations.exclude(
                     request__request_group__observation_type=RequestGroup.RAPID_RESPONSE)
             if not request_serializer.data.get('include_direct', False):
-                observations = observations.exclude(request__request_group__observation_type=RequestGroup.DIRECT)
+                observations = observations.exclude(request__request_group__observation_type__in=RequestGroup.NON_SCHEDULED_TYPES)
             if request.user and not request.user.is_staff:
                 observations = observations.filter(request__request_group__proposal__direct_submission=True)
             # First check if we have an in_progress observation that overlaps with the time range and resource.

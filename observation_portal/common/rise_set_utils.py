@@ -333,3 +333,45 @@ def get_site_rise_set_intervals(start, end, site_code):
         return v.get_dark_intervals()
 
     return []
+
+
+def is_interval_available_for_telescope(start: datetime, end: datetime, site: str, enclosure: str, telescope: str) -> bool:
+    """Returns a boolean if the start/end interval is available at the given telescope
+       Takes downtime and dark intervals into account
+
+    Parameters:
+        start: The start time
+        end: The end time
+        site: The site code
+        enclosure: The enclosure code
+        telescope: The telescope code
+    Returns:
+        boolean True if the interval is available, False if it fails.
+    """
+    filtered_dark_intervalset = filtered_dark_intervalset_for_telescope(start, end, site, enclosure, telescope)
+    desired_interval = Intervals([(start, end)])
+    intersected_interval = filtered_dark_intervalset.intersect([desired_interval])
+    return intersected_interval.get_total_time() == desired_interval.get_total_time()
+
+
+def filtered_dark_intervalset_for_telescope(start: datetime, end: datetime, site: str, enclosure: str, telescope: str) -> Intervals:
+    """Returns downtime filtered dark intervals for the given telescope in the time range
+
+    Parameters:
+        start: The start time
+        end: The end time
+        site: The site code
+        enclosure: The enclosure code
+        telescope: The telescope code
+    Returns:
+        rise_set intervals with downtimes filtered out for that telescope
+    """
+    resource = '.'.join([telescope, enclosure, site])
+    dark_intervals = get_site_rise_set_intervals(start, end, site)
+    dark_intervalset = intervals_by_site_to_intervalsets_by_telescope({site: dark_intervals}, [resource,])
+    downtime_intervals = DowntimeDB.get_downtime_intervals()
+    filtered_intervalset = dark_intervalset[resource]
+    if resource in downtime_intervals:
+        for intervals in downtime_intervals[resource].values():
+            filtered_intervalset = filtered_intervalset.subtract(intervals)
+    return filtered_intervalset

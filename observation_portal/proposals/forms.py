@@ -43,7 +43,7 @@ class TimeAllocationForm(forms.ModelForm):
                 'requests', 'requests__windows', 'requests__configurations'
             )
             for requestgroup in requestgroups:
-                if requestgroup.observation_type != RequestGroup.DIRECT:
+                if requestgroup.observation_type not in RequestGroup.NON_SCHEDULED_TYPES:
                     for request in requestgroup.requests.all():
                         for tak in request.time_allocation_keys:
                             if (tak.instrument_type in self.instance.instrument_types and
@@ -78,7 +78,7 @@ class TimeAllocationFormSet(forms.models.BaseInlineFormSet):
                     'requests', 'requests__windows', 'requests__configurations'
                 )
                 for requestgroup in requestgroups:
-                    if requestgroup.observation_type != RequestGroup.DIRECT:
+                    if requestgroup.observation_type not in RequestGroup.NON_SCHEDULED_TYPES:
                         for request in requestgroup.requests.all():
                             for tak in request.time_allocation_keys:
                                 if (tak.instrument_type in form.cleaned_data.get('instrument_types') and

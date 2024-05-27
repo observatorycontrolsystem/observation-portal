@@ -61,7 +61,7 @@ class DowntimeDB(object):
         ''' Returns dictionary of IntervalSets of downtime intervals per telescope resource and per instrument_type or "all".
             Caches the data and will attempt to update the cache every 15 minutes, but fallback on using previous downtime list otherwise.
         '''
-        downtime_intervals = caches['locmem'].get('downtime_intervals', [])
+        downtime_intervals = caches['locmem'].get('downtime_intervals', {})
         if not downtime_intervals:
             # If the cache has expired, attempt to update the downtime intervals
             try:
@@ -70,7 +70,7 @@ class DowntimeDB(object):
                 caches['locmem'].set('downtime_intervals', downtime_intervals, 900)
                 caches['locmem'].set('downtime_intervals.no_expire', downtime_intervals)
             except DowntimeDBException as e:
-                downtime_intervals = caches['locmem'].get('downtime_intervals.no_expire', [])
+                downtime_intervals = caches['locmem'].get('downtime_intervals.no_expire', {})
                 logger.warning(repr(e))
 
         return downtime_intervals

@@ -15,7 +15,7 @@ def on_summary_update_time_accounting(current, instance):
     """ Whenever a summary is created or updated, do time accounting based on the completed time """
     observation_type = instance.configuration_status.observation.request.request_group.observation_type
     # No time accounting is done for Direct submitted observations
-    if observation_type == RequestGroup.DIRECT:
+    if observation_type in RequestGroup.NON_SCHEDULED_TYPES:
         return
 
     current_config_time = timedelta(seconds=0)

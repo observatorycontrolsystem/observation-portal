@@ -767,7 +767,7 @@ class RequestGroupSerializer(serializers.ModelSerializer):
                 windows_data = r.pop('windows', [])
                 request = Request.objects.create(request_group=request_group, **r)
 
-                if validated_data['observation_type'] != RequestGroup.DIRECT:
+                if validated_data['observation_type'] not in RequestGroup.NON_SCHEDULED_TYPES:
                     Location.objects.create(request=request, **location_data)
                     for window_data in windows_data:
                         Window.objects.create(request=request, **window_data)
@@ -848,13 +848,13 @@ class RequestGroupSerializer(serializers.ModelSerializer):
                     _('This request\'s duration will exceed the time limit set for your account on this proposal.')
                 )
 
-        if data['observation_type'] == RequestGroup.DIRECT:
+        if data['observation_type'] in RequestGroup.NON_SCHEDULED_TYPES:
             # Don't do any time accounting stuff if it is a directly scheduled observation
             return data
         else:
             for request in data['requests']:
                 for config in request['configurations']:
-                    # for non-DIRECT observations, don't allow HOUR_ANGLE targets (they're not supported in rise-set yet)
+                    # for scheduled observations, don't allow HOUR_ANGLE targets (they're not supported in rise-set yet)
                     if config['target']['type'] == 'HOUR_ANGLE':
                         raise serializers.ValidationError(_('HOUR_ANGLE Target type not supported in scheduled observations'))
 

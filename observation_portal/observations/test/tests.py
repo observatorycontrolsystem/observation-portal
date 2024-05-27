@@ -23,6 +23,17 @@ import observation_portal.observations.signals.handlers  # noqa
 from unittest.mock import patch
 import copy
 
+realtime = {
+    "proposal": "auto_focus",
+    "observation_type": "REAL_TIME",
+    "name": "Test Real Time",
+    "site": "tst",
+    "enclosure": "domb",
+    "telescope": "1m0a",
+    "start": "2016-09-05T22:35:39Z",
+    "end": "2016-09-05T23:35:40Z"
+}
+
 observation = {
     "request": {
         "configurations": [
@@ -413,6 +424,135 @@ class TestPostScheduleMultiConfigApi(SetTimeMixin, APITestCase):
 
         response = self.client.post(reverse('api:schedule-list'), data=bad_observation)
         self.assertEqual(response.status_code, 400)
+
+
+class TestPostRealTimeApi(SetTimeMixin, APITestCase):
+    def setUp(self):
+        super().setUp()
+        self.proposal = mixer.blend(Proposal, direct_submission=True, active=True)
+        self.user = blend_user(
+            user_params={'is_admin': True, 'is_superuser': True, 'is_staff': True},
+            profile_params={'staff_view': True})
+        self.submitter_user = blend_user(user_params={'is_admin': False, 'is_superuser': False, 'is_staff': False})
+        self.client.force_login(self.user)
+        self.semester = mixer.blend(
+            Semester, id='2016B', start=datetime(2016, 9, 1, tzinfo=timezone.utc),
+            end=datetime(2016, 12, 31, tzinfo=timezone.utc)
+        )
+
+        self.membership = mixer.blend(Membership, user=self.submitter_user, proposal=self.proposal)
+        self.observation = copy.deepcopy(realtime)
+        self.observation['proposal'] = self.proposal.id
+        self.observation['submitter'] = self.submitter_user.username
+
+    def test_post_realtime_observation_succeeds(self):
+        response = self.client.post(reverse('api:realtime-list'), data=self.observation)
+        self.assertEqual(response.status_code, 201)
+        # Check here that the submitter is who we said it should be, not who submits it
+        self.assertEqual(response.json()['submitter'], self.observation['submitter'])
+        self.assertEqual(response.json()['observation_type'], self.observation['observation_type'])
+        self.assertEqual(response.json()['name'], self.observation['name'])
+
+    def test_post_realtime_user_not_on_proposal(self):
+        proposal = mixer.blend(Proposal, direct_submission=True, active=True)
+        mixer.blend(Membership, user=self.user, proposal=proposal)
+        bad_observation = copy.deepcopy(self.observation)
+        bad_observation['proposal'] = proposal.id
+        response = self.client.post(reverse('api:realtime-list'), data=bad_observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('is not a member of proposal', str(response.content))
+
+    def test_post_realtime_proposal_not_active(self):
+        inactive_proposal = mixer.blend(Proposal, direct_submission=True, active=False)
+        mixer.blend(Membership, user=self.submitter_user, proposal=inactive_proposal)
+        bad_observation = copy.deepcopy(self.observation)
+        bad_observation['proposal'] = inactive_proposal.id
+        response = self.client.post(reverse('api:realtime-list'), data=bad_observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('is not active', str(response.content))
+
+    def test_post_realtime_proposal_does_not_exist(self):
+        bad_observation = copy.deepcopy(self.observation)
+        bad_observation['proposal'] = 'fakeProposal'
+        response = self.client.post(reverse('api:realtime-list'), data=bad_observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Proposal fakeProposal does not exist', str(response.content))
+
+    def test_post_realtime_submitter_does_not_exist(self):
+        bad_observation = copy.deepcopy(self.observation)
+        bad_observation['submitter'] = 'fakeUser'
+        response = self.client.post(reverse('api:realtime-list'), data=bad_observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('User with username fakeUser does not exist', str(response.content))
+
+    def test_post_telescope_does_not_exist(self):
+        bad_observation = copy.deepcopy(self.observation)
+        bad_observation['site'] = 'lco'
+        response = self.client.post(reverse('api:realtime-list'), data=bad_observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('No instruments found at lco.domb.1m0a', str(response.content))
+
+    def test_observation_has_no_configurations(self):
+        response = self.client.post(reverse('api:realtime-list'), data=self.observation)
+        self.assertEqual(response.status_code, 201)
+        observation = Observation.objects.first().as_dict()
+
+        response = self.client.get(reverse('api:schedule-list'))
+        self.assertEqual(response.json()['count'], 1)
+        test_obs1 = response.json()['results'][0]
+        self.assertEqual(observation['id'], test_obs1['id'])
+        self.assertEqual(observation['request']['configurations'], test_obs1['request']['configurations'])
+
+        response = self.client.get(reverse('api:observations-list'))
+        self.assertEqual(response.json()['count'], 1)
+        test_obs2 = response.json()['results'][0]
+        self.assertEqual(observation['id'], test_obs2['id'])
+        self.assertEqual(observation['request']['configurations'], test_obs2['request']['configurations'])
+
+    def test_post_realtime_rejected_during_daytime(self):
+        bad_observation = copy.deepcopy(self.observation)
+        bad_observation['start'] = "2016-09-05T12:35:39Z"
+        bad_observation['end'] = "2016-09-05T13:35:39Z"
+        response = self.client.post(reverse('api:realtime-list'), data=bad_observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('The desired interval', str(response.content))
+
+    def test_post_realtime_rejected_during_daytime_overlapping(self):
+        bad_observation = copy.deepcopy(self.observation)
+        bad_observation['start'] = "2016-09-05T16:35:39Z"
+        bad_observation['end'] = "2016-09-05T18:35:39Z"
+        response = self.client.post(reverse('api:realtime-list'), data=bad_observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('The desired interval', str(response.content))
+
+    @patch('observation_portal.common.downtimedb.DowntimeDB._get_downtime_data')
+    def test_post_realtime_rejected_due_to_downtime_during_interval(self, downtime_data):
+        downtime_data.return_value = [{'start': '2016-09-05T23:00:00Z',
+                                       'end': '2016-09-05T23:10:00Z',
+                                       'site': 'tst',
+                                       'enclosure': 'domb',
+                                       'telescope': '1m0a',
+                                       'instrument_type': '',
+                                       'reason': 'Whatever'},
+                                      ]
+        bad_observation = copy.deepcopy(self.observation)
+        response = self.client.post(reverse('api:realtime-list'), data=bad_observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('The desired interval', str(response.content))
+
+    @patch('observation_portal.common.downtimedb.DowntimeDB._get_downtime_data')
+    def test_post_realtime_accepted_with_nonoverlapping_downtime(self, downtime_data):
+        downtime_data.return_value = [{'start': '2016-09-05T21:00:00Z',
+                                       'end': '2016-09-05T22:10:00Z',
+                                       'site': 'tst',
+                                       'enclosure': 'domb',
+                                       'telescope': '1m0a',
+                                       'instrument_type': '',
+                                       'reason': 'Whatever'},
+                                      ]
+        good_observation = copy.deepcopy(self.observation)
+        response = self.client.post(reverse('api:realtime-list'), data=good_observation)
+        self.assertEqual(response.status_code, 201)
 
 
 class TestObservationApiBase(SetTimeMixin, APITestCase):

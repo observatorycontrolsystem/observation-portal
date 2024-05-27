@@ -96,7 +96,7 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
         queryset = RequestGroup.objects.exclude(
             state__in=TERMINAL_REQUEST_STATES
         ).exclude(
-            observation_type=RequestGroup.DIRECT
+            observation_type__in=RequestGroup.NON_SCHEDULED_TYPES
         ).filter(
             requests__windows__start__lte=end,
             requests__windows__start__gte=start,

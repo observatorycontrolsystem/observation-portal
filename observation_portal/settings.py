@@ -338,6 +338,7 @@ SERIALIZERS = {
         'Request': os.getenv('OBSERVATIONS_REQUEST_SERIALIZER', 'observation_portal.observations.serializers.ObserveRequestSerializer'),
         'RequestGroup': os.getenv('OBSERVATIONS_REQUESTGROUP_SERIALIZER', 'observation_portal.observations.serializers.ObserveRequestGroupSerializer'),
         'Schedule': os.getenv('OBSERVATIONS_SCHEDULE_SERIALIZER', 'observation_portal.observations.serializers.ScheduleSerializer'),
+        'RealTime': os.getenv('OBSERVATIONS_REALTIME_SERIALIZER', 'observation_portal.observations.serializers.RealTimeSerializer'),
         'Observation': os.getenv('OBSERVATIONS_OBSERVATION_SERIALIZER', 'observation_portal.observations.serializers.ObservationSerializer'),
         'Cancel': os.getenv('OBSERVATIONS_CANCEL_SERIALIZER', 'observation_portal.observations.serializers.CancelObservationsSerializer'),
         'CancelResponse': os.getenv('OBSERVATIONS_CANCEL_RESPONSE_SERIALIZER', 'observation_portal.observations.serializers.CancelObservationsResponseSerializer'),
