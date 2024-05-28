@@ -8,7 +8,87 @@ from PyPDF2 import PdfFileReader
 from PyPDF2.utils import PdfReadError
 from rest_framework import serializers
 
-from observation_portal.sciapplications.models import ScienceApplication, Call, TimeRequest, CoInvestigator, Instrument
+from observation_portal.sciapplications.models import (
+    ScienceApplication,
+    Call,
+    TimeRequest,
+    CoInvestigator,
+    Instrument,
+    ScienceApplicationReviewProcess,
+    ScienceApplicationUserReview,
+)
+
+
+class ScienceApplicationUserReviewNestedSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ScienceApplicationUserReview
+        fields = ["id", "primary", "comments", "completed", "grade"]
+
+
+class ScienceApplicationReviewProcessSerializer(serializers.ModelSerializer):
+    title = serializers.SerializerMethodField()
+    semester = serializers.SerializerMethodField()
+    abstract = serializers.SerializerMethodField()
+    pdf_url = serializers.SerializerMethodField()
+    completed = serializers.SerializerMethodField()
+    mean_grade = serializers.SerializerMethodField()
+    is_authenticated_user_primary = serializers.SerializerMethodField()
+    reviews = ScienceApplicationUserReviewNestedSerializer(read_only=True, many=True)
+
+    class Meta:
+        model = ScienceApplicationReviewProcess
+        fields = ["id", "title", "semester", "abstract", "pdf_url", "completed", "mean_grade", "is_authenticated_user_primary", "reviews", "science_category", "technical_review", "status", "summary"]
+        read_only_fields = ["science_category", "technical_review", "status", "reviews"]
+
+    def get_title(self, obj):
+        return obj.science_application.title
+
+    def get_semester(self, obj):
+        return obj.science_application.call.semester.id
+
+    def get_abstract(self, obj):
+        return obj.science_application.abstract
+
+    def get_pdf_url(self, obj):
+        try:
+            return obj.science_application.pdf.url
+        except Exception:
+            return None
+
+    def get_completed(self, obj):
+        return all(x.completed for x in obj.reviews.all())
+
+    def get_mean_grade(self, obj):
+        grades = [x.grade for x in obj.reviews.all() if x.grade is not None]
+
+        if len(grades) == 0:
+            return None
+
+        return str(sum(grades) / len(grades))
+
+    def get_is_authenticated_user_primary(self, obj):
+        primary_review = obj.reviews.filter(primary=True).first()
+        if primary_review == None:
+            return False
+
+        return bool(primary_review.user == self.context["request"].user)
+
+class ScienceApplicationReviewProcessNestedSerializer(ScienceApplicationReviewProcessSerializer):
+
+    class Meta:
+        model = ScienceApplicationReviewProcess
+        fields = ["id", "title", "semester", "abstract", "pdf_url", "completed", "mean_grade", "science_category", "technical_review", "status", "summary"]
+        read_only_fields = ["science_category", "technical_review", "status"]
+
+
+class ScienceApplicationUserReviewSerializer(serializers.ModelSerializer):
+    review_process = ScienceApplicationReviewProcessNestedSerializer(read_only=True)
+
+    class Meta:
+        model = ScienceApplicationUserReview
+        fields = ["id", "review_process", "primary", "comments", "completed", "grade"]
+        read_only_fields = ["primary"]
 
 
 class CallSerializer(serializers.ModelSerializer):

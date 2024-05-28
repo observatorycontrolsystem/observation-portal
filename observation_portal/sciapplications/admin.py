@@ -63,7 +63,7 @@ class AlwaysChangedModelForm(ModelForm):
         return True
 
 
-class ScienceApplicationReviewProcessInline(admin.TabularInline):
+class ScienceApplicationReviewProcessInline(admin.StackedInline):
     model = ScienceApplicationReviewProcess
     form = AlwaysChangedModelForm
     extra = 0
@@ -147,7 +147,8 @@ admin.site.register(ScienceApplication, ScienceApplicationAdmin)
 class ScienceApplicationUserReviewInline(admin.TabularInline):
     model = ScienceApplicationUserReview
     fk_name = "review_process"
-    fields = ["user", "primary", "completed", "grade", "rank"]
+    fields = ["user", "primary", "completed", "grade"]
+    autocomplete_fields = ["user"]
     extra = 0
     show_change_link = True
 
@@ -158,9 +159,18 @@ class ScienceApplicationReviewProcessAdmin(admin.ModelAdmin):
         ScienceApplicationUserReviewInline,
     ]
 
-    list_display = ["science_application"]
+    list_display = ["science_application", "science_category", "status"]
+    list_filter = ["status", "science_category"]
+    search_fields = ["science_application__title"]
+    autocomplete_fields = ["science_application"]
 
 
 @admin.register(ScienceApplicationUserReview)
 class ScienceApplicationUserReviewAdmin(admin.ModelAdmin):
-    pass
+    list_display = ["get_science_application", "user", "primary", "completed", "grade"]
+    list_filter = ["primary", "completed",]
+    autocomplete_fields = ["review_process", "user"]
+
+    @admin.display(description="Application")
+    def get_science_application(self, obj):
+        return obj.review_process.science_application

@@ -284,7 +284,7 @@ class CoInvestigator(models.Model):
 
 
 class ScienceApplicationReviewProcess(models.Model):
-    science_application = models.OneToOneField(ScienceApplication, primary_key=True, on_delete=models.CASCADE, related_name="review_process")
+    science_application = models.OneToOneField(ScienceApplication, on_delete=models.CASCADE, related_name="review_process")
 
     class ScienceCategory(models.TextChoices):
         EXPLOSIVE_TRANSIENTS = "EXPLOSIVE_TRANSIENTS", _("Explosive Transients")
@@ -304,6 +304,8 @@ class ScienceApplicationReviewProcess(models.Model):
 
     status = models.CharField(choices=Status.choices, default=Status.UNDER_REVIEW, max_length=255)
 
+    summary = models.TextField(blank=True, default="")
+
     def __str__(self):
         return f"{self.science_application!s} review"
 
@@ -312,6 +314,14 @@ class ScienceApplicationUserReview(models.Model):
     review_process = models.ForeignKey(ScienceApplicationReviewProcess, on_delete=models.CASCADE, related_name="reviews")
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="sciapplication_reviews")
+
+    primary = models.BooleanField(default=False)
+
+    comments = models.TextField(blank=True, default="")
+
+    completed = models.BooleanField(default=False)
+
+    grade = models.DecimalField(blank=True, null=True, default=None, max_digits=4, decimal_places=2)
 
     class Meta:
         constraints = [
@@ -324,15 +334,6 @@ class ScienceApplicationUserReview(models.Model):
             )
         ]
 
-    primary = models.BooleanField(default=False)
-
-    comments = models.TextField(blank=True, default="")
-
-    completed = models.BooleanField(default=False)
-
-    grade = models.PositiveSmallIntegerField(blank=True, null=True, default=None)
-
-    rank = models.PositiveSmallIntegerField(blank=True, null=True, default=None)
 
     def __str__(self):
         return f"{self.user!s} {self.review_process!s}"
