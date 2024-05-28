@@ -426,7 +426,7 @@ class TestPostScheduleMultiConfigApi(SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 400)
 
 
-class TestPostRealTimeApi(SetTimeMixin, APITestCase):
+class TestRealTimeApi(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
         self.proposal = mixer.blend(Proposal, direct_submission=True, active=True)
@@ -452,6 +452,24 @@ class TestPostRealTimeApi(SetTimeMixin, APITestCase):
         self.assertEqual(response.json()['submitter'], self.observation['submitter'])
         self.assertEqual(response.json()['observation_type'], self.observation['observation_type'])
         self.assertEqual(response.json()['name'], self.observation['name'])
+
+    def test_delete_realtime_observation_succeeds(self):
+        response = self.client.post(reverse('api:realtime-list'), data=self.observation)
+        self.assertEqual(response.status_code, 201)
+        observation_id = response.json()['id']
+        Observation.objects.get(id=observation_id)
+        request_group_id = response.json()['request_group_id']
+        RequestGroup.objects.get(id=request_group_id)
+        response = self.client.delete(reverse('api:realtime-detail', args=(observation_id,)))
+        self.assertEqual(response.status_code, 204)
+        with self.assertRaises(Observation.DoesNotExist):
+            Observation.objects.get(id=observation_id)
+        with self.assertRaises(RequestGroup.DoesNotExist):
+            RequestGroup.objects.get(id=request_group_id)
+
+    def test_delete_nonexistent_observation(self):
+        response = self.client.delete(reverse('api:realtime-detail', args=(12345,)))
+        self.assertEqual(response.status_code, 404)
 
     def test_post_realtime_user_not_on_proposal(self):
         proposal = mixer.blend(Proposal, direct_submission=True, active=True)

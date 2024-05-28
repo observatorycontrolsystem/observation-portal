@@ -3,6 +3,7 @@ from rest_framework.permissions import IsAdminUser
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
+from rest_framework.authtoken.models import Token
 from django.core.cache import cache
 from django.utils import timezone
 from django.utils.module_loading import import_string
@@ -16,6 +17,11 @@ from observation_portal.common.mixins import ListAsDictMixin, CreateListModelMix
 from observation_portal.accounts.permissions import IsAdminOrReadOnly, IsDirectUser
 from observation_portal.common.schema import ObservationPortalSchema
 from observation_portal.common.doc_examples import EXAMPLE_RESPONSES
+from observation_portal.common.downtimedb import DowntimeDB
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def get_sites_from_request(request):
@@ -51,9 +57,47 @@ def observations_queryset(request):
 
 class RealTimeViewSet(CreateListModelMixin, viewsets.ModelViewSet):
     permission_classes = (IsAdminUser,)
-    http_method_names = ['post',]
+    http_method_names = ['post', 'delete']
     serializer_class = import_string(settings.SERIALIZERS['observations']['RealTime'])
     schema = ObservationPortalSchema(tags=['Observations'])
+
+    def get_queryset(self):
+        return Observation.objects.all()
+
+    def perform_create(self, serializer):
+        """ This creates the associated downtime block after the observation is created,
+            using its observation id as the downtime reason
+        """
+        observation = serializer.save()
+        downtime = {
+            'site': observation.site,
+            'enclosure': observation.enclosure,
+            'telescope': observation.telescope,
+            'start': observation.start.isoformat(),
+            'end': observation.end.isoformat(),
+            'reason': str(observation.id)
+        }
+        try:
+            auth_token = Token.objects.get(user=self.request.user)
+            headers = {'Authorization': f'Token {auth_token.key}'}
+            DowntimeDB.create_downtime_interval(headers=headers, downtime=downtime)
+        except Token.DoesNotExist:
+            logger.warning("Failed to retrieve token for realtime submission user. This should not happen.")
+
+    def perform_destroy(self, instance):
+        """ This destroys the associated downtime and also the associated request and request group
+        """
+        try:
+            auth_token = Token.objects.get(user=self.request.user)
+            headers = {'Authorization': f'Token {auth_token.key}'}
+            DowntimeDB.delete_downtime_interval(headers=headers, site=instance.site, enclosure=instance.enclosure,
+                                                telescope=instance.telescope, observation_id=instance.id)
+        except Token.DoesNotExist:
+            logger.warning("Failed to retrieve token for realtime deletion user. This should not happen.")
+
+        rg = instance.request.request_group
+        instance.delete()
+        rg.delete()
 
     def create(self, request, *args, **kwargs):
         """ This sets the last scheduled time on a site when any directly submitted request is submitted for that site
