@@ -59,6 +59,7 @@ class ObservationFilter(mixins.CustomIsoDateTimeFilterMixin, django_filters.Filt
     )
     request_id = django_filters.NumberFilter(field_name='request__id')
     request_group_id = django_filters.NumberFilter(field_name='request__request_group__id', label='Request Group ID')
+    user = django_filters.CharFilter(field_name='request__request_group__submitter__username', lookup_expr='exact', label='Username exact')
     state = django_filters.MultipleChoiceFilter(choices=Observation.STATE_CHOICES, field_name='state')
     observation_type = django_filters.MultipleChoiceFilter(
         choices=RequestGroup.OBSERVATION_TYPES,
