@@ -5,7 +5,7 @@ from django.db.models import F
 from observation_portal.requestgroups.duration_utils import get_configuration_duration
 from observation_portal.requestgroups.models import RequestGroup
 from observation_portal.common.configdb import configdb
-from observation_portal.proposals.models import TimeAllocation
+from observation_portal.proposals.models import TimeAllocation, Semester
 
 
 logger = logging.getLogger()
@@ -85,6 +85,7 @@ def refund_configuration_status_time(configuration_status, percentage_refund):
         return abs(time_difference)
     return 0.0
 
+
 def configuration_time_used(summary, observation_type):
     """ Calculates the observation bounded time completed for time accounting purposes """
     configuration_time = timedelta(seconds=0)
@@ -99,3 +100,44 @@ def configuration_time_used(summary, observation_type):
         configuration_time = min(configuration_time, base_duration)
 
     return configuration_time
+
+
+def realtime_time_available(instrument_types, proposal):
+    """ Returns the (max) realtime time available on the proposal given a set of
+        potential instrument_types. The instrument_types are really just a standin for
+        the telescope, since real time blocks are per telescope and block the whole telescope.
+    """
+    realtime_available = 0.0
+    for ta in proposal.timeallocation_set.filter(semester=Semester.current_semesters().first()):
+        for instrument_type in ta.instrument_types:
+            if instrument_type.upper() in instrument_types:
+                # Just return the max time allocation available since its possible to have multiple that match
+                realtime_available = max(realtime_available, ta.realtime_allocation - ta.realtime_time_used)
+                continue
+    return realtime_available
+
+
+def debit_realtime_time_allocation(site, enclosure, telescope, proposal, hours):
+    """ Attempts to debit the largest suitable time allocation for a real time observation
+        If hours is negative, it will act as a credit rather than a debit.
+    """
+    allowable_instruments = configdb.get_instruments_at_location(
+        site, enclosure, telescope
+    )
+    instrument_types = allowable_instruments.get('types')
+    max_time_allocation = None
+    max_time_available = 0.0
+    for ta in proposal.timeallocation_set.filter(semester=Semester.current_semesters().first()):
+        for instrument_type in ta.instrument_types:
+            if instrument_type.upper() in instrument_types:
+                time_available = ta.realtime_allocation - ta.realtime_time_used
+                if time_available > max_time_available:
+                    max_time_available = time_available
+                    max_time_allocation = ta
+                continue
+    if max_time_allocation:
+        # If hours is negative, make sure we don't go below 0 time used
+        max_time_allocation.realtime_time_used = max(max_time_allocation.realtime_time_used + hours, 0.0)
+        max_time_allocation.save()
+    else:
+        logger.warning(f"Failed to find a time allocation to debit for RealTime submission on proposal {proposal.id} and telescope {telescope}.{enclosure}.{site}")

@@ -433,29 +433,45 @@ class TestRealTimeApi(SetTimeMixin, APITestCase):
         self.user = blend_user(
             user_params={'is_admin': True, 'is_superuser': True, 'is_staff': True},
             profile_params={'staff_view': True})
-        self.submitter_user = blend_user(user_params={'is_admin': False, 'is_superuser': False, 'is_staff': False})
-        self.client.force_login(self.user)
+        self.nonstaff_user = blend_user(user_params={'is_admin': False, 'is_superuser': False, 'is_staff': False})
+        self.client.force_login(self.nonstaff_user)
         self.semester = mixer.blend(
             Semester, id='2016B', start=datetime(2016, 9, 1, tzinfo=timezone.utc),
             end=datetime(2016, 12, 31, tzinfo=timezone.utc)
         )
-
-        self.membership = mixer.blend(Membership, user=self.submitter_user, proposal=self.proposal)
+        self.ta = mixer.blend(TimeAllocation, proposal=self.proposal, semester=self.semester, realtime_allocation=10.0, instrument_types=['1M0-SCICAM-SBIG',])
+        self.membership = mixer.blend(Membership, user=self.nonstaff_user, proposal=self.proposal)
         self.observation = copy.deepcopy(realtime)
         self.observation['proposal'] = self.proposal.id
-        self.observation['submitter'] = self.submitter_user.username
 
-    def test_post_realtime_observation_succeeds(self):
+    def test_post_realtime_observation_succeeds_with_nonstaff_user(self):
         response = self.client.post(reverse('api:realtime-list'), data=self.observation)
         self.assertEqual(response.status_code, 201)
-        # Check here that the submitter is who we said it should be, not who submits it
-        self.assertEqual(response.json()['submitter'], self.observation['submitter'])
+        self.assertEqual(response.json()['submitter'], self.nonstaff_user.username)
+        self.assertEqual(response.json()['observation_type'], self.observation['observation_type'])
+        self.assertEqual(response.json()['name'], self.observation['name'])
+        # Make sure time is debitted on creation
+        self.ta.refresh_from_db()
+        time_used = (parse(self.observation['end']) - parse(self.observation['start'])).total_seconds() / 3600.0
+        self.assertEqual(time_used, self.ta.realtime_time_used)
+
+    def test_post_realtime_observation_succeeds_with_staff_user(self):
+        self.client.force_login(self.user)
+        mixer.blend(Membership, user=self.user, proposal=self.proposal)
+        response = self.client.post(reverse('api:realtime-list'), data=self.observation)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()['submitter'], self.user.username)
         self.assertEqual(response.json()['observation_type'], self.observation['observation_type'])
         self.assertEqual(response.json()['name'], self.observation['name'])
 
     def test_delete_realtime_observation_succeeds(self):
         response = self.client.post(reverse('api:realtime-list'), data=self.observation)
         self.assertEqual(response.status_code, 201)
+        # Make sure time is debitted on creation
+        self.ta.refresh_from_db()
+        time_used = (parse(self.observation['end']) - parse(self.observation['start'])).total_seconds() / 3600.0
+        self.assertEqual(time_used, self.ta.realtime_time_used)
+
         observation_id = response.json()['id']
         Observation.objects.get(id=observation_id)
         request_group_id = response.json()['request_group_id']
@@ -466,6 +482,9 @@ class TestRealTimeApi(SetTimeMixin, APITestCase):
             Observation.objects.get(id=observation_id)
         with self.assertRaises(RequestGroup.DoesNotExist):
             RequestGroup.objects.get(id=request_group_id)
+        # Now make sure time is credited back on deletion
+        self.ta.refresh_from_db()
+        self.assertEqual(0.0, self.ta.realtime_time_used)
 
     def test_delete_nonexistent_observation(self):
         response = self.client.delete(reverse('api:realtime-detail', args=(12345,)))
@@ -482,12 +501,31 @@ class TestRealTimeApi(SetTimeMixin, APITestCase):
 
     def test_post_realtime_proposal_not_active(self):
         inactive_proposal = mixer.blend(Proposal, direct_submission=True, active=False)
-        mixer.blend(Membership, user=self.submitter_user, proposal=inactive_proposal)
+        mixer.blend(Membership, user=self.nonstaff_user, proposal=inactive_proposal)
         bad_observation = copy.deepcopy(self.observation)
         bad_observation['proposal'] = inactive_proposal.id
         response = self.client.post(reverse('api:realtime-list'), data=bad_observation)
         self.assertEqual(response.status_code, 400)
         self.assertIn('is not active', str(response.content))
+
+    def test_post_realtime_proposal_no_time_allocation(self):
+        test_proposal = mixer.blend(Proposal, direct_submission=True, active=True)
+        mixer.blend(Membership, user=self.nonstaff_user, proposal=test_proposal)
+        bad_observation = copy.deepcopy(self.observation)
+        bad_observation['proposal'] = test_proposal.id
+        response = self.client.post(reverse('api:realtime-list'), data=bad_observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Not enough realtime time allocation available on proposal', str(response.content))
+
+    def test_post_realtime_proposal_not_enough_time_allocation(self):
+        test_proposal = mixer.blend(Proposal, direct_submission=True, active=True)
+        mixer.blend(Membership, user=self.nonstaff_user, proposal=test_proposal)
+        mixer.blend(TimeAllocation, proposal=test_proposal, semester=self.semester, realtime_allocation=0.5, instrument_types=['1M0-SCICAM-SBIG',])
+        bad_observation = copy.deepcopy(self.observation)
+        bad_observation['proposal'] = test_proposal.id
+        response = self.client.post(reverse('api:realtime-list'), data=bad_observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn(f'Not enough realtime time allocation available on proposal {test_proposal.id}: 0.5 hours available', str(response.content))
 
     def test_post_realtime_proposal_does_not_exist(self):
         bad_observation = copy.deepcopy(self.observation)
@@ -495,13 +533,6 @@ class TestRealTimeApi(SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:realtime-list'), data=bad_observation)
         self.assertEqual(response.status_code, 400)
         self.assertIn('Proposal fakeProposal does not exist', str(response.content))
-
-    def test_post_realtime_submitter_does_not_exist(self):
-        bad_observation = copy.deepcopy(self.observation)
-        bad_observation['submitter'] = 'fakeUser'
-        response = self.client.post(reverse('api:realtime-list'), data=bad_observation)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn('User with username fakeUser does not exist', str(response.content))
 
     def test_post_telescope_does_not_exist(self):
         bad_observation = copy.deepcopy(self.observation)

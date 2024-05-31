@@ -527,6 +527,8 @@ EXAMPLE_RESPONSES = {
                 "rr_time_used": 0.0,
                 "tc_allocation": 0.0,
                 "tc_time_used": 0.0,
+                "realtime_allocation": 0.0,
+                "realtime_time_used": 0.0,
                 "instrument_types": ["2M0-INSTRUMENT-A"],
                 "proposal": {
                     "notes": "",

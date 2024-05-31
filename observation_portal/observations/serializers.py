@@ -10,6 +10,7 @@ from django.conf import settings
 from observation_portal.common.configdb import configdb
 from observation_portal.common.rise_set_utils import is_interval_available_for_telescope
 from observation_portal.observations.models import Observation, ConfigurationStatus, Summary
+from observation_portal.observations.time_accounting import realtime_time_available
 from observation_portal.requestgroups.models import RequestGroup, Request, AcquisitionConfig, GuidingConfig, Target
 from observation_portal.requestgroups.serializers import ConfigurationTypeValidationHelper
 from observation_portal.proposals.models import Proposal
@@ -324,25 +325,17 @@ class RealTimeSerializer(serializers.ModelSerializer):
     site = serializers.ChoiceField(choices=configdb.get_site_tuples())
     enclosure = serializers.ChoiceField(choices=configdb.get_enclosure_tuples())
     telescope = serializers.ChoiceField(choices=configdb.get_telescope_tuples())
-    submitter = serializers.CharField(write_only=True)
     state = serializers.ReadOnlyField()
 
     class Meta:
         model = Observation
         fields = ('site', 'enclosure', 'telescope', 'start', 'end', 'state',
-                  'proposal', 'priority', 'name', 'id', 'modified', 'submitter')
+                  'proposal', 'priority', 'name', 'id', 'modified')
         read_only_fields = ('modified', 'id',)
 
     def validate(self, data):
         validated_data = super().validate(data)
-        # Convert the submitter text field into a User object
-        try:
-            submitter_user = User.objects.get(username=validated_data.get('submitter'))
-            validated_data['submitter_id'] = submitter_user.id
-            validated_data['submitter'] = submitter_user
-        except User.DoesNotExist:
-            raise serializers.ValidationError(_(f"User with username {validated_data.get('submitter')} does not exist"))
-
+        user = self.context['request'].user
         # Now check if the proposal is valid and if the submitter user is on the proposal given
         try:
             proposal = Proposal.objects.get(id=validated_data.get('proposal'))
@@ -352,8 +345,8 @@ class RealTimeSerializer(serializers.ModelSerializer):
         if not proposal.active:
             raise serializers.ValidationError(_(f"Proposal {validated_data.get('proposal')} is not active"))
 
-        if proposal not in submitter_user.proposal_set.all():
-            raise serializers.ValidationError(_(f"User {submitter_user.username} is not a member of proposal {validated_data.get('proposal')}"))
+        if proposal not in user.proposal_set.all():
+            raise serializers.ValidationError(_(f"User {user.username} is not a member of proposal {validated_data.get('proposal')}"))
 
         # Validate the site/obs/tel is a valid combination
         allowable_instruments = configdb.get_instruments_at_location(
@@ -361,6 +354,13 @@ class RealTimeSerializer(serializers.ModelSerializer):
         )
         if len(allowable_instruments.get('names')) == 0:
             raise serializers.ValidationError(_(f"No instruments found at {data['site']}.{data['enclosure']}.{data['telescope']} or telescope does not exist"))
+
+        # Validate that at least one instrument type available on the telescope requested
+        # has time allocation available for this real time observing block
+        max_hours_available = realtime_time_available(allowable_instruments.get('types'), proposal)
+        hours_duration = (validated_data.get('end') - validated_data.get('start')).total_seconds() / 3600.0
+        if max_hours_available < hours_duration:
+            raise serializers.ValidationError(_(f"Not enough realtime time allocation available on proposal {proposal.id}: {max_hours_available} hours available, {hours_duration} requested"))
 
         # Validate that the start/end time is during nighttime at the telescope
         # Also check that there is not an overlapping downtime

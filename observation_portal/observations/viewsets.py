@@ -1,5 +1,5 @@
 from rest_framework import viewsets, filters, status
-from rest_framework.permissions import IsAdminUser
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
@@ -11,6 +11,7 @@ from django.conf import settings
 from django_filters.rest_framework import DjangoFilterBackend
 
 from observation_portal.requestgroups.models import RequestGroup
+from observation_portal.observations.time_accounting import debit_realtime_time_allocation
 from observation_portal.observations.models import Observation, ConfigurationStatus
 from observation_portal.observations.filters import ObservationFilter, ConfigurationStatusFilter
 from observation_portal.common.mixins import ListAsDictMixin, CreateListModelMixin
@@ -56,7 +57,7 @@ def observations_queryset(request):
 
 
 class RealTimeViewSet(CreateListModelMixin, viewsets.ModelViewSet):
-    permission_classes = (IsAdminUser,)
+    permission_classes = (IsAuthenticated,)
     http_method_names = ['post', 'delete']
     serializer_class = import_string(settings.SERIALIZERS['observations']['RealTime'])
     schema = ObservationPortalSchema(tags=['Observations'])
@@ -68,7 +69,12 @@ class RealTimeViewSet(CreateListModelMixin, viewsets.ModelViewSet):
         """ This creates the associated downtime block after the observation is created,
             using its observation id as the downtime reason
         """
-        observation = serializer.save()
+        observation = serializer.save(submitter=self.request.user, submitter_id=self.request.user.id)
+        # Debit the realtime time allocation hours
+        obs_hours = (observation.end - observation.start).total_seconds() / 3600.0
+        debit_realtime_time_allocation(observation.site, observation.enclosure, observation.telescope,
+                                       observation.request.request_group.proposal, obs_hours)
+        # Now create the downtime block in DowntimeDB
         downtime = {
             'site': observation.site,
             'enclosure': observation.enclosure,
@@ -95,6 +101,11 @@ class RealTimeViewSet(CreateListModelMixin, viewsets.ModelViewSet):
         except Token.DoesNotExist:
             logger.warning("Failed to retrieve token for realtime deletion user. This should not happen.")
 
+        # Now credit the realtime time back to the time allocation with most hours
+        negative_obs_hours = -(instance.end - instance.start).total_seconds() / 3600.0
+        debit_realtime_time_allocation(instance.site, instance.enclosure, instance.telescope,
+                                       instance.request.request_group.proposal, negative_obs_hours)
+        # delete the observation and then request group
         rg = instance.request.request_group
         instance.delete()
         rg.delete()
