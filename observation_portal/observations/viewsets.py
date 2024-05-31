@@ -63,7 +63,15 @@ class RealTimeViewSet(CreateListModelMixin, viewsets.ModelViewSet):
     schema = ObservationPortalSchema(tags=['Observations'])
 
     def get_queryset(self):
-        return Observation.objects.all()
+        """ This is just used for the delete endpoint to retrieve an object to delete.
+            Staff can delete anything, otherwise a user can only delete their own realtime observation.
+        """
+        if self.request.user.is_authenticated:
+            if self.request.user.is_staff:
+                return Observation.objects.all()
+            else:
+                return Observation.objects.filter(request__request_group__submitter=self.request.user)
+        return Observation.objects.none()
 
     def perform_create(self, serializer):
         """ This creates the associated downtime block after the observation is created,

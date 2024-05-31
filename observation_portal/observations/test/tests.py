@@ -486,6 +486,26 @@ class TestRealTimeApi(SetTimeMixin, APITestCase):
         self.ta.refresh_from_db()
         self.assertEqual(0.0, self.ta.realtime_time_used)
 
+    def test_delete_someone_elses_observation_fails(self):
+        response = self.client.post(reverse('api:realtime-list'), data=self.observation)
+        self.assertEqual(response.status_code, 201)
+        observation_id = response.json()['id']
+
+        # Make another non-staff user and show they cannot delete it
+        someone_else = blend_user(user_params={'is_admin': False, 'is_superuser': False, 'is_staff': False})
+        self.client.force_login(someone_else)
+        response = self.client.delete(reverse('api:realtime-detail', args=(observation_id,)))
+        self.assertEqual(response.status_code, 404)
+
+    def test_delete_someone_elses_observation_succeeds_as_staff(self):
+        response = self.client.post(reverse('api:realtime-list'), data=self.observation)
+        self.assertEqual(response.status_code, 201)
+        observation_id = response.json()['id']
+
+        self.client.force_login(self.user)
+        response = self.client.delete(reverse('api:realtime-detail', args=(observation_id,)))
+        self.assertEqual(response.status_code, 204)
+
     def test_delete_nonexistent_observation(self):
         response = self.client.delete(reverse('api:realtime-detail', args=(12345,)))
         self.assertEqual(response.status_code, 404)
