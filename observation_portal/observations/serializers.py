@@ -387,8 +387,7 @@ class RealTimeSerializer(serializers.ModelSerializer):
         obs_fields = {}
         for field in OBS_FIELDS:
             if field in validated_data:
-                obs_fields[field] = validated_data[field]
-                del validated_data[field]
+                obs_fields[field] = validated_data.pop(field)
 
         with transaction.atomic():
             request_group = RequestGroup.objects.create(**validated_data)

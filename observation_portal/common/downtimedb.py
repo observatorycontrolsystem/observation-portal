@@ -115,8 +115,8 @@ class DowntimeDB(object):
             else:
                 downtime_id = results.get('results')[0].get('id')
                 r = requests.delete(url + f"{downtime_id}/", headers=headers)
-                DowntimeDB.refresh_downtime_intervals()
                 r.raise_for_status()
+                DowntimeDB.refresh_downtime_intervals()
                 return True
         except (requests.exceptions.RequestException, requests.exceptions.HTTPError) as e:
             logger.warning(f"Failed to delete downtime {downtime_id} for observation {observation_id}: {repr(e)}")
