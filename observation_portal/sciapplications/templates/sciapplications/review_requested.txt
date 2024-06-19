@@ -1,4 +1,4 @@
-Hello {{ user.first_name }} {{ user.last_name }},
+Hello {{ panelist.first_name }} {{ panelist.last_name }},
 
 You have been assigned to review a proposal application:
 
