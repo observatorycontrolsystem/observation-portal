@@ -1,0 +1,11 @@
+Hello {{ user.first_name }} {{ user.last_name }},
+
+You have been assigned to review a proposal application:
+
+{{ science_application.title }}
+
+You can submit your review at {{ review_url }}.
+
+Thank you,
+
+{{ organization_name }}

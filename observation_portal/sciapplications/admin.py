@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.utils.html import format_html_join
 from django.urls import reverse
 from django.conf import settings
@@ -7,8 +7,8 @@ from django.forms.models import ModelForm
 
 from .models import (
     Instrument, Call, ScienceApplication, TimeRequest, CoInvestigator,
-    NoTimeAllocatedError, MultipleTimesAllocatedError, ScienceApplicationReviewProcess,
-    ScienceApplicationUserReview
+    NoTimeAllocatedError, MultipleTimesAllocatedError, ScienceApplicationReview,
+    ScienceApplicationUserReview, ReviewPanel, ReviewPanelMembership
 )
 from observation_portal.proposals.models import Proposal
 from observation_portal.common.utils import get_queryset_field_values
@@ -63,15 +63,17 @@ class AlwaysChangedModelForm(ModelForm):
         return True
 
 
-class ScienceApplicationReviewProcessInline(admin.StackedInline):
-    model = ScienceApplicationReviewProcess
+class ScienceApplicationReviewInline(admin.StackedInline):
+    model = ScienceApplicationReview
+    readonly_fields = ["mean_grade"]
+    autocomplete_fields = ["review_panel", "can_summarize"]
     form = AlwaysChangedModelForm
     extra = 0
     show_change_link = True
 
 
 class ScienceApplicationAdmin(admin.ModelAdmin):
-    inlines = [CoInvestigatorInline, TimeRequestAdminInline, ScienceApplicationReviewProcessInline]
+    inlines = [CoInvestigatorInline, TimeRequestAdminInline, ScienceApplicationReviewInline]
     list_display = (
         'title',
         'call',
@@ -146,31 +148,45 @@ admin.site.register(ScienceApplication, ScienceApplicationAdmin)
 
 class ScienceApplicationUserReviewInline(admin.TabularInline):
     model = ScienceApplicationUserReview
-    fk_name = "review_process"
-    fields = ["user", "primary", "completed", "grade"]
-    autocomplete_fields = ["user"]
+    fk_name = "science_application_review"
+    fields = ["reviewer", "finished", "grade"]
+    autocomplete_fields = ["reviewer"]
     extra = 0
     show_change_link = True
 
 
-@admin.register(ScienceApplicationReviewProcess)
-class ScienceApplicationReviewProcessAdmin(admin.ModelAdmin):
+@admin.register(ScienceApplicationReview)
+class ScienceApplicationReviewAdmin(admin.ModelAdmin):
     inlines = [
         ScienceApplicationUserReviewInline,
     ]
+    readonly_fields = ["mean_grade"]
 
-    list_display = ["science_application", "science_category", "status"]
+    list_display = ["science_application", "review_panel", "science_category", "status", "mean_grade"]
     list_filter = ["status", "science_category"]
     search_fields = ["science_application__title"]
-    autocomplete_fields = ["science_application"]
+    autocomplete_fields = ["science_application", "review_panel", "can_summarize"]
 
 
 @admin.register(ScienceApplicationUserReview)
 class ScienceApplicationUserReviewAdmin(admin.ModelAdmin):
-    list_display = ["get_science_application", "user", "primary", "completed", "grade"]
-    list_filter = ["primary", "completed",]
-    autocomplete_fields = ["review_process", "user"]
+    list_display = ["get_science_application", "reviewer", "finished", "grade"]
+    list_filter = ["finished",]
+    autocomplete_fields = ["science_application_review", "reviewer"]
 
     @admin.display(description="Application")
     def get_science_application(self, obj):
-        return obj.review_process.science_application
+        return obj.science_application_review.science_application
+
+
+class ReviewPanelMembershipInline(admin.TabularInline):
+    model = ReviewPanelMembership
+    extra = 1
+    autocomplete_fields = ["user"]
+
+
+@admin.register(ReviewPanel)
+class ReviewPanelAdmin(admin.ModelAdmin):
+    inlines = [ReviewPanelMembershipInline]
+    list_display = ["name"]
+    search_fields = ["name"]

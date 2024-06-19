@@ -35,7 +35,13 @@ from observation_portal.accounts.views import (
 from observation_portal.proposals.viewsets import (
     ProposalViewSet, SemesterViewSet, MembershipViewSet, ProposalInviteViewSet
 )
-from observation_portal.sciapplications.viewsets import CallViewSet, ScienceApplicationViewSet, ScienceApplicationUserReviewViewSet, ScienceApplicationReviewProcessViewSet
+from observation_portal.sciapplications.viewsets import (
+    CallViewSet,
+    ScienceApplicationViewSet,
+    ScienceApplicationReviewViewSet,
+    ScienceApplicationReviewSummaryViewSet,
+    ScienceApplicationMyReviewViewSet,
+)
 from observation_portal.observations.views import LastScheduledView
 from observation_portal.observations.viewsets import ObservationViewSet, ScheduleViewSet, ConfigurationStatusViewSet
 import observation_portal.accounts.urls as accounts_urls
@@ -53,8 +59,7 @@ router.register(r'memberships', MembershipViewSet, 'memberships')
 router.register(r'invitations', ProposalInviteViewSet, 'invitations')
 router.register(r'calls', CallViewSet, 'calls')
 router.register(r'scienceapplications', ScienceApplicationViewSet, 'scienceapplications')
-router.register(r'scienceapplication-reviews', ScienceApplicationReviewProcessViewSet, 'scienceapplication-reviews')
-router.register(r'scienceapplication-user-reviews', ScienceApplicationUserReviewViewSet, 'scienceapplication-user-reviews')
+router.register(r'scienceapplication-reviews', ScienceApplicationReviewViewSet, 'scienceapplication-reviews')
 router.register(r'observations', ObservationViewSet, 'observations')
 router.register(r'schedule', ScheduleViewSet, 'schedule')
 router.register(r'configurationstatus', ConfigurationStatusViewSet, 'configurationstatus')
@@ -63,6 +68,16 @@ api_urlpatterns = ([
     re_path(r'^', include(router.urls)),
     re_path(r'^api-token-auth/', obtain_auth_token, name='api-token-auth'),
     path('users-bulk/', BulkCreateUsersApiView.as_view(), name='users-bulk'),
+    path(
+        'scienceapplication-reviews/<int:pk>/summary',
+        ScienceApplicationReviewSummaryViewSet.as_view({"get": "retrieve", "put": "update"}),
+        name="scienceapplication-review-summary"
+    ),
+    path(
+        'scienceapplication-reviews/<int:pk>/my-review',
+        ScienceApplicationMyReviewViewSet.as_view({"post": "create", "get": "retrieve", "put": "update", "patch": "partial_update"}),
+        name="scienceapplication-my-review"
+    ),
     re_path(r'^telescope_states/', TelescopeStatesView.as_view(), name='telescope_states'),
     re_path(r'^telescope_availability/', TelescopeAvailabilityView.as_view(), name='telescope_availability'),
     re_path(r'profile/accept_terms/', AcceptTermsApiView.as_view(), name='accept_terms'),

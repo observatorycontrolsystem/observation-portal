@@ -13,8 +13,8 @@ from django.core.files.base import ContentFile
 
 from observation_portal.accounts.tasks import send_mail
 from observation_portal.sciapplications.filters import ScienceApplicationFilter, CallFilter
-from observation_portal.sciapplications.models import CoInvestigator, ScienceApplication, Call, TimeRequest, ScienceApplicationUserReview, ScienceApplicationReviewProcess
-from observation_portal.sciapplications.serializers import ScienceApplicationUserReviewSerializer, ScienceApplicationReviewProcessSerializer
+from observation_portal.sciapplications.models import CoInvestigator, ScienceApplication, Call, TimeRequest, ScienceApplicationUserReview, ScienceApplicationReview
+from observation_portal.sciapplications.serializers import ScienceApplicationUserReviewSerializer, ScienceApplicationReviewSerializer, ScienceApplicationReviewSummarySerializer
 from observation_portal.common.schema import ObservationPortalSchema
 
 
@@ -35,60 +35,76 @@ class CallViewSet(viewsets.ReadOnlyModelViewSet):
             return Call.objects.all().exclude(proposal_type=Call.COLLAB_PROPOSAL)
 
 
-class IsScienceApplicationReviewProcessEditor(permissions.BasePermission):
-
-    def has_object_permission(self, request, view, obj):
-        if view.action == "retrieve":
-            return True
-        else:
-            primary_review = obj.reviews.filter(primary=True).first()
-            if primary_review == None:
-                return False
-
-            return bool(primary_review.user == request.user)
-
-class ScienceApplicationReviewProcessViewSet(
+class ScienceApplicationReviewViewSet(
     mixins.RetrieveModelMixin,
-    mixins.UpdateModelMixin,
-    mixins.ListModelMixin,
-    viewsets.GenericViewSet
-):
-    permission_classes = (IsAuthenticated, IsScienceApplicationReviewProcessEditor)
-    schema = ObservationPortalSchema(tags=['Science Applications'])
-    serializer_class = ScienceApplicationReviewProcessSerializer
-    filter_backends = (
-        filters.OrderingFilter,
-        DjangoFilterBackend
-    )
-    ordering_fields = []
-    filterset_fields = []
-
-    def get_queryset(self):
-        qs = ScienceApplicationReviewProcess.objects.filter(reviews__user=self.request.user)
-
-        return qs
-
-
-class ScienceApplicationUserReviewViewSet(
-    mixins.RetrieveModelMixin,
-    mixins.UpdateModelMixin,
     mixins.ListModelMixin,
     viewsets.GenericViewSet
 ):
     permission_classes = (IsAuthenticated, )
     schema = ObservationPortalSchema(tags=['Science Applications'])
-    serializer_class = ScienceApplicationUserReviewSerializer
+    serializer_class = ScienceApplicationReviewSerializer
     filter_backends = (
         filters.OrderingFilter,
         DjangoFilterBackend
     )
-    ordering_fields = ["primary", "completed", "grade", "rank"]
-    filterset_fields = ["primary", "completed"]
+    ordering_fields = []
+    ordering = ["-created_at"]
+    filterset_fields = []
 
     def get_queryset(self):
-        qs = ScienceApplicationUserReview.objects.filter(user=self.request.user)
+        qs = ScienceApplicationReview.objects.filter(review_panel__members=self.request.user)
 
         return qs
+
+class IsScienceApplicationReviewSummaryEditor(permissions.BasePermission):
+
+    def has_object_permission(self, request, view, obj):
+      return obj.can_summarize.filter(pk=request.user.pk).exists()
+
+
+class ScienceApplicationReviewSummaryViewSet(
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    viewsets.GenericViewSet
+):
+    permission_classes = (IsAuthenticated, IsScienceApplicationReviewSummaryEditor )
+    schema = ObservationPortalSchema(tags=['Science Applications'])
+    serializer_class = ScienceApplicationReviewSummarySerializer
+
+    def get_queryset(self):
+        qs = ScienceApplicationReview.objects.filter(review_panel__members=self.request.user)
+
+        return qs
+
+
+class ScienceApplicationMyReviewPermissions(permissions.BasePermission):
+
+    def has_permission(self, request, view):
+        return ScienceApplicationReview.objects.filter(pk=view.kwargs["pk"], review_panel__members=request.user).exists()
+
+
+class ScienceApplicationMyReviewViewSet(
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    viewsets.GenericViewSet
+):
+    permission_classes = (IsAuthenticated, ScienceApplicationMyReviewPermissions, )
+    schema = ObservationPortalSchema(tags=['Science Applications'])
+    serializer_class = ScienceApplicationUserReviewSerializer
+    lookup_field = "science_application_review"
+    lookup_url_kwarg = "pk"
+
+    def get_queryset(self):
+        qs = ScienceApplicationUserReview.objects.filter(reviewer=self.request.user)
+
+        return qs
+
+    def perform_create(self, serializer):
+        serializer.save(
+            science_application_review=ScienceApplicationReview.objects.get(pk=self.kwargs["pk"]),
+            reviewer=self.request.user,
+        )
 
 
 class ScienceApplicationViewSet(viewsets.ModelViewSet):

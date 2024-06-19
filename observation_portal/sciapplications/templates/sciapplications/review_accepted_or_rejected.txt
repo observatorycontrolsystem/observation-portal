@@ -1,0 +1,13 @@
+Hello {{ submitter.first_name }} {{ submitter.last_name }},
+
+Your proposal application, "{{ science_application.title }}", has been {{ status }}.
+
+{% if additional_message %}
+
+{{ additional_message }}
+
+{% endif %}
+
+Thank you,
+
+{{ organization_name }}
