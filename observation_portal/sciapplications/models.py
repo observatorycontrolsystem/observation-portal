@@ -6,7 +6,7 @@ from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import User
 from django.urls import reverse
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext as _
 from django.contrib.postgres.fields import ArrayField
 from django.template.loader import render_to_string
 from django.utils.functional import cached_property

@@ -11,7 +11,6 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.cache import cache
 from django.db import transaction
 from django.utils import timezone
-from django.utils.functional import lazy
 from django.utils.module_loading import import_string
 from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -611,7 +610,7 @@ class WindowSerializer(serializers.ModelSerializer):
 
 
 class RequestSerializer(serializers.ModelSerializer):
-    location = lazy(lambda: import_string(settings.SERIALIZERS['requestgroups']['Location'])(), object)()
+    location = import_string(settings.SERIALIZERS['requestgroups']['Location'])()
     configurations = import_string(settings.SERIALIZERS['requestgroups']['Configuration'])(many=True)
     windows = import_string(settings.SERIALIZERS['requestgroups']['Window'])(many=True)
     cadence = import_string(settings.SERIALIZERS['requestgroups']['Cadence'])(required=False, write_only=True)
