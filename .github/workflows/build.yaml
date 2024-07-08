@@ -50,7 +50,7 @@ jobs:
         DB_HOST: localhost
         DB_PORT: 5432
     - name: Generate and send coveralls report
-      uses: coverallsapp/github-action@v2
+      uses: coverallsapp/github-action@v2.3.0
       with:
         parallel: true
   finish:
@@ -58,7 +58,7 @@ jobs:
     needs: run_tests
     steps:
       - name: Close parallel build
-        uses: coverallsapp/github-action@v1
+        uses: coverallsapp/github-action@v2.3.0
         with:
           parallel-finished: true
 
