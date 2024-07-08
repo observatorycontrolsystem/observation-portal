@@ -66,7 +66,7 @@ class AlwaysChangedModelForm(ModelForm):
 class ScienceApplicationReviewInline(admin.StackedInline):
     model = ScienceApplicationReview
     readonly_fields = ["mean_grade"]
-    autocomplete_fields = ["review_panel", "can_summarize"]
+    autocomplete_fields = ["review_panel", "primary_reviewer", "secondary_reviewer"]
     form = AlwaysChangedModelForm
     extra = 0
     show_change_link = True
@@ -165,7 +165,7 @@ class ScienceApplicationReviewAdmin(admin.ModelAdmin):
     list_display = ["science_application", "review_panel", "science_category", "status", "mean_grade"]
     list_filter = ["status", "science_category"]
     search_fields = ["science_application__title"]
-    autocomplete_fields = ["science_application", "review_panel", "can_summarize"]
+    autocomplete_fields = ["science_application", "review_panel", "primary_reviewer", "secondary_reviewer"]
 
 
 @admin.register(ScienceApplicationUserReview)

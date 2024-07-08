@@ -42,6 +42,8 @@ class ScienceApplicationReviewSerializer(serializers.ModelSerializer):
     pdf_url = serializers.SerializerMethodField()
     completed = serializers.SerializerMethodField()
     can_summarize = serializers.SerializerMethodField()
+    is_primary_reviewer = serializers.SerializerMethodField()
+    is_secondary_reviewer = serializers.SerializerMethodField()
     user_reviews = ScienceApplicationUserReviewNestedSerializer(read_only=True, many=True)
     my_review = serializers.SerializerMethodField()
 
@@ -49,7 +51,7 @@ class ScienceApplicationReviewSerializer(serializers.ModelSerializer):
         model = ScienceApplicationReview
         fields = [
           "id", "science_category", "technical_review", "status", "mean_grade", "summary",
-          "title", "semester", "abstract", "pdf_url", "completed", "can_summarize", "user_reviews", "my_review",
+          "title", "semester", "abstract", "pdf_url", "completed", "can_summarize", "is_primary_reviewer", "is_secondary_reviewer", "user_reviews", "my_review",
         ]
 
     def get_title(self, obj):
@@ -71,7 +73,15 @@ class ScienceApplicationReviewSerializer(serializers.ModelSerializer):
         return obj.review_panel.members.all().count() == obj.user_reviews.filter(finished=True).count()
 
     def get_can_summarize(self, obj):
-        return obj.can_summarize.filter(pk=self.context["request"].user.pk).exists()
+        return self.get_is_primary_reviewer(obj) or self.get_is_secondary_reviewer(obj)
+
+    def get_is_primary_reviewer(self, obj):
+        u = self.context["request"].user
+        return obj.primary_reviewer == u
+
+    def get_is_secondary_reviewer(self, obj):
+        u = self.context["request"].user
+        return obj.secondary_reviewer == u
 
     def get_my_review(self, obj):
         ur = obj.user_reviews.filter(reviewer=self.context["request"].user).first()

@@ -304,9 +304,11 @@ class ScienceApplicationReview(models.Model):
 
     review_panel = models.ForeignKey(ReviewPanel, on_delete=models.CASCADE, related_name="science_application_reviews")
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    primary_reviewer = models.ForeignKey(User, on_delete=models.CASCADE, related_name="primary_reviewer_for", help_text="Primary reviewer")
 
-    can_summarize = models.ManyToManyField(User, related_name="summarizeable_sciapplication_reviews", help_text="Users who can edit the summary for this review")
+    secondary_reviewer = models.ForeignKey(User, on_delete=models.CASCADE, related_name="secondary_reviewer_for", help_text="Secondary reviewer")
+
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class ScienceCategory(models.TextChoices):
         EXPLOSIVE_TRANSIENTS = "EXPLOSIVE_TRANSIENTS", _("Explosive Transients")
@@ -320,11 +322,12 @@ class ScienceApplicationReview(models.Model):
     technical_review = models.TextField(blank=True, default="")
 
     class Status(models.TextChoices):
-        UNDER_REVIEW = "UNDER_REVIEW", _("Under Review")
+        AWAITING_REVIEWS = "AWAITING_REVIEWS", _("Awaiting Reviews")
+        PANEL_DISCUSSION = "PANEL_DISCUSSION", _("Panel Discussion")
         ACCEPTED = "ACCEPTED", _("Accepted")
         REJECTED = "REJECTED", _("Rejected")
 
-    status = models.CharField(choices=Status.choices, default=Status.UNDER_REVIEW, max_length=255)
+    status = models.CharField(choices=Status.choices, default=Status.AWAITING_REVIEWS, max_length=255)
 
     summary = models.TextField(blank=True, default="")
 
@@ -333,16 +336,17 @@ class ScienceApplicationReview(models.Model):
         help_text="Mean of all user reviews. This field is automatically recalculated anytime a user review is added/updated/deleted"
     )
 
-    send_submitter_status_notifications = models.BooleanField(
+    notify_sumbitter = models.BooleanField(
         default=False,
-        help_text="Whether to send the application submitter notifications regarding the status of this review."
+        help_text="Whether to send the application submitter notifications regarding the acceptance or rejection of this review."
     )
 
-    submitter_status_notification_additional_message = models.TextField(
+    notify_submitter_additional_message = models.TextField(
         blank=True,
         default="",
         help_text="Additional message to embed in notifications sent to the application submitter."
     )
+
 
     def __str__(self):
         return f"{self.science_application!s} review"
@@ -354,23 +358,20 @@ class ScienceApplicationReview(models.Model):
             self.send_review_requested_email_to_all_panelists()
             return r
 
-        if self.status == ScienceApplicationReview.Status.UNDER_REVIEW:
-            return super().save(*args, **kwargs)
-
-        sciapp = self.science_application
         if self.status == ScienceApplicationReview.Status.ACCEPTED:
-            sciapp.status = ScienceApplication.ACCEPTED
+            self.science_application.sciapp.status = ScienceApplication.ACCEPTED
         elif self.status == ScienceApplicationReview.Status.REJECTED:
-            sciapp.status = ScienceApplication.REJECTED
+            self.science_application.sciapp.status = ScienceApplication.REJECTED
+        else:
+            return super().save(*args, **kwargs)
 
         r = super().save(*args, **kwargs)
         sciapp.save()
 
-        if self.send_submitter_status_notifications:
+        if self.notify_sumbitter:
             self.send_review_accepted_or_rejected_email_to_submitter()
 
         return r
-
 
     def send_review_requested_email_to_all_panelists(self):
         subject = str(_(f"Proposal Application Review Requested: {self.science_application.title}"))
@@ -403,7 +404,7 @@ class ScienceApplicationReview(models.Model):
                 "submitter": submitter,
                 "science_application": self.science_application,
                 "status": status,
-                "additional_message": self.submitter_status_notification_additional_message,
+                "additional_message": self.notify_submitter_additional_message,
                 "organization_name": settings.ORGANIZATION_NAME,
             }
         )

@@ -30,7 +30,7 @@
 
       systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
 
-      perSystem = { config, self', inputs', pkgs, system, ... }: {
+      perSystem = { config, self', inputs', pkgs, system, lib, ... }: {
         # Per-system attributes can be defined here. The self' and inputs'
         # module parameters provide easy access to attributes of the same
         # system.
@@ -38,13 +38,20 @@
         # https://devenv.sh/basics/
         # Enter using `nix develop --impure`
         config.devenv.shells.default = {
+          languages.python = {
+            enable = true;
+            package = pkgs.python310;
+
+            poetry = {
+              enable = true;
+              activate.enable = true;
+              install.enable = true;
+            };
+          };
 
           # https://devenv.sh/packages/
           packages = [
-            pkgs.gcc
-            pkgs.gfortran
-            pkgs.poetry
-            pkgs.python310
+            pkgs.gfortran.cc.lib
           ];
 
           # https://devenv.sh/reference/options/#entershell
@@ -56,10 +63,6 @@
             echo "This is done to sandbox Kuberenetes tools (kubectl, skaffold, etc) to the local K8s cluster for this project."
 
             touch "$DEVENV_ROOT/k8s/envs/local/secrets.env"
-
-            echo
-            poetry env use python3.10
-            poetry shell
           '';
         };
       };

@@ -59,7 +59,8 @@ class ScienceApplicationReviewViewSet(
 class IsScienceApplicationReviewSummaryEditor(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
-      return obj.can_summarize.filter(pk=request.user.pk).exists()
+      u = request.user
+      return obj.primary_reviewer == u or obj.secondary_reviewer == u
 
 
 class ScienceApplicationReviewSummaryViewSet(
