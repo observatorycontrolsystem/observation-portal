@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from django.contrib import admin, messages
+from django.contrib import admin
 from django.utils.html import format_html_join
 from django.urls import reverse
 from django.conf import settings

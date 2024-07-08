@@ -11,7 +11,6 @@ from django.contrib.postgres.fields import ArrayField
 from django.template.loader import render_to_string
 from django.utils.functional import cached_property
 from django.conf import settings
-from django.db.models import Q
 
 from observation_portal.common.configdb import configdb
 from observation_portal.accounts.tasks import send_mail
@@ -359,14 +358,14 @@ class ScienceApplicationReview(models.Model):
             return r
 
         if self.status == ScienceApplicationReview.Status.ACCEPTED:
-            self.science_application.sciapp.status = ScienceApplication.ACCEPTED
+            self.science_application.status = ScienceApplication.ACCEPTED
         elif self.status == ScienceApplicationReview.Status.REJECTED:
-            self.science_application.sciapp.status = ScienceApplication.REJECTED
+            self.science_application.status = ScienceApplication.REJECTED
         else:
             return super().save(*args, **kwargs)
 
         r = super().save(*args, **kwargs)
-        sciapp.save()
+        self.science_application.save()
 
         if self.notify_sumbitter:
             self.send_review_accepted_or_rejected_email_to_submitter()
