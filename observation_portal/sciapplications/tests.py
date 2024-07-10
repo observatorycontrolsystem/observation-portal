@@ -1,8 +1,13 @@
+from datetime import timedelta
+
 from django.test import TestCase
 from mixer.backend.django import mixer
+from django_dramatiq.test import DramatiqTestCase
+from django.utils import timezone
+from django.core import mail
 
 from observation_portal.accounts.test_utils import blend_user
-from observation_portal.sciapplications.models import ScienceApplication, Call, TimeRequest, CoInvestigator, Instrument
+from observation_portal.sciapplications.models import ScienceApplication, Call, TimeRequest, CoInvestigator, Instrument, ScienceApplicationReview, ReviewPanel
 from observation_portal.proposals.models import Semester, Membership, ProposalInvite, ScienceCollaborationAllocation
 
 
@@ -114,3 +119,326 @@ class TestSciAppToProposal(TestCase):
         self.assertEqual(proposal.sca, sca)
         self.assertEqual(proposal.timeallocation_set.first().std_allocation, tr.std_time)
         self.assertFalse(ProposalInvite.objects.filter(proposal=proposal).exists())
+
+
+class TestReviewProcess(DramatiqTestCase):
+
+    def setUp(self):
+        super().setUp()
+
+        self.semester = mixer.blend(
+            Semester, start=timezone.now() + timedelta(days=1), end=timezone.now() + timedelta(days=365)
+        )
+        self.call = mixer.blend(
+            Call, semester=self.semester,
+            deadline=timezone.now() + timedelta(days=7),
+            opens=timezone.now(),
+            proposal_type=Call.SCI_PROPOSAL,
+            eligibility_short='Short Eligibility'
+        )
+        mixer.blend(Instrument, call=self.call)
+
+    def test_email_sent_to_panelists_on_create(self):
+        submitter = blend_user()
+
+        app = mixer.blend(
+            ScienceApplication,
+            status=ScienceApplication.SUBMITTED,
+            submitter=submitter,
+            call=self.call
+        )
+
+        user1 = blend_user()
+        user2 = blend_user()
+        user3 = blend_user()
+
+        panel = mixer.blend(
+            ReviewPanel,
+            name="panel 1",
+        )
+
+        panel.members.set([user1, user2, user3])
+
+        app_review = mixer.blend(
+            ScienceApplicationReview,
+            science_application=app,
+            review_panel=panel,
+            primary_reviewer=user1,
+            secondary_reviewer=user2,
+        )
+
+
+        self.assertEqual(app_review.status, ScienceApplicationReview.Status.AWAITING_REVIEWS)
+
+        self.broker.join('default')
+        self.worker.join()
+
+        self.assertEqual(len(mail.outbox), 3)
+        expected_email_subject = f"Proposal Application Review Requested: {app_review.science_application.title}"
+        self.assertEqual(set([expected_email_subject]), set(x.subject for x in mail.outbox))
+        self.assertEqual(
+            set(u.email for u in panel.members.all()),
+            set(t for x in mail.outbox for t in x.to)
+        )
+
+
+    def test_email_not_sent_to_panelists_on_update(self):
+        submitter = blend_user()
+
+        app = mixer.blend(
+            ScienceApplication,
+            status=ScienceApplication.SUBMITTED,
+            submitter=submitter,
+            call=self.call
+        )
+
+        user1 = blend_user()
+        user2 = blend_user()
+        user3 = blend_user()
+
+        panel = mixer.blend(
+            ReviewPanel,
+            name="panel 1",
+        )
+
+        panel.members.set([user1, user2, user3])
+
+        app_review = mixer.blend(
+            ScienceApplicationReview,
+            science_application=app,
+            review_panel=panel,
+            primary_reviewer=user1,
+            secondary_reviewer=user2,
+        )
+
+        self.assertEqual(app_review.status, ScienceApplicationReview.Status.AWAITING_REVIEWS)
+
+        self.broker.join('default')
+        self.worker.join()
+
+        mail.outbox = []
+
+        app_review.technical_review = "test"
+        app_review.save()
+
+        self.broker.join('default')
+        self.worker.join()
+
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_application_is_accepted_on_review_accepted(self):
+        submitter = blend_user()
+
+        app = mixer.blend(
+            ScienceApplication,
+            status=ScienceApplication.SUBMITTED,
+            submitter=submitter,
+            call=self.call
+        )
+
+        user1 = blend_user()
+        user2 = blend_user()
+        user3 = blend_user()
+
+        panel = mixer.blend(
+            ReviewPanel,
+            name="panel 1",
+        )
+
+        panel.members.set([user1, user2, user3])
+
+        app_review = mixer.blend(
+            ScienceApplicationReview,
+            science_application=app,
+            review_panel=panel,
+            primary_reviewer=user1,
+            secondary_reviewer=user2,
+        )
+
+        self.assertEqual(app_review.status, ScienceApplicationReview.Status.AWAITING_REVIEWS)
+        self.assertEqual(app.status, ScienceApplication.SUBMITTED)
+
+        app_review.status = ScienceApplicationReview.Status.ACCEPTED
+        app_review.save()
+
+        self.assertEqual(app.status, ScienceApplication.ACCEPTED)
+
+    def test_application_is_rejected_on_review_rejected(self):
+        submitter = blend_user()
+
+        app = mixer.blend(
+            ScienceApplication,
+            status=ScienceApplication.SUBMITTED,
+            submitter=submitter,
+            call=self.call
+        )
+
+        user1 = blend_user()
+        user2 = blend_user()
+        user3 = blend_user()
+
+        panel = mixer.blend(
+            ReviewPanel,
+            name="panel 1",
+        )
+
+        panel.members.set([user1, user2, user3])
+
+        app_review = mixer.blend(
+            ScienceApplicationReview,
+            science_application=app,
+            review_panel=panel,
+            primary_reviewer=user1,
+            secondary_reviewer=user2,
+        )
+
+        self.assertEqual(app_review.status, ScienceApplicationReview.Status.AWAITING_REVIEWS)
+        self.assertEqual(app.status, ScienceApplication.SUBMITTED)
+
+        app_review.status = ScienceApplicationReview.Status.REJECTED
+        app_review.save()
+
+        self.assertEqual(app.status, ScienceApplication.REJECTED)
+
+    def test_email_sent_to_submitter_on_accepted(self):
+        submitter = blend_user()
+
+        app = mixer.blend(
+            ScienceApplication,
+            status=ScienceApplication.SUBMITTED,
+            submitter=submitter,
+            call=self.call
+        )
+
+        user1 = blend_user()
+        user2 = blend_user()
+        user3 = blend_user()
+
+        panel = mixer.blend(
+            ReviewPanel,
+            name="panel 1",
+        )
+
+        panel.members.set([user1, user2, user3])
+
+        app_review = mixer.blend(
+            ScienceApplicationReview,
+            science_application=app,
+            review_panel=panel,
+            primary_reviewer=user1,
+            secondary_reviewer=user2,
+        )
+
+        self.assertEqual(app_review.status, ScienceApplicationReview.Status.AWAITING_REVIEWS)
+
+        self.broker.join('default')
+        self.worker.join()
+
+        mail.outbox = []
+
+        app_review.status = ScienceApplicationReview.Status.ACCEPTED
+        app_review.notify_submitter = True
+        app_review.notify_submitter_additional_message = "extra message"
+        app_review.save()
+
+        self.broker.join('default')
+        self.worker.join()
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, [submitter.email])
+        self.assertIn("extra message", str(mail.outbox[0].message()))
+
+    def test_email_sent_to_submitter_on_rejected(self):
+        submitter = blend_user()
+
+        app = mixer.blend(
+            ScienceApplication,
+            status=ScienceApplication.SUBMITTED,
+            submitter=submitter,
+            call=self.call
+        )
+
+        user1 = blend_user()
+        user2 = blend_user()
+        user3 = blend_user()
+
+        panel = mixer.blend(
+            ReviewPanel,
+            name="panel 1",
+        )
+
+        panel.members.set([user1, user2, user3])
+
+        app_review = mixer.blend(
+            ScienceApplicationReview,
+            science_application=app,
+            review_panel=panel,
+            primary_reviewer=user1,
+            secondary_reviewer=user2,
+        )
+
+        self.assertEqual(app_review.status, ScienceApplicationReview.Status.AWAITING_REVIEWS)
+
+        self.broker.join('default')
+        self.worker.join()
+
+        mail.outbox = []
+
+        app_review.status = ScienceApplicationReview.Status.REJECTED
+        app_review.notify_submitter = True
+        app_review.notify_submitter_additional_message = "rejected extra message"
+        app_review.save()
+
+        self.broker.join('default')
+        self.worker.join()
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, [submitter.email])
+        self.assertEqual(mail.outbox[0].to, [submitter.email])
+        self.assertIn("rejected extra message", str(mail.outbox[0].message()))
+
+    def test_email_not_sent_to_submitter_if_flag_disabled(self):
+        submitter = blend_user()
+
+        app = mixer.blend(
+            ScienceApplication,
+            status=ScienceApplication.SUBMITTED,
+            submitter=submitter,
+            call=self.call
+        )
+
+        user1 = blend_user()
+        user2 = blend_user()
+        user3 = blend_user()
+
+        panel = mixer.blend(
+            ReviewPanel,
+            name="panel 1",
+        )
+
+        panel.members.set([user1, user2, user3])
+
+        app_review = mixer.blend(
+            ScienceApplicationReview,
+            science_application=app,
+            review_panel=panel,
+            primary_reviewer=user1,
+            secondary_reviewer=user2,
+        )
+
+        self.assertEqual(app_review.status, ScienceApplicationReview.Status.AWAITING_REVIEWS)
+
+        self.broker.join('default')
+        self.worker.join()
+
+        mail.outbox = []
+
+        app_review.status = ScienceApplicationReview.Status.ACCEPTED
+        app_review.notify_submitter = False
+        app_review.notify_submitter_additional_message = "extra message"
+        app_review.save()
+
+        self.broker.join('default')
+        self.worker.join()
+
+        self.assertEqual(len(mail.outbox), 0)
