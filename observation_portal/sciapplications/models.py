@@ -335,7 +335,7 @@ class ScienceApplicationReview(models.Model):
         help_text="Mean of all user reviews. This field is automatically recalculated anytime a user review is added/updated/deleted"
     )
 
-    notify_sumbitter = models.BooleanField(
+    notify_submitter = models.BooleanField(
         default=False,
         help_text="Whether to send the application submitter notifications regarding the acceptance or rejection of this review."
     )
@@ -367,7 +367,7 @@ class ScienceApplicationReview(models.Model):
         r = super().save(*args, **kwargs)
         self.science_application.save()
 
-        if self.notify_sumbitter:
+        if self.notify_submitter:
             self.send_review_accepted_or_rejected_email_to_submitter()
 
         return r
