@@ -315,6 +315,7 @@ class ScienceApplicationReview(models.Model):
         STARS_STELLAR_ACTIVITY = "STARS_STELLAR_ACTIVITY", _("Stars and Stellar Activity")
         SOLAR_SYSTEM_SMALL_BODIES = "SOLAR_SYSTEM_SMALL_BODIES", _("Solar System Small Bodies")
         MISCELLANEOUS = "MISC", _("Miscellaneous")
+        EXOPLANETS = "EXOPLANETS", _("Exoplanets")
 
     science_category = models.CharField(choices=ScienceCategory.choices, default=ScienceCategory.MISCELLANEOUS, max_length=255)
 
