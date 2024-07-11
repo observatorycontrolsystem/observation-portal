@@ -20,6 +20,23 @@ secretGenerator:
       - ./secrets.env
 
 patches:
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: api
+      spec:
+        template:
+          spec:
+            volumes:
+              - name: media
+                emptyDir:
+                  sizeLimit: 1Gi
+            containers:
+              - name: default
+                volumeMounts:
+                  - name: media
+                    mountPath: /src/media
   - target:
       kind: Deployment
       name: api

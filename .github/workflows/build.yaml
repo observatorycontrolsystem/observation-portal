@@ -50,17 +50,19 @@ jobs:
         DB_HOST: localhost
         DB_PORT: 5432
     - name: Generate and send coveralls report
-      uses: coverallsapp/github-action@v2
+      uses: coverallsapp/github-action@v2.3.0
       with:
         parallel: true
+        coverage-reporter-version: v0.6.9
   finish:
     runs-on: ubuntu-latest
     needs: run_tests
     steps:
       - name: Close parallel build
-        uses: coverallsapp/github-action@v1
+        uses: coverallsapp/github-action@v2.3.0
         with:
           parallel-finished: true
+          coverage-reporter-version: v0.6.9
 
   publish_to_pypi:
     # Only run this job if the run_tests job has succeeded, and if

@@ -1,5 +1,6 @@
 import smtplib
 from collections import defaultdict
+from urllib.parse import urljoin
 
 from django.db import models
 from django.utils import timezone
@@ -280,3 +281,152 @@ class CoInvestigator(models.Model):
 
     def __str__(self):
         return '{0} {1} <{2}> ({3})'.format(self.first_name, self.last_name, self.email, self.institution)
+
+
+class ReviewPanel(models.Model):
+    name = models.CharField(max_length=128)
+
+    members = models.ManyToManyField(User, related_name="review_panels", through="ReviewPanelMembership")
+
+    def __str__(self):
+        return f"{self.name!s}"
+
+
+class ReviewPanelMembership(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    review_panel = models.ForeignKey(ReviewPanel, on_delete=models.CASCADE)
+
+
+class ScienceApplicationReview(models.Model):
+    science_application = models.OneToOneField(ScienceApplication, on_delete=models.CASCADE, related_name="review")
+
+    review_panel = models.ForeignKey(ReviewPanel, on_delete=models.CASCADE, related_name="science_application_reviews")
+
+    primary_reviewer = models.ForeignKey(User, on_delete=models.CASCADE, related_name="primary_reviewer_for", help_text="Primary reviewer")
+
+    secondary_reviewer = models.ForeignKey(User, on_delete=models.CASCADE, related_name="secondary_reviewer_for", help_text="Secondary reviewer")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class ScienceCategory(models.TextChoices):
+        EXPLOSIVE_TRANSIENTS = "EXPLOSIVE_TRANSIENTS", _("Explosive Transients")
+        ACTIVE_GALAXIES = "ACTIVE_GALAXIES", _("Active Galaxies")
+        STARS_STELLAR_ACTIVITY = "STARS_STELLAR_ACTIVITY", _("Stars and Stellar Activity")
+        SOLAR_SYSTEM_SMALL_BODIES = "SOLAR_SYSTEM_SMALL_BODIES", _("Solar System Small Bodies")
+        MISCELLANEOUS = "MISC", _("Miscellaneous")
+        EXOPLANETS = "EXOPLANETS", _("Exoplanets")
+
+    science_category = models.CharField(choices=ScienceCategory.choices, default=ScienceCategory.MISCELLANEOUS, max_length=255)
+
+    technical_review = models.TextField(blank=True, default="")
+
+    class Status(models.TextChoices):
+        AWAITING_REVIEWS = "AWAITING_REVIEWS", _("Awaiting Reviews")
+        PANEL_DISCUSSION = "PANEL_DISCUSSION", _("Panel Discussion")
+        ACCEPTED = "ACCEPTED", _("Accepted")
+        REJECTED = "REJECTED", _("Rejected")
+
+    status = models.CharField(choices=Status.choices, default=Status.AWAITING_REVIEWS, max_length=255)
+
+    summary = models.TextField(blank=True, default="")
+
+    mean_grade = models.DecimalField(
+        blank=True, null=True, default=None, max_digits=4, decimal_places=2,
+        help_text="Mean of all user reviews. This field is automatically recalculated anytime a user review is added/updated/deleted"
+    )
+
+    notify_submitter = models.BooleanField(
+        default=False,
+        help_text="Whether to send the application submitter notifications regarding the acceptance or rejection of this review."
+    )
+
+    notify_submitter_additional_message = models.TextField(
+        blank=True,
+        default="",
+        help_text="Additional message to embed in notifications sent to the application submitter."
+    )
+
+
+    def __str__(self):
+        return f"{self.science_application!s} review"
+
+    def save(self, *args, **kwargs):
+        # created
+        if not self.pk:
+            r =  super().save(*args, **kwargs)
+            self.send_review_requested_email_to_all_panelists()
+            return r
+
+        if self.status == ScienceApplicationReview.Status.ACCEPTED:
+            self.science_application.status = ScienceApplication.ACCEPTED
+        elif self.status == ScienceApplicationReview.Status.REJECTED:
+            self.science_application.status = ScienceApplication.REJECTED
+        else:
+            return super().save(*args, **kwargs)
+
+        r = super().save(*args, **kwargs)
+        self.science_application.save()
+
+        if self.notify_submitter:
+            self.send_review_accepted_or_rejected_email_to_submitter()
+
+        return r
+
+    def send_review_requested_email_to_all_panelists(self):
+        subject = str(_(f"Proposal Application Review Requested: {self.science_application.title}"))
+        for x in self.review_panel.members.all():
+            message = render_to_string(
+                "sciapplications/review_requested.txt",
+                {
+                    "panelist": x,
+                    "science_application": self.science_application,
+                    "organization_name": settings.ORGANIZATION_NAME,
+                    "review_url": urljoin(settings.OBSERVATION_PORTAL_BASE_URL, f"proposal-reviews/{self.pk}/my-review"),
+                }
+            )
+            send_mail.send(subject, message, settings.ORGANIZATION_EMAIL, [str(x.email)])
+
+    def send_review_accepted_or_rejected_email_to_submitter(self):
+        if self.status == ScienceApplicationReview.Status.ACCEPTED:
+            status = "accepted"
+        elif self.status == ScienceApplicationReview.Status.REJECTED:
+            status = "rejected"
+        else:
+            raise Exception("invalid state")
+
+        subject = str(_(f"Proposal Application {status.capitalize()}: {self.science_application.title}"))
+        submitter = self.science_application.submitter
+
+        message = render_to_string(
+            "sciapplications/review_accepted_or_rejected.txt",
+            {
+                "submitter": submitter,
+                "science_application": self.science_application,
+                "status": status,
+                "additional_message": self.notify_submitter_additional_message,
+                "organization_name": settings.ORGANIZATION_NAME,
+            }
+        )
+        send_mail.send(subject, message, settings.ORGANIZATION_EMAIL, [str(submitter.email)])
+
+
+class ScienceApplicationUserReview(models.Model):
+    science_application_review = models.ForeignKey(ScienceApplicationReview, on_delete=models.CASCADE, related_name="user_reviews")
+
+    reviewer = models.ForeignKey(User, on_delete=models.CASCADE, related_name="sciapplication_reviews")
+
+    comments = models.TextField(blank=True, default="")
+
+    finished = models.BooleanField(default=False)
+
+    grade = models.DecimalField(blank=True, null=True, default=None, max_digits=4, decimal_places=2)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["science_application_review", "reviewer"], name="%(app_label)s_%(class)s_primary_key"),
+        ]
+
+
+    def __str__(self):
+        return f"{self.reviewer!s}'s {self.science_application_review!s}"

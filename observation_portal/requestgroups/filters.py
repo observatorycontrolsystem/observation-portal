@@ -10,7 +10,7 @@ class RequestGroupFilter(django_filters.FilterSet):
     user = django_filters.CharFilter(field_name='submitter__username', lookup_expr='icontains', label='Username contains')
     exclude_state = django_filters.MultipleChoiceFilter(field_name='state', choices=RequestGroup.STATE_CHOICES, label='Exclude State', exclude=True)
     telescope_class = django_filters.MultipleChoiceFilter(
-        choices=configdb.get_telescope_class_tuples(), field_name='requests__location__telescope_class', distinct=True,
+        choices=lambda: configdb.get_telescope_class_tuples(), field_name='requests__location__telescope_class', distinct=True,
     )
     target = django_filters.CharFilter(
         field_name='requests__configurations__target__name', lookup_expr='icontains', label='Target name contains',
@@ -48,11 +48,11 @@ class RequestFilter(django_filters.FilterSet):
 
 
 class LastChangedFilter(django_filters.FilterSet):
-    telescope_class = django_filters.MultipleChoiceFilter(choices=configdb.get_telescope_class_tuples())
+    telescope_class = django_filters.MultipleChoiceFilter(choices=lambda: configdb.get_telescope_class_tuples())
 
 
 class InstrumentsInformationFilter(django_filters.FilterSet):
-    site = django_filters.MultipleChoiceFilter(choices=configdb.get_site_tuples(), label='Site code')
-    enclosure = django_filters.MultipleChoiceFilter(choices=configdb.get_enclosure_tuples(), label='Enclosure code')
-    telescope_class = django_filters.MultipleChoiceFilter(choices=configdb.get_telescope_class_tuples(), label='Telescope class')
-    telescope = django_filters.MultipleChoiceFilter(choices=configdb.get_telescope_tuples(), label='Telescope code')
+    site = django_filters.MultipleChoiceFilter(choices=lambda: configdb.get_site_tuples(), label='Site code')
+    enclosure = django_filters.MultipleChoiceFilter(choices=lambda: configdb.get_enclosure_tuples(), label='Enclosure code')
+    telescope_class = django_filters.MultipleChoiceFilter(choices=lambda: configdb.get_telescope_class_tuples(), label='Telescope class')
+    telescope = django_filters.MultipleChoiceFilter(choices=lambda: configdb.get_telescope_tuples(), label='Telescope code')
