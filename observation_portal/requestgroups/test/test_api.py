@@ -2421,6 +2421,22 @@ class TestGetRequestApi(APITestCase):
         result = self.client.get(reverse('api:requests-detail', args=(request.id,)))
         self.assertEqual(result.json()['observation_note'], request.observation_note)
 
+    def test_get_request_with_zero_duration_doesnt_throw_exception(self):
+        self.client.force_login(self.user)
+        request = mixer.blend(Request, request_group=self.request_group, observation_note='testobsnote')
+        mixer.blend(Location, request=request)
+        mixer.blend(Window, request=request)
+        config = mixer.blend(Configuration, request=request, type='EXPOSE', instrument_type='1M0-FLI')
+        mixer.blend(Constraints, configuration=config)
+        mixer.blend(InstrumentConfig, configuration=config, exposure_count=1, exposure_time=0)
+        mixer.blend(AcquisitionConfig, configuration=config)
+        mixer.blend(GuidingConfig, configuration=config)
+        result = self.client.get(reverse('api:requests-list'))
+        self.assertContains(result, 'testobsnote')
+        self.assertEqual(result.status_code, 200)
+        # The configuration has zero duration, but there is still 90s front padding added to the request duration
+        self.assertEqual(result.json()['results'][0]['duration'], 90.0)
+
 
 class TestDraftRequestGroupApi(APITestCase):
     def setUp(self):
