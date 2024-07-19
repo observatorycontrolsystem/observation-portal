@@ -125,23 +125,3 @@ spec:
             - secretRef:
                 name: env
                 optional: false
-
-          livenessProbe:
-            initialDelaySeconds: 5
-            timeoutSeconds: 3
-            failureThreshold: 4
-            successThreshold: 1
-            periodSeconds: 30
-            httpGet:
-              path: /health
-              port: static
-
-          readinessProbe:
-            initialDelaySeconds: 5
-            timeoutSeconds: 3
-            failureThreshold: 3
-            successThreshold: 1
-            periodSeconds: 30
-            httpGet:
-              path: /health
-              port: static

@@ -532,10 +532,19 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
 
 
 class LocationSerializer(serializers.ModelSerializer):
-    site = serializers.ChoiceField(choices=configdb.get_site_tuples(), required=False)
-    enclosure = serializers.ChoiceField(choices=configdb.get_enclosure_tuples(), required=False)
-    telescope = serializers.ChoiceField(choices=configdb.get_telescope_tuples(), required=False)
-    telescope_class = serializers.ChoiceField(choices=configdb.get_telescope_class_tuples(), required=True)
+    site = serializers.ChoiceField(choices=[], required=False)
+    enclosure = serializers.ChoiceField(choices=[], required=False)
+    telescope = serializers.ChoiceField(choices=[], required=False)
+    telescope_class = serializers.ChoiceField(choices=[], required=True)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Can't even make migrations without connecting to ConfigDB :(
+        self.fields["site"].choices = configdb.get_site_tuples()
+        self.fields["enclosure"].choices = configdb.get_enclosure_tuples()
+        self.fields["telescope"].choices = configdb.get_telescope_tuples()
+        self.fields["telescope_class"].choices = configdb.get_telescope_class_tuples()
 
     class Meta:
         model = Location

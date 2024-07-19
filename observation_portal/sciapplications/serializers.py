@@ -8,7 +8,123 @@ from PyPDF2 import PdfFileReader
 from PyPDF2.utils import PdfReadError
 from rest_framework import serializers
 
-from observation_portal.sciapplications.models import ScienceApplication, Call, TimeRequest, CoInvestigator, Instrument
+from observation_portal.sciapplications.models import (
+    ScienceApplication,
+    Call,
+    TimeRequest,
+    CoInvestigator,
+    Instrument,
+    ScienceApplicationReview,
+    ScienceApplicationUserReview,
+)
+
+
+class ScienceApplicationUserReviewNestedSerializer(serializers.ModelSerializer):
+    username = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ScienceApplicationUserReview
+        fields = [
+            "id", "comments", "finished", "grade",
+            "username",
+        ]
+
+    def get_username(self, obj):
+        return obj.reviewer.username
+
+
+class ScienceApplicationReviewSerializer(serializers.ModelSerializer):
+    science_category = serializers.CharField(source="get_science_category_display")
+
+    title = serializers.SerializerMethodField()
+    semester = serializers.SerializerMethodField()
+    abstract = serializers.SerializerMethodField()
+    pdf_url = serializers.SerializerMethodField()
+    completed = serializers.SerializerMethodField()
+    can_summarize = serializers.SerializerMethodField()
+    is_primary_reviewer = serializers.SerializerMethodField()
+    is_secondary_reviewer = serializers.SerializerMethodField()
+    user_reviews = ScienceApplicationUserReviewNestedSerializer(read_only=True, many=True)
+    my_review = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ScienceApplicationReview
+        fields = [
+          "id", "science_category", "technical_review", "status", "mean_grade", "summary",
+          "title", "semester", "abstract", "pdf_url", "completed", "can_summarize", "is_primary_reviewer", "is_secondary_reviewer", "user_reviews", "my_review",
+        ]
+
+    def get_title(self, obj):
+        return obj.science_application.title
+
+    def get_semester(self, obj):
+        return obj.science_application.call.semester.id
+
+    def get_abstract(self, obj):
+        return obj.science_application.abstract
+
+    def get_pdf_url(self, obj):
+        try:
+            return obj.science_application.pdf.url
+        except Exception:
+            return None
+
+    def get_completed(self, obj):
+        return obj.review_panel.members.all().count() == obj.user_reviews.filter(finished=True).count()
+
+    def get_can_summarize(self, obj):
+        return self.get_is_primary_reviewer(obj) or self.get_is_secondary_reviewer(obj)
+
+    def get_is_primary_reviewer(self, obj):
+        u = self.context["request"].user
+        return obj.primary_reviewer == u
+
+    def get_is_secondary_reviewer(self, obj):
+        u = self.context["request"].user
+        return obj.secondary_reviewer == u
+
+    def get_my_review(self, obj):
+        ur = obj.user_reviews.filter(reviewer=self.context["request"].user).first()
+
+        if ur is None:
+            return None
+
+        return ScienceApplicationUserReviewNestedSerializer(ur).data
+
+
+class ScienceApplicationReviewSummarySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ScienceApplicationReview
+        fields = ["summary"]
+
+
+class ScienceApplicationUserReviewSerializer(serializers.ModelSerializer):
+    title = serializers.SerializerMethodField()
+    semester = serializers.SerializerMethodField()
+    abstract = serializers.SerializerMethodField()
+    pdf_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ScienceApplicationUserReview
+        fields = [
+            "id", "comments", "finished", "grade",
+            "title", "semester", "abstract", "pdf_url",
+        ]
+
+    def get_title(self, obj):
+        return obj.science_application_review.science_application.title
+
+    def get_semester(self, obj):
+        return obj.science_application_review.science_application.call.semester.id
+
+    def get_abstract(self, obj):
+        return obj.science_application_review.science_application.abstract
+
+    def get_pdf_url(self, obj):
+        try:
+            return obj.science_application_review.science_application.pdf.url
+        except Exception:
+            return None
 
 
 class CallSerializer(serializers.ModelSerializer):

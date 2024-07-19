@@ -12,7 +12,7 @@ from django_dramatiq.test import DramatiqTestCase
 from django.test.client import MULTIPART_CONTENT, BOUNDARY, encode_multipart
 from faker import Faker
 
-from observation_portal.sciapplications.models import ScienceApplication, Call, CoInvestigator, Instrument, TimeRequest
+from observation_portal.sciapplications.models import ScienceApplication, Call, CoInvestigator, Instrument, TimeRequest, ReviewPanel, ScienceApplicationReview, ScienceApplicationUserReview
 from observation_portal.proposals.models import Semester, ScienceCollaborationAllocation, CollaborationAllocation
 from observation_portal.accounts.test_utils import blend_user
 from observation_portal.sciapplications.serializers import ScienceApplicationSerializer
@@ -1150,3 +1150,234 @@ class TestCopySciApp(DramatiqTestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertIn('No open call at this time for proposal type KEY', response.json()['errors'][0])
+
+
+class TestReviewProcessAPI(APITestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.semester = mixer.blend(
+            Semester, start=timezone.now() + timedelta(days=1), end=timezone.now() + timedelta(days=365)
+        )
+        self.user = blend_user()
+        self.client.force_login(self.user)
+        self.call = mixer.blend(
+            Call, semester=self.semester,
+            deadline=timezone.now() + timedelta(days=7),
+            opens=timezone.now(),
+            proposal_type=Call.SCI_PROPOSAL,
+            eligibility_short='Short Eligibility'
+        )
+        mixer.blend(Instrument, call=self.call)
+
+    def test_unauthenticated(self):
+        self.client.logout()
+        response = self.client.get(reverse("api:scienceapplication-reviews-list"))
+        self.assertEqual(response.status_code, 403)
+
+        response = self.client.get(reverse("api:scienceapplication-review-summary", kwargs={"pk": "2323"}))
+        self.assertEqual(response.status_code, 403)
+
+        response = self.client.get(reverse("api:scienceapplication-my-review", kwargs={"pk": "2323"}))
+        self.assertEqual(response.status_code, 403)
+
+    def test_user_can_only_review_application_they_are_panelists_of(self):
+        submitter = blend_user()
+
+        app1 = mixer.blend(
+            ScienceApplication,
+            status=ScienceApplication.SUBMITTED,
+            submitter=submitter,
+            call=self.call
+        )
+
+        app2 = mixer.blend(
+            ScienceApplication,
+            status=ScienceApplication.SUBMITTED,
+            submitter=submitter,
+            call=self.call
+        )
+
+        panel1 = mixer.blend(
+            ReviewPanel,
+            name="panel 1",
+        )
+        panel1.members.add(self.user)
+
+        other_user = blend_user()
+
+        panel2 = mixer.blend(
+            ReviewPanel,
+            name="panel 2",
+        )
+        panel2.members.add(other_user)
+
+        app1_review = mixer.blend(
+            ScienceApplicationReview,
+            science_application=app1,
+            review_panel=panel1,
+            primary_reviewer=self.user,
+            secondary_reviewer=self.user,
+
+        )
+
+        app2_review = mixer.blend(
+            ScienceApplicationReview,
+            science_application=app2,
+            review_panel=panel2,
+            primary_reviewer=other_user,
+            secondary_reviewer=other_user,
+
+        )
+
+        response = self.client.get(reverse("api:scienceapplication-reviews-list"))
+        self.assertEqual(response.json()["count"], 1)
+        self.assertContains(response, app1_review.science_application.title)
+        self.assertNotContains(response, app2_review.science_application.title)
+
+    def test_users_my_review_is_theirs(self):
+        submitter = blend_user()
+
+        app = mixer.blend(
+            ScienceApplication,
+            status=ScienceApplication.SUBMITTED,
+            submitter=submitter,
+            call=self.call
+        )
+
+        other_user = blend_user()
+        panel = mixer.blend(
+            ReviewPanel,
+            name="panel 1",
+        )
+
+        panel.members.set([self.user, other_user])
+
+        app_review = mixer.blend(
+            ScienceApplicationReview,
+            science_application=app,
+            review_panel=panel,
+            primary_reviewer=self.user,
+            secondary_reviewer=self.user,
+
+        )
+
+        my_review = mixer.blend(
+            ScienceApplicationUserReview,
+            science_application_review=app_review,
+            reviewer=self.user,
+            comments="yo"
+        )
+
+        mixer.blend(
+            ScienceApplicationUserReview,
+            science_application_review=app_review,
+            reviewer=other_user,
+            comments="not me"
+        )
+
+        response = self.client.get(reverse("api:scienceapplication-my-review", kwargs={"pk": app_review.pk}))
+        self.assertEqual(response.json()["comments"], my_review.comments)
+
+    def test_non_primary_or_secondary_can_not_summarize(self):
+        submitter = blend_user()
+
+        app = mixer.blend(
+            ScienceApplication,
+            status=ScienceApplication.SUBMITTED,
+            submitter=submitter,
+            call=self.call
+        )
+
+        panel = mixer.blend(
+            ReviewPanel,
+            name="panel 1",
+        )
+
+        other_user1 = blend_user()
+        other_user2 = blend_user()
+        panel.members.set([self.user, other_user1, other_user2])
+
+        app_review = mixer.blend(
+            ScienceApplicationReview,
+            science_application=app,
+            review_panel=panel,
+            primary_reviewer=other_user1,
+            secondary_reviewer=other_user2,
+
+        )
+        response = self.client.put(
+            reverse("api:scienceapplication-review-summary", kwargs={"pk": app_review.pk}),
+            data={"summary": "test"},
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_primary_can_summarize(self):
+        submitter = blend_user()
+
+        app = mixer.blend(
+            ScienceApplication,
+            status=ScienceApplication.SUBMITTED,
+            submitter=submitter,
+            call=self.call
+        )
+
+        panel = mixer.blend(
+            ReviewPanel,
+            name="panel 1",
+        )
+
+        other_user1 = blend_user()
+        panel.members.set([self.user, other_user1])
+
+        app_review = mixer.blend(
+            ScienceApplicationReview,
+            science_application=app,
+            review_panel=panel,
+            primary_reviewer=self.user,
+            secondary_reviewer=other_user1,
+
+        )
+        response = self.client.put(
+            reverse("api:scienceapplication-review-summary", kwargs={"pk": app_review.pk}),
+            data={"summary": "test"},
+        )
+        self.assertEqual(response.json()["summary"], "test")
+
+        app_review.refresh_from_db()
+        self.assertEqual(app_review.summary, "test")
+
+    def test_secondary_can_summarize(self):
+        submitter = blend_user()
+
+        app = mixer.blend(
+            ScienceApplication,
+            status=ScienceApplication.SUBMITTED,
+            submitter=submitter,
+            call=self.call
+        )
+
+        panel = mixer.blend(
+            ReviewPanel,
+            name="panel 1",
+        )
+
+        other_user1 = blend_user()
+        panel.members.set([self.user, other_user1])
+
+        app_review = mixer.blend(
+            ScienceApplicationReview,
+            science_application=app,
+            review_panel=panel,
+            primary_reviewer=other_user1,
+            secondary_reviewer=self.user,
+
+        )
+        response = self.client.put(
+            reverse("api:scienceapplication-review-summary", kwargs={"pk": app_review.pk}),
+            data={"summary": "test"},
+        )
+        self.assertEqual(response.json()["summary"], "test")
+
+        app_review.refresh_from_db()
+        self.assertEqual(app_review.summary, "test")

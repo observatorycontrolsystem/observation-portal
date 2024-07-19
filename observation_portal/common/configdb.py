@@ -59,7 +59,11 @@ class ConfigDB(object):
 
     def get_site_data(self):
         """Return ConfigDB sites data."""
-        return self._get_configdb_data('sites')
+        try:
+            return self._get_configdb_data('sites')
+        except ConfigDBException as e:
+            logger.warn("unable to connect to configdb; using empty site data: %s", e)
+            return []
 
     def get_sites_with_instrument_type_and_location(
         self, instrument_type: str = '', site_code: str = '', enclosure_code: str = '', telescope_code: str = '',
