@@ -60,6 +60,8 @@ requests = "^2.27.1"
 time_intervals = "^1"
 uritemplate = "^4.1.1"
 PyYAML = "^6.0"
+sentry-sdk = {extras = ["django"], version = "^2.10.0"}
+django-health-check = "^3.18.3"
 
 [tool.poetry.dev-dependencies]
 responses = "0.18.0"
