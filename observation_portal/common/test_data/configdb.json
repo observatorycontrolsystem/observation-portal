@@ -2291,6 +2291,150 @@
           ]
         },
         {
+          "code": "dome",
+          "active": true,
+          "telescope_set": [
+            {
+              "code": "1m0a",
+              "name": "1 Meter",
+              "active": true,
+              "aperture": 1.0,
+              "lat": -32.3805542,
+              "long": 20.8100352,
+              "horizon": 15.0,
+              "ha_limit_pos": 4.6,
+              "ha_limit_neg": -4.6,
+              "zenith_blind_spot": 0.0,
+              "slew_rate": 0.0,
+              "minimum_slew_overhead": 0.0,
+              "maximum_slew_overhead": 0.0,
+              "instrument_change_overhead": 0.0,
+              "instrument_set": [
+                {
+                  "state": "SCHEDULABLE",
+                  "code": "fl04",
+                  "autoguider_camera": {
+                    "code": "ef03",
+                    "orientation": 0.0,
+                    "camera_type": {
+                      "code": "1M0-SCICAM-AG",
+                      "pixels_x": 240,
+                      "pixels_y": 180,
+                      "pscale": 1,
+                      "allow_self_guiding": true
+                    }
+                  },
+                  "instrument_type": {
+                    "code": "1M0-FLI",
+                    "name": "1M0-FLI",
+                    "instrument_category": "IMAGE",
+                    "allow_self_guiding": true,
+                    "default_configuration_type": "EXPOSE",
+                    "configuration_types": [
+                      {
+                          "name": "Expose",
+                          "code": "EXPOSE",
+                          "config_change_overhead": 0.0,
+                          "requires_optical_elements": true,
+                          "force_acquisition_off": false,
+                          "schedulable": true
+                      }
+                    ],
+                    "default_acceptability_threshold": 100,
+                    "config_front_padding": 16.0,
+                    "acquire_exposure_time": 0,
+                    "observation_front_padding": 90,
+                    "fixed_overhead_per_exposure": -16,
+                    "mode_types": [
+                      {
+                        "type": "readout",
+                        "default": "default",
+                        "modes": [
+                          {
+                            "code": "default",
+                            "overhead": 0.0,
+                            "schedulable": true,
+                            "validation_schema": {
+                              "extra_params": {"type": "dict", "schema": {"bin_x": {"type": "integer", "allowed": [1], "default": 1}, "bin_y": {"type": "integer", "allowed": [1], "default": 1}}, "default": {}, "required": true}
+                            }
+                          }
+                        ]
+                      },
+                      {
+                        "type": "acquisition",
+                        "default": "OFF",
+                        "modes": [
+                          {
+                            "code": "OFF",
+                            "overhead": 0.0,
+                            "schedulable": true,
+                            "validation_schema": {}
+                          }
+                        ]
+                      },
+                      {
+                        "type": "guiding",
+                        "default": "OFF",
+                        "modes": [
+                          {
+                            "code": "OFF",
+                            "overhead": 0.0,
+                            "schedulable": true,
+                            "validation_schema": {}
+                          },
+                          {
+                            "code": "ON",
+                            "overhead": 0.0,
+                            "schedulable": true,
+                            "validation_schema": {}
+                          }
+                        ]
+                      }
+                    ],
+                    "validation_schema": {
+                      "extra_params": {
+                        "type": "dict",
+                        "schema": {
+                          "defocus": {"type": "float", "min": -5.0, "max": 5.0},
+                          "offset_ra": {"type": "float"},
+                          "offset_dec": {"type": "float"}
+                        }
+                      }
+                    }
+                  },
+                  "science_cameras": [{
+                    "code": "fl04",
+                    "orientation": 0.0,
+                    "camera_type": {
+                      "code": "1M0-FLI",
+                      "name": "1M0-FLI",
+                      "pixels_x": 1000,
+                      "pixels_y": 1000,
+                      "pscale": 0.5,
+                      "max_rois": 0
+                    },
+                    "optical_element_groups": [
+                      {
+                        "type": "filters",
+                        "element_change_overhead": 0,
+                        "optical_elements": [
+                          {
+                            "name": "Air",
+                            "code": "air",
+                            "schedulable": false
+                          }
+                        ],
+                        "default": "air"
+                      }
+                    ]
+                  }],
+                  "__str__": "tst.dome.1m0a.fl04-fl04"
+                }
+              ]
+            }
+          ]
+        },
+        {
           "code": "domf",
           "active": true,
           "telescope_set": [
