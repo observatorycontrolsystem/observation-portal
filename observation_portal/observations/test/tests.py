@@ -664,6 +664,9 @@ class TestRealTimeApi(SetTimeMixin, APITestCase):
         # Check that the downtime interval is not within the available intervals
         blocked_interval = Intervals([(datetime(2016, 9, 5, 21, 5, tzinfo=timezone.utc), datetime(2016, 9, 5, 22, tzinfo=timezone.utc))])
         self.assertTrue(available_intervals.intersect([blocked_interval]).is_empty())
+        # Make sure the same times the next day are available so we know using the downtime was real
+        free_interval = Intervals([(datetime(2016, 9, 6, 21, 5, tzinfo=timezone.utc), datetime(2016, 9, 6, 22, tzinfo=timezone.utc))])
+        self.assertFalse(available_intervals.intersect([free_interval]).is_empty())
 
 
 class TestObservationApiBase(SetTimeMixin, APITestCase):

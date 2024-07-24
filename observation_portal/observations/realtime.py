@@ -23,7 +23,7 @@ def get_realtime_availability(user, telescope_filter = None):
                     telescope_info = configdb.get_telescopes_with_instrument_type_and_location(instrument_type)
                     for key in telescope_info:
                         if not telescope_filter or key == telescope_filter:
-                            telescopes_availability[key] = []   
+                            telescopes_availability[key] = []
 
     # Now go through each telesope and get its availability intervals
     start = timezone.now() + timedelta(minutes=settings.REAL_TIME_AVAILABILITY_MINUTES_IN)
