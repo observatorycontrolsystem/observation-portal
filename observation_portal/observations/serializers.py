@@ -8,7 +8,7 @@ from django.conf import settings
 from observation_portal.common.configdb import configdb
 from observation_portal.common.rise_set_utils import is_interval_available_for_telescope
 from observation_portal.observations.models import Observation, ConfigurationStatus, Summary
-from observation_portal.observations.time_accounting import realtime_time_available
+from observation_portal.observations.realtime import realtime_time_available
 from observation_portal.requestgroups.models import RequestGroup, Request, AcquisitionConfig, GuidingConfig, Target
 from observation_portal.requestgroups.serializers import ConfigurationTypeValidationHelper
 from observation_portal.proposals.models import Proposal

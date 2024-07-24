@@ -102,21 +102,6 @@ def configuration_time_used(summary, observation_type):
     return configuration_time
 
 
-def realtime_time_available(instrument_types, proposal):
-    """ Returns the (max) realtime time available on the proposal given a set of
-        potential instrument_types. The instrument_types are really just a standin for
-        the telescope, since real time blocks are per telescope and block the whole telescope.
-    """
-    realtime_available = 0.0
-    for ta in proposal.timeallocation_set.filter(semester=Semester.current_semesters().first()):
-        for instrument_type in ta.instrument_types:
-            if instrument_type.upper() in instrument_types:
-                # Just return the max time allocation available since its possible to have multiple that match
-                realtime_available = max(realtime_available, ta.realtime_allocation - ta.realtime_time_used)
-                continue
-    return realtime_available
-
-
 def debit_realtime_time_allocation(site, enclosure, telescope, proposal, hours):
     """ Attempts to debit the largest suitable time allocation for a real time observation
         If hours is negative, it will act as a credit rather than a debit.

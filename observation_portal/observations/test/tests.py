@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from io import StringIO
 
+from time_intervals.intervals import Intervals
 from rest_framework.test import APITestCase
 from django.utils import timezone
 from mixer.backend.django import mixer
@@ -622,6 +623,47 @@ class TestRealTimeApi(SetTimeMixin, APITestCase):
         good_observation = copy.deepcopy(self.observation)
         response = self.client.post(reverse('api:realtime-list'), data=good_observation)
         self.assertEqual(response.status_code, 201)
+
+    def test_realtime_availability_is_limited_by_proposal_time_allocation(self):
+        response = self.client.get(reverse('api:realtime-availability'))
+        self.assertEqual(response.status_code, 200)
+        availability = response.json()
+        self.assertTrue(availability)
+        for key in availability.keys():
+            # The default proposal only has 1m0-sbig realtime time
+            self.assertIn('1m0a', key)
+
+        # Now remove the proposal time allocation and see that there is no availability
+        self.ta.delete()
+        response = self.client.get(reverse('api:realtime-availability'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {})
+
+    def _convert_availability_to_intervals_helper(self, interval_list):
+        intervals = []
+        for interval in interval_list:
+            intervals.append((parse(interval[0]), parse(interval[1])))
+        return Intervals(intervals)
+
+    @patch('observation_portal.common.downtimedb.DowntimeDB._get_downtime_data')
+    def test_realtime_availability_filters_out_existing_observation_blocks(self, downtime_data):
+        downtime_data.return_value = [{'start': '2016-09-05T21:00:00Z',
+                                       'end': '2016-09-05T22:10:00Z',
+                                       'site': 'tst',
+                                       'enclosure': 'domb',
+                                       'telescope': '1m0a',
+                                       'instrument_type': '',
+                                       'reason': 'Whatever'},
+                                     ]
+        response = self.client.get(reverse('api:realtime-availability') + '?telescope=1m0a.domb.tst')
+        self.assertEqual(response.status_code, 200)
+        availability = response.json()
+        self.assertContains(response, '1m0a.domb.tst')
+        available_intervals = self._convert_availability_to_intervals_helper(availability['1m0a.domb.tst'])
+        self.assertFalse(available_intervals.is_empty())
+        # Check that the downtime interval is not within the available intervals
+        blocked_interval = Intervals([(datetime(2016, 9, 5, 21, 5, tzinfo=timezone.utc), datetime(2016, 9, 5, 22, tzinfo=timezone.utc))])
+        self.assertTrue(available_intervals.intersect([blocked_interval]).is_empty())
 
 
 class TestObservationApiBase(SetTimeMixin, APITestCase):

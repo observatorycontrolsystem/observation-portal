@@ -14,6 +14,7 @@ from observation_portal.requestgroups.models import RequestGroup
 from observation_portal.observations.time_accounting import debit_realtime_time_allocation
 from observation_portal.observations.models import Observation, ConfigurationStatus
 from observation_portal.observations.filters import ObservationFilter, ConfigurationStatusFilter
+from observation_portal.observations.realtime import get_realtime_availability
 from observation_portal.common.mixins import ListAsDictMixin, CreateListModelMixin
 from observation_portal.accounts.permissions import IsAdminOrReadOnly, IsDirectUser
 from observation_portal.common.schema import ObservationPortalSchema
@@ -58,7 +59,7 @@ def observations_queryset(request):
 
 class RealTimeViewSet(CreateListModelMixin, viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated,)
-    http_method_names = ['post', 'delete']
+    http_method_names = ['get', 'post', 'delete']
     serializer_class = import_string(settings.SERIALIZERS['observations']['RealTime'])
     schema = ObservationPortalSchema(tags=['Observations'])
 
@@ -67,10 +68,11 @@ class RealTimeViewSet(CreateListModelMixin, viewsets.ModelViewSet):
             Staff can delete anything, otherwise a user can only delete their own realtime observation.
         """
         if self.request.user.is_authenticated:
+            realtime_obs = Observation.objects.filter(request__request_group__observation_type='REAL_TIME')
             if self.request.user.is_staff:
-                return Observation.objects.all()
+                return realtime_obs
             else:
-                return Observation.objects.filter(request__request_group__submitter=self.request.user)
+                return realtime_obs.filter(request__request_group__submitter=self.request.user)
         return Observation.objects.none()
 
     def perform_create(self, serializer):
@@ -127,6 +129,17 @@ class RealTimeViewSet(CreateListModelMixin, viewsets.ModelViewSet):
         for site in sites:
             cache.set(f"{cache_key}_{site}", timezone.now(), None)
         return created_obs
+
+    @action(detail=False, methods=['get'], permission_classes=(IsAuthenticated,))
+    def availability(self, request):
+        """ Returns the availability of real time sessions for the next week.
+            Takes into account nighttime and downtime and what the user has time for.
+
+            Returns: dictionary of telescope to list of available time ranges as [start, end]
+        """
+        telescope = request.query_params.get('telescope', None)
+        realtime_availability = get_realtime_availability(request.user, telescope)
+        return Response(realtime_availability)
 
     def get_example_response(self):
         return {'list': Response(EXAMPLE_RESPONSES['observations']['list_real_time'], status=200)}.get(self.action)
