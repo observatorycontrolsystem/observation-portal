@@ -2,14 +2,9 @@ apiVersion: skaffold/v4beta10
 kind: Config
 metadata:
   name: app
-build:
-  tagPolicy:
-    gitCommit:
-      variant: Tags
-  artifacts:
-    - image: observation-portal
-      docker:
-        dockerfile: Dockerfile
+requires:
+  - configs:
+    - app-image
 manifests:
   kustomize:
     paths:
@@ -18,6 +13,23 @@ deploy:
   kubectl: {}
   logs:
     prefix: podAndContainer
+---
+
+apiVersion: skaffold/v4beta10
+kind: Config
+metadata:
+  name: app-image
+build:
+  tagPolicy:
+    gitCommit:
+      variant: Tags
+  artifacts:
+    - image: observation-portal
+      custom:
+        buildCommand: skaffold-builder-buildx
+        dependencies:
+          dockerfile:
+            path: Dockerfile
 ---
 
 apiVersion: skaffold/v4beta10
