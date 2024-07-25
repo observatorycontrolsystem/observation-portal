@@ -40,7 +40,7 @@ def get_realtime_availability(user: User, telescope_filter: str = ''):
     return telescopes_availability
 
 
-def realtime_time_available(instrument_types: list[str], proposal: str):
+def realtime_time_available(instrument_types: list, proposal: str):
     """ Returns the (max) realtime time available on the proposal given a set of
         potential instrument_types. The instrument_types are really just a standin for
         the telescope, since real time blocks are per telescope and block the whole telescope.
