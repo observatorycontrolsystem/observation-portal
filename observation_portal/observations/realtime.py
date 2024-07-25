@@ -2,15 +2,18 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.utils import timezone
+from django.contrib.auth.models import User
 
 from observation_portal.proposals.models import Semester
 from observation_portal.common.configdb import configdb
 from observation_portal.common.rise_set_utils import filtered_dark_intervalset_for_telescope
 
 
-def get_realtime_availability(user, telescope_filter = None):
+def get_realtime_availability(user: User, telescope_filter: str = ''):
     """ Returns a dict of lists of availability intervals for each
         telescope, limited to just a specific telescope if specified
+
+        telescope_filter should be of the form telescope_code.enclosure_code.site_code (i.e. 0m4a.clma.tst)
     """
     # Get the set of telescopes available for a users proposals and optionally filtered by the telescope param
     instrument_types_available = set()
@@ -25,7 +28,7 @@ def get_realtime_availability(user, telescope_filter = None):
                         if not telescope_filter or key == telescope_filter:
                             telescopes_availability[key] = []
 
-    # Now go through each telesope and get its availability intervals
+    # Now go through each telescope and get its availability intervals
     start = timezone.now() + timedelta(minutes=settings.REAL_TIME_AVAILABILITY_MINUTES_IN)
     end = start + timedelta(days=settings.REAL_TIME_AVAILABILITY_DAYS_OUT)
     for resource in telescopes_availability.keys():
@@ -37,7 +40,7 @@ def get_realtime_availability(user, telescope_filter = None):
     return telescopes_availability
 
 
-def realtime_time_available(instrument_types, proposal):
+def realtime_time_available(instrument_types: list[str], proposal: str):
     """ Returns the (max) realtime time available on the proposal given a set of
         potential instrument_types. The instrument_types are really just a standin for
         the telescope, since real time blocks are per telescope and block the whole telescope.
