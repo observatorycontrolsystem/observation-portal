@@ -253,6 +253,11 @@ OPENSEARCH_URL = os.getenv('OPENSEARCH_URL', 'http://localhost')
 CONFIGDB_URL = os.getenv('CONFIGDB_URL', 'http://localhost')
 DOWNTIMEDB_URL = os.getenv('DOWNTIMEDB_URL', 'http://localhost')
 
+# Real time session booking variables for availability
+# Availability from (current time + minutes in) to (current time + minutes in + days out)
+REAL_TIME_AVAILABILITY_DAYS_OUT = int(os.getenv('REAL_TIME_AVAILABILITY_DAYS_OUT', 7))
+REAL_TIME_AVAILABILITY_MINUTES_IN = int(os.getenv('REAL_TIME_AVAILABILITY_MINUTES_IN', 60))
+
 REQUESTGROUP_DATA_DOWNLOAD_URL = os.getenv('REQUESTGROUP_DATA_DOWNLOAD_URL', '')  # use {requestgroup_id} to have it substituted in
 REQUEST_DETAIL_URL = os.getenv('REQUEST_DETAIL_URL', '')  # use {request_id} to have it substituted in
 SCIENCE_APPLICATION_DETAIL_URL = os.getenv('SCIENCE_APPLICATION_DETAIL_URL', '')  # use {scicapp_id} to have it substituted in
