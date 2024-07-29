@@ -57,7 +57,7 @@ class Command(BaseCommand):
                                                           request__request_group__proposal=proposal.id,
                                                           request__configurations__instrument_type=instrument_type,
                                                           ).exclude(state='PENDING'
-                                                          ).exclude(request__request_group__observation_type=RequestGroup.DIRECT
+                                                          ).exclude(request__request_group__observation_type__in=RequestGroup.NON_SCHEDULED_TYPES
                                                           ).prefetch_related(
                     'request',
                     'request__request_group',

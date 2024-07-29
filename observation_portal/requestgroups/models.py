@@ -43,7 +43,7 @@ def request_as_dict(instance, for_observation=False):
     ret_dict['duration'] = instance.duration
     ret_dict['configurations'] = [c.as_dict() for c in instance.configurations.all()]
     if not for_observation:
-        if instance.request_group.observation_type == RequestGroup.DIRECT:
+        if instance.request_group.observation_type in RequestGroup.NON_SCHEDULED_TYPES:
             if instance.observation_set.count() > 0:
                 observation = instance.observation_set.first()
                 ret_dict['location'] = {'site': observation.site, 'enclosure': observation.enclosure,
@@ -118,6 +118,8 @@ class RequestGroup(models.Model):
     RAPID_RESPONSE = 'RAPID_RESPONSE'
     TIME_CRITICAL = 'TIME_CRITICAL'
     DIRECT = 'DIRECT'
+    REAL_TIME = 'REAL_TIME'
+    NON_SCHEDULED_TYPES = [DIRECT, REAL_TIME]
 
     STATE_CHOICES = (
         ('PENDING', 'PENDING'),
@@ -136,7 +138,8 @@ class RequestGroup(models.Model):
         ('NORMAL', NORMAL),
         ('RAPID_RESPONSE', RAPID_RESPONSE),
         ('TIME_CRITICAL', TIME_CRITICAL),
-        ('DIRECT', DIRECT)
+        ('DIRECT', DIRECT),
+        ('REAL_TIME', REAL_TIME)
     )
 
     submitter = models.ForeignKey(

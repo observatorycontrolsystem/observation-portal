@@ -1,14 +1,15 @@
 from rest_framework import serializers
 from django.utils import timezone
-from django.core.cache import cache
 from django.db import transaction
 from django.utils.translation import gettext as _
 from django.utils.module_loading import import_string
 from django.conf import settings
 
 from observation_portal.common.configdb import configdb
+from observation_portal.common.rise_set_utils import is_interval_available_for_telescope
 from observation_portal.observations.models import Observation, ConfigurationStatus, Summary
-from observation_portal.requestgroups.models import RequestGroup, AcquisitionConfig, GuidingConfig, Target
+from observation_portal.observations.realtime import realtime_time_available
+from observation_portal.requestgroups.models import RequestGroup, Request, AcquisitionConfig, GuidingConfig, Target
 from observation_portal.requestgroups.serializers import ConfigurationTypeValidationHelper
 from observation_portal.proposals.models import Proposal
 
@@ -281,7 +282,7 @@ class ScheduleSerializer(serializers.ModelSerializer):
 
         with transaction.atomic():
             rgs = import_string(settings.SERIALIZERS['observations']['RequestGroup'])(data=validated_data, context=self.context)
-            rgs.is_valid(True)
+            rgs.is_valid(raise_exception=True)
             rg = rgs.save()
 
             observation = Observation.objects.create(request=rg.requests.first(), **obs_fields)
@@ -316,6 +317,101 @@ class ScheduleSerializer(serializers.ModelSerializer):
                 del config_status_by_id[id]['id']
                 config.update(config_status_by_id[id])
         del data['configuration_statuses']
+        return data
+
+
+class RealTimeSerializer(serializers.ModelSerializer):
+    """ Used to validate realtime direct-submitted observations
+        These observations just reserve a downtime block of time but have NO content
+        or validation since they are a period of time when the telescope will be
+        controlled directly
+    """
+    proposal = serializers.CharField(write_only=True)
+    name = serializers.CharField(write_only=True)
+    site = serializers.ChoiceField(choices=configdb.get_site_tuples())
+    enclosure = serializers.ChoiceField(choices=configdb.get_enclosure_tuples())
+    telescope = serializers.ChoiceField(choices=configdb.get_telescope_tuples())
+    state = serializers.ReadOnlyField()
+
+    class Meta:
+        model = Observation
+        fields = ('site', 'enclosure', 'telescope', 'start', 'end', 'state',
+                  'proposal', 'priority', 'name', 'id', 'modified')
+        read_only_fields = ('modified', 'id',)
+
+    def validate(self, data):
+        validated_data = super().validate(data)
+        user = self.context['request'].user
+        # Now check if the proposal is valid and if the submitter user is on the proposal given
+        try:
+            proposal = Proposal.objects.get(id=validated_data.get('proposal'))
+        except Proposal.DoesNotExist:
+            raise serializers.ValidationError(_(f"Proposal {validated_data.get('proposal')} does not exist"))
+
+        if not proposal.active:
+            raise serializers.ValidationError(_(f"Proposal {validated_data.get('proposal')} is not active"))
+
+        if proposal not in user.proposal_set.all():
+            raise serializers.ValidationError(_(f"User {user.username} is not a member of proposal {validated_data.get('proposal')}"))
+
+        # Validate the site/obs/tel is a valid combination
+        allowable_instruments = configdb.get_instruments_at_location(
+            validated_data['site'], validated_data['enclosure'], validated_data['telescope']
+        )
+        if len(allowable_instruments.get('names')) == 0:
+            raise serializers.ValidationError(_(f"No instruments found at {data['site']}.{data['enclosure']}.{data['telescope']} or telescope does not exist"))
+
+        # Validate that at least one instrument type available on the telescope requested
+        # has time allocation available for this real time observing block
+        max_hours_available = realtime_time_available(allowable_instruments.get('types'), proposal)
+        hours_duration = (validated_data.get('end') - validated_data.get('start')).total_seconds() / 3600.0
+        if max_hours_available < hours_duration:
+            raise serializers.ValidationError(_(f"Not enough realtime time allocation available on proposal {proposal.id}: {max_hours_available} hours available, {hours_duration} requested"))
+
+        # Validate that the start/end time is during nighttime at the telescope
+        # Also check that there is not an overlapping downtime
+        interval_available = is_interval_available_for_telescope(
+            validated_data['start'],
+            validated_data['end'],
+            validated_data['site'],
+            validated_data['enclosure'],
+            validated_data['telescope']
+        )
+        if not interval_available:
+            raise serializers.ValidationError(_(f"The desired interval of {validated_data['start']} to {validated_data['end']} is not available on the telescope"))
+
+        validated_data['proposal'] = proposal
+        # Add in the request group defaults for an observation
+        validated_data['observation_type'] = RequestGroup.REAL_TIME
+        validated_data['operator'] = 'SINGLE'
+        validated_data['ipp_value'] = 1.0
+        return validated_data
+
+    def create(self, validated_data):
+        # separate out the observation and request_group fields
+        OBS_FIELDS = ['site', 'enclosure', 'telescope', 'start', 'end', 'priority']
+        obs_fields = {}
+        for field in OBS_FIELDS:
+            if field in validated_data:
+                obs_fields[field] = validated_data.pop(field)
+
+        with transaction.atomic():
+            request_group = RequestGroup.objects.create(**validated_data)
+            request = Request.objects.create(request_group=request_group)
+            observation = Observation.objects.create(request=request, **obs_fields)
+
+        return observation
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # Add in the indirect fields from the requestgroup parent
+        data['proposal'] = instance.request.request_group.proposal.id
+        data['submitter'] = instance.request.request_group.submitter.username
+        data['name'] = instance.request.request_group.name
+        data['ipp_value'] = instance.request.request_group.ipp_value
+        data['observation_type'] = instance.request.request_group.observation_type
+        data['request_group_id'] = instance.request.request_group.id
+
         return data
 
 

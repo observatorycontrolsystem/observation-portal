@@ -257,6 +257,11 @@ OPENSEARCH_URL = os.getenv('OPENSEARCH_URL', 'http://localhost')
 CONFIGDB_URL = os.getenv('CONFIGDB_URL', 'http://localhost')
 DOWNTIMEDB_URL = os.getenv('DOWNTIMEDB_URL', 'http://localhost')
 
+# Real time session booking variables for availability
+# Availability from (current time + minutes in) to (current time + minutes in + days out)
+REAL_TIME_AVAILABILITY_DAYS_OUT = int(os.getenv('REAL_TIME_AVAILABILITY_DAYS_OUT', 7))
+REAL_TIME_AVAILABILITY_MINUTES_IN = int(os.getenv('REAL_TIME_AVAILABILITY_MINUTES_IN', 60))
+
 REQUESTGROUP_DATA_DOWNLOAD_URL = os.getenv('REQUESTGROUP_DATA_DOWNLOAD_URL', '')  # use {requestgroup_id} to have it substituted in
 REQUEST_DETAIL_URL = os.getenv('REQUEST_DETAIL_URL', '')  # use {request_id} to have it substituted in
 SCIENCE_APPLICATION_DETAIL_URL = os.getenv('SCIENCE_APPLICATION_DETAIL_URL', '')  # use {scicapp_id} to have it substituted in
@@ -342,6 +347,7 @@ SERIALIZERS = {
         'Request': os.getenv('OBSERVATIONS_REQUEST_SERIALIZER', 'observation_portal.observations.serializers.ObserveRequestSerializer'),
         'RequestGroup': os.getenv('OBSERVATIONS_REQUESTGROUP_SERIALIZER', 'observation_portal.observations.serializers.ObserveRequestGroupSerializer'),
         'Schedule': os.getenv('OBSERVATIONS_SCHEDULE_SERIALIZER', 'observation_portal.observations.serializers.ScheduleSerializer'),
+        'RealTime': os.getenv('OBSERVATIONS_REALTIME_SERIALIZER', 'observation_portal.observations.serializers.RealTimeSerializer'),
         'Observation': os.getenv('OBSERVATIONS_OBSERVATION_SERIALIZER', 'observation_portal.observations.serializers.ObservationSerializer'),
         'Cancel': os.getenv('OBSERVATIONS_CANCEL_SERIALIZER', 'observation_portal.observations.serializers.CancelObservationsSerializer'),
         'CancelResponse': os.getenv('OBSERVATIONS_CANCEL_RESPONSE_SERIALIZER', 'observation_portal.observations.serializers.CancelObservationsResponseSerializer'),

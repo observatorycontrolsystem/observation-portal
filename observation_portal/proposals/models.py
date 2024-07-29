@@ -174,6 +174,7 @@ class Proposal(models.Model):
                 'std': ta.std_allocation,
                 'rr': ta.rr_allocation,
                 'tc': ta.tc_allocation,
+                'realtime': ta.realtime_allocation
             }
         return allocs
 
@@ -238,6 +239,8 @@ class TimeAllocation(models.Model):
     rr_time_used = models.FloatField(default=0)
     tc_allocation = models.FloatField(default=0)
     tc_time_used = models.FloatField(default=0)
+    realtime_allocation = models.FloatField(default=0, help_text='Number of Realtime hours allocated')
+    realtime_time_used = models.FloatField(default=0, help_text='Number of Realtime hours used')
     semester = models.ForeignKey(Semester, on_delete=models.CASCADE)
     proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE)
     instrument_types = ArrayField(base_field=models.CharField(max_length=200), default=list,

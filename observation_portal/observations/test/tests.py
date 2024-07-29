@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from io import StringIO
 
+from time_intervals.intervals import Intervals
 from rest_framework.test import APITestCase
 from django.utils import timezone
 from mixer.backend.django import mixer
@@ -22,6 +23,17 @@ import observation_portal.observations.signals.handlers  # noqa
 
 from unittest.mock import patch
 import copy
+
+realtime = {
+    "proposal": "auto_focus",
+    "observation_type": "REAL_TIME",
+    "name": "Test Real Time",
+    "site": "tst",
+    "enclosure": "domb",
+    "telescope": "1m0a",
+    "start": "2016-09-05T22:35:39Z",
+    "end": "2016-09-05T23:35:40Z"
+}
 
 observation = {
     "request": {
@@ -413,6 +425,248 @@ class TestPostScheduleMultiConfigApi(SetTimeMixin, APITestCase):
 
         response = self.client.post(reverse('api:schedule-list'), data=bad_observation)
         self.assertEqual(response.status_code, 400)
+
+
+class TestRealTimeApi(SetTimeMixin, APITestCase):
+    def setUp(self):
+        super().setUp()
+        self.proposal = mixer.blend(Proposal, direct_submission=True, active=True)
+        self.user = blend_user(
+            user_params={'is_admin': True, 'is_superuser': True, 'is_staff': True},
+            profile_params={'staff_view': True})
+        self.nonstaff_user = blend_user(user_params={'is_admin': False, 'is_superuser': False, 'is_staff': False})
+        self.client.force_login(self.nonstaff_user)
+        self.semester = mixer.blend(
+            Semester, id='2016B', start=datetime(2016, 9, 1, tzinfo=timezone.utc),
+            end=datetime(2016, 12, 31, tzinfo=timezone.utc)
+        )
+        self.ta = mixer.blend(TimeAllocation, proposal=self.proposal, semester=self.semester, realtime_allocation=10.0, instrument_types=['1M0-SCICAM-SBIG',])
+        self.membership = mixer.blend(Membership, user=self.nonstaff_user, proposal=self.proposal)
+        self.observation = copy.deepcopy(realtime)
+        self.observation['proposal'] = self.proposal.id
+
+    def test_post_realtime_observation_succeeds_with_nonstaff_user(self):
+        response = self.client.post(reverse('api:realtime-list'), data=self.observation)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()['submitter'], self.nonstaff_user.username)
+        self.assertEqual(response.json()['observation_type'], self.observation['observation_type'])
+        self.assertEqual(response.json()['name'], self.observation['name'])
+        # Make sure time is debitted on creation
+        self.ta.refresh_from_db()
+        time_used = (parse(self.observation['end']) - parse(self.observation['start'])).total_seconds() / 3600.0
+        self.assertEqual(time_used, self.ta.realtime_time_used)
+
+    def test_post_realtime_observation_succeeds_with_staff_user(self):
+        self.client.force_login(self.user)
+        mixer.blend(Membership, user=self.user, proposal=self.proposal)
+        response = self.client.post(reverse('api:realtime-list'), data=self.observation)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()['submitter'], self.user.username)
+        self.assertEqual(response.json()['observation_type'], self.observation['observation_type'])
+        self.assertEqual(response.json()['name'], self.observation['name'])
+
+    def test_delete_realtime_observation_succeeds(self):
+        response = self.client.post(reverse('api:realtime-list'), data=self.observation)
+        self.assertEqual(response.status_code, 201)
+        # Make sure time is debitted on creation
+        self.ta.refresh_from_db()
+        time_used = (parse(self.observation['end']) - parse(self.observation['start'])).total_seconds() / 3600.0
+        self.assertEqual(time_used, self.ta.realtime_time_used)
+
+        observation_id = response.json()['id']
+        Observation.objects.get(id=observation_id)
+        request_group_id = response.json()['request_group_id']
+        RequestGroup.objects.get(id=request_group_id)
+        response = self.client.delete(reverse('api:realtime-detail', args=(observation_id,)))
+        self.assertEqual(response.status_code, 204)
+        with self.assertRaises(Observation.DoesNotExist):
+            Observation.objects.get(id=observation_id)
+        with self.assertRaises(RequestGroup.DoesNotExist):
+            RequestGroup.objects.get(id=request_group_id)
+        # Now make sure time is credited back on deletion
+        self.ta.refresh_from_db()
+        self.assertEqual(0.0, self.ta.realtime_time_used)
+
+    def test_delete_someone_elses_observation_fails(self):
+        response = self.client.post(reverse('api:realtime-list'), data=self.observation)
+        self.assertEqual(response.status_code, 201)
+        observation_id = response.json()['id']
+
+        # Make another non-staff user and show they cannot delete it
+        someone_else = blend_user(user_params={'is_admin': False, 'is_superuser': False, 'is_staff': False})
+        self.client.force_login(someone_else)
+        response = self.client.delete(reverse('api:realtime-detail', args=(observation_id,)))
+        self.assertEqual(response.status_code, 404)
+
+    def test_delete_someone_elses_observation_succeeds_as_staff(self):
+        response = self.client.post(reverse('api:realtime-list'), data=self.observation)
+        self.assertEqual(response.status_code, 201)
+        observation_id = response.json()['id']
+
+        self.client.force_login(self.user)
+        response = self.client.delete(reverse('api:realtime-detail', args=(observation_id,)))
+        self.assertEqual(response.status_code, 204)
+
+    def test_delete_nonexistent_observation(self):
+        response = self.client.delete(reverse('api:realtime-detail', args=(12345,)))
+        self.assertEqual(response.status_code, 404)
+
+    def test_post_realtime_user_not_on_proposal(self):
+        proposal = mixer.blend(Proposal, direct_submission=True, active=True)
+        mixer.blend(Membership, user=self.user, proposal=proposal)
+        bad_observation = copy.deepcopy(self.observation)
+        bad_observation['proposal'] = proposal.id
+        response = self.client.post(reverse('api:realtime-list'), data=bad_observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('is not a member of proposal', str(response.content))
+
+    def test_post_realtime_proposal_not_active(self):
+        inactive_proposal = mixer.blend(Proposal, direct_submission=True, active=False)
+        mixer.blend(Membership, user=self.nonstaff_user, proposal=inactive_proposal)
+        bad_observation = copy.deepcopy(self.observation)
+        bad_observation['proposal'] = inactive_proposal.id
+        response = self.client.post(reverse('api:realtime-list'), data=bad_observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('is not active', str(response.content))
+
+    def test_post_realtime_proposal_no_time_allocation(self):
+        test_proposal = mixer.blend(Proposal, direct_submission=True, active=True)
+        mixer.blend(Membership, user=self.nonstaff_user, proposal=test_proposal)
+        bad_observation = copy.deepcopy(self.observation)
+        bad_observation['proposal'] = test_proposal.id
+        response = self.client.post(reverse('api:realtime-list'), data=bad_observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Not enough realtime time allocation available on proposal', str(response.content))
+
+    def test_post_realtime_proposal_not_enough_time_allocation(self):
+        test_proposal = mixer.blend(Proposal, direct_submission=True, active=True)
+        mixer.blend(Membership, user=self.nonstaff_user, proposal=test_proposal)
+        mixer.blend(TimeAllocation, proposal=test_proposal, semester=self.semester, realtime_allocation=0.5, instrument_types=['1M0-SCICAM-SBIG',])
+        bad_observation = copy.deepcopy(self.observation)
+        bad_observation['proposal'] = test_proposal.id
+        response = self.client.post(reverse('api:realtime-list'), data=bad_observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn(f'Not enough realtime time allocation available on proposal {test_proposal.id}: 0.5 hours available', str(response.content))
+
+    def test_post_realtime_proposal_does_not_exist(self):
+        bad_observation = copy.deepcopy(self.observation)
+        bad_observation['proposal'] = 'fakeProposal'
+        response = self.client.post(reverse('api:realtime-list'), data=bad_observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Proposal fakeProposal does not exist', str(response.content))
+
+    def test_post_telescope_does_not_exist(self):
+        bad_observation = copy.deepcopy(self.observation)
+        bad_observation['site'] = 'lco'
+        response = self.client.post(reverse('api:realtime-list'), data=bad_observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('No instruments found at lco.domb.1m0a', str(response.content))
+
+    def test_observation_has_no_configurations(self):
+        response = self.client.post(reverse('api:realtime-list'), data=self.observation)
+        self.assertEqual(response.status_code, 201)
+        observation = Observation.objects.first().as_dict()
+
+        response = self.client.get(reverse('api:schedule-list'))
+        self.assertEqual(response.json()['count'], 1)
+        test_obs1 = response.json()['results'][0]
+        self.assertEqual(observation['id'], test_obs1['id'])
+        self.assertEqual(observation['request']['configurations'], test_obs1['request']['configurations'])
+
+        response = self.client.get(reverse('api:observations-list'))
+        self.assertEqual(response.json()['count'], 1)
+        test_obs2 = response.json()['results'][0]
+        self.assertEqual(observation['id'], test_obs2['id'])
+        self.assertEqual(observation['request']['configurations'], test_obs2['request']['configurations'])
+
+    def test_post_realtime_rejected_during_daytime(self):
+        bad_observation = copy.deepcopy(self.observation)
+        bad_observation['start'] = "2016-09-05T12:35:39Z"
+        bad_observation['end'] = "2016-09-05T13:35:39Z"
+        response = self.client.post(reverse('api:realtime-list'), data=bad_observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('The desired interval', str(response.content))
+
+    def test_post_realtime_rejected_during_daytime_overlapping(self):
+        bad_observation = copy.deepcopy(self.observation)
+        bad_observation['start'] = "2016-09-05T16:35:39Z"
+        bad_observation['end'] = "2016-09-05T18:35:39Z"
+        response = self.client.post(reverse('api:realtime-list'), data=bad_observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('The desired interval', str(response.content))
+
+    @patch('observation_portal.common.downtimedb.DowntimeDB._get_downtime_data')
+    def test_post_realtime_rejected_due_to_downtime_during_interval(self, downtime_data):
+        downtime_data.return_value = [{'start': '2016-09-05T23:00:00Z',
+                                       'end': '2016-09-05T23:10:00Z',
+                                       'site': 'tst',
+                                       'enclosure': 'domb',
+                                       'telescope': '1m0a',
+                                       'instrument_type': '',
+                                       'reason': 'Whatever'},
+                                      ]
+        bad_observation = copy.deepcopy(self.observation)
+        response = self.client.post(reverse('api:realtime-list'), data=bad_observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('The desired interval', str(response.content))
+
+    @patch('observation_portal.common.downtimedb.DowntimeDB._get_downtime_data')
+    def test_post_realtime_accepted_with_nonoverlapping_downtime(self, downtime_data):
+        downtime_data.return_value = [{'start': '2016-09-05T21:00:00Z',
+                                       'end': '2016-09-05T22:10:00Z',
+                                       'site': 'tst',
+                                       'enclosure': 'domb',
+                                       'telescope': '1m0a',
+                                       'instrument_type': '',
+                                       'reason': 'Whatever'},
+                                      ]
+        good_observation = copy.deepcopy(self.observation)
+        response = self.client.post(reverse('api:realtime-list'), data=good_observation)
+        self.assertEqual(response.status_code, 201)
+
+    def test_realtime_availability_is_limited_by_proposal_time_allocation(self):
+        response = self.client.get(reverse('api:realtime-availability'))
+        self.assertEqual(response.status_code, 200)
+        availability = response.json()
+        self.assertTrue(availability)
+        for key in availability.keys():
+            # The default proposal only has 1m0-sbig realtime time
+            self.assertIn('1m0a', key)
+
+        # Now remove the proposal time allocation and see that there is no availability
+        self.ta.delete()
+        response = self.client.get(reverse('api:realtime-availability'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {})
+
+    def _convert_availability_to_intervals_helper(self, interval_list):
+        intervals = []
+        for interval in interval_list:
+            intervals.append((parse(interval[0]), parse(interval[1])))
+        return Intervals(intervals)
+
+    @patch('observation_portal.common.downtimedb.DowntimeDB._get_downtime_data')
+    def test_realtime_availability_filters_out_existing_observation_blocks(self, downtime_data):
+        downtime_data.return_value = [{'start': '2016-09-05T21:00:00Z',
+                                       'end': '2016-09-05T22:10:00Z',
+                                       'site': 'tst',
+                                       'enclosure': 'domb',
+                                       'telescope': '1m0a',
+                                       'instrument_type': '',
+                                       'reason': 'Whatever'},
+                                     ]
+        response = self.client.get(reverse('api:realtime-availability') + '?telescope=1m0a.domb.tst')
+        self.assertEqual(response.status_code, 200)
+        availability = response.json()
+        self.assertContains(response, '1m0a.domb.tst')
+        available_intervals = self._convert_availability_to_intervals_helper(availability['1m0a.domb.tst'])
+        self.assertFalse(available_intervals.is_empty())
+        # Check that the downtime interval is not within the available intervals
+        blocked_interval = Intervals([(datetime(2016, 9, 5, 21, 5, tzinfo=timezone.utc), datetime(2016, 9, 5, 22, tzinfo=timezone.utc))])
+        self.assertTrue(available_intervals.intersect([blocked_interval]).is_empty())
+        # Make sure the same times the next day are available so we know using the downtime was real
+        free_interval = Intervals([(datetime(2016, 9, 6, 21, 5, tzinfo=timezone.utc), datetime(2016, 9, 6, 22, tzinfo=timezone.utc))])
+        self.assertFalse(available_intervals.intersect([free_interval]).is_empty())
 
 
 class TestObservationApiBase(SetTimeMixin, APITestCase):

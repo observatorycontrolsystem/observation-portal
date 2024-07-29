@@ -57,20 +57,68 @@ class DowntimeDB(object):
         return downtime_intervals
 
     @staticmethod
+    def refresh_downtime_intervals():
+        ''' Refreshes the cached intervals of downtimes - necessary after submitting downtimes so they
+            can be used right away.
+        '''
+        try:
+            data = DowntimeDB._get_downtime_data()
+            downtime_intervals = DowntimeDB._order_downtime_by_resource_and_instrument_type(data)
+            caches['locmem'].set('downtime_intervals', downtime_intervals, 900)
+            caches['locmem'].set('downtime_intervals.no_expire', downtime_intervals)
+            return downtime_intervals
+        except DowntimeDBException as e:
+            logger.warning(repr(e))
+        return None
+
+    @staticmethod
     def get_downtime_intervals():
         ''' Returns dictionary of IntervalSets of downtime intervals per telescope resource and per instrument_type or "all".
             Caches the data and will attempt to update the cache every 15 minutes, but fallback on using previous downtime list otherwise.
         '''
-        downtime_intervals = caches['locmem'].get('downtime_intervals', [])
+        downtime_intervals = caches['locmem'].get('downtime_intervals', {})
         if not downtime_intervals:
             # If the cache has expired, attempt to update the downtime intervals
-            try:
-                data = DowntimeDB._get_downtime_data()
-                downtime_intervals = DowntimeDB._order_downtime_by_resource_and_instrument_type(data)
-                caches['locmem'].set('downtime_intervals', downtime_intervals, 900)
-                caches['locmem'].set('downtime_intervals.no_expire', downtime_intervals)
-            except DowntimeDBException as e:
-                downtime_intervals = caches['locmem'].get('downtime_intervals.no_expire', [])
-                logger.warning(repr(e))
+            downtime_intervals = DowntimeDB.refresh_downtime_intervals()
+            if downtime_intervals is None:
+                downtime_intervals = caches['locmem'].get('downtime_intervals.no_expire', {})
 
         return downtime_intervals
+
+    @staticmethod
+    def create_downtime_interval(headers, downtime):
+        ''' Takes in a headers dict and downtime dict to create in the downtime app
+            Returns the created downtime block and raises a DowntimeDBException on error.
+        '''
+        try:
+            r = requests.post(settings.DOWNTIMEDB_URL + 'api/', json=downtime, headers=headers)
+            r.raise_for_status()
+            DowntimeDB.refresh_downtime_intervals()
+            return r.json()
+        except (requests.exceptions.RequestException, requests.exceptions.HTTPError) as e:
+            msg = "{}: {}".format(e.__class__.__name__, DOWNTIMEDB_ERROR_MSG)
+            raise DowntimeDBException(msg)
+
+    @staticmethod
+    def delete_downtime_interval(headers, site, enclosure, telescope, observation_id):
+        ''' Takes in a headers dict and downtime dict to delete a downtime with those fields
+            from the downtime app. Returns True if something was deleted, False otherwise.
+        '''
+        downtime_id = 'N/A'
+        try:
+            url = settings.DOWNTIMEDB_URL + "api/"
+            get_url = url + f"?site={site}&enclosure={enclosure}&telescope={telescope}&reason_exact={observation_id}"
+            r = requests.get(get_url, headers=headers)
+            results = r.json()
+            if results.get('count') != 1:
+                logger.error(f"Trying to get downtimes for observation {observation_id} had {results.get('count')} results. This should never happen!")
+            else:
+                downtime_id = results.get('results')[0].get('id')
+                r = requests.delete(url + f"{downtime_id}/", headers=headers)
+                r.raise_for_status()
+                DowntimeDB.refresh_downtime_intervals()
+                return True
+        except (requests.exceptions.RequestException, requests.exceptions.HTTPError) as e:
+            logger.warning(f"Failed to delete downtime {downtime_id} for observation {observation_id}: {repr(e)}")
+            return False
+        return False

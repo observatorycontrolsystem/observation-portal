@@ -43,7 +43,9 @@ jobs:
         python -m pip install 'poetry'
         poetry install
     - name: Run tests
-      run: poetry run coverage run manage.py test --settings=observation_portal.test_settings
+      run: |
+        poetry run coverage run manage.py test --settings=observation_portal.test_settings
+        poetry run coverage xml
       env:
         DB_USER: postgres
         DB_PASS: postgres

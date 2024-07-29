@@ -43,7 +43,7 @@ from observation_portal.sciapplications.viewsets import (
     ScienceApplicationMyReviewViewSet,
 )
 from observation_portal.observations.views import LastScheduledView
-from observation_portal.observations.viewsets import ObservationViewSet, ScheduleViewSet, ConfigurationStatusViewSet
+from observation_portal.observations.viewsets import ObservationViewSet, ScheduleViewSet, RealTimeViewSet, ConfigurationStatusViewSet
 import observation_portal.accounts.urls as accounts_urls
 from observation_portal import settings
 from observation_portal.common.schema import ObservationPortalSchemaGenerator
@@ -62,6 +62,7 @@ router.register(r'scienceapplications', ScienceApplicationViewSet, 'scienceappli
 router.register(r'scienceapplication-reviews', ScienceApplicationReviewViewSet, 'scienceapplication-reviews')
 router.register(r'observations', ObservationViewSet, 'observations')
 router.register(r'schedule', ScheduleViewSet, 'schedule')
+router.register(r'realtime', RealTimeViewSet, 'realtime')
 router.register(r'configurationstatus', ConfigurationStatusViewSet, 'configurationstatus')
 
 api_urlpatterns = ([

@@ -24,8 +24,8 @@ Also, be aware that the end of the semester generally sees higher contention for
       <th></th><th colspan="3">Hours Allocated</th><th colspan="3">Hours Used</th>
     </tr>
     <tr>
-      <th></th><th>Queue</th><th>Time Critical</th><th>Rapid Response</th>
-      <th>Queue</th><th>Time Critical</th><th>Rapid Response</th>
+      <th></th><th>Queue</th><th>Time Critical</th><th>Rapid Response</th><th>Realtime</th>
+      <th>Queue</th><th>Time Critical</th><th>Rapid Response</th><th>Realtime</th>
     </tr>
   </thead>
   <tbody>
@@ -35,9 +35,11 @@ Also, be aware that the end of the semester generally sees higher contention for
       <td>{{ ta.std_allocation }}</td>
       <td>{{ ta.tc_allocation }}</td>
       <td>{{ ta.rr_allocation }}</td>
+      <td>{{ ta.realtime_allocation }}</td>
       <td>{{ ta.std_time_used|floatformat }}</td>
       <td>{{ ta.tc_time_used|floatformat }}</td>
       <td>{{ ta.rr_time_used|floatformat }}</td>
+      <td>{{ ta.realtime_time_used|floatformat }}</td>
     </tr>
     {% endfor %}
   </tbody>

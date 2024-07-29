@@ -1,8 +1,9 @@
 from rest_framework import viewsets, filters, status
-from rest_framework.permissions import IsAdminUser
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
+from rest_framework.authtoken.models import Token
 from django.core.cache import cache
 from django.utils import timezone
 from django.utils.module_loading import import_string
@@ -10,12 +11,19 @@ from django.conf import settings
 from django_filters.rest_framework import DjangoFilterBackend
 
 from observation_portal.requestgroups.models import RequestGroup
+from observation_portal.observations.time_accounting import debit_realtime_time_allocation
 from observation_portal.observations.models import Observation, ConfigurationStatus
 from observation_portal.observations.filters import ObservationFilter, ConfigurationStatusFilter
+from observation_portal.observations.realtime import get_realtime_availability
 from observation_portal.common.mixins import ListAsDictMixin, CreateListModelMixin
 from observation_portal.accounts.permissions import IsAdminOrReadOnly, IsDirectUser
 from observation_portal.common.schema import ObservationPortalSchema
 from observation_portal.common.doc_examples import EXAMPLE_RESPONSES
+from observation_portal.common.downtimedb import DowntimeDB
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def get_sites_from_request(request):
@@ -47,6 +55,94 @@ def observations_queryset(request):
         'request__configurations__instrument_configs__rois', 'configuration_statuses',
         'configuration_statuses__summary', 'configuration_statuses__configuration', 'request__request_group__submitter'
     ).distinct()
+
+
+class RealTimeViewSet(CreateListModelMixin, viewsets.ModelViewSet):
+    permission_classes = (IsAuthenticated,)
+    http_method_names = ['get', 'post', 'delete']
+    serializer_class = import_string(settings.SERIALIZERS['observations']['RealTime'])
+    schema = ObservationPortalSchema(tags=['Observations'])
+
+    def get_queryset(self):
+        """ This is just used for the delete endpoint to retrieve an object to delete.
+            Staff can delete anything, otherwise a user can only delete their own realtime observation.
+        """
+        if self.request.user.is_authenticated:
+            realtime_obs = Observation.objects.filter(request__request_group__observation_type='REAL_TIME')
+            if self.request.user.is_staff:
+                return realtime_obs
+            else:
+                return realtime_obs.filter(request__request_group__submitter=self.request.user)
+        return Observation.objects.none()
+
+    def perform_create(self, serializer):
+        """ This creates the associated downtime block after the observation is created,
+            using its observation id as the downtime reason
+        """
+        observation = serializer.save(submitter=self.request.user, submitter_id=self.request.user.id)
+        # Debit the realtime time allocation hours
+        obs_hours = (observation.end - observation.start).total_seconds() / 3600.0
+        debit_realtime_time_allocation(observation.site, observation.enclosure, observation.telescope,
+                                       observation.request.request_group.proposal, obs_hours)
+        # Now create the downtime block in DowntimeDB
+        downtime = {
+            'site': observation.site,
+            'enclosure': observation.enclosure,
+            'telescope': observation.telescope,
+            'start': observation.start.isoformat(),
+            'end': observation.end.isoformat(),
+            'reason': str(observation.id)
+        }
+        try:
+            auth_token = Token.objects.get(user=self.request.user)
+            headers = {'Authorization': f'Token {auth_token.key}'}
+            DowntimeDB.create_downtime_interval(headers=headers, downtime=downtime)
+        except Token.DoesNotExist:
+            logger.warning("Failed to retrieve token for realtime submission user. This should not happen.")
+
+    def perform_destroy(self, instance):
+        """ This destroys the associated downtime and also the associated request and request group
+        """
+        try:
+            auth_token = Token.objects.get(user=self.request.user)
+            headers = {'Authorization': f'Token {auth_token.key}'}
+            DowntimeDB.delete_downtime_interval(headers=headers, site=instance.site, enclosure=instance.enclosure,
+                                                telescope=instance.telescope, observation_id=instance.id)
+        except Token.DoesNotExist:
+            logger.warning("Failed to retrieve token for realtime deletion user. This should not happen.")
+
+        # Now credit the realtime time back to the time allocation with most hours
+        negative_obs_hours = -(instance.end - instance.start).total_seconds() / 3600.0
+        debit_realtime_time_allocation(instance.site, instance.enclosure, instance.telescope,
+                                       instance.request.request_group.proposal, negative_obs_hours)
+        # delete the observation and then request group
+        rg = instance.request.request_group
+        instance.delete()
+        rg.delete()
+
+    def create(self, request, *args, **kwargs):
+        """ This sets the last scheduled time on a site when any directly submitted request is submitted for that site
+        """
+        cache_key = 'observation_portal_last_schedule_time'
+        created_obs = super().create(request, args, kwargs)
+        sites = get_sites_from_request(request)
+        for site in sites:
+            cache.set(f"{cache_key}_{site}", timezone.now(), None)
+        return created_obs
+
+    @action(detail=False, methods=['get'], permission_classes=(IsAuthenticated,))
+    def availability(self, request):
+        """ Returns the availability of real time sessions for the next week.
+            Takes into account nighttime and downtime and what the user has time for.
+
+            Returns: dictionary of telescope to list of available time ranges as [start, end]
+        """
+        telescope = request.query_params.get('telescope', None)
+        realtime_availability = get_realtime_availability(request.user, telescope)
+        return Response(realtime_availability)
+
+    def get_example_response(self):
+        return {'list': Response(EXAMPLE_RESPONSES['observations']['list_real_time'], status=200)}.get(self.action)
 
 
 class ScheduleViewSet(ListAsDictMixin, CreateListModelMixin, viewsets.ModelViewSet):
@@ -147,7 +243,7 @@ class ObservationViewSet(CreateListModelMixin, ListAsDictMixin, viewsets.ModelVi
                 observations = observations.exclude(
                     request__request_group__observation_type=RequestGroup.RAPID_RESPONSE)
             if not request_serializer.data.get('include_direct', False):
-                observations = observations.exclude(request__request_group__observation_type=RequestGroup.DIRECT)
+                observations = observations.exclude(request__request_group__observation_type__in=RequestGroup.NON_SCHEDULED_TYPES)
             if request.user and not request.user.is_staff:
                 observations = observations.filter(request__request_group__proposal__direct_submission=True)
             # First check if we have an in_progress observation that overlaps with the time range and resource.

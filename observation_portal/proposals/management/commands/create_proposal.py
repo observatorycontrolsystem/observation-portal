@@ -77,6 +77,7 @@ class Command(BaseCommand):
                         'std_allocation': 100,
                         'rr_allocation': 100,
                         'tc_allocation': 100,
+                        'realtime_allocation': 100,
                         'ipp_limit': 10,
                         'ipp_time_available': 5
                     }
