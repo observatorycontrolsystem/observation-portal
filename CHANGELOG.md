@@ -10,6 +10,14 @@ This project adheres to semantic versioning.
 
 ### Removed
 
+## [4.10.0] - 2024-07-29
+
+### Added
+- New `REAL_TIME` observation_type to use for reserving real time observing blocks
+- /api/realtime/ endpoint for submitting realtime observing blocks that are validated
+- `realtime_allocation` and `realtime_time_used` in proposal time allocations to keep track
+- /api/realtime/availability endpoint for getting available real time slots in the near future for a user
+
 ## [4.8.4] - 2024-03-05
 
 ### Changed
