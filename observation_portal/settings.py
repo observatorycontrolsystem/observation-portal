@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 """
 
 import os
+import sentry_sdk
+
 from lcogt_logging import LCOGTFormatter
 
 
@@ -61,9 +63,10 @@ ORGANIZATION_SUPPORT_EMAIL = os.getenv('ORGANIZATION_SUPPORT_EMAIL', '')  # Orga
 ORGANIZATION_ADMIN_EMAIL = os.getenv('ORGANIZATION_ADMIN_EMAIL', '')  # Admin email address to receive 500 error emails
 OBSERVATION_PORTAL_BASE_URL = os.getenv('OBSERVATION_PORTAL_BASE_URL', 'http://localhost')
 
-ADMINS = [
-    ('Admins', ORGANIZATION_ADMIN_EMAIL)
-]
+ADMINS = []
+
+if os.getenv("SEND_ORG_ADMIN_ERROR_EMAILS", "no").lower() in {"yes", "true", "y"}:
+    ADMINS.append(("Admins", ORGANIZATION_ADMIN_EMAIL))
 
 # Application definition
 
@@ -85,6 +88,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'django_extensions',
     'django_dramatiq',
+    'health_check',
     'observation_portal.accounts.apps.AccountsConfig',
     'observation_portal.requestgroups.apps.RequestGroupsConfig',
     'observation_portal.observations.apps.ObservationsConfig',
@@ -447,6 +451,34 @@ DRAMATIQ_BROKER = {
 }
 
 TEST_RUNNER = 'observation_portal.test_runner.MyDiscoverRunner'
+
+# Configure Sentry
+SENTRY_DSN = os.getenv("SENTRY_DSN")
+
+def traces_sampler(ctx):
+    fallback = float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0.10"))
+
+    if ctx.get("parent_sampled") is not None:
+        return ctx.get("parent_sampled")
+
+    url = ctx.get("wsgi_environ", {}).get("PATH_INFO", "") or ctx.get("asgi_scope", {}).get("path", "")
+
+    # Disable traces for all zpages (health, etc)
+    if url.startswith("/zpages/"):
+        return 0
+
+    return fallback
+
+def profiles_sampler(context):
+    # This rate is on top of the traces collected
+    return float(os.getenv("SENTRY_PROFILES_SAMPLE_RATE", "0.50"))
+
+if SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        traces_sampler=traces_sampler,
+        profiles_sampler=profiles_sampler,
+    )
 
 try:
     from local_settings import *  # noqa

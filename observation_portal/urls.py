@@ -107,6 +107,7 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
+    path("zpages/health/", include("health_check.urls")),
     re_path(r'^accounts/', include(accounts_urls)),
     re_path(r'^api/', include(api_urlpatterns)),
     re_path(r'^o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
