@@ -430,7 +430,7 @@ class TestPostScheduleMultiConfigApi(SetTimeMixin, APITestCase):
 class TestRealTimeApi(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
-        self.proposal = mixer.blend(Proposal, direct_submission=True, active=True)
+        self.proposal = mixer.blend(Proposal, id='auto_focus', direct_submission=True, active=True)
         self.user = blend_user(
             user_params={'is_admin': True, 'is_superuser': True, 'is_staff': True},
             profile_params={'staff_view': True})
@@ -620,6 +620,81 @@ class TestRealTimeApi(SetTimeMixin, APITestCase):
                                        'instrument_type': '',
                                        'reason': 'Whatever'},
                                       ]
+        good_observation = copy.deepcopy(self.observation)
+        response = self.client.post(reverse('api:realtime-list'), data=good_observation)
+        self.assertEqual(response.status_code, 201)
+
+    def test_post_realtime_rejected_if_overlapping_users_other_sessions(self):
+        # Create one realtime observation
+        good_observation = copy.deepcopy(self.observation)
+        good_observation['enclosure'] = 'doma'
+        good_observation['start'] = "2016-09-05T23:00:00Z"
+        response = self.client.post(reverse('api:realtime-list'), data=good_observation)
+        self.assertEqual(response.status_code, 201)
+        # Then attempt to create another realtime observation that would overlap but on a different resource
+        bad_observation = copy.deepcopy(self.observation)
+        response = self.client.post(reverse('api:realtime-list'), data=bad_observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("overlaps an existing interval for user", str(response.content))
+
+    def test_post_realtime_rejected_if_overlapping_in_progress_observations(self):
+        # First create an in progress observation during the same time as the realtime session
+        mixer.blend(Observation, state='IN_PROGRESS', start=datetime(2016, 9, 1, 0, tzinfo=timezone.utc),
+                    end=datetime(2016, 9, 1, 1, tzinfo=timezone.utc), site='tst', enclosure='domb', telescope='1m0a')
+        # Then show that the realtime session fails to book
+        bad_observation = copy.deepcopy(self.observation)
+        bad_observation['start'] = "2016-09-01T00:15:00Z"
+        bad_observation['end'] = "2016-09-01T01:15:00Z"
+        response = self.client.post(reverse('api:realtime-list'), data=bad_observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("There is currently an observation in progress on tst.domb.1m0a", str(response.content))
+        # overlapping fails to book again
+        bad_observation['start'] = "2016-09-01T00:15:00Z"
+        bad_observation['end'] = "2016-09-01T00:45:00Z"
+        response = self.client.post(reverse('api:realtime-list'), data=bad_observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("There is currently an observation in progress on tst.domb.1m0a", str(response.content))
+        # Non overlapping succeeds at booking
+        good_observation = copy.deepcopy(self.observation)
+        good_observation['start'] = "2016-09-01T01:15:00Z"
+        good_observation['end'] = "2016-09-01T01:30:00Z"
+        response = self.client.post(reverse('api:realtime-list'), data=good_observation)
+        self.assertEqual(response.status_code, 201)
+
+    def test_post_realtime_rejected_if_overlapping_important_scheduled_observations(self):
+        # First create an in progress observation during the same time as the realtime session
+        requestgroup = create_simple_requestgroup(
+            self.nonstaff_user, self.proposal, instrument_type='1M0-SCICAM-SBIG'
+        )
+        requestgroup.observation_type = RequestGroup.TIME_CRITICAL
+        requestgroup.save()
+        mixer.blend(Observation, request=requestgroup.requests.first(), state='IN_PROGRESS',
+                    start=datetime(2016, 9, 5, 22, tzinfo=timezone.utc),
+                    end=datetime(2016, 9, 5, 23, tzinfo=timezone.utc),
+                    site='tst', enclosure='domb', telescope='1m0a')
+        # Then show that the realtime session fails to book
+        bad_observation = copy.deepcopy(self.observation)
+        response = self.client.post(reverse('api:realtime-list'), data=bad_observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("This session overlaps a currently scheduled high priority observation", str(response.content))
+        # Non overlapping succeeds at booking
+        good_observation = copy.deepcopy(self.observation)
+        good_observation['start'] = "2016-09-05T23:15:00Z"
+        good_observation['end'] = "2016-09-05T23:30:00Z"
+        response = self.client.post(reverse('api:realtime-list'), data=good_observation)
+        self.assertEqual(response.status_code, 201)
+
+    def test_post_realtime_succeeds_if_overlapping_normal_scheduled_observations(self):
+        # First create an in progress observation during the same time as the realtime session
+        requestgroup = create_simple_requestgroup(
+            self.nonstaff_user, self.proposal, instrument_type='1M0-SCICAM-SBIG'
+        )
+        requestgroup.observation_type = RequestGroup.NORMAL
+        requestgroup.save()
+        mixer.blend(Observation, request=requestgroup.requests.first(), state='IN_PROGRESS',
+                    start=datetime(2016, 9, 5, 22, tzinfo=timezone.utc),
+                    end=datetime(2016, 9, 5, 23, tzinfo=timezone.utc),
+                    site='tst', enclosure='domb', telescope='1m0a')
         good_observation = copy.deepcopy(self.observation)
         response = self.client.post(reverse('api:realtime-list'), data=good_observation)
         self.assertEqual(response.status_code, 201)
