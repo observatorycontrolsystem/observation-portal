@@ -38,7 +38,7 @@ def realtime_interval_availability_checks(user: User, start: datetime, end: date
     if overlapping_obs.count() > 0:
         raise serializers.ValidationError(_(f"The desired interval of {start} to {end} overlaps an existing interval for user {user.username}"))
     # Now check if there is a in progress observation of any type on the telescope at this time
-    # If the start time is > 8 hours in the future we don't even need to check this
+    # If the start time is > 8 hours in the future we don't even need to check this - no obs are longer than 8 hours
     if start < (timezone.now() + timedelta(hours=8)):
         running_obs = Observation.objects.filter(
             state='IN_PROGRESS',
