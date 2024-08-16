@@ -662,13 +662,13 @@ class TestRealTimeApi(SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 201)
 
     def test_post_realtime_rejected_if_overlapping_important_scheduled_observations(self):
-        # First create an in progress observation during the same time as the realtime session
+        # First schedule an important observation during the same time as the realtime session
         requestgroup = create_simple_requestgroup(
             self.nonstaff_user, self.proposal, instrument_type='1M0-SCICAM-SBIG'
         )
         requestgroup.observation_type = RequestGroup.TIME_CRITICAL
         requestgroup.save()
-        mixer.blend(Observation, request=requestgroup.requests.first(), state='IN_PROGRESS',
+        mixer.blend(Observation, request=requestgroup.requests.first(), state='PENDING',
                     start=datetime(2016, 9, 5, 22, tzinfo=timezone.utc),
                     end=datetime(2016, 9, 5, 23, tzinfo=timezone.utc),
                     site='tst', enclosure='domb', telescope='1m0a')
@@ -742,6 +742,106 @@ class TestRealTimeApi(SetTimeMixin, APITestCase):
         # Make sure the same times the next day are available so we know using the downtime was real
         free_interval = Intervals([(datetime(2016, 9, 6, 21, 5, tzinfo=timezone.utc), datetime(2016, 9, 6, 22, tzinfo=timezone.utc))])
         self.assertFalse(available_intervals.intersect([free_interval]).is_empty())
+
+    def test_realtime_availability_filters_out_times_user_has_other_realtime_sessions(self):
+        # Create one realtime observation on 1m0a.tst.doma
+        good_observation = copy.deepcopy(self.observation)
+        good_observation['enclosure'] = 'doma'
+        good_observation['start'] = "2016-09-05T23:00:00Z"
+        good_observation['end'] = "2016-09-05T23:30:00Z"
+        response = self.client.post(reverse('api:realtime-list'), data=good_observation)
+        self.assertEqual(response.status_code, 201)
+        # Now get availability intervals for 1m0a.tst.domb and make sure that time booked on doma is not available
+        response = self.client.get(reverse('api:realtime-availability') + '?telescope=1m0a.domb.tst')
+        self.assertEqual(response.status_code, 200)
+        availability = response.json()
+        self.assertContains(response, '1m0a.domb.tst')
+        available_intervals = self._convert_availability_to_intervals_helper(availability['1m0a.domb.tst'])
+        self.assertFalse(available_intervals.is_empty())
+        # Check that the overlapping interval is not within the available intervals
+        blocked_interval = Intervals([(datetime(2016, 9, 5, 23, 0, tzinfo=timezone.utc), datetime(2016, 9, 5, 23, 30, tzinfo=timezone.utc))])
+        self.assertTrue(available_intervals.intersect([blocked_interval]).is_empty())
+        # Now get the availability intervals again but for a different user with no realtime booking to show their free
+        mixer.blend(Membership, user=self.user, proposal=self.proposal)
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('api:realtime-availability') + '?telescope=1m0a.domb.tst')
+        self.assertEqual(response.status_code, 200)
+        availability = response.json()
+        available_intervals = self._convert_availability_to_intervals_helper(availability['1m0a.domb.tst'])
+        self.assertFalse(available_intervals.intersect([blocked_interval]).is_empty())
+
+    def test_realtime_availability_filters_out_times_overlapping_with_in_progress_observations(self):
+        # First create an in progress observation during the time range
+        observation = mixer.blend(Observation, state='IN_PROGRESS',
+                                  start=datetime(2016, 9, 5, 22, tzinfo=timezone.utc),
+                                  end=datetime(2016, 9, 6, 0, tzinfo=timezone.utc),
+                                  site='tst', enclosure='domb', telescope='1m0a')
+        # Now get availability intervals for 1m0a.tst.domb and make sure the in progress time is not available
+        response = self.client.get(reverse('api:realtime-availability') + '?telescope=1m0a.domb.tst')
+        self.assertEqual(response.status_code, 200)
+        availability = response.json()
+        self.assertContains(response, '1m0a.domb.tst')
+        available_intervals = self._convert_availability_to_intervals_helper(availability['1m0a.domb.tst'])
+        self.assertFalse(available_intervals.is_empty())
+        # Check that the in progress observation interval is not within the available intervals
+        blocked_interval = Intervals([(observation.start, observation.end)])
+        self.assertTrue(available_intervals.intersect([blocked_interval]).is_empty())
+        # Check times before and after the blocked interval
+        free_intervals = Intervals([(datetime(2016, 9, 5, 21, tzinfo=timezone.utc),
+                                     datetime(2016, 9, 5, 21, 59, tzinfo=timezone.utc)),
+                                    (datetime(2016, 9, 6, 0, 1, tzinfo=timezone.utc),
+                                     datetime(2016, 9, 6, 0, 15, tzinfo=timezone.utc))])
+        self.assertEquals(available_intervals.intersect([free_intervals]), free_intervals)
+
+    def test_realtime_availability_filters_out_times_overlapping_with_future_important_observations(self):
+       # First schedule an important observation during the time range
+        requestgroup = create_simple_requestgroup(
+            self.nonstaff_user, self.proposal, instrument_type='1M0-SCICAM-SBIG'
+        )
+        requestgroup.observation_type = RequestGroup.TIME_CRITICAL
+        requestgroup.save()
+        tc_observation = mixer.blend(Observation, request=requestgroup.requests.first(), state='PENDING',
+                                     start=datetime(2016, 9, 5, 21, tzinfo=timezone.utc),
+                                     end=datetime(2016, 9, 5, 22, tzinfo=timezone.utc),
+                                     site='tst', enclosure='domb', telescope='1m0a')
+        # Now get availability intervals for 1m0a.tst.domb and make sure the scheduled time is not available
+        response = self.client.get(reverse('api:realtime-availability') + '?telescope=1m0a.domb.tst')
+        self.assertEqual(response.status_code, 200)
+        availability = response.json()
+        self.assertContains(response, '1m0a.domb.tst')
+        available_intervals = self._convert_availability_to_intervals_helper(availability['1m0a.domb.tst'])
+        self.assertFalse(available_intervals.is_empty())
+        # Check that the future scheduled observation interval is not within the available intervals
+        blocked_interval = Intervals([(tc_observation.start, tc_observation.end)])
+        self.assertTrue(available_intervals.intersect([blocked_interval]).is_empty())
+        # Check times before and after the blocked interval
+        free_intervals = Intervals([(datetime(2016, 9, 5, 20, 45, tzinfo=timezone.utc),
+                                     datetime(2016, 9, 5, 20, 59, tzinfo=timezone.utc)),
+                                    (datetime(2016, 9, 5, 22, 1, tzinfo=timezone.utc),
+                                     datetime(2016, 9, 5, 22, 15, tzinfo=timezone.utc))])
+        self.assertEquals(available_intervals.intersect([free_intervals]), free_intervals)
+
+    def test_realtime_availability_ignores_overlapping_with_future_normal_observations(self):
+       # First schedule an normal observation during the time range
+        requestgroup = create_simple_requestgroup(
+            self.nonstaff_user, self.proposal, instrument_type='1M0-SCICAM-SBIG'
+        )
+        requestgroup.observation_type = RequestGroup.NORMAL
+        requestgroup.save()
+        observation = mixer.blend(Observation, request=requestgroup.requests.first(), state='PENDING',
+                                     start=datetime(2016, 9, 5, 21, tzinfo=timezone.utc),
+                                     end=datetime(2016, 9, 5, 22, tzinfo=timezone.utc),
+                                     site='tst', enclosure='domb', telescope='1m0a')
+        # Now get availability intervals for 1m0a.tst.domb and make sure the scheduled time is not available
+        response = self.client.get(reverse('api:realtime-availability') + '?telescope=1m0a.domb.tst')
+        self.assertEqual(response.status_code, 200)
+        availability = response.json()
+        self.assertContains(response, '1m0a.domb.tst')
+        available_intervals = self._convert_availability_to_intervals_helper(availability['1m0a.domb.tst'])
+        self.assertFalse(available_intervals.is_empty())
+        # Check that the future scheduled observation interval is not within the available intervals
+        nonblocked_interval = Intervals([(observation.start, observation.end)])
+        self.assertEqual(available_intervals.intersect([nonblocked_interval]), nonblocked_interval)
 
 
 class TestObservationApiBase(SetTimeMixin, APITestCase):
