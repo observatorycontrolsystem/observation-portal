@@ -771,27 +771,42 @@ class TestRealTimeApi(SetTimeMixin, APITestCase):
         self.assertFalse(available_intervals.intersect([blocked_interval]).is_empty())
 
     def test_realtime_availability_filters_out_times_overlapping_with_in_progress_observations(self):
-        # First create an in progress observation during the time range
-        observation = mixer.blend(Observation, state='IN_PROGRESS',
+        # First create two in progress observations on different resources during the time range
+        observation_a = mixer.blend(Observation, state='IN_PROGRESS',
+                            start=datetime(2016, 9, 5, 21, tzinfo=timezone.utc),
+                            end=datetime(2016, 9, 5, 22, tzinfo=timezone.utc),
+                            site='tst', enclosure='doma', telescope='1m0a')
+        observation_b = mixer.blend(Observation, state='IN_PROGRESS',
                                   start=datetime(2016, 9, 5, 22, tzinfo=timezone.utc),
                                   end=datetime(2016, 9, 6, 0, tzinfo=timezone.utc),
                                   site='tst', enclosure='domb', telescope='1m0a')
-        # Now get availability intervals for 1m0a.tst.domb and make sure the in progress time is not available
-        response = self.client.get(reverse('api:realtime-availability') + '?telescope=1m0a.domb.tst')
+
+        # Now get availability intervals and make sure the in progress times are not available
+        response = self.client.get(reverse('api:realtime-availability'))
         self.assertEqual(response.status_code, 200)
         availability = response.json()
+        self.assertContains(response, '1m0a.doma.tst')
         self.assertContains(response, '1m0a.domb.tst')
-        available_intervals = self._convert_availability_to_intervals_helper(availability['1m0a.domb.tst'])
-        self.assertFalse(available_intervals.is_empty())
-        # Check that the in progress observation interval is not within the available intervals
-        blocked_interval = Intervals([(observation.start, observation.end)])
-        self.assertTrue(available_intervals.intersect([blocked_interval]).is_empty())
-        # Check times before and after the blocked interval
-        free_intervals = Intervals([(datetime(2016, 9, 5, 21, tzinfo=timezone.utc),
+        available_intervals_a = self._convert_availability_to_intervals_helper(availability['1m0a.doma.tst'])
+        available_intervals_b = self._convert_availability_to_intervals_helper(availability['1m0a.domb.tst'])
+        self.assertFalse(available_intervals_a.is_empty())
+        self.assertFalse(available_intervals_b.is_empty())
+        # Check that the in progress observation intervals are not within the available intervals
+        blocked_interval_a = Intervals([(observation_a.start, observation_a.end)])
+        self.assertTrue(available_intervals_a.intersect([blocked_interval_a]).is_empty())
+        blocked_interval_b = Intervals([(observation_b.start, observation_b.end)])
+        self.assertTrue(available_intervals_b.intersect([blocked_interval_b]).is_empty())
+        # Check times before and after the blocked intervals
+        free_intervals_a = Intervals([(datetime(2016, 9, 5, 20, 45, tzinfo=timezone.utc),
+                                     datetime(2016, 9, 5, 20, 59, tzinfo=timezone.utc)),
+                                    (datetime(2016, 9, 5, 22, 1, tzinfo=timezone.utc),
+                                     datetime(2016, 9, 5, 22, 15, tzinfo=timezone.utc))])
+        self.assertEquals(available_intervals_a.intersect([free_intervals_a]), free_intervals_a)
+        free_intervals_b = Intervals([(datetime(2016, 9, 5, 21, tzinfo=timezone.utc),
                                      datetime(2016, 9, 5, 21, 59, tzinfo=timezone.utc)),
                                     (datetime(2016, 9, 6, 0, 1, tzinfo=timezone.utc),
                                      datetime(2016, 9, 6, 0, 15, tzinfo=timezone.utc))])
-        self.assertEquals(available_intervals.intersect([free_intervals]), free_intervals)
+        self.assertEquals(available_intervals_b.intersect([free_intervals_b]), free_intervals_b)
 
     def test_realtime_availability_filters_out_times_overlapping_with_future_important_observations(self):
        # First schedule an important observation during the time range
