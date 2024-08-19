@@ -65,7 +65,7 @@ def realtime_interval_availability_checks(user: User, start: datetime, end: date
     )
     if future_important_obs.count() > 0:
         raise serializers.ValidationError(
-            _(f"This session overlaps a currently scheduled high priority observation. Please try again at a different time or resource"))
+            _("This session overlaps a currently scheduled high priority observation. Please try again at a different time or resource"))
 
 
 class SummarySerializer(serializers.ModelSerializer):
