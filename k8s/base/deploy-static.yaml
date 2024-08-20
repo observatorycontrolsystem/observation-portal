@@ -80,7 +80,11 @@ spec:
               mountPath: /tmp
 
             - name: static
-              mountPath: /static
+              mountPath: /public
+
+          env:
+            - name: STATIC_ROOT
+              value: "/public/static/"
 
           envFrom:
             - configMapRef:
@@ -95,7 +99,7 @@ spec:
           image: ghcr.io/static-web-server/static-web-server:2
           command:
             - /static-web-server
-            - --root=/static
+            - --root=/public
             - --health
             - --port=8000
             - --host=0.0.0.0
@@ -111,7 +115,7 @@ spec:
               mountPath: /tmp
 
             - name: static
-              mountPath: /static
+              mountPath: /public
 
           ports:
             - name: static
