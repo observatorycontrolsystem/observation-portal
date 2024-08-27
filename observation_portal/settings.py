@@ -236,8 +236,8 @@ AWS_DEFAULT_ACL = None
 AWS_S3_SIGNATURE_VERSION = 's3v4'
 
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
-STATIC_URL = '/static/'
-STATIC_ROOT = '/static/'
+STATIC_URL = os.getenv('STATIC_URL', '/static/')
+STATIC_ROOT = os.getenv('STATIC_ROOT', '/static/')
 STATICFILES_STORAGE = os.getenv('STATIC_STORAGE', 'django.contrib.staticfiles.storage.StaticFilesStorage')
 MEDIAFILES_DIR = os.getenv('MEDIAFILES_DIR', 'media')
 MEDIA_URL = '' if AWS_ACCESS_KEY_ID else '/media/'
