@@ -10,6 +10,11 @@ This project adheres to semantic versioning.
 
 ### Removed
 
+## [4.10.1] - 2024-08-27
+
+### Added
+- Three extra validation checks for realtime session booking and availability endpoints
+
 ## [4.10.0] - 2024-07-29
 
 ### Added
