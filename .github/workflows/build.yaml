@@ -43,7 +43,7 @@ jobs:
         python -m pip install 'poetry'
         poetry install
       env:
-        SETUPTOOLS_USE_DISTUTILS=stdlib
+        SETUPTOOLS_USE_DISTUTILS: stdlib
     - name: Run tests
       run: |
         poetry run coverage run manage.py test --settings=observation_portal.test_settings
@@ -91,7 +91,7 @@ jobs:
         poetry build -f sdist
         poetry publish -u "__token__" -p '${{ secrets.PYPI_OBS_PORTAL_API_TOKEN }}'
       env:
-        SETUPTOOLS_USE_DISTUTILS=stdlib
+        SETUPTOOLS_USE_DISTUTILS: stdlib
 
 
   build_and_publish_image:
