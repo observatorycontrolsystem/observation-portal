@@ -20,6 +20,8 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install 'poetry'
         poetry install
+      env:
+        SETUPTOOLS_USE_DISTUTILS: stdlib
     - name: Build docs
       run: |
         poetry run python manage.py generateschema_mocked --file observation-portal.yaml --generator_class=observation_portal.common.schema.ObservationPortalSchemaGenerator

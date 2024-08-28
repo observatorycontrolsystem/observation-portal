@@ -1,9 +1,12 @@
+from datetime import datetime, timedelta
+
 from rest_framework import serializers
 from django.utils import timezone
 from django.db import transaction
 from django.utils.translation import gettext as _
 from django.utils.module_loading import import_string
 from django.conf import settings
+from django.contrib.auth.models import User
 
 from observation_portal.common.configdb import configdb
 from observation_portal.common.rise_set_utils import is_interval_available_for_telescope
@@ -18,6 +21,51 @@ import logging
 from datetime import timedelta
 
 logger = logging.getLogger()
+
+
+def realtime_interval_availability_checks(user: User, start: datetime, end: datetime, site: str, enclosure: str, telescope: str):
+    """ Performs a few different availability checks on a given interval - makes sure it does not overlap with another realtime session
+        for the user, or that it doesn't overlap with a currently running observation or scheduled TC, RR, or Direct observation
+
+        raises ValidationError if any check fails
+    """
+    # First check if the user has a realtime observation that is overlapping in time
+    overlapping_obs = Observation.objects.filter(
+        request__request_group__submitter=user,
+        request__request_group__observation_type=RequestGroup.REAL_TIME,
+        start__lt=end,
+        end__gt=start)
+    if overlapping_obs.count() > 0:
+        raise serializers.ValidationError(_(f"The desired interval of {start} to {end} overlaps an existing interval for user {user.username}"))
+    # Now check if there is a in progress observation of any type on the telescope at this time
+    # If the start time is > 8 hours in the future we don't even need to check this - no obs are longer than 8 hours
+    if start < (timezone.now() + timedelta(hours=8)):
+        running_obs = Observation.objects.filter(
+            state='IN_PROGRESS',
+            start__lt=end,
+            end__gt=start,
+            site=site,
+            enclosure=enclosure,
+            telescope=telescope
+        ).first()
+        if running_obs:
+            raise serializers.ValidationError(_(
+                f"""There is currently an observation in progress on {site}.{
+                    enclosure}.{telescope} that would overlap with your session."""
+            ))
+    # Now check if there are future scheduled observations that overlap and are TC, RR, or Direct type
+    future_important_obs = Observation.objects.filter(
+        request__request_group__observation_type__in=[
+            RequestGroup.TIME_CRITICAL, RequestGroup.RAPID_RESPONSE, RequestGroup.DIRECT],
+        start__lt=end,
+        end__gt=start,
+        site=site,
+        enclosure=enclosure,
+        telescope=telescope
+    )
+    if future_important_obs.count() > 0:
+        raise serializers.ValidationError(
+            _("This session overlaps a currently scheduled high priority observation. Please try again at a different time or resource"))
 
 
 class SummarySerializer(serializers.ModelSerializer):
@@ -379,6 +427,16 @@ class RealTimeSerializer(serializers.ModelSerializer):
         )
         if not interval_available:
             raise serializers.ValidationError(_(f"The desired interval of {validated_data['start']} to {validated_data['end']} is not available on the telescope"))
+
+        # Now check a bunch of conditions on the real time interval to make sure its available
+        realtime_interval_availability_checks(
+            user,
+            validated_data['start'],
+            validated_data['end'],
+            validated_data['site'],
+            validated_data['enclosure'],
+            validated_data['telescope']
+        )
 
         validated_data['proposal'] = proposal
         # Add in the request group defaults for an observation

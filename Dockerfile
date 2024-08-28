@@ -25,7 +25,7 @@ COPY ./README.md ./pyproject.toml ./poetry.lock ./
 # NOTE: pySLALIB's setup.py is messed up as it requires numpy to already be
 # installed to install it. https://github.com/scottransom/pyslalib/blob/fcb0650a140a8002cc6c0e8918c3e4c6fe3f8e01/setup.py#L3
 # So please excuse the ugly hack.
-
+ENV SETUPTOOLS_USE_DISTUTILS=stdlib
 RUN pip install -r <(poetry export | grep "numpy") && \
   pip install -r <(poetry export)
 
