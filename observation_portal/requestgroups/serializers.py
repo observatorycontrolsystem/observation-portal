@@ -506,7 +506,7 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
                 # Validate that the duration exceeds the minimum to run everything at least once
                 min_duration = sum(
                     [get_instrument_configuration_duration(
-                        ic, data['instrument_type']) for ic in data['instrument_configs']]
+                        data, index) for index in range(len(data['instrument_configs']))]
                 )
                 if min_duration > data['repeat_duration']:
                     raise serializers.ValidationError(_(
