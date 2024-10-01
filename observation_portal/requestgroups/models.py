@@ -19,7 +19,6 @@ from observation_portal.requestgroups.duration_utils import (
     get_configuration_duration,
     get_optical_change_duration,
     get_total_complete_configurations_duration,
-    get_instrument_configuration_duration,
     get_total_duration_dict,
     get_semester_in
 )
@@ -756,10 +755,6 @@ class InstrumentConfig(models.Model):
 
     def as_dict(self):
         return import_string(settings.AS_DICT['requestgroups']['InstrumentConfig'])(self)
-
-    @cached_property
-    def duration(self):
-        return get_instrument_configuration_duration(self.as_dict(), self.configuration.instrument_type)
 
 
 class RegionOfInterest(models.Model):

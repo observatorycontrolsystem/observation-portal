@@ -33,25 +33,26 @@ def get_semester_in(start_date, end_date):
     return None
 
 
-def get_instrument_configuration_duration_per_exposure(instrument_configuration_dict, instrument_type):
-    total_overhead_per_exp = configdb.get_exposure_overhead(instrument_type,
+def get_instrument_configuration_duration_per_exposure(configuration_dict, inst_config_index):
+    instrument_configuration_dict = configuration_dict['instrument_configs'][inst_config_index]
+    total_overhead_per_exp = configdb.get_exposure_overhead(configuration_dict['instrument_type'],
                                                             instrument_configuration_dict['mode'])
     duration_per_exp = instrument_configuration_dict['exposure_time'] + total_overhead_per_exp
     return duration_per_exp
 
 
-def get_instrument_configuration_duration(instrument_config_dict, instrument_type):
+def get_instrument_configuration_duration(configuration_dict, inst_config_index):
     duration_per_exposure_function = import_string(settings.DURATION['instrument_configuration_duration_per_exposure'])
-    duration_per_exposure = duration_per_exposure_function(instrument_config_dict, instrument_type)
-    return instrument_config_dict['exposure_count'] * duration_per_exposure
+    duration_per_exposure = duration_per_exposure_function(configuration_dict, inst_config_index)
+    return configuration_dict['instrument_configs'][inst_config_index]['exposure_count'] * duration_per_exposure
 
 
 def get_configuration_duration(configuration_dict, request_overheads, include_front_padding=True):
     conf_duration = {}
     instrumentconf_durations = [{
         'duration': get_instrument_configuration_duration(
-            ic, configuration_dict['instrument_type']
-        )} for ic in configuration_dict['instrument_configs']
+            configuration_dict, index
+        )} for index in range(len(configuration_dict['instrument_configs']))
     ]
     conf_duration['instrument_configs'] = instrumentconf_durations
     if ('REPEAT' in configuration_dict['type'] and 'repeat_duration' in configuration_dict

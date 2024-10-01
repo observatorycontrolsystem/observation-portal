@@ -6,6 +6,19 @@ import hashlib
 from functools import wraps
 from django.core.serializers.json import DjangoJSONEncoder
 from django.core.cache import caches
+from cerberus import Validator
+
+
+class OCSValidator(Validator):
+    """ Custom validator that allows label, show(in UI), and description fields in the schema """
+    def _validate_description(self, constraint, field, value):
+        pass
+
+    def _validate_label(self, constraint, field, value):
+        pass
+
+    def _validate_show(self, constraint, field, value):
+        pass
 
 
 def get_queryset_field_values(queryset, field):

@@ -166,13 +166,25 @@
                       }
                     ],
                     "validation_schema": {
-                      "extra_params": {
-                        "type": "dict",
+                      "instrument_configs": {
                         "schema": {
-                          "defocus": {"type": "float", "min": -5.0, "max": 5.0},
-                          "offset_ra": {"type": "float"},
-                          "offset_dec": {"type": "float"}
-                        }
+                          "schema": {
+                            "extra_params": {
+                              "schema": {
+                                "defocus": {
+                                  "max": 5.0,
+                                  "min": -5.0,
+                                  "type": "float"
+                                },
+                                "offset_ra": {"type": "float"},
+                                "offset_dec": {"type": "float"}
+                              },
+                              "type": "dict"
+                            }
+                          },
+                          "type": "dict"
+                        },
+                        "type": "list"
                       }
                     }
                   },
@@ -342,13 +354,25 @@
                       }
                     ],
                     "validation_schema": {
-                      "extra_params": {
-                        "type": "dict",
+                      "instrument_configs": {
                         "schema": {
-                          "defocus": {"type": "float", "min": -5.0, "max": 5.0},
-                          "offset_ra": {"type": "float"},
-                          "offset_dec": {"type": "float"}
-                        }
+                          "schema": {
+                            "extra_params": {
+                              "schema": {
+                                "defocus": {
+                                  "max": 5.0,
+                                  "min": -5.0,
+                                  "type": "float"
+                                },
+                                "offset_ra": {"type": "float"},
+                                "offset_dec": {"type": "float"}
+                              },
+                              "type": "dict"
+                            }
+                          },
+                          "type": "dict"
+                        },
+                        "type": "list"
                       }
                     }
                   },
@@ -518,13 +542,25 @@
                       }
                     ],
                     "validation_schema": {
-                      "extra_params": {
-                        "type": "dict",
+                      "instrument_configs": {
                         "schema": {
-                          "defocus": {"type": "float", "min": -5.0, "max": 5.0},
-                          "offset_ra": {"type": "float"},
-                          "offset_dec": {"type": "float"}
-                        }
+                          "schema": {
+                            "extra_params": {
+                              "schema": {
+                                "defocus": {
+                                  "max": 5.0,
+                                  "min": -5.0,
+                                  "type": "float"
+                                },
+                                "offset_ra": {"type": "float"},
+                                "offset_dec": {"type": "float"}
+                              },
+                              "type": "dict"
+                            }
+                          },
+                          "type": "dict"
+                        },
+                        "type": "list"
                       }
                     }
                   },
@@ -713,16 +749,7 @@
                         ]
                       }
                     ],
-                    "validation_schema": {
-                      "extra_params": {
-                        "type": "dict",
-                        "schema": {
-                          "defocus": {"type": "float", "min": -5.0, "max": 5.0},
-                          "offset_ra": {"type": "float"},
-                          "offset_dec": {"type": "float"}
-                        }
-                      }
-                    }
+                    "validation_schema": {}
                   },
                   "science_cameras": [{
                     "code": "xx02",
@@ -929,13 +956,23 @@
                       }
                     ],
                     "validation_schema": {
-                      "extra_params": {
-                        "type": "dict",
+                      "instrument_configs": {
                         "schema": {
-                          "defocus": {"type": "float", "min": -5.0, "max": 5.0},
-                          "offset_ra": {"type": "float"},
-                          "offset_dec": {"type": "float"}
-                        }
+                          "schema": {
+                            "extra_params": {
+                              "schema": {
+                                "defocus": {
+                                  "max": 5.0,
+                                  "min": -5.0,
+                                  "type": "float"
+                                }
+                              },
+                              "type": "dict"
+                            }
+                          },
+                          "type": "dict"
+                        },
+                        "type": "list"
                       }
                     }
                   },
@@ -1116,13 +1153,23 @@
                       }
                     ],
                     "validation_schema": {
-                      "extra_params": {
-                        "type": "dict",
+                      "instrument_configs": {
                         "schema": {
-                          "defocus": {"type": "float", "min": -5.0, "max": 5.0},
-                          "offset_ra": {"type": "float"},
-                          "offset_dec": {"type": "float"}
-                        }
+                          "schema": {
+                            "extra_params": {
+                              "schema": {
+                                "defocus": {
+                                  "max": 5.0,
+                                  "min": -5.0,
+                                  "type": "float"
+                                }
+                              },
+                              "type": "dict"
+                            }
+                          },
+                          "type": "dict"
+                        },
+                        "type": "list"
                       }
                     }
                   },
@@ -1297,16 +1344,7 @@
                         ]
                       }
                     ],
-                    "validation_schema": {
-                      "extra_params": {
-                        "type": "dict",
-                        "schema": {
-                          "defocus": {"type": "float", "min": -5.0, "max": 5.0},
-                          "offset_ra": {"type": "float"},
-                          "offset_dec": {"type": "float"}
-                        }
-                      }
-                    }
+                    "validation_schema": {}
                   },
                   "science_cameras": [{
                     "code": "xx04",
@@ -1444,13 +1482,23 @@
                       }
                     ],
                     "validation_schema": {
-                      "extra_params": {
-                        "type": "dict",
+                      "instrument_configs": {
                         "schema": {
-                          "defocus": {"type": "float", "min": -5.0, "max": 5.0},
-                          "offset_ra": {"type": "float"},
-                          "offset_dec": {"type": "float"}
-                        }
+                          "schema": {
+                            "extra_params": {
+                              "schema": {
+                                "defocus": {
+                                  "max": 5.0,
+                                  "min": -5.0,
+                                  "type": "float"
+                                }
+                              },
+                              "type": "dict"
+                            }
+                          },
+                          "type": "dict"
+                        },
+                        "type": "list"
                       }
                     },
                     "default_acceptability_threshold": 90.0,

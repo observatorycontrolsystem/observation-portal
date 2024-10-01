@@ -145,13 +145,15 @@ class InstrumentsInformationView(APIView):
         for instrument_type in configdb.get_instrument_type_codes(location=location, only_schedulable=only_schedulable):
             if not requested_instrument_type or requested_instrument_type.upper() == instrument_type.upper():
                 ccd_size = configdb.get_ccd_size(instrument_type)
+                instrument_type_dict = configdb.get_instrument_type_by_code(instrument_type)
                 info[instrument_type] = {
-                    'type': configdb.get_instrument_type_category(instrument_type),
+                    'type': instrument_type_dict.get('instrument_category', 'None'),
                     'class': configdb.get_instrument_type_telescope_class(instrument_type),
-                    'name': configdb.get_instrument_type_full_name(instrument_type),
+                    'name': instrument_type_dict.get('name', instrument_type),
                     'optical_elements': configdb.get_optical_elements(instrument_type),
                     'modes': configdb.get_modes_by_type(instrument_type),
-                    'default_acceptability_threshold': configdb.get_default_acceptability_threshold(instrument_type),
+                    'validation_schema': instrument_type_dict.get('validation_schema', {}),
+                    'default_acceptability_threshold': instrument_type_dict.get('default_acceptability_threshold'),
                     'configuration_types': configdb.get_configuration_types(instrument_type),
                     'default_configuration_type': configdb.get_default_configuration_type(instrument_type),
                     'camera_type': {

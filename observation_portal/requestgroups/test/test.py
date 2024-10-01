@@ -512,23 +512,46 @@ class TestRequestDuration(SetTimeMixin, TestCase):
 class TestValidationHelper(TestCase):
     def setUp(self) -> None:
         self.mock_instrument_type = {'code': '1M0-SCICAM-SBIG',
-                                     'validation_schema': {'extra_params': {'type': 'dict',
-                                                                            'schema': {'defocus': {'type': 'float',
-                                                                                                   'min': -5.0,
-                                                                                                   'max': 5.0}}},
-                                                           'exposure_time': {'type': 'integer', 'min': 0}}}
+                                     'validation_schema': {
+                                        "instrument_configs": {
+                                            "schema": {
+                                                "schema": {
+                                                    "extra_params": {
+                                                    "schema": {
+                                                        "defocus": {
+                                                        "max": 5.0,
+                                                        "min": -5.0,
+                                                        "type": "float"
+                                                        }
+                                                    },
+                                                    "type": "dict"
+                                                    },
+                                                    'exposure_time': {'type': 'integer', 'min': 0}
+                                                },
+                                                "type": "dict"
+                                            },
+                                            "type": "list"
+                                        }
+                                      }
+                                    }
 
         self.mock_configuration_type_properties = {'SKY_FLAT': {
-            "validation_schema": {
-                "exposure_time": {
-                    "type": "float",
-                    "default": 2.0
+            'validation_schema': {
+                "instrument_configs": {
+                    "schema": {
+                        "schema": {
+                            'exposure_time': {'type': 'integer', 'default': 2}
+                        },
+                        "type": "dict"
+                    },
+                    "type": "list"
                 }
             }
         }}
         self.generic_payload = copy.deepcopy(generic_payload)
         self.request_instrument_type = self.generic_payload['requests'][0]['configurations'][0]['instrument_type']
-        self.instrument_config = self.generic_payload['requests'][0]['configurations'][0]['instrument_configs'][0]
+        self.configuration = self.generic_payload['requests'][0]['configurations'][0]
+        self.instrument_config = self.configuration['instrument_configs'][0]
         self.muscat_extra_params = {'exposure_time_g': 60,
                                     'exposure_time_r': 90,
                                     'exposure_time_i': 60,
@@ -537,25 +560,27 @@ class TestValidationHelper(TestCase):
 
     @patch('observation_portal.requestgroups.serializers.configdb.get_instrument_type_by_code')
     def test_validate_instrument_config_and_extra_params_good_config(self, mock_instrument_type):
-        instrument_config = self.instrument_config.copy()
+        configuration = self.configuration.copy()
+        instrument_config = configuration['instrument_configs'][0]
         mock_instrument_type.return_value = self.mock_instrument_type
         instrument_config['extra_params'] = {'defocus': 2.0}
 
         validation_helper = InstrumentTypeValidationHelper(self.request_instrument_type)
-        validated_config = validation_helper.validate(instrument_config)
+        validated_config = validation_helper.validate(configuration)
 
-        self.assertEqual(instrument_config, validated_config)
+        self.assertEqual(configuration, validated_config)
 
     @patch('observation_portal.requestgroups.serializers.configdb.get_instrument_type_by_code')
     def test_validate_instrument_config_and_extra_params_bad_config(self, mock_instrument_type):
-        instrument_config = self.instrument_config.copy()
+        configuration = self.configuration.copy()
+        instrument_config = configuration['instrument_configs'][0]
         mock_instrument_type.return_value = self.mock_instrument_type
         instrument_config['extra_params'] = {'defocus': 2.0}
         instrument_config['exposure_time'] = -20
 
         validation_helper = InstrumentTypeValidationHelper(self.request_instrument_type)
         with self.assertRaises(ValidationError) as e:
-            validation_helper.validate(instrument_config)
+            validation_helper.validate(configuration)
         self.assertIn('exposure_time', str(e.exception))
 
     def test_validate_mode_config_filled_in_when_missing(self):
@@ -618,14 +643,15 @@ class TestValidationHelper(TestCase):
 
     @patch('observation_portal.requestgroups.serializers.configdb.get_configuration_types')
     def test_validate_exposure_time_no_exposure_time_set(self, mock_configuration_type_properties):
-        instrument_config = self.instrument_config.copy()
+        configuration = self.configuration.copy()
+        instrument_config = configuration['instrument_configs'][0]
         mock_configuration_type_properties.return_value = self.mock_configuration_type_properties
         del instrument_config['exposure_time']
 
         validation_helper = ConfigurationTypeValidationHelper('FAKE-CAMERA', 'SKY_FLAT')
-        validated_instrument_config = validation_helper.validate(instrument_config)
+        validated_configuration = validation_helper.validate(configuration)
 
-        self.assertEqual(validated_instrument_config['exposure_time'], 2.0)
+        self.assertEqual(validated_configuration['instrument_configs'][0]['exposure_time'], 2.0)
 
 
 class TestRequestSemester(SetTimeMixin, TestCase):
