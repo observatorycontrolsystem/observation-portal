@@ -25,6 +25,7 @@ from observation_portal.common.state_changes import debit_ipp_time, TimeAllocati
 from observation_portal.requestgroups.target_helpers import TARGET_TYPE_HELPER_MAP
 from observation_portal.common.mixins import ExtraParamsFormatter
 from observation_portal.common.configdb import configdb, ConfigDB
+from observation_portal.common.utils import OCSValidator
 from observation_portal.requestgroups.duration_utils import (
     get_total_request_duration, get_requestgroup_duration, get_total_duration_dict,
     get_instrument_configuration_duration, get_semester_in
@@ -45,14 +46,14 @@ class ValidationHelper(ABC):
     def validate(self, config_dict: dict) -> dict:
         pass
 
-    def _validate_document(self, document: dict, validation_schema: dict) -> (Validator, dict):
+    def _validate_document(self, document: dict, validation_schema: dict) -> (OCSValidator, dict):
         """
         Perform validation on a document using Cerberus validation schema
         :param document: Document to be validated
         :param validation_schema: Cerberus validation schema
         :return: Tuple of validator and a validated document
         """
-        validator = Validator(validation_schema)
+        validator = OCSValidator(validation_schema)
         validator.allow_unknown = True
         validated_config_dict = validator.validated(document) or document.copy()
 
@@ -74,6 +75,30 @@ class ValidationHelper(ABC):
         error_str = error_str.rstrip(', ')
         return error_str
 
+    def _cerberus_to_serializer_validation_error(self, validation_errors: dict) -> dict:
+        """
+        Unpack and format Cerberus validation errors as a dict matching the DRF Serializer Validation error format
+        :param validation_errors: Errors from the validator (validator.errors)
+        :return: Dict containing DRF serializer validation error for the cerberus errors
+        """
+        # The two issues we have are with extra_params becoming a list, and instrument_configs not having their index work properly
+        serializer_errors = {}
+        if 'extra_params' in validation_errors:
+            serializer_errors['extra_params'] = validation_errors['extra_params'][0]
+        if 'instrument_configs' in validation_errors:
+            instrument_configs_errors = []
+            last_instrument_config_with_error = max(validation_errors['instrument_configs'][0].keys())
+            for i in range(0, last_instrument_config_with_error+1):
+                if i in validation_errors['instrument_configs'][0]:
+                    instrument_config_error = validation_errors['instrument_configs'][0][i][0].copy()
+                    if 'extra_params' in instrument_config_error:
+                        instrument_config_error['extra_params'] = instrument_config_error['extra_params'][0]
+                    instrument_configs_errors.append(instrument_config_error)
+                else:
+                    instrument_configs_errors.append({})
+            serializer_errors['instrument_configs'] = instrument_configs_errors
+        return serializer_errors
+
 
 class InstrumentTypeValidationHelper(ValidationHelper):
     """Class to validate config based on InstrumentType in ConfigDB"""
@@ -91,9 +116,7 @@ class InstrumentTypeValidationHelper(ValidationHelper):
         validation_schema = instrument_type_dict.get('validation_schema', {})
         validator, validated_config_dict = self._validate_document(config_dict, validation_schema)
         if validator.errors:
-            raise serializers.ValidationError(_(
-                f'Invalid configuration: {self._cerberus_validation_error_to_str(validator.errors)}'
-            ))
+            raise serializers.ValidationError(self._cerberus_to_serializer_validation_error(validator.errors))
 
         return validated_config_dict
 
@@ -187,13 +210,16 @@ class ConfigurationTypeValidationHelper(ValidationHelper):
         self._configuration_type = configuration_type
 
     def validate(self, config_dict: dict) -> dict:
-        configuration_type_properties = configdb.get_configuration_types(self._instrument_type)[self._configuration_type]
+        configuration_types = configdb.get_configuration_types(self._instrument_type)
+        if self._configuration_type not in configuration_types:
+            raise serializers.ValidationError(_(
+                f'configuration type {self._configuration_type} is not valid for instrument type {self._instrument_type}'
+            ))
+        configuration_type_properties = configuration_types[self._configuration_type]
         validation_schema = configuration_type_properties.get('validation_schema', {})
         validator, validated_config_dict = self._validate_document(config_dict, validation_schema)
         if validator.errors:
-            raise serializers.ValidationError(_(
-                f'Invalid configuration: {self._cerberus_validation_error_to_str(validator.errors)}'
-            ))
+            raise serializers.ValidationError(self._cerberus_to_serializer_validation_error(validator.errors))
 
         return validated_config_dict
 
@@ -374,18 +400,18 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
                 acquisition_config['mode'] = AcquisitionConfig.OFF
             data['acquisition_config'] = acquisition_config
 
+        # Validate the instrument_type and configuration_type properties related validation schema at the configuration level
+        instrument_type_validation_helper = InstrumentTypeValidationHelper(instrument_type)
+        instrument_config = instrument_type_validation_helper.validate(data)
+
+        configuration_type_validation_helper = ConfigurationTypeValidationHelper(instrument_type, data['type'])
+        instrument_config = configuration_type_validation_helper.validate(data)
+
         available_optical_elements = configdb.get_optical_elements(instrument_type)
         for i, instrument_config in enumerate(data['instrument_configs']):
             # Validate the named readout mode if set, or set the default readout mode if left blank
-            readout_mode = instrument_config.get('mode', '')
             readout_validation_helper = ModeValidationHelper('readout', instrument_type, modes['readout'])
             instrument_config = readout_validation_helper.validate(instrument_config)
-
-            instrument_type_validation_helper = InstrumentTypeValidationHelper(instrument_type)
-            instrument_config = instrument_type_validation_helper.validate(instrument_config)
-
-            configuration_type_validation_helper = ConfigurationTypeValidationHelper(instrument_type, data['type'])
-            instrument_config = configuration_type_validation_helper.validate(instrument_config)
 
             data['instrument_configs'][i] = instrument_config
 
@@ -480,7 +506,7 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
                 # Validate that the duration exceeds the minimum to run everything at least once
                 min_duration = sum(
                     [get_instrument_configuration_duration(
-                        ic, data['instrument_type']) for ic in data['instrument_configs']]
+                        data, index) for index in range(len(data['instrument_configs']))]
                 )
                 if min_duration > data['repeat_duration']:
                     raise serializers.ValidationError(_(
