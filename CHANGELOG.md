@@ -10,6 +10,13 @@ This project adheres to semantic versioning.
 
 ### Removed
 
+## [4.11.0] - 2024-10-11
+
+### Changed
+- Modified the way InstrumentType and ConfigurationTypeProperties level `validation_schema` from configdb are validated against
+  - This change requires the configdb 3.0.6 running and requires existing `validation_schema` for InstrumentType and ConfigurationTypeProperties to be updated to be applied at the Configuration level instead of the Instrument Configuration level.
+- Added in ability to pass proper errors for extra params in those validation schema through the serializer
+
 ## [4.10.1] - 2024-08-27
 
 ### Added
