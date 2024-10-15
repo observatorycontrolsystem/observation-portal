@@ -10,6 +10,11 @@ This project adheres to semantic versioning.
 
 ### Removed
 
+## [4.11.1] - 2024-10-15
+
+### Changed
+- Fixed a bug in the recent changes to instrument type and configuration type validation schemas
+
 ## [4.11.0] - 2024-10-11
 
 ### Changed

@@ -172,10 +172,9 @@ class ObservationConfigurationSerializer(import_string(settings.SERIALIZERS['req
             if not target_serializer.is_valid():
                 raise serializers.ValidationError(target_serializer.errors)
 
-        for i, instrument_config in enumerate(validated_data['instrument_configs']):
-            configuration_type_validation_helper = ConfigurationTypeValidationHelper(data['instrument_type'], data['type'])
-            instrument_config = configuration_type_validation_helper.validate(instrument_config)
-            validated_data['instrument_configs'][i] = instrument_config
+
+        configuration_type_validation_helper = ConfigurationTypeValidationHelper(data['instrument_type'], data['type'])
+        validated_data = configuration_type_validation_helper.validate(validated_data)
 
         return validated_data
 

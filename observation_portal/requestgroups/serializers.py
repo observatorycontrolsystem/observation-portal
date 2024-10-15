@@ -402,10 +402,10 @@ class ConfigurationSerializer(ExtraParamsFormatter, serializers.ModelSerializer)
 
         # Validate the instrument_type and configuration_type properties related validation schema at the configuration level
         instrument_type_validation_helper = InstrumentTypeValidationHelper(instrument_type)
-        instrument_config = instrument_type_validation_helper.validate(data)
+        data = instrument_type_validation_helper.validate(data)
 
         configuration_type_validation_helper = ConfigurationTypeValidationHelper(instrument_type, data['type'])
-        instrument_config = configuration_type_validation_helper.validate(data)
+        data = configuration_type_validation_helper.validate(data)
 
         available_optical_elements = configdb.get_optical_elements(instrument_type)
         for i, instrument_config in enumerate(data['instrument_configs']):
