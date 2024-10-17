@@ -51,8 +51,6 @@ drf-yasg = "^1.20"
 opensearch-py = ">=1.0,<2.0"
 gunicorn = { version = "^20.1", extras = [ "gevent" ] }
 lcogt-logging = "0.3.2"
-numpy = "^1.16"
-ocs-rise-set = "0.6.2"
 psycopg2-binary = "^2.9.3"
 PyPDF2 = ">=1.26,<1.28"
 redis = "^3"
@@ -62,8 +60,9 @@ uritemplate = "^4.1.1"
 PyYAML = "^6.0"
 sentry-sdk = {extras = ["django"], version = "^2.10.0"}
 django-health-check = "^3.18.3"
+ocs-rise-set = "^0.6.3"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 responses = "0.18.0"
 mixer = "7.2.1"
 Faker = "^12"

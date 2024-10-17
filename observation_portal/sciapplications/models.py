@@ -298,6 +298,11 @@ class ReviewPanelMembership(models.Model):
     review_panel = models.ForeignKey(ReviewPanel, on_delete=models.CASCADE)
 
 
+def review_pdf_upload_path(instance, filename):
+    # PDFs will be uploaded to MEDIA_ROOT/sciappsreviews/<semester>/
+    return "sciappreviews/{0}/{1}/{2}".format(instance.science_application.call.semester.id, instance.science_application.id, filename)
+
+
 class ScienceApplicationReview(models.Model):
     science_application = models.OneToOneField(ScienceApplication, on_delete=models.CASCADE, related_name="review")
 
@@ -347,6 +352,12 @@ class ScienceApplicationReview(models.Model):
         help_text="Additional message to embed in notifications sent to the application submitter."
     )
 
+    pdf = models.FileField(
+        upload_to=review_pdf_upload_path,
+        blank=True,
+        null=True,
+        help_text="Anonymized proposal PDF that will be visible to the panel."
+    )
 
     def __str__(self):
         return f"{self.science_application!s} review"

@@ -20,23 +20,19 @@ WORKDIR /src
 # copy bare minimum needed to install python dependecies with poetry
 COPY ./README.md ./pyproject.toml ./poetry.lock ./
 
-# install locked python dependecies using poetry to generate a requirements.txt
+ENV POETRY_VIRTUALENVS_CREATE=true POETRY_VIRTUALENVS_IN_PROJECT=true
 
-# NOTE: pySLALIB's setup.py is messed up as it requires numpy to already be
-# installed to install it. https://github.com/scottransom/pyslalib/blob/fcb0650a140a8002cc6c0e8918c3e4c6fe3f8e01/setup.py#L3
-# So please excuse the ugly hack.
-ENV SETUPTOOLS_USE_DISTUTILS=stdlib
-RUN pip install -r <(poetry export | grep "numpy") && \
-  pip install -r <(poetry export)
+# install python dependencies
+RUN poetry install --only main --no-root --no-cache
 
 # copy everything else
 COPY ./ ./
 
-# install our app
-RUN pip install .
+# install app
+RUN poetry install --only-root
 
-ENV PYTHONUNBUFFERED=1 PYTHONFAULTHANDLER=1
-
+# activate venv
+ENV PATH="/src/.venv/bin:$PATH" PYTHONUNBUFFERED=1 PYTHONFAULTHANDLER=1
 
 # add a multi-stage build target which also has dev (test) dependencies
 # usefull for running tests in docker container
@@ -44,7 +40,7 @@ ENV PYTHONUNBUFFERED=1 PYTHONFAULTHANDLER=1
 # e.g. docker build --target dev .
 FROM base as dev
 
-RUN pip install -r <(poetry export --dev)
+RUN poetry install --only dev
 
 ENTRYPOINT ["bash"]
 

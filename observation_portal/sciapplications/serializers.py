@@ -65,7 +65,7 @@ class ScienceApplicationReviewSerializer(serializers.ModelSerializer):
 
     def get_pdf_url(self, obj):
         try:
-            return obj.science_application.pdf.url
+            return obj.pdf.url
         except Exception:
             return None
 
@@ -122,7 +122,7 @@ class ScienceApplicationUserReviewSerializer(serializers.ModelSerializer):
 
     def get_pdf_url(self, obj):
         try:
-            return obj.science_application_review.science_application.pdf.url
+            return obj.science_application_review.pdf.url
         except Exception:
             return None
 
