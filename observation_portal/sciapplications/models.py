@@ -288,6 +288,20 @@ class ReviewPanel(models.Model):
 
     members = models.ManyToManyField(User, related_name="review_panels", through="ReviewPanelMembership")
 
+    is_admin = models.BooleanField(
+        default=False,
+        help_text="All members of an admin panel will have access to all reviews"
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["is_admin"],
+                condition=models.Q(is_admin=True),
+                name="%(app_label)s_%(class)s_is_admin",
+                violation_error_message="Only one review panel can be designated as an admin panel"),
+        ]
+
     def __str__(self):
         return f"{self.name!s}"
 

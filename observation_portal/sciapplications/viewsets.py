@@ -52,7 +52,10 @@ class ScienceApplicationReviewViewSet(
     filterset_fields = []
 
     def get_queryset(self):
-        qs = ScienceApplicationReview.objects.filter(review_panel__members=self.request.user)
+        if self.request.user.review_panels.filter(is_admin=True).exists():
+            qs = ScienceApplicationReview.objects.all()
+        else:
+            qs = ScienceApplicationReview.objects.filter(review_panel__members=self.request.user)
 
         return qs
 
@@ -60,7 +63,7 @@ class IsScienceApplicationReviewSummaryEditor(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
       u = request.user
-      return obj.primary_reviewer == u or obj.secondary_reviewer == u
+      return obj.primary_reviewer == u or obj.secondary_reviewer == u or u.review_panels.filter(is_admin=True).exists()
 
 
 class ScienceApplicationReviewSummaryViewSet(
@@ -73,7 +76,10 @@ class ScienceApplicationReviewSummaryViewSet(
     serializer_class = ScienceApplicationReviewSummarySerializer
 
     def get_queryset(self):
-        qs = ScienceApplicationReview.objects.filter(review_panel__members=self.request.user)
+        if self.request.user.review_panels.filter(is_admin=True).exists():
+            qs = ScienceApplicationReview.objects.all()
+        else:
+            qs = ScienceApplicationReview.objects.filter(review_panel__members=self.request.user)
 
         return qs
 

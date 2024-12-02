@@ -36,7 +36,12 @@ apiVersion: skaffold/v4beta10
 kind: Config
 metadata:
   name: deps
+manifests:
+  kustomize:
+    paths:
+      - k8s/envs/local-deps/
 deploy:
+  kubectl: {}
   helm:
     releases:
       - name: postgresql

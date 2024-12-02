@@ -188,5 +188,6 @@ class ReviewPanelMembershipInline(admin.TabularInline):
 @admin.register(ReviewPanel)
 class ReviewPanelAdmin(admin.ModelAdmin):
     inlines = [ReviewPanelMembershipInline]
-    list_display = ["name"]
+    list_display = ["name", "is_admin"]
+    list_filter = ["is_admin"]
     search_fields = ["name"]

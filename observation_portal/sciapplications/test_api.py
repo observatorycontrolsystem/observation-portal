@@ -1381,3 +1381,107 @@ class TestReviewProcessAPI(APITestCase):
 
         app_review.refresh_from_db()
         self.assertEqual(app_review.summary, "test")
+
+    def test_members_of_admin_panels_can_view_all_proposals(self):
+        submitter = blend_user()
+
+        app1 = mixer.blend(
+            ScienceApplication,
+            status=ScienceApplication.SUBMITTED,
+            submitter=submitter,
+            call=self.call
+        )
+
+        app2 = mixer.blend(
+            ScienceApplication,
+            status=ScienceApplication.SUBMITTED,
+            submitter=submitter,
+            call=self.call
+        )
+        other_user = blend_user()
+
+        panel1 = mixer.blend(
+            ReviewPanel,
+            name="panel 1",
+        )
+        panel1.members.add(other_user)
+
+
+        panel2 = mixer.blend(
+            ReviewPanel,
+            name="panel 2",
+        )
+        panel2.members.add(other_user)
+
+        admin_panel = mixer.blend(
+            ReviewPanel,
+            name="admin panel",
+            is_admin=True,
+        )
+        admin_panel.members.add(self.user)
+
+        app1_review = mixer.blend(
+            ScienceApplicationReview,
+            science_application=app1,
+            review_panel=panel1,
+            primary_reviewer=other_user,
+            secondary_reviewer=other_user,
+
+        )
+
+        app2_review = mixer.blend(
+            ScienceApplicationReview,
+            science_application=app2,
+            review_panel=panel2,
+            primary_reviewer=other_user,
+            secondary_reviewer=other_user,
+
+        )
+
+        response = self.client.get(reverse("api:scienceapplication-reviews-list"))
+        self.assertEqual(response.json()["count"], 2)
+        self.assertContains(response, app1_review.science_application.title)
+        self.assertContains(response, app2_review.science_application.title)
+
+    def test_admin_panel_memebers_can_summarize(self):
+        submitter = blend_user()
+
+        app = mixer.blend(
+            ScienceApplication,
+            status=ScienceApplication.SUBMITTED,
+            submitter=submitter,
+            call=self.call
+        )
+
+        panel = mixer.blend(
+            ReviewPanel,
+            name="panel 1",
+        )
+
+        other_user1 = blend_user()
+        panel.members.set([other_user1])
+
+        app_review = mixer.blend(
+            ScienceApplicationReview,
+            science_application=app,
+            review_panel=panel,
+            primary_reviewer=other_user1,
+            secondary_reviewer=other_user1,
+
+        )
+
+        admin_panel = mixer.blend(
+            ReviewPanel,
+            name="admin panel",
+            is_admin=True,
+        )
+        admin_panel.members.add(self.user)
+
+        response = self.client.put(
+            reverse("api:scienceapplication-review-summary", kwargs={"pk": app_review.pk}),
+            data={"summary": "test"},
+        )
+        self.assertEqual(response.json()["summary"], "test")
+
+        app_review.refresh_from_db()
+        self.assertEqual(app_review.summary, "test")
