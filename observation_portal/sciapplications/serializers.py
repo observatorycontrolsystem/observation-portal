@@ -72,8 +72,12 @@ class ScienceApplicationReviewSerializer(serializers.ModelSerializer):
     def get_completed(self, obj):
         return obj.review_panel.members.all().count() == obj.user_reviews.filter(finished=True).count()
 
+    def _request_user_is_admin_panel_memeber(self):
+        u = self.context["request"].user
+        return u.review_panels.filter(is_admin=True).exists()
+
     def get_can_summarize(self, obj):
-        return self.get_is_primary_reviewer(obj) or self.get_is_secondary_reviewer(obj)
+        return self.get_is_primary_reviewer(obj) or self.get_is_secondary_reviewer(obj) or self._request_user_is_admin_panel_memeber()
 
     def get_is_primary_reviewer(self, obj):
         u = self.context["request"].user
