@@ -47,7 +47,12 @@ class ScienceApplicationReviewViewSet(
         filters.OrderingFilter,
         DjangoFilterBackend
     )
-    ordering_fields = []
+    ordering_fields = [
+        "science_application__title",
+        "science_application__call__semester__start",
+        "science_category",
+        "status",
+    ]
     ordering = ["-created_at"]
     filterset_fields = []
 
