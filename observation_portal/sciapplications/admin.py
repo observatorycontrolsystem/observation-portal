@@ -202,14 +202,12 @@ class ScienceApplicationReviewAdmin(admin.ModelAdmin):
             time_by_instrument_type = defaultdict(int)
 
             for tr in obj.science_application.timerequest_set.filter(approved=True):
-                instrument_types = tr.instrument_types.all()
-                if len(instrument_types) != 1:
-                    continue
+                instrument_types = frozenset(x.display for x in tr.instrument_types.all())
 
-                time_by_instrument_type[instrument_types[0].display] += tr.total_requested_time
+                time_by_instrument_type[instrument_types] += tr.total_requested_time
 
             instrument_allocations = [
-              {"name": k, "value": v} for k, v in time_by_instrument_type.items()
+              {"name": ", ".join(sorted(k)), "value": v} for k, v in time_by_instrument_type.items()
             ]
 
             message = render_to_string(
