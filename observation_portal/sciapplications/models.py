@@ -1,6 +1,7 @@
 import smtplib
 from collections import defaultdict
 from urllib.parse import urljoin
+from datetime import datetime
 
 from django.db import models
 from django.utils import timezone
@@ -407,6 +408,69 @@ class ScienceApplicationReview(models.Model):
                 }
             )
             send_mail.send(subject, message, settings.ORGANIZATION_EMAIL, [str(x.email)])
+
+    def send_review_accepted_or_rejected_email_to_submitter(self):
+        current_date = datetime.today().strftime("%d %B %Y")
+        first_name = self.science_application.submitter.first_name
+        last_name = self.science_application.submitter.last_name
+        proposal_title = self.science_application.title
+        semester_name = self.science_application.call.semester.id
+        tac_comments = [x.comments for x in self.user_reviews.all()]
+        observatory_director_name = settings.OBSERVATORY_DIRECTOR_NAME
+
+        if self.status == ScienceApplicationReview.Status.ACCEPTED:
+            semester_start = self.science_application.call.semester.start.strftime("%B %d, %Y")
+            semester_end = self.science_application.call.semester.end.strftime("%B %d, %Y")
+
+            time_by_instrument_type = defaultdict(int)
+
+            for tr in self.science_application.timerequest_set.filter(approved=True):
+                instrument_types = frozenset(x.display for x in tr.instrument_types.all())
+
+                time_by_instrument_type[instrument_types] += tr.total_requested_time
+
+            instrument_allocations = [
+              {"name": ", ".join(sorted(k)), "value": v} for k, v in time_by_instrument_type.items()
+            ]
+
+            message = render_to_string(
+                "sciapplications/review_accepted.html",
+                {
+                    "current_date": current_date,
+                    "first_name": first_name,
+                    "last_name": last_name,
+                    "proposal_title": proposal_title,
+                    "semester_name": semester_name,
+                    "semester_start": semester_start,
+                    "semester_end": semester_end,
+                    "proposal_priority": self.get_accepted_priority_display(),
+                    "instrument_allocations": instrument_allocations,
+                    "tac_comments": tac_comments,
+                    "technical_remarks": self.technical_review,
+                    "observatory_director_name": observatory_director_name,
+                }
+            )
+        elif self.status == ScienceApplicationReview.Status.REJECTED:
+            message = render_to_string(
+                "sciapplications/review_rejected.html",
+                {
+                    "current_date": current_date,
+                    "first_name": first_name,
+                    "last_name": last_name,
+                    "proposal_title": proposal_title,
+                    "semester_name": semester_name,
+                    "tac_comments": tac_comments,
+                    "technical_remarks": self.technical_review,
+                    "observatory_director_name": observatory_director_name,
+                }
+            )
+        else:
+            raise Exception("invalid state")
+
+        subject = str(_(f"Proposal Application Status: {proposal_title}"))
+        submitter = self.science_application.submitter
+
+        send_mail.send(subject, message, settings.ORGANIZATION_EMAIL, [str(submitter.email)], html_message=message)
 
 
 class ScienceApplicationUserReview(models.Model):
