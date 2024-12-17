@@ -196,8 +196,6 @@ class ScienceApplicationReviewAdmin(admin.ModelAdmin):
         observatory_director_name = settings.OBSERVATORY_DIRECTOR_NAME
 
         if obj.status == ScienceApplicationReview.Status.ACCEPTED:
-            status = "Accepted"
-
             semester_start = obj.science_application.call.semester.start.strftime("%B %d, %Y")
             semester_end = obj.science_application.call.semester.end.strftime("%B %d, %Y")
 
@@ -232,7 +230,6 @@ class ScienceApplicationReviewAdmin(admin.ModelAdmin):
                 }
             )
         elif obj.status == ScienceApplicationReview.Status.REJECTED:
-            status = "Rejected"
             message = render_to_string(
                 "sciapplications/review_rejected.html",
                 {
@@ -249,7 +246,7 @@ class ScienceApplicationReviewAdmin(admin.ModelAdmin):
         else:
             raise Exception("invalid state")
 
-        subject = str(_(f"Proposal Application {status}: {proposal_title}"))
+        subject = str(_(f"Proposal Application Status: {proposal_title}"))
         submitter = obj.science_application.submitter
 
         send_mail.send(subject, message, settings.ORGANIZATION_EMAIL, [str(submitter.email)], html_message=message)
