@@ -161,6 +161,7 @@ class ScienceApplication(models.Model):
             proposal_type_to_name[self.call.proposal_type], self.call.semester, str(self.tac_rank).zfill(3)
         )
 
+
     @property
     def time_requested_by_telescope_name(self):
         time_by_telescope_name = defaultdict(int)
@@ -355,23 +356,21 @@ class ScienceApplicationReview(models.Model):
         help_text="Mean of all user reviews. This field is automatically recalculated anytime a user review is added/updated/deleted"
     )
 
-    notify_submitter = models.BooleanField(
-        default=False,
-        help_text="Whether to send the application submitter notifications regarding the acceptance or rejection of this review."
-    )
-
-    notify_submitter_additional_message = models.TextField(
-        blank=True,
-        default="",
-        help_text="Additional message to embed in notifications sent to the application submitter."
-    )
-
     pdf = models.FileField(
         upload_to=review_pdf_upload_path,
         blank=True,
         null=True,
         help_text="Anonymized proposal PDF that will be visible to the panel."
     )
+
+    submitter_notified = models.DateTimeField(null=True, blank=True, help_text="When/if the submitter was notified of the status (most recent)")
+
+    class AcceptedPriority(models.TextChoices):
+        bottom = "BOTTOM", _("bottom")
+        middle = "MIDDLE", _("middle")
+        top = "TOP", _("top")
+
+    accepted_priority = models.CharField(choices=AcceptedPriority.choices, default=AcceptedPriority.bottom, max_length=255, help_text="Priority at which the proposal is accpeted")
 
     def __str__(self):
         return f"{self.science_application!s} review"
@@ -393,9 +392,6 @@ class ScienceApplicationReview(models.Model):
         r = super().save(*args, **kwargs)
         self.science_application.save()
 
-        if self.notify_submitter:
-            self.send_review_accepted_or_rejected_email_to_submitter()
-
         return r
 
     def send_review_requested_email_to_all_panelists(self):
@@ -411,29 +407,6 @@ class ScienceApplicationReview(models.Model):
                 }
             )
             send_mail.send(subject, message, settings.ORGANIZATION_EMAIL, [str(x.email)])
-
-    def send_review_accepted_or_rejected_email_to_submitter(self):
-        if self.status == ScienceApplicationReview.Status.ACCEPTED:
-            status = "accepted"
-        elif self.status == ScienceApplicationReview.Status.REJECTED:
-            status = "rejected"
-        else:
-            raise Exception("invalid state")
-
-        subject = str(_(f"Proposal Application {status.capitalize()}: {self.science_application.title}"))
-        submitter = self.science_application.submitter
-
-        message = render_to_string(
-            "sciapplications/review_accepted_or_rejected.txt",
-            {
-                "submitter": submitter,
-                "science_application": self.science_application,
-                "status": status,
-                "additional_message": self.notify_submitter_additional_message,
-                "organization_name": settings.ORGANIZATION_NAME,
-            }
-        )
-        send_mail.send(subject, message, settings.ORGANIZATION_EMAIL, [str(submitter.email)])
 
 
 class ScienceApplicationUserReview(models.Model):

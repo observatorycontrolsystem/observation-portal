@@ -63,6 +63,8 @@ ORGANIZATION_SUPPORT_EMAIL = os.getenv('ORGANIZATION_SUPPORT_EMAIL', '')  # Orga
 ORGANIZATION_ADMIN_EMAIL = os.getenv('ORGANIZATION_ADMIN_EMAIL', '')  # Admin email address to receive 500 error emails
 OBSERVATION_PORTAL_BASE_URL = os.getenv('OBSERVATION_PORTAL_BASE_URL', 'http://localhost')
 
+OBSERVATORY_DIRECTOR_NAME = os.getenv('OBSERVATORY_DIRECTOR_NAME', 'Foo Bar')
+
 ADMINS = []
 
 if os.getenv("SEND_ORG_ADMIN_ERROR_EMAILS", "no").lower() in {"yes", "true", "y"}:

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<p>{{ current_date }}</p>
+
+<p>Dear {{ first_name }} {{ last_name }},</p>
+
+<p>I am pleased to tell you that your proposal, <b>{{ proposal_title }}</b>, has been awarded time in the {{ semester_name }} LCO project cycle.
+Semester {{ semester_name }} runs from {{ semester_start }} - {{ semester_end }}.</p>
+
+<p>Queue time, Time-Critical (TC) time, and Rapid Response (RR) time are assigned and tracked separately.
+RR requests interrupt an ongoing observation, so that mode is only to be used if your observation must start immediately.
+It is our intent to execute almost all requests. Obviously, we cannot guarantee that since requests may conflict in an irreconcilable way.
+Therefore, we assign a “TAC priority” that will determine – all other things being equal – which proposal has priority.
+Your proposal was assigned a priority in the <b>{{ proposal_priority }} third</b> of the selected proposals.</p>
+
+<table>
+  <caption>Allocation (hours)</caption>
+  <thead>
+    <tr>
+    {% for x in instrument_allocations %}
+      <th>{{ x.name }}</th>
+    {% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+    {% for x in instrument_allocations %}
+      <td>{{ x.value }}</td>
+    {% endfor %}
+    </tr>
+  </tbody>
+</table>
+
+<p>As PI, your login on our observation portal will be linked to this program and its time allocation. Before the start of the semester, our science operations team will contact you with information about your allocation and your program ID. You will then be able to submit requests for observations to be carried out starting {{ semester_start }}.</p>
+
+<p>You may add any of your co-investigators to this program and they will also be able to submit requests. The portal web site will tell you how much of your allocation has been used. Hours allocated each semester do not carry over. Our archive has been optimized for ease of identifying and downloading data (raw and reduced) from your observing program. You will find the archive interface at archive.lco.global. Please contact our scientific support group through science-support@lco.global to submit questions or notify us about problems.</p>
+
+<p>Reviewer comments are provided below. During the semester, you will receive updates about network status and capabilities by email.</p>
+
+<p>I wish you success in carrying out your program.</p>
+
+<p>Sincerely,
+<br>
+<br>
+{{ observatory_director_name }}<br>
+Observatory Director</p>
+
+<h3>TAC comments</h3>
+<ul>
+{% for x in tac_comments %}
+  <li>{{ x }}</li>
+{% endfor %}
+</ul>
+
+<h3>Technical remarks</h3>
+<p>{{ technical_remarks }}</p>
+
+</body>
+</html>
