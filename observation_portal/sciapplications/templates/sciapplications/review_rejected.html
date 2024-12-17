@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<p>{{ current_date }}</p>
+
+<p>Dear {{ first_name }} {{ last_name }},</p>
+
+<p>I regret to inform you that no time has been awarded in semester {{ semester_name }} for your proposal, {{ proposal_title }}.
+Reviewer comments are provided below. I wish you success with your future proposals.<p>
+
+<p>Sincerely,
+<br>
+<br>
+{{ observatory_director_name }}<br>
+Observatory Director</p>
+
+<h3>TAC comments</h3>
+<ul>
+{% for x in tac_comments %}
+  <li>{{ x }}</li>
+{% endfor %}
+</ul>
+
+<h3>Technical remarks</h3>
+<p>{{ technical_remarks }}</p>
+
+</body>
+</html>

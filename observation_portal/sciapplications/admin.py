@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from datetime import datetime
+
 from django.contrib import admin
 from django.utils.html import format_html_join
 from django.urls import reverse
@@ -162,11 +164,23 @@ class ScienceApplicationReviewAdmin(admin.ModelAdmin):
     ]
     readonly_fields = ["mean_grade"]
 
-    list_display = ["science_application", "review_panel", "science_category", "status", "mean_grade"]
-    list_filter = ["status", "science_category"]
+    list_display = ["science_application", "review_panel", "science_category", "status", "mean_grade", "submitter_notified"]
+    list_filter = ["status", "science_category", ("submitter_notified", admin.EmptyFieldListFilter)]
     search_fields = ["science_application__title"]
     autocomplete_fields = ["science_application", "review_panel", "primary_reviewer", "secondary_reviewer"]
+    actions = ["notify_submitter"]
 
+    @admin.action(description="Send accepted or rejected email to submitter")
+    def notify_submitter(self, request, queryset):
+      for x in queryset:
+        try:
+          x.send_review_accepted_or_rejected_email_to_submitter()
+        except Exception as e:
+          self.message_user(request, f"Failed to send notification for {x.science_application.title}: {e}", level="error")
+        else:
+          x.submitter_notified = datetime.now()
+          x.save()
+          self.message_user(request, f"Notification sent for {x.science_application.title}", level="info")
 
 @admin.register(ScienceApplicationUserReview)
 class ScienceApplicationUserReviewAdmin(admin.ModelAdmin):
