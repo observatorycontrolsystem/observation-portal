@@ -415,7 +415,6 @@ class ScienceApplicationReview(models.Model):
         last_name = self.science_application.submitter.last_name
         proposal_title = self.science_application.title
         semester_name = self.science_application.call.semester.id
-        tac_comments = [x.comments for x in self.user_reviews.all()]
         observatory_director_name = settings.OBSERVATORY_DIRECTOR_NAME
 
         if self.status == ScienceApplicationReview.Status.ACCEPTED:
@@ -445,7 +444,7 @@ class ScienceApplicationReview(models.Model):
                     "semester_end": semester_end,
                     "proposal_priority": self.get_accepted_priority_display(),
                     "instrument_allocations": instrument_allocations,
-                    "tac_comments": tac_comments,
+                    "tac_comments": self.summary,
                     "technical_remarks": self.technical_review,
                     "observatory_director_name": observatory_director_name,
                 }
@@ -459,7 +458,7 @@ class ScienceApplicationReview(models.Model):
                     "last_name": last_name,
                     "proposal_title": proposal_title,
                     "semester_name": semester_name,
-                    "tac_comments": tac_comments,
+                    "tac_comments": self.summary,
                     "technical_remarks": self.technical_review,
                     "observatory_director_name": observatory_director_name,
                 }

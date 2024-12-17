@@ -48,11 +48,7 @@ Your proposal was assigned a priority in the <b>{{ proposal_priority }} third</b
 Observatory Director</p>
 
 <h3>TAC comments</h3>
-<ul>
-{% for x in tac_comments %}
-  <li>{{ x }}</li>
-{% endfor %}
-</ul>
+<p>{{ tac_comments }}</p>
 
 <h3>Technical remarks</h3>
 <p>{{ technical_remarks }}</p>
