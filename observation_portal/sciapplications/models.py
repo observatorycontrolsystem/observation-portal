@@ -421,15 +421,17 @@ class ScienceApplicationReview(models.Model):
             semester_start = self.science_application.call.semester.start.strftime("%B %d, %Y")
             semester_end = self.science_application.call.semester.end.strftime("%B %d, %Y")
 
-            time_by_instrument_type = defaultdict(int)
+            time_by_instrument_type = defaultdict(lambda: defaultdict(int))
 
             for tr in self.science_application.timerequest_set.filter(approved=True):
                 instrument_types = frozenset(x.display for x in tr.instrument_types.all())
 
-                time_by_instrument_type[instrument_types] += tr.total_requested_time
+                time_by_instrument_type[instrument_types]["std"] += tr.std_time
+                time_by_instrument_type[instrument_types]["tc"] += tr.tc_time
+                time_by_instrument_type[instrument_types]["rr"] += tr.rr_time
 
             instrument_allocations = [
-              {"name": ", ".join(sorted(k)), "value": v} for k, v in time_by_instrument_type.items()
+              {"name": ", ".join(sorted(k)), **v} for k, v in time_by_instrument_type.items()
             ]
 
             message = render_to_string(

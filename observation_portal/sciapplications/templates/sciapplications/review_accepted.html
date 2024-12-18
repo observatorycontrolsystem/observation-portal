@@ -18,18 +18,20 @@ Your proposal was assigned a priority in the <b>{{ proposal_priority }} third</b
 <table>
   <caption>Allocation (hours)</caption>
   <thead>
-    <tr>
-    {% for x in instrument_allocations %}
-      <th>{{ x.name }}</th>
-    {% endfor %}
-    </tr>
+    <tr>Instrument</tr>
+    <tr>Queue</tr>
+    <tr>TC</tr>
+    <tr>RR</tr>
   </thead>
   <tbody>
-    <tr>
     {% for x in instrument_allocations %}
-      <td>{{ x.value }}</td>
+      <tr>
+        <td>{{ x.name }}</td>
+        <td>{{ x.std }}</td>
+        <td>{{ x.tc }}</td>
+        <td>{{ x.rr }}</td>
+      </tr>
     {% endfor %}
-    </tr>
   </tbody>
 </table>
 
