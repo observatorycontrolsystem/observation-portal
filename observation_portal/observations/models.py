@@ -35,6 +35,9 @@ def observation_as_dict(instance, no_request=False):
 def get_expanded_configurations(observation, configurations):
     ''' Gets set of expanded configurations with configuration details filled in for a given observation
     '''
+    # If this is a REAL_TIME observation, just return its configuration_status since it doesn't have a configuration
+    if observation.request.request_group.observation_type == RequestGroup.REAL_TIME:
+        return [{'configuration_status': observation.configuration_statuses.first().id}]
     expanded_configurations = []
     configuration_status_by_config = defaultdict(list)
     # First arrange the configuration statuses by Configuration they apply to in the order they apply
@@ -226,7 +229,7 @@ class ConfigurationStatus(models.Model):
     )
 
     configuration = models.ForeignKey(
-        Configuration, related_name='configuration_status', on_delete=models.PROTECT
+        Configuration, null=True, blank=True, related_name='configuration_status', on_delete=models.PROTECT
     )
     observation = models.ForeignKey(
         Observation, related_name='configuration_statuses', on_delete=models.CASCADE

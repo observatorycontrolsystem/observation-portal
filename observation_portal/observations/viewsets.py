@@ -82,10 +82,6 @@ class RealTimeViewSet(CreateListModelMixin, viewsets.ModelViewSet):
             using its observation id as the downtime reason
         """
         observation = serializer.save(submitter=self.request.user, submitter_id=self.request.user.id)
-        # Debit the realtime time allocation hours
-        obs_hours = (observation.end - observation.start).total_seconds() / 3600.0
-        debit_realtime_time_allocation(observation.site, observation.enclosure, observation.telescope,
-                                       observation.request.request_group.proposal, obs_hours)
         # Now create the downtime block in DowntimeDB
         downtime = {
             'site': observation.site,
@@ -99,8 +95,18 @@ class RealTimeViewSet(CreateListModelMixin, viewsets.ModelViewSet):
             auth_token = Token.objects.get(user=self.request.user)
             headers = {'Authorization': f'Token {auth_token.key}'}
             DowntimeDB.create_downtime_interval(headers=headers, downtime=downtime)
-        except Token.DoesNotExist:
-            logger.warning("Failed to retrieve token for realtime submission user. This should not happen.")
+        except Exception as dte:
+            logger.warning(f"Failed to create a downtime for a realtime submission: {repr(dte)}")
+            # Delete the observation and then request group if we are unable to make a downtime for any reason
+            # We had to save the observation first since the downtime needs the observation id in it
+            rg = observation.request.request_group
+            observation.delete()
+            rg.delete()
+            raise ValidationError(f"Failed to create downtime for Realtime observation. Please try again later")
+        # Debit the realtime time allocation hours last so we are sure creating the downtime worked
+        obs_hours = (observation.end - observation.start).total_seconds() / 3600.0
+        debit_realtime_time_allocation(observation.site, observation.enclosure, observation.telescope,
+                                       observation.request.request_group.proposal, obs_hours)
 
     def perform_destroy(self, instance):
         """ This destroys the associated downtime and also the associated request and request group
@@ -110,14 +116,15 @@ class RealTimeViewSet(CreateListModelMixin, viewsets.ModelViewSet):
             headers = {'Authorization': f'Token {auth_token.key}'}
             DowntimeDB.delete_downtime_interval(headers=headers, site=instance.site, enclosure=instance.enclosure,
                                                 telescope=instance.telescope, observation_id=instance.id)
-        except Token.DoesNotExist:
-            logger.warning("Failed to retrieve token for realtime deletion user. This should not happen.")
+        except Exception as dte:
+            logger.warning(f"Failed to delete a downtime for a realtime submission: {repr(dte)}")
+            raise ValidationError(f"Failed to delete downtime associated with Realtime observation. Please try again later")
 
         # Now credit the realtime time back to the time allocation with most hours
         negative_obs_hours = -(instance.end - instance.start).total_seconds() / 3600.0
         debit_realtime_time_allocation(instance.site, instance.enclosure, instance.telescope,
                                        instance.request.request_group.proposal, negative_obs_hours)
-        # delete the observation and then request group
+        # Delete the realtime observation and then request group
         rg = instance.request.request_group
         instance.delete()
         rg.delete()

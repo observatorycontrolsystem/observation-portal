@@ -9,6 +9,7 @@ from dateutil.parser import parse
 from django.urls import reverse
 from django.core.cache import caches
 from django.core.management import call_command
+from rest_framework.authtoken.models import Token
 
 from observation_portal.common.test_helpers import SetTimeMixin
 from observation_portal.requestgroups.models import RequestGroup, Window, Location, Request
@@ -434,7 +435,9 @@ class TestRealTimeApi(SetTimeMixin, APITestCase):
         self.user = blend_user(
             user_params={'is_admin': True, 'is_superuser': True, 'is_staff': True},
             profile_params={'staff_view': True})
+        Token.objects.get_or_create(user=self.user)
         self.nonstaff_user = blend_user(user_params={'is_admin': False, 'is_superuser': False, 'is_staff': False})
+        Token.objects.get_or_create(user=self.nonstaff_user)
         self.client.force_login(self.nonstaff_user)
         self.semester = mixer.blend(
             Semester, id='2016B', start=datetime(2016, 9, 1, tzinfo=timezone.utc),
@@ -445,7 +448,8 @@ class TestRealTimeApi(SetTimeMixin, APITestCase):
         self.observation = copy.deepcopy(realtime)
         self.observation['proposal'] = self.proposal.id
 
-    def test_post_realtime_observation_succeeds_with_nonstaff_user(self):
+    @patch('observation_portal.common.downtimedb.DowntimeDB.create_downtime_interval')
+    def test_post_realtime_observation_succeeds_with_nonstaff_user(self, create_downtime):
         response = self.client.post(reverse('api:realtime-list'), data=self.observation)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json()['submitter'], self.nonstaff_user.username)
@@ -456,7 +460,8 @@ class TestRealTimeApi(SetTimeMixin, APITestCase):
         time_used = (parse(self.observation['end']) - parse(self.observation['start'])).total_seconds() / 3600.0
         self.assertEqual(time_used, self.ta.realtime_time_used)
 
-    def test_post_realtime_observation_succeeds_with_staff_user(self):
+    @patch('observation_portal.common.downtimedb.DowntimeDB.create_downtime_interval')
+    def test_post_realtime_observation_succeeds_with_staff_user(self, create_downtime):
         self.client.force_login(self.user)
         mixer.blend(Membership, user=self.user, proposal=self.proposal)
         response = self.client.post(reverse('api:realtime-list'), data=self.observation)
@@ -465,7 +470,20 @@ class TestRealTimeApi(SetTimeMixin, APITestCase):
         self.assertEqual(response.json()['observation_type'], self.observation['observation_type'])
         self.assertEqual(response.json()['name'], self.observation['name'])
 
-    def test_delete_realtime_observation_succeeds(self):
+    @patch('observation_portal.common.downtimedb.DowntimeDB.create_downtime_interval')
+    def test_post_realtime_observation_fails_if_downtime_creation_fails(self, create_downtime):
+        create_downtime.side_effect = Exception("Failed to create downtime")
+        self.client.force_login(self.user)
+        mixer.blend(Membership, user=self.user, proposal=self.proposal)
+        response = self.client.post(reverse('api:realtime-list'), data=self.observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Failed to create downtime for Realtime observation', str(response.content))
+        # Make sure no observations were created
+        self.assertEqual(Observation.objects.all().count(), 0)
+
+    @patch('observation_portal.common.downtimedb.DowntimeDB.create_downtime_interval')
+    @patch('observation_portal.common.downtimedb.DowntimeDB.delete_downtime_interval')
+    def test_delete_realtime_observation_succeeds(self, create_downtime, delete_downtime):
         response = self.client.post(reverse('api:realtime-list'), data=self.observation)
         self.assertEqual(response.status_code, 201)
         # Make sure time is debitted on creation
@@ -487,7 +505,9 @@ class TestRealTimeApi(SetTimeMixin, APITestCase):
         self.ta.refresh_from_db()
         self.assertEqual(0.0, self.ta.realtime_time_used)
 
-    def test_delete_someone_elses_observation_fails(self):
+    @patch('observation_portal.common.downtimedb.DowntimeDB.delete_downtime_interval')
+    @patch('observation_portal.common.downtimedb.DowntimeDB.create_downtime_interval')
+    def test_delete_someone_elses_observation_fails(self, create_downtime, delete_downtime):
         response = self.client.post(reverse('api:realtime-list'), data=self.observation)
         self.assertEqual(response.status_code, 201)
         observation_id = response.json()['id']
@@ -498,7 +518,9 @@ class TestRealTimeApi(SetTimeMixin, APITestCase):
         response = self.client.delete(reverse('api:realtime-detail', args=(observation_id,)))
         self.assertEqual(response.status_code, 404)
 
-    def test_delete_someone_elses_observation_succeeds_as_staff(self):
+    @patch('observation_portal.common.downtimedb.DowntimeDB.delete_downtime_interval')
+    @patch('observation_portal.common.downtimedb.DowntimeDB.create_downtime_interval')
+    def test_delete_someone_elses_observation_succeeds_as_staff(self, create_downtime, delete_downtime):
         response = self.client.post(reverse('api:realtime-list'), data=self.observation)
         self.assertEqual(response.status_code, 201)
         observation_id = response.json()['id']
@@ -506,6 +528,21 @@ class TestRealTimeApi(SetTimeMixin, APITestCase):
         self.client.force_login(self.user)
         response = self.client.delete(reverse('api:realtime-detail', args=(observation_id,)))
         self.assertEqual(response.status_code, 204)
+
+    @patch('observation_portal.common.downtimedb.DowntimeDB.delete_downtime_interval')
+    @patch('observation_portal.common.downtimedb.DowntimeDB.create_downtime_interval')
+    def test_delete_observation_fails_if_downtime_deletion_fails(self, create_downtime, delete_downtime):
+        delete_downtime.side_effect = Exception("Failed to delete downtime")
+        response = self.client.post(reverse('api:realtime-list'), data=self.observation)
+        self.assertEqual(response.status_code, 201)
+        observation_id = response.json()['id']
+
+        self.client.force_login(self.user)
+        response = self.client.delete(reverse('api:realtime-detail', args=(observation_id,)))
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Failed to delete downtime associated with Realtime observation', str(response.content))
+        # Make sure observation still exists
+        self.assertEqual(Observation.objects.filter(id=observation_id).count(), 1)
 
     def test_delete_nonexistent_observation(self):
         response = self.client.delete(reverse('api:realtime-detail', args=(12345,)))
@@ -562,7 +599,17 @@ class TestRealTimeApi(SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('No instruments found at lco.domb.1m0a', str(response.content))
 
-    def test_observation_has_no_configurations(self):
+    @patch('observation_portal.common.downtimedb.DowntimeDB.create_downtime_interval')
+    def test_observation_has_configuration_status_created(self, create_downtime):
+        response = self.client.post(reverse('api:realtime-list'), data=self.observation)
+        self.assertEqual(response.status_code, 201)
+        self.assertIn('configuration_status_id', response.json())
+        observation = Observation.objects.first().as_dict()
+        self.assertEqual(observation['request']['configurations'][0]['configuration_status'],
+                         response.json()['configuration_status_id'])
+
+    @patch('observation_portal.common.downtimedb.DowntimeDB.create_downtime_interval')
+    def test_observation_has_no_configurations(self, create_downtime):
         response = self.client.post(reverse('api:realtime-list'), data=self.observation)
         self.assertEqual(response.status_code, 201)
         observation = Observation.objects.first().as_dict()
@@ -611,7 +658,8 @@ class TestRealTimeApi(SetTimeMixin, APITestCase):
         self.assertIn('The desired interval', str(response.content))
 
     @patch('observation_portal.common.downtimedb.DowntimeDB._get_downtime_data')
-    def test_post_realtime_accepted_with_nonoverlapping_downtime(self, downtime_data):
+    @patch('observation_portal.common.downtimedb.DowntimeDB.create_downtime_interval')
+    def test_post_realtime_accepted_with_nonoverlapping_downtime(self, create_downtime, downtime_data):
         downtime_data.return_value = [{'start': '2016-09-05T21:00:00Z',
                                        'end': '2016-09-05T22:10:00Z',
                                        'site': 'tst',
@@ -624,7 +672,8 @@ class TestRealTimeApi(SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:realtime-list'), data=good_observation)
         self.assertEqual(response.status_code, 201)
 
-    def test_post_realtime_rejected_if_overlapping_users_other_sessions(self):
+    @patch('observation_portal.common.downtimedb.DowntimeDB.create_downtime_interval')
+    def test_post_realtime_rejected_if_overlapping_users_other_sessions(self, create_downtime):
         # Create one realtime observation
         good_observation = copy.deepcopy(self.observation)
         good_observation['enclosure'] = 'doma'
@@ -637,7 +686,8 @@ class TestRealTimeApi(SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("overlaps an existing interval for user", str(response.content))
 
-    def test_post_realtime_rejected_if_overlapping_in_progress_observations(self):
+    @patch('observation_portal.common.downtimedb.DowntimeDB.create_downtime_interval')
+    def test_post_realtime_rejected_if_overlapping_in_progress_observations(self, create_downtime):
         # First create an in progress observation during the same time as the realtime session
         mixer.blend(Observation, state='IN_PROGRESS', start=datetime(2016, 9, 1, 0, tzinfo=timezone.utc),
                     end=datetime(2016, 9, 1, 1, tzinfo=timezone.utc), site='tst', enclosure='domb', telescope='1m0a')
@@ -661,7 +711,8 @@ class TestRealTimeApi(SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:realtime-list'), data=good_observation)
         self.assertEqual(response.status_code, 201)
 
-    def test_post_realtime_rejected_if_overlapping_important_scheduled_observations(self):
+    @patch('observation_portal.common.downtimedb.DowntimeDB.create_downtime_interval')
+    def test_post_realtime_rejected_if_overlapping_important_scheduled_observations(self, create_downtime):
         # First schedule an important observation during the same time as the realtime session
         requestgroup = create_simple_requestgroup(
             self.nonstaff_user, self.proposal, instrument_type='1M0-SCICAM-SBIG'
@@ -684,7 +735,8 @@ class TestRealTimeApi(SetTimeMixin, APITestCase):
         response = self.client.post(reverse('api:realtime-list'), data=good_observation)
         self.assertEqual(response.status_code, 201)
 
-    def test_post_realtime_succeeds_if_overlapping_normal_scheduled_observations(self):
+    @patch('observation_portal.common.downtimedb.DowntimeDB.create_downtime_interval')
+    def test_post_realtime_succeeds_if_overlapping_normal_scheduled_observations(self, create_downtime):
         # First create an in progress observation during the same time as the realtime session
         requestgroup = create_simple_requestgroup(
             self.nonstaff_user, self.proposal, instrument_type='1M0-SCICAM-SBIG'
@@ -743,7 +795,8 @@ class TestRealTimeApi(SetTimeMixin, APITestCase):
         free_interval = Intervals([(datetime(2016, 9, 6, 21, 5, tzinfo=timezone.utc), datetime(2016, 9, 6, 22, tzinfo=timezone.utc))])
         self.assertFalse(available_intervals.intersect([free_interval]).is_empty())
 
-    def test_realtime_availability_filters_out_times_user_has_other_realtime_sessions(self):
+    @patch('observation_portal.common.downtimedb.DowntimeDB.create_downtime_interval')
+    def test_realtime_availability_filters_out_times_user_has_other_realtime_sessions(self, create_downtime):
         # Create one realtime observation on 1m0a.tst.doma
         good_observation = copy.deepcopy(self.observation)
         good_observation['enclosure'] = 'doma'
