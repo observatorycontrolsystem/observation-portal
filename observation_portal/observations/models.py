@@ -205,12 +205,14 @@ class Observation(models.Model):
     # Returns the current configuration repeat we are within the request for this configuration status
     def get_current_repeat(self, configuration_status_id):
         num_configurations = self.request.configurations.count()
-        configuration_status_index = 0
-        for cs in self.configuration_statuses.all():
-            if cs.id == configuration_status_id:
-                break
-            configuration_status_index += 1
-        return (configuration_status_index // num_configurations) + 1
+        if num_configurations:
+            configuration_status_index = 0
+            for cs in self.configuration_statuses.all():
+                if cs.id == configuration_status_id:
+                    break
+                configuration_status_index += 1
+            return (configuration_status_index // num_configurations) + 1
+        return 1
 
     @property
     def instrument_types(self):

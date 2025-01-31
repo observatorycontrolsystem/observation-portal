@@ -609,6 +609,31 @@ class TestRealTimeApi(SetTimeMixin, APITestCase):
                          response.json()['configuration_status_id'])
 
     @patch('observation_portal.common.downtimedb.DowntimeDB.create_downtime_interval')
+    def test_update_configuration_state_succeeds(self, create_downtime):
+        response = self.client.post(reverse('api:realtime-list'), data=self.observation)
+        self.assertEqual(response.status_code, 201)
+        configuration_status_id = response.json()['configuration_status_id']
+        configuration_status = ConfigurationStatus.objects.first()
+        self.assertEqual(configuration_status.id, configuration_status_id)
+        self.assertEqual(configuration_status.state, 'PENDING')
+        update_data = {'state': 'ATTEMPTED'}
+        self.client.force_login(self.user)
+        self.client.patch(reverse('api:configurationstatus-detail', args=(configuration_status_id,)), update_data)
+        configuration_status.refresh_from_db()
+        self.assertEqual(configuration_status.state, 'ATTEMPTED')
+
+    @patch('observation_portal.common.downtimedb.DowntimeDB.create_downtime_interval')
+    def test_update_configuration_state_completed_makes_observation_complete(self, create_downtime):
+        response = self.client.post(reverse('api:realtime-list'), data=self.observation)
+        self.assertEqual(response.status_code, 201)
+        configuration_status_id = response.json()['configuration_status_id']
+        update_data = {'state': 'COMPLETED'}
+        self.client.force_login(self.user)
+        self.client.patch(reverse('api:configurationstatus-detail', args=(configuration_status_id,)), update_data)
+        observation = Observation.objects.first()
+        self.assertEqual(observation.state, 'COMPLETED')
+
+    @patch('observation_portal.common.downtimedb.DowntimeDB.create_downtime_interval')
     def test_observation_has_no_configurations(self, create_downtime):
         response = self.client.post(reverse('api:realtime-list'), data=self.observation)
         self.assertEqual(response.status_code, 201)

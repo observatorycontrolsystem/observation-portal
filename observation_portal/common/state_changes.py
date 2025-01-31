@@ -249,18 +249,22 @@ def modify_ipp_time_from_request(ipp_val, request, modification='debit'):
 
 def get_request_state_from_configuration_statuses(old_request_state, request, configuration_statuses):
     """Determine request state from all the configuration statuses associated with one of the request's observations"""
-    acceptability_threshold = request.acceptability_threshold
-    observation_state = get_observation_state(configuration_statuses)
-    completion_percent = exposure_completion_percentage(configuration_statuses)
-    if isclose(acceptability_threshold, completion_percent) or \
-            completion_percent >= acceptability_threshold or \
-            observation_state == 'COMPLETED':
-        return 'COMPLETED'
-    # If a nonzero MAX_FAILURES_PER_REQUEST is set and the observation failed, check that condition
-    if settings.MAX_FAILURES_PER_REQUEST and observation_state == 'FAILED':
-        failed_observations_count = request.observation_set.filter(state='FAILED').count()
-        if failed_observations_count >= settings.MAX_FAILURES_PER_REQUEST:
-            return 'FAILURE_LIMIT_REACHED'
+    if request.request_group.observation_type == RequestGroup.REAL_TIME:
+        if configuration_statuses.first().state == 'COMPLETED':
+            return 'COMPLETED'
+    else:
+        acceptability_threshold = request.acceptability_threshold
+        observation_state = get_observation_state(configuration_statuses)
+        completion_percent = exposure_completion_percentage(configuration_statuses)
+        if isclose(acceptability_threshold, completion_percent) or \
+                completion_percent >= acceptability_threshold or \
+                observation_state == 'COMPLETED':
+            return 'COMPLETED'
+        # If a nonzero MAX_FAILURES_PER_REQUEST is set and the observation failed, check that condition
+        if settings.MAX_FAILURES_PER_REQUEST and observation_state == 'FAILED':
+            failed_observations_count = request.observation_set.filter(state='FAILED').count()
+            if failed_observations_count >= settings.MAX_FAILURES_PER_REQUEST:
+                return 'FAILURE_LIMIT_REACHED'
     return old_request_state
 
 
