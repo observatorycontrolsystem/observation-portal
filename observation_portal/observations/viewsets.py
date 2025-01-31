@@ -102,7 +102,7 @@ class RealTimeViewSet(CreateListModelMixin, viewsets.ModelViewSet):
             rg = observation.request.request_group
             observation.delete()
             rg.delete()
-            raise ValidationError(f"Failed to create downtime for Realtime observation. Please try again later")
+            raise ValidationError("Failed to create downtime for Realtime observation. Please try again later")
         # Debit the realtime time allocation hours last so we are sure creating the downtime worked
         obs_hours = (observation.end - observation.start).total_seconds() / 3600.0
         debit_realtime_time_allocation(observation.site, observation.enclosure, observation.telescope,
@@ -118,7 +118,7 @@ class RealTimeViewSet(CreateListModelMixin, viewsets.ModelViewSet):
                                                 telescope=instance.telescope, observation_id=instance.id)
         except Exception as dte:
             logger.warning(f"Failed to delete a downtime for a realtime submission: {repr(dte)}")
-            raise ValidationError(f"Failed to delete downtime associated with Realtime observation. Please try again later")
+            raise ValidationError("Failed to delete downtime associated with Realtime observation. Please try again later")
 
         # Now credit the realtime time back to the time allocation with most hours
         negative_obs_hours = -(instance.end - instance.start).total_seconds() / 3600.0
