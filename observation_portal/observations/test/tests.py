@@ -634,7 +634,7 @@ class TestRealTimeApi(SetTimeMixin, APITestCase):
         self.assertEqual(observation.state, 'COMPLETED')
 
     @patch('observation_portal.common.downtimedb.DowntimeDB.create_downtime_interval')
-    def test_observation_has_no_configurations(self, create_downtime):
+    def test_observation_has_configurations(self, create_downtime):
         response = self.client.post(reverse('api:realtime-list'), data=self.observation)
         self.assertEqual(response.status_code, 201)
         observation = Observation.objects.first().as_dict()

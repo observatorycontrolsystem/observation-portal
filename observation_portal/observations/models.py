@@ -37,7 +37,10 @@ def get_expanded_configurations(observation, configurations):
     '''
     # If this is a REAL_TIME observation, just return its configuration_status since it doesn't have a configuration
     if observation.request.request_group.observation_type == RequestGroup.REAL_TIME:
-        return [{'configuration_status': observation.configuration_statuses.first().id}]
+        if observation.configuration_statuses.all().count() > 0:
+            return [{'configuration_status': observation.configuration_statuses.first().id}]
+        else:
+            return []
     expanded_configurations = []
     configuration_status_by_config = defaultdict(list)
     # First arrange the configuration statuses by Configuration they apply to in the order they apply
