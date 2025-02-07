@@ -27,6 +27,12 @@ class ProfileApiView(RetrieveUpdateAPIView):
     schema = ObservationPortalSchema(tags=['Accounts'])
     permission_classes = [IsAuthenticated]
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        if 'include_current_time_allocations' in self.request.query_params:
+            context['include_current_time_allocations'] = True
+        return context
+
     #TODO: Docstrings on get_object are not plumbed into the description for the API endpoint - override this.
     def get_object(self):
         """Once authenticated, retrieve profile data"""

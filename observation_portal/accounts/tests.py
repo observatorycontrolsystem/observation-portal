@@ -17,7 +17,7 @@ from rest_framework import status
 
 from observation_portal.accounts.test_utils import blend_user
 from observation_portal.accounts.models import Profile
-from observation_portal.proposals.models import Proposal, Membership, TimeAllocation
+from observation_portal.proposals.models import Proposal, Membership, TimeAllocation, Semester
 
 
 class TestAPIQuota(TestCase):
@@ -233,6 +233,18 @@ class TestProfileAPI(APITestCase):
 
         self.assertEqual(len(response.json()['proposals']), 1)
         self.assertEqual(response.json()['proposals'][0]['id'], proposal.id)
+        self.assertNotContains(response, 'time_allocations')
+
+    def test_proposal_include_time_allocations(self):
+        semester = mixer.blend(Semester, start=timezone.now() - timedelta(days=1), end=timezone.now() + timedelta(days=1))
+        proposal = mixer.blend(Proposal, active=True)
+        mixer.blend(Membership, proposal=proposal, user=self.user)
+        mixer.blend(TimeAllocation, proposal=proposal, semester=semester, instrument_types=['1M0-SCICAM-SBIG'], std_allocation=43.3)
+
+        response = self.client.get(reverse('api:profile') + '?include_current_time_allocations')
+        self.assertContains(response, 'time_allocations')
+        self.assertEqual(response.json()['proposals'][0]['time_allocations'][0]['std_allocation'], 43.3)
+        self.assertContains(response, 'time_limit')
 
     def test_user_gets_api_token(self):
         with self.assertRaises(Token.DoesNotExist):

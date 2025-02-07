@@ -17,6 +17,7 @@ class MembershipFilter(django_filters.FilterSet):
 
 
 class ProposalFilter(django_filters.FilterSet):
+    id = django_filters.ModelMultipleChoiceFilter(queryset=Proposal.objects.all())
     semester = django_filters.ModelChoiceFilter(
         label="Semester", distinct=True, queryset=Semester.objects.all().order_by('-start')
     )

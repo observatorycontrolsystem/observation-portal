@@ -62,10 +62,20 @@ class UserSerializer(serializers.ModelSerializer):
         )
 
     def get_proposals(self, obj):
-        return [
-            {'id': proposal.id, 'title': proposal.title, 'current': proposal in obj.profile.current_proposals}
-            for proposal in obj.proposal_set.all()
-        ]
+        proposals = []
+        for proposal in obj.proposal_set.all():
+            proposal_details = {
+                'id': proposal.id, 'title': proposal.title, 'current': proposal in obj.profile.current_proposals
+            }
+            if 'include_current_time_allocations' in self.context and self.context['include_current_time_allocations']:
+                membership = obj.membership_set.filter(proposal=proposal).first()
+                proposal_details['time_limit'] = membership.time_limit
+                proposal_details['time_used'] = obj.profile.time_used_in_proposal(proposal)
+                proposal_details['time_allocations'] = []
+                for time_allocation in proposal.timeallocation_set.filter(semester=proposal.current_semester):
+                    proposal_details['time_allocations'].append(time_allocation.as_dict(exclude=['semester', 'proposal', 'id']))
+            proposals.append(proposal_details)
+        return proposals
 
     def get_proposal_notifications(self, obj):
         return [pn.proposal.id for pn in obj.proposalnotification_set.all()]
