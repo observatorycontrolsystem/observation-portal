@@ -10,6 +10,16 @@ This project adheres to semantic versioning.
 
 ### Removed
 
+## [4.13.4] - 2025-02-10
+
+### Added
+- REAL_TIME observations now create a configuration status (but no configurations) so status can be updated
+- Multiple Choice filter on id for the `/api/proposals/` endpoint to select several proposals at once
+- `?include_current_time_allocations` flag when getting `/api/profile/` to include current time allocations in the returned proposals
+
+### Changed
+- Fixed a potential issue in reserving REAL_TIME observations when dealing with a flaky connection with downtimeDB
+
 ## [4.11.1] - 2024-10-15
 
 ### Changed
