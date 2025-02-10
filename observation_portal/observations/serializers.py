@@ -379,12 +379,13 @@ class RealTimeSerializer(serializers.ModelSerializer):
     enclosure = serializers.ChoiceField(choices=configdb.get_enclosure_tuples())
     telescope = serializers.ChoiceField(choices=configdb.get_telescope_tuples())
     state = serializers.ReadOnlyField()
+    configuration_status_id = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = Observation
         fields = ('site', 'enclosure', 'telescope', 'start', 'end', 'state',
-                  'proposal', 'priority', 'name', 'id', 'modified')
-        read_only_fields = ('modified', 'id',)
+                  'proposal', 'priority', 'name', 'id', 'modified', 'configuration_status_id')
+        read_only_fields = ('modified', 'id', 'configuration_status_id')
 
     def validate(self, data):
         validated_data = super().validate(data)
@@ -456,6 +457,7 @@ class RealTimeSerializer(serializers.ModelSerializer):
             request_group = RequestGroup.objects.create(**validated_data)
             request = Request.objects.create(request_group=request_group)
             observation = Observation.objects.create(request=request, **obs_fields)
+            ConfigurationStatus.objects.create(observation=observation, instrument_name='')
 
         return observation
 
@@ -468,6 +470,7 @@ class RealTimeSerializer(serializers.ModelSerializer):
         data['ipp_value'] = instance.request.request_group.ipp_value
         data['observation_type'] = instance.request.request_group.observation_type
         data['request_group_id'] = instance.request.request_group.id
+        data['configuration_status_id'] = instance.configuration_statuses.first().id
 
         return data
 

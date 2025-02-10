@@ -42,6 +42,15 @@ class TestProposalApiList(APITestCase):
         for p in proposals:
             self.assertContains(response, p.id)
 
+    def test_filter_proposals_on_multiple_ids(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('api:proposals-list') + f'?id={self.proposals[1].id}&id={self.proposals[0].id}')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['count'], 2)
+        self.assertContains(response, self.proposals[0].id)
+        self.assertContains(response, self.proposals[1].id)
+        self.assertNotContains(response, self.proposals[2].id)
+
     def test_staff_with_staff_view_set_can_view_all_proposals(self):
         admin_user = blend_user(user_params={'is_staff': True}, profile_params={'staff_view': True})
         self.client.force_login(admin_user)

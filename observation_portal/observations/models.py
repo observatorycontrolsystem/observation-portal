@@ -35,6 +35,12 @@ def observation_as_dict(instance, no_request=False):
 def get_expanded_configurations(observation, configurations):
     ''' Gets set of expanded configurations with configuration details filled in for a given observation
     '''
+    # If this is a REAL_TIME observation, just return its configuration_status since it doesn't have a configuration
+    if observation.request.request_group.observation_type == RequestGroup.REAL_TIME:
+        if observation.configuration_statuses.all().count() > 0:
+            return [{'configuration_status': observation.configuration_statuses.first().id}]
+        else:
+            return []
     expanded_configurations = []
     configuration_status_by_config = defaultdict(list)
     # First arrange the configuration statuses by Configuration they apply to in the order they apply
@@ -202,12 +208,14 @@ class Observation(models.Model):
     # Returns the current configuration repeat we are within the request for this configuration status
     def get_current_repeat(self, configuration_status_id):
         num_configurations = self.request.configurations.count()
-        configuration_status_index = 0
-        for cs in self.configuration_statuses.all():
-            if cs.id == configuration_status_id:
-                break
-            configuration_status_index += 1
-        return (configuration_status_index // num_configurations) + 1
+        if num_configurations:
+            configuration_status_index = 0
+            for cs in self.configuration_statuses.all():
+                if cs.id == configuration_status_id:
+                    break
+                configuration_status_index += 1
+            return (configuration_status_index // num_configurations) + 1
+        return 1
 
     @property
     def instrument_types(self):
@@ -226,7 +234,7 @@ class ConfigurationStatus(models.Model):
     )
 
     configuration = models.ForeignKey(
-        Configuration, related_name='configuration_status', on_delete=models.PROTECT
+        Configuration, null=True, blank=True, related_name='configuration_status', on_delete=models.PROTECT
     )
     observation = models.ForeignKey(
         Observation, related_name='configuration_statuses', on_delete=models.CASCADE
