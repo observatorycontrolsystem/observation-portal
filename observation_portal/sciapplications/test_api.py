@@ -603,7 +603,7 @@ class TestPostCreateSciApp(DramatiqTestCase):
         semester = mixer.blend(
             Semester, id='2000BC', start=timezone.now() + timedelta(days=20), end=timezone.now() + timedelta(days=60)
         )
-        data = {**self.sci_data.copy(), **generate_time_request_data(0, self.instrument, semester)}
+        data = {**self.ddt_data.copy(), **generate_time_request_data(0, self.instrument, semester)}
         response = self.client.post(reverse('api:scienceapplications-list'), data=data)
         self.assertEqual(response.status_code, 400)
 
