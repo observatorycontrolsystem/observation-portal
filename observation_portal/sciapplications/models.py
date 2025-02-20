@@ -84,7 +84,7 @@ class Call(models.Model):
     @property
     def eligible_semesters(self):
         # List of semesters for which time can be requested for this call
-        if self.proposal_type == Call.KEY_PROPOSAL:
+        if self.proposal_type in {Call.KEY_PROPOSAL, Call.SCI_PROPOSAL} :
             return [semester.id for semester in Semester.future_semesters()]
         else:
             return [self.semester.id]
