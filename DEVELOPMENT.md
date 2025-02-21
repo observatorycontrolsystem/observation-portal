@@ -1,55 +1,59 @@
 # Development w/ Kubernetes
 
-Install Nix if you haven't already using [this guide](https://github.com/LCOGT/public-wiki/wiki/Install-Nix).
+## Shell
 
-Activate development environment:
+Always enter the development shell before doing anything else. This will make
+sure everyone is using the same version of tools, to avoid any system discrepancies.
+
+Install [Nix](https://github.com/LCOGT/public-wiki/wiki/Install-Nix) if you have
+not already.
+
+If you have [direnv](https://github.com/LCOGT/public-wiki/wiki/Install-direnv)
+installed, the shell will automatically activate and deactive anytime you change
+directories. You may have to grant permissions initially with:
 
 ```sh
-nix develop --impure
+direnv allow
 ```
 
-This will install all necessary tools used below.
-
-Create an ephmeral Kubernetes cluster for development:
+Otherwise, you can manually enter the shell with:
 
 ```sh
-ctlptl apply -f ./local-registry.yaml -f ./local-cluster.yaml
+./develop.sh
 ```
+
+## Skaffold
 
 Deploy dependent services (e.g. Postgres, Redis):
 
 ```sh
-skaffold -m deps run
+skaffold -m obs-portal-deps run
 ```
 
 Start application development loop:
 
 ```sh
-skaffold -m app dev --port-forward
+skaffold -m obs-portal dev
 ```
 
 This will build & deploy all components, wait for them to ready and then tail their logs.
 
-The API server should be exposed at http://localhost:8080/ (the port may be different, check the output).
-
 It will also watch all source-code files and automatically re-deploy/restart all necessary components when they change.
 
-You can access the Django Admin interface (http://localhost:8080/admin) with the default superuser `admin:admin`.
+The API server should be running at https://api-obs-portal.local.lco.earth
+
+You can access the Django Admin interface (https://api-obs-portal.local.lco.earth/admin) with the default superuser `admin:admin`.
 
 Customize environment variables further in `./k8s/envs/local/{settings,secrets}.env`.
 
 When you exit the development loop using `CTRL-C`, it will also cleanup all deployed resources. If you'd like to keep things
-running in the background use `skaffold -m app run` instead of `skaffold -m app dev`.
+running in the background use `skaffold -m obs-portal run`.
 
-Use `skaffold -m <module> delete` to bring down artifacts of a previous `run`.
 
 ## Teardown
 
-To compleltely clean-up everything, just delete the local cluster:
+To compleltely clean-up everything:
 
 ```sh
-ctlptl delete -f ./local-cluster.yaml
+skaffold -m obs-portal,obs-portal-deps delete
 ```
-
-You should leave the `./local-registry.yaml` running because it might be used by other projects.
-It also caches container images, allowing you to skip expensive container builds next time you work on this project.

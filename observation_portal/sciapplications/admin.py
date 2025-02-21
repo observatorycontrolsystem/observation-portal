@@ -3,6 +3,7 @@ from datetime import datetime
 
 from django.contrib import admin
 from django.utils.html import format_html_join
+from django.utils.safestring import mark_safe
 from django.urls import reverse
 from django.conf import settings
 from django.forms.models import ModelForm
@@ -198,10 +199,41 @@ class ReviewPanelMembershipInline(admin.TabularInline):
     extra = 1
     autocomplete_fields = ["user"]
 
+class ReviewPanelScienceAppReviewInline(admin.TabularInline):
+    model = ScienceApplicationReview
+    extra = 0
+    fields = ("title", "category",)
+    readonly_fields = ("title", "category",)
+    can_delete = False
+
+    def has_add_permission(self, request, inst):
+        return False
+
+    @admin.display(description="Category")
+    def category(self, inst):
+        return inst.get_science_category_display()
+
+    @admin.display(description="Title")
+    def title(self, inst):
+        return mark_safe('<a href="{}">{}</a>'.format(
+            reverse("admin:sciapplications_scienceapplicationreview_change", args=(inst.pk,)),
+            inst.science_application.title
+        ))
 
 @admin.register(ReviewPanel)
 class ReviewPanelAdmin(admin.ModelAdmin):
-    inlines = [ReviewPanelMembershipInline]
+    inlines = [ReviewPanelMembershipInline, ReviewPanelScienceAppReviewInline]
     list_display = ["name", "is_admin"]
     list_filter = ["is_admin"]
     search_fields = ["name"]
+    actions = ["send_review_requested_emails"]
+
+    @admin.action(description="Send review requested email to all panelists")
+    def send_review_requested_emails(self, request, queryset):
+      for x in queryset:
+        try:
+          x.send_review_requested_emails()
+        except Exception as e:
+          self.message_user(request, f"Failed to send emails for {x.name}: {e}", level="error")
+        else:
+          self.message_user(request, f"Emails sent for {x.name}", level="info")

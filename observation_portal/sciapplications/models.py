@@ -307,6 +307,30 @@ class ReviewPanel(models.Model):
     def __str__(self):
         return f"{self.name!s}"
 
+    def send_review_requested_emails(self):
+        subject = str(_(f"Proposal Application Review Requested: {self.name}"))
+
+        review_home_url = urljoin(settings.OBSERVATION_PORTAL_BASE_URL, f"proposal-reviews/")
+        review_requests = [
+          {
+            "title": sci_app_review.science_application.title,
+            "url": urljoin(settings.OBSERVATION_PORTAL_BASE_URL, f"proposal-reviews/{sci_app_review.pk}/my-review")
+          }
+          for sci_app_review in self.science_application_reviews.all()
+        ]
+
+        for x in self.members.all():
+            message = render_to_string(
+                "sciapplications/review_requested.txt",
+                {
+                    "panelist": x,
+                    "review_requests": review_requests,
+                    "organization_name": settings.ORGANIZATION_NAME,
+                    "review_home_url": review_home_url,
+                }
+            )
+            send_mail.send(subject, message, settings.ORGANIZATION_EMAIL, [str(x.email)])
+
 
 class ReviewPanelMembership(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -380,7 +404,6 @@ class ScienceApplicationReview(models.Model):
         # created
         if not self.pk:
             r =  super().save(*args, **kwargs)
-            self.send_review_requested_email_to_all_panelists()
             return r
 
         if self.status == ScienceApplicationReview.Status.ACCEPTED:
@@ -394,20 +417,6 @@ class ScienceApplicationReview(models.Model):
         self.science_application.save()
 
         return r
-
-    def send_review_requested_email_to_all_panelists(self):
-        subject = str(_(f"Proposal Application Review Requested: {self.science_application.title}"))
-        for x in self.review_panel.members.all():
-            message = render_to_string(
-                "sciapplications/review_requested.txt",
-                {
-                    "panelist": x,
-                    "science_application": self.science_application,
-                    "organization_name": settings.ORGANIZATION_NAME,
-                    "review_url": urljoin(settings.OBSERVATION_PORTAL_BASE_URL, f"proposal-reviews/{self.pk}/my-review"),
-                }
-            )
-            send_mail.send(subject, message, settings.ORGANIZATION_EMAIL, [str(x.email)])
 
     def send_review_accepted_or_rejected_email_to_submitter(self):
         current_date = datetime.today().strftime("%d %B %Y")
