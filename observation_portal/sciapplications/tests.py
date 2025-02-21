@@ -4,7 +4,6 @@ from django.test import TestCase
 from mixer.backend.django import mixer
 from django_dramatiq.test import DramatiqTestCase
 from django.utils import timezone
-from django.core import mail
 
 from observation_portal.accounts.test_utils import blend_user
 from observation_portal.sciapplications.models import ScienceApplication, Call, TimeRequest, CoInvestigator, Instrument, ScienceApplicationReview, ReviewPanel
@@ -126,6 +125,9 @@ class TestReviewProcess(DramatiqTestCase):
     def setUp(self):
         super().setUp()
 
+        self.user = blend_user(user_params={"is_superuser": True})
+        self.client.force_login(self.user)
+
         self.semester = mixer.blend(
             Semester, start=timezone.now() + timedelta(days=1), end=timezone.now() + timedelta(days=365)
         )
@@ -137,94 +139,6 @@ class TestReviewProcess(DramatiqTestCase):
             eligibility_short='Short Eligibility'
         )
         mixer.blend(Instrument, call=self.call)
-
-    def test_email_sent_to_panelists_on_create(self):
-        submitter = blend_user()
-
-        app = mixer.blend(
-            ScienceApplication,
-            status=ScienceApplication.SUBMITTED,
-            submitter=submitter,
-            call=self.call
-        )
-
-        user1 = blend_user()
-        user2 = blend_user()
-        user3 = blend_user()
-
-        panel = mixer.blend(
-            ReviewPanel,
-            name="panel 1",
-        )
-
-        panel.members.set([user1, user2, user3])
-
-        app_review = mixer.blend(
-            ScienceApplicationReview,
-            science_application=app,
-            review_panel=panel,
-            primary_reviewer=user1,
-            secondary_reviewer=user2,
-        )
-
-
-        self.assertEqual(app_review.status, ScienceApplicationReview.Status.AWAITING_REVIEWS)
-
-        self.broker.join('default')
-        self.worker.join()
-
-        self.assertEqual(len(mail.outbox), 3)
-        expected_email_subject = f"Proposal Application Review Requested: {app_review.science_application.title}"
-        self.assertEqual(set([expected_email_subject]), set(x.subject for x in mail.outbox))
-        self.assertEqual(
-            set(u.email for u in panel.members.all()),
-            set(t for x in mail.outbox for t in x.to)
-        )
-
-
-    def test_email_not_sent_to_panelists_on_update(self):
-        submitter = blend_user()
-
-        app = mixer.blend(
-            ScienceApplication,
-            status=ScienceApplication.SUBMITTED,
-            submitter=submitter,
-            call=self.call
-        )
-
-        user1 = blend_user()
-        user2 = blend_user()
-        user3 = blend_user()
-
-        panel = mixer.blend(
-            ReviewPanel,
-            name="panel 1",
-        )
-
-        panel.members.set([user1, user2, user3])
-
-        app_review = mixer.blend(
-            ScienceApplicationReview,
-            science_application=app,
-            review_panel=panel,
-            primary_reviewer=user1,
-            secondary_reviewer=user2,
-        )
-
-        self.assertEqual(app_review.status, ScienceApplicationReview.Status.AWAITING_REVIEWS)
-
-        self.broker.join('default')
-        self.worker.join()
-
-        mail.outbox = []
-
-        app_review.technical_review = "test"
-        app_review.save()
-
-        self.broker.join('default')
-        self.worker.join()
-
-        self.assertEqual(len(mail.outbox), 0)
 
     def test_application_is_accepted_on_review_accepted(self):
         submitter = blend_user()

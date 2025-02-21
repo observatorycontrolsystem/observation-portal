@@ -310,7 +310,7 @@ class ReviewPanel(models.Model):
     def send_review_requested_emails(self):
         subject = str(_(f"Proposal Application Review Requested: {self.name}"))
 
-        review_home_url = urljoin(settings.OBSERVATION_PORTAL_BASE_URL, f"proposal-reviews/")
+        review_home_url = urljoin(settings.OBSERVATION_PORTAL_BASE_URL, "proposal-reviews/")
         review_requests = [
           {
             "title": sci_app_review.science_application.title,
