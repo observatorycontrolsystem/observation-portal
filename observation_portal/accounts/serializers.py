@@ -73,7 +73,8 @@ class UserSerializer(serializers.ModelSerializer):
                 proposal_details['time_used'] = obj.profile.time_used_in_proposal(proposal)
                 proposal_details['time_allocations'] = []
                 for time_allocation in proposal.timeallocation_set.filter(semester=proposal.current_semester):
-                    proposal_details['time_allocations'].append(time_allocation.as_dict(exclude=['semester', 'proposal', 'id']))
+                    proposal_details['time_allocations'].append(time_allocation.as_dict(
+                        exclude=['semester', 'proposal', 'id', 'instrument_type']))
             proposals.append(proposal_details)
         return proposals
 

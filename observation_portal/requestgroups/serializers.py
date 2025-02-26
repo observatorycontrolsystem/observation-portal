@@ -724,7 +724,7 @@ class RequestSerializer(serializers.ModelSerializer):
         if data.get('windows'):
             duration = get_total_request_duration(data)
             rise_set_intervals_by_site = get_filtered_rise_set_intervals_by_site(data, is_staff=is_staff)
-            largest_interval = get_largest_interval(rise_set_intervals_by_site)
+            largest_interval = get_largest_interval(rise_set_intervals_by_site, exclude_past=True)
             for configuration in data['configurations']:
                 if 'REPEAT' in configuration['type'].upper() and configuration.get('fill_window'):
                     max_configuration_duration = largest_interval.total_seconds() - duration + configuration.get('repeat_duration', 0) - 1
@@ -739,8 +739,8 @@ class RequestSerializer(serializers.ModelSerializer):
             if largest_interval.total_seconds() <= 0:
                 raise serializers.ValidationError(
                     _(
-                        'According to the constraints of the request, the target is never visible within the time '
-                        'window. Check that the target is in the nighttime sky. Consider modifying the time '
+                        'According to the constraints of the request, the target is never visible within the future '
+                        'time window. Check that the target is in the nighttime sky. Consider modifying the time '
                         'window or loosening the airmass or lunar separation constraints. If the target is '
                         'non sidereal, double check that the provided elements are correct.'
                     )
@@ -749,7 +749,8 @@ class RequestSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     (
                         'According to the constraints of the request, the target is visible for a maximum of {0:.2f} '
-                        'hours within the time window. This is less than the duration of your request {1:.2f} hours. '
+                        'hours within the future time window. '
+                        'This is less than the duration of your request {1:.2f} hours. '
                         'Consider expanding the time window or loosening the airmass or lunar separation constraints.'
                     ).format(
                         largest_interval.total_seconds() / 3600.0,

@@ -1448,7 +1448,7 @@ class TestOrbitalElementsTarget(SetTimeMixin, APITestCase):
 
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('the target is never visible within the time window', str(response.content))
+        self.assertIn('the target is never visible within the future time window', str(response.content))
 
     def test_post_requestgroup_orbital_elements_target_missing_fields(self):
         bad_data = self.generic_payload.copy()
@@ -2157,7 +2157,7 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         bad_data['requests'][0]['configurations'][0]['repeat_duration'] = 250
         bad_data['requests'][0]['configurations'][0]['fill_window'] = True
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertIn('the target is never visible within the time window', str(response.content))
+        self.assertIn('the target is never visible within the future time window', str(response.content))
         self.assertEqual(response.status_code, 400)
 
     def test_fill_window_confined_window_fills_the_window(self):
