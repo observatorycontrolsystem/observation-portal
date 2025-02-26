@@ -1664,27 +1664,27 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         self.user = blend_user()
         self.client.force_login(self.user)
 
-        semester = mixer.blend(
+        self.semester = mixer.blend(
             Semester, id='2016B', start=datetime(2016, 9, 1, tzinfo=timezone.utc),
             end=datetime(2016, 12, 31, tzinfo=timezone.utc)
         )
         self.time_allocation_1m0_sbig = mixer.blend(
-            TimeAllocation, proposal=self.proposal, semester=semester, instrument_types=['1M0-SCICAM-SBIG'],
+            TimeAllocation, proposal=self.proposal, semester=self.semester, instrument_types=['1M0-SCICAM-SBIG'],
             std_allocation=100.0, std_time_used=0.0, rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
             ipp_time_available=5.0
         )
         self.time_allocation_1m0_nres = mixer.blend(
-            TimeAllocation, proposal=self.proposal, semester=semester, instrument_types=['1M0-NRES-SCICAM'],
+            TimeAllocation, proposal=self.proposal, semester=self.semester, instrument_types=['1M0-NRES-SCICAM'],
             std_allocation=100.0, std_time_used=0.0, rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
             ipp_time_available=5.0
         )
         self.time_allocation_2m0_floyds = mixer.blend(
-            TimeAllocation, proposal=self.proposal, semester=semester, instrument_types=['2M0-FLOYDS-SCICAM'],
+            TimeAllocation, proposal=self.proposal, semester=self.semester, instrument_types=['2M0-FLOYDS-SCICAM'],
             std_allocation=100.0, std_time_used=0.0, rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
             ipp_time_available=5.0
         )
         self.time_allocation_soar = mixer.blend(
-            TimeAllocation, proposal=self.proposal, semester=semester, instrument_types=['1M0-SCICAM-SOAR'],
+            TimeAllocation, proposal=self.proposal, semester=self.semester, instrument_types=['1M0-SCICAM-SOAR'],
             std_allocation=100.0, std_time_used=0.0, rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
             ipp_time_available=5.0
         )
@@ -2086,6 +2086,20 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 201)
         for i, configuration in enumerate(rg['requests'][0]['configurations']):
             self.assertEqual(configuration['priority'], i + 1)
+
+    def test_past_window_visibility_rejected(self):
+        bad_data = self.generic_payload.copy()
+        # Have to modify the semester bounds so its not rejected for that
+        self.semester.start = datetime(2016, 8, 1, tzinfo=timezone.utc)
+        self.semester.save()
+        # Has plent of time in past before 2016-09-01, not enough time in future
+        bad_data['requests'][0]['windows'][0] = {
+            'start': '2016-08-01T00:00:00Z',
+            'end': '2016-09-01T00:01:00Z'
+        }
+        response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
+        self.assertIn('the target is never visible within the future time window', str(response.content))
+        self.assertEqual(response.status_code, 400)
 
     def test_fill_window_on_more_than_one_configuration_fails(self):
         bad_data = self.generic_payload.copy()
