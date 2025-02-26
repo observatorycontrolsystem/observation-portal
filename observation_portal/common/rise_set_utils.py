@@ -1,6 +1,7 @@
 from math import cos, radians
 from collections import defaultdict
 from datetime import datetime, timedelta
+from django.utils import timezone
 from django.core.serializers.json import DjangoJSONEncoder
 import json
 import hashlib
@@ -23,11 +24,15 @@ from observation_portal.requestgroups.target_helpers import TARGET_TYPE_HELPER_M
 HOURS_PER_DEGREES = 15.0
 
 
-def get_largest_interval(intervals_by_site):
+def get_largest_interval(intervals_by_site, exclude_past=False):
+    now = timezone.now()
     largest_interval = timedelta(seconds=0)
     for intervals in intervals_by_site.values():
         for interval in intervals:
-            largest_interval = max((interval[1] - interval[0]), largest_interval)
+            if interval[0] > now or not exclude_past:
+                largest_interval = max((interval[1] - interval[0]), largest_interval)
+            elif interval[1] > now:
+                largest_interval = max((interval[1] - now), largest_interval)
 
     return largest_interval
 

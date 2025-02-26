@@ -2,6 +2,7 @@ from observation_portal.common.telescope_states import (TelescopeStates, get_tel
                                               combine_telescope_availabilities_by_site_and_class)
 from observation_portal.common.configdb import TelescopeKey
 from observation_portal.common import rise_set_utils
+from observation_portal.common.test_helpers import SetTimeMixin
 
 from time_intervals.intervals import Intervals
 from django.test import TestCase
@@ -395,7 +396,7 @@ class TestTelescopeStatesFromFile(TelescopeStatesFromFile):
                 previous_event = event
 
 
-class TestRiseSetUtils(TestCase):
+class TestRiseSetUtils(SetTimeMixin, TestCase):
     def setUp(self):
         super().setUp()
 
@@ -459,8 +460,8 @@ class TestRiseSetUtils(TestCase):
         request_dict = {'location': {'telescope_class': '1m0'},
                         'windows': [
                             {
-                                'start': datetime(2016, 9, 4),
-                                'end': datetime(2016, 9, 5)
+                                'start': datetime(2016, 9, 4, tzinfo=timezone.utc),
+                                'end': datetime(2016, 9, 5, tzinfo=timezone.utc)
                             }
                         ],
                         'configurations': [
