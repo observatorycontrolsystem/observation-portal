@@ -1,6 +1,0 @@
-apiVersion: ctlptl.dev/v1alpha1
-kind: Cluster
-name: kind-observation-portal
-product: kind
-registry: lco-local
-kubernetesVersion: v1.23.17
