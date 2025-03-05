@@ -599,11 +599,19 @@ class TestPostCreateSciApp(DramatiqTestCase):
         self.assertIsNone(self.user.scienceapplication_set.first().submitted)
         self.assertContains(response, self.sci_data['title'], status_code=201)
 
-    def test_cannot_set_noneligible_semester(self):
+    def test_submitting_sci_proposal_future_semester(self):
         semester = mixer.blend(
             Semester, id='2000BC', start=timezone.now() + timedelta(days=20), end=timezone.now() + timedelta(days=60)
         )
         data = {**self.sci_data.copy(), **generate_time_request_data(0, self.instrument, semester)}
+        response = self.client.post(reverse('api:scienceapplications-list'), data=data)
+        self.assertEqual(response.status_code, 201)
+
+    def test_cannot_set_noneligible_semester(self):
+        semester = mixer.blend(
+            Semester, id='2000BC', start=timezone.now() + timedelta(days=20), end=timezone.now() + timedelta(days=60)
+        )
+        data = {**self.ddt_data.copy(), **generate_time_request_data(0, self.instrument, semester)}
         response = self.client.post(reverse('api:scienceapplications-list'), data=data)
         self.assertEqual(response.status_code, 400)
 

@@ -9,7 +9,7 @@ from django_dramatiq.test import DramatiqTestCase
 
 from observation_portal.accounts.test_utils import blend_user
 from observation_portal.proposals.models import Semester, Proposal
-from observation_portal.sciapplications.models import ScienceApplication, Call, Instrument, TimeRequest
+from observation_portal.sciapplications.models import ScienceApplication, Call, Instrument, TimeRequest, ScienceApplicationReview, ReviewPanel
 
 
 def order_mail_invite_then_approval(mailbox):
@@ -229,3 +229,73 @@ class TestSciAppAdmin(DramatiqTestCase):
             )
             self.assertContains(response, 'View in API')
             self.assertContains(response, 'View on site')
+
+class TestReviewProcessAdmin(DramatiqTestCase):
+
+    def setUp(self):
+        super().setUp()
+
+        self.admin_user = User.objects.create_superuser('admin', 'admin@example.com', 'password')
+        self.client.force_login(self.admin_user)
+
+        self.semester = mixer.blend(
+            Semester, start=timezone.now() + timedelta(days=1), end=timezone.now() + timedelta(days=365)
+        )
+        self.call = mixer.blend(
+            Call, semester=self.semester,
+            deadline=timezone.now() + timedelta(days=7),
+            opens=timezone.now(),
+            proposal_type=Call.SCI_PROPOSAL,
+            eligibility_short='Short Eligibility'
+        )
+        mixer.blend(Instrument, call=self.call)
+
+    def test_sending_email_to_panelists(self):
+        submitter = blend_user()
+
+        app = mixer.blend(
+            ScienceApplication,
+            status=ScienceApplication.SUBMITTED,
+            submitter=submitter,
+            call=self.call
+        )
+
+        user1 = blend_user()
+        user2 = blend_user()
+        user3 = blend_user()
+
+        panel = mixer.blend(
+            ReviewPanel,
+            name="panel 1",
+        )
+        panel.members.set([user1, user2, user3])
+
+        mixer.blend(
+            ScienceApplicationReview,
+            science_application=app,
+            review_panel=panel,
+            primary_reviewer=user1,
+            secondary_reviewer=user2,
+        )
+
+        resp = self.client.post(
+            reverse("admin:sciapplications_reviewpanel_changelist"),
+            data={
+                "action": "send_review_requested_emails",
+                "_selected_action": [str(panel.pk)],
+            },
+            follow=True,
+        )
+
+        self.assertEqual(resp.status_code, 200)
+
+        self.broker.join('default')
+        self.worker.join()
+
+        self.assertEqual(len(mail.outbox), 3)
+        expected_email_subject = f"Proposal Application Review Requested: {panel.name}"
+        self.assertEqual(set([expected_email_subject]), set(x.subject for x in mail.outbox))
+        self.assertEqual(
+            set(u.email for u in panel.members.all()),
+            set(t for x in mail.outbox for t in x.to)
+        )

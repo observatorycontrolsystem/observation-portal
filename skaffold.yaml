@@ -1,10 +1,10 @@
 apiVersion: skaffold/v4beta10
 kind: Config
 metadata:
-  name: app
+  name: obs-portal
 requires:
   - configs:
-    - app-image
+    - obs-portal-app-image
 manifests:
   kustomize:
     paths:
@@ -18,7 +18,7 @@ deploy:
 apiVersion: skaffold/v4beta10
 kind: Config
 metadata:
-  name: app-image
+  name: obs-portal-app-image
 build:
   tagPolicy:
     gitCommit:
@@ -35,34 +35,12 @@ build:
 apiVersion: skaffold/v4beta10
 kind: Config
 metadata:
-  name: deps
+  name: obs-portal-deps
 manifests:
   kustomize:
     paths:
       - k8s/envs/local-deps/
 deploy:
   kubectl: {}
-  helm:
-    releases:
-      - name: postgresql
-        remoteChart: oci://registry-1.docker.io/bitnamicharts/postgresql
-        version: 12.12.10
-        namespace: observation-portal-pg
-        createNamespace: true
-        setValues:
-          architecture: standalone
-          primary.persistence.size: 2Gi
-          auth:
-            database: observationportal
-            username: observationportal
-            password: observationportal
-
-      - name: redis
-        remoteChart: oci://registry-1.docker.io/bitnamicharts/redis
-        version: 19.1.0
-        namespace: observation-portal-redis
-        createNamespace: true
-        setValues:
-          architecture: standalone
-          auth.password: observationportal
-          master.persistence.enabled: false
+  logs:
+    prefix: podAndContainer
