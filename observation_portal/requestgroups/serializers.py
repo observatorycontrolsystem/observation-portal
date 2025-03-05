@@ -739,7 +739,7 @@ class RequestSerializer(serializers.ModelSerializer):
             if largest_interval.total_seconds() <= 0:
                 raise serializers.ValidationError(
                     _(
-                        'According to the constraints of the request, the target is never visible within the future '
+                        'According to the constraints of the request, the target will not be visible within the '
                         'time window. Check that the target is in the nighttime sky. Consider modifying the time '
                         'window or loosening the airmass or lunar separation constraints. If the target is '
                         'non sidereal, double check that the provided elements are correct.'
@@ -748,8 +748,8 @@ class RequestSerializer(serializers.ModelSerializer):
             if largest_interval.total_seconds() <= duration:
                 raise serializers.ValidationError(
                     (
-                        'According to the constraints of the request, the target is visible for a maximum of {0:.2f} '
-                        'hours within the future time window. '
+                        'According to the constraints of the request, the target will only be visible for a maximum '
+                        'of {0:.2f} hours within the time window. '
                         'This is less than the duration of your request {1:.2f} hours. '
                         'Consider expanding the time window or loosening the airmass or lunar separation constraints.'
                     ).format(

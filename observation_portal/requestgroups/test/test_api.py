@@ -483,7 +483,7 @@ class TestUserPostRequestApi(SetTimeMixin, APITestCase):
         bad_data['requests'][0]['configurations'][0]['instrument_configs'][0]['exposure_time'] = 999999999999
         response = self.client.post(reverse('api:request_groups-list'), data=self.generic_payload)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('the target is visible for a maximum of', str(response.content))
+        self.assertIn('the target will only be visible for a maximum of', str(response.content))
 
     def test_post_requestgroup_default_acceptability_threshold(self):
         data = self.generic_payload.copy()
@@ -1448,7 +1448,7 @@ class TestOrbitalElementsTarget(SetTimeMixin, APITestCase):
 
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('the target is never visible within the future time window', str(response.content))
+        self.assertIn('the target will not be visible within the time window', str(response.content))
 
     def test_post_requestgroup_orbital_elements_target_missing_fields(self):
         bad_data = self.generic_payload.copy()
@@ -2098,7 +2098,7 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
             'end': '2016-09-01T00:01:00Z'
         }
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertIn('the target is never visible within the future time window', str(response.content))
+        self.assertIn('the target will not be visible within the time window', str(response.content))
         self.assertEqual(response.status_code, 400)
 
     def test_fill_window_on_more_than_one_configuration_fails(self):
@@ -2171,7 +2171,7 @@ class TestConfigurationApi(SetTimeMixin, APITestCase):
         bad_data['requests'][0]['configurations'][0]['repeat_duration'] = 250
         bad_data['requests'][0]['configurations'][0]['fill_window'] = True
         response = self.client.post(reverse('api:request_groups-list'), data=bad_data)
-        self.assertIn('the target is never visible within the future time window', str(response.content))
+        self.assertIn('the target will not be visible within the time window', str(response.content))
         self.assertEqual(response.status_code, 400)
 
     def test_fill_window_confined_window_fills_the_window(self):
