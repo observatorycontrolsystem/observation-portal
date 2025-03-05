@@ -454,6 +454,8 @@ DRAMATIQ_BROKER = {
 
 TEST_RUNNER = 'observation_portal.test_runner.MyDiscoverRunner'
 
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
 # Configure Sentry
 SENTRY_DSN = os.getenv("SENTRY_DSN")
 

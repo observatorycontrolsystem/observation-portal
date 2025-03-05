@@ -8,6 +8,11 @@
 
     nixpkgs.follows = "devenv-k8s/nixpkgs";
     flake-parts.follows = "devenv-k8s/flake-parts";
+
+    devenv-root = {
+      url = "file+file:///dev/null";
+      flake = false;
+    };
   };
 
   nixConfig = {
@@ -38,6 +43,13 @@
         # https://devenv.sh/basics/
         # Enter using `nix develop --impure`
         config.devenv.shells.default = {
+          devenv.root = let
+            devenvRootFileContent = builtins.readFile inputs.devenv-root.outPath;
+          in pkgs.lib.mkIf (devenvRootFileContent != "") devenvRootFileContent;
+
+          # setup local development cluster
+          devenv-k8s.local-cluster.enable = true;
+
           languages.python = {
             enable = true;
             package = pkgs.python310;
@@ -56,12 +68,6 @@
 
           # https://devenv.sh/reference/options/#entershell
           enterShell = ''
-            export KUBECONFIG="`pwd`/local-kubeconfig"
-
-            echo "Setting KUBECONFIG=$KUBECONFIG"
-            echo
-            echo "This is done to sandbox Kuberenetes tools (kubectl, skaffold, etc) to the local K8s cluster for this project."
-
             touch "$DEVENV_ROOT/k8s/envs/local/secrets.env"
           '';
         };
