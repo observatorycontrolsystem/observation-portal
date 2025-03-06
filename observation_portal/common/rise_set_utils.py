@@ -1,7 +1,9 @@
 from math import cos, radians
 from collections import defaultdict
 from datetime import datetime, timedelta
+from django.utils.module_loading import import_string
 from django.core.serializers.json import DjangoJSONEncoder
+from django.conf import settings
 import json
 import hashlib
 
@@ -335,7 +337,24 @@ def get_site_rise_set_intervals(start, end, site_code):
     return []
 
 
-def is_interval_available_for_telescope(start: datetime, end: datetime, site: str, enclosure: str, telescope: str) -> bool:
+def realtime_intervals_to_block_for_telescope(start: datetime, end: datetime, site: str, enclosure: str, telescope: str) -> Intervals:
+    """Returns an Intervals object containing time intervals to block out realtime observing, per telescope.
+       This is meant to be overridden in a custom Observation Portal to add whatever rules are desired for blocking
+       realtime sessions.
+       
+    Parameters:
+        start: The start time
+        end: The end time
+        site: The site code
+        enclosure: The enclosure code
+        telescope: The telescope code
+    Returns:
+        Intervals object of time intervals to block realtime sessions.
+    """
+    return Intervals()
+
+
+def is_realtime_interval_available_for_telescope(start: datetime, end: datetime, site: str, enclosure: str, telescope: str) -> bool:
     """Returns a boolean if the start/end interval is available at the given telescope
        Takes downtime and dark intervals into account
 
@@ -349,6 +368,11 @@ def is_interval_available_for_telescope(start: datetime, end: datetime, site: st
         boolean True if the interval is available, False if it fails.
     """
     filtered_dark_intervalset = filtered_dark_intervalset_for_telescope(start, end, site, enclosure, telescope)
+    intervals_to_block = import_string(settings.VISIBILITY['realtime_intervals_to_block_for_telescope'])(
+        start, end, site, enclosure, telescope
+    )
+    filtered_dark_intervalset = filtered_dark_intervalset.subtract(intervals_to_block)
+
     desired_interval = Intervals([(start, end)])
     intersected_interval = filtered_dark_intervalset.intersect([desired_interval])
     return intersected_interval.get_total_time() == desired_interval.get_total_time()
