@@ -7,8 +7,10 @@ from unittest.mock import patch
 
 from time_intervals.intervals import Intervals
 
-from observation_portal.requestgroups.request_utils import (get_airmasses_for_request_at_sites, get_telescope_states_for_request,
+from observation_portal.requestgroups.request_utils import (get_airmasses_for_request_at_sites,
+                                                            get_telescope_states_for_request,
                                                             get_filtered_rise_set_intervals_by_site)
+from observation_portal.common.rise_set_utils import get_largest_interval
 from observation_portal.requestgroups.models import (Request, Configuration, Target, RequestGroup, Window, Location,
                                                      Constraints, InstrumentConfig, AcquisitionConfig, GuidingConfig)
 from observation_portal.proposals.models import Proposal, TimeAllocation, Semester
@@ -42,7 +44,7 @@ class BaseSetupRequest(SetTimeMixin, TestCase):
         )
         self.acquisition_config = mixer.blend(AcquisitionConfig, configuration=self.configuration)
         self.guiding_config = mixer.blend(GuidingConfig, configuration=self.configuration)
-        mixer.blend(
+        self.window = mixer.blend(
             Window, request=self.request, start=datetime(2016, 10, 1, tzinfo=timezone.utc),
             end=datetime(2016, 10, 8, tzinfo=timezone.utc)
         )
@@ -76,6 +78,15 @@ class TestRequestIntervals(BaseSetupRequest):
                             datetime(2016, 10, 8, 0, 0, tzinfo=timezone.utc))]
 
         self.assertEqual(intervals, truth_intervals)
+
+    def test_get_largest_interval_culls_ones_before_now(self):
+        # switch the window to be before the now time of 2016-9-1
+        self.window.start = datetime(2016, 8, 21, tzinfo=timezone.utc)
+        self.window.end = datetime(2016, 8, 31, tzinfo=timezone.utc)
+        self.window.save()
+        intervals = get_filtered_rise_set_intervals_by_site(self.request.as_dict())
+        self.assertGreater(get_largest_interval(intervals).total_seconds(), 0)
+        self.assertEqual(get_largest_interval(intervals, exclude_past=True).total_seconds(), 0)
 
     def test_request_intervals_for_staff_at_location(self):
         request_dict = self.request.as_dict()
