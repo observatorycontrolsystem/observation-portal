@@ -373,7 +373,7 @@ def is_realtime_interval_available_for_telescope(start: datetime, end: datetime,
         boolean True if the interval is available, False if it fails.
     """
     filtered_dark_intervalset = filtered_dark_intervalset_for_telescope(start, end, site, enclosure, telescope)
-    intervals_to_block = import_string(settings.VISIBILITY['realtime_intervals_to_block_for_telescope'])(
+    intervals_to_block = import_string(settings.OVERRIDES['realtime_intervals_to_block_for_telescope'])(
         start, end, site, enclosure, telescope
     )
     filtered_dark_intervalset = filtered_dark_intervalset.subtract(intervals_to_block)

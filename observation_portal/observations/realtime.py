@@ -3,6 +3,7 @@ from collections import defaultdict
 
 from django.conf import settings
 from django.utils import timezone
+from django.utils.module_loading import import_string
 from django.contrib.auth.models import User
 from time_intervals.intervals import Intervals
 
@@ -120,8 +121,12 @@ def get_realtime_availability(user: User, telescope_filter: str = ''):
     for resource in telescopes_availability.keys():
         telescope, enclosure, site = resource.split('.')
         intervals = filtered_dark_intervalset_for_telescope(start, end, site, enclosure, telescope)
-        # Now also filter out running obs, future high priority (TC, RR, Direct) obs, and obs overlapping in time by the user
         intervals_to_block = []
+        # Filter out according to our custom per telescope rules
+        intervals_to_block.append(import_string(settings.OVERRIDES['realtime_intervals_to_block_for_telescope'])(
+            start, end, site, enclosure, telescope
+        ))
+        # Now also filter out running obs, future high priority (TC, RR, Direct) obs, and obs overlapping in time by the user
         if resource in in_progress_intervals:
             intervals_to_block.append(in_progress_intervals[resource])
         if resource in future_intervals:
