@@ -373,10 +373,6 @@ def is_realtime_interval_available_for_telescope(start: datetime, end: datetime,
         boolean True if the interval is available, False if it fails.
     """
     filtered_dark_intervalset = filtered_dark_intervalset_for_telescope(start, end, site, enclosure, telescope)
-    intervals_to_block = import_string(settings.OVERRIDES['realtime_intervals_to_block_for_telescope'])(
-        start, end, site, enclosure, telescope
-    )
-    filtered_dark_intervalset = filtered_dark_intervalset.subtract(intervals_to_block)
 
     desired_interval = Intervals([(start, end)])
     intersected_interval = filtered_dark_intervalset.intersect([desired_interval])
@@ -385,6 +381,7 @@ def is_realtime_interval_available_for_telescope(start: datetime, end: datetime,
 
 def filtered_dark_intervalset_for_telescope(start: datetime, end: datetime, site: str, enclosure: str, telescope: str) -> Intervals:
     """Returns downtime filtered dark intervals for the given telescope in the time range
+       Also filters out telescope specific realtime intervals to block (override)
 
     Parameters:
         start: The start time
@@ -400,7 +397,10 @@ def filtered_dark_intervalset_for_telescope(start: datetime, end: datetime, site
     dark_intervalset = intervals_by_site_to_intervalsets_by_telescope({site: dark_intervals}, [resource,])
     downtime_intervals = DowntimeDB.get_downtime_intervals()
     filtered_intervalset = dark_intervalset[resource]
+    intervals_to_block = import_string(settings.OVERRIDES['realtime_intervals_to_block_for_telescope'])(
+        start, end, site, enclosure, telescope
+    )
     if resource in downtime_intervals:
-        for intervals in downtime_intervals[resource].values():
-            filtered_intervalset = filtered_intervalset.subtract(intervals)
-    return filtered_intervalset
+        intervals_to_block = intervals_to_block.union(downtime_intervals[resource].values())
+
+    return filtered_intervalset.subtract(intervals_to_block)
