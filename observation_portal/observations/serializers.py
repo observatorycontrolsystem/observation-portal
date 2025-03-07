@@ -9,7 +9,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 
 from observation_portal.common.configdb import configdb
-from observation_portal.common.rise_set_utils import is_interval_available_for_telescope
+from observation_portal.common.rise_set_utils import is_realtime_interval_available_for_telescope
 from observation_portal.observations.models import Observation, ConfigurationStatus, Summary
 from observation_portal.observations.realtime import realtime_time_available
 from observation_portal.requestgroups.models import RequestGroup, Request, AcquisitionConfig, GuidingConfig, Target
@@ -418,7 +418,7 @@ class RealTimeSerializer(serializers.ModelSerializer):
 
         # Validate that the start/end time is during nighttime at the telescope
         # Also check that there is not an overlapping downtime
-        interval_available = is_interval_available_for_telescope(
+        interval_available = is_realtime_interval_available_for_telescope(
             validated_data['start'],
             validated_data['end'],
             validated_data['site'],

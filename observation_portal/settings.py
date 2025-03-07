@@ -432,9 +432,11 @@ AS_DICT = {
     }
 }
 
-# Overrides for Duration calculation functions
-DURATION = {
-    'instrument_configuration_duration_per_exposure': os.getenv('INSTRUMENT_CONFIGURATION_PER_EXPOSURE_DURATION', 'observation_portal.requestgroups.duration_utils.get_instrument_configuration_duration_per_exposure')
+
+# Overrides for other important methods to add app specific logic
+OVERRIDES = {
+    'instrument_configuration_duration_per_exposure': os.getenv('INSTRUMENT_CONFIGURATION_PER_EXPOSURE_DURATION', 'observation_portal.requestgroups.duration_utils.get_instrument_configuration_duration_per_exposure'),
+    'realtime_intervals_to_block_for_telescope': os.getenv('REALTIME_INTERVALS_TO_BLOCK_FOR_TELESCOPE', 'observation_portal.common.rise_set_utils.realtime_intervals_to_block_for_telescope')
 }
 
 DRAMATIQ_BROKER = {

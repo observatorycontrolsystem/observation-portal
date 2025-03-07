@@ -42,7 +42,7 @@ def get_instrument_configuration_duration_per_exposure(configuration_dict, inst_
 
 
 def get_instrument_configuration_duration(configuration_dict, inst_config_index):
-    duration_per_exposure_function = import_string(settings.DURATION['instrument_configuration_duration_per_exposure'])
+    duration_per_exposure_function = import_string(settings.OVERRIDES['instrument_configuration_duration_per_exposure'])
     duration_per_exposure = duration_per_exposure_function(configuration_dict, inst_config_index)
     return configuration_dict['instrument_configs'][inst_config_index]['exposure_count'] * duration_per_exposure
 
