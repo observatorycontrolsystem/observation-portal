@@ -10,6 +10,11 @@ This project adheres to semantic versioning.
 
 ### Removed
 
+## [4.14.1] - 2025-03-21
+
+### Added
+- New overrideable method for constraining realtime slots on telescopes
+
 ## [4.13.4] - 2025-02-10
 
 ### Added
