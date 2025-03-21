@@ -6,6 +6,7 @@
     {
       "code": "tst",
       "elevation": 100,
+      "timezone": 2,
       "active": true,
       "enclosure_set": [
         {
@@ -2678,6 +2679,7 @@
       "code": "lco",
       "active": true,
       "elevation": 10,
+      "timezone": 2,
       "enclosure_set": [
         {
           "code": "doma",

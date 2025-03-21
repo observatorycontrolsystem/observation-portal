@@ -268,7 +268,8 @@ class ConfigDB(object):
                                                     'altitude': site['elevation'],
                                                     'ha_limit_pos': telescope['ha_limit_pos'],
                                                     'ha_limit_neg': telescope['ha_limit_neg'],
-                                                    'zenith_blind_spot': telescope['zenith_blind_spot']
+                                                    'zenith_blind_spot': telescope['zenith_blind_spot'],
+                                                    'timezone': site['timezone']
                                                 }
         return telescope_details
 
