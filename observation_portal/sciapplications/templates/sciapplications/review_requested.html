@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<p>Hello {{ panelist.first_name }} {{ panelist.last_name }},</p>
+
+<p>You have been assigned to review the following proposal application(s):</p>
+
+<ul>
+{% for item in review_requests %}
+<li><a href="{{ item.url }}">{{ item.title }}</a></li>
+{% endfor %}
+</ul>
+
+<p>You can manage all of your reviews at {{ review_home_url }}.</p>
+
+<p>Thank you,</p>
+
+<p>{{ organization_name }}</p>
+
+</body>
+</html>

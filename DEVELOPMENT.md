@@ -22,6 +22,14 @@ Otherwise, you can manually enter the shell with:
 ./develop.sh
 ```
 
+## Development Cluster
+
+Spin up the development cluster with:
+
+```sh
+devenv-k8s-cluster-up
+```
+
 ## Skaffold
 
 Deploy dependent services (e.g. Postgres, Redis):

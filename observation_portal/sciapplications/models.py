@@ -321,7 +321,7 @@ class ReviewPanel(models.Model):
 
         for x in self.members.all():
             message = render_to_string(
-                "sciapplications/review_requested.txt",
+                "sciapplications/review_requested.html",
                 {
                     "panelist": x,
                     "review_requests": review_requests,
@@ -329,7 +329,7 @@ class ReviewPanel(models.Model):
                     "review_home_url": review_home_url,
                 }
             )
-            send_mail.send(subject, message, settings.ORGANIZATION_EMAIL, [str(x.email)])
+            send_mail.send(subject, message, settings.ORGANIZATION_EMAIL, [str(x.email)], html_message=message)
 
 
 class ReviewPanelMembership(models.Model):
