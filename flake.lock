@@ -83,11 +83,11 @@
         "skaffold": "skaffold"
       },
       "locked": {
-        "lastModified": 1739567912,
-        "narHash": "sha256-aujTXDKahAtAet7R9xAJkR+Jo444CDxDvOKRZBcgwc0=",
+        "lastModified": 1741209900,
+        "narHash": "sha256-Io7haS5sxcnHRkyAeY+DEGh2UNajmIbiCjbBJlrr10Q=",
         "owner": "LCOGT",
         "repo": "devenv-k8s",
-        "rev": "88a78f46f17cce686877ed383226fb642a574536",
+        "rev": "91d3283881d043087847451b30fc265d8fb1e106",
         "type": "github"
       },
       "original": {
