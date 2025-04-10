@@ -162,6 +162,11 @@ class ScienceApplication(models.Model):
             proposal_type_to_name[self.call.proposal_type], self.call.semester, str(self.tac_rank).zfill(3)
         )
 
+    def total_time_requested_for_inst(self, inst_prefix: str):
+        t = 0
+        for tr in self.timerequest_set.filter(instrument_types__code__istartswith=inst_prefix):
+            t += tr.std_time + tr.tc_time + tr.rr_time
+        return t
 
     @property
     def time_requested_by_telescope_name(self):
@@ -493,6 +498,8 @@ class ScienceApplicationUserReview(models.Model):
     finished = models.BooleanField(default=False)
 
     grade = models.DecimalField(blank=True, null=True, default=None, max_digits=4, decimal_places=2)
+
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         constraints = [
