@@ -41,6 +41,7 @@ from observation_portal.sciapplications.viewsets import (
     ScienceApplicationReviewViewSet,
     ScienceApplicationReviewSummaryViewSet,
     ScienceApplicationMyReviewViewSet,
+    ScienceApplicationUserReviewViewSet,
 )
 from observation_portal.observations.views import LastScheduledView
 from observation_portal.observations.viewsets import ObservationViewSet, ScheduleViewSet, RealTimeViewSet, ConfigurationStatusViewSet
@@ -60,6 +61,7 @@ router.register(r'invitations', ProposalInviteViewSet, 'invitations')
 router.register(r'calls', CallViewSet, 'calls')
 router.register(r'scienceapplications', ScienceApplicationViewSet, 'scienceapplications')
 router.register(r'scienceapplication-reviews', ScienceApplicationReviewViewSet, 'scienceapplication-reviews')
+router.register(r'scienceapplication-user-reviews', ScienceApplicationUserReviewViewSet, 'scienceapplication-user-reviews')
 router.register(r'observations', ObservationViewSet, 'observations')
 router.register(r'schedule', ScheduleViewSet, 'schedule')
 router.register(r'realtime', RealTimeViewSet, 'realtime')

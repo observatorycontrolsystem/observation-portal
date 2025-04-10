@@ -119,6 +119,33 @@ class ScienceApplicationMyReviewViewSet(
         )
 
 
+class ScienceApplicationUserReviewViewSet(
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet
+):
+    permission_classes = (IsAuthenticated, )
+    schema = ObservationPortalSchema(tags=['Science Applications'])
+    serializer_class = ScienceApplicationUserReviewSerializer
+    filter_backends = (
+        filters.OrderingFilter,
+        DjangoFilterBackend
+    )
+    ordering_fields = [
+        "science_application_review__science_application__title",
+        "science_application_review__science_application__call__semester__start",
+        "science_application_review__science_category",
+        "science_application_review__mean_grade",
+        "grade",
+    ]
+    ordering = ["-created_at"]
+    filterset_fields = []
+
+    def get_queryset(self):
+        qs = ScienceApplicationUserReview.objects.filter(reviewer=self.request.user)
+
+        return qs
+
+
 class ScienceApplicationViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAuthenticated, )
     schema = ObservationPortalSchema(tags=['Science Applications'])
