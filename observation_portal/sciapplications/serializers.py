@@ -46,13 +46,23 @@ class ScienceApplicationReviewSerializer(serializers.ModelSerializer):
     is_secondary_reviewer = serializers.SerializerMethodField()
     user_reviews = ScienceApplicationUserReviewNestedSerializer(read_only=True, many=True)
     my_review = serializers.SerializerMethodField()
+    long_term = serializers.SerializerMethodField()
+    total_requested_time_inst_code = serializers.SerializerMethodField()
+
 
     class Meta:
         model = ScienceApplicationReview
         fields = [
           "id", "science_category", "technical_review", "status", "mean_grade", "summary",
           "title", "semester", "abstract", "pdf_url", "completed", "can_summarize", "is_primary_reviewer", "is_secondary_reviewer", "user_reviews", "my_review",
+          "long_term", "total_requested_time_inst_code",
         ]
+
+    def get_total_requested_time_inst_code(self, obj):
+        return obj.science_application.total_time_requested_by_inst_code()
+
+    def get_long_term(self, obj):
+        return "long-term" in obj.science_application.tags
 
     def get_title(self, obj):
         return obj.science_application.title
@@ -107,13 +117,24 @@ class ScienceApplicationUserReviewSerializer(serializers.ModelSerializer):
     semester = serializers.SerializerMethodField()
     abstract = serializers.SerializerMethodField()
     pdf_url = serializers.SerializerMethodField()
+    application_id = serializers.SerializerMethodField()
+    science_category = serializers.SerializerMethodField()
+    mean_grade = serializers.SlugRelatedField(read_only=True, slug_field="mean_grade", source="science_application_review")
+    status = serializers.SlugRelatedField(read_only=True, slug_field="status", source="science_application_review")
+    review_id = serializers.SlugRelatedField(read_only=True, slug_field="id", source="science_application_review")
 
     class Meta:
         model = ScienceApplicationUserReview
         fields = [
             "id", "comments", "finished", "grade",
-            "title", "semester", "abstract", "pdf_url",
+            "title", "semester", "abstract", "pdf_url", "application_id", "science_category", "mean_grade", "status", "review_id"
         ]
+
+    def get_science_category(self, obj):
+        return obj.science_application_review.get_science_category_display()
+
+    def get_application_id(self, obj):
+        return obj.science_application_review.science_application.id
 
     def get_title(self, obj):
         return obj.science_application_review.science_application.title
