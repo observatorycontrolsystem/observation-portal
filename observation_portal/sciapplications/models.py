@@ -162,11 +162,13 @@ class ScienceApplication(models.Model):
             proposal_type_to_name[self.call.proposal_type], self.call.semester, str(self.tac_rank).zfill(3)
         )
 
-    def total_time_requested_for_inst(self, inst_prefix: str):
-        t = 0
-        for tr in self.timerequest_set.filter(instrument_types__code__istartswith=inst_prefix):
-            t += tr.std_time + tr.tc_time + tr.rr_time
-        return t
+    def total_time_requested_by_inst_code(self):
+        d = defaultdict(int)
+        for tr in self.timerequest_set.all():
+            key = frozenset(x.code for x in tr.instrument_types.all())
+            d[key] += tr.std_time + tr.tc_time + tr.rr_time
+
+        return {", ".join(sorted(k)): v for k, v in d.items()}
 
     @property
     def time_requested_by_telescope_name(self):

@@ -47,26 +47,19 @@ class ScienceApplicationReviewSerializer(serializers.ModelSerializer):
     user_reviews = ScienceApplicationUserReviewNestedSerializer(read_only=True, many=True)
     my_review = serializers.SerializerMethodField()
     long_term = serializers.SerializerMethodField()
-    total_requested_time_0m4 = serializers.SerializerMethodField()
-    total_requested_time_1m0 = serializers.SerializerMethodField()
-    total_requested_time_2m0 = serializers.SerializerMethodField()
+    total_requested_time_inst_code = serializers.SerializerMethodField()
+
 
     class Meta:
         model = ScienceApplicationReview
         fields = [
           "id", "science_category", "technical_review", "status", "mean_grade", "summary",
           "title", "semester", "abstract", "pdf_url", "completed", "can_summarize", "is_primary_reviewer", "is_secondary_reviewer", "user_reviews", "my_review",
-          "long_term", "total_requested_time_0m4", "total_requested_time_1m0", "total_requested_time_2m0",
+          "long_term", "total_requested_time_inst_code",
         ]
 
-    def get_total_requested_time_0m4(self, obj):
-        return obj.science_application.total_time_requested_for_inst("0m4")
-
-    def get_total_requested_time_1m0(self, obj):
-        return obj.science_application.total_time_requested_for_inst("1m0")
-
-    def get_total_requested_time_2m0(self, obj):
-        return obj.science_application.total_time_requested_for_inst("2m0")
+    def get_total_requested_time_inst_code(self, obj):
+        return obj.science_application.total_time_requested_by_inst_code()
 
     def get_long_term(self, obj):
         return "long-term" in obj.science_application.tags
@@ -126,9 +119,9 @@ class ScienceApplicationUserReviewSerializer(serializers.ModelSerializer):
     pdf_url = serializers.SerializerMethodField()
     application_id = serializers.SerializerMethodField()
     science_category = serializers.SerializerMethodField()
-    mean_grade = serializers.SerializerMethodField()
-    status = serializers.SerializerMethodField()
-    review_id = serializers.SerializerMethodField()
+    mean_grade = serializers.SlugRelatedField(read_only=True, slug_field="mean_grade", source="science_application_review")
+    status = serializers.SlugRelatedField(read_only=True, slug_field="status", source="science_application_review")
+    review_id = serializers.SlugRelatedField(read_only=True, slug_field="id", source="science_application_review")
 
     class Meta:
         model = ScienceApplicationUserReview
@@ -136,15 +129,6 @@ class ScienceApplicationUserReviewSerializer(serializers.ModelSerializer):
             "id", "comments", "finished", "grade",
             "title", "semester", "abstract", "pdf_url", "application_id", "science_category", "mean_grade", "status", "review_id"
         ]
-
-    def get_review_id(self, obj):
-        return obj.science_application_review.id
-
-    def get_status(self, obj):
-        return obj.science_application_review.status
-
-    def get_mean_grade(self, obj):
-        return obj.science_application_review.mean_grade
 
     def get_science_category(self, obj):
         return obj.science_application_review.get_science_category_display()
