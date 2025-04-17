@@ -48,6 +48,7 @@ class ScienceApplicationReviewSerializer(serializers.ModelSerializer):
     my_review = serializers.SerializerMethodField()
     long_term = serializers.SerializerMethodField()
     total_requested_time_inst_code = serializers.SerializerMethodField()
+    application_id = serializers.SerializerMethodField()
 
 
     class Meta:
@@ -55,8 +56,11 @@ class ScienceApplicationReviewSerializer(serializers.ModelSerializer):
         fields = [
           "id", "science_category", "technical_review", "status", "mean_grade", "summary",
           "title", "semester", "abstract", "pdf_url", "completed", "can_summarize", "is_primary_reviewer", "is_secondary_reviewer", "user_reviews", "my_review",
-          "long_term", "total_requested_time_inst_code",
+          "long_term", "total_requested_time_inst_code", "application_id",
         ]
+
+    def get_application_id(self, obj):
+        return obj.science_application.id
 
     def get_total_requested_time_inst_code(self, obj):
         return obj.science_application.total_time_requested_by_inst_code()
