@@ -383,6 +383,8 @@ class ScienceApplicationReview(models.Model):
 
     summary = models.TextField(blank=True, default="")
 
+    secondary_notes = models.TextField(blank=True, default="")
+
     mean_grade = models.DecimalField(
         blank=True, null=True, default=None, max_digits=4, decimal_places=2,
         help_text="Mean of all user reviews. This field is automatically recalculated anytime a user review is added/updated/deleted"

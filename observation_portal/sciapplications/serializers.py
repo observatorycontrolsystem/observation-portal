@@ -42,6 +42,7 @@ class ScienceApplicationReviewSerializer(serializers.ModelSerializer):
     pdf_url = serializers.SerializerMethodField()
     completed = serializers.SerializerMethodField()
     can_summarize = serializers.SerializerMethodField()
+    can_edit_secondary_notes = serializers.SerializerMethodField()
     is_primary_reviewer = serializers.SerializerMethodField()
     is_secondary_reviewer = serializers.SerializerMethodField()
     user_reviews = ScienceApplicationUserReviewNestedSerializer(read_only=True, many=True)
@@ -57,6 +58,7 @@ class ScienceApplicationReviewSerializer(serializers.ModelSerializer):
           "id", "science_category", "technical_review", "status", "mean_grade", "summary",
           "title", "semester", "abstract", "pdf_url", "completed", "can_summarize", "is_primary_reviewer", "is_secondary_reviewer", "user_reviews", "my_review",
           "long_term", "total_requested_time_inst_code", "application_id",
+          "secondary_notes", "can_edit_secondary_notes",
         ]
 
     def get_application_id(self, obj):
@@ -93,6 +95,9 @@ class ScienceApplicationReviewSerializer(serializers.ModelSerializer):
     def get_can_summarize(self, obj):
         return self.get_is_primary_reviewer(obj) or self.get_is_secondary_reviewer(obj) or self._request_user_is_admin_panel_memeber()
 
+    def get_can_edit_secondary_notes(self, obj):
+        return self.get_is_secondary_reviewer(obj) or self._request_user_is_admin_panel_memeber()
+
     def get_is_primary_reviewer(self, obj):
         u = self.context["request"].user
         return obj.primary_reviewer == u
@@ -114,6 +119,13 @@ class ScienceApplicationReviewSummarySerializer(serializers.ModelSerializer):
     class Meta:
         model = ScienceApplicationReview
         fields = ["summary"]
+
+
+class ScienceApplicationReviewSecondaryNotesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ScienceApplicationReview
+        fields = ["secondary_notes"]
+
 
 
 class ScienceApplicationUserReviewSerializer(serializers.ModelSerializer):

@@ -40,6 +40,7 @@ from observation_portal.sciapplications.viewsets import (
     ScienceApplicationViewSet,
     ScienceApplicationReviewViewSet,
     ScienceApplicationReviewSummaryViewSet,
+    ScienceApplicationReviewSecondaryNotesViewSet,
     ScienceApplicationMyReviewViewSet,
     ScienceApplicationUserReviewViewSet,
 )
@@ -75,6 +76,11 @@ api_urlpatterns = ([
         'scienceapplication-reviews/<int:pk>/summary',
         ScienceApplicationReviewSummaryViewSet.as_view({"get": "retrieve", "put": "update"}),
         name="scienceapplication-review-summary"
+    ),
+    path(
+        "scienceapplication-reviews/<int:pk>/secondary-notes",
+        ScienceApplicationReviewSecondaryNotesViewSet.as_view({"get": "retrieve", "put": "update"}),
+        name="scienceapplication-review-secondary-notes"
     ),
     path(
         'scienceapplication-reviews/<int:pk>/my-review',

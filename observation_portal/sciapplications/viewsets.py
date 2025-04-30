@@ -14,7 +14,10 @@ from django.core.files.base import ContentFile
 from observation_portal.accounts.tasks import send_mail
 from observation_portal.sciapplications.filters import ScienceApplicationFilter, CallFilter
 from observation_portal.sciapplications.models import CoInvestigator, ScienceApplication, Call, TimeRequest, ScienceApplicationUserReview, ScienceApplicationReview
-from observation_portal.sciapplications.serializers import ScienceApplicationUserReviewSerializer, ScienceApplicationReviewSerializer, ScienceApplicationReviewSummarySerializer
+from observation_portal.sciapplications.serializers import (
+    ScienceApplicationUserReviewSerializer, ScienceApplicationReviewSerializer, ScienceApplicationReviewSummarySerializer,
+    ScienceApplicationReviewSecondaryNotesSerializer,
+)
 from observation_portal.common.schema import ObservationPortalSchema
 
 
@@ -79,6 +82,31 @@ class ScienceApplicationReviewSummaryViewSet(
     permission_classes = (IsAuthenticated, IsScienceApplicationReviewSummaryEditor )
     schema = ObservationPortalSchema(tags=['Science Applications'])
     serializer_class = ScienceApplicationReviewSummarySerializer
+
+    def get_queryset(self):
+        if self.request.user.review_panels.filter(is_admin=True).exists():
+            qs = ScienceApplicationReview.objects.all()
+        else:
+            qs = ScienceApplicationReview.objects.filter(review_panel__members=self.request.user)
+
+        return qs
+
+
+class IsScienceApplicationReviewSecondaryNotesEditor(permissions.BasePermission):
+
+    def has_object_permission(self, request, view, obj):
+      u = request.user
+      return obj.secondary_reviewer == u or u.review_panels.filter(is_admin=True).exists()
+
+
+class ScienceApplicationReviewSecondaryNotesViewSet(
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    viewsets.GenericViewSet
+):
+    permission_classes = (IsAuthenticated, IsScienceApplicationReviewSecondaryNotesEditor )
+    schema = ObservationPortalSchema(tags=['Science Applications'])
+    serializer_class = ScienceApplicationReviewSecondaryNotesSerializer
 
     def get_queryset(self):
         if self.request.user.review_panels.filter(is_admin=True).exists():
