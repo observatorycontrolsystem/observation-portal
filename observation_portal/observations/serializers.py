@@ -404,7 +404,7 @@ class RealTimeSerializer(serializers.ModelSerializer):
 
         # Validate the site/obs/tel is a valid combination
         allowable_instruments = configdb.get_instruments_at_location(
-            validated_data['site'], validated_data['enclosure'], validated_data['telescope']
+            validated_data['site'], validated_data['enclosure'], validated_data['telescope'], only_schedulable=True
         )
         if len(allowable_instruments.get('names')) == 0:
             raise serializers.ValidationError(_(f"No instruments found at {data['site']}.{data['enclosure']}.{data['telescope']} or telescope does not exist"))
