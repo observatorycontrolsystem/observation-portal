@@ -489,7 +489,12 @@ class ScienceApplicationReview(models.Model):
         subject = str(_(f"Proposal Application Status: {proposal_title}"))
         submitter = self.science_application.submitter
 
-        send_mail.send(subject, message, settings.ORGANIZATION_EMAIL, [str(submitter.email)], html_message=message)
+        to = [str(submitter.email)]
+
+        if settings.PROPOSAL_REVIEW_DECISION_CC_EMAIL:
+            to.append(settings.PROPOSAL_REVIEW_DECISION_CC_EMAIL)
+
+        send_mail.send(subject, message, settings.ORGANIZATION_EMAIL, to, html_message=message)
 
 
 class ScienceApplicationUserReview(models.Model):
