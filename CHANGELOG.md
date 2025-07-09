@@ -10,6 +10,11 @@ This project adheres to semantic versioning.
 
 ### Removed
 
+## [4.17.1] - 2025-07-09
+
+### Changed
+- Added never_cache to realtime availability endpoint to prevent downstream browser caching
+
 ## [4.14.1] - 2025-03-21
 
 ### Added
