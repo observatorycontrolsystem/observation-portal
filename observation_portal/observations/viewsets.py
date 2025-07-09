@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
 from rest_framework.authtoken.models import Token
 from django.core.cache import cache
-from django.views.decorators.cache import cache_page
+from django.views.decorators.cache import cache_page, never_cache
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.utils.module_loading import import_string
@@ -139,6 +139,7 @@ class RealTimeViewSet(CreateListModelMixin, viewsets.ModelViewSet):
             cache.set(f"{cache_key}_{site}", timezone.now(), None)
         return created_obs
 
+    @method_decorator(never_cache)
     @method_decorator(cache_page(60 * 5))
     @action(detail=False, methods=['get'], permission_classes=(IsAuthenticated,))
     def availability(self, request):
