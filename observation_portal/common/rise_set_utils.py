@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from django.utils.module_loading import import_string
 from django.utils import timezone
 from django.core.serializers.json import DjangoJSONEncoder
+from django.contrib.auth.models import User
 from django.conf import settings
 import json
 import hashlib
@@ -359,7 +360,7 @@ def realtime_intervals_to_block_for_telescope(start: datetime, end: datetime, si
     return Intervals()
 
 
-def is_realtime_interval_available_for_telescope(start: datetime, end: datetime, site: str, enclosure: str, telescope: str) -> bool:
+def is_realtime_interval_available_for_telescope(user: User, start: datetime, end: datetime, site: str, enclosure: str, telescope: str) -> bool:
     """Returns a boolean if the start/end interval is available at the given telescope
        Takes downtime and dark intervals into account
 
@@ -372,14 +373,14 @@ def is_realtime_interval_available_for_telescope(start: datetime, end: datetime,
     Returns:
         boolean True if the interval is available, False if it fails.
     """
-    filtered_dark_intervalset = filtered_dark_intervalset_for_telescope(start, end, site, enclosure, telescope)
+    filtered_dark_intervalset = filtered_dark_intervalset_for_telescope(user, start, end, site, enclosure, telescope)
 
     desired_interval = Intervals([(start, end)])
     intersected_interval = filtered_dark_intervalset.intersect([desired_interval])
     return intersected_interval.get_total_time() == desired_interval.get_total_time()
 
 
-def filtered_dark_intervalset_for_telescope(start: datetime, end: datetime, site: str, enclosure: str, telescope: str) -> Intervals:
+def filtered_dark_intervalset_for_telescope(user: User, start: datetime, end: datetime, site: str, enclosure: str, telescope: str) -> Intervals:
     """Returns downtime filtered dark intervals for the given telescope in the time range
        Also filters out telescope specific realtime intervals to block (override)
 
@@ -397,9 +398,13 @@ def filtered_dark_intervalset_for_telescope(start: datetime, end: datetime, site
     dark_intervalset = intervals_by_site_to_intervalsets_by_telescope({site: dark_intervals}, [resource,])
     downtime_intervals = DowntimeDB.get_downtime_intervals()
     filtered_intervalset = dark_intervalset[resource]
-    intervals_to_block = import_string(settings.OVERRIDES['realtime_intervals_to_block_for_telescope'])(
-        start, end, site, enclosure, telescope
-    )
+    # If the user is staff, circumvent blocking off specific realtime sessions so they can see all times available
+    if user and user.is_authenticated and user.is_staff:
+        intervals_to_block = Intervals()
+    else:
+        intervals_to_block = import_string(settings.OVERRIDES['realtime_intervals_to_block_for_telescope'])(
+            start, end, site, enclosure, telescope
+        )
     if resource in downtime_intervals:
         intervals_to_block = intervals_to_block.union(downtime_intervals[resource].values())
 
