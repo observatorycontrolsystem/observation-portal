@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from io import StringIO
 
+from django.test import override_settings
 from time_intervals.intervals import Intervals
 from rest_framework.test import APITestCase
 from django.utils import timezone
@@ -426,6 +427,10 @@ class TestPostScheduleMultiConfigApi(SetTimeMixin, APITestCase):
 
         response = self.client.post(reverse('api:schedule-list'), data=bad_observation)
         self.assertEqual(response.status_code, 400)
+
+
+def realtime_intervals_block_all(start: datetime, end: datetime, site: str, enclosure: str, telescope: str) -> Intervals:
+    return Intervals([(start, end),])
 
 
 class TestRealTimeApi(SetTimeMixin, APITestCase):
@@ -935,6 +940,29 @@ class TestRealTimeApi(SetTimeMixin, APITestCase):
         # Check that the future scheduled observation interval is not within the available intervals
         nonblocked_interval = Intervals([(observation.start, observation.end)])
         self.assertEqual(available_intervals.intersect([nonblocked_interval]), nonblocked_interval)
+
+    @override_settings(OVERRIDES={'realtime_intervals_to_block_for_telescope': 'observation_portal.observations.test.tests.realtime_intervals_block_all'})
+    def test_realtime_availability_per_telescope_block_overrides_work(self):
+        # Now get availability intervals for 1m0a.tst.domb and make sure the scheduled time is not available
+        response = self.client.get(reverse('api:realtime-availability') + '?telescope=1m0a.domb.tst')
+        self.assertEqual(response.status_code, 200)
+        availability = response.json()
+        self.assertContains(response, '1m0a.domb.tst')
+        available_intervals = self._convert_availability_to_intervals_helper(availability['1m0a.domb.tst'])
+        self.assertTrue(available_intervals.is_empty())
+
+    @override_settings(OVERRIDES={'realtime_intervals_to_block_for_telescope': 'observation_portal.observations.test.tests.realtime_intervals_block_all'})
+    def test_realtime_availability_per_telescope_block_overrides_ignored_if_staff(self):
+        # Login as a staff user and attach staff user to proposal with realtime time
+        mixer.blend(Membership, user=self.user, proposal=self.proposal)
+        self.client.force_login(self.user)
+        # Now get availability intervals for 1m0a.tst.domb and make sure the scheduled time is available
+        response = self.client.get(reverse('api:realtime-availability') + '?telescope=1m0a.domb.tst')
+        self.assertEqual(response.status_code, 200)
+        availability = response.json()
+        self.assertContains(response, '1m0a.domb.tst')
+        available_intervals = self._convert_availability_to_intervals_helper(availability['1m0a.domb.tst'])
+        self.assertFalse(available_intervals.is_empty())
 
 
 class TestObservationApiBase(SetTimeMixin, APITestCase):

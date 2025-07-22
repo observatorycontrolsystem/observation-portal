@@ -419,6 +419,7 @@ class RealTimeSerializer(serializers.ModelSerializer):
         # Validate that the start/end time is during nighttime at the telescope
         # Also check that there is not an overlapping downtime
         interval_available = is_realtime_interval_available_for_telescope(
+            user,
             validated_data['start'],
             validated_data['end'],
             validated_data['site'],
