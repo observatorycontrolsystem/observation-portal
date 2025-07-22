@@ -10,6 +10,11 @@ This project adheres to semantic versioning.
 
 ### Removed
 
+## [4.17.2] - 2025-07-22
+
+### Changed
+- Staff accounts can get a realtime session at any time, i.e. they are unaffected by realtime blocks put in place for normal users.
+
 ## [4.17.1] - 2025-07-09
 
 ### Changed
