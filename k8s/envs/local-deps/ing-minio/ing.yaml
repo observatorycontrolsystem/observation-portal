@@ -2,35 +2,29 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata: # kpt-merge: /example
-  name: api
+  name: minio
   annotations:
     internal.kpt.dev/upstream-identifier: 'networking.k8s.io|Ingress|default|example'
 spec:
   ingressClassName: "nginx"
   rules:
-    - host: "api-obs-portal.local.lco.earth"
+    - host: "minio-obs-portal.local.lco.earth"
       http:
         paths:
-          - pathType: "Prefix"
-            path: "/static"
-            backend:
-              service:
-                name: "static"
-                port:
-                  name: "static"
-
           - pathType: "Prefix"
             path: "/"
             backend:
               service:
-                name: "api"
+                name: "minio"
                 port:
-                  name: "api"
-
+                  name: "minio-api"
+    - host: "minio-console-obs-portal.local.lco.earth"
+      http:
+        paths:
           - pathType: "Prefix"
-            path: "/api/scienceapplication-reviews/pdf-zip"
+            path: "/"
             backend:
               service:
-                name: "api"
+                name: "minio"
                 port:
-                  name: "nginx"
+                  name: "minio-console"

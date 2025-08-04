@@ -1,0 +1,5 @@
+# ignore everything
+**/*
+
+# add
+!./mod_zip/

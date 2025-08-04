@@ -5,3 +5,7 @@ resources:
    - ./ns.yaml
    - ./postgres/
    - ./redis/
+   - ./minio/
+   - ./ing-minio/
+
+namespace: obs-portal
