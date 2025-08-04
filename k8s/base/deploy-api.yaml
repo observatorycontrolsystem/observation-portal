@@ -158,6 +158,11 @@ spec:
 
         - name: nginx
           image: nginx-mod-zip
+          env:
+            - name: OBS_PORTAL_API_SVC_HOSTNAME
+              value: "api"
+            - name: OBS_PORTAL_API_SVC_PORT
+              value: "8080"
           ports:
             - name: nginx
               containerPort: 8000

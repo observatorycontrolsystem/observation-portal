@@ -25,3 +25,25 @@ configMapGenerator:
 
 secretGenerator:
   - name: env
+
+replacements:
+  - source:
+      kind: Service
+      name: api
+      fieldPath: metadata.name
+    targets:
+      - select:
+          kind: Deployment
+          name: api
+        fieldPaths:
+          - spec.template.spec.containers.[name=nginx].env.[name=OBS_PORTAL_API_SVC_HOSTNAME].value
+  - source:
+      kind: Service
+      name: api
+      fieldPath: spec.ports.[name=api].port
+    targets:
+      - select:
+          kind: Deployment
+          name: api
+        fieldPaths:
+          - spec.template.spec.containers.[name=nginx].env.[name=OBS_PORTAL_API_SVC_PORT].value
