@@ -1,7 +1,6 @@
 from datetime import timedelta
 from os import path
 from unittest.mock import patch
-from textwrap import dedent
 from urllib.parse import quote, unquote
 
 from rest_framework.test import APITestCase
@@ -1562,30 +1561,30 @@ class TestReviewProcessAPI(APITestCase):
         response = self.client.get(reverse("api:scienceapplication-reviews-pdf-zip"))
         expected_mod_zip_response_lines = []
 
-        for r in [app1_review, app2_review]:
-            expected_mod_zip_response_lines.append(f"- {r.pdf.size} /internal-zip-proxy?redirect={quote(unquote(r.pdf.url), safe='')} {r.pdf.name}")
+        for r in [app2_review, app1_review]:
+            expected_mod_zip_response_lines.append(f"- {r.pdf.size} /internal-zip-proxy?redirect={quote(unquote(r.pdf.url), safe='')} {path.basename(r.pdf.name)}".encode())
 
-        expected_mod_zip_response = "\r\n".join(expected_mod_zip_response_lines)
+        expected_mod_zip_response = b"\r\n".join(expected_mod_zip_response_lines)
 
-        self.assertEqual(response.data, expected_mod_zip_response_lines)
+        self.assertEqual(response.content, expected_mod_zip_response)
 
     def test_pdf_zip_empty(self):
         response = self.client.get(reverse("api:scienceapplication-reviews-pdf-zip"))
-        self.assertEqual(response.data, "0 0 @directory empty")
+        self.assertEqual(response.content, b"0 0 @directory empty")
 
     def test_pdf_zip_filter_by_semester(self):
         app1 = mixer.blend(
             ScienceApplication,
             status=ScienceApplication.SUBMITTED,
             submitter=blend_user(),
-            call=self.call
+            call=self.call,
         )
 
         semester2 = mixer.blend(
             Semester, start=timezone.now() + timedelta(days=1), end=timezone.now() + timedelta(days=365)
         )
         call2 = mixer.blend(
-            Call, semester=semester2
+            Call, semester=semester2,
             deadline=timezone.now() + timedelta(days=7),
             opens=timezone.now(),
             proposal_type=Call.SCI_PROPOSAL,
@@ -1597,7 +1596,31 @@ class TestReviewProcessAPI(APITestCase):
             ScienceApplication,
             status=ScienceApplication.SUBMITTED,
             submitter=blend_user(),
-            call=call2
+            call=call2,
+        )
+
+        panel1 = mixer.blend(
+            ReviewPanel,
+            name="panel 1",
+        )
+        panel1.members.add(self.user)
+
+        app1_review = mixer.blend(
+            ScienceApplicationReview,
+            science_application=app1,
+            review_panel=panel1,
+            primary_reviewer=self.user,
+            secondary_reviewer=self.user,
+            pdf=SimpleUploadedFile('proposal_1.pdf', b'a'),
+        )
+
+        app2_review = mixer.blend(
+            ScienceApplicationReview,
+            science_application=app2,
+            review_panel=panel1,
+            primary_reviewer=self.user,
+            secondary_reviewer=self.user,
+            pdf=SimpleUploadedFile('proposal_2.pdf', b'ab'),
         )
 
         response = self.client.get(
@@ -1608,6 +1631,6 @@ class TestReviewProcessAPI(APITestCase):
         )
 
         self.assertEqual(
-            response.data,
-            f"- {app2.pdf.size} /internal-zip-proxy?redirect={quote(unquote(app2.pdf.url), safe='')} {app2.pdf.name}",
+            response.content,
+            f"- {app2_review.pdf.size} /internal-zip-proxy?redirect={quote(unquote(app2_review.pdf.url), safe='')} {path.basename(app2_review.pdf.name)}".encode(),
         )
