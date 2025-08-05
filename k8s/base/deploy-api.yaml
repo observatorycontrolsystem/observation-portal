@@ -31,12 +31,12 @@ spec:
         # NGINX configuration
         - name: nginx-confd
           emptyDir:
-            sizeLimit: 128Mi
+            sizeLimit: 32Mi
 
         # NGINX cache directory
         - name: nginx-var-cache-nginx
           emptyDir:
-            sizeLimit: 128Mi
+            sizeLimit: 32Mi
 
         # NGINX run directory (very small pid files, etc.)
         - name: nginx-var-run
@@ -47,7 +47,7 @@ spec:
         # NGINX tmp
         - name: nginx-tmp
           emptyDir:
-            sizeLimit: 32Mi
+            sizeLimit: 128Mi
 
         # Coredns config
         - name: coredns
