@@ -23,6 +23,37 @@ spec:
           emptyDir:
             sizeLimit: 32Mi
 
+        # NGINX configuration template
+        - name: nginx-confd-templates
+          configMap:
+            name: nginx-confd-templates
+
+        # NGINX configuration
+        - name: nginx-confd
+          emptyDir:
+            sizeLimit: 32Mi
+
+        # NGINX cache directory
+        - name: nginx-var-cache-nginx
+          emptyDir:
+            sizeLimit: 32Mi
+
+        # NGINX run directory (very small pid files, etc.)
+        - name: nginx-var-run
+          emptyDir:
+            medium: Memory
+            sizeLimit: 16Mi
+
+        # NGINX tmp
+        - name: nginx-tmp
+          emptyDir:
+            sizeLimit: 128Mi
+
+        # Coredns config
+        - name: coredns
+          configMap:
+            name: coredns
+
       initContainers:
         - name: check-db-ready
           image: postgres:14-alpine
@@ -124,3 +155,57 @@ spec:
               value: "4"
             - name: GUNICORN_TIMEOUT
               value: "30"
+
+        - name: nginx
+          image: nginx-mod-zip
+          env:
+            - name: OBS_PORTAL_API_SVC_HOSTNAME
+              value: "api"
+            - name: OBS_PORTAL_API_SVC_PORT
+              value: "8080"
+          ports:
+            - name: nginx
+              containerPort: 8000
+              protocol: TCP
+          livenessProbe:
+            initialDelaySeconds: 15
+            timeoutSeconds: 5
+            httpGet:
+              path: /healthz
+              port: nginx
+          readinessProbe:
+            initialDelaySeconds: 15
+            timeoutSeconds: 5
+            httpGet:
+              path: /healthz
+              port: nginx
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 101
+            runAsGroup: 101
+            readOnlyRootFilesystem: true
+          volumeMounts:
+            - name: nginx-confd-templates
+              mountPath: /etc/nginx/templates
+              readOnly: false
+            - name: nginx-confd
+              mountPath: /etc/nginx/conf.d
+              readOnly: false
+            - name: nginx-var-cache-nginx
+              mountPath: /var/cache/nginx
+              readOnly: false
+            - name: nginx-var-run
+              mountPath: /var/run
+              readOnly: false
+            - name: nginx-tmp
+              mountPath: /tmp
+              readOnly: false
+
+        # This is needed because nginx needs a DNS resovler for dynamic proxy_pass
+        - name: coredns
+          image: coredns/coredns:1.12.2@sha256:af8c8d35a5d184b386c4a6d1a012c8b218d40d1376474c7d071bb6c07201f47d
+          args:
+            - -conf=/mnt/coredns/Corefile
+          volumeMounts:
+            - name: coredns
+              mountPath: /mnt/coredns

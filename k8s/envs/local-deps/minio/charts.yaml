@@ -1,0 +1,36 @@
+apiVersion: kpt.dev/v1
+kind: RenderHelmChart
+metadata: # kpt-merge: /example
+  name: minio
+  annotations:
+    config.kubernetes.io/local-config: "true"
+    internal.kpt.dev/upstream-identifier: kpt.dev|RenderHelmChart|default|example
+# See https://catalog.kpt.dev/render-helm-chart/v0.2/
+helmCharts:
+  - chartArgs:
+      repo: oci://registry-1.docker.io/bitnamicharts
+      name: minio
+      version: 14.7.15
+    templateOptions:
+      apiVersions:
+        - v1.25.16
+      releaseName: minio
+      namespace: obs-portal
+      includeCRDs: true
+      skipTests: true
+      values:
+        valuesInline:
+          # Chart values go here
+          auth:
+            rootUser: rootroot
+            rootPassword: rootroot
+          persistence:
+            enabled: true
+            size: 1Gi
+          defaultBuckets: obs-portal
+          pdb:
+            create: false
+          networkPolicy:
+            enabled: false
+          image:
+            debug: false

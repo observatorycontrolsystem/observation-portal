@@ -1,0 +1,227 @@
+# Source: minio/templates/standalone/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio
+  namespace: obs-portal
+  labels:
+    app.kubernetes.io/instance: minio
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: minio
+    app.kubernetes.io/version: 2024.10.2
+    helm.sh/chart: minio-14.7.15
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: minio
+      app.kubernetes.io/name: minio
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: minio
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: minio
+        app.kubernetes.io/version: 2024.10.2
+        helm.sh/chart: minio-14.7.15
+      annotations:
+        checksum/credentials-secret: efef2de595b5172484389c50162bc346216ed2d9dfb9a339fe24d5ae3bc4e06c
+    spec:
+      serviceAccountName: minio
+      affinity:
+        podAffinity: null
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/instance: minio
+                  app.kubernetes.io/name: minio
+              topologyKey: kubernetes.io/hostname
+            weight: 1
+        nodeAffinity: null
+      automountServiceAccountToken: false
+      securityContext:
+        fsGroup: 1001
+        fsGroupChangePolicy: OnRootMismatch
+        supplementalGroups: []
+        sysctls: []
+      containers:
+      - name: minio
+        image: docker.io/bitnami/minio:2024.10.2-debian-12-r0
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          privileged: false
+          readOnlyRootFilesystem: true
+          runAsGroup: 1001
+          runAsNonRoot: true
+          runAsUser: 1001
+          seLinuxOptions: {}
+          seccompProfile:
+            type: RuntimeDefault
+        env:
+        - name: BITNAMI_DEBUG
+          value: "false"
+        - name: MINIO_SCHEME
+          value: http
+        - name: MINIO_FORCE_NEW_KEYS
+          value: "no"
+        - name: MINIO_API_PORT_NUMBER
+          value: "9000"
+        - name: MINIO_ROOT_USER
+          valueFrom:
+            secretKeyRef:
+              name: minio
+              key: root-user
+        - name: MINIO_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: minio
+              key: root-password
+        - name: MINIO_DEFAULT_BUCKETS
+          value: obs-portal
+        - name: MINIO_BROWSER
+          value: "on"
+        - name: MINIO_PROMETHEUS_AUTH_TYPE
+          value: public
+        - name: MINIO_CONSOLE_PORT_NUMBER
+          value: "9001"
+        - name: MINIO_DATA_DIR
+          value: /bitnami/minio/data
+        envFrom: null
+        ports:
+        - name: minio-api
+          containerPort: 9000
+          protocol: TCP
+        - name: minio-console
+          containerPort: 9001
+          protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /minio/health/live
+            port: minio-api
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 5
+        readinessProbe:
+          tcpSocket:
+            port: minio-api
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 1
+          successThreshold: 1
+          failureThreshold: 5
+        resources:
+          limits:
+            cpu: 375m
+            ephemeral-storage: 2Gi
+            memory: 384Mi
+          requests:
+            cpu: 250m
+            ephemeral-storage: 50Mi
+            memory: 256Mi
+        volumeMounts:
+        - name: empty-dir
+          mountPath: /tmp
+          subPath: tmp-dir
+        - name: empty-dir
+          mountPath: /opt/bitnami/minio/tmp
+          subPath: app-tmp-dir
+        - name: empty-dir
+          mountPath: /.mc
+          subPath: app-mc-dir
+        - name: data
+          mountPath: /bitnami/minio/data
+      volumes:
+      - name: empty-dir
+        emptyDir: {}
+      - name: data
+        persistentVolumeClaim:
+          claimName: minio
+---
+# Source: minio/templates/pvc.yaml
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: minio
+  namespace: obs-portal
+  labels:
+    app.kubernetes.io/instance: minio
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: minio
+    app.kubernetes.io/version: 2024.10.2
+    helm.sh/chart: minio-14.7.15
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+# Source: minio/templates/secrets.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: minio
+  namespace: obs-portal
+  labels:
+    app.kubernetes.io/instance: minio
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: minio
+    app.kubernetes.io/version: 2024.10.2
+    helm.sh/chart: minio-14.7.15
+type: Opaque
+data:
+  root-user: cm9vdHJvb3Q=
+  root-password: cm9vdHJvb3Q=
+---
+# Source: minio/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+  namespace: obs-portal
+  labels:
+    app.kubernetes.io/instance: minio
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: minio
+    app.kubernetes.io/version: 2024.10.2
+    helm.sh/chart: minio-14.7.15
+spec:
+  type: ClusterIP
+  ports:
+  - name: minio-api
+    port: 9000
+    targetPort: minio-api
+    nodePort: null
+  - name: minio-console
+    port: 9001
+    targetPort: minio-console
+    nodePort: null
+  selector:
+    app.kubernetes.io/instance: minio
+    app.kubernetes.io/name: minio
+---
+# Source: minio/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: minio
+  namespace: obs-portal
+  labels:
+    app.kubernetes.io/instance: minio
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: minio
+    app.kubernetes.io/version: 2024.10.2
+    helm.sh/chart: minio-14.7.15
+automountServiceAccountToken: false
+secrets:
+- name: minio

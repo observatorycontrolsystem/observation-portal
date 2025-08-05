@@ -1,6 +1,7 @@
 from datetime import timedelta
 from os import path
 from unittest.mock import patch
+from urllib.parse import quote, unquote
 
 from rest_framework.test import APITestCase
 from mixer.backend.django import mixer
@@ -1493,3 +1494,143 @@ class TestReviewProcessAPI(APITestCase):
 
         app_review.refresh_from_db()
         self.assertEqual(app_review.summary, "test")
+
+    def test_pdf_zip(self):
+        app1 = mixer.blend(
+            ScienceApplication,
+            status=ScienceApplication.SUBMITTED,
+            submitter=blend_user(),
+            call=self.call
+        )
+
+        app2 = mixer.blend(
+            ScienceApplication,
+            status=ScienceApplication.SUBMITTED,
+            submitter=blend_user(),
+            call=self.call
+        )
+
+        app3 = mixer.blend(
+            ScienceApplication,
+            status=ScienceApplication.SUBMITTED,
+            submitter=blend_user(),
+            call=self.call
+        )
+
+        panel1 = mixer.blend(
+            ReviewPanel,
+            name="panel 1",
+        )
+        panel1.members.add(self.user)
+
+        other_user = blend_user()
+
+        panel2 = mixer.blend(
+            ReviewPanel,
+            name="panel 2",
+        )
+        panel2.members.add(other_user)
+
+        app1_review = mixer.blend(
+            ScienceApplicationReview,
+            science_application=app1,
+            review_panel=panel1,
+            primary_reviewer=self.user,
+            secondary_reviewer=self.user,
+            pdf=SimpleUploadedFile('proposal_1.pdf', b'a'),
+        )
+
+        app2_review = mixer.blend(
+            ScienceApplicationReview,
+            science_application=app2,
+            review_panel=panel1,
+            primary_reviewer=self.user,
+            secondary_reviewer=self.user,
+            pdf=SimpleUploadedFile('proposal_2.pdf', b'ab'),
+        )
+
+        app3_review = mixer.blend(
+            ScienceApplicationReview,
+            science_application=app3,
+            review_panel=panel2,
+            primary_reviewer=self.user,
+            secondary_reviewer=self.user,
+            pdf=SimpleUploadedFile('proposal_3.pdf', b'abc'),
+        )
+
+        response = self.client.get(reverse("api:scienceapplication-reviews-pdf-zip"))
+        expected_mod_zip_response_lines = []
+
+        for r in [app2_review, app1_review]:
+            expected_mod_zip_response_lines.append(f"- {r.pdf.size} /internal-zip-proxy?redirect={quote(unquote(r.pdf.url), safe='')} {path.basename(r.pdf.name)}".encode())
+
+        expected_mod_zip_response = b"\r\n".join(expected_mod_zip_response_lines)
+
+        self.assertEqual(response.content, expected_mod_zip_response)
+
+    def test_pdf_zip_empty(self):
+        response = self.client.get(reverse("api:scienceapplication-reviews-pdf-zip"))
+        self.assertEqual(response.content, b"0 0 @directory empty")
+
+    def test_pdf_zip_filter_by_semester(self):
+        app1 = mixer.blend(
+            ScienceApplication,
+            status=ScienceApplication.SUBMITTED,
+            submitter=blend_user(),
+            call=self.call,
+        )
+
+        semester2 = mixer.blend(
+            Semester, start=timezone.now() + timedelta(days=1), end=timezone.now() + timedelta(days=365)
+        )
+        call2 = mixer.blend(
+            Call, semester=semester2,
+            deadline=timezone.now() + timedelta(days=7),
+            opens=timezone.now(),
+            proposal_type=Call.SCI_PROPOSAL,
+            eligibility_short='Short Eligibility'
+        )
+        mixer.blend(Instrument, call=call2)
+
+        app2 = mixer.blend(
+            ScienceApplication,
+            status=ScienceApplication.SUBMITTED,
+            submitter=blend_user(),
+            call=call2,
+        )
+
+        panel1 = mixer.blend(
+            ReviewPanel,
+            name="panel 1",
+        )
+        panel1.members.add(self.user)
+
+        app1_review = mixer.blend(
+            ScienceApplicationReview,
+            science_application=app1,
+            review_panel=panel1,
+            primary_reviewer=self.user,
+            secondary_reviewer=self.user,
+            pdf=SimpleUploadedFile('proposal_1.pdf', b'a'),
+        )
+
+        app2_review = mixer.blend(
+            ScienceApplicationReview,
+            science_application=app2,
+            review_panel=panel1,
+            primary_reviewer=self.user,
+            secondary_reviewer=self.user,
+            pdf=SimpleUploadedFile('proposal_2.pdf', b'ab'),
+        )
+
+        response = self.client.get(
+            reverse("api:scienceapplication-reviews-pdf-zip"),
+            data={
+                "science_application__call__semester__id": semester2.id,
+            },
+        )
+
+        self.assertEqual(
+            response.content,
+            f"- {app2_review.pdf.size} /internal-zip-proxy?redirect={quote(unquote(app2_review.pdf.url), safe='')} {path.basename(app2_review.pdf.name)}".encode(),
+        )

@@ -14,3 +14,6 @@ spec:
     - name: api
       port: 8080
       targetPort: api
+    - name: nginx
+      port: 8000
+      targetPort: nginx

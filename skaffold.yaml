@@ -30,6 +30,13 @@ build:
         dependencies:
           dockerfile:
             path: Dockerfile
+    - image: nginx-mod-zip
+      context: nginx-mod-zip/
+      custom:
+        buildCommand: skaffold-builder-buildx
+        dependencies:
+          dockerfile:
+            path: Dockerfile
 ---
 
 apiVersion: skaffold/v4beta10
