@@ -15,5 +15,35 @@ commonLabels:
 configMapGenerator:
   - name: env
 
+  - name: nginx-confd-templates
+    files:
+      - default.conf.template=./nginx-default.conf.template
+
+  - name: coredns
+    files:
+      - ./Corefile
+
 secretGenerator:
   - name: env
+
+replacements:
+  - source:
+      kind: Service
+      name: api
+      fieldPath: metadata.name
+    targets:
+      - select:
+          kind: Deployment
+          name: api
+        fieldPaths:
+          - spec.template.spec.containers.[name=nginx].env.[name=OBS_PORTAL_API_SVC_HOSTNAME].value
+  - source:
+      kind: Service
+      name: api
+      fieldPath: spec.ports.[name=api].port
+    targets:
+      - select:
+          kind: Deployment
+          name: api
+        fieldPaths:
+          - spec.template.spec.containers.[name=nginx].env.[name=OBS_PORTAL_API_SVC_PORT].value

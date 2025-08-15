@@ -1,5 +1,7 @@
 import os
 
+from urllib.parse import quote, unquote
+
 from rest_framework import viewsets, filters, mixins, permissions
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
@@ -10,6 +12,7 @@ from django.template.loader import render_to_string
 from django.conf import settings
 from django.utils.module_loading import import_string
 from django.core.files.base import ContentFile
+from django.http import HttpResponse
 
 from observation_portal.accounts.tasks import send_mail
 from observation_portal.sciapplications.filters import ScienceApplicationFilter, CallFilter
@@ -57,7 +60,7 @@ class ScienceApplicationReviewViewSet(
         "status",
     ]
     ordering = ["-created_at"]
-    filterset_fields = []
+    filterset_fields = ["science_application__call__semester__id"]
 
     def get_queryset(self):
         if self.request.user.review_panels.filter(is_admin=True).exists():
@@ -66,6 +69,42 @@ class ScienceApplicationReviewViewSet(
             qs = ScienceApplicationReview.objects.filter(review_panel__members=self.request.user)
 
         return qs
+
+    @action(methods=["get"], detail=False, url_path="pdf-zip")
+    def pdf_zip(self, request):
+        application_reviews = self.filter_queryset(self.get_queryset())
+
+        mod_zip_response_lines = []
+        for review in application_reviews:
+            try:
+                pdf_url = review.pdf.url
+                size = review.pdf.size
+                name = os.path.basename(review.pdf.name)
+            except Exception:
+                # Should this be a show stopper?
+                continue
+
+            zip_proxy_url = f"/internal-zip-proxy?redirect={quote(unquote(pdf_url), safe='')}"
+
+            mod_zip_response_lines.append(f"- {size} {zip_proxy_url} {name}")
+
+        # If there's nothing to zip, create a empty directory to avoid returning a 5xx
+        if not mod_zip_response_lines:
+            mod_zip_response_lines.append("0 0 @directory empty")
+
+        mod_zip_response = "\r\n".join(mod_zip_response_lines)
+
+        return HttpResponse(
+            content=mod_zip_response,
+            status=status.HTTP_200_OK,
+            content_type="text/plain",
+            headers={
+                "X-Archive-Files": "zip",
+                "Content-Disposition": "attachment; filename=proposal-reviews.zip",
+            }
+        )
+
+
 
 class IsScienceApplicationReviewSummaryEditor(permissions.BasePermission):
 

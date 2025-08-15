@@ -2,9 +2,7 @@
   description = "Astronomical observing management backend";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    flake-parts.url = "github:hercules-ci/flake-parts";
-    devenv-k8s.url = "github:LCOGT/devenv-k8s";
+    devenv-k8s.url = "github:LCOGT/devenv-k8s/v1";
 
     nixpkgs.follows = "devenv-k8s/nixpkgs";
     flake-parts.follows = "devenv-k8s/flake-parts";
@@ -49,6 +47,9 @@
 
           # setup local development cluster
           devenv-k8s.local-cluster.enable = true;
+
+          # offload caching to docker/buildx
+          env.SKAFFOLD_CACHE_ARTIFACTS = "false";
 
           languages.python = {
             enable = true;
