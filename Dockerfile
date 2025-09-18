@@ -1,4 +1,4 @@
-FROM python:3.10-slim as base
+FROM python:3.10-slim AS base
 
 # these commands are organized to minimize docker build cache invalidation
 # (barring any other logical constraints)
@@ -38,7 +38,7 @@ ENV PATH="/src/.venv/bin:$PATH" PYTHONUNBUFFERED=1 PYTHONFAULTHANDLER=1
 # usefull for running tests in docker container
 # this won't be included in the final image
 # e.g. docker build --target dev .
-FROM base as dev
+FROM base AS dev
 
 RUN poetry install --only dev
 
@@ -46,7 +46,7 @@ ENTRYPOINT ["bash"]
 
 
 # final image
-FROM base as prod
+FROM base AS prod
 
 # add a non-root user to run the app
 RUN useradd appuser

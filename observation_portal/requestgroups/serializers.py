@@ -37,6 +37,7 @@ logger = logging.getLogger(__name__)
 
 
 class ValidationHelper(ABC):
+    CONFIG_SECTIONS = ['guiding_config', 'acquisition_config', 'target', 'constraints']
     """Base class for validating documents"""
     @abstractmethod
     def __init__(self):
@@ -85,6 +86,14 @@ class ValidationHelper(ABC):
         serializer_errors = {}
         if 'extra_params' in validation_errors:
             serializer_errors['extra_params'] = validation_errors['extra_params'][0]
+        for section in self.CONFIG_SECTIONS:
+            if section in validation_errors:
+                error = validation_errors[section][0]
+                if section not in serializer_errors:
+                    serializer_errors[section] = {}
+                serializer_errors[section].update(error)
+                if 'extra_params' in error:
+                    serializer_errors[section]['extra_params'] = error['extra_params'][0]
         if 'instrument_configs' in validation_errors:
             instrument_configs_errors = []
             last_instrument_config_with_error = max(validation_errors['instrument_configs'][0].keys())
