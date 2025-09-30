@@ -10,6 +10,11 @@ This project adheres to semantic versioning.
 
 ### Removed
 
+## [4.17.3] - 2025-09-30
+
+### Changed
+- Cerberus validation schema's on the instrument_type on configdb can now validate things in all sections within the configuration level (i.e. acquisition_config, target, constraints, etc.)
+
 ## [4.17.2] - 2025-07-22
 
 ### Changed
