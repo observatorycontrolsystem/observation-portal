@@ -261,6 +261,43 @@ class TestUserPostRequestApi(SetTimeMixin, APITestCase):
         self.assertIn('currently inactive', str(response.content))
         self.assertEqual(response.status_code, 400)
 
+    def test_post_requestgroup_with_low_string_dec(self):
+        mixer.blend(
+            TimeAllocation, proposal=self.proposal, semester=self.semester,
+            instrument_types=['1M0-FLI'], std_allocation=100.0, std_time_used=0.0,
+            rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0, ipp_time_available=5.0
+        )
+        # 1M0-FLI instrument has a validation_schema set to reject dec < -85.0
+        data = self.generic_payload.copy()
+        data['requests'][0]['configurations'][0]['instrument_type'] = '1M0-FLI'
+        data['requests'][0]['configurations'][0]['target']['dec'] = '-85.0'
+        response = self.client.post(reverse('api:request_groups-list'), data=data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()['name'], self.generic_payload['name'])
+
+        data['requests'][0]['configurations'][0]['instrument_type'] = '1M0-FLI'
+        data['requests'][0]['configurations'][0]['target']['dec'] = '-86.0'
+        response = self.client.post(reverse('api:request_groups-list'), data=data)
+        self.assertContains(response, 'min value is -85.0', status_code=400)
+
+    def test_post_requestgroup_with_validation_schema_constraint(self):
+        mixer.blend(
+            TimeAllocation, proposal=self.proposal, semester=self.semester,
+            instrument_types=['1M0-FLI'], std_allocation=100.0, std_time_used=0.0,
+            rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0, ipp_time_available=5.0
+        )
+        # 1M0-FLI instrument has a validation_schema set to reject max_airmass < 2.0
+        data = self.generic_payload.copy()
+        data['requests'][0]['configurations'][0]['instrument_type'] = '1M0-FLI'
+        response = self.client.post(reverse('api:request_groups-list'), data=data)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()['name'], self.generic_payload['name'])
+
+        data['requests'][0]['configurations'][0]['instrument_type'] = '1M0-FLI'
+        data['requests'][0]['configurations'][0]['constraints']['max_airmass'] = 1.9
+        response = self.client.post(reverse('api:request_groups-list'), data=data)
+        self.assertContains(response, 'min value is 2.0', status_code=400)
+
     def test_post_requestgroup_missing_data(self):
         bad_data = self.generic_payload.copy()
         del bad_data['requests']

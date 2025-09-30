@@ -2448,6 +2448,25 @@
                           "offset_ra": {"type": "float"},
                           "offset_dec": {"type": "float"}
                         }
+                      },
+                      "target": {
+                        "schema": {
+                          "dec": {
+                            "max": 85.0,
+                            "min": -85.0,
+                            "type": "float"
+                          }
+                        },
+                        "type": "dict"
+                      },
+                      "constraints": {
+                        "schema": {
+                          "max_airmass": {
+                            "min": 2.0,
+                            "type": "float"
+                          }
+                        },
+                        "type": "dict"
                       }
                     }
                   },
