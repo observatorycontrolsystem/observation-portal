@@ -1,3 +1,4 @@
+from typing import Union
 import smtplib
 from collections import defaultdict
 from urllib.parse import urljoin
@@ -191,7 +192,7 @@ class ScienceApplication(models.Model):
                 time_by_telescope_name[telescope_name] += timerequest.total_requested_time
         return time_by_telescope_name
 
-    def time_by_instrument_type(self, approved: None | bool = None):
+    def time_by_instrument_type(self, approved: Union[None, bool] = None):
         r = defaultdict(lambda: defaultdict(int))
 
         if approved is None:
