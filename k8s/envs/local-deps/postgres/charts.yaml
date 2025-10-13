@@ -21,6 +21,8 @@ helmCharts:
       values:
         valuesInline:
           # Chart values go here
+          image:
+            repository: bitnamilegacy/postgresql
           architecture: standalone
           primary:
             persistence:

@@ -1,6 +1,6 @@
 from datetime import timedelta
 from os import path
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock, call
 from urllib.parse import quote, unquote
 
 from rest_framework.test import APITestCase
@@ -17,6 +17,7 @@ from observation_portal.sciapplications.models import ScienceApplication, Call, 
 from observation_portal.proposals.models import Semester, ScienceCollaborationAllocation, CollaborationAllocation
 from observation_portal.accounts.test_utils import blend_user
 from observation_portal.sciapplications.serializers import ScienceApplicationSerializer
+from observation_portal.sciapplications.signals import generate_review_pdf, generate_admin_review_pdf
 
 fake = Faker()
 
@@ -43,7 +44,6 @@ def generate_coinvestigator_data(index):
 class MockPDFFileReader:
     def __init__(self, bytesio):
         self.content = bytesio.getvalue()
-
 
 class TestCallAPI(APITestCase):
     def setUp(self) -> None:
@@ -328,8 +328,10 @@ class TestListScienceApplicationAPI(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['count'], 3)
 
-@patch('observation_portal.sciapplications.serializers.PdfFileReader', new=MockPDFFileReader)
+@patch('observation_portal.sciapplications.serializers.PdfReader', new=MockPDFFileReader)
+@patch('observation_portal.sciapplications.signals.PdfWriter', new=MagicMock())
 class TestPostCreateSciApp(DramatiqTestCase):
+    @patch('observation_portal.sciapplications.signals.PdfWriter', new=MagicMock())
     def setUp(self):
         super().setUp()
         self.semester = mixer.blend(
@@ -383,8 +385,9 @@ class TestPostCreateSciApp(DramatiqTestCase):
             'pi_first_name': fake.first_name(),
             'pi_last_name': fake.last_name(),
             'pi_institution': fake.company(),
-            'pdf': SimpleUploadedFile('s.pdf', b'ab'),
             'abstract': fake.text(),
+            'pdf_one': SimpleUploadedFile('one.pdf', b'ab'),
+            'pdf_two': SimpleUploadedFile('two.pdf', b'abcd'),
             'tac_rank': 1
         }
         timerequest_data = generate_time_request_data(0, self.instrument, self.semester)
@@ -555,7 +558,8 @@ class TestPostCreateSciApp(DramatiqTestCase):
 
     def test_cannot_upload_files_that_arent_pdfs(self):
         data = self.sci_data.copy()
-        data['pdf'] = SimpleUploadedFile('notpdf.png', b'apngfile')
+        data['pdf_one'] = SimpleUploadedFile('notpdf.png', b'apngfile')
+        data['pdf_two'] = SimpleUploadedFile('anothernotpdf.png', b'anotherone')
         response = self.client.post(reverse('api:scienceapplications-list'), data=data)
         self.assertEqual(self.user.scienceapplication_set.count(), 0)
         self.assertContains(response, 'We can only accept PDF files', status_code=400)
@@ -694,20 +698,46 @@ class TestPostCreateSciApp(DramatiqTestCase):
         self.assertIn('This field is required.', response.json().get('tac_rank'))
         self.assertIn('This field is required.', response.json().get('abstract'))
 
-    def test_ddt_application_requires_pdf(self):
+    def test_application_requires_both_pdf(self):
         data = self.ddt_data.copy()
-        del data['pdf']
+        del data['pdf_one']
         response = self.client.post(reverse('api:scienceapplications-list'), data=data)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('A PDF is required for submission.', response.json().get('pdf'))
+        self.assertIn('A PDF is required for submission.', response.json().get('pdf_one'))
+
+        data = self.ddt_data.copy()
+        del data['pdf_two']
+        response = self.client.post(reverse('api:scienceapplications-list'), data=data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('A PDF is required for submission.', response.json().get('pdf_two'))
+
+    def test_legacy_pdf_is_generated(self):
+        data = self.sci_data.copy()
+        uploaded_pdf_one = data['pdf_one']
+        response = self.client.post(reverse('api:scienceapplications-list'), data=data)
+        submitted_sciapp = ScienceApplication.objects.get(pk=response.json()["id"])
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(path.basename(submitted_sciapp.pdf.name), uploaded_pdf_one.name)
+        self.assertEqual(submitted_sciapp.pdf_generated, submitted_sciapp.modified)
+
+    def test_ddt_application_requires_pdf(self):
+        data = self.ddt_data.copy()
+        del data['pdf_one']
+        del data['pdf_two']
+        response = self.client.post(reverse('api:scienceapplications-list'), data=data)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('A PDF is required for submission.', response.json().get('pdf_one'))
+        self.assertIn('A PDF is required for submission.', response.json().get('pdf_two'))
 
     def test_sci_application_requires_pdf_and_abstract(self):
         data = self.sci_data.copy()
         del data['abstract']
-        del data['pdf']
+        del data['pdf_one']
+        del data['pdf_two']
         response = self.client.post(reverse('api:scienceapplications-list'), data=data)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('A PDF is required for submission.', response.json().get('pdf'))
+        self.assertIn('A PDF is required for submission.', response.json().get('pdf_one'))
+        self.assertIn('A PDF is required for submission.', response.json().get('pdf_two'))
         self.assertIn('This field is required.', response.json().get('abstract'))
 
     def test_can_save_draft_with_no_timerequests(self):
@@ -731,7 +761,8 @@ class TestPostCreateSciApp(DramatiqTestCase):
     def test_collab_applications_cannot_submit_a_pdf(self):
         self.client.force_login(self.scicollab_admin)
         data = self.collab_data.copy()
-        data['pdf'] = SimpleUploadedFile('s.pdf', b'ab')
+        data['pdf_one'] = SimpleUploadedFile('s.pdf', b'ab')
+        data['pdf_two'] = SimpleUploadedFile('p.pdf', b'ab')
         response = self.client.post(reverse('api:scienceapplications-list'), data=data)
         self.assertContains(response, 'collaboration proposals do not have pdfs', status_code=400)
 
@@ -762,7 +793,8 @@ class TestPostCreateSciApp(DramatiqTestCase):
         self.assertTrue('moon' in response.json()['tags'])
 
 
-@patch('observation_portal.sciapplications.serializers.PdfFileReader', new=MockPDFFileReader)
+@patch('observation_portal.sciapplications.serializers.PdfReader', new=MockPDFFileReader)
+@patch('observation_portal.sciapplications.signals.PdfWriter', new=MagicMock())
 class TestPostUpdateSciApp(DramatiqTestCase):
     def setUp(self):
         self.semester = mixer.blend(
@@ -801,7 +833,8 @@ class TestPostUpdateSciApp(DramatiqTestCase):
             'pi_last_name': fake.last_name(),
             'pi_institution': fake.company(),
             'abstract': fake.text(),
-            'pdf': SimpleUploadedFile('sci.pdf', b'ab'),
+            'pdf_one': SimpleUploadedFile('one.pdf', b'ab'),
+            'pdf_two': SimpleUploadedFile('two.pdf', b'abcd'),
             **generate_coinvestigator_data(0),
             **generate_time_request_data(0, self.instrument, self.semester)
         }
@@ -904,10 +937,13 @@ class TestPostUpdateSciApp(DramatiqTestCase):
 
     def test_submit_draft_that_has_pdf_saved_does_not_need_user_to_pass_in_pdf_field(self):
         data = self.sci_data.copy()
-        uploaded_pdf = data['pdf']
-        self.sci_app.pdf = uploaded_pdf
+        uploaded_pdf_one = data['pdf_one']
+        uploaded_pdf_two = data['pdf_two']
+        self.sci_app.pdf_one = uploaded_pdf_one
+        self.sci_app.pdf_two = uploaded_pdf_two
         self.sci_app.save()
-        del data['pdf']
+        del data['pdf_one']
+        del data['pdf_two']
         data['status'] = ScienceApplication.SUBMITTED
         response = self.client.put(
             reverse('api:scienceapplications-detail', kwargs={'pk': self.sci_app.id}),
@@ -915,12 +951,14 @@ class TestPostUpdateSciApp(DramatiqTestCase):
         )
         submitted_sciapp = ScienceApplication.objects.get(pk=self.sci_app.id)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(path.basename(submitted_sciapp.pdf.name), uploaded_pdf.name)
+        self.assertEqual(path.basename(submitted_sciapp.pdf_one.name), uploaded_pdf_one.name)
+        self.assertEqual(path.basename(submitted_sciapp.pdf_two.name), uploaded_pdf_two.name)
 
     def test_submitting_app_without_pdf_when_a_pdf_is_required_fails(self):
         data = self.sci_data.copy()
         data['status'] = ScienceApplication.SUBMITTED
-        del data['pdf']
+        del data['pdf_one']
+        del data['pdf_two']
         response = self.client.put(
             reverse('api:scienceapplications-detail', kwargs={'pk': self.sci_app.id}),
             data=encode_multipart(BOUNDARY, data), content_type=MULTIPART_CONTENT
@@ -929,9 +967,11 @@ class TestPostUpdateSciApp(DramatiqTestCase):
 
     def test_clearing_pdf_when_pdf_is_required_on_submission_fails(self):
         data = self.sci_data.copy()
-        self.sci_app.pdf = data['pdf']
+        self.sci_app.pdf_one = data['pdf_one']
+        self.sci_app.pdf_two = data['pdf_two']
         self.sci_app.save()
-        del data['pdf']
+        del data['pdf_one']
+        del data['pdf_two']
         data['clear_pdf'] = True
         data['status'] = ScienceApplication.SUBMITTED
         response = self.client.put(
@@ -941,12 +981,16 @@ class TestPostUpdateSciApp(DramatiqTestCase):
         self.assertContains(response, 'A PDF is required for submission', status_code=400)
 
     def test_leaving_out_a_pdf_doesnt_update_the_uploaded_pdf(self):
-        uploaded_pdf = SimpleUploadedFile('app.pdf', b'123')
-        self.sci_app.pdf = uploaded_pdf
+        uploaded_pdf_one = SimpleUploadedFile('app_one.pdf', b'123')
+        uploaded_pdf_two = SimpleUploadedFile('app_two.pdf', b'123')
+        self.sci_app.pdf_one = uploaded_pdf_one
+        self.sci_app.pdf_two = uploaded_pdf_two
         self.sci_app.save()
-        self.assertEqual(path.basename(self.sci_app.pdf.name), uploaded_pdf.name)
+        self.assertEqual(path.basename(self.sci_app.pdf_one.name), uploaded_pdf_one.name)
+        self.assertEqual(path.basename(self.sci_app.pdf_two.name), uploaded_pdf_two.name)
         data = self.sci_data.copy()
-        del data['pdf']
+        del data['pdf_one']
+        del data['pdf_two']
         data['title'] = 'Updated title'
         response = self.client.put(
             reverse('api:scienceapplications-detail', kwargs={'pk': self.sci_app.id}),
@@ -954,16 +998,20 @@ class TestPostUpdateSciApp(DramatiqTestCase):
         )
         updated_sciapp = ScienceApplication.objects.get(pk=self.sci_app.id)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(path.basename(updated_sciapp.pdf.name), uploaded_pdf.name)
+        self.assertEqual(path.basename(updated_sciapp.pdf_one.name), uploaded_pdf_one.name)
+        self.assertEqual(path.basename(updated_sciapp.pdf_two.name), uploaded_pdf_two.name)
         self.assertEqual(updated_sciapp.title, data['title'])
 
     def test_setting_clear_pdf_clears_pdf(self):
-        self.sci_app.pdf = SimpleUploadedFile('sci.pdf', b'ab')
+        self.sci_app.pdf_one = SimpleUploadedFile('sci_one.pdf', b'ab')
+        self.sci_app.pdf_two = SimpleUploadedFile('sci_two.pdf', b'ab')
         self.sci_app.save()
-        self.assertTrue(self.sci_app.pdf)
+        self.assertTrue(self.sci_app.pdf_one)
+        self.assertTrue(self.sci_app.pdf_two)
         data = self.sci_data.copy()
         data['title'] = 'Updated title'
-        del data['pdf']
+        del data['pdf_one']
+        del data['pdf_two']
         data['clear_pdf'] = True
         response = self.client.put(
             reverse('api:scienceapplications-detail', kwargs={'pk': self.sci_app.id}),
@@ -971,7 +1019,8 @@ class TestPostUpdateSciApp(DramatiqTestCase):
         )
         updated_sciapp = ScienceApplication.objects.get(pk=self.sci_app.id)
         self.assertEqual(response.status_code, 200)
-        self.assertFalse(updated_sciapp.pdf)
+        self.assertFalse(updated_sciapp.pdf_one)
+        self.assertFalse(updated_sciapp.pdf_two)
         self.assertEqual(updated_sciapp.title, data['title'])
 
     def test_cannot_set_both_pdf_and_clear_pdf(self):
@@ -985,11 +1034,15 @@ class TestPostUpdateSciApp(DramatiqTestCase):
         self.assertContains(response, 'Please either submit a new pdf or clear the existing pdf', status_code=400)
 
     def test_setting_new_pdf_updates_pdf(self):
-        original_pdf = SimpleUploadedFile('first_upload.pdf', b'qwerty')
-        self.sci_app.pdf = original_pdf
+        original_pdf_one = SimpleUploadedFile('first_upload_one.pdf', b'qwerty')
+        original_pdf_two = SimpleUploadedFile('first_upload_two.pdf', b'qwerty')
+        self.sci_app.pdf_one = original_pdf_one
+        self.sci_app.pdf_two = original_pdf_two
         self.sci_app.save()
-        self.assertEqual(path.basename(self.sci_app.pdf.name), original_pdf.name)
-        self.assertEqual(self.sci_app.pdf.size, original_pdf.size)
+        self.assertEqual(path.basename(self.sci_app.pdf_one.name), original_pdf_one.name)
+        self.assertEqual(path.basename(self.sci_app.pdf_two.name), original_pdf_two.name)
+        self.assertEqual(self.sci_app.pdf_one.size, original_pdf_one.size)
+        self.assertEqual(self.sci_app.pdf_two.size, original_pdf_two.size)
         data = self.sci_data.copy()
         data['title'] = 'Updated title'
         response = self.client.put(
@@ -998,8 +1051,10 @@ class TestPostUpdateSciApp(DramatiqTestCase):
         )
         updated_sciapp = ScienceApplication.objects.get(pk=self.sci_app.id)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(path.basename(updated_sciapp.pdf.name), data['pdf'].name)
-        self.assertEqual(updated_sciapp.pdf.size, data['pdf'].size)
+        self.assertEqual(path.basename(updated_sciapp.pdf_one.name), data['pdf_one'].name)
+        self.assertEqual(path.basename(updated_sciapp.pdf_two.name), data['pdf_two'].name)
+        self.assertEqual(updated_sciapp.pdf_one.size, data['pdf_one'].size)
+        self.assertEqual(updated_sciapp.pdf_two.size, data['pdf_two'].size)
         self.assertEqual(updated_sciapp.title, data['title'])
 
     def test_draft_ddt_does_not_send_notification_email(self):
@@ -1084,8 +1139,11 @@ class TestPostUpdateSciApp(DramatiqTestCase):
         self.assertIsNone(sciapp.submitted)
 
 
-@patch('observation_portal.sciapplications.serializers.PdfFileReader', new=MockPDFFileReader)
+@patch('observation_portal.sciapplications.serializers.PdfReader', new=MockPDFFileReader)
+@patch('observation_portal.sciapplications.signals.PdfWriter', new=MagicMock())
 class TestCopySciApp(DramatiqTestCase):
+
+    @patch('observation_portal.sciapplications.signals.PdfWriter', new=MagicMock())
     def setUp(self):
         self.upcoming_semester = mixer.blend(
             Semester, start=timezone.now() + timedelta(days=1), end=timezone.now() + timedelta(days=365)
@@ -1118,7 +1176,8 @@ class TestCopySciApp(DramatiqTestCase):
             pi_last_name=fake.last_name(),
             pi_institution=fake.company(),
             abstract=fake.text(),
-            pdf=SimpleUploadedFile('sci.pdf', b'ab'),
+            pdf_one=SimpleUploadedFile('sci_one.pdf', b'ab'),
+            pdf_two=SimpleUploadedFile('sci_two.pdf', b'ab'),
             **generate_coinvestigator_data(0),
             **generate_time_request_data(0, self.instrument, self.old_semester)
         )
@@ -1133,7 +1192,8 @@ class TestCopySciApp(DramatiqTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(science_applications.count(), 2)
         self.assertEqual(sci_app_copy.status, ScienceApplication.DRAFT)
-        self.assertNotEqual(sci_app_copy.pdf.name, old_sci_app.pdf.name)
+        self.assertNotEqual(sci_app_copy.pdf_one.name, old_sci_app.pdf_one.name)
+        self.assertNotEqual(sci_app_copy.pdf_two.name, old_sci_app.pdf_two.name)
         self.assertEqual(sci_app_copy.call.id, self.current_sci_call.id)
         self.assertEqual(sci_app_copy.call.semester.id, self.current_sci_call.semester.id)
         self.assertEqual(sci_app_copy.tac_rank, 0)
@@ -1634,3 +1694,111 @@ class TestReviewProcessAPI(APITestCase):
             response.content,
             f"- {app2_review.pdf.size} /internal-zip-proxy?redirect={quote(unquote(app2_review.pdf.url), safe='')} {path.basename(app2_review.pdf.name)}".encode(),
         )
+
+    def test_pdf_zip_admin_panel(self):
+        app = mixer.blend(
+            ScienceApplication,
+            status=ScienceApplication.SUBMITTED,
+            submitter=blend_user(),
+            call=self.call
+        )
+
+
+        admin_panel = mixer.blend(
+            ReviewPanel,
+            name="panel 1",
+            is_admin=True
+        )
+        admin_panel.members.add(self.user)
+
+        other_user = blend_user()
+
+        normal_panel = mixer.blend(
+            ReviewPanel,
+            name="panel 2",
+        )
+        normal_panel.members.add(other_user)
+
+        app_review = mixer.blend(
+            ScienceApplicationReview,
+            science_application=app,
+            review_panel=normal_panel,
+            primary_reviewer=self.user,
+            secondary_reviewer=self.user,
+            pdf=SimpleUploadedFile('proposal_1.pdf', b'a'),
+            admin_pdf=SimpleUploadedFile('proposal_1_admin.pdf', b'a'),
+        )
+
+        response = self.client.get(reverse("api:scienceapplication-reviews-pdf-zip"))
+        self.assertEqual(
+            response.content,
+            f"- {app_review.admin_pdf.size} /internal-zip-proxy?redirect={quote(unquote(app_review.admin_pdf.url), safe='')} {path.basename(app_review.admin_pdf.name)}".encode(),
+        )
+
+        self.client.force_login(other_user)
+        response = self.client.get(reverse("api:scienceapplication-reviews-pdf-zip"))
+        self.assertEqual(
+            response.content,
+            f"- {app_review.pdf.size} /internal-zip-proxy?redirect={quote(unquote(app_review.pdf.url), safe='')} {path.basename(app_review.pdf.name)}".encode(),
+        )
+
+    @patch('observation_portal.sciapplications.signals.basename')
+    @patch('observation_portal.sciapplications.signals.ContentFile')
+    @patch('observation_portal.sciapplications.signals.BytesIO')
+    @patch('observation_portal.sciapplications.signals._generate_cover_page_pdf')
+    @patch('observation_portal.sciapplications.signals.PdfWriter')
+    def test_generate_review_pdf(self, pdf_writer_m, _generate_cover_page_pdf_m, bytes_io_m, content_file_m, basename_m):
+        app = MagicMock()
+        app.status = ScienceApplication.SUBMITTED
+        app.pdf_one = MagicMock()
+
+        app_review = MagicMock()
+        app_review.science_application = app
+
+        generate_review_pdf(MagicMock(), app_review)
+
+        _generate_cover_page_pdf_m.assert_called_once_with(app, show_authors=False)
+
+        merged = pdf_writer_m()
+        self.assertEqual(merged.append.call_count, 2)
+        merged.append.assert_has_calls([
+            call(_generate_cover_page_pdf_m()),
+            call(app.pdf_one.open(mode="rb").__enter__()),
+        ])
+
+        buff = bytes_io_m().__enter__()
+        merged.write.assert_called_once_with(buff)
+
+        self.assertEqual(app_review.pdf, content_file_m(buff.getbuffer(), name=basename_m(app.pdf_one.name)))
+
+
+    @patch('observation_portal.sciapplications.signals.basename')
+    @patch('observation_portal.sciapplications.signals.ContentFile')
+    @patch('observation_portal.sciapplications.signals.BytesIO')
+    @patch('observation_portal.sciapplications.signals._generate_cover_page_pdf')
+    @patch('observation_portal.sciapplications.signals.PdfWriter')
+    def test_generate_admin_review_pdf(self, pdf_writer_m, _generate_cover_page_pdf_m, bytes_io_m, content_file_m, basename_m):
+        app = MagicMock()
+        app.status = ScienceApplication.SUBMITTED
+        app.pdf_one = MagicMock()
+        app.pdf_two = MagicMock()
+
+        app_review = MagicMock()
+        app_review.science_application = app
+
+        generate_admin_review_pdf(MagicMock(), app_review)
+
+        _generate_cover_page_pdf_m.assert_called_once_with(app, show_authors=True)
+
+        merged = pdf_writer_m()
+        self.assertEqual(merged.append.call_count, 3)
+        merged.append.assert_has_calls([
+            call(_generate_cover_page_pdf_m()),
+            call(app.pdf_one.open(mode="rb").__enter__()),
+            call(app.pdf_two.open(mode="rb").__enter__()),
+        ])
+
+        buff = bytes_io_m().__enter__()
+        merged.write.assert_called_once_with(buff)
+
+        self.assertEqual(app_review.admin_pdf, content_file_m(buff.getbuffer(), name=basename_m(app.pdf_one.name)))

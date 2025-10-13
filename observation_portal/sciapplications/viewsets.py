@@ -74,12 +74,18 @@ class ScienceApplicationReviewViewSet(
     def pdf_zip(self, request):
         application_reviews = self.filter_queryset(self.get_queryset())
 
+        is_admin = request.user.review_panels.filter(is_admin=True).exists()
         mod_zip_response_lines = []
         for review in application_reviews:
             try:
-                pdf_url = review.pdf.url
-                size = review.pdf.size
-                name = os.path.basename(review.pdf.name)
+                if is_admin:
+                    pdf = review.admin_pdf
+                else:
+                    pdf = review.pdf
+
+                pdf_url = pdf.url
+                size = pdf.size
+                name = os.path.basename(pdf.name)
             except Exception:
                 # Should this be a show stopper?
                 continue
@@ -276,10 +282,16 @@ class ScienceApplicationViewSet(viewsets.ModelViewSet):
                         tr.instrument_types.add(instrument)
                     tr.save()
             # now generate new PDF, this uses the primary key of the new sciapp
-            if sci_app.pdf:
-                sci_app.pdf = ContentFile(sci_app.pdf.read(),
-                                        name=os.path.basename(sci_app.pdf.name))
-                sci_app.save()
+            if sci_app.pdf_one:
+                with sci_app.pdf_one.open("rb") as fobj:
+                    sci_app.pdf_one = ContentFile(fobj.read(), name=os.path.basename(sci_app.pdf_one.name))
+
+            if sci_app.pdf_two:
+                with sci_app.pdf_two.open("rb") as fobj:
+                    sci_app.pdf_two = ContentFile(fobj.read(), name=os.path.basename(sci_app.pdf_two.name))
+
+            sci_app.save()
+
             return Response(status=status.HTTP_200_OK)
 
     def get_queryset(self):

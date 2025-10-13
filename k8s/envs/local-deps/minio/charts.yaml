@@ -34,3 +34,4 @@ helmCharts:
             enabled: false
           image:
             debug: false
+            repository: bitnamilegacy/minio
