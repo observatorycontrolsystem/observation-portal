@@ -167,6 +167,7 @@ class MembershipAdmin(admin.ModelAdmin):
 
 
 class ProposalInviteAdmin(admin.ModelAdmin):
+    search_fields = ['proposal__id', 'email']
     model = ProposalInvite
     raw_id_fields = ['proposal']
 
