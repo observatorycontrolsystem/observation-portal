@@ -10,6 +10,11 @@ This project adheres to semantic versioning.
 
 ### Removed
 
+## [4.17.4] - 2025-10-21
+
+### Changed
+- Updated admin search options for proposal invites
+
 ## [4.17.3] - 2025-09-30
 
 ### Changed
