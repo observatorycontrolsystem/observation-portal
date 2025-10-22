@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+table, td, th {
+  border: 1px solid black;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  padding: 2px;
+}
+
+td {
+  vertical-align: center;
+  padding: 5px;
+}
+</style>
+</head>
+<body>
+
+<h2>{{ id }}</h2>
+
+<h1>{{ title }}</h1>
+
+<p>{{ abstract }}</p>
+
+{% if show_authors %}
+<p>
+Principal Investigator:
+{% if not pi.first_name or not pi.last_name %}
+N/A
+{% else %}
+{{ pi.first_name }} {{ pi.last_name }}
+
+{% if pi.email %}
+<a :href="mailto:{{ pi.email }}">({{ pi.email }})</a>
+{% endif %}
+
+{% endif %}
+</p>
+
+{% if cois %}
+<p>
+Co Investigator(s):
+<ul>
+{% for coi in cois %}
+<li>
+<span>{{ coi.first_name }} {{ coi.last_name }}</span>
+{% if coi.email %}
+<a :href="mailto:{{ coi.email }}">({{ coi.email }})</a>
+{% endif %}
+</li>
+
+{% endfor %}
+</ul>
+</p>
+{% endif %}
+
+{% endif %}
+
+<h2>Time Allocation</h2>
+
+{% if instrument_allocations %}
+<table>
+  <thead>
+    <tr>
+      <th>Instrument(s)</th>
+      <th>Standard Time</th>
+      <th>Time Critical</th>
+      <th>Rapid Response</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for x in instrument_allocations %}
+      <tr>
+        <td>{{ x.name }}</td>
+        <td>{{ x.std }}</td>
+        <td>{{ x.tc }}</td>
+        <td>{{ x.rr }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% else %}
+<p>N/A</p>
+{% endif %}
+
+</body>
+</html>
