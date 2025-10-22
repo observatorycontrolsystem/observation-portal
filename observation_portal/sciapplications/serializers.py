@@ -266,8 +266,8 @@ class ScienceApplicationSerializer(serializers.ModelSerializer):
     coinvestigator_set = CoInvestigatorSerializer(many=True, required=False)
     timerequest_set = TimeRequestSerializer(many=True, required=False)
     pdf = serializers.FileField(required=False)
-    pdf_one = serializers.FileField(required=False)
-    pdf_two = serializers.FileField(required=False)
+    sci_justification_pdf = serializers.FileField(required=False)
+    exp_design_and_time_justification_pdf = serializers.FileField(required=False)
     clear_pdf = serializers.BooleanField(required=False, default=False, write_only=True)
     tags = serializers.ListField(child=serializers.CharField(max_length=255), allow_empty=True, required=False)
     call = serializers.SerializerMethodField()
@@ -279,7 +279,7 @@ class ScienceApplicationSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'title', 'abstract', 'status', 'tac_rank', 'call', 'call_id', 'pi',
             'pi_first_name', 'pi_last_name', 'pi_institution', 'timerequest_set', 'tags',
-            'coinvestigator_set', 'pdf', 'pdf_one', 'pdf_two', 'clear_pdf', 'sca', 'submitter', 'submitted'
+            'coinvestigator_set', 'pdf', 'sci_justification_pdf', 'exp_design_and_time_justification_pdf', 'clear_pdf', 'sca', 'submitter', 'submitted'
         )
         read_only_fields = ('submitted', 'pdf')
 
@@ -347,10 +347,10 @@ class ScienceApplicationSerializer(serializers.ModelSerializer):
 
         return pdf
 
-    def validate_pdf_one(self, pdf):
+    def validate_sci_justification_pdf(self, pdf):
         return self.validate_pdf(pdf)
 
-    def validate_pdf_one(self, pdf):
+    def validate_sci_justification_pdf(self, pdf):
         return self.validate_pdf(pdf)
 
     def validate_abstract(self, abstract):
@@ -363,23 +363,23 @@ class ScienceApplicationSerializer(serializers.ModelSerializer):
     def get_required_fields_for_submission(call_proposal_type):
         required_fields = ['call', 'status', 'title', 'pi', 'pi_first_name', 'pi_last_name', 'pi_institution']
         if call_proposal_type == Call.DDT_PROPOSAL:
-            required_fields.extend(['pdf_one', 'pdf_two'])
+            required_fields.extend(['sci_justification_pdf', 'exp_design_and_time_justification_pdf'])
         elif call_proposal_type == Call.COLLAB_PROPOSAL:
             required_fields.extend(['abstract', 'tac_rank'])
         else:
-            required_fields.extend(['abstract', 'pdf_one', 'pdf_two'])
+            required_fields.extend(['abstract', 'sci_justification_pdf', 'exp_design_and_time_justification_pdf'])
         return required_fields
 
     def validate(self, data):
         status = data['status']
         call = data['call']
         clear_pdf = data.get('clear_pdf', False)
-        pdf_one = data.get('pdf_one', None)
-        pdf_two = data.get('pdf_two', None)
+        sci_justification_pdf = data.get('sci_justification_pdf', None)
+        exp_design_and_time_justification_pdf = data.get('exp_design_and_time_justification_pdf', None)
         timerequest_set = data.get('timerequest_set', [])
         tac_rank = data.get('tac_rank', 0)
 
-        have_any_pdf = (pdf_one is not None) or (pdf_two is not None)
+        have_any_pdf = (sci_justification_pdf is not None) or (exp_design_and_time_justification_pdf is not None)
 
         if have_any_pdf and clear_pdf:
             raise serializers.ValidationError(_('Please either submit a new pdf or clear the existing pdf, not both.'))
@@ -416,7 +416,7 @@ class ScienceApplicationSerializer(serializers.ModelSerializer):
             for field in self.get_required_fields_for_submission(call.proposal_type):
                 empty_values = [None, '']
                 field_is_empty = data.get(field) in empty_values
-                if field == 'pdf_one' or field == 'pdf_two':
+                if field == 'sci_justification_pdf' or field == 'exp_design_and_time_justification_pdf':
                     if clear_pdf:
                         missing_fields['clear_pdf'] = _(
                             'A PDF is required for submission. If you want to clear the uploaded PDF, please '
@@ -437,8 +437,8 @@ class ScienceApplicationSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         # TODO: Do this without needing to delete all existing time requests and coinvestigators
-        pdf_one = validated_data.pop('pdf_one', None)
-        pdf_two = validated_data.pop('pdf_two', None)
+        sci_justification_pdf = validated_data.pop('sci_justification_pdf', None)
+        exp_design_and_time_justification_pdf = validated_data.pop('exp_design_and_time_justification_pdf', None)
         clear_pdf = validated_data.pop('clear_pdf', False)
         timerequest_set = validated_data.pop('timerequest_set', [])
         coinvestigator_set = validated_data.pop('coinvestigator_set', [])
@@ -453,13 +453,13 @@ class ScienceApplicationSerializer(serializers.ModelSerializer):
             # uploaded pdfs. Use `clear_pdf` to determine if the pdf should be cleared.
 
             if clear_pdf:
-                instance.pdf_one = None
-                instance.pdf_two = None
+                instance.sci_justification_pdf = None
+                instance.exp_design_and_time_justification_pdf = None
             else:
-              if pdf_one is not None:
-                  instance.pdf_one = pdf_one
-              if pdf_two is not None:
-                  instance.pdf_two = pdf_two
+              if sci_justification_pdf is not None:
+                  instance.sci_justification_pdf = sci_justification_pdf
+              if exp_design_and_time_justification_pdf is not None:
+                  instance.exp_design_and_time_justification_pdf = exp_design_and_time_justification_pdf
 
             instance.save()
 

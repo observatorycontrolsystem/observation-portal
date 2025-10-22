@@ -282,13 +282,13 @@ class ScienceApplicationViewSet(viewsets.ModelViewSet):
                         tr.instrument_types.add(instrument)
                     tr.save()
             # now generate new PDF, this uses the primary key of the new sciapp
-            if sci_app.pdf_one:
-                with sci_app.pdf_one.open("rb") as fobj:
-                    sci_app.pdf_one = ContentFile(fobj.read(), name=os.path.basename(sci_app.pdf_one.name))
+            if sci_app.sci_justification_pdf:
+                with sci_app.sci_justification_pdf.open("rb") as fobj:
+                    sci_app.sci_justification_pdf = ContentFile(fobj.read(), name=os.path.basename(sci_app.sci_justification_pdf.name))
 
-            if sci_app.pdf_two:
-                with sci_app.pdf_two.open("rb") as fobj:
-                    sci_app.pdf_two = ContentFile(fobj.read(), name=os.path.basename(sci_app.pdf_two.name))
+            if sci_app.exp_design_and_time_justification_pdf:
+                with sci_app.exp_design_and_time_justification_pdf.open("rb") as fobj:
+                    sci_app.exp_design_and_time_justification_pdf = ContentFile(fobj.read(), name=os.path.basename(sci_app.exp_design_and_time_justification_pdf.name))
 
             sci_app.save()
 

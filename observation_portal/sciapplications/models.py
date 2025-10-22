@@ -96,11 +96,11 @@ class Call(models.Model):
 def pdf_upload_path(instance, filename):
     return 'sciapps/{0}/{1}/{2}'.format(instance.call.semester.id, instance.id, filename)
 
-def pdf_one_upload_path(instance, filename):
-    return 'sciapps/{0}/{1}/{2}/one/{3}'.format(instance.call.semester.id, instance.submitter.id, instance.id, filename)
+def sci_justification_upload_path(instance, filename):
+    return 'sciapps/{0}/{1}/{2}/science_justification/{3}'.format(instance.call.semester.id, instance.submitter.id, instance.id, filename)
 
-def pdf_two_upload_path(instance, filename):
-    return 'sciapps/{0}/{1}/{2}/two/{3}'.format(instance.call.semester.id, instance.submitter.id, instance.id, filename)
+def exp_design_and_time_justification_upload_path(instance, filename):
+    return 'sciapps/{0}/{1}/{2}/exp_design_time_justification/{3}'.format(instance.call.semester.id, instance.submitter.id, instance.id, filename)
 
 
 
@@ -132,8 +132,8 @@ class ScienceApplication(models.Model):
     tac_rank = models.PositiveIntegerField(default=0)
     tac_priority = models.PositiveIntegerField(default=0)
     pdf = models.FileField(upload_to=pdf_upload_path, blank=True, null=True)
-    pdf_one = models.FileField(upload_to=pdf_one_upload_path, blank=True, null=True)
-    pdf_two = models.FileField(upload_to=pdf_two_upload_path, blank=True, null=True)
+    sci_justification_pdf = models.FileField(upload_to=sci_justification_upload_path, blank=True, null=True)
+    exp_design_and_time_justification_pdf = models.FileField(upload_to=exp_design_and_time_justification_upload_path, blank=True, null=True)
     tags = ArrayField(models.CharField(max_length=255), default=list, blank=True, help_text='List of strings tagging this application')
 
     # Admin only Notes

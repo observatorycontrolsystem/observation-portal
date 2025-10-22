@@ -38,7 +38,7 @@ def generate_legacy_pdf(sender, instance, **kwargs):
     TODO: remove this once the `pdf` field has been sunset completely.
     """
     # exit early if any of the two PDFs are missing
-    if not instance.pdf_one or not instance.pdf_two:
+    if not instance.sci_justification_pdf or not instance.exp_design_and_time_justification_pdf:
         return
 
     # also if the PDF is already up to date
@@ -47,13 +47,13 @@ def generate_legacy_pdf(sender, instance, **kwargs):
 
     # otherwise merge them into a new PDF and save to the legacy pdf field
     merged = PdfWriter()
-    for f in [instance.pdf_one, instance.pdf_two]:
+    for f in [instance.sci_justification_pdf, instance.exp_design_and_time_justification_pdf]:
         with f.open(mode="rb") as fobj:
             merged.append(fobj)
 
     with BytesIO() as buff:
         merged.write(buff)
-        instance.pdf = ContentFile(buff.getbuffer(), name=basename(instance.pdf_one.name))
+        instance.pdf = ContentFile(buff.getbuffer(), name=basename(instance.sci_justification_pdf.name))
         instance.pdf_generated = instance.modified
         instance.save(update_fields=["pdf", "pdf_generated"])
 
@@ -103,7 +103,7 @@ def generate_review_pdf(sender, instance, **kwargs):
         return
 
     # need a PDF to do anything
-    if not sci_app.pdf_one:
+    if not sci_app.sci_justification_pdf:
         return
 
     # otherwise create a PDF version of the cover page and merge that with
@@ -112,12 +112,12 @@ def generate_review_pdf(sender, instance, **kwargs):
 
     merged = PdfWriter()
     merged.append(cover_page)
-    with sci_app.pdf_one.open(mode="rb") as fobj:
+    with sci_app.sci_justification_pdf.open(mode="rb") as fobj:
         merged.append(fobj)
 
     with BytesIO() as buff:
         merged.write(buff)
-        instance.pdf = ContentFile(buff.getbuffer(), name=basename(sci_app.pdf_one.name))
+        instance.pdf = ContentFile(buff.getbuffer(), name=basename(sci_app.sci_justification_pdf.name))
 
 @receiver([pre_save], sender=ScienceApplicationReview)
 def generate_admin_review_pdf(sender, instance, **kwargs):
@@ -131,7 +131,7 @@ def generate_admin_review_pdf(sender, instance, **kwargs):
         return
 
     # exit early if both PDFs are not set
-    if not sci_app.pdf_one or not sci_app.pdf_two:
+    if not sci_app.sci_justification_pdf or not sci_app.exp_design_and_time_justification_pdf:
         return
 
     # otherwise create a PDF version of the cover page and merge that with
@@ -140,10 +140,10 @@ def generate_admin_review_pdf(sender, instance, **kwargs):
 
     merged = PdfWriter()
     merged.append(cover_page)
-    for f in [sci_app.pdf_one, sci_app.pdf_two]:
+    for f in [sci_app.sci_justification_pdf, sci_app.exp_design_and_time_justification_pdf]:
         with f.open(mode="rb") as fobj:
             merged.append(fobj)
 
     with BytesIO() as buff:
         merged.write(buff)
-        instance.admin_pdf = ContentFile(buff.getbuffer(), name=basename(sci_app.pdf_one.name))
+        instance.admin_pdf = ContentFile(buff.getbuffer(), name=basename(sci_app.sci_justification_pdf.name))
