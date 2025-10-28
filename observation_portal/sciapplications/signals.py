@@ -30,32 +30,6 @@ def update_review_mean(sender, instance, **kwargs):
 
     review.save()
 
-@receiver([post_save], sender=ScienceApplication)
-def generate_legacy_pdf(sender, instance, **kwargs):
-    """
-    Generate a merged PDF to maintain backwards compatibility.
-
-    TODO: remove this once the `pdf` field has been sunset completely.
-    """
-    # exit early if any of the two PDFs are missing
-    if not instance.sci_justification_pdf or not instance.exp_design_and_time_justification_pdf:
-        return
-
-    # also if the PDF is already up to date
-    if instance.pdf_generated is not None and instance.pdf_generated == instance.modified:
-        return
-
-    # otherwise merge them into a new PDF and save to the legacy pdf field
-    merged = PdfWriter()
-    for f in [instance.sci_justification_pdf, instance.exp_design_and_time_justification_pdf]:
-        with f.open(mode="rb") as fobj:
-            merged.append(fobj)
-
-    with BytesIO() as buff:
-        merged.write(buff)
-        instance.pdf = ContentFile(buff.getbuffer(), name=basename(instance.sci_justification_pdf.name))
-        instance.pdf_generated = instance.modified
-        instance.save(update_fields=["pdf", "pdf_generated"])
 
 def _render_to_pdf(*args, **kwargs):
     """
@@ -131,7 +105,7 @@ def generate_admin_review_pdf(sender, instance, **kwargs):
         return
 
     # exit early if both PDFs are not set
-    if not sci_app.sci_justification_pdf or not sci_app.exp_design_and_time_justification_pdf:
+    if not sci_app.sci_justification_pdf or not sci_app.references_pdf:
         return
 
     # otherwise create a PDF version of the cover page and merge that with
@@ -140,7 +114,7 @@ def generate_admin_review_pdf(sender, instance, **kwargs):
 
     merged = PdfWriter()
     merged.append(cover_page)
-    for f in [sci_app.sci_justification_pdf, sci_app.exp_design_and_time_justification_pdf]:
+    for f in [sci_app.sci_justification_pdf, sci_app.references_pdf]:
         with f.open(mode="rb") as fobj:
             merged.append(fobj)
 

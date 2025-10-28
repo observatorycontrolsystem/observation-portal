@@ -387,7 +387,7 @@ class TestPostCreateSciApp(DramatiqTestCase):
             'pi_institution': fake.company(),
             'abstract': fake.text(),
             'sci_justification_pdf': SimpleUploadedFile('one.pdf', b'ab'),
-            'exp_design_and_time_justification_pdf': SimpleUploadedFile('two.pdf', b'abcd'),
+            'references_pdf': SimpleUploadedFile('two.pdf', b'abcd'),
             'tac_rank': 1
         }
         timerequest_data = generate_time_request_data(0, self.instrument, self.semester)
@@ -559,7 +559,7 @@ class TestPostCreateSciApp(DramatiqTestCase):
     def test_cannot_upload_files_that_arent_pdfs(self):
         data = self.sci_data.copy()
         data['sci_justification_pdf'] = SimpleUploadedFile('notpdf.png', b'apngfile')
-        data['exp_design_and_time_justification_pdf'] = SimpleUploadedFile('anothernotpdf.png', b'anotherone')
+        data['references_pdf'] = SimpleUploadedFile('anothernotpdf.png', b'anotherone')
         response = self.client.post(reverse('api:scienceapplications-list'), data=data)
         self.assertEqual(self.user.scienceapplication_set.count(), 0)
         self.assertContains(response, 'We can only accept PDF files', status_code=400)
@@ -706,38 +706,29 @@ class TestPostCreateSciApp(DramatiqTestCase):
         self.assertIn('A PDF is required for submission.', response.json().get('sci_justification_pdf'))
 
         data = self.ddt_data.copy()
-        del data['exp_design_and_time_justification_pdf']
+        del data['references_pdf']
         response = self.client.post(reverse('api:scienceapplications-list'), data=data)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('A PDF is required for submission.', response.json().get('exp_design_and_time_justification_pdf'))
-
-    def test_legacy_pdf_is_generated(self):
-        data = self.sci_data.copy()
-        uploaded_sci_justification_pdf = data['sci_justification_pdf']
-        response = self.client.post(reverse('api:scienceapplications-list'), data=data)
-        submitted_sciapp = ScienceApplication.objects.get(pk=response.json()["id"])
-        self.assertEqual(response.status_code, 201)
-        self.assertEqual(path.basename(submitted_sciapp.pdf.name), uploaded_sci_justification_pdf.name)
-        self.assertEqual(submitted_sciapp.pdf_generated, submitted_sciapp.modified)
+        self.assertIn('A PDF is required for submission.', response.json().get('references_pdf'))
 
     def test_ddt_application_requires_pdf(self):
         data = self.ddt_data.copy()
         del data['sci_justification_pdf']
-        del data['exp_design_and_time_justification_pdf']
+        del data['references_pdf']
         response = self.client.post(reverse('api:scienceapplications-list'), data=data)
         self.assertEqual(response.status_code, 400)
         self.assertIn('A PDF is required for submission.', response.json().get('sci_justification_pdf'))
-        self.assertIn('A PDF is required for submission.', response.json().get('exp_design_and_time_justification_pdf'))
+        self.assertIn('A PDF is required for submission.', response.json().get('references_pdf'))
 
     def test_sci_application_requires_pdf_and_abstract(self):
         data = self.sci_data.copy()
         del data['abstract']
         del data['sci_justification_pdf']
-        del data['exp_design_and_time_justification_pdf']
+        del data['references_pdf']
         response = self.client.post(reverse('api:scienceapplications-list'), data=data)
         self.assertEqual(response.status_code, 400)
         self.assertIn('A PDF is required for submission.', response.json().get('sci_justification_pdf'))
-        self.assertIn('A PDF is required for submission.', response.json().get('exp_design_and_time_justification_pdf'))
+        self.assertIn('A PDF is required for submission.', response.json().get('references_pdf'))
         self.assertIn('This field is required.', response.json().get('abstract'))
 
     def test_can_save_draft_with_no_timerequests(self):
@@ -762,7 +753,7 @@ class TestPostCreateSciApp(DramatiqTestCase):
         self.client.force_login(self.scicollab_admin)
         data = self.collab_data.copy()
         data['sci_justification_pdf'] = SimpleUploadedFile('s.pdf', b'ab')
-        data['exp_design_and_time_justification_pdf'] = SimpleUploadedFile('p.pdf', b'ab')
+        data['references_pdf'] = SimpleUploadedFile('p.pdf', b'ab')
         response = self.client.post(reverse('api:scienceapplications-list'), data=data)
         self.assertContains(response, 'collaboration proposals do not have pdfs', status_code=400)
 
@@ -834,7 +825,7 @@ class TestPostUpdateSciApp(DramatiqTestCase):
             'pi_institution': fake.company(),
             'abstract': fake.text(),
             'sci_justification_pdf': SimpleUploadedFile('one.pdf', b'ab'),
-            'exp_design_and_time_justification_pdf': SimpleUploadedFile('two.pdf', b'abcd'),
+            'references_pdf': SimpleUploadedFile('two.pdf', b'abcd'),
             **generate_coinvestigator_data(0),
             **generate_time_request_data(0, self.instrument, self.semester)
         }
@@ -938,12 +929,12 @@ class TestPostUpdateSciApp(DramatiqTestCase):
     def test_submit_draft_that_has_pdf_saved_does_not_need_user_to_pass_in_pdf_field(self):
         data = self.sci_data.copy()
         uploaded_sci_justification_pdf = data['sci_justification_pdf']
-        uploaded_exp_design_and_time_justification_pdf = data['exp_design_and_time_justification_pdf']
+        uploaded_references_pdf = data['references_pdf']
         self.sci_app.sci_justification_pdf = uploaded_sci_justification_pdf
-        self.sci_app.exp_design_and_time_justification_pdf = uploaded_exp_design_and_time_justification_pdf
+        self.sci_app.references_pdf = uploaded_references_pdf
         self.sci_app.save()
         del data['sci_justification_pdf']
-        del data['exp_design_and_time_justification_pdf']
+        del data['references_pdf']
         data['status'] = ScienceApplication.SUBMITTED
         response = self.client.put(
             reverse('api:scienceapplications-detail', kwargs={'pk': self.sci_app.id}),
@@ -952,13 +943,13 @@ class TestPostUpdateSciApp(DramatiqTestCase):
         submitted_sciapp = ScienceApplication.objects.get(pk=self.sci_app.id)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(path.basename(submitted_sciapp.sci_justification_pdf.name), uploaded_sci_justification_pdf.name)
-        self.assertEqual(path.basename(submitted_sciapp.exp_design_and_time_justification_pdf.name), uploaded_exp_design_and_time_justification_pdf.name)
+        self.assertEqual(path.basename(submitted_sciapp.references_pdf.name), uploaded_references_pdf.name)
 
     def test_submitting_app_without_pdf_when_a_pdf_is_required_fails(self):
         data = self.sci_data.copy()
         data['status'] = ScienceApplication.SUBMITTED
         del data['sci_justification_pdf']
-        del data['exp_design_and_time_justification_pdf']
+        del data['references_pdf']
         response = self.client.put(
             reverse('api:scienceapplications-detail', kwargs={'pk': self.sci_app.id}),
             data=encode_multipart(BOUNDARY, data), content_type=MULTIPART_CONTENT
@@ -968,10 +959,10 @@ class TestPostUpdateSciApp(DramatiqTestCase):
     def test_clearing_pdf_when_pdf_is_required_on_submission_fails(self):
         data = self.sci_data.copy()
         self.sci_app.sci_justification_pdf = data['sci_justification_pdf']
-        self.sci_app.exp_design_and_time_justification_pdf = data['exp_design_and_time_justification_pdf']
+        self.sci_app.references_pdf = data['references_pdf']
         self.sci_app.save()
         del data['sci_justification_pdf']
-        del data['exp_design_and_time_justification_pdf']
+        del data['references_pdf']
         data['clear_pdf'] = True
         data['status'] = ScienceApplication.SUBMITTED
         response = self.client.put(
@@ -982,15 +973,15 @@ class TestPostUpdateSciApp(DramatiqTestCase):
 
     def test_leaving_out_a_pdf_doesnt_update_the_uploaded_pdf(self):
         uploaded_sci_justification_pdf = SimpleUploadedFile('app_one.pdf', b'123')
-        uploaded_exp_design_and_time_justification_pdf = SimpleUploadedFile('app_two.pdf', b'123')
+        uploaded_references_pdf = SimpleUploadedFile('app_two.pdf', b'123')
         self.sci_app.sci_justification_pdf = uploaded_sci_justification_pdf
-        self.sci_app.exp_design_and_time_justification_pdf = uploaded_exp_design_and_time_justification_pdf
+        self.sci_app.references_pdf = uploaded_references_pdf
         self.sci_app.save()
         self.assertEqual(path.basename(self.sci_app.sci_justification_pdf.name), uploaded_sci_justification_pdf.name)
-        self.assertEqual(path.basename(self.sci_app.exp_design_and_time_justification_pdf.name), uploaded_exp_design_and_time_justification_pdf.name)
+        self.assertEqual(path.basename(self.sci_app.references_pdf.name), uploaded_references_pdf.name)
         data = self.sci_data.copy()
         del data['sci_justification_pdf']
-        del data['exp_design_and_time_justification_pdf']
+        del data['references_pdf']
         data['title'] = 'Updated title'
         response = self.client.put(
             reverse('api:scienceapplications-detail', kwargs={'pk': self.sci_app.id}),
@@ -999,19 +990,19 @@ class TestPostUpdateSciApp(DramatiqTestCase):
         updated_sciapp = ScienceApplication.objects.get(pk=self.sci_app.id)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(path.basename(updated_sciapp.sci_justification_pdf.name), uploaded_sci_justification_pdf.name)
-        self.assertEqual(path.basename(updated_sciapp.exp_design_and_time_justification_pdf.name), uploaded_exp_design_and_time_justification_pdf.name)
+        self.assertEqual(path.basename(updated_sciapp.references_pdf.name), uploaded_references_pdf.name)
         self.assertEqual(updated_sciapp.title, data['title'])
 
     def test_setting_clear_pdf_clears_pdf(self):
         self.sci_app.sci_justification_pdf = SimpleUploadedFile('sci_one.pdf', b'ab')
-        self.sci_app.exp_design_and_time_justification_pdf = SimpleUploadedFile('sci_two.pdf', b'ab')
+        self.sci_app.references_pdf = SimpleUploadedFile('sci_two.pdf', b'ab')
         self.sci_app.save()
         self.assertTrue(self.sci_app.sci_justification_pdf)
-        self.assertTrue(self.sci_app.exp_design_and_time_justification_pdf)
+        self.assertTrue(self.sci_app.references_pdf)
         data = self.sci_data.copy()
         data['title'] = 'Updated title'
         del data['sci_justification_pdf']
-        del data['exp_design_and_time_justification_pdf']
+        del data['references_pdf']
         data['clear_pdf'] = True
         response = self.client.put(
             reverse('api:scienceapplications-detail', kwargs={'pk': self.sci_app.id}),
@@ -1020,7 +1011,7 @@ class TestPostUpdateSciApp(DramatiqTestCase):
         updated_sciapp = ScienceApplication.objects.get(pk=self.sci_app.id)
         self.assertEqual(response.status_code, 200)
         self.assertFalse(updated_sciapp.sci_justification_pdf)
-        self.assertFalse(updated_sciapp.exp_design_and_time_justification_pdf)
+        self.assertFalse(updated_sciapp.references_pdf)
         self.assertEqual(updated_sciapp.title, data['title'])
 
     def test_cannot_set_both_pdf_and_clear_pdf(self):
@@ -1035,14 +1026,14 @@ class TestPostUpdateSciApp(DramatiqTestCase):
 
     def test_setting_new_pdf_updates_pdf(self):
         original_sci_justification_pdf = SimpleUploadedFile('first_upload_one.pdf', b'qwerty')
-        original_exp_design_and_time_justification_pdf = SimpleUploadedFile('first_upload_two.pdf', b'qwerty')
+        original_references_pdf = SimpleUploadedFile('first_upload_two.pdf', b'qwerty')
         self.sci_app.sci_justification_pdf = original_sci_justification_pdf
-        self.sci_app.exp_design_and_time_justification_pdf = original_exp_design_and_time_justification_pdf
+        self.sci_app.references_pdf = original_references_pdf
         self.sci_app.save()
         self.assertEqual(path.basename(self.sci_app.sci_justification_pdf.name), original_sci_justification_pdf.name)
-        self.assertEqual(path.basename(self.sci_app.exp_design_and_time_justification_pdf.name), original_exp_design_and_time_justification_pdf.name)
+        self.assertEqual(path.basename(self.sci_app.references_pdf.name), original_references_pdf.name)
         self.assertEqual(self.sci_app.sci_justification_pdf.size, original_sci_justification_pdf.size)
-        self.assertEqual(self.sci_app.exp_design_and_time_justification_pdf.size, original_exp_design_and_time_justification_pdf.size)
+        self.assertEqual(self.sci_app.references_pdf.size, original_references_pdf.size)
         data = self.sci_data.copy()
         data['title'] = 'Updated title'
         response = self.client.put(
@@ -1052,9 +1043,9 @@ class TestPostUpdateSciApp(DramatiqTestCase):
         updated_sciapp = ScienceApplication.objects.get(pk=self.sci_app.id)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(path.basename(updated_sciapp.sci_justification_pdf.name), data['sci_justification_pdf'].name)
-        self.assertEqual(path.basename(updated_sciapp.exp_design_and_time_justification_pdf.name), data['exp_design_and_time_justification_pdf'].name)
+        self.assertEqual(path.basename(updated_sciapp.references_pdf.name), data['references_pdf'].name)
         self.assertEqual(updated_sciapp.sci_justification_pdf.size, data['sci_justification_pdf'].size)
-        self.assertEqual(updated_sciapp.exp_design_and_time_justification_pdf.size, data['exp_design_and_time_justification_pdf'].size)
+        self.assertEqual(updated_sciapp.references_pdf.size, data['references_pdf'].size)
         self.assertEqual(updated_sciapp.title, data['title'])
 
     def test_draft_ddt_does_not_send_notification_email(self):
@@ -1177,7 +1168,7 @@ class TestCopySciApp(DramatiqTestCase):
             pi_institution=fake.company(),
             abstract=fake.text(),
             sci_justification_pdf=SimpleUploadedFile('sci_one.pdf', b'ab'),
-            exp_design_and_time_justification_pdf=SimpleUploadedFile('sci_two.pdf', b'ab'),
+            references_pdf=SimpleUploadedFile('sci_two.pdf', b'ab'),
             **generate_coinvestigator_data(0),
             **generate_time_request_data(0, self.instrument, self.old_semester)
         )
@@ -1193,7 +1184,7 @@ class TestCopySciApp(DramatiqTestCase):
         self.assertEqual(science_applications.count(), 2)
         self.assertEqual(sci_app_copy.status, ScienceApplication.DRAFT)
         self.assertNotEqual(sci_app_copy.sci_justification_pdf.name, old_sci_app.sci_justification_pdf.name)
-        self.assertNotEqual(sci_app_copy.exp_design_and_time_justification_pdf.name, old_sci_app.exp_design_and_time_justification_pdf.name)
+        self.assertNotEqual(sci_app_copy.references_pdf.name, old_sci_app.references_pdf.name)
         self.assertEqual(sci_app_copy.call.id, self.current_sci_call.id)
         self.assertEqual(sci_app_copy.call.semester.id, self.current_sci_call.semester.id)
         self.assertEqual(sci_app_copy.tac_rank, 0)
@@ -1781,7 +1772,7 @@ class TestReviewProcessAPI(APITestCase):
         app = MagicMock()
         app.status = ScienceApplication.SUBMITTED
         app.sci_justification_pdf = MagicMock()
-        app.exp_design_and_time_justification_pdf = MagicMock()
+        app.references_pdf = MagicMock()
 
         app_review = MagicMock()
         app_review.science_application = app
@@ -1795,7 +1786,7 @@ class TestReviewProcessAPI(APITestCase):
         merged.append.assert_has_calls([
             call(_generate_cover_page_pdf_m()),
             call(app.sci_justification_pdf.open(mode="rb").__enter__()),
-            call(app.exp_design_and_time_justification_pdf.open(mode="rb").__enter__()),
+            call(app.references_pdf.open(mode="rb").__enter__()),
         ])
 
         buff = bytes_io_m().__enter__()

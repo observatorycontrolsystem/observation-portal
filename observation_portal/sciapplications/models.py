@@ -99,8 +99,8 @@ def pdf_upload_path(instance, filename):
 def sci_justification_upload_path(instance, filename):
     return 'sciapps/{0}/{1}/{2}/science_justification/{3}'.format(instance.call.semester.id, instance.submitter.id, instance.id, filename)
 
-def exp_design_and_time_justification_upload_path(instance, filename):
-    return 'sciapps/{0}/{1}/{2}/exp_design_time_justification/{3}'.format(instance.call.semester.id, instance.submitter.id, instance.id, filename)
+def references_upload_path(instance, filename):
+    return 'sciapps/{0}/{1}/{2}/references/{3}'.format(instance.call.semester.id, instance.submitter.id, instance.id, filename)
 
 
 
@@ -133,7 +133,7 @@ class ScienceApplication(models.Model):
     tac_priority = models.PositiveIntegerField(default=0)
     pdf = models.FileField(upload_to=pdf_upload_path, blank=True, null=True)
     sci_justification_pdf = models.FileField(upload_to=sci_justification_upload_path, blank=True, null=True)
-    exp_design_and_time_justification_pdf = models.FileField(upload_to=exp_design_and_time_justification_upload_path, blank=True, null=True)
+    references_pdf = models.FileField(upload_to=references_upload_path, blank=True, null=True)
     tags = ArrayField(models.CharField(max_length=255), default=list, blank=True, help_text='List of strings tagging this application')
 
     # Admin only Notes
@@ -144,7 +144,6 @@ class ScienceApplication(models.Model):
     modified = models.DateTimeField(auto_now=True)
     submitted = models.DateTimeField(null=True, blank=True)
 
-    pdf_generated = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ('-id',)

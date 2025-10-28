@@ -286,9 +286,9 @@ class ScienceApplicationViewSet(viewsets.ModelViewSet):
                 with sci_app.sci_justification_pdf.open("rb") as fobj:
                     sci_app.sci_justification_pdf = ContentFile(fobj.read(), name=os.path.basename(sci_app.sci_justification_pdf.name))
 
-            if sci_app.exp_design_and_time_justification_pdf:
-                with sci_app.exp_design_and_time_justification_pdf.open("rb") as fobj:
-                    sci_app.exp_design_and_time_justification_pdf = ContentFile(fobj.read(), name=os.path.basename(sci_app.exp_design_and_time_justification_pdf.name))
+            if sci_app.references_pdf:
+                with sci_app.references_pdf.open("rb") as fobj:
+                    sci_app.references_pdf = ContentFile(fobj.read(), name=os.path.basename(sci_app.references_pdf.name))
 
             sci_app.save()
 
