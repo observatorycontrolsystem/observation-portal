@@ -2,23 +2,35 @@
 
 from os.path import basename
 from django.db import migrations
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 
 
 def prepend_user_id_to_pdf_files_forwards(apps, schema_editor):
     ScienceApplication = apps.get_model("sciapplications", "ScienceApplication")
 
+    # NOTE: This leaves the old file in place. That might be the safest option
+    # to avoid loosing any files in-case something goes wrong during the migration.
+    # Plus, I don't think there's a way to dynamically change the upload_to path
+    # temporarily when doing a delete.
     for item in ScienceApplication.objects.all():
-        filename = basename(item.pdf.name)
-        item.pdf.name = 'sciapps/{0}/{1}/{2}/{3}'.format(item.call.semester.id, item.submitter.id, item.id, filename)
-        item.save()
+        old_name = item.pdf.name
+
+        # skip if file has already been moved
+        # new format has 4 forward slashes...maybe we need an unique identifier in the path)
+        if old_name.count("/") == 4:
+            continue
+
+        filename = basename(old_name)
+        with item.pdf.open(mode="rb") as fobj:
+            item.pdf = ContentFile(fobj.read(), name=filename)
+            item.pdf.name = filename
+            item.save(update_fields=["pdf"])
 
 def prepend_user_id_to_pdf_files_backwards(apps, schema_editor):
-    ScienceApplication = apps.get_model("sciapplications", "ScienceApplication")
+    # no-op
+    pass
 
-    for item in ScienceApplication.objects.all():
-        filename = basename(item.pdf.name)
-        item.pdf.name = 'sciapps/{0}/{1}/{2}'.format(item.call.semester.id, item.id, filename)
-        item.save()
 
 class Migration(migrations.Migration):
 

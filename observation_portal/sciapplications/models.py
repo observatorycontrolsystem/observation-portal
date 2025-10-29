@@ -94,8 +94,11 @@ class Call(models.Model):
         return '{0} call for {1}'.format(self.get_proposal_type_display(), self.semester)
 
 def pdf_upload_path(instance, filename):
-    return 'sciapps/{0}/{1}/{2}'.format(instance.call.semester.id, instance.id, filename)
+    return 'sciapps/{0}/{1}/{2}/{3}'.format(instance.call.semester.id, instance.submitter.id, instance.id, filename)
 
+#def pdf_upload_path(instance, filename):
+#    return 'sciapps/{0}/{1}/{2}'.format(instance.call.semester.id, instance.id, filename)
+#
 def sci_justification_upload_path(instance, filename):
     return 'sciapps/{0}/{1}/{2}/science_justification/{3}'.format(instance.call.semester.id, instance.submitter.id, instance.id, filename)
 
