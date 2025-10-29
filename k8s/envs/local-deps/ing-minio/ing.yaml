@@ -5,6 +5,7 @@ metadata: # kpt-merge: /example
   name: minio
   annotations:
     internal.kpt.dev/upstream-identifier: 'networking.k8s.io|Ingress|default|example'
+    nginx.ingress.kubernetes.io/proxy-body-size: 128m
 spec:
   ingressClassName: "nginx"
   rules:
