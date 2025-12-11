@@ -1,3 +1,4 @@
+import json
 from datetime import datetime, timedelta
 from django.test import TestCase
 from django.urls import reverse
@@ -42,6 +43,24 @@ class TestIndex(TestCase):
         self.client.post(
             reverse('auth_login'),
             {'username': 'doge', 'password': 'sopassword'},
+        )
+        user = auth.get_user(self.client)
+        self.assertTrue(user.is_authenticated)
+
+    def test_api_login_fails(self):
+        self.client.post(
+            reverse('api_login'),
+            data=json.dumps({'username': 'doge', 'password': 'wrongpass'}),
+            content_type='application/json'
+        )
+        user = auth.get_user(self.client)
+        self.assertFalse(user.is_authenticated)
+
+    def test_api_login(self):
+        self.client.post(
+            reverse('api_login'),
+            data=json.dumps({'username': 'doge', 'password': 'sopassword'}),
+            content_type='application/json'
         )
         user = auth.get_user(self.client)
         self.assertTrue(user.is_authenticated)
