@@ -9,13 +9,11 @@ namespace: obs-portal
 
 configMapGenerator:
   - name: env
-    behavior: merge
     envs:
       - ./settings.env
 
 secretGenerator:
   - name: env
-    behavior: merge
     envs:
       - ./secrets.env
 
