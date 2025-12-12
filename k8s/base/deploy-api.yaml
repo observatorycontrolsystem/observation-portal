@@ -149,12 +149,6 @@ spec:
             - secretRef:
                 name: env
                 optional: true
-            - secretRef:
-                name: env-db
-                optional: true
-            - secretRef:
-                name: env-
-                optional: true
 
           env:
             - name: GUNICORN_WORKERS
