@@ -48,10 +48,10 @@ spec:
           envFrom:
             - configMapRef:
                 name: env
-                optional: false
+                optional: true
             - secretRef:
                 name: env
-                optional: false
+                optional: true
 
           livenessProbe:
             initialDelaySeconds: 15
