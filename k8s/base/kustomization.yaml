@@ -13,8 +13,6 @@ commonLabels:
   app.kubernetes.io/name: observation-portal
 
 configMapGenerator:
-  - name: env
-
   - name: nginx-confd-templates
     files:
       - default.conf.template=./nginx-default.conf.template
@@ -22,9 +20,6 @@ configMapGenerator:
   - name: coredns
     files:
       - ./Corefile
-
-secretGenerator:
-  - name: env
 
 replacements:
   - source:

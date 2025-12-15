@@ -48,10 +48,10 @@ spec:
           envFrom:
             - configMapRef:
                 name: env
-                optional: false
+                optional: true
             - secretRef:
                 name: env
-                optional: false
+                optional: true
 
           resources:
             requests:
@@ -89,10 +89,10 @@ spec:
           envFrom:
             - configMapRef:
                 name: env
-                optional: false
+                optional: true
             - secretRef:
                 name: env
-                optional: false
+                optional: true
 
       containers:
         - name: default
@@ -125,7 +125,7 @@ spec:
           envFrom:
             - configMapRef:
                 name: env
-                optional: false
+                optional: true
             - secretRef:
                 name: env
-                optional: false
+                optional: true
