@@ -21,6 +21,8 @@ helmCharts:
       values:
         valuesInline:
           # Chart values go here
+          image:
+            repository: bitnamilegacy/redis
           architecture: standalone
           auth:
             password: observationportal

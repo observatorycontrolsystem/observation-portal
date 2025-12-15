@@ -4,8 +4,8 @@ from collections import defaultdict
 from django.utils.translation import gettext as _
 from django.utils import timezone
 from django.db import transaction
-from PyPDF2 import PdfFileReader
-from PyPDF2.utils import PdfReadError
+from PyPDF2 import PdfReader
+from PyPDF2.errors import PdfReadError
 from rest_framework import serializers
 
 from observation_portal.sciapplications.models import (
@@ -81,7 +81,10 @@ class ScienceApplicationReviewSerializer(serializers.ModelSerializer):
 
     def get_pdf_url(self, obj):
         try:
-            return obj.pdf.url
+            if self._request_user_is_admin_panel_memeber():
+                return obj.admin_pdf.url
+            else:
+                return obj.pdf.url
         except Exception:
             return None
 
@@ -163,9 +166,16 @@ class ScienceApplicationUserReviewSerializer(serializers.ModelSerializer):
 
     def get_pdf_url(self, obj):
         try:
-            return obj.science_application_review.pdf.url
+            if self._request_user_is_admin_panel_memeber():
+                return obj.science_application_review.admin_pdf.url
+            else:
+                return obj.science_application_review.pdf.url
         except Exception:
             return None
+
+    def _request_user_is_admin_panel_memeber(self):
+        u = self.context["request"].user
+        return u.review_panels.filter(is_admin=True).exists()
 
 
 class CallSerializer(serializers.ModelSerializer):
@@ -256,6 +266,8 @@ class ScienceApplicationSerializer(serializers.ModelSerializer):
     coinvestigator_set = CoInvestigatorSerializer(many=True, required=False)
     timerequest_set = TimeRequestSerializer(many=True, required=False)
     pdf = serializers.FileField(required=False)
+    sci_justification_pdf = serializers.FileField(required=False)
+    references_pdf = serializers.FileField(required=False)
     clear_pdf = serializers.BooleanField(required=False, default=False, write_only=True)
     tags = serializers.ListField(child=serializers.CharField(max_length=255), allow_empty=True, required=False)
     call = serializers.SerializerMethodField()
@@ -267,9 +279,9 @@ class ScienceApplicationSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'title', 'abstract', 'status', 'tac_rank', 'call', 'call_id', 'pi',
             'pi_first_name', 'pi_last_name', 'pi_institution', 'timerequest_set', 'tags',
-            'coinvestigator_set', 'pdf', 'clear_pdf', 'sca', 'submitter', 'submitted'
+            'coinvestigator_set', 'pdf', 'sci_justification_pdf', 'references_pdf', 'clear_pdf', 'sca', 'submitter', 'submitted'
         )
-        read_only_fields = ('submitted', )
+        read_only_fields = ('submitted', 'pdf')
 
     def get_sca(self, obj):
         return {
@@ -329,11 +341,17 @@ class ScienceApplicationSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(_('We can only accept PDF files.'))
 
         try:
-            PdfFileReader(pdf.file)
+            PdfReader(pdf.file)
         except PdfReadError:
             raise serializers.ValidationError(_('Invalid PDF file.'))
 
         return pdf
+
+    def validate_sci_justification_pdf(self, pdf):
+        return self.validate_pdf(pdf)
+
+    def validate_references_pdf(self, pdf):
+        return self.validate_pdf(pdf)
 
     def validate_abstract(self, abstract):
         abstract_word_limit = 500
@@ -345,25 +363,28 @@ class ScienceApplicationSerializer(serializers.ModelSerializer):
     def get_required_fields_for_submission(call_proposal_type):
         required_fields = ['call', 'status', 'title', 'pi', 'pi_first_name', 'pi_last_name', 'pi_institution']
         if call_proposal_type == Call.DDT_PROPOSAL:
-            required_fields.extend(['pdf'])
+            required_fields.extend(['sci_justification_pdf', 'references_pdf'])
         elif call_proposal_type == Call.COLLAB_PROPOSAL:
             required_fields.extend(['abstract', 'tac_rank'])
         else:
-            required_fields.extend(['abstract', 'pdf'])
+            required_fields.extend(['abstract', 'sci_justification_pdf', 'references_pdf'])
         return required_fields
 
     def validate(self, data):
         status = data['status']
         call = data['call']
         clear_pdf = data.get('clear_pdf', False)
-        pdf = data.get('pdf', None)
+        sci_justification_pdf = data.get('sci_justification_pdf', None)
+        references_pdf = data.get('references_pdf', None)
         timerequest_set = data.get('timerequest_set', [])
         tac_rank = data.get('tac_rank', 0)
 
-        if pdf is not None and clear_pdf:
+        have_any_pdf = (sci_justification_pdf is not None) or (references_pdf is not None)
+
+        if have_any_pdf and clear_pdf:
             raise serializers.ValidationError(_('Please either submit a new pdf or clear the existing pdf, not both.'))
 
-        if pdf is not None and call.proposal_type == Call.COLLAB_PROPOSAL:
+        if have_any_pdf and call.proposal_type == Call.COLLAB_PROPOSAL:
             raise serializers.ValidationError(_('Science collaboration proposals do not have pdfs.'))
 
         for timerequest in timerequest_set:
@@ -395,13 +416,13 @@ class ScienceApplicationSerializer(serializers.ModelSerializer):
             for field in self.get_required_fields_for_submission(call.proposal_type):
                 empty_values = [None, '']
                 field_is_empty = data.get(field) in empty_values
-                if field == 'pdf':
+                if field == 'sci_justification_pdf' or field == 'references_pdf':
                     if clear_pdf:
                         missing_fields['clear_pdf'] = _(
                             'A PDF is required for submission. If you want to clear the uploaded PDF, please '
                             'either upload a different PDF or save the application as a draft.'
                         )
-                    elif field_is_empty and not getattr(self.instance, 'pdf', None):
+                    elif field_is_empty and not getattr(self.instance, field, None):
                         missing_fields[field] = _('A PDF is required for submission.')
                 else:
                     if field_is_empty:
@@ -416,7 +437,8 @@ class ScienceApplicationSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         # TODO: Do this without needing to delete all existing time requests and coinvestigators
-        pdf = validated_data.pop('pdf', None)
+        sci_justification_pdf = validated_data.pop('sci_justification_pdf', None)
+        references_pdf = validated_data.pop('references_pdf', None)
         clear_pdf = validated_data.pop('clear_pdf', False)
         timerequest_set = validated_data.pop('timerequest_set', [])
         coinvestigator_set = validated_data.pop('coinvestigator_set', [])
@@ -427,12 +449,17 @@ class ScienceApplicationSerializer(serializers.ModelSerializer):
             for field, value in validated_data.items():
                 setattr(instance, field, value)
 
-            # The pdf may be set to `None` because a user does not want to change their previously
-            # uploaded pdf. Use `clear_pdf` to determine if the pdf should be cleared.
-            if pdf is not None:
-                instance.pdf = pdf
-            elif clear_pdf:
-                instance.pdf = None
+            # The pdfs may be set to `None` because a user does not want to change their previously
+            # uploaded pdfs. Use `clear_pdf` to determine if the pdf should be cleared.
+
+            if clear_pdf:
+                instance.sci_justification_pdf = None
+                instance.references_pdf = None
+            else:
+              if sci_justification_pdf is not None:
+                  instance.sci_justification_pdf = sci_justification_pdf
+              if references_pdf is not None:
+                  instance.references_pdf = references_pdf
 
             instance.save()
 

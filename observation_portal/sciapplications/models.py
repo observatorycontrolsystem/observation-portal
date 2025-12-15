@@ -1,3 +1,4 @@
+from typing import Union
 import smtplib
 from collections import defaultdict
 from urllib.parse import urljoin
@@ -92,10 +93,18 @@ class Call(models.Model):
     def __str__(self):
         return '{0} call for {1}'.format(self.get_proposal_type_display(), self.semester)
 
-
 def pdf_upload_path(instance, filename):
-    # PDFs will be uploaded to MEDIA_ROOT/sciapps/<semester>/
-    return 'sciapps/{0}/{1}/{2}'.format(instance.call.semester.id, instance.id, filename)
+    return 'sciapps/{0}/{1}/{2}/{3}'.format(instance.call.semester.id, instance.submitter.id, instance.id, filename)
+
+#def pdf_upload_path(instance, filename):
+#    return 'sciapps/{0}/{1}/{2}'.format(instance.call.semester.id, instance.id, filename)
+#
+def sci_justification_upload_path(instance, filename):
+    return 'sciapps/{0}/{1}/{2}/science_justification/{3}'.format(instance.call.semester.id, instance.submitter.id, instance.id, filename)
+
+def references_upload_path(instance, filename):
+    return 'sciapps/{0}/{1}/{2}/references/{3}'.format(instance.call.semester.id, instance.submitter.id, instance.id, filename)
+
 
 
 class ScienceApplication(models.Model):
@@ -126,6 +135,8 @@ class ScienceApplication(models.Model):
     tac_rank = models.PositiveIntegerField(default=0)
     tac_priority = models.PositiveIntegerField(default=0)
     pdf = models.FileField(upload_to=pdf_upload_path, blank=True, null=True)
+    sci_justification_pdf = models.FileField(upload_to=sci_justification_upload_path, blank=True, null=True)
+    references_pdf = models.FileField(upload_to=references_upload_path, blank=True, null=True)
     tags = ArrayField(models.CharField(max_length=255), default=list, blank=True, help_text='List of strings tagging this application')
 
     # Admin only Notes
@@ -135,6 +146,7 @@ class ScienceApplication(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
     submitted = models.DateTimeField(null=True, blank=True)
+
 
     class Meta:
         ordering = ('-id',)
@@ -181,6 +193,23 @@ class ScienceApplication(models.Model):
             for telescope_name in telescope_names:
                 time_by_telescope_name[telescope_name] += timerequest.total_requested_time
         return time_by_telescope_name
+
+    def time_by_instrument_type(self, approved: Union[None, bool] = None):
+        r = defaultdict(lambda: defaultdict(int))
+
+        if approved is None:
+            tr_set = self.timerequest_set.all()
+        else:
+            tr_set = self.timerequest_set.filter(approved=approved)
+
+        for tr in tr_set:
+            instrument_types = frozenset(x.display for x in tr.instrument_types.all())
+
+            r[instrument_types]["std"] += tr.std_time
+            r[instrument_types]["tc"] += tr.tc_time
+            r[instrument_types]["rr"] += tr.rr_time
+
+        return r
 
     def get_absolute_url(self):
         if settings.SCIENCE_APPLICATION_DETAIL_URL:
@@ -346,8 +375,10 @@ class ReviewPanelMembership(models.Model):
 
 
 def review_pdf_upload_path(instance, filename):
-    # PDFs will be uploaded to MEDIA_ROOT/sciappsreviews/<semester>/
     return "sciappreviews/{0}/{1}/{2}".format(instance.science_application.call.semester.id, instance.science_application.id, filename)
+
+def review_admin_pdf_upload_path(instance, filename):
+    return "sciappreviews/{0}/{1}/admin/{2}".format(instance.science_application.call.semester.id, instance.science_application.id, filename)
 
 
 class ScienceApplicationReview(models.Model):
@@ -397,6 +428,13 @@ class ScienceApplicationReview(models.Model):
         help_text="Anonymized proposal PDF that will be visible to the panel."
     )
 
+    admin_pdf = models.FileField(
+        upload_to=review_admin_pdf_upload_path,
+        blank=True,
+        null=True,
+        help_text="PDF that will be visible to admins."
+    )
+
     submitter_notified = models.DateTimeField(null=True, blank=True, help_text="When/if the submitter was notified of the status (most recent)")
 
     class AcceptedPriority(models.TextChoices):
@@ -439,17 +477,9 @@ class ScienceApplicationReview(models.Model):
             semester_start = self.science_application.call.semester.start.strftime("%B %d, %Y")
             semester_end = self.science_application.call.semester.end.strftime("%B %d, %Y")
 
-            time_by_instrument_type = defaultdict(lambda: defaultdict(int))
-
-            for tr in self.science_application.timerequest_set.filter(approved=True):
-                instrument_types = frozenset(x.display for x in tr.instrument_types.all())
-
-                time_by_instrument_type[instrument_types]["std"] += tr.std_time
-                time_by_instrument_type[instrument_types]["tc"] += tr.tc_time
-                time_by_instrument_type[instrument_types]["rr"] += tr.rr_time
 
             instrument_allocations = [
-              {"name": ", ".join(sorted(k)), **v} for k, v in time_by_instrument_type.items()
+              {"name": ", ".join(sorted(k)), **v} for k, v in self.science_application.time_by_instrument_type(approved=True)
             ]
 
             message = render_to_string(
