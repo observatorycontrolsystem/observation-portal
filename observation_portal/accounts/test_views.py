@@ -64,7 +64,7 @@ class TestIndex(TestCase):
             data=json.dumps({'username': 'doge', 'password': 'sopassword'}),
             content_type='application/json'
         )
-        assert response.json()['message'] == 'Password expired'
+        self.assertEqual(response.json()['message'], 'Password expired')
         user = auth.get_user(self.client)
         self.assertFalse(user.is_authenticated)
 
