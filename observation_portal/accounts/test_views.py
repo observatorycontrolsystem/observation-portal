@@ -56,6 +56,18 @@ class TestIndex(TestCase):
         user = auth.get_user(self.client)
         self.assertFalse(user.is_authenticated)
 
+    def test_api_login_expired_password(self):
+        self.user.profile.password_expiration = timezone.now() - timedelta(hours=1)
+        self.user.profile.save()
+        response = self.client.post(
+            reverse('api_login'),
+            data=json.dumps({'username': 'doge', 'password': 'sopassword'}),
+            content_type='application/json'
+        )
+        assert response.json()['message'] == 'Password expired'
+        user = auth.get_user(self.client)
+        self.assertFalse(user.is_authenticated)
+
     def test_api_login(self):
         self.client.post(
             reverse('api_login'),
