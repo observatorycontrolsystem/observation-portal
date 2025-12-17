@@ -180,9 +180,17 @@ class ApiLoginView(APIView):
         password = request.data.get('password')
         user = authenticate(request, username=username, password=password)
         if user is not None:
+            if (
+                hasattr(user, "profile")
+                and (exp := user.profile.password_expiration) is not None
+                and timezone.now() > exp
+            ):
+                return Response(
+                    {"message": "Password expired"}, status=status.HTTP_401_UNAUTHORIZED
+                )
             login(request, user)
-            response = Response({"message": "Login successful"})
+            return Response({"message": "Login successful"})
         else:
-            response = Response({"message": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
-
-        return response
+            return Response(
+                {"message": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED
+            )
