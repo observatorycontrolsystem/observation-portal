@@ -1,6 +1,7 @@
 import json
 from datetime import timedelta
 
+from django.contrib.auth import authenticate, login
 from django.utils import timezone
 from django.contrib.auth.models import User
 from django.contrib.auth.views import LoginView, PasswordChangeView, PasswordResetConfirmView
@@ -8,7 +9,7 @@ from django.utils.module_loading import import_string
 from django.conf import settings
 from django.urls import reverse_lazy
 from rest_framework.generics import CreateAPIView, RetrieveUpdateAPIView
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -168,3 +169,28 @@ class CustomRegistrationView(RegistrationView):
         kwargs = super().get_form_kwargs()
         kwargs.update({'email': self.request.GET.get('email')})
         return kwargs
+
+
+class ApiLoginView(APIView):
+    """Logs a user in with standard Django session cookies via a JSON request."""
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        username = request.data.get('username')
+        password = request.data.get('password')
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            if (
+                hasattr(user, "profile")
+                and (exp := user.profile.password_expiration) is not None
+                and timezone.now() > exp
+            ):
+                return Response(
+                    {"message": "Password expired"}, status=status.HTTP_401_UNAUTHORIZED
+                )
+            login(request, user)
+            return Response({"message": "Login successful"})
+        else:
+            return Response(
+                {"message": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED
+            )
