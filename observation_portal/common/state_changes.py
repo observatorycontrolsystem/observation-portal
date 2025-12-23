@@ -10,6 +10,7 @@ from django.utils.translation import gettext as _
 
 from observation_portal.observations.models import Observation
 from observation_portal.proposals.models import TimeAllocation
+from observation_portal.observations.time_accounting import refund_observation_time
 from observation_portal.proposals.notifications import \
     requestgroup_notifications, request_notifications
 from observation_portal.requestgroups.models import Request, RequestGroup, Location
@@ -25,12 +26,12 @@ REQUEST_STATE_MAP = {
     'WINDOW_EXPIRED': ['PENDING'],
     'CANCELED': ['PENDING'],
     'FAILURE_LIMIT_REACHED': ['PENDING'],
-    'PENDING': []
+    'PENDING': ['COMPLETED']
 }
 
 TERMINAL_REQUEST_STATES = ['COMPLETED', 'CANCELED', 'WINDOW_EXPIRED', 'FAILURE_LIMIT_REACHED']
 
-TERMINAL_OBSERVATION_STATES = ['CANCELED', 'ABORTED', 'FAILED', 'COMPLETED', 'NOT_ATTEMPTED']
+TERMINAL_OBSERVATION_STATES = ['CANCELED', 'ABORTED', 'FAILED', 'COMPLETED', 'NOT_ATTEMPTED', 'BAD_DATA']
 
 
 class InvalidStateChange(Exception):
@@ -136,6 +137,31 @@ def update_observation_state(observation):
         cache.set('observation_portal_last_change_time_all', now, None)
 
 
+def set_observation_state_to_bad_data(observation, set_configuration_statuses=True):
+    """ This function specifically marks an observation as having bad data by setting its
+        state to BAD_DATA. It optionally sets all its configuration statuses to BAD_DATA as well,
+        and then attempts to reset a COMPLETED parent Request back to PENDING, so it can be rescheduled
+    """
+    # refund the time, set the request back to pending if possible, and update configuration status states
+    refund_observation_time(observation, 1.0)
+    now = timezone.now()
+    with transaction.atomic():
+        observation.state = 'BAD_DATA'
+        if set_configuration_statuses:
+            observation.configuration_statuses.update(state='BAD_DATA')
+        observation.save()
+        # If the request was marked as completed but still has time remaining in its windows, set it back to PENDING
+        if observation.request.state == 'COMPLETED' and observation.request.max_window_time > now:
+            observation.request.state = 'PENDING'
+            observation.request.save()
+            observation.request.request_group.state = 'PENDING'
+            observation.request.request_group.save()
+    ipp_value = observation.request.request_group.ipp_value
+    # If ipp_time is < 1.0, then it was already credited to the proposal on request completion so we should remove it here
+    if ipp_value < 1.0:
+        modify_ipp_time_from_request(ipp_value, observation.request, 'debit')
+
+
 def get_observation_state(configuration_statuses):
     states = [config_status.state for config_status in configuration_statuses]
     if all([state == 'PENDING' for state in states]):
@@ -147,6 +173,8 @@ def get_observation_state(configuration_statuses):
         return 'PENDING'
     elif all([state == 'PENDING' or state == 'ATTEMPTED' for state in states]):
         return 'IN_PROGRESS'
+    elif any([state == 'BAD_DATA' for state in states]):
+        return 'BAD_DATA'
     elif any([state == 'NOT_ATTEMPTED' for state in states]):
         return 'FAILED'
     elif any([state == 'FAILED' for state in states]):
@@ -211,7 +239,7 @@ def debit_ipp_time(request_group):
 
 
 def modify_ipp_time_from_request(ipp_val, request, modification='debit'):
-    ipp_value = ipp_val - 1
+    ipp_value = abs(ipp_val - 1)
     if ipp_value == 0:
         return
     try:
@@ -227,7 +255,7 @@ def modify_ipp_time_from_request(ipp_val, request, modification='debit'):
             if modification == 'debit':
                 modified_time -= (duration_hours * ipp_value)
             elif modification == 'credit':
-                modified_time += abs(ipp_value) * duration_hours
+                modified_time += (duration_hours * ipp_value)
             if (modified_time + time_allocation.ipp_time_available) < 0:
                 logger.warning(_(
                     f'ipp debiting for request {request.id} would set ipp_time_available < 0. Time available after '

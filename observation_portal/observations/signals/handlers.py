@@ -10,7 +10,9 @@ from observation_portal.common.state_changes import on_configuration_status_stat
 def cb_configurationstatus_post_save(sender, instance, created, *args, **kwargs):
     # Ensure this is an update to the model and not a new model
     if not created:
-        on_configuration_status_state_change(instance)
+        # The BAD_DATA state transition is handled separately, in the serializer for the Observation
+        if instance.state != 'BAD_DATA':
+            on_configuration_status_state_change(instance)
 
 
 @receiver(pre_save, sender=Summary)
