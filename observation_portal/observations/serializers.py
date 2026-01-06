@@ -513,7 +513,7 @@ class ObservationSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(_('Updated end time must be in the future'))
             if 'state' in data:
                 if data['state'] != 'BAD_DATA':
-                    raise serializers.ValidationError(_('Users can only update Observation state to BAD_DATA'))
+                    raise serializers.ValidationError(_('Observation state can only be updated to BAD_DATA'))
                 elif not user.is_staff:
                     raise serializers.ValidationError(_('Only staff accounts can update Observation state'))
             return data

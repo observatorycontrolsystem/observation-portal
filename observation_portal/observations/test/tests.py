@@ -2129,7 +2129,7 @@ class TestUpdateObservationApi(TestObservationApiBase):
         update_data = {"state": "FAILED"}
         response = self.client.patch(reverse('api:observations-detail', args=(observation.id,)), update_data)
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.json()['non_field_errors'], ['Users can only update Observation state to BAD_DATA'])
+        self.assertEqual(response.json()['non_field_errors'], ['Observation state can only be updated to BAD_DATA'])
 
     def test_update_observation_state_debits_credited_ipp_time(self):
         # Ensure that resetting the Requst state from COMPLETED removes its credited <1 ipp_time
