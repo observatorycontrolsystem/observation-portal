@@ -2,8 +2,7 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
-  - ./deploy-api.yaml
-  - ./svc-api.yaml
+  - ./api/
   - ./deploy-static.yaml
   - ./svc-static.yaml
   - ./deploy-dramatiq-scheduler.yaml
@@ -11,39 +10,3 @@ resources:
 
 commonLabels:
   app.kubernetes.io/name: observation-portal
-
-configMapGenerator:
-  - name: env
-
-  - name: nginx-confd-templates
-    files:
-      - default.conf.template=./nginx-default.conf.template
-
-  - name: coredns
-    files:
-      - ./Corefile
-
-secretGenerator:
-  - name: env
-
-replacements:
-  - source:
-      kind: Service
-      name: api
-      fieldPath: metadata.name
-    targets:
-      - select:
-          kind: Deployment
-          name: api
-        fieldPaths:
-          - spec.template.spec.containers.[name=nginx].env.[name=OBS_PORTAL_API_SVC_HOSTNAME].value
-  - source:
-      kind: Service
-      name: api
-      fieldPath: spec.ports.[name=api].port
-    targets:
-      - select:
-          kind: Deployment
-          name: api
-        fieldPaths:
-          - spec.template.spec.containers.[name=nginx].env.[name=OBS_PORTAL_API_SVC_PORT].value

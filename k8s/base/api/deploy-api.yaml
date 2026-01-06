@@ -75,10 +75,10 @@ spec:
           envFrom:
             - configMapRef:
                 name: env
-                optional: false
+                optional: true
             - secretRef:
                 name: env
-                optional: false
+                optional: true
 
           resources:
             requests:
@@ -109,10 +109,10 @@ spec:
           envFrom:
             - configMapRef:
                 name: env
-                optional: false
+                optional: true
             - secretRef:
                 name: env
-                optional: false
+                optional: true
 
       containers:
         - name: default
@@ -145,10 +145,10 @@ spec:
           envFrom:
             - configMapRef:
                 name: env
-                optional: false
+                optional: true
             - secretRef:
                 name: env
-                optional: false
+                optional: true
 
           env:
             - name: GUNICORN_WORKERS
@@ -158,11 +158,6 @@ spec:
 
         - name: nginx
           image: nginx-mod-zip
-          env:
-            - name: OBS_PORTAL_API_SVC_HOSTNAME
-              value: "api"
-            - name: OBS_PORTAL_API_SVC_PORT
-              value: "8080"
           ports:
             - name: nginx
               containerPort: 8000
