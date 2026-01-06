@@ -92,7 +92,8 @@ class Observation(models.Model):
         ('COMPLETED', 'COMPLETED'),
         ('CANCELED', 'CANCELED'),
         ('ABORTED', 'ABORTED'),
-        ('FAILED', 'FAILED')
+        ('FAILED', 'FAILED'),
+        ('BAD_DATA', 'BAD_DATA')
     )
 
     request = models.ForeignKey(
@@ -234,7 +235,8 @@ class ConfigurationStatus(models.Model):
         ('ATTEMPTED', 'ATTEMPTED'),
         ('NOT_ATTEMPTED', 'NOT_ATTEMPTED'),
         ('COMPLETED', 'COMPLETED'),
-        ('FAILED', 'FAILED')
+        ('FAILED', 'FAILED'),
+        ('BAD_DATA', 'BAD_DATA')
     )
 
     configuration = models.ForeignKey(

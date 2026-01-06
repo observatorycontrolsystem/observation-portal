@@ -10,6 +10,7 @@ from django.contrib.auth.models import User
 
 from observation_portal.common.configdb import configdb
 from observation_portal.common.rise_set_utils import is_realtime_interval_available_for_telescope
+from observation_portal.common.state_changes import set_observation_state_to_bad_data
 from observation_portal.observations.models import Observation, ConfigurationStatus, Summary
 from observation_portal.observations.realtime import realtime_time_available
 from observation_portal.requestgroups.models import RequestGroup, Request, AcquisitionConfig, GuidingConfig, Target
@@ -110,6 +111,11 @@ class ConfigurationStatusSerializer(serializers.ModelSerializer):
         if instance.state not in ConfigurationStatusSerializer.TERMINAL_STATES:
             instance.state = validated_data.get('state', instance.state)
             instance.save(update_fields=update_fields)
+        elif validated_data.get('state', '') == 'BAD_DATA':
+            # If we set the config status state to BAD_DATA, mark the observation that way (which attempts to reset the Request to PENDING)
+            instance.state = validated_data['state']
+            instance.save(update_fields=update_fields)
+            set_observation_state_to_bad_data(instance.observation, set_configuration_statuses=False)
 
         if 'summary' in validated_data:
             summary_serializer = import_string(settings.SERIALIZERS['observations']['Summary'])(data=validated_data['summary'])
@@ -482,7 +488,7 @@ class ObservationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Observation
         fields = ('site', 'enclosure', 'telescope', 'start', 'end', 'priority', 'configuration_statuses', 'request', 'state', 'modified', 'created')
-        read_only_fields = ('state', 'modified', 'created')
+        read_only_fields = ('modified', 'created')
 
     def validate(self, data):
         user = self.context['request'].user
@@ -501,10 +507,15 @@ class ObservationSerializer(serializers.ModelSerializer):
 
         if self.context.get('request').method == 'PATCH':
             # For a partial update, only validate that the 'end' field is set, and that it is > now
-            if 'end' not in data:
-                raise serializers.ValidationError(_('Observation update must include `end` field'))
-            if data['end'] <= timezone.now():
+            if 'end' not in data and 'state' not in data:
+                raise serializers.ValidationError(_('Observation update must include `end` or `state` field'))
+            if 'end' in data and data['end'] <= timezone.now():
                 raise serializers.ValidationError(_('Updated end time must be in the future'))
+            if 'state' in data:
+                if data['state'] != 'BAD_DATA':
+                    raise serializers.ValidationError(_('Observation state can only be updated to BAD_DATA'))
+                elif not user.is_staff:
+                    raise serializers.ValidationError(_('Only staff accounts can update Observation state'))
             return data
 
         if data['end'] <= data['start']:
@@ -554,7 +565,14 @@ class ObservationSerializer(serializers.ModelSerializer):
         return data
 
     def update(self, instance, validated_data):
-        return instance.update_end_time(validated_data['end'])
+        if 'state' in validated_data and validated_data['state'] == 'BAD_DATA':
+            # The Observation data was determined to be bad, so check if it was in a terminal state
+            if instance.state not in ['COMPLETED', 'FAILED', 'ABORTED']:
+                raise serializers.ValidationError(_(f"Cannot update observation state from {instance.state} to {validated_data['state']}"))
+            set_observation_state_to_bad_data(instance, set_configuration_statuses=True)
+            return instance
+        if 'end' in validated_data:
+            return instance.update_end_time(validated_data['end'])
 
     def create(self, validated_data):
         configuration_statuses = validated_data.pop('configuration_statuses')
