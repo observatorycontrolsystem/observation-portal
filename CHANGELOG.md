@@ -10,6 +10,12 @@ This project adheres to semantic versioning.
 
 ### Removed
 
+## [4.17.5] - 2026-01-06
+
+### Added
+- `api-login` endpoint for logins through the API instead of via the built in form
+- ability to update observation state to `BAD_DATA`, which refunds time and resets request back to `PENDING` if able
+
 ## [4.17.4] - 2025-10-21
 
 ### Changed
