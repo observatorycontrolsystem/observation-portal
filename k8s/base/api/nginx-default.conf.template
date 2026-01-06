@@ -6,7 +6,7 @@ server {
   listen 8000;
 
   location /api/scienceapplication-reviews/pdf-zip {
-    proxy_pass http://${OBS_PORTAL_API_SVC_HOSTNAME}:${OBS_PORTAL_API_SVC_PORT};
+    proxy_pass http://127.0.0.1:8080;
     proxy_http_version 1.1;
     proxy_set_header Connection "";
     proxy_set_header Host $http_host;
