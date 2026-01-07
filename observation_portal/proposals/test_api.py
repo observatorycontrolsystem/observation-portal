@@ -625,13 +625,29 @@ class TestProposalInviteCreateApi(APITestCase):
     def test_inviting_a_user_that_already_exists_creates_membership(self):
         self.client.force_login(self.pi_user)
         user = blend_user()
+        time_limit = 5
         response = self.client.post(
             reverse('api:proposals-invite', kwargs={'pk': self.proposal.id}),
-            data={'emails': [user.email]},
+            data={'emails': [user.email], 'time_limit': time_limit},
         )
         self.assertEqual(response.status_code, 200)
         self.assertFalse(ProposalInvite.objects.filter(email=user.email, proposal=self.proposal).exists())
         self.assertTrue(Membership.objects.filter(user=user, proposal=self.proposal, role=Membership.CI).exists())
+        membership = Membership.objects.get(user=user, proposal=self.proposal, role=Membership.CI)
+        self.assertEqual(membership.time_limit, time_limit)
+
+    def test_invite_must_have_postive_time_limit(self):
+        self.client.force_login(self.pi_user)
+        user = blend_user()
+        time_limit = -5
+        response = self.client.post(
+            reverse('api:proposals-invite', kwargs={'pk': self.proposal.id}),
+            data={'emails': [user.email], 'time_limit': time_limit},
+        )
+        self.assertFalse(ProposalInvite.objects.filter(email=user.email, proposal=self.proposal).exists())
+        self.assertContains(
+            response, f'Field time_limit must either be a positive integer or -1 (no limit)', status_code=400
+        )
 
     def test_inviting_user_that_already_has_a_pending_invite_updates_sent_time(self):
         email = 'invite@me.com'
@@ -644,15 +660,17 @@ class TestProposalInviteCreateApi(APITestCase):
             role=Membership.CI,
             email=email
         )
+        time_limit = 3
         self.client.force_login(self.pi_user)
         response = self.client.post(
             reverse('api:proposals-invite', kwargs={'pk': self.proposal.id}),
-            data={'emails': [email]},
+            data={'emails': [email], 'time_limit': time_limit},
         )
         self.assertEqual(response.status_code, 200)
         proposal_invite.refresh_from_db()
         self.assertTrue(ProposalInvite.objects.filter(pk=proposal_invite.id).exists())
         self.assertGreater(proposal_invite.sent, initial_sent_time)
+        self.assertEqual(proposal_invite.time_limit, time_limit)
 
 
 class TestProposalInviteDetailApi(APITestCase):
