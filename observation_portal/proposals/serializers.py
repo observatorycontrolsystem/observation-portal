@@ -38,7 +38,7 @@ class ProposalInviteSerializer(serializers.ModelSerializer):
 
     def validate_time_limit(self, time_limit):
         if time_limit < -1:
-            raise serializers.ValidationError(_(f'Field time_limit must either be a positive integer or -1 (no limit)'))
+            raise serializers.ValidationError(_('Field time_limit must either be a positive integer or -1 (no limit)'))
         return time_limit
 
     def validate_emails(self, emails):

@@ -332,7 +332,7 @@ class ProposalInvite(models.Model):
         return 'Invitation for {} token {}'.format(self.proposal, self.email)
 
     def accept(self, user):
-        mem, _ = Membership.objects.update_or_create(
+        Membership.objects.update_or_create(
             proposal=self.proposal,
             user=user,
             defaults={

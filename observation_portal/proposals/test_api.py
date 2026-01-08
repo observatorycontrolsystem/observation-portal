@@ -646,7 +646,7 @@ class TestProposalInviteCreateApi(APITestCase):
         )
         self.assertFalse(ProposalInvite.objects.filter(email=user.email, proposal=self.proposal).exists())
         self.assertContains(
-            response, f'Field time_limit must either be a positive integer or -1 (no limit)', status_code=400
+            response, 'Field time_limit must either be a positive integer or -1 (no limit)', status_code=400
         )
 
     def test_inviting_user_that_already_has_a_pending_invite_updates_sent_time(self):
