@@ -29,11 +29,17 @@ class SemesterSerializer(serializers.ModelSerializer):
 
 class ProposalInviteSerializer(serializers.ModelSerializer):
     emails = serializers.ListField(child=serializers.EmailField(), write_only=True)
+    time_limit = serializers.IntegerField(default=-1, required=False)
 
     class Meta:
         model = ProposalInvite
-        fields = ('id', 'role', 'email', 'sent', 'used', 'proposal', 'emails')
+        fields = ('id', 'role', 'email', 'time_limit', 'sent', 'used', 'proposal', 'emails')
         read_only_fields = ('role', 'email', 'proposal')
+
+    def validate_time_limit(self, time_limit):
+        if time_limit < -1:
+            raise serializers.ValidationError(_('Field time_limit must either be a positive integer or -1 (no limit)'))
+        return time_limit
 
     def validate_emails(self, emails):
         user = self.context.get('user')

@@ -689,9 +689,11 @@ class TestBulkCreateUsersApi(APITestCase):
         # as a PI
         proposal1 = mixer.blend(Proposal, active=True)
         mixer.blend(Membership, role=Membership.PI, proposal=proposal1, user=self.existing_user)
+        time_limit1 = 2
 
         proposal2 = mixer.blend(Proposal, active=True)
         mixer.blend(Membership, role=Membership.PI, proposal=proposal2, user=self.existing_user)
+        time_limit2 = 3
 
         self.client.force_authenticate(user=self.existing_user)
 
@@ -699,7 +701,8 @@ class TestBulkCreateUsersApi(APITestCase):
         resp = self.client.post(
             reverse("api:proposals-invite", args=[proposal1.pk]),
             {
-                "emails": ["user1@domain.example", "user2@domain.example"]
+                "emails": ["user1@domain.example", "user2@domain.example"],
+                "time_limit": time_limit1
             }
         )
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
@@ -707,7 +710,8 @@ class TestBulkCreateUsersApi(APITestCase):
         resp = self.client.post(
             reverse("api:proposals-invite", args=[proposal2.pk]),
             {
-                "emails": ["user1@domain.example", "user3@domain.example"]
+                "emails": ["user1@domain.example", "user3@domain.example"],
+                "time_limit": time_limit2
             }
         )
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
@@ -764,3 +768,12 @@ class TestBulkCreateUsersApi(APITestCase):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertEqual(len(resp.data["results"]), 1)
         self.assertEqual(resp.data["results"][0]["email"], "user3@domain.example")
+
+        # Check that the memberships exist for the users and have the proper time_limit set
+        memberships1 = Membership.objects.filter(proposal=proposal1, user__username__in=['user1', 'user2'])
+        memberships2 = Membership.objects.filter(proposal=proposal2, user__username__in=['user1', 'user2'])
+
+        for membership in memberships1:
+            self.assertEqual(membership.time_limit, time_limit1)
+        for membership in memberships2:
+            self.assertEqual(membership.time_limit, time_limit2)

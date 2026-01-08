@@ -182,21 +182,27 @@ class Proposal(models.Model):
     def current_proposals(cls):
         return cls.objects.filter(semester__in=Semester.current_semesters(future=True))
 
-    def add_users(self, emails, role):
+    def add_users(self, emails, role, time_limit=-1):
         for email in emails:
             if User.objects.filter(email=email).exists():
-                membership, created = Membership.objects.get_or_create(
+                membership, created = Membership.objects.update_or_create(
                     proposal=self,
                     user=User.objects.get(email=email),
-                    role=role
+                    defaults={
+                        'role': role,
+                        'time_limit': time_limit
+                    }
                 )
                 if created:
                     membership.send_notification()
             else:
-                proposal_invite, created = ProposalInvite.objects.get_or_create(
+                proposal_invite, created = ProposalInvite.objects.update_or_create(
                     proposal=self,
-                    role=role,
-                    email=email
+                    email=email,
+                    defaults={
+                        'role': role,
+                        'time_limit': time_limit
+                    }
                 )
                 proposal_invite.send_invitation()
 
@@ -318,6 +324,7 @@ class ProposalInvite(models.Model):
     proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE)
     role = models.CharField(max_length=5, choices=Membership.ROLE_CHOICES)
     email = models.EmailField()
+    time_limit = models.IntegerField(default=-1)  # seconds, -1 is unlimited
     sent = models.DateTimeField(null=True)
     used = models.DateTimeField(null=True)
 
@@ -325,13 +332,14 @@ class ProposalInvite(models.Model):
         return 'Invitation for {} token {}'.format(self.proposal, self.email)
 
     def accept(self, user):
-        mem, _ = Membership.objects.get_or_create(
+        Membership.objects.update_or_create(
             proposal=self.proposal,
             user=user,
+            defaults={
+                'role': self.role,
+                'time_limit': self.time_limit
+            }
         )
-        mem.role = self.role
-        mem.save()
-
         self.used = timezone.now()
         self.save()
 
