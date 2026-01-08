@@ -636,7 +636,7 @@ class TestProposalInviteCreateApi(APITestCase):
         membership = Membership.objects.get(user=user, proposal=self.proposal, role=Membership.CI)
         self.assertEqual(membership.time_limit, time_limit)
 
-    def test_invite_must_have_postive_time_limit(self):
+    def test_invite_must_have_valid_time_limit(self):
         self.client.force_login(self.pi_user)
         user = blend_user()
         time_limit = -5
