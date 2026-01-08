@@ -10,6 +10,11 @@ This project adheres to semantic versioning.
 
 ### Removed
 
+## [4.17.6] - 2026-01-08
+
+### Changed
+- ProposalInvite model added time_limit field, to carry that through to the poprosal Membership properly.
+
 ## [4.17.5] - 2026-01-06
 
 ### Added
