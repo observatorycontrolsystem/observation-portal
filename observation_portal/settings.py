@@ -211,6 +211,7 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_URLS_REGEX = r'^/(api|accounts|media)/.*$|^/o/.*'
 CORS_ORIGIN_WHITELIST = get_list_from_env('CORS_ORIGIN_WHITELIST')
 CSRF_TRUSTED_ORIGINS = get_list_from_env('CSRF_TRUSTED_ORIGINS')
+CSRF_COOKIE_SAMESITE = os.getenv("CSRF_COOKIE_SAMESITE", "Lax")
 LOGIN_REDIRECT_URL = '/accounts/loggedinstate/'
 LOGOUT_REDIRECT_URL = '/'
 

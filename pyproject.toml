@@ -52,7 +52,7 @@ opensearch-py = ">=1.0,<2.0"
 gunicorn = { version = "^20.1", extras = [ "gevent" ] }
 lcogt-logging = "0.3.2"
 psycopg2-binary = "^2.9.3"
-PyPDF2 = ">=1.26,<1.28"
+PyPDF2 = "^3"
 redis = "^3"
 requests = "^2.27.1"
 time_intervals = "^1"
@@ -61,6 +61,7 @@ PyYAML = "^6.0"
 sentry-sdk = {extras = ["django"], version = "^2.10.0"}
 django-health-check = "^3.18.3"
 ocs-rise-set = "^0.6.3"
+xhtml2pdf = "^0.2.17"
 
 [tool.poetry.group.dev.dependencies]
 responses = "0.18.0"
