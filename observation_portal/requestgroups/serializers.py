@@ -644,6 +644,32 @@ class WindowSerializer(serializers.ModelSerializer):
         return value
 
 
+class RequestUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Request
+        fields = ['suspend_until',]
+
+    def validate(self, data):
+        if 'suspend_until' not in data:
+            raise serializers.ValidationError(_('The suspend_until value must be set on update requests'))
+        for key in data.keys():
+            if key != 'suspend_until':
+                raise serializers.ValidationError(_('Only the suspend_until field may be updated in requests'))
+        return data
+
+    def validate_suspend_until(self, value):
+        if value and value < timezone.now():
+            raise serializers.ValidationError(_('The suspend_until value must be in the future'))
+        return value
+
+    def update(self, instance, validated_data):
+        if instance.state != 'PENDING':
+            raise serializers.ValidationError(_(f"Can only suspend scheduling on PENDING Requests - this request state is {instance.state}"))
+        instance.suspend_until = validated_data.get('suspend_until')
+        instance.save(update_fields=['suspend_until'])
+        return instance
+
+
 class RequestSerializer(serializers.ModelSerializer):
     location = import_string(settings.SERIALIZERS['requestgroups']['Location'])()
     configurations = import_string(settings.SERIALIZERS['requestgroups']['Configuration'])(many=True)
