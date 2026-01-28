@@ -788,7 +788,7 @@ class TestUpdateRequestApi(SetTimeMixin, APITestCase):
         for r in self.reqs:
             self.assertIsNone(r.suspend_until)
             # Now set the suspend until time into the future on those requests
-            response = self.client.patch(reverse('api:requests-detail', args=(r.id,)), data=payload)
+            response = self.client.patch(reverse('api:requests-detail', args=(r.id,)) + '?telescope_class=1m0', data=payload)
             self.assertEqual(response.status_code, 200)
             r.refresh_from_db()
             self.assertEqual(r.suspend_until, suspend_time)
@@ -809,6 +809,15 @@ class TestUpdateRequestApi(SetTimeMixin, APITestCase):
             self.assertEqual(response.status_code, 200)
             r.refresh_from_db()
             self.assertIsNone(r.suspend_until)
+
+    def test_setting_suspend_until_time_with_wrong_telescope_class_fails(self):
+        suspend_time = timezone.now() + timedelta(hours=4)
+        payload = {'suspend_until': suspend_time.isoformat()}
+        for r in self.reqs:
+            self.assertIsNone(r.suspend_until)
+            # Use a filter parameter telescope_class that doesn't match this request which should fail to find the request
+            response = self.client.patch(reverse('api:requests-detail', args=(r.id,)) + '?telescope_class=2m0', data=payload)
+            self.assertContains(response, 'No Request matches', status_code=404)
 
     def test_setting_suspend_fails_with_non_time_fails(self):
         payload = {'suspend_until': 'not a time'}

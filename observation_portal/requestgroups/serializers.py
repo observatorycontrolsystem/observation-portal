@@ -658,7 +658,7 @@ class RequestUpdateSerializer(serializers.ModelSerializer):
         return data
 
     def validate_suspend_until(self, value):
-        if value and value < timezone.now():
+        if value and value <= timezone.now():
             raise serializers.ValidationError(_('The suspend_until value must be in the future'))
         return value
 
