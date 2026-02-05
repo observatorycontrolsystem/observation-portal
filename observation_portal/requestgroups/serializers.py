@@ -652,9 +652,8 @@ class RequestUpdateSerializer(serializers.ModelSerializer):
     def validate(self, data):
         if 'suspend_until' not in data:
             raise serializers.ValidationError(_('The suspend_until value must be set on update requests'))
-        for key in data.keys():
-            if key != 'suspend_until':
-                raise serializers.ValidationError(_('Only the suspend_until field may be updated in requests'))
+        elif {'suspend_until'} != set(data.keys()):
+            raise serializers.ValidationError(_('Only the suspend_until field may be updated in requests'))
         return data
 
     def validate_suspend_until(self, value):
