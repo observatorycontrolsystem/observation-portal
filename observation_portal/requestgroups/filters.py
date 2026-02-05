@@ -42,6 +42,9 @@ class RequestGroupFilter(django_filters.FilterSet):
 
 
 class RequestFilter(django_filters.FilterSet):
+    telescope_class = django_filters.MultipleChoiceFilter(
+        choices=lambda: configdb.get_telescope_class_tuples(), field_name='location__telescope_class', distinct=True,
+    )
     class Meta:
         model = Request
         fields = ('state',)

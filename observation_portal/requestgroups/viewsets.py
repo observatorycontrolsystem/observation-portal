@@ -2,6 +2,7 @@ import logging
 
 from rest_framework import viewsets, filters
 from rest_framework.decorators import action
+from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAdminUser, IsAuthenticated
 from rest_framework import status
@@ -17,6 +18,7 @@ from observation_portal.proposals.models import Proposal, Semester, TimeAllocati
 from observation_portal.requestgroups.models import (RequestGroup, Request, DraftRequestGroup, InstrumentConfig,
                                                      Configuration)
 from observation_portal.requestgroups.filters import RequestGroupFilter, RequestFilter
+from observation_portal.requestgroups.serializers import RequestUpdateSerializer
 from observation_portal.requestgroups.cadence import expand_cadence_request
 from observation_portal.requestgroups.pattern_expansion import expand_dither_pattern, expand_mosaic_pattern
 from observation_portal.requestgroups.duration_utils import (
@@ -90,7 +92,7 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
             'constraints', 'target', 'acquisition_config', 'guiding_config').prefetch_related(
             Prefetch('instrument_configs', queryset=instrument_config_query)
         )
-        request_query = Request.objects.select_related('location').prefetch_related(
+        request_query = Request.objects.exclude(suspend_until__gt=timezone.now()).select_related('location').prefetch_related(
             'windows', Prefetch('configurations', queryset=configuration_query)
         )
         queryset = RequestGroup.objects.exclude(
@@ -248,8 +250,9 @@ class RequestGroupViewSet(ListAsDictMixin, viewsets.ModelViewSet):
         return serializers.get(self.action, self.serializer_class)(*args, **kwargs)
 
 
-class RequestViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
+class RequestViewSet(ListAsDictMixin, viewsets.ModelViewSet):
     permission_classes = (IsAuthenticatedOrReadOnly,)
+    http_method_names = ['get', 'options', 'post', 'patch']
     schema = ObservationPortalSchema(tags=['Requests'])
     serializer_class = import_string(settings.SERIALIZERS['requestgroups']['Request'])
     filterset_class = RequestFilter
@@ -260,6 +263,17 @@ class RequestViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
     ordering = ('-id',)
     ordering_fields = ('id', 'state')
     undocumented_actions = ['telescope_states']
+
+    def get_permissions(self):
+        if self.request.method == 'PATCH':
+            return [IsAdminUser()]
+        else:
+            return [IsAuthenticatedOrReadOnly()]
+
+    def get_serializer_class(self):
+        if self.action == 'partial_update':
+            return RequestUpdateSerializer
+        return super().get_serializer_class()
 
     def get_queryset(self):
         if self.request.user.is_authenticated:
@@ -276,6 +290,12 @@ class RequestViewSet(ListAsDictMixin, viewsets.ReadOnlyModelViewSet):
             'configurations__acquisition_config', 'configurations__guiding_config', 'configurations__constraints',
             'configurations__instrument_configs__rois'
         ).distinct()
+
+    def create(self, request, *args, **kwargs):
+        """
+        Block the default create action (POST) to the main endpoint.
+        """
+        raise MethodNotAllowed('POST')
 
     @action(detail=True)
     def airmass(self, request, pk=None):

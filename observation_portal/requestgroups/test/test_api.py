@@ -743,6 +743,145 @@ class TestRequestGroupIPP(SetTimeMixin, APITestCase):
         self.assertEqual(time_allocation_2m0.ipp_time_available, 5.0)
 
 
+class TestUpdateRequestApi(SetTimeMixin, APITestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.proposal = mixer.blend(Proposal)
+        self.user = blend_user(user_params={'is_staff': True})
+        mixer.blend(Membership, user=self.user, proposal=self.proposal, ipp_value=1.0)
+        semester = mixer.blend(
+            Semester, id='2016B', start=datetime(2016, 9, 1, tzinfo=timezone.utc),
+            end=datetime(2016, 12, 31, tzinfo=timezone.utc)
+        )
+        self.time_allocation_1m0 = mixer.blend(
+            TimeAllocation, proposal=self.proposal, semester=semester,
+            instrument_types=['1M0-SCICAM-SBIG'], std_allocation=100.0, std_time_used=0.0,
+            rr_allocation=10, rr_time_used=0.0, ipp_limit=10.0,
+            ipp_time_available=5.0
+        )
+
+        # Add a few requests within the current semester
+        self.rg = mixer.blend(RequestGroup, proposal=self.proposal, submitter=self.user,
+                                         observation_type='NORMAL', operator='MANY', state='PENDING')
+        self.reqs = mixer.cycle(5).blend(Request, request_group=self.rg, state='PENDING')
+        start = datetime(2016, 10, 1, tzinfo=timezone.utc)
+        end = datetime(2016, 11, 1, tzinfo=timezone.utc)
+        for req in self.reqs:
+            mixer.blend(Window, request=req, start=start, end=end)
+            start += timedelta(days=2)
+            end += timedelta(days=2)
+            conf = mixer.blend(Configuration, request=req, type='EXPOSE', instrument_type='1M0-SCICAM-SBIG')
+            mixer.blend(InstrumentConfig, configuration=conf,  exposure_time=60, exposure_count=10,
+                        optical_elements={'filter': 'air'}, mode='1m0_sbig_1', extra_params={'bin_x': 1, 'bin_y': 1})
+            mixer.blend(AcquisitionConfig, configuration=conf, )
+            mixer.blend(GuidingConfig, configuration=conf, )
+            mixer.blend(Target, configuration=conf, type='ICRS', dec=20, ra=34.4)
+            mixer.blend(Location, request=req, telescope_class='1m0')
+            mixer.blend(Constraints, configuration=conf, max_airmass=2.0, min_lunar_distance=30.0, max_lunar_phase=1.0)
+
+        self.client.force_login(self.user)
+
+    def test_setting_suspend_until_time_succeeds(self):
+        suspend_time = timezone.now() + timedelta(hours=4)
+        payload = {'suspend_until': suspend_time.isoformat()}
+        for r in self.reqs:
+            self.assertIsNone(r.suspend_until)
+            # Now set the suspend until time into the future on those requests
+            response = self.client.patch(reverse('api:requests-detail', args=(r.id,)) + '?telescope_class=1m0', data=payload)
+            self.assertEqual(response.status_code, 200)
+            r.refresh_from_db()
+            self.assertEqual(r.suspend_until, suspend_time)
+
+    def test_removing_suspend_until_time_succeeds(self):
+        suspend_time = timezone.now() + timedelta(hours=4)
+        payload = {'suspend_until': suspend_time.isoformat()}
+        empty_payload = {'suspend_until': None}
+        for r in self.reqs:
+            self.assertIsNone(r.suspend_until)
+            # Now set the suspend until time into the future on those requests
+            response = self.client.patch(reverse('api:requests-detail', args=(r.id,)), data=payload)
+            self.assertEqual(response.status_code, 200)
+            r.refresh_from_db()
+            self.assertEqual(r.suspend_until, suspend_time)
+            # Now reset the suspend until time back to null
+            response = self.client.patch(reverse('api:requests-detail', args=(r.id,)), data=empty_payload)
+            self.assertEqual(response.status_code, 200)
+            r.refresh_from_db()
+            self.assertIsNone(r.suspend_until)
+
+    def test_setting_suspend_until_time_with_wrong_telescope_class_fails(self):
+        suspend_time = timezone.now() + timedelta(hours=4)
+        payload = {'suspend_until': suspend_time.isoformat()}
+        for r in self.reqs:
+            self.assertIsNone(r.suspend_until)
+            # Use a filter parameter telescope_class that doesn't match this request which should fail to find the request
+            response = self.client.patch(reverse('api:requests-detail', args=(r.id,)) + '?telescope_class=2m0', data=payload)
+            self.assertContains(response, 'No Request matches', status_code=404)
+
+    def test_setting_suspend_fails_with_non_time_fails(self):
+        payload = {'suspend_until': 'not a time'}
+        r = self.reqs[0]
+        self.assertIsNone(r.suspend_until)
+
+        # Now try setting the suspend until with invalid value on the request
+        response = self.client.patch(reverse('api:requests-detail', args=(r.id,)), data=payload)
+        self.assertContains(response, 'Datetime has wrong format', status_code=400)
+        r.refresh_from_db()
+        self.assertIsNone(r.suspend_until)
+
+    def test_updating_with_no_suspend_until_fails(self):
+        payload = {'state': 'COMPLETED'}
+        r = self.reqs[0]
+
+        # Now try patching an update on the request without the suspend_until param
+        response = self.client.patch(reverse('api:requests-detail', args=(r.id,)), data=payload)
+        self.assertContains(response, 'The suspend_until value must be set on update requests', status_code=400)
+
+    def test_updating_with_invalid_extra_fields_ignores_them(self):
+        suspend_time = timezone.now() + timedelta(hours=4)
+        payload = {'state': 'COMPLETED', 'suspend_until': suspend_time.isoformat()}
+        r = self.reqs[0]
+        self.assertIsNone(r.suspend_until)
+        self.assertEqual(r.state, 'PENDING')
+
+        # Now try patching an update on the request with invalid extra fields
+        response = self.client.patch(reverse('api:requests-detail', args=(r.id,)), data=payload)
+        self.assertEqual(response.status_code, 200)
+        r.refresh_from_db()
+        self.assertEqual(r.suspend_until, suspend_time)
+        # And the state is not updated, it is ignored
+        self.assertEqual(r.state, 'PENDING')
+
+    def test_setting_suspend_fails_when_setting_in_past(self):
+        suspend_time = timezone.now() - timedelta(hours=4)
+        payload = {'suspend_until': suspend_time.isoformat()}
+        r = self.reqs[0]
+        self.assertIsNone(r.suspend_until)
+
+        # Now try setting the suspend until time into the past on the request
+        response = self.client.patch(reverse('api:requests-detail', args=(r.id,)), data=payload)
+        self.assertContains(response, 'The suspend_until value must be in the future', status_code=400)
+        r.refresh_from_db()
+        self.assertIsNone(r.suspend_until)
+
+    def test_setting_suspend_fails_for_non_staff_user(self):
+        user = blend_user(user_params={'is_staff': False})
+        mixer.blend(Membership, proposal=self.proposal, user=user, role=Membership.CI)
+        self.client.force_login(user)
+
+        suspend_time = timezone.now() + timedelta(hours=4)
+        payload = {'suspend_until': suspend_time.isoformat()}
+        r = self.reqs[0]
+
+        # Now try setting the suspend until time and see its rejected on permissions
+        response = self.client.patch(reverse('api:requests-detail', args=(r.id,)), data=payload)
+        self.assertEqual(response.status_code, 403)
+        r.refresh_from_db()
+        self.assertIsNone(r.suspend_until)
+
+
+
 class TestRequestIPP(SetTimeMixin, APITestCase):
     def setUp(self):
         super().setUp()
@@ -2837,6 +2976,7 @@ class TestSchedulableRequestsApi(SetTimeMixin, APITestCase):
         self.assertEqual(len(response.json()), 10)
         tracking_numbers = [rg.id for rg in self.rgs]
         for rg in response.json():
+            self.assertEqual(len(rg['requests']), 5)
             self.assertIn(rg['id'], tracking_numbers)
 
     def test_get_requests_for_telescope_class(self, modify_mock):
@@ -2933,6 +3073,40 @@ class TestSchedulableRequestsApi(SetTimeMixin, APITestCase):
         self.client.force_login(user)
         response = self.client.get(reverse('api:request_groups-schedulable-requests'))
         self.assertEqual(response.status_code, 403)
+
+    def test_suspended_in_past_requests_are_returned(self, modify_mock):
+        # Set first requests to be suspended until a future date
+        for rg in self.rgs:
+            for r in rg.requests.all():
+                r.suspend_until = timezone.now() - timedelta(hours=1)
+                r.save()
+
+        # get all the requestgroups for the semester
+        response = self.client.get(reverse('api:request_groups-schedulable-requests'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()), 10)
+        for rg in response.json():
+            # All requests are suspended until a past time, so they should all show up here
+            self.assertEqual(len(rg['requests']), 5)
+
+    def test_suspended_requests_not_returned(self, modify_mock):
+        suspended_requests = []
+        # Set first requests to be suspended until a future date
+        for rg in self.rgs:
+            r = rg.requests.first()
+            r.suspend_until = timezone.now() + timedelta(days=7)
+            r.save()
+            suspended_requests.append(r.id)
+
+        # get all the requestgroups for the semester
+        response = self.client.get(reverse('api:request_groups-schedulable-requests'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()), 10)
+        for rg in response.json():
+            # We suspended one request in each requestgroup, so ensure it is left out of the response
+            self.assertEqual(len(rg['requests']), 4)
+            for r in rg.get('requests', []):
+                self.assertNotIn(r['id'], suspended_requests)
 
 
 class TestContention(APITestCase):

@@ -181,7 +181,7 @@ class RequestGroup(models.Model):
         help_text='Time when this RequestGroup was created'
     )
     state = models.CharField(
-        max_length=40, choices=STATE_CHOICES, default=STATE_CHOICES[0][0],
+        max_length=40, choices=STATE_CHOICES, default=STATE_CHOICES[0][0], db_index=True,
         help_text='Current state of this RequestGroup'
     )
     modified = models.DateTimeField(
@@ -263,6 +263,10 @@ class Request(models.Model):
     state = models.CharField(
         max_length=40, choices=STATE_CHOICES, default=STATE_CHOICES[0][0],
         help_text='Current state of this Request'
+    )
+    suspend_until = models.DateTimeField(
+        null=True, blank=True,
+        help_text='Timestamp to suspend scheduling until for this Request. If it is > now, this request will not be considered for scheduling.'
     )
     modified = models.DateTimeField(
         auto_now=True, db_index=True,
