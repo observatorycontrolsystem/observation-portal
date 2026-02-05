@@ -10,6 +10,11 @@ This project adheres to semantic versioning.
 
 ### Removed
 
+## [4.17.7] - 2026-02-05
+
+### Added
+- Ability to set `suspend_until` on Request through API, which excludes it from schedulable_requests until that time is exceeded.
+
 ## [4.17.6] - 2026-01-08
 
 ### Changed
