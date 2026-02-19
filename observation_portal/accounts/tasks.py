@@ -39,7 +39,7 @@ def send_mail(*args, **kwargs):
     usernames = set()
     for email_address in args[3]:
         usernames = usernames.union(
-            set(User.objects.filter(email=email_address).values_list('username', flat=True))
+            set(User.objects.filter(email__iexact=email_address).values_list('username', flat=True))
         )
     logger.info(f"Sending email to {','.join(usernames)} with subject {args[0]}")
     django_send_mail(*args, **kwargs)
@@ -52,7 +52,7 @@ def send_mass_mail(emails):
         usernames = set()
         for email_address in email_tuple[3]:
             usernames = usernames.union(
-                set(User.objects.filter(email=email_address).values_list('username', flat=True))
+                set(User.objects.filter(email__iexact=email_address).values_list('username', flat=True))
             )
         logger.info(f"Sending email to {','.join(usernames)} with subject {email_tuple[0]}")
     django_send_mass_mail(emails)
