@@ -1,0 +1,18 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<script>
+function copyToClipboard() {
+  const text = document.getElementById("csv");
+  navigator.clipboard.writeText(text.value).then(() => {
+    alert("Copied");
+  }).catch(err => {
+    console.error("Failed to copy to clipboard:", err);
+  });
+}
+</script>
+<textarea id="csv">
+{{ csv }}
+</textarea>
+<button onclick="copyToClipboard()">Copy to clipboard</button>
+{% endblock %}

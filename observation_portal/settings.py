@@ -74,6 +74,10 @@ ADMINS = []
 if os.getenv("SEND_ORG_ADMIN_ERROR_EMAILS", "no").lower() in {"yes", "true", "y"}:
     ADMINS.append(("Admins", ORGANIZATION_ADMIN_EMAIL))
 
+
+SCI_APPS_ADMIN_EXPORT_CSV_TAGS = get_list_from_env("SCI_APPS_ADMIN_EXPORT_CSV_TAGS")
+
+SCI_APPS_ADMIN_EXPORT_CSV_INSTRUMENT_TYPES = get_list_from_env("SCI_APPS_ADMIN_EXPORT_CSV_INSTRUMENT_TYPES")
 # Application definition
 
 INSTALLED_APPS = [

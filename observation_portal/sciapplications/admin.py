@@ -7,6 +7,7 @@ from django.utils.safestring import mark_safe
 from django.urls import reverse
 from django.conf import settings
 from django.forms.models import ModelForm
+from django.shortcuts import render
 
 from .models import (
     Instrument, Call, ScienceApplication, TimeRequest, CoInvestigator,
@@ -87,7 +88,7 @@ class ScienceApplicationAdmin(admin.ModelAdmin):
         'preview_link',
     )
     list_filter = (ScienceApplicationTagListFilter, 'call', 'status', 'call__proposal_type')
-    actions = ['accept', 'reject', 'port']
+    actions = ['accept', 'reject', 'port', 'export_key_data_csv']
     search_fields = ['title', 'abstract', 'submitter__first_name', 'submitter__last_name', 'submitter__username']
 
     def preview_link(self, obj):
@@ -145,6 +146,71 @@ class ScienceApplicationAdmin(admin.ModelAdmin):
                         level='ERROR'
                     )
                     return
+
+    @admin.action(description="Export key data as CSV")
+    def export_key_data_csv(self, request, queryset):
+        column_getters = [
+          # name, lambda o: value
+          ("Proposal ID", lambda o: o.id),
+          ("Rank", lambda o: o.tac_rank),
+          ("Title", lambda o: o.title),
+          ("PI Name", lambda o: " ".join([o.pi_first_name, o.pi_last_name])),
+          ("PI Institution", lambda o: o.pi_institution),
+          ("PI Email", lambda o: o.pi),
+        ]
+
+        for tag in settings.SCI_APPS_ADMIN_EXPORT_CSV_TAGS:
+            column_getters.append(
+              (tag, lambda o: "Yes" if tag in o.tags else "No"),
+            )
+
+        def timerequests_by_inst_type(o, inst_type):
+            for tr in o.timerequest_set.all():
+                if tr.code != inst_type:
+                    continue
+                yield tr
+
+        def get_queue_time(o, inst_type):
+            ret = 0
+            for tr in timerequests_by_inst_type(o, inst_type):
+                ret += tr.std_time
+            return ret
+
+        def get_rr_time(o, inst_type):
+            ret = 0
+            for tr in timerequests_by_inst_type(o, inst_type):
+                ret += tr.rr_time
+            return ret
+
+        def get_tc_time(o, inst_type):
+            ret = 0
+            for tr in timerequests_by_inst_type(o, inst_type):
+                ret += tr.tc_time
+            return ret
+
+        for inst_type in settings.SCI_APPS_ADMIN_EXPORT_CSV_INSTRUMENT_TYPES:
+            column_getters.extend([
+              (f"{inst_type} Queue", lambda o: get_queue_time(o, inst_type)),
+              (f"{inst_type} RR", lambda o: get_rr_time(o, inst_type)),
+              (f"{inst_type} TC", lambda o: get_tc_time(o, inst_type)),
+            ])
+
+        rows = []
+        for o in queryset:
+            cols = []
+            for cg in column_getters:
+                cols.append(str(cg[1](o)))
+            rows.append(",".join(cols))
+
+        headers = ",".join([cg[0] for cg in column_getters])
+        csv = "\n".join([headers, "\n".join(rows)])
+        return render(
+            request,
+            "admin/export_key_data_csv.html",
+            context={
+              "csv": csv,
+            }
+        )
 
 admin.site.register(ScienceApplication, ScienceApplicationAdmin)
 
