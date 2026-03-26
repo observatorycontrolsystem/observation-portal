@@ -113,6 +113,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'observation_portal.common.middleware.RequestLogMiddleware',
+    'observation_portal.common.middleware.LimitAnonymousAccessMiddleware',
 ]
 
 ROOT_URLCONF = 'observation_portal.urls'
@@ -336,6 +337,11 @@ LOGGING = {
 MAX_IPP_VALUE = float(os.getenv('MAX_IPP_VALUE', 2.0))  # the maximum allowed value of ipp
 MIN_IPP_VALUE = float(os.getenv('MIN_IPP_VALUE', 0.5))  # the minimum allowed value of ipp
 PROPOSAL_TIME_OVERUSE_ALLOWANCE = float(os.getenv('PROPOSAL_TIME_OVERUSE_ALLOWANCE', 1.1))  # amount of leeway in a proposals timeallocation before rejecting that request
+
+# Anonymous requests with offsets > this will be blocked - to stop the bots
+MAX_UNAUTHENTICATED_OFFSET = os.getenv('MAX_UNAUTHENTICATED_OFFSET', 10000)
+# Anonymous requests with limits > this will be blocked - to slow the bots
+MAX_UNAUTHENTICATED_LIMIT = os.getenv('MAX_UNAUTHENTICATED_LIMIT', 100)
 
 ## This is a list of base URLs for each OAuth Client application which we want this Oauth server
 ## to update the token of a user in when the token is revoked and created.

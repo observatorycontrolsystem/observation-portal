@@ -1,6 +1,8 @@
 import logging
 
 from observation_portal.accounts.models import Profile
+from django.conf import settings
+from django.http import HttpResponseBadRequest
 
 
 class RequestLogMiddleware(object):
@@ -41,3 +43,21 @@ class RequestLogMiddleware(object):
         self.logger.log(level, 'PortalRequestLog', extra={'tags': tags})
 
         return response
+
+
+class LimitAnonymousAccessMiddleware(object):
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        # If this is an unauthenticated GET request, check the offset and limit and block if theyre too large
+        if request.method == 'GET' and not request.user.is_authenticated:
+            offset = request.GET.get('offset')
+            if offset and offset.isdigit() and int(offset) > settings.MAX_UNAUTHENTICATED_OFFSET:
+                return HttpResponseBadRequest("Large offset not allowed for anonymous users.")
+
+            limit = request.GET.get('limit')
+            if limit and limit.isdigit() and int(limit) > settings.MAX_UNAUTHENTICATED_LIMIT:
+                return HttpResponseBadRequest("Large limit not allowed for anonymous users.")
+
+        return self.get_response(request)
