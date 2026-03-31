@@ -3,7 +3,8 @@ import logging
 from observation_portal.accounts.models import Profile
 from django.conf import settings
 from django.http import HttpResponseBadRequest
-
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.request import Request
 
 class RequestLogMiddleware(object):
     def __init__(self, get_response):
@@ -60,4 +61,22 @@ class LimitAnonymousAccessMiddleware(object):
             if limit and limit.isdigit() and int(limit) > settings.MAX_UNAUTHENTICATED_LIMIT:
                 return HttpResponseBadRequest("Large limit not allowed for anonymous users.")
 
+        return self.get_response(request)
+
+
+class DRFTokenAuthMiddleware(object):
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        # Check if this is a Token Auth request based on the Auth header having `Token` in it.
+        if request.method == 'GET' and request.headers.get('Authorization', '').startswith('Token'):
+            drf_request = Request(request)
+            try:
+                user_auth = TokenAuthentication().authenticate(drf_request)
+                # Set the request.user field if we successfully authenticate with TokenAuthentication
+                if user_auth:
+                    request.user = user_auth[0]
+            except Exception:
+                pass
         return self.get_response(request)
