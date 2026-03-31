@@ -110,6 +110,22 @@ class TestUserGetRequestApi(SetTimeMixin, APITestCase):
         self.assertEqual(result.status_code, 200)
         self.assertEqual(result.json()['results'], [])
 
+    def test_unauthenticated_user_has_limits_on_offset(self):
+        result = self.client.get(reverse('api:request_groups-list') + '?offset=10001')
+        self.assertContains(result, 'Large offset not allowed', status_code=400)
+
+        self.client.force_login(self.other_user)
+        result = self.client.get(reverse('api:request_groups-list') + '?offset=10001')
+        self.assertEqual(result.status_code, 200)
+
+    def test_unauthenticated_user_has_limits_on_limit(self):
+        result = self.client.get(reverse('api:request_groups-list') + '?limit=101')
+        self.assertContains(result, 'Large limit not allowed', status_code=400)
+
+        self.client.force_login(self.other_user)
+        result = self.client.get(reverse('api:request_groups-list') + '?limit=101')
+        self.assertEqual(result.status_code, 200)
+
     def test_get_request_group_list_authenticated(self):
         request_group = mixer.blend(RequestGroup, submitter=self.user, proposal=self.proposal, name="testgroup",
                                     observation_type=RequestGroup.NORMAL)
