@@ -10,6 +10,11 @@ This project adheres to semantic versioning.
 
 ### Removed
 
+## [4.17.10] - 2026-03-31
+### Added
+- Middleware to set logged in user for TokenAuth for use in other custom middleware
+
+
 ## [4.17.9] - 2026-03-31
 ### Added
 - Middleware to block large offset requests from anonymous users
