@@ -157,43 +157,47 @@ class ScienceApplicationAdmin(admin.ModelAdmin):
           ("PI Name", lambda o: " ".join([o.pi_first_name, o.pi_last_name])),
           ("PI Institution", lambda o: o.pi_institution),
           ("PI Email", lambda o: o.pi),
+          ("Tags", lambda o: "|".join(o.tags))
         ]
 
-        for tag in settings.SCI_APPS_ADMIN_EXPORT_CSV_TAGS:
-            column_getters.append(
-              (tag, lambda o: "Yes" if tag in o.tags else "No"),
-            )
-
-        def timerequests_by_inst_type(o, inst_type):
+        timerequest_semesters_start = {}
+        for o in queryset:
             for tr in o.timerequest_set.all():
-                if tr.code != inst_type:
+                timerequest_semesters_start[tr.semester.id] = tr.semester.start
+
+        timerequest_semesters = [y[0] for y in sorted(timerequest_semesters_start.items(), key=lambda x: x[1])]
+
+        def timerequests_by_inst_type(o, inst_type, semester):
+            for tr in o.timerequest_set.filter(semester__id=semester):
+                if [inst.code for inst in tr.instrument_types.all()] != [inst_type]:
                     continue
                 yield tr
 
-        def get_queue_time(o, inst_type):
+        def get_queue_time(o, inst_type, semester):
             ret = 0
-            for tr in timerequests_by_inst_type(o, inst_type):
+            for tr in timerequests_by_inst_type(o, inst_type, semester):
                 ret += tr.std_time
             return ret
 
-        def get_rr_time(o, inst_type):
+        def get_rr_time(o, inst_type, semester):
             ret = 0
-            for tr in timerequests_by_inst_type(o, inst_type):
+            for tr in timerequests_by_inst_type(o, inst_type, semester):
                 ret += tr.rr_time
             return ret
 
-        def get_tc_time(o, inst_type):
+        def get_tc_time(o, inst_type, semester):
             ret = 0
-            for tr in timerequests_by_inst_type(o, inst_type):
+            for tr in timerequests_by_inst_type(o, inst_type, semester):
                 ret += tr.tc_time
             return ret
 
-        for inst_type in settings.SCI_APPS_ADMIN_EXPORT_CSV_INSTRUMENT_TYPES:
-            column_getters.extend([
-              (f"{inst_type} Queue", lambda o: get_queue_time(o, inst_type)),
-              (f"{inst_type} RR", lambda o: get_rr_time(o, inst_type)),
-              (f"{inst_type} TC", lambda o: get_tc_time(o, inst_type)),
-            ])
+        for semester in timerequest_semesters:
+            for inst_type in settings.SCI_APPS_ADMIN_EXPORT_CSV_INSTRUMENT_TYPES:
+                column_getters.extend([
+                  (f"{semester} {inst_type} Queue", lambda o, inst_type=inst_type, semester=semester: get_queue_time(o, inst_type, semester)),
+                  (f"{semester} {inst_type} RR", lambda o, inst_type=inst_type, semester=semester: get_rr_time(o, inst_type, semester)),
+                  (f"{semester} {inst_type} TC", lambda o, inst_type=inst_type, semester=semester: get_tc_time(o, inst_type, semester)),
+                ])
 
         rows = []
         for o in queryset:

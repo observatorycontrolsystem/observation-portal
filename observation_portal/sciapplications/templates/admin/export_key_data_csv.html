@@ -11,8 +11,8 @@ function copyToClipboard() {
   });
 }
 </script>
-<textarea id="csv">
+<button onclick="copyToClipboard()">Copy to clipboard</button>
+<textarea id="csv" style="width: 100%; height: 200px" readonly>
 {{ csv }}
 </textarea>
-<button onclick="copyToClipboard()">Copy to clipboard</button>
 {% endblock %}
