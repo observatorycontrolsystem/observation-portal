@@ -10,6 +10,20 @@ This project adheres to semantic versioning.
 
 ### Removed
 
+## [4.17.10] - 2026-03-31
+### Added
+- Middleware to set logged in user for TokenAuth for use in other custom middleware
+
+
+## [4.17.9] - 2026-03-31
+### Added
+- Middleware to block large offset requests from anonymous users
+
+
+## [4.17.8] - 2026-03-23
+### Changed
+- Email checks are now case insensitive, fixing a bug that allowed users to have multiple accounts with the same email address using different casing
+
 ## [4.17.7] - 2026-02-05
 
 ### Added
