@@ -4,6 +4,7 @@ from django.shortcuts import render
 from django.utils import timezone
 from django.http import HttpResponseRedirect
 
+from ..common.admin import export_sciapps_key_data_csv
 from observation_portal.proposals.forms import TimeAllocationForm, TimeAllocationFormSet, CollaborationAllocationForm
 from observation_portal.common.utils import get_queryset_field_values
 from observation_portal.proposals.models import (
@@ -86,7 +87,7 @@ class ProposalAdmin(admin.ModelAdmin):
     inlines = [TimeAllocationAdminInline]
     search_fields = ['id', 'title', 'abstract']
     readonly_fields = []
-    actions = ['activate_selected', 'deactivate_selected', 'makepublic_selected', 'rollover_selected']
+    actions = ['activate_selected', 'deactivate_selected', 'makepublic_selected', 'rollover_selected', 'export_app_key_data_csv']
 
     def semesters(self, obj):
         return [semester.id for semester in obj.semester_set.all().distinct()]
@@ -113,6 +114,18 @@ class ProposalAdmin(admin.ModelAdmin):
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
+
+    @admin.action(description="Export science application data as CSV")
+    def export_app_key_data_csv(self, request, queryset):
+        csv = export_sciapps_key_data_csv([sciapp for o in queryset for sciapp in o.scienceapplication_set.all()])
+
+        return render(
+            request,
+            "admin/export_data_csv.html",
+            context={
+              "csv": csv,
+            }
+        )
 
     @admin.action(description='Make proposals Public')
     def makepublic_selected(self, request, queryset):
