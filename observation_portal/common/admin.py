@@ -1,6 +1,6 @@
 from django.conf import settings
 
-from ..sciapplications.models import ScienceApplication
+from observation_portal.sciapplications.models import ScienceApplication
 
 
 def export_sciapps_key_data_csv(sciapps: list[ScienceApplication]) -> str:

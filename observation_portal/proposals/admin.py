@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.http import HttpResponseRedirect
 from django.conf import settings
 
-from ..common.admin import export_sciapps_key_data_csv
+from observation_portal.common.admin import export_sciapps_key_data_csv
 from observation_portal.proposals.forms import TimeAllocationForm, TimeAllocationFormSet, CollaborationAllocationForm
 from observation_portal.common.utils import get_queryset_field_values
 from observation_portal.proposals.models import (
