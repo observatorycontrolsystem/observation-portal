@@ -15,12 +15,10 @@ def export_sciapps_key_data_csv(sciapps: list[ScienceApplication]) -> str:
       ("Tags", lambda o: "|".join(o.tags))
     ]
 
-    timerequest_semesters_start = {}
+    timerequest_semesters = []
     for o in sciapps:
-        for tr in o.timerequest_set.all():
-            timerequest_semesters_start[tr.semester.id] = tr.semester.start
-
-    timerequest_semesters = [y[0] for y in sorted(timerequest_semesters_start.items(), key=lambda x: x[1])]
+        for tr in o.timerequest_set.all().order_by("semester__start"):
+            timerequest_semesters.append(tr.semester.id)
 
     def timerequests_by_inst_type(o, inst_type, semester):
         for tr in o.timerequest_set.filter(semester__id=semester):
