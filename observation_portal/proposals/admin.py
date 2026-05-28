@@ -3,7 +3,9 @@ from django.contrib import admin
 from django.shortcuts import render
 from django.utils import timezone
 from django.http import HttpResponseRedirect
+from django.conf import settings
 
+from observation_portal.common.admin import export_sciapps_key_data_csv
 from observation_portal.proposals.forms import TimeAllocationForm, TimeAllocationFormSet, CollaborationAllocationForm
 from observation_portal.common.utils import get_queryset_field_values
 from observation_portal.proposals.models import (
@@ -86,7 +88,7 @@ class ProposalAdmin(admin.ModelAdmin):
     inlines = [TimeAllocationAdminInline]
     search_fields = ['id', 'title', 'abstract']
     readonly_fields = []
-    actions = ['activate_selected', 'deactivate_selected', 'makepublic_selected', 'rollover_selected']
+    actions = ['activate_selected', 'deactivate_selected', 'makepublic_selected', 'rollover_selected', 'export_related_sciapp_key_data_csv', 'export_key_data_csv']
 
     def semesters(self, obj):
         return [semester.id for semester in obj.semester_set.all().distinct()]
@@ -113,6 +115,86 @@ class ProposalAdmin(admin.ModelAdmin):
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
+
+    @admin.action(description="Export related science application data as CSV")
+    def export_related_sciapp_key_data_csv(self, request, queryset):
+        csv = export_sciapps_key_data_csv([sciapp for o in queryset for sciapp in o.scienceapplication_set.all()])
+
+        return render(
+            request,
+            "admin/export_data_csv.html",
+            context={
+              "csv": csv,
+            }
+        )
+
+    @admin.action(description="Export key data as CSV")
+    def export_key_data_csv(self, request, queryset):
+        column_getters = [
+          # name, lambda o: value
+          ("Proposal ID", lambda o: o.id),
+          ("Rank", lambda o: o.tac_rank),
+          ("Title", lambda o: o.title),
+          ("PI Name", lambda o: " ".join([o.pi.first_name, o.pi.last_name])),
+          ("PI Institution", lambda o: o.pi.profile.institution),
+          ("PI Email", lambda o: o.pi.email),
+          ("Tags", lambda o: "|".join(o.tags))
+        ]
+
+        timeallocation_semesters = []
+        for o in queryset:
+            for ta in o.timeallocation_set.all().order_by("semester__start"):
+                timeallocation_semesters.append(ta.semester.id)
+
+        def timeallocation_by_inst_type(o, inst_type, semester):
+            for ta in o.timeallocation_set.filter(semester__id=semester):
+                if ta.instrument_types != [inst_type]:
+                    continue
+                yield ta
+
+        def get_queue_time(o, inst_type, semester):
+            ret = 0
+            for ta in timeallocation_by_inst_type(o, inst_type, semester):
+                ret += ta.std_allocation
+            return ret
+
+        def get_rr_time(o, inst_type, semester):
+            ret = 0
+            for ta in timeallocation_by_inst_type(o, inst_type, semester):
+                ret += ta.rr_allocation
+            return ret
+
+        def get_tc_time(o, inst_type, semester):
+            ret = 0
+            for ta in timeallocation_by_inst_type(o, inst_type, semester):
+                ret += ta.tc_allocation
+            return ret
+
+        for semester in timeallocation_semesters:
+            for inst_type in settings.SCI_APPS_ADMIN_EXPORT_CSV_INSTRUMENT_TYPES:
+                column_getters.extend([
+                  (f"{semester} {inst_type} Queue", lambda o, inst_type=inst_type, semester=semester: get_queue_time(o, inst_type, semester)),
+                  (f"{semester} {inst_type} RR", lambda o, inst_type=inst_type, semester=semester: get_rr_time(o, inst_type, semester)),
+                  (f"{semester} {inst_type} TC", lambda o, inst_type=inst_type, semester=semester: get_tc_time(o, inst_type, semester)),
+                ])
+
+        rows = []
+        for o in queryset:
+            cols = []
+            for cg in column_getters:
+                cols.append(str(cg[1](o)))
+            rows.append(",".join(cols))
+
+        headers = ",".join([cg[0] for cg in column_getters])
+        csv = "\n".join([headers, "\n".join(rows)])
+
+        return render(
+            request,
+            "admin/export_data_csv.html",
+            context={
+              "csv": csv,
+            }
+        )
 
     @admin.action(description='Make proposals Public')
     def makepublic_selected(self, request, queryset):
