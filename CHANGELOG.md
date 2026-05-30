@@ -10,7 +10,7 @@ This project adheres to semantic versioning.
 
 ### Removed
 
-## [4.17.11] - 2026-05-30
+## [4.18.1] - 2026-05-30
 ### Changed
 - Added `SKY` as valid configuration type
 
