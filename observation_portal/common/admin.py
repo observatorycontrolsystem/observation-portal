@@ -45,7 +45,7 @@ def export_sciapps_key_data_csv(sciapps: list[ScienceApplication]) -> str:
         return ret
 
     for semester in timerequest_semesters:
-        for inst_type in settings.SCI_APPS_ADMIN_EXPORT_CSV_INSTRUMENT_TYPES:
+        for inst_type in settings.ADMIN_EXPORT_CSV_INSTRUMENT_TYPES:
             column_getters.extend([
               (f"{semester} {inst_type} Queue", lambda o, inst_type=inst_type, semester=semester: get_queue_time(o, inst_type, semester)),
               (f"{semester} {inst_type} RR", lambda o, inst_type=inst_type, semester=semester: get_rr_time(o, inst_type, semester)),

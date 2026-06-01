@@ -10,7 +10,7 @@ from django.forms.models import ModelForm
 from django.shortcuts import render
 
 from observation_portal.common.admin import export_sciapps_key_data_csv
-from .models import (
+from observation_portal.sciapplications.models import (
     Instrument, Call, ScienceApplication, TimeRequest, CoInvestigator,
     NoTimeAllocatedError, MultipleTimesAllocatedError, ScienceApplicationReview,
     ScienceApplicationUserReview, ReviewPanel, ReviewPanelMembership
