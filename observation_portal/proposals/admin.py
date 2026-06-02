@@ -141,10 +141,12 @@ class ProposalAdmin(admin.ModelAdmin):
           ("Tags", lambda o: "|".join(o.tags))
         ]
 
-        timeallocation_semesters = []
+        timeallocation_semesters_start = {}
         for o in queryset:
-            for ta in o.timeallocation_set.all().order_by("semester__start"):
-                timeallocation_semesters.append(ta.semester.id)
+            for tr in o.timeallocation_set.all():
+                timeallocation_semesters_start[tr.semester.id] = tr.semester.start
+
+        timeallocation_semesters = [y[0] for y in sorted(timeallocation_semesters_start.items(), key=lambda x: x[1])]
 
         def timeallocation_by_inst_type(o, inst_type, semester):
             for ta in o.timeallocation_set.filter(semester__id=semester):
