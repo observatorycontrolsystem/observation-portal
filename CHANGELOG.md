@@ -10,6 +10,10 @@ This project adheres to semantic versioning.
 
 ### Removed
 
+## [4.18.1] - 2026-05-30
+### Changed
+- Added `SKY` as valid configuration type
+
 ## [4.17.10] - 2026-03-31
 ### Added
 - Middleware to set logged in user for TokenAuth for use in other custom middleware
