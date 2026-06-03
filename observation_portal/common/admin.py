@@ -3,7 +3,7 @@ from django.conf import settings
 from observation_portal.sciapplications.models import ScienceApplication
 
 
-def export_sciapps_key_data_csv(sciapps: list[ScienceApplication]) -> str:
+def export_sciapps_key_data_tsv(sciapps: list[ScienceApplication]) -> str:
     column_getters = [
       # name, lambda o: value
       ("Proposal ID", lambda o: o.id),
@@ -47,7 +47,7 @@ def export_sciapps_key_data_csv(sciapps: list[ScienceApplication]) -> str:
         return ret
 
     for semester in timerequest_semesters:
-        for inst_type in settings.ADMIN_EXPORT_CSV_INSTRUMENT_TYPES:
+        for inst_type in settings.ADMIN_EXPORT_INSTRUMENT_TYPES:
             column_getters.extend([
               (f"{semester} {inst_type} Queue", lambda o, inst_type=inst_type, semester=semester: get_queue_time(o, inst_type, semester)),
               (f"{semester} {inst_type} RR", lambda o, inst_type=inst_type, semester=semester: get_rr_time(o, inst_type, semester)),
@@ -59,9 +59,9 @@ def export_sciapps_key_data_csv(sciapps: list[ScienceApplication]) -> str:
         cols = []
         for cg in column_getters:
             cols.append(str(cg[1](o)))
-        rows.append(",".join(cols))
+        rows.append("\t".join(cols))
 
-    headers = ",".join([cg[0] for cg in column_getters])
-    csv = "\n".join([headers, "\n".join(rows)])
+    headers = "\t".join([cg[0] for cg in column_getters])
+    tsv = "\n".join([headers, "\n".join(rows)])
 
-    return csv
+    return tsv

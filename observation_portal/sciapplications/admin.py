@@ -9,7 +9,7 @@ from django.conf import settings
 from django.forms.models import ModelForm
 from django.shortcuts import render
 
-from observation_portal.common.admin import export_sciapps_key_data_csv
+from observation_portal.common.admin import export_sciapps_key_data_tsv
 from observation_portal.sciapplications.models import (
     Instrument, Call, ScienceApplication, TimeRequest, CoInvestigator,
     NoTimeAllocatedError, MultipleTimesAllocatedError, ScienceApplicationReview,
@@ -89,7 +89,7 @@ class ScienceApplicationAdmin(admin.ModelAdmin):
         'preview_link',
     )
     list_filter = (ScienceApplicationTagListFilter, 'call', 'status', 'call__proposal_type')
-    actions = ['accept', 'reject', 'port', 'export_key_data_csv']
+    actions = ['accept', 'reject', 'port', 'export_key_data_tsv']
     search_fields = ['title', 'abstract', 'submitter__first_name', 'submitter__last_name', 'submitter__username']
 
     def preview_link(self, obj):
@@ -148,14 +148,14 @@ class ScienceApplicationAdmin(admin.ModelAdmin):
                     )
                     return
 
-    @admin.action(description="Export key data as CSV")
-    def export_key_data_csv(self, request, queryset):
-        csv = export_sciapps_key_data_csv([o for o in queryset])
+    @admin.action(description="Export key data as TSV")
+    def export_key_data_tsv(self, request, queryset):
+        tsv = export_sciapps_key_data_tsv([o for o in queryset])
         return render(
             request,
-            "admin/export_data_csv.html",
+            "admin/export_data.html",
             context={
-              "csv": csv,
+              "export": tsv,
             }
         )
 
