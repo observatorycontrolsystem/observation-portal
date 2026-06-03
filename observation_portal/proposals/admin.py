@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.http import HttpResponseRedirect
 from django.conf import settings
 
-from observation_portal.common.admin import export_sciapps_key_data_csv
+from observation_portal.common.admin import export_sciapps_key_data_tsv
 from observation_portal.proposals.forms import TimeAllocationForm, TimeAllocationFormSet, CollaborationAllocationForm
 from observation_portal.common.utils import get_queryset_field_values
 from observation_portal.proposals.models import (
@@ -88,7 +88,7 @@ class ProposalAdmin(admin.ModelAdmin):
     inlines = [TimeAllocationAdminInline]
     search_fields = ['id', 'title', 'abstract']
     readonly_fields = []
-    actions = ['activate_selected', 'deactivate_selected', 'makepublic_selected', 'rollover_selected', 'export_related_sciapp_key_data_csv', 'export_key_data_csv']
+    actions = ['activate_selected', 'deactivate_selected', 'makepublic_selected', 'rollover_selected', 'export_related_sciapp_key_data_tsv', 'export_key_data_tsv']
 
     def semesters(self, obj):
         return [semester.id for semester in obj.semester_set.all().distinct()]
@@ -116,20 +116,20 @@ class ProposalAdmin(admin.ModelAdmin):
             del actions['delete_selected']
         return actions
 
-    @admin.action(description="Export related science application data as CSV")
-    def export_related_sciapp_key_data_csv(self, request, queryset):
-        csv = export_sciapps_key_data_csv([sciapp for o in queryset for sciapp in o.scienceapplication_set.all()])
+    @admin.action(description="Export related science application data as TSV")
+    def export_related_sciapp_key_data_tsv(self, request, queryset):
+        tsv = export_sciapps_key_data_tsv([sciapp for o in queryset for sciapp in o.scienceapplication_set.all()])
 
         return render(
             request,
-            "admin/export_data_csv.html",
+            "admin/export_data.html",
             context={
-              "csv": csv,
+              "export": tsv,
             }
         )
 
-    @admin.action(description="Export key data as CSV")
-    def export_key_data_csv(self, request, queryset):
+    @admin.action(description="Export key data as TSV")
+    def export_key_data_tsv(self, request, queryset):
         column_getters = [
           # name, lambda o: value
           ("Proposal ID", lambda o: o.id),
@@ -173,7 +173,7 @@ class ProposalAdmin(admin.ModelAdmin):
             return ret
 
         for semester in timeallocation_semesters:
-            for inst_type in settings.ADMIN_EXPORT_CSV_INSTRUMENT_TYPES:
+            for inst_type in settings.ADMIN_EXPORT_INSTRUMENT_TYPES:
                 column_getters.extend([
                   (f"{semester} {inst_type} Queue", lambda o, inst_type=inst_type, semester=semester: get_queue_time(o, inst_type, semester)),
                   (f"{semester} {inst_type} RR", lambda o, inst_type=inst_type, semester=semester: get_rr_time(o, inst_type, semester)),
@@ -185,16 +185,16 @@ class ProposalAdmin(admin.ModelAdmin):
             cols = []
             for cg in column_getters:
                 cols.append(str(cg[1](o)))
-            rows.append(",".join(cols))
+            rows.append("\t".join(cols))
 
-        headers = ",".join([cg[0] for cg in column_getters])
-        csv = "\n".join([headers, "\n".join(rows)])
+        headers = "\t".join([cg[0] for cg in column_getters])
+        tsv = "\n".join([headers, "\n".join(rows)])
 
         return render(
             request,
-            "admin/export_data_csv.html",
+            "admin/export_data.html",
             context={
-              "csv": csv,
+              "export": tsv,
             }
         )
 
