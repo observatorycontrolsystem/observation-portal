@@ -6,7 +6,7 @@ from django_dramatiq.test import DramatiqTestCase
 from django.utils import timezone
 
 from observation_portal.accounts.test_utils import blend_user
-from observation_portal.sciapplications.models import ScienceApplication, Call, TimeRequest, CoInvestigator, Instrument, ScienceApplicationReview, ReviewPanel
+from observation_portal.sciapplications.models import ScienceApplication, Call, TimeRequest, CoInvestigator, Instrument, ScienceApplicationReview, ReviewPanel, NoPrioritySetError
 from observation_portal.proposals.models import Semester, Membership, ProposalInvite, ScienceCollaborationAllocation
 
 
@@ -105,6 +105,12 @@ class TestSciAppToProposal(TestCase):
 
         self.assertEqual(proposal.timeallocation_set.get(semester=other_semester).std_allocation, tr2.std_time)
         self.assertEqual(proposal.timeallocation_set.get(semester=other_semester).instrument_types[0], it2.code)
+
+    def test_convert_to_proposal_without_priority_raises(self):
+        app = mixer.blend(ScienceApplication, submitter=self.user, pi='', tac_priority=0)
+        mixer.blend(TimeRequest, approved=True, science_application=app)
+        with self.assertRaises(NoPrioritySetError):
+            app.convert_to_proposal()
 
     def test_create_collab_proposal(self):
         pi = blend_user()

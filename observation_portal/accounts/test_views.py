@@ -77,6 +77,39 @@ class TestIndex(TestCase):
         user = auth.get_user(self.client)
         self.assertTrue(user.is_authenticated)
 
+    def test_api_login_missing_password(self):
+        response = self.client.post(
+            reverse('api_login'),
+            data=json.dumps({'username': 'doge'}),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['message'], 'Must provide a `username` and `password`')
+        user = auth.get_user(self.client)
+        self.assertFalse(user.is_authenticated)
+
+    def test_api_login_missing_username(self):
+        response = self.client.post(
+            reverse('api_login'),
+            data=json.dumps({'password': 'sopassword'}),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['message'], 'Must provide a `username` and `password`')
+        user = auth.get_user(self.client)
+        self.assertFalse(user.is_authenticated)
+
+    def test_api_login_missing_username_and_password(self):
+        response = self.client.post(
+            reverse('api_login'),
+            data=json.dumps({}),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['message'], 'Must provide a `username` and `password`')
+        user = auth.get_user(self.client)
+        self.assertFalse(user.is_authenticated)
+
     def test_login_with_email(self):
         self.client.post(
             reverse('auth_login'),

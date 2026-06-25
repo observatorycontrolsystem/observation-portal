@@ -28,6 +28,10 @@ class MultipleTimesAllocatedError(Exception):
     pass
 
 
+class NoPrioritySetError(Exception):
+    pass
+
+
 class Instrument(models.Model):
     code = models.CharField(max_length=50)
     display = models.CharField(max_length=50)
@@ -189,6 +193,9 @@ class ScienceApplication(models.Model):
             return reverse('api:scienceapplications-detail', args=(self.id,))
 
     def convert_to_proposal(self):
+        if self.tac_priority == 0:
+            raise NoPrioritySetError
+
         approved_time_requests = self.timerequest_set.filter(approved=True)
         if not approved_time_requests.count():
             raise NoTimeAllocatedError
