@@ -44,7 +44,8 @@ class TestSciAppAdmin(DramatiqTestCase):
             status=ScienceApplication.SUBMITTED,
             submitter=self.user,
             call=self.call,
-            tac_rank=(x for x in range(3))
+            tac_rank=(x for x in range(3)),
+            tac_priority=(x+1 for x in range(3))
         )
         mixer.cycle(3).blend(
             TimeRequest,
