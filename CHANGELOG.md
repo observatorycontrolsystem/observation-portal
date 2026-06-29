@@ -10,6 +10,11 @@ This project adheres to semantic versioning.
 
 ### Removed
 
+## [4.18.5] - 2026-06-29
+### Changed
+- Block sci-app porting with no tac priority set
+
+
 ## [4.18.1] - 2026-05-30
 ### Changed
 - Added `SKY` as valid configuration type
