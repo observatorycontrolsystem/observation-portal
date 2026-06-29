@@ -13,7 +13,8 @@ from observation_portal.common.admin import export_sciapps_key_data_tsv
 from observation_portal.sciapplications.models import (
     Instrument, Call, ScienceApplication, TimeRequest, CoInvestigator,
     NoTimeAllocatedError, MultipleTimesAllocatedError, ScienceApplicationReview,
-    ScienceApplicationUserReview, ReviewPanel, ReviewPanelMembership
+    ScienceApplicationUserReview, ReviewPanel, ReviewPanelMembership,
+    NoPrioritySetError
 )
 from observation_portal.proposals.models import Proposal
 from observation_portal.common.utils import get_queryset_field_values
@@ -124,6 +125,11 @@ class ScienceApplicationAdmin(admin.ModelAdmin):
             else:
                 try:
                     app.convert_to_proposal()
+                except NoPrioritySetError:
+                    self.message_user(
+                        request, f'Application {app.title} has no Tac Priority set', level='ERROR'
+                    )
+                    return
                 except NoTimeAllocatedError:
                     self.message_user(
                         request, f'Application {app.title} has no approved Time Allocations', level='ERROR'
