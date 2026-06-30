@@ -1,0 +1,18 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<script>
+function copyToClipboard() {
+  const text = document.getElementById("export");
+  navigator.clipboard.writeText(text.value).then(() => {
+    alert("Copied");
+  }).catch(err => {
+    console.error("Failed to copy to clipboard:", err);
+  });
+}
+</script>
+<button onclick="copyToClipboard()">Copy to clipboard</button>
+<textarea id="export" style="width: 100%; height: 200px" readonly>
+{{ export }}
+</textarea>
+{% endblock %}

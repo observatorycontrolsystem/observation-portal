@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 class EmailOrUsernameModelBackend(object):
     @staticmethod
     def authenticate(request, username=None, password=None):
-        if '@' in username:
+        if username and '@' in username:
             kwargs = {'email': username}
         else:
             kwargs = {'username': username}

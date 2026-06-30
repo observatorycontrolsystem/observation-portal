@@ -460,6 +460,7 @@ class Configuration(models.Model):
         ('EXPOSE', 'EXPOSE'),
         ('REPEAT_EXPOSE', 'REPEAT_EXPOSE'),
         ('SKY_FLAT', 'SKY_FLAT'),
+        ('SKY', 'SKY'),
         ('STANDARD', 'STANDARD'),
         ('ARC', 'ARC'),
         ('LAMP_FLAT', 'LAMP_FLAT'),

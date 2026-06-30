@@ -184,10 +184,10 @@ class Proposal(models.Model):
 
     def add_users(self, emails, role, time_limit=-1):
         for email in emails:
-            if User.objects.filter(email=email).exists():
+            if User.objects.filter(email__iexact=email).exists():
                 membership, created = Membership.objects.update_or_create(
                     proposal=self,
-                    user=User.objects.get(email=email),
+                    user=User.objects.get(email__iexact=email),
                     defaults={
                         'role': role,
                         'time_limit': time_limit

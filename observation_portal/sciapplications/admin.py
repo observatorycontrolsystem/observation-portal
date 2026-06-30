@@ -7,11 +7,14 @@ from django.utils.safestring import mark_safe
 from django.urls import reverse
 from django.conf import settings
 from django.forms.models import ModelForm
+from django.shortcuts import render
 
-from .models import (
+from observation_portal.common.admin import export_sciapps_key_data_tsv
+from observation_portal.sciapplications.models import (
     Instrument, Call, ScienceApplication, TimeRequest, CoInvestigator,
     NoTimeAllocatedError, MultipleTimesAllocatedError, ScienceApplicationReview,
-    ScienceApplicationUserReview, ReviewPanel, ReviewPanelMembership
+    ScienceApplicationUserReview, ReviewPanel, ReviewPanelMembership,
+    NoPrioritySetError
 )
 from observation_portal.proposals.models import Proposal
 from observation_portal.common.utils import get_queryset_field_values
@@ -87,7 +90,7 @@ class ScienceApplicationAdmin(admin.ModelAdmin):
         'preview_link',
     )
     list_filter = (ScienceApplicationTagListFilter, 'call', 'status', 'call__proposal_type')
-    actions = ['accept', 'reject', 'port']
+    actions = ['accept', 'reject', 'port', 'export_key_data_tsv']
     search_fields = ['title', 'abstract', 'submitter__first_name', 'submitter__last_name', 'submitter__username']
 
     def preview_link(self, obj):
@@ -122,6 +125,11 @@ class ScienceApplicationAdmin(admin.ModelAdmin):
             else:
                 try:
                     app.convert_to_proposal()
+                except NoPrioritySetError:
+                    self.message_user(
+                        request, f'Application {app.title} has no Tac Priority set', level='ERROR'
+                    )
+                    return
                 except NoTimeAllocatedError:
                     self.message_user(
                         request, f'Application {app.title} has no approved Time Allocations', level='ERROR'
@@ -145,6 +153,17 @@ class ScienceApplicationAdmin(admin.ModelAdmin):
                         level='ERROR'
                     )
                     return
+
+    @admin.action(description="Export key data as TSV")
+    def export_key_data_tsv(self, request, queryset):
+        tsv = export_sciapps_key_data_tsv([o for o in queryset])
+        return render(
+            request,
+            "admin/export_data.html",
+            context={
+              "export": tsv,
+            }
+        )
 
 admin.site.register(ScienceApplication, ScienceApplicationAdmin)
 
