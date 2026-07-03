@@ -1,22 +1,33 @@
 # -*- coding: utf-8 -*-
-from django.contrib import admin
-from django.shortcuts import render
-from django.utils import timezone
-from django.http import HttpResponseRedirect
+import csv
+import io
+
+from django import forms
 from django.conf import settings
+from django.contrib import admin
+from django.contrib.auth.models import User
+from django.http import HttpResponseRedirect
+from django.shortcuts import redirect, render
+from django.utils import timezone
+from django.views.generic import FormView
+from django_object_actions import DjangoObjectActions, action
 
 from observation_portal.common.admin import export_sciapps_key_data_tsv
-from observation_portal.proposals.forms import TimeAllocationForm, TimeAllocationFormSet, CollaborationAllocationForm
 from observation_portal.common.utils import get_queryset_field_values
+from observation_portal.proposals.forms import (
+    CollaborationAllocationForm,
+    TimeAllocationForm,
+    TimeAllocationFormSet,
+)
 from observation_portal.proposals.models import (
-    Semester,
-    ScienceCollaborationAllocation,
     CollaborationAllocation,
-    Proposal,
-    TimeAllocation,
     Membership,
+    Proposal,
     ProposalInvite,
-    ProposalNotification
+    ProposalNotification,
+    ScienceCollaborationAllocation,
+    Semester,
+    TimeAllocation,
 )
 
 
@@ -69,7 +80,7 @@ class ProposalTagListFilter(admin.SimpleListFilter):
             return queryset
 
 
-class ProposalAdmin(admin.ModelAdmin):
+class ProposalAdmin(DjangoObjectActions, admin.ModelAdmin):
     list_display = (
         'id',
         'active',
@@ -89,6 +100,7 @@ class ProposalAdmin(admin.ModelAdmin):
     search_fields = ['id', 'title', 'abstract']
     readonly_fields = []
     actions = ['activate_selected', 'deactivate_selected', 'makepublic_selected', 'rollover_selected', 'export_related_sciapp_key_data_tsv', 'export_key_data_tsv']
+    changelist_actions = ['import_proposals_csv']
 
     def semesters(self, obj):
         return [semester.id for semester in obj.semester_set.all().distinct()]
@@ -225,7 +237,7 @@ class ProposalAdmin(admin.ModelAdmin):
 
             self.message_user(request, 'Successfully rolled over time for {} proposal(s)'.format(queryset.count()))
             return HttpResponseRedirect(request.get_full_path())
-  
+
         proposals = []
         rejects = []
         updated = []
@@ -237,7 +249,81 @@ class ProposalAdmin(admin.ModelAdmin):
             else:
                 proposals.append(obj)
         return render(request, 'admin/rollover_selected.html', context={'proposals':proposals, 'rejects':rejects, 'updated':updated, 'nextsemester':nextsemester, 'currentsemester':currentsemester})
-                
+
+    @action(label="Import Proposals from CSV")
+    def import_proposals_csv(self, request, _queryset):
+        return ImportCSVView.as_view()(request, admin=self)
+
+
+def import_csv_data(csv_file, semester) -> int:
+    reader = csv.DictReader(io.TextIOWrapper(csv_file))
+    created = 0
+    for row in reader:
+        print(row)
+        # TODO: Fill in/Fix the business logic here. In particular, decide what to do if
+        # the PI is not found, make the SCA lookup correct
+
+        # Create base proposal
+        proposal = Proposal.objects.create(
+            id=row["PropID"],
+            title=row["Title"],
+            abstract=row["Abstract"],
+            # TODO: This should be the real SCA. Could also be a dropdown in the form.
+            sca=ScienceCollaborationAllocation.objects.get_or_create(
+                id="SOAR", name="SOAR"
+            )[0],
+        )
+
+        # Attempt to add PI membership
+        email = row["PI_email"]
+        try:
+            user = User.objects.get(email=email)
+            Membership.objects.create(user=user, proposal=proposal, role="PI")
+        except User.DoesNotExist:
+            # could not find PI. Do what here? Create or no membership?
+            # the name is available as row['PI_name']
+            pass
+
+        # Create a TimeAllocation
+        tc = float(row["time TIME_CRITICAL"]) if row["time TIME_CRITICAL"] else 0.0
+        std = float(row["time NORMAL"]) if row["time NORMAL"] else 0.0
+        TimeAllocation.objects.create(
+            proposal=proposal,
+            semester=semester,
+            tc_allocation=tc,
+            std_allocation=std,
+            instrument_types=row["Instrument"].replace(" ", "").split(","),
+        )
+        created += 1
+    return created
+
+
+class ImportCSVForm(forms.Form):
+    csv_file = forms.FileField(label="CSV File", required=True)
+    semester = forms.ModelChoiceField(
+        queryset=Semester.objects.all(), label="Semester", required=True
+    )
+
+
+class ImportCSVView(FormView):
+    form_class = ImportCSVForm
+    template_name = "admin/generic_form.html"
+
+    # Passing the admin object to the view (see the import_propsals_csv method in the Admin)
+    # So that we can call admin.message_user after the form is submitted.
+    def dispatch(self, request, *args, admin, **kwargs):
+        self.admin = admin
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        print(form.cleaned_data["csv_file"])
+        num_imported = import_csv_data(
+            form.files["csv_file"], form.cleaned_data["semester"]
+        )
+        self.admin.message_user(
+            self.request, f"Successfully imported {num_imported} proposals."
+        )
+        return redirect("admin:proposals_proposal_changelist")
 
 
 class MembershipAdmin(admin.ModelAdmin):

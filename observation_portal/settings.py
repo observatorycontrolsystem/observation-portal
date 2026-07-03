@@ -99,6 +99,7 @@ INSTALLED_APPS = [
     'django_extensions',
     'django_dramatiq',
     'health_check',
+    'django_object_actions',
     'observation_portal.accounts.apps.AccountsConfig',
     'observation_portal.requestgroups.apps.RequestGroupsConfig',
     'observation_portal.observations.apps.ObservationsConfig',
