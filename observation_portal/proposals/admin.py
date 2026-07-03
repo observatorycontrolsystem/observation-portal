@@ -259,7 +259,6 @@ def import_csv_data(csv_file, semester) -> int:
     reader = csv.DictReader(io.TextIOWrapper(csv_file))
     created = 0
     for row in reader:
-        print(row)
         # TODO: Fill in/Fix the business logic here. In particular, decide what to do if
         # the PI is not found, make the SCA lookup correct
 
