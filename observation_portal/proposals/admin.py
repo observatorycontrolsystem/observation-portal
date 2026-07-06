@@ -261,9 +261,6 @@ def import_csv_data(csv_file, semester) -> int:
     created = 0
     try:
         for row in reader:
-            # TODO: Fill in/Fix the business logic here. In particular, decide what to do if
-            # the PI is not found, make the SCA lookup correct
-
             # Create base proposal
             proposal = Proposal.objects.create(
                 id=row["PropID"],
@@ -281,8 +278,7 @@ def import_csv_data(csv_file, semester) -> int:
                 user = User.objects.get(email=email)
                 Membership.objects.create(user=user, proposal=proposal, role="PI")
             except User.DoesNotExist:
-                # could not find PI. Do what here? Create or no membership?
-                # the name is available as row['PI_name']
+                # Do nothing an d still attempt to create the propsosal. PI can be added later.
                 pass
 
             # Create a TimeAllocation
