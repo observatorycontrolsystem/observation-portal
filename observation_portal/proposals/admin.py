@@ -6,6 +6,7 @@ from django import forms
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth.models import User
+from django.db import transaction
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.utils import timezone
@@ -315,10 +316,16 @@ class ImportCSVView(FormView):
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
-        print(form.cleaned_data["csv_file"])
-        num_imported = import_csv_data(
-            form.files["csv_file"], form.cleaned_data["semester"]
-        )
+        try:
+            with transaction.atomic():
+                num_imported = import_csv_data(
+                    form.files["csv_file"], form.cleaned_data["semester"]
+                )
+        except Exception as e:
+            self.admin.message_user(
+                self.request, f"Error importing csv: {str(e)}", level="error"
+            )
+            return redirect("admin:proposals_proposal_changelist")
         self.admin.message_user(
             self.request, f"Successfully imported {num_imported} proposals."
         )
