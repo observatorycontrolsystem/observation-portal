@@ -259,42 +259,46 @@ class ProposalAdmin(DjangoObjectActions, admin.ModelAdmin):
 def import_csv_data(csv_file, semester) -> int:
     reader = csv.DictReader(io.TextIOWrapper(csv_file))
     created = 0
-    for row in reader:
-        # TODO: Fill in/Fix the business logic here. In particular, decide what to do if
-        # the PI is not found, make the SCA lookup correct
+    try:
+        for row in reader:
+            # TODO: Fill in/Fix the business logic here. In particular, decide what to do if
+            # the PI is not found, make the SCA lookup correct
 
-        # Create base proposal
-        proposal = Proposal.objects.create(
-            id=row["PropID"],
-            title=row["Title"],
-            abstract=row["Abstract"],
-            # TODO: This should be the real SCA. Could also be a dropdown in the form.
-            sca=ScienceCollaborationAllocation.objects.get_or_create(
-                id="SOAR", name="SOAR"
-            )[0],
-        )
+            # Create base proposal
+            proposal = Proposal.objects.create(
+                id=row["PropID"],
+                title=row["Title"],
+                abstract=row["Abstract"],
+                # TODO: This should be the real SCA. Could also be a dropdown in the form.
+                sca=ScienceCollaborationAllocation.objects.get_or_create(
+                    id="SOAR", name="SOAR"
+                )[0],
+            )
 
-        # Attempt to add PI membership
-        email = row["PI_email"]
-        try:
-            user = User.objects.get(email=email)
-            Membership.objects.create(user=user, proposal=proposal, role="PI")
-        except User.DoesNotExist:
-            # could not find PI. Do what here? Create or no membership?
-            # the name is available as row['PI_name']
-            pass
+            # Attempt to add PI membership
+            email = row["PI_email"]
+            try:
+                user = User.objects.get(email=email)
+                Membership.objects.create(user=user, proposal=proposal, role="PI")
+            except User.DoesNotExist:
+                # could not find PI. Do what here? Create or no membership?
+                # the name is available as row['PI_name']
+                pass
 
-        # Create a TimeAllocation
-        tc = float(row["time TIME_CRITICAL"]) if row["time TIME_CRITICAL"] else 0.0
-        std = float(row["time NORMAL"]) if row["time NORMAL"] else 0.0
-        TimeAllocation.objects.create(
-            proposal=proposal,
-            semester=semester,
-            tc_allocation=tc,
-            std_allocation=std,
-            instrument_types=row["Instrument"].replace(" ", "").split(","),
-        )
-        created += 1
+            # Create a TimeAllocation
+            tc = float(row["time TIME_CRITICAL"]) if row["time TIME_CRITICAL"] else 0.0
+            std = float(row["time NORMAL"]) if row["time NORMAL"] else 0.0
+            TimeAllocation.objects.create(
+                proposal=proposal,
+                semester=semester,
+                tc_allocation=tc,
+                std_allocation=std,
+                instrument_types=row["Instrument"].replace(" ", "").split(","),
+            )
+            created += 1
+    except Exception as e:
+        e.add_note(f"Error occured on row {created + 2}")
+        raise
     return created
 
 
@@ -325,6 +329,8 @@ class ImportCSVView(FormView):
             self.admin.message_user(
                 self.request, f"Error importing csv: {str(e)}", level="error"
             )
+            for note in e.__notes__:
+                self.admin.message_user(self.request, note, level="error")
             return redirect("admin:proposals_proposal_changelist")
         self.admin.message_user(
             self.request, f"Successfully imported {num_imported} proposals."
