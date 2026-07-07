@@ -276,9 +276,8 @@ def import_csv_data(csv_file, semester, sca) -> int:
                 user = User.objects.get(email__iexact=pi_email)
                 Membership.objects.create(user=user, proposal=proposal, role="PI")
             except User.DoesNotExist:
-                # Do nothing and still attempt to create the propsosal. PI can be added later.
+                # Log proposal without PI linked for admin review later.
                 proposals_without_pi.append(proposal.id)
-                pass
 
             coi_emails = row["coIs_email"].replace(" ", "").split(";")
             for email in coi_emails:
