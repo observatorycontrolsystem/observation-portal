@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import csv
 import io
+from datetime import datetime, timezone
 
 from django import forms
 from django.conf import settings
@@ -253,7 +254,7 @@ class ProposalAdmin(DjangoObjectActions, admin.ModelAdmin):
 
     @action(label="Import Proposals from CSV")
     def import_proposals_csv(self, request, _queryset):
-        return ImportCSVView.as_view()(request, admin=self)
+        return ImportCSVView.as_view(admin=self)(request)
 
 
 def import_csv_data(csv_file, semester) -> int:
@@ -301,19 +302,14 @@ def import_csv_data(csv_file, semester) -> int:
 class ImportCSVForm(forms.Form):
     csv_file = forms.FileField(label="CSV File", required=True)
     semester = forms.ModelChoiceField(
-        queryset=Semester.objects.all(), label="Semester", required=True
+        queryset=Semester.objects.filter(end__gte=datetime.now(timezone.utc)), label="Semester", required=True
     )
 
 
 class ImportCSVView(FormView):
     form_class = ImportCSVForm
     template_name = "admin/generic_form.html"
-
-    # Passing the admin object to the view (see the import_propsals_csv method in the Admin)
-    # So that we can call admin.message_user after the form is submitted.
-    def dispatch(self, request, *args, admin, **kwargs):
-        self.admin = admin
-        return super().dispatch(request, *args, **kwargs)
+    admin = None
 
     def form_valid(self, form):
         try:
