@@ -13,6 +13,7 @@ from django.shortcuts import redirect, render
 from django.views.generic import FormView
 from django_object_actions import DjangoObjectActions, action
 
+from observation_portal.common.configdb import configdb
 from observation_portal.common.admin import export_sciapps_key_data_tsv
 from observation_portal.common.utils import get_queryset_field_values
 from observation_portal.proposals.forms import (
@@ -260,8 +261,14 @@ def import_csv_data(csv_file, semester, sca) -> int:
     reader = csv.DictReader(io.TextIOWrapper(csv_file))
     created = 0
     proposals_without_pi = []
+    available_instrument_types = configdb.get_instrument_types()
     try:
         for row in reader:
+            # Check if instrument types are correct or raise exception
+            instrument_types=[it.upper() for it in row["Instrument"].replace(" ", "").split(",")]
+            for instrument_type in instrument_types:
+                if instrument_type not in available_instrument_types:
+                    raise RuntimeError(f"instrument_type {instrument_type} is not one of the available instrument types on this system")
             # Create base proposal
             proposal = Proposal.objects.create(
                 id=row["PropID"],
@@ -272,21 +279,23 @@ def import_csv_data(csv_file, semester, sca) -> int:
 
             # Attempt to add PI membership
             pi_email = row["PI_email"]
-            try:
-                user = User.objects.get(email__iexact=pi_email)
-                Membership.objects.create(user=user, proposal=proposal, role="PI")
-            except User.DoesNotExist:
-                # Log proposal without PI linked for admin review later.
-                proposals_without_pi.append(proposal.id)
+            if pi_email:
+                try:
+                    user = User.objects.get(email__iexact=pi_email)
+                    Membership.objects.create(user=user, proposal=proposal, role="PI")
+                except User.DoesNotExist:
+                    # Log proposal without PI linked for admin review later.
+                    proposals_without_pi.append(proposal.id)
 
             coi_emails = row["coIs_email"].replace(" ", "").split(";")
             for email in coi_emails:
-                try:
-                    user = User.objects.get(email__iexact=email)
-                    Membership.objects.create(user=user, proposal=proposal, role="CI")
-                except User.DoesNotExist:
-                    # Do nothing if COIs don't exist - the PI can invite them later
-                    pass
+                if email:
+                    try:
+                        user = User.objects.get(email__iexact=email)
+                        Membership.objects.create(user=user, proposal=proposal, role="CI")
+                    except User.DoesNotExist:
+                        # Do nothing if COIs don't exist - the PI can invite them later
+                        pass
 
             # Create a TimeAllocation
             tc = float(row["time TIME_CRITICAL"]) if row["time TIME_CRITICAL"] else 0.0
@@ -296,12 +305,11 @@ def import_csv_data(csv_file, semester, sca) -> int:
                 semester=semester,
                 tc_allocation=tc,
                 std_allocation=std,
-                instrument_types=row["Instrument"].replace(" ", "").split(","),
+                instrument_types=instrument_types,
             )
             created += 1
     except Exception as e:
-        e.add_note(f"Error occured on row {created + 2}")
-        raise
+        raise RuntimeError(f"Error occured on row {created + 1}") from e
     return created, proposals_without_pi
 
 
@@ -327,15 +335,14 @@ class ImportCSVView(FormView):
                     form.files["csv_file"], form.cleaned_data["semester"], form.cleaned_data["sca"]
                 )
         except Exception as e:
+            original_error_msg = f". Caused by: {str(e.__cause__)}" if e.__cause__ else ""
             self.admin.message_user(
-                self.request, f"Error importing csv: {str(e)}", level="error"
+                self.request, f"Error importing csv: {str(e)}{original_error_msg}", level="error"
             )
-            for note in e.__notes__:
-                self.admin.message_user(self.request, note, level="error")
             return redirect("admin:proposals_proposal_changelist")
         message = f"Successfully imported {num_imported} proposals."
         if proposals_without_pis:
-            message += f" The following proposals' PI accounts were not found and could not be linked: {proposals_without_pis.join(', ')}"
+            message += f" The following proposals' PI accounts were not found and could not be linked: {', '.join(proposals_without_pis)}"
         self.admin.message_user(
             self.request, message
         )
