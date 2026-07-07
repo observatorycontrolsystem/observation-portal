@@ -10,7 +10,6 @@ from django.contrib.auth.models import User
 from django.db import transaction
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
-from django.utils import timezone
 from django.views.generic import FormView
 from django_object_actions import DjangoObjectActions, action
 
@@ -219,7 +218,7 @@ class ProposalAdmin(DjangoObjectActions, admin.ModelAdmin):
 
     @admin.action(description='Rollover time allocation for selected proposals')
     def rollover_selected(self, request, queryset):
-        now = timezone.now()
+        now = datetime.now(timezone.utc)
         currentsemester = Semester.objects.filter(start__lte=now, end__gte=now).first()
         nextsemester = Semester.objects.filter(start__gte=currentsemester.end).order_by('start').first()
         if 'apply' in request.POST:
@@ -257,9 +256,10 @@ class ProposalAdmin(DjangoObjectActions, admin.ModelAdmin):
         return ImportCSVView.as_view(admin=self)(request)
 
 
-def import_csv_data(csv_file, semester) -> int:
+def import_csv_data(csv_file, semester, sca) -> int:
     reader = csv.DictReader(io.TextIOWrapper(csv_file))
     created = 0
+    proposals_without_pi = []
     try:
         for row in reader:
             # Create base proposal
@@ -267,20 +267,27 @@ def import_csv_data(csv_file, semester) -> int:
                 id=row["PropID"],
                 title=row["Title"],
                 abstract=row["Abstract"],
-                # TODO: This should be the real SCA. Could also be a dropdown in the form.
-                sca=ScienceCollaborationAllocation.objects.get_or_create(
-                    id="SOAR", name="SOAR"
-                )[0],
+                sca=sca,
             )
 
             # Attempt to add PI membership
-            email = row["PI_email"]
+            pi_email = row["PI_email"]
             try:
-                user = User.objects.get(email=email)
+                user = User.objects.get(email__iexact=pi_email)
                 Membership.objects.create(user=user, proposal=proposal, role="PI")
             except User.DoesNotExist:
-                # Do nothing an d still attempt to create the propsosal. PI can be added later.
+                # Do nothing and still attempt to create the propsosal. PI can be added later.
+                proposals_without_pi.append(proposal.id)
                 pass
+
+            coi_emails = row["coIs_email"].replace(" ", "").split(";")
+            for email in coi_emails:
+                try:
+                    user = User.objects.get(email__iexact=email)
+                    Membership.objects.create(user=user, proposal=proposal, role="CI")
+                except User.DoesNotExist:
+                    # Do nothing if COIs don't exist - the PI can invite them later
+                    pass
 
             # Create a TimeAllocation
             tc = float(row["time TIME_CRITICAL"]) if row["time TIME_CRITICAL"] else 0.0
@@ -296,13 +303,16 @@ def import_csv_data(csv_file, semester) -> int:
     except Exception as e:
         e.add_note(f"Error occured on row {created + 2}")
         raise
-    return created
+    return created, proposals_without_pi
 
 
 class ImportCSVForm(forms.Form):
     csv_file = forms.FileField(label="CSV File", required=True)
     semester = forms.ModelChoiceField(
         queryset=Semester.objects.filter(end__gte=datetime.now(timezone.utc)), label="Semester", required=True
+    )
+    sca = forms.ModelChoiceField(
+        queryset=ScienceCollaborationAllocation.objects.all(), label="SCA", required=True
     )
 
 
@@ -314,8 +324,8 @@ class ImportCSVView(FormView):
     def form_valid(self, form):
         try:
             with transaction.atomic():
-                num_imported = import_csv_data(
-                    form.files["csv_file"], form.cleaned_data["semester"]
+                num_imported, proposals_without_pis = import_csv_data(
+                    form.files["csv_file"], form.cleaned_data["semester"], form.cleaned_data["sca"]
                 )
         except Exception as e:
             self.admin.message_user(
@@ -324,8 +334,11 @@ class ImportCSVView(FormView):
             for note in e.__notes__:
                 self.admin.message_user(self.request, note, level="error")
             return redirect("admin:proposals_proposal_changelist")
+        message = f"Successfully imported {num_imported} proposals."
+        if proposals_without_pis:
+            message += f" The following proposals' PI accounts were not found and could not be linked: {proposals_without_pis.join(', ')}"
         self.admin.message_user(
-            self.request, f"Successfully imported {num_imported} proposals."
+            self.request, message
         )
         return redirect("admin:proposals_proposal_changelist")
 
