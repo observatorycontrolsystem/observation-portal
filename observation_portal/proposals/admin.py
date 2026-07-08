@@ -265,20 +265,20 @@ def import_csv_data(csv_file, semester, sca) -> int:
     try:
         for row in reader:
             # Check if instrument types are correct or raise exception
-            instrument_types=[it.upper() for it in row["Instrument"].replace(" ", "").split(",")]
+            instrument_types=[it.upper() for it in row["instrument_types"].replace(" ", "").split(",")]
             for instrument_type in instrument_types:
                 if instrument_type not in available_instrument_types:
                     raise RuntimeError(f"instrument_type {instrument_type} is not one of the available instrument types on this system")
             # Create base proposal
             proposal = Proposal.objects.create(
-                id=row["PropID"],
-                title=row["Title"],
-                abstract=row["Abstract"],
+                id=row["proposal_id"],
+                title=row["title"],
+                abstract=row["abstract"],
                 sca=sca,
             )
 
             # Attempt to add PI membership
-            pi_email = row["PI_email"]
+            pi_email = row["pi_email"]
             if pi_email:
                 try:
                     user = User.objects.get(email__iexact=pi_email)
@@ -287,7 +287,7 @@ def import_csv_data(csv_file, semester, sca) -> int:
                     # Log proposal without PI linked for admin review later.
                     proposals_without_pi.append(proposal.id)
 
-            coi_emails = row["coIs_email"].replace(" ", "").split(";")
+            coi_emails = row["cois_email"].replace(" ", "").split(";")
             for email in coi_emails:
                 if email:
                     try:
@@ -298,8 +298,8 @@ def import_csv_data(csv_file, semester, sca) -> int:
                         pass
 
             # Create a TimeAllocation
-            tc = float(row["time TIME_CRITICAL"]) if row["time TIME_CRITICAL"] else 0.0
-            std = float(row["time NORMAL"]) if row["time NORMAL"] else 0.0
+            tc = float(row["time_critical_time"]) if row["time_critical_time"] else 0.0
+            std = float(row["normal_time"]) if row["normal_time"] else 0.0
             TimeAllocation.objects.create(
                 proposal=proposal,
                 semester=semester,

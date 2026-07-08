@@ -10,6 +10,11 @@ This project adheres to semantic versioning.
 
 ### Removed
 
+## [4.18.6] - 2026-07-08
+### Added
+- Proposal Admin action to load in proposal set from CSV file
+
+
 ## [4.18.5] - 2026-06-29
 ### Changed
 - Block sci-app porting with no tac priority set
