@@ -1,22 +1,35 @@
 # -*- coding: utf-8 -*-
-from django.contrib import admin
-from django.shortcuts import render
-from django.utils import timezone
-from django.http import HttpResponseRedirect
-from django.conf import settings
+import csv
+import io
+from datetime import datetime, timezone
 
+from django import forms
+from django.conf import settings
+from django.contrib import admin
+from django.contrib.auth.models import User
+from django.db import transaction
+from django.http import HttpResponseRedirect
+from django.shortcuts import redirect, render
+from django.views.generic import FormView
+from django_object_actions import DjangoObjectActions, action
+
+from observation_portal.common.configdb import configdb
 from observation_portal.common.admin import export_sciapps_key_data_tsv
-from observation_portal.proposals.forms import TimeAllocationForm, TimeAllocationFormSet, CollaborationAllocationForm
 from observation_portal.common.utils import get_queryset_field_values
+from observation_portal.proposals.forms import (
+    CollaborationAllocationForm,
+    TimeAllocationForm,
+    TimeAllocationFormSet,
+)
 from observation_portal.proposals.models import (
-    Semester,
-    ScienceCollaborationAllocation,
     CollaborationAllocation,
-    Proposal,
-    TimeAllocation,
     Membership,
+    Proposal,
     ProposalInvite,
-    ProposalNotification
+    ProposalNotification,
+    ScienceCollaborationAllocation,
+    Semester,
+    TimeAllocation,
 )
 
 
@@ -69,7 +82,7 @@ class ProposalTagListFilter(admin.SimpleListFilter):
             return queryset
 
 
-class ProposalAdmin(admin.ModelAdmin):
+class ProposalAdmin(DjangoObjectActions, admin.ModelAdmin):
     list_display = (
         'id',
         'active',
@@ -89,6 +102,7 @@ class ProposalAdmin(admin.ModelAdmin):
     search_fields = ['id', 'title', 'abstract']
     readonly_fields = []
     actions = ['activate_selected', 'deactivate_selected', 'makepublic_selected', 'rollover_selected', 'export_related_sciapp_key_data_tsv', 'export_key_data_tsv']
+    changelist_actions = ['import_proposals_csv']
 
     def semesters(self, obj):
         return [semester.id for semester in obj.semester_set.all().distinct()]
@@ -205,7 +219,7 @@ class ProposalAdmin(admin.ModelAdmin):
 
     @admin.action(description='Rollover time allocation for selected proposals')
     def rollover_selected(self, request, queryset):
-        now = timezone.now()
+        now = datetime.now(timezone.utc)
         currentsemester = Semester.objects.filter(start__lte=now, end__gte=now).first()
         nextsemester = Semester.objects.filter(start__gte=currentsemester.end).order_by('start').first()
         if 'apply' in request.POST:
@@ -225,7 +239,7 @@ class ProposalAdmin(admin.ModelAdmin):
 
             self.message_user(request, 'Successfully rolled over time for {} proposal(s)'.format(queryset.count()))
             return HttpResponseRedirect(request.get_full_path())
-  
+
         proposals = []
         rejects = []
         updated = []
@@ -237,7 +251,102 @@ class ProposalAdmin(admin.ModelAdmin):
             else:
                 proposals.append(obj)
         return render(request, 'admin/rollover_selected.html', context={'proposals':proposals, 'rejects':rejects, 'updated':updated, 'nextsemester':nextsemester, 'currentsemester':currentsemester})
-                
+
+    @action(label="Import Proposals from CSV")
+    def import_proposals_csv(self, request, _queryset):
+        return ImportCSVView.as_view(admin=self)(request)
+
+
+def import_csv_data(csv_file, semester, sca) -> int:
+    reader = csv.DictReader(io.TextIOWrapper(csv_file))
+    created = 0
+    proposals_without_pi = []
+    available_instrument_types = configdb.get_instrument_types()
+    try:
+        for row in reader:
+            # Check if instrument types are correct or raise exception
+            instrument_types=[it.upper() for it in row["Instrument"].replace(" ", "").split(",")]
+            for instrument_type in instrument_types:
+                if instrument_type not in available_instrument_types:
+                    raise RuntimeError(f"instrument_type {instrument_type} is not one of the available instrument types on this system")
+            # Create base proposal
+            proposal = Proposal.objects.create(
+                id=row["PropID"],
+                title=row["Title"],
+                abstract=row["Abstract"],
+                sca=sca,
+            )
+
+            # Attempt to add PI membership
+            pi_email = row["PI_email"]
+            if pi_email:
+                try:
+                    user = User.objects.get(email__iexact=pi_email)
+                    Membership.objects.create(user=user, proposal=proposal, role="PI")
+                except User.DoesNotExist:
+                    # Log proposal without PI linked for admin review later.
+                    proposals_without_pi.append(proposal.id)
+
+            coi_emails = row["coIs_email"].replace(" ", "").split(";")
+            for email in coi_emails:
+                if email:
+                    try:
+                        user = User.objects.get(email__iexact=email)
+                        Membership.objects.create(user=user, proposal=proposal, role="CI")
+                    except User.DoesNotExist:
+                        # Do nothing if COIs don't exist - the PI can invite them later
+                        pass
+
+            # Create a TimeAllocation
+            tc = float(row["time TIME_CRITICAL"]) if row["time TIME_CRITICAL"] else 0.0
+            std = float(row["time NORMAL"]) if row["time NORMAL"] else 0.0
+            TimeAllocation.objects.create(
+                proposal=proposal,
+                semester=semester,
+                tc_allocation=tc,
+                std_allocation=std,
+                instrument_types=instrument_types,
+            )
+            created += 1
+    except Exception as e:
+        raise RuntimeError(f"Error occured on row {created + 1}") from e
+    return created, proposals_without_pi
+
+
+class ImportCSVForm(forms.Form):
+    csv_file = forms.FileField(label="CSV File", required=True)
+    semester = forms.ModelChoiceField(
+        queryset=Semester.objects.filter(end__gte=datetime.now(timezone.utc)), label="Semester", required=True
+    )
+    sca = forms.ModelChoiceField(
+        queryset=ScienceCollaborationAllocation.objects.all(), label="SCA", required=True
+    )
+
+
+class ImportCSVView(FormView):
+    form_class = ImportCSVForm
+    template_name = "admin/generic_form.html"
+    admin = None
+
+    def form_valid(self, form):
+        try:
+            with transaction.atomic():
+                num_imported, proposals_without_pis = import_csv_data(
+                    form.files["csv_file"], form.cleaned_data["semester"], form.cleaned_data["sca"]
+                )
+        except Exception as e:
+            original_error_msg = f". Caused by: {str(e.__cause__)}" if e.__cause__ else ""
+            self.admin.message_user(
+                self.request, f"Error importing csv: {str(e)}{original_error_msg}", level="error"
+            )
+            return redirect("admin:proposals_proposal_changelist")
+        message = f"Successfully imported {num_imported} proposals."
+        if proposals_without_pis:
+            message += f" The following proposals' PI accounts were not found and could not be linked: {', '.join(proposals_without_pis)}"
+        self.admin.message_user(
+            self.request, message
+        )
+        return redirect("admin:proposals_proposal_changelist")
 
 
 class MembershipAdmin(admin.ModelAdmin):
