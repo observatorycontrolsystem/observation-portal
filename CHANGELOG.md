@@ -10,7 +10,7 @@ This project adheres to semantic versioning.
 
 ### Removed
 
-## [4.18.8] - 2026-07-08
+## [4.18.9] - 2026-07-08
 ### Added
 - Proposal Admin action to load in proposal set from CSV file
 
