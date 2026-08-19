@@ -164,9 +164,33 @@ This will install the project in a Poetry managed virtual environment. To run
 commands in that environment either use `poetry run ...` or start a shell in
 that environment with `poetry shell`
 
+### **Start the PostgreSQL server**
+
+This example uses the [PostgreSQL Docker image](https://hub.docker.com/_/postgres).
+
+If installed via Homebrew:
+
+    bashbrew services start postgres
+
+Note: If you installed a specific version, use brew services start postgresql@14, postgresql@15, etc.
+
+Otherwise, 
+    
+    docker start postgres
+
 ### **Set up the database**
 
-This example uses the [PostgreSQL Docker image](https://hub.docker.com/_/postgres) to create a database. Make sure that the options that you use to set up your database correspond with your configured database settings.
+ Once the database server is running, make sure that the options that you use to set up your database correspond with your configured database settings. Now you can create the database.
+
+
+    createdb -h127.0.0.1 -p5432 -Upostgres -W observation_portal
+
+    pg_dump -Fc -Uobservationportal -h<ask Jon N. for the database host> -W observationportal > prod.db
+
+It will prompt you for a password. Ask Jon N. for the password. Run the following step twice. It will take a long time (about an hour) to run both times.
+
+    pg_restore -Upostgres -h127.0.0.1 -p5432 -W -dobservation_portal -c prod.db
+
 
     docker run --name observation-portal-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=observation_portal -v/var/lib/postgresql/data -p5432:5432 -d postgres:11.1
 
