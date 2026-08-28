@@ -74,11 +74,11 @@
         "skaffold": "skaffold"
       },
       "locked": {
-        "lastModified": 1768103827,
-        "narHash": "sha256-ZScP7ddAACx1L1tD151GW5h5iYVdepC87VsntngxYj4=",
+        "lastModified": 1781285948,
+        "narHash": "sha256-NLrKsQCXrwZ93I3jS2HPkOpj+2Sqi8esAqOxPriE35E=",
         "owner": "LCOGT",
         "repo": "devenv-k8s",
-        "rev": "ad5368c21dc68185256fe3b2bb67730b79122a80",
+        "rev": "f5b4b94d52f6782ccb6628aef5ae19c4ecc316ba",
         "type": "github"
       },
       "original": {
@@ -490,16 +490,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1724261402,
-        "narHash": "sha256-ablZLlVPhrC5cShu2/5e80cbrR5MOMGc7Fpgf37HNbQ=",
-        "owner": "jashandeep-sohi",
+        "lastModified": 1781285104,
+        "narHash": "sha256-XThdXz/WM+WzWNUjESFUe/mptd05ti8prpbLn2cwiqw=",
+        "owner": "LCOGT",
         "repo": "octopilot",
-        "rev": "b17d9033a57525c63fc973e3d1108fefdec62210",
+        "rev": "2c61f942c52696fc000d69cb9c7c34ae46613c45",
         "type": "github"
       },
       "original": {
-        "owner": "jashandeep-sohi",
-        "ref": "fix/commit-with-api",
+        "owner": "LCOGT",
+        "ref": "fix/poll-pr-mergable",
         "repo": "octopilot",
         "type": "github"
       }
