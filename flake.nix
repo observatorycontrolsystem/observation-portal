@@ -57,8 +57,8 @@
 
             poetry = {
               enable = true;
-              activate.enable = true;
-              install.enable = true;
+              activate.enable = false;
+              install.enable = false;
             };
           };
 
