@@ -8,7 +8,7 @@ requires:
 manifests:
   kustomize:
     paths:
-      - k8s/envs/local/
+      - k8s/local-dev/
 deploy:
   kubectl: {}
   logs:
@@ -46,7 +46,7 @@ metadata:
 manifests:
   kustomize:
     paths:
-      - k8s/envs/local-deps/
+      - k8s/local-dev/deps/
 deploy:
   kubectl: {}
   logs:
