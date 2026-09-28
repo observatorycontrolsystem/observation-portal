@@ -8,5 +8,8 @@ resources:
   - ./deploy-dramatiq-scheduler.yaml
   - ./deploy-dramatiq-worker.yaml
 
-commonLabels:
-  app.kubernetes.io/name: observation-portal
+labels:
+  - pairs:
+      app.kubernetes.io/name: observation-portal
+    includeSelectors: true
+    includeTemplates: true
