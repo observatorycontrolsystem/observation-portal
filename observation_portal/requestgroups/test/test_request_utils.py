@@ -1,7 +1,8 @@
 from django.utils import timezone
 from django.test import TestCase
+from django.db.models.signals import post_save
 from mixer.backend.django import mixer
-from datetime import datetime
+from datetime import datetime, timedelta
 from copy import deepcopy
 from unittest.mock import patch
 
@@ -9,13 +10,16 @@ from time_intervals.intervals import Intervals
 
 from observation_portal.requestgroups.request_utils import (get_airmasses_for_request_at_sites,
                                                             get_telescope_states_for_request,
-                                                            get_filtered_rise_set_intervals_by_site)
+                                                            get_filtered_rise_set_intervals_by_site,
+                                                            exposure_completion_percentage)
 from observation_portal.common.rise_set_utils import get_largest_interval
 from observation_portal.requestgroups.models import (Request, Configuration, Target, RequestGroup, Window, Location,
                                                      Constraints, InstrumentConfig, AcquisitionConfig, GuidingConfig)
+from observation_portal.observations.models import Observation, ConfigurationStatus, Summary
+from observation_portal.observations.signals.handlers import cb_configurationstatus_post_save
 from observation_portal.proposals.models import Proposal, TimeAllocation, Semester
 from observation_portal.common.test_telescope_states import TelescopeStatesFakeInput
-from observation_portal.common.test_helpers import SetTimeMixin
+from observation_portal.common.test_helpers import SetTimeMixin, disconnect_signal
 
 
 class BaseSetupRequest(SetTimeMixin, TestCase):
@@ -54,6 +58,100 @@ class BaseSetupRequest(SetTimeMixin, TestCase):
         )
         self.location = mixer.blend(Location, request=self.request, telescope_class='1m0')
         mixer.blend(Constraints, configuration=self.configuration)
+
+
+class TestExposureCompletionPercentage(BaseSetupRequest):
+    def setUp(self):
+        super().setUp()
+        self.observation = mixer.blend(
+            Observation, request=self.request, site='tst', enclosure='doma', telescope='1m0a',
+            start=datetime(2016, 10, 1, 19, 30, tzinfo=timezone.utc),
+            end=datetime(2016, 10, 1, 20, 30, tzinfo=timezone.utc)
+        )
+
+    def _add_configuration_status(self, configuration, time_completed=None, summary_duration=None):
+        with disconnect_signal(post_save, cb_configurationstatus_post_save, ConfigurationStatus):
+            configuration_status = mixer.blend(
+                ConfigurationStatus, observation=self.observation, configuration=configuration, state='COMPLETED'
+            )
+            if time_completed is not None:
+                summary_duration = summary_duration if summary_duration is not None else time_completed
+                mixer.blend(
+                    Summary, configuration_status=configuration_status, time_completed=time_completed,
+                    start=self.observation.start,
+                    end=self.observation.start + timedelta(seconds=summary_duration)
+                )
+        return configuration_status
+
+    def test_repeat_configuration_uses_time_completed_over_summary_duration(self):
+        self.configuration.type = 'REPEAT_EXPOSE'
+        self.configuration.repeat_duration = 1000
+        self.configuration.save()
+        # The summary spans the full repeat_duration in wall clock time, but only half of that was exposing
+        configuration_status = self._add_configuration_status(
+            self.configuration, time_completed=500, summary_duration=1000
+        )
+
+        self.assertEqual(exposure_completion_percentage([configuration_status]), 50.0)
+
+    def test_repeat_configuration_with_no_summary_is_zero_percent(self):
+        self.configuration.type = 'REPEAT_EXPOSE'
+        self.configuration.repeat_duration = 1000
+        self.configuration.save()
+        configuration_status = self._add_configuration_status(self.configuration)
+
+        self.assertEqual(exposure_completion_percentage([configuration_status]), 0.0)
+
+    def test_repeat_configuration_without_repeat_duration_uses_instrument_configs(self):
+        self.configuration.type = 'REPEAT_EXPOSE'
+        self.configuration.repeat_duration = None
+        self.configuration.save()
+        # Total time falls back to the instrument config exposures of 2 x 600 seconds
+        configuration_status = self._add_configuration_status(self.configuration, time_completed=600)
+
+        self.assertEqual(exposure_completion_percentage([configuration_status]), 50.0)
+
+    def test_repeat_and_normal_configurations_summed_together(self):
+        self.configuration.type = 'REPEAT_EXPOSE'
+        self.configuration.repeat_duration = 1000
+        self.configuration.save()
+        normal_configuration = mixer.blend(
+            Configuration, request=self.request, instrument_type='1M0-SCICAM-SBIG', type='EXPOSE'
+        )
+        mixer.blend(InstrumentConfig, configuration=normal_configuration, exposure_time=500, exposure_count=2)
+        repeat_configuration_status = self._add_configuration_status(
+            self.configuration, time_completed=500, summary_duration=1000
+        )
+        normal_configuration_status = self._add_configuration_status(normal_configuration, time_completed=500)
+
+        self.assertEqual(
+            exposure_completion_percentage([repeat_configuration_status, normal_configuration_status]), 50.0
+        )
+
+    def test_repeat_configuration_over_completed_is_capped_at_100_percent(self):
+        self.configuration.type = 'REPEAT_EXPOSE'
+        self.configuration.repeat_duration = 1000
+        self.configuration.save()
+        configuration_status = self._add_configuration_status(self.configuration, time_completed=1500)
+
+        self.assertEqual(exposure_completion_percentage([configuration_status]), 100.0)
+
+    def test_normal_configuration_over_completed_is_capped_at_100_percent(self):
+        configuration_status = self._add_configuration_status(self.configuration, time_completed=2000)
+
+        self.assertEqual(exposure_completion_percentage([configuration_status]), 100.0)
+
+    def test_normal_configuration_uses_time_completed(self):
+        configuration_status = self._add_configuration_status(self.configuration, time_completed=300)
+
+        self.assertEqual(exposure_completion_percentage([configuration_status]), 25.0)
+
+    def test_zero_total_time_is_100_percent(self):
+        self.instrument_config.exposure_count = 0
+        self.instrument_config.save()
+        configuration_status = self._add_configuration_status(self.configuration, time_completed=0)
+
+        self.assertEqual(exposure_completion_percentage([configuration_status]), 100.0)
 
 
 class TestRequestIntervals(BaseSetupRequest):
