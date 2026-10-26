@@ -1,3 +1,4 @@
+import copy
 from importlib import metadata
 from rest_framework import serializers
 from rest_framework.schemas.openapi import AutoSchema, SchemaGenerator
@@ -75,6 +76,17 @@ class ObservationPortalSchema(AutoSchema):
             if override_query_parameters is not None:
                 return override_query_parameters
 
+        # django-filter's schema generation iterates filter choices directly and fails on callable choices, so give
+        # this view instance a copy of the filterset with those choices resolved
+        filterset_class = getattr(self.view, 'filterset_class', None)
+        if filterset_class is not None:
+            resolved_filters = copy.deepcopy(filterset_class.base_filters)
+            for filter_field in resolved_filters.values():
+                if callable(filter_field.extra.get('choices')):
+                    filter_field.extra['choices'] = filter_field.extra['choices']()
+            self.view.filterset_class = type(filterset_class.__name__, (filterset_class,), {})
+            self.view.filterset_class.base_filters = resolved_filters
+
         return super().get_filter_parameters(path, method)
 
     # The following class methods are based off a change merged to master in the DRF repository
@@ -137,7 +149,7 @@ class ObservationPortalSchema(AutoSchema):
         if not isinstance(serializer, serializers.Serializer):
             item_schema = {}
         else:
-            item_schema = self._get_reference(serializer)
+            item_schema = self.get_reference(serializer)
 
         return {
             'content': {
@@ -161,7 +173,7 @@ class ObservationPortalSchema(AutoSchema):
         if not isinstance(serializer, serializers.Serializer):
             item_schema = {}
         else:
-            item_schema = self._get_reference(serializer)
+            item_schema = self.get_reference(serializer)
 
         if is_list_view(path, method, self.view) and self.is_list_view:
             response_schema = {
