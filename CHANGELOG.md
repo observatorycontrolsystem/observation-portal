@@ -10,6 +10,12 @@ This project adheres to semantic versioning.
 
 ### Removed
 
+## [4.18.10] - 2026-10-26
+### Changed
+- REPEAT_* type requests with a repeat_duration now use the same method of determining completion using on the configuration status summary time reported.
+- Set default `DATA_UPLOAD_MAX_NUMBER_FIELDS` to 5000.
+
+
 ## [4.18.9] - 2026-07-08
 ### Added
 - Proposal Admin action to load in proposal set from CSV file
