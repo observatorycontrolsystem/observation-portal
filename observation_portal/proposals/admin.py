@@ -148,6 +148,7 @@ class ProposalAdmin(DjangoObjectActions, admin.ModelAdmin):
           # name, lambda o: value
           ("Proposal ID", lambda o: o.id),
           ("Rank", lambda o: o.tac_rank),
+          ("Priority", lambda o: o.tac_priority),
           ("Title", lambda o: o.title),
           ("PI Name", lambda o: " ".join([o.pi.first_name, o.pi.last_name])),
           ("PI Institution", lambda o: o.pi.profile.institution),

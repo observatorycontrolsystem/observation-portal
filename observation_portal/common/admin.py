@@ -8,6 +8,7 @@ def export_sciapps_key_data_tsv(sciapps: list[ScienceApplication]) -> str:
       # name, lambda o: value
       ("Proposal ID", lambda o: o.id),
       ("Rank", lambda o: o.tac_rank),
+      ("Priority", lambda o: o.tac_priority),
       ("Title", lambda o: o.title),
       ("PI Name", lambda o: " ".join([o.pi_first_name, o.pi_last_name])),
       ("PI Institution", lambda o: o.pi_institution),
