@@ -150,9 +150,9 @@ class ProposalAdmin(DjangoObjectActions, admin.ModelAdmin):
           ("Rank", lambda o: o.tac_rank),
           ("Priority", lambda o: o.tac_priority),
           ("Title", lambda o: o.title),
-          ("PI Name", lambda o: " ".join([o.pi.first_name, o.pi.last_name])),
-          ("PI Institution", lambda o: o.pi.profile.institution),
-          ("PI Email", lambda o: o.pi.email),
+          ("PI Name", lambda o: " ".join([o.pi.first_name, o.pi.last_name]) if o.pi is not None else ""),
+          ("PI Institution", lambda o: o.pi.profile.institution if (o.pi is not None and o.pi.profile is not None) else ""),
+          ("PI Email", lambda o: o.pi.email if o.pi is not None else ""),
           ("Tags", lambda o: "|".join(o.tags))
         ]
 
