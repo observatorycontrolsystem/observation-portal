@@ -168,7 +168,7 @@ that environment with `poetry shell`
 
 This example uses the [PostgreSQL Docker image](https://hub.docker.com/_/postgres) to create a database. Make sure that the options that you use to set up your database correspond with your configured database settings.
 
-    docker run --name observation-portal-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=observation_portal -v/var/lib/postgresql/data -p5432:5432 -d postgres:11.1
+    docker run --name observation-portal-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=observation_portal -v/var/lib/postgresql/data -p5432:5432 -d postgres:14.1
 
 After creating the database, migrations must be applied to set up the tables in the database.
 
