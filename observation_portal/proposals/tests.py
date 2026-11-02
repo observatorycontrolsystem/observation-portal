@@ -45,6 +45,14 @@ class TestProposal(DramatiqTestCase):
         proposal.add_users([proposal_invite.email], Membership.CI)
         self.assertEqual(ProposalInvite.objects.filter(email=proposal_invite.email).count(), 1)
 
+    def test_add_nonexisting_user_again_resets_used_invite(self):
+        proposal = mixer.blend(Proposal)
+        proposal_invite = mixer.blend(ProposalInvite, proposal=proposal, role=Membership.CI, used=timezone.now())
+        proposal.add_users([proposal_invite.email], Membership.CI)
+        updated_invite = ProposalInvite.objects.get(pk=proposal_invite.pk)
+        self.assertIsNone(updated_invite.used)
+        self.assertEqual(updated_invite.code, proposal_invite.code)
+
     def test_no_dual_membership(self):
         proposal = mixer.blend(Proposal)
         user = blend_user()
@@ -90,6 +98,15 @@ class TestProposalInvitation(DramatiqTestCase):
         self.assertIn(invitation.proposal.id, str(mail.outbox[0].message()))
         self.assertEqual(mail.outbox[0].to, [invitation.email])
         self.assertIn(reverse('registration_register'), str(mail.outbox[0].message()))
+
+    def test_send_invitation_includes_code_link(self):
+        invitation = mixer.blend(ProposalInvite)
+        invitation.send_invitation()
+
+        self.broker.join("default")
+        self.worker.join()
+
+        self.assertIn(f'/proposal-invitation?code={invitation.code}', mail.outbox[0].body)
 
     def test_accept(self):
         invitation = mixer.blend(ProposalInvite)

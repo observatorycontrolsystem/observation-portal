@@ -14,6 +14,7 @@ from collections import namedtuple
 
 from urllib.parse import urljoin
 import logging
+import uuid
 
 from observation_portal.accounts.tasks import send_mail
 from observation_portal.common.configdb import configdb
@@ -196,12 +197,14 @@ class Proposal(models.Model):
                 if created:
                     membership.send_notification()
             else:
+                # Reset used so a re-sent invite that was already claimed by another account becomes usable again
                 proposal_invite, created = ProposalInvite.objects.update_or_create(
                     proposal=self,
                     email=email,
                     defaults={
                         'role': role,
-                        'time_limit': time_limit
+                        'time_limit': time_limit,
+                        'used': None
                     }
                 )
                 proposal_invite.send_invitation()
@@ -324,6 +327,7 @@ class ProposalInvite(models.Model):
     proposal = models.ForeignKey(Proposal, on_delete=models.CASCADE)
     role = models.CharField(max_length=5, choices=Membership.ROLE_CHOICES)
     email = models.EmailField()
+    code = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     time_limit = models.IntegerField(default=-1)  # seconds, -1 is unlimited
     sent = models.DateTimeField(null=True)
     used = models.DateTimeField(null=True)
@@ -350,6 +354,7 @@ class ProposalInvite(models.Model):
             {
                 'proposal': self.proposal,
                 'url': urljoin(reverse('registration_register'), f'?email={self.email}'),
+                'code': self.code,
                 'organization_name': settings.ORGANIZATION_NAME,
                 'observation_portal_base_url': settings.OBSERVATION_PORTAL_BASE_URL
             }

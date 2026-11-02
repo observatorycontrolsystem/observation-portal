@@ -33,7 +33,7 @@ from observation_portal.accounts.views import (
     AcceptTermsApiView, BulkCreateUsersApiView
 )
 from observation_portal.proposals.viewsets import (
-    ProposalViewSet, SemesterViewSet, MembershipViewSet, ProposalInviteViewSet
+    ProposalViewSet, SemesterViewSet, MembershipViewSet, ProposalInviteViewSet, ProposalInviteCodeViewSet
 )
 from observation_portal.sciapplications.viewsets import (
     CallViewSet,
@@ -59,6 +59,7 @@ router.register(r'proposals', ProposalViewSet, 'proposals')
 router.register(r'semesters', SemesterViewSet, 'semesters')
 router.register(r'memberships', MembershipViewSet, 'memberships')
 router.register(r'invitations', ProposalInviteViewSet, 'invitations')
+router.register(r'invitation-codes', ProposalInviteCodeViewSet, 'invitation-codes')
 router.register(r'calls', CallViewSet, 'calls')
 router.register(r'scienceapplications', ScienceApplicationViewSet, 'scienceapplications')
 router.register(r'scienceapplication-reviews', ScienceApplicationReviewViewSet, 'scienceapplication-reviews')

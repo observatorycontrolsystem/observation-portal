@@ -5,6 +5,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils.translation import gettext as _
 from django.utils.module_loading import import_string
+from django.utils import timezone
+from django.db import transaction
 from django.conf import settings
 from rest_framework import status
 
@@ -281,3 +283,57 @@ class ProposalInviteViewSet(mixins.DestroyModelMixin, viewsets.ReadOnlyModelView
     def perform_destroy(self, instance):
         if instance.used is None:
             instance.delete()
+
+
+class ProposalInviteCodeViewSet(viewsets.GenericViewSet):
+    permission_classes = (IsAuthenticated,)
+    schema = ObservationPortalSchema(tags=['Proposals'], empty_request=True)
+    serializer_class = import_string(settings.SERIALIZERS['proposals']['ProposalInviteCode'])
+    queryset = ProposalInvite.objects.all()
+    lookup_field = 'code'
+    lookup_value_regex = '[0-9a-f-]{36}'
+
+    def retrieve(self, request, code=None):
+        # Return the serialized proposal invite if it exists and is unused
+        invite = self.get_object()
+        if invite.used:
+            return Response({'errors': [_('This invitation has already been used')]}, status=status.HTTP_400_BAD_REQUEST)
+        response_serializer = self.get_response_serializer(invite)
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'])
+    def accept(self, request, code=None):
+        # Create a Membership for the authenticated user on the proposal in this proposal invite
+        # if it has not been used, and if the user isn't already a member of the proposal.
+        invite = self.get_object()
+        if Membership.objects.filter(proposal=invite.proposal, user=request.user).exists():
+            return Response(
+                {'errors': [_(f'You are already a member of proposal {invite.proposal}')]},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        with transaction.atomic():
+            # Claim the invite with a conditional update so concurrent requests can't both use it
+            claimed = ProposalInvite.objects.filter(pk=invite.pk, used__isnull=True).update(used=timezone.now())
+            if not claimed:
+                return Response({'errors': [_('This invitation has already been used')]}, status=status.HTTP_400_BAD_REQUEST)
+            Membership.objects.create(
+                proposal=invite.proposal,
+                user=request.user,
+                role=invite.role,
+                time_limit=invite.time_limit
+            )
+        response_serializer = self.get_response_serializer(
+            {'message': _(f'You have been added to proposal {invite.proposal} as a {invite.get_role_display()}')}
+        )
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
+
+    def get_response_serializer(self, *args, **kwargs):
+        serializers = {'accept': import_string(settings.SERIALIZERS['proposals']['ProposalInviteCodeAcceptResponse'])}
+        return serializers.get(self.action, self.serializer_class)(*args, **kwargs)
+
+    def get_endpoint_name(self):
+        endpoint_names = {'retrieve': 'getProposalInviteByCode',
+                          'accept': 'acceptProposalInvite'}
+        return endpoint_names.get(self.action)
+
+
