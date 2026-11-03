@@ -6,13 +6,11 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.template.loader import render_to_string
-from django.urls import reverse
 from django.utils.html import strip_tags
 from django.utils.module_loading import import_string
 from django.conf import settings
 from collections import namedtuple
 
-from urllib.parse import urljoin
 import logging
 import uuid
 
@@ -353,7 +351,6 @@ class ProposalInvite(models.Model):
             'proposals/invitation.txt',
             {
                 'proposal': self.proposal,
-                'url': urljoin(reverse('registration_register'), f'?email={self.email}'),
                 'code': self.code,
                 'organization_name': settings.ORGANIZATION_NAME,
                 'observation_portal_base_url': settings.OBSERVATION_PORTAL_BASE_URL

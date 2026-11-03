@@ -97,16 +97,7 @@ class TestProposalInvitation(DramatiqTestCase):
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn(invitation.proposal.id, str(mail.outbox[0].message()))
         self.assertEqual(mail.outbox[0].to, [invitation.email])
-        self.assertIn(reverse('registration_register'), str(mail.outbox[0].message()))
-
-    def test_send_invitation_includes_code_link(self):
-        invitation = mixer.blend(ProposalInvite)
-        invitation.send_invitation()
-
-        self.broker.join("default")
-        self.worker.join()
-
-        self.assertIn(f'/proposal-invitation?code={invitation.code}', mail.outbox[0].body)
+        self.assertIn(f'/proposal-invitation?code={invitation.code}', str(mail.outbox[0].message()))
 
     def test_accept(self):
         invitation = mixer.blend(ProposalInvite)
