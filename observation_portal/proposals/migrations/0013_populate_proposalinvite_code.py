@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
 
     def gen_codes(apps, schema_editor):
         ProposalInvite = apps.get_model('proposals', 'ProposalInvite')
-        for invite in ProposalInvite.objects.all():
+        for invite in ProposalInvite.objects.filter(code__isnull=True):
             invite.code = uuid.uuid4()
             invite.save(update_fields=['code'])
 
