@@ -15,7 +15,7 @@ from observation_portal.observations.models import Observation, ConfigurationSta
 from observation_portal.observations.realtime import realtime_time_available
 from observation_portal.requestgroups.models import RequestGroup, Request, AcquisitionConfig, GuidingConfig, Target
 from observation_portal.requestgroups.serializers import ConfigurationTypeValidationHelper
-from observation_portal.proposals.models import Proposal
+from observation_portal.proposals.models import Proposal, Membership
 
 import logging
 
@@ -420,7 +420,17 @@ class RealTimeSerializer(serializers.ModelSerializer):
         max_hours_available = realtime_time_available(allowable_instruments.get('types'), proposal)
         hours_duration = (validated_data.get('end') - validated_data.get('start')).total_seconds() / 3600.0
         if max_hours_available < hours_duration:
-            raise serializers.ValidationError(_(f"Not enough realtime time allocation available on proposal {proposal.id}: {max_hours_available} hours available, {hours_duration} requested"))
+            raise serializers.ValidationError(_(f"Not enough realtime time allocation available on proposal {proposal.id}: {round(max_hours_available, 2)} hours available, {round(hours_duration, 2)} requested"))
+
+        # Check that the user has not exceeded the time limit on this membership
+        membership = Membership.objects.get(user=user, proposal=proposal)
+        if membership.time_limit >= 0:
+            time_to_be_used = user.profile.time_used_in_proposal(proposal) + hours_duration * 3600.0
+            if membership.time_limit < time_to_be_used:
+                raise serializers.ValidationError(_(
+                    f"This realtime observation's duration of {round(hours_duration, 2)} hours will exceed the time limit of "
+                    f"{round(membership.time_limit_hours, 2)} hours set for your account on proposal {proposal.id}"
+                ))
 
         # Validate that the start/end time is during nighttime at the telescope
         # Also check that there is not an overlapping downtime

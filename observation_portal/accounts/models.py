@@ -11,6 +11,7 @@ from oauth2_provider.models import AccessToken, Application
 from rest_framework.authtoken.models import Token
 
 from observation_portal.proposals.models import Proposal
+from observation_portal.requestgroups.models import RequestGroup
 
 logger = logging.getLogger()
 
@@ -35,11 +36,15 @@ class Profile(models.Model):
         requestgroups = self.user.requestgroup_set.filter(
             proposal=proposal, created__gte=proposal.current_semester.start, state__in=['PENDING', 'COMPLETED']
         ).prefetch_related('requests')
-        return sum(
-            request.duration for request_group in requestgroups for request in request_group.requests.filter(
-                state__in=['PENDING', 'COMPLETED']
-            )
-        )
+        time_used = 0
+        for request_group in requestgroups:
+            for request in request_group.requests.filter(state__in=['PENDING', 'COMPLETED']):
+                if request_group.observation_type == RequestGroup.REAL_TIME:
+                    # Real time requests have no configurations, so their time used is their reserved observation block
+                    time_used += sum((obs.end - obs.start).total_seconds() for obs in request.observation_set.all())
+                else:
+                    time_used += request.duration
+        return time_used
 
     @property
     def archive_bearer_token(self):
