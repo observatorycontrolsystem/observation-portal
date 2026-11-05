@@ -12,10 +12,10 @@ jobs:
     env:
       SECRET_KEY: fakesecretkey
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v7
       with:
         fetch-depth: 0
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@v7
       with:
         python-version: "3.10"
     - name: Install dependencies
@@ -31,7 +31,7 @@ jobs:
         npx redoc-cli bundle observation-portal.yaml
         mkdir openapi; mv redoc-static.html openapi/observation-portal.html
     - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v3 # https://github.com/peaceiris/actions-gh-pages
+      uses: peaceiris/actions-gh-pages@v4 # https://github.com/peaceiris/actions-gh-pages
       with:
         personal_token: ${{ secrets.PERSONAL_TOKEN }}
         external_repository: observatorycontrolsystem/observatorycontrolsystem.github.io
