@@ -268,6 +268,14 @@ class TestRegistration(TestCase):
         self.assertTrue(second_invitation.used)
         self.assertTrue(Membership.objects.filter(user__username=self.reg_data['username']).exists())
 
+    def test_registration_does_not_accept_used_invite(self):
+        used = timezone.now()
+        invitation = mixer.blend(ProposalInvite, email=self.reg_data['email'], used=used)
+        self.client.post(reverse('registration_register'), self.reg_data, follow=True)
+        invitation.refresh_from_db()
+        self.assertEqual(invitation.used, used)
+        self.assertFalse(Membership.objects.filter(user__username=self.reg_data['username']).exists())
+
     def test_education_register(self):
         reg_data = self.reg_data.copy()
         reg_data['simple_interface'] = True

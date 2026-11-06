@@ -41,7 +41,7 @@ class CustomRegistrationForm(RegistrationFormTermsOfService, RegistrationFormUni
         # There may be more than one proposal invite for the same proposal for the same user. Use the latest invite
         # that was sent if this is the case.
         proposal_invites = {}
-        for proposal_invite in ProposalInvite.objects.filter(email__iexact=new_user_instance.email).order_by('sent'):
+        for proposal_invite in ProposalInvite.objects.filter(email__iexact=new_user_instance.email, used__isnull=True).order_by('sent'):
             proposal_invites[proposal_invite.proposal.id] = proposal_invite
 
         for proposal_id in proposal_invites:
