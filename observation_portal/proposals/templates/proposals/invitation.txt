@@ -3,7 +3,7 @@ Hello,
 {{ proposal.pi.first_name }} {{ proposal.pi.last_name }} has invited you to join their observing program "{{ proposal.id }}: {{ proposal.title }}" at {{ organization_name }}.
 
 Use the following link to sign in and add the proposal to your account. If you do not have an account or wish for this proposal to be connected to a new account, simply register when prompted instead of signing in, confirm your registration email, and click this link again.
-Warning: This invitation can only be attached to a single account:
+Warning: This invitation can only be used to attach this proposal to a single account:
 
 {{ observation_portal_base_url }}/proposal-invitation?code={{ code }}
 
