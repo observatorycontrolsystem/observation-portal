@@ -10,6 +10,12 @@ This project adheres to semantic versioning.
 
 ### Removed
 
+## [4.18.12] - 2026-11-11
+### Changed
+- Apply proposal time_limit to REAL_TIME requests too
+- Update Proposal Invite to have a unique code, allowing any user with the unique code to use the invite to join the proposal.
+
+
 ## [4.18.10] - 2026-10-26
 ### Changed
 - REPEAT_* type requests with a repeat_duration now use the same method of determining completion using on the configuration status summary time reported.
