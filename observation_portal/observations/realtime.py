@@ -6,7 +6,7 @@ from django.utils import timezone
 from django.contrib.auth.models import User
 from time_intervals.intervals import Intervals
 
-from observation_portal.proposals.models import Semester
+from observation_portal.proposals.models import Semester, Membership
 from observation_portal.observations.models import Observation
 from observation_portal.requestgroups.models import RequestGroup
 from observation_portal.common.configdb import configdb
@@ -97,6 +97,10 @@ def get_realtime_availability(user: User, telescope_filter: str = ''):
     instrument_types_available = set()
     telescopes_availability = {}
     for proposal in user.profile.current_proposals:
+        # Skip proposals where the user is within 15 minutes of the time_limit on their membership
+        membership = Membership.objects.get(user=user, proposal=proposal)
+        if membership.time_limit >= 0 and membership.time_limit - user.profile.time_used_in_proposal(proposal) < 15 * 60:
+            continue
         for ta in proposal.timeallocation_set.filter(semester=Semester.current_semesters().first()):
             if ta.realtime_allocation > 0 and ta.realtime_time_used < ta.realtime_allocation:
                 for instrument_type in ta.instrument_types:

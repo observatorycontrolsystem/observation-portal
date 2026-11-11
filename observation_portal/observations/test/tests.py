@@ -590,6 +590,38 @@ class TestRealTimeApi(SetTimeMixin, APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn(f'Not enough realtime time allocation available on proposal {test_proposal.id}: 0.5 hours available', str(response.content))
 
+    def test_post_realtime_time_limit_reached(self):
+        self.membership.time_limit = 0
+        self.membership.save()
+        response = self.client.post(reverse('api:realtime-list'), data=self.observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn(f'will exceed the time limit of 0.0 hours set for your account on proposal {self.proposal.id}', str(response.content))
+
+    @patch('observation_portal.common.downtimedb.DowntimeDB.create_downtime_interval')
+    def test_post_realtime_time_limit_not_reached(self, create_downtime):
+        self.membership.time_limit = 7200
+        self.membership.save()
+        response = self.client.post(reverse('api:realtime-list'), data=self.observation)
+        self.assertEqual(response.status_code, 201)
+
+    @patch('observation_portal.common.downtimedb.DowntimeDB.create_downtime_interval')
+    def test_post_realtime_time_limit_includes_previous_realtime_blocks(self, create_downtime):
+        self.membership.time_limit = 5400
+        self.membership.save()
+        response = self.client.post(reverse('api:realtime-list'), data=self.observation)
+        self.assertEqual(response.status_code, 201)
+        second_observation = copy.deepcopy(self.observation)
+        second_observation['start'] = "2016-09-06T22:35:39Z"
+        second_observation['end'] = "2016-09-06T23:35:40Z"
+        response = self.client.post(reverse('api:realtime-list'), data=second_observation)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn(f'will exceed the time limit of 1.5 hours set for your account on proposal {self.proposal.id}', str(response.content))
+        # The same block is accepted once the time limit is removed
+        self.membership.time_limit = -1
+        self.membership.save()
+        response = self.client.post(reverse('api:realtime-list'), data=second_observation)
+        self.assertEqual(response.status_code, 201)
+
     def test_post_realtime_proposal_does_not_exist(self):
         bad_observation = copy.deepcopy(self.observation)
         bad_observation['proposal'] = 'fakeProposal'
@@ -792,6 +824,20 @@ class TestRealTimeApi(SetTimeMixin, APITestCase):
 
         # Now remove the proposal time allocation and see that there is no availability
         self.ta.delete()
+        response = self.client.get(reverse('api:realtime-availability'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {})
+
+    def test_realtime_availability_is_limited_by_membership_time_limit(self):
+        self.membership.time_limit = 1000
+        self.membership.save()
+        response = self.client.get(reverse('api:realtime-availability'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json())
+
+        # Now set the time limit to within 15 minutes and see that there is no availability
+        self.membership.time_limit = 800
+        self.membership.save()
         response = self.client.get(reverse('api:realtime-availability'))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {})

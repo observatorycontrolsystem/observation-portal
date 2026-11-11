@@ -9,7 +9,8 @@ import datetime
 from django_dramatiq.test import DramatiqTestCase
 
 from observation_portal.proposals.models import ProposalInvite, Proposal, Membership, ProposalNotification, TimeAllocation, Semester
-from observation_portal.requestgroups.models import RequestGroup, Configuration, InstrumentConfig, Window
+from observation_portal.requestgroups.models import RequestGroup, Request, Configuration, InstrumentConfig, Window
+from observation_portal.observations.models import Observation
 from observation_portal.accounts.test_utils import blend_user
 from observation_portal.common.test_helpers import create_simple_requestgroup
 from observation_portal.proposals.tasks import time_allocation_reminder
@@ -280,6 +281,14 @@ class TestProposalUserLimits(TestCase):
         create_simple_requestgroup(self.user, self.proposal, configuration=configuration,
                                    instrument_config=instrument_config)
         self.assertGreater(self.user.profile.time_used_in_proposal(self.proposal), 0)
+
+    def test_time_used_for_user_includes_realtime_blocks(self):
+        request_group = mixer.blend(RequestGroup, submitter=self.user, proposal=self.proposal,
+                                    observation_type=RequestGroup.REAL_TIME, state='PENDING')
+        request = mixer.blend(Request, request_group=request_group, state='PENDING')
+        start = timezone.now() + datetime.timedelta(hours=1)
+        mixer.blend(Observation, request=request, start=start, end=start + datetime.timedelta(hours=2))
+        self.assertEqual(self.user.profile.time_used_in_proposal(self.proposal), 7200)
 
 
 class TestDefaultIPP(TestCase):
