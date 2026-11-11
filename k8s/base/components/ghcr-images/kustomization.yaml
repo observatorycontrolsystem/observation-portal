@@ -4,11 +4,11 @@
 apiVersion: kustomize.config.k8s.io/v1alpha1
 kind: Component
 images:
-- digest: sha256:930175b8e05ef26b4d00c332ce1a1603dc23ae3d500902c29a628ab225ae9be0
+- digest: sha256:adb977412e396b3871495178eef409ae9b169cf2c74dacd91091638152386cc8
   name: nginx-mod-zip
   newName: ghcr.io/observatorycontrolsystem/observation-portal/nginx-mod-zip
-  newTag: v4.18.11
-- digest: sha256:59df0c16ce5061bfef55f98a382d00541de05d82f1dca448c89680a1261f490d
+  newTag: v4.18.12
+- digest: sha256:d62b778eecedc19d73125ff912693b93e6ad4be528fe7019805e5ea09cbca146
   name: observation-portal
   newName: ghcr.io/observatorycontrolsystem/observation-portal/observation-portal
-  newTag: v4.18.11
+  newTag: v4.18.12
