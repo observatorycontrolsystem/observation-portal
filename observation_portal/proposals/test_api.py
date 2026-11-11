@@ -3,6 +3,7 @@ from mixer.backend.django import mixer
 from django.urls import reverse
 from datetime import datetime, timedelta
 from django.utils import timezone
+import uuid
 
 from observation_portal.proposals.models import (
     Proposal, Membership, Semester, ProposalNotification, ProposalInvite, TimeAllocation
@@ -754,6 +755,127 @@ class TestProposalInviteDetailApi(APITestCase):
         response = self.client.delete(reverse('api:invitations-detail', kwargs={'pk': self.proposal_invite.id}))
         self.assertEqual(response.status_code, 204)
         self.assertTrue(ProposalInvite.objects.filter(pk=self.proposal_invite.id).exists())
+
+
+class TestProposalInviteCodeApi(APITestCase):
+    def setUp(self):
+        self.pi_user = blend_user()
+        self.ci_user = blend_user()
+        self.proposal = mixer.blend(Proposal)
+        Membership.objects.create(user=self.pi_user, proposal=self.proposal, role=Membership.PI)
+        Membership.objects.create(user=self.ci_user, proposal=self.proposal, role=Membership.CI)
+        self.proposal_invite = ProposalInvite.objects.create(
+            proposal=self.proposal,
+            role=Membership.CI,
+            email='inviteme@example.com',
+            time_limit=3600,
+            sent=timezone.now(),
+            used=None
+        )
+        self.detail_url = reverse('api:invitation-codes-detail', kwargs={'code': self.proposal_invite.code})
+        self.accept_url = reverse('api:invitation-codes-accept', kwargs={'code': self.proposal_invite.code})
+
+    def test_unauthenticated_not_allowed_to_see_invitation(self):
+        response = self.client.get(self.detail_url)
+        self.assertEqual(response.status_code, 403)
+
+    def test_user_can_see_invitation(self):
+        self.client.force_login(blend_user())
+        response = self.client.get(self.detail_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {
+            'proposal': self.proposal_invite.proposal.id,
+            'proposal_title': self.proposal_invite.proposal.title,
+            'role': self.proposal_invite.role,
+            'time_limit': self.proposal_invite.time_limit
+        })
+
+    def test_seeing_invitation_does_not_use_it(self):
+        self.client.force_login(blend_user())
+        self.client.get(self.detail_url)
+        self.proposal_invite.refresh_from_db()
+        self.assertIsNone(self.proposal_invite.used)
+
+    def test_used_invitation_cannot_be_seen(self):
+        self.proposal_invite.used = timezone.now()
+        self.proposal_invite.save()
+        self.client.force_login(blend_user())
+        response = self.client.get(self.detail_url)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('already been used', response.json()['errors'][0])
+
+    def test_unknown_code_not_found(self):
+        self.client.force_login(blend_user())
+        response = self.client.get(reverse('api:invitation-codes-detail', kwargs={'code': uuid.uuid4()}))
+        self.assertEqual(response.status_code, 404)
+
+    def test_malformed_code_not_found(self):
+        self.client.force_login(blend_user())
+        response = self.client.get(self.detail_url.replace(str(self.proposal_invite.code), 'not-a-code'))
+        self.assertEqual(response.status_code, 404)
+
+    def test_delete_not_allowed(self):
+        self.client.force_login(self.pi_user)
+        response = self.client.delete(self.detail_url)
+        self.assertEqual(response.status_code, 405)
+        self.assertTrue(ProposalInvite.objects.filter(pk=self.proposal_invite.id).exists())
+
+    def test_unauthenticated_not_allowed_to_accept_invitation(self):
+        response = self.client.post(self.accept_url)
+        self.assertEqual(response.status_code, 403)
+        self.proposal_invite.refresh_from_db()
+        self.assertIsNone(self.proposal_invite.used)
+
+    def test_get_not_allowed_to_accept_invitation(self):
+        self.client.force_login(blend_user())
+        response = self.client.get(self.accept_url)
+        self.assertEqual(response.status_code, 405)
+        self.proposal_invite.refresh_from_db()
+        self.assertIsNone(self.proposal_invite.used)
+
+    def test_user_can_accept_invitation(self):
+        user = blend_user()
+        self.client.force_login(user)
+        response = self.client.post(self.accept_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(self.proposal.id, response.json()['message'])
+        membership = Membership.objects.get(proposal=self.proposal, user=user)
+        self.assertEqual(membership.role, Membership.CI)
+        self.assertEqual(membership.time_limit, 3600)
+        self.proposal_invite.refresh_from_db()
+        self.assertIsNotNone(self.proposal_invite.used)
+
+    def test_used_invitation_cannot_be_accepted(self):
+        self.client.force_login(blend_user())
+        self.client.post(self.accept_url)
+        other_user = blend_user()
+        self.client.force_login(other_user)
+        response = self.client.post(self.accept_url)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('already been used', response.json()['errors'][0])
+        self.assertFalse(Membership.objects.filter(proposal=self.proposal, user=other_user).exists())
+
+    def test_existing_member_cannot_accept_invitation(self):
+        self.client.force_login(self.ci_user)
+        response = self.client.post(self.accept_url)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('already a member', response.json()['errors'][0])
+        self.assertEqual(Membership.objects.get(proposal=self.proposal, user=self.ci_user).time_limit, -1)
+        self.proposal_invite.refresh_from_db()
+        self.assertIsNone(self.proposal_invite.used)
+
+    def test_pi_accepting_invitation_keeps_pi_role(self):
+        self.client.force_login(self.pi_user)
+        response = self.client.post(self.accept_url)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(Membership.objects.get(proposal=self.proposal, user=self.pi_user).role, Membership.PI)
+        self.proposal_invite.refresh_from_db()
+        self.assertIsNone(self.proposal_invite.used)
+
+    def test_accept_unknown_code_not_found(self):
+        self.client.force_login(blend_user())
+        response = self.client.post(reverse('api:invitation-codes-accept', kwargs={'code': uuid.uuid4()}))
+        self.assertEqual(response.status_code, 404)
 
 
 class TestMembershipDetailApi(APITestCase):

@@ -56,6 +56,19 @@ class ProposalInviteResponseSerializer(serializers.Serializer):
     message = serializers.CharField(default='Co Investigator(s) invited')
 
 
+class ProposalInviteCodeSerializer(serializers.ModelSerializer):
+    proposal_title = serializers.CharField(source='proposal.title', read_only=True)
+
+    class Meta:
+        model = ProposalInvite
+        fields = ('proposal', 'proposal_title', 'role', 'time_limit')
+        read_only_fields = fields
+
+
+class ProposalInviteCodeAcceptResponseSerializer(serializers.Serializer):
+    message = serializers.CharField(default='Proposal invitation accepted')
+
+
 class MembershipSerializer(serializers.ModelSerializer):
     class Meta:
         model = Membership

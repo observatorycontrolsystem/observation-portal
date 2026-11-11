@@ -144,7 +144,7 @@ class TestSciAppAdmin(DramatiqTestCase):
         ordered_mailbox = order_mail_invite_then_approval(mail.outbox)
         # Proposal invitation email
         self.assertEqual([non_registered_email], ordered_mailbox[0].to)
-        self.assertIn('Please use the following link to register your account', str(ordered_mailbox[0].message()))
+        self.assertIn('/proposal-invitation?code=', str(ordered_mailbox[0].message()))
         # Proposal approved email
         self.assertEqual([non_registered_email], ordered_mailbox[1].to)
         self.assertIn(ScienceApplication.objects.get(pk=app_id_to_port).proposal.id, str(ordered_mailbox[1].message()))

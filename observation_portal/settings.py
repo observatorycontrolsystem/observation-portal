@@ -396,6 +396,8 @@ SERIALIZERS = {
         'Proposal': os.getenv('PROPOSALS_PROPOSAL_SERIALIZER', 'observation_portal.proposals.serializers.ProposalSerializer'),
         'ProposalInvite': os.getenv('PROPOSALS_PROPOSALINVITE_SERIALIZER', 'observation_portal.proposals.serializers.ProposalInviteSerializer'),
         'ProposalInviteResponse': os.getenv('PROPOSALS_PROPOSALINVITE_RESPONSE_SERIALIZER', 'observation_portal.proposals.serializers.ProposalInviteResponseSerializer'),
+        'ProposalInviteCode': os.getenv('PROPOSALS_PROPOSALINVITECODE_SERIALIZER', 'observation_portal.proposals.serializers.ProposalInviteCodeSerializer'),
+        'ProposalInviteCodeAcceptResponse': os.getenv('PROPOSALS_PROPOSALINVITECODE_ACCEPT_RESPONSE_SERIALIZER', 'observation_portal.proposals.serializers.ProposalInviteCodeAcceptResponseSerializer'),
         'Semester': os.getenv('PROPOSALS_SEMESTER_SERIALIZER', 'observation_portal.proposals.serializers.SemesterSerializer'),
         'Membership': os.getenv('PROPOSALS_MEMBERSHIP_SERIALIZER', 'observation_portal.proposals.serializers.MembershipSerializer'),
         'ProposalNotification': os.getenv('PROPOSALS_PROPOSALNOTIFICATION_SERIALIZER', 'observation_portal.proposals.serializers.ProposalNotificationSerializer'),
