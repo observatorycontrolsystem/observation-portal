@@ -406,6 +406,9 @@ class TestGlobalMembershipLimitApi(APITestCase):
         self.assertEqual(Membership.objects.filter(role=Membership.PI).first().time_limit, 0)
         for membership in Membership.objects.filter(role=Membership.CI):
             self.assertEqual(membership.time_limit, 3 * 3600)
+            latest_history = membership.history.latest()
+            self.assertEqual(latest_history.history_user, self.pi_user)
+            self.assertEqual(latest_history.diff_against(latest_history.prev_record).changed_fields, ['time_limit'])
 
     def test_pi_cannot_set_globallimit_on_other_proposal(self):
         other_proposal = mixer.blend(Proposal)
@@ -842,6 +845,7 @@ class TestProposalInviteCodeApi(APITestCase):
         membership = Membership.objects.get(proposal=self.proposal, user=user)
         self.assertEqual(membership.role, Membership.CI)
         self.assertEqual(membership.time_limit, 3600)
+        self.assertEqual(membership.history.get().history_user, user)
         self.proposal_invite.refresh_from_db()
         self.assertIsNotNone(self.proposal_invite.used)
 
@@ -946,6 +950,9 @@ class TestMembershipDetailApi(APITestCase):
         self.assertFalse(
             Membership.objects.filter(proposal=self.proposal, user=self.cim_1.user, role=Membership.CI).exists()
         )
+        deleted_history = Membership.history.get(id=self.cim_1.id, history_type='-')
+        self.assertEqual(deleted_history.history_user, self.pi_user)
+        self.assertEqual(deleted_history.user, self.ci_user_1)
 
     def test_ci_cannot_delete_other_ci(self):
         other_user = blend_user()
