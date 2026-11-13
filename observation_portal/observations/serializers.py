@@ -577,7 +577,7 @@ class ObservationSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         if 'state' in validated_data and validated_data['state'] == 'BAD_DATA':
             # The Observation data was determined to be bad, so check if it was in a terminal state
-            if instance.state not in ['COMPLETED', 'FAILED', 'ABORTED']:
+            if instance.state not in ['COMPLETED', 'FAILED', 'ABORTED', 'CANCELED']:
                 raise serializers.ValidationError(_(f"Cannot update observation state from {instance.state} to {validated_data['state']}"))
             set_observation_state_to_bad_data(instance, set_configuration_statuses=True)
             return instance
