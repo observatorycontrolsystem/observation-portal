@@ -343,6 +343,14 @@ class TestTimeAllocationModel(TestCase):
         # Make sure it did save in the save method
         self.assertEqual(ta.instrument_types, ['2M0-FLOYDS-SCICAM', 'FAKE-TYPE'])
 
+    def test_time_allocation_change_recorded_in_history(self):
+        self.assertEqual(self.time_allocation.history.get().history_type, '+')
+        self.time_allocation.std_allocation += 10
+        self.time_allocation.save()
+        latest_history = self.time_allocation.history.latest()
+        self.assertEqual(latest_history.history_type, '~')
+        self.assertEqual(latest_history.diff_against(latest_history.prev_record).changed_fields, ['std_allocation'])
+
 
 class TestProposalAdmin(TestCase):
     def setUp(self):
@@ -372,6 +380,9 @@ class TestProposalAdmin(TestCase):
         )
         for proposal in self.proposals:
             self.assertEqual(Proposal.objects.get(pk=proposal.id).active, True)
+            latest_history = proposal.history.latest()
+            self.assertEqual(latest_history.history_user, self.admin_user)
+            self.assertEqual(latest_history.diff_against(latest_history.prev_record).changed_fields, ['active'])
 
     def test_clean_time_allocation_time_change_succeeds(self):
         ta_dict = self.time_allocation.as_dict()

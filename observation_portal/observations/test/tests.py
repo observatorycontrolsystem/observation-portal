@@ -1026,7 +1026,7 @@ class TestObservationApiBase(SetTimeMixin, APITestCase):
         self.window = self.requestgroup.requests.first().windows.first()
         self.location = self.requestgroup.requests.first().location
 
-    def _generate_requestgroup(self, user=None, proposal=None):
+    def _generate_requestgroup(self, user=None, proposal=None, instrument_type='1M0-SCICAM-SBIG'):
         user = user or self.user
         proposal = proposal or self.proposal
         window = mixer.blend(
@@ -1034,7 +1034,7 @@ class TestObservationApiBase(SetTimeMixin, APITestCase):
         )
         location = mixer.blend(Location, telescope_class='1m0')
         requestgroup = create_simple_requestgroup(
-            user, proposal, window=window, location=location, instrument_type='1M0-SCICAM-SBIG'
+            user, proposal, window=window, location=location, instrument_type=instrument_type
         )
         requestgroup.observation_type = RequestGroup.NORMAL
         requestgroup.save()
@@ -2916,13 +2916,15 @@ class TestTimeAccountingCommand(TestObservationApiBase):
                                            proposal=self.proposal, std_allocation=100, rr_allocation=100,
                                            tc_allocation=100, ipp_time_available=100)
 
-    def _add_observation(self, state, time_completed):
-        observation = Observation.objects.create(request=self.requestgroup.requests.first(), state=state, site='tst', enclosure='domb', telescope='1m0a',
+    def _add_observation(self, state, time_completed, configurations=None):
+        configurations = configurations or [self.requestgroup.requests.first().configurations.first()]
+        observation = Observation.objects.create(request=configurations[0].request, state=state, site='tst', enclosure='domb', telescope='1m0a',
         start=datetime(2016,9,5,22,35,39, tzinfo=timezone.utc), end=datetime(2016,9,5,23,35,40, tzinfo=timezone.utc))
-        config_status = ConfigurationStatus.objects.create(observation=observation, configuration=self.requestgroup.requests.first().configurations.first(),
-        state=state, instrument_name='xx03', guide_camera_name='xx03')
-        Summary.objects.create(configuration_status=config_status, start=datetime(2016,9,5,22,35,39, tzinfo=timezone.utc),
-        end=datetime(2016,9,5,23,35,40, tzinfo=timezone.utc), time_completed=time_completed, state=state)
+        for configuration in configurations:
+            config_status = ConfigurationStatus.objects.create(observation=observation, configuration=configuration,
+            state=state, instrument_name='xx03', guide_camera_name='xx03')
+            Summary.objects.create(configuration_status=config_status, start=datetime(2016,9,5,22,35,39, tzinfo=timezone.utc),
+            end=datetime(2016,9,5,23,35,40, tzinfo=timezone.utc), time_completed=time_completed, state=state)
         return observation
 
     def test_with_no_obs_command_reports_no_time_used(self):
@@ -2931,11 +2933,13 @@ class TestTimeAccountingCommand(TestObservationApiBase):
         call_command('time_accounting', f'-p{self.proposal.id}', '-i1M0-SCICAM-SBIG', f'-s{self.semester.id}', stdout=command_output, stderr=command_err)
         command_out = command_output.getvalue()
         self.assertIn('Used 0 NORMAL hours, 0 RAPID_RESPONSE hours, and 0 TIME_CRITICAL hours', command_out)
-        self.assertNotIn('is different from existing', command_err)
+        self.assertNotIn('is different from existing', command_err.getvalue())
         self.time_allocation.refresh_from_db()
         self.assertEqual(self.time_allocation.std_time_used, 0)
         self.assertEqual(self.time_allocation.rr_time_used, 0)
         self.assertEqual(self.time_allocation.tc_time_used, 0)
+        # Nothing changed, so the time allocation should not have been saved
+        self.assertFalse(self.time_allocation.history.filter(history_type='~').exists())
 
     def test_with_one_obs_command_reports_time_used_and_modifies_time(self):
         command_output = StringIO()
@@ -2950,6 +2954,62 @@ class TestTimeAccountingCommand(TestObservationApiBase):
         self.assertIn('is different from existing', command_err.getvalue())
         self.time_allocation.refresh_from_db()
         self.assertAlmostEqual(self.time_allocation.std_time_used, time_used)
+        self.assertEqual(self.time_allocation.history.latest().history_change_reason, 'Recalculated by time_accounting management command')
+
+    def test_rapid_response_time_used_matches_live_accounting(self):
+        self.requestgroup.observation_type = RequestGroup.RAPID_RESPONSE
+        self.requestgroup.save()
+        observation = self._add_observation(state='COMPLETED', time_completed=1000)
+        # reset time used to 0 since creating the observation already modified it
+        self.time_allocation.rr_time_used = 0
+        self.time_allocation.save()
+        call_command('time_accounting', f'-p{self.proposal.id}', '-i1M0-SCICAM-SBIG', f'-s{self.semester.id}', stdout=StringIO(), stderr=StringIO())
+        summary = observation.configuration_statuses.first().summary
+        live_time_used = configuration_time_used(summary, RequestGroup.RAPID_RESPONSE).total_seconds() / 3600.0
+        # The summary runs longer than the configuration's expected duration, so the rapid response time is capped
+        self.assertLess(live_time_used, (summary.end - summary.start).total_seconds() / 3600.0)
+        self.time_allocation.refresh_from_db()
+        self.assertAlmostEqual(self.time_allocation.rr_time_used, live_time_used)
+
+    def test_time_allocation_with_multiple_instrument_types_is_charged_for_all_of_them(self):
+        nres_requestgroup = self._generate_requestgroup(instrument_type='1M0-NRES-SCICAM')
+        sbig_observation = self._add_observation(state='COMPLETED', time_completed=1000)
+        nres_observation = self._add_observation(state='COMPLETED', time_completed=1000,
+                                                 configurations=[nres_requestgroup.requests.first().configurations.first()])
+        # Give the NRES observation a different duration so the total shows which observations were counted
+        nres_duration = timedelta(minutes=20)
+        nres_summary = nres_observation.configuration_statuses.first().summary
+        nres_summary.end = nres_summary.start + nres_duration
+        nres_summary.save()
+        self.time_allocation.instrument_types = ['1M0-SCICAM-SBIG', '1M0-NRES-SCICAM']
+        self.time_allocation.std_time_used = 0
+        self.time_allocation.save()
+        call_command('time_accounting', f'-p{self.proposal.id}', '-i1M0-NRES-SCICAM', f'-s{self.semester.id}', stdout=StringIO(), stderr=StringIO())
+        sbig_summary = sbig_observation.configuration_statuses.first().summary
+        sbig_duration = sbig_summary.end - sbig_summary.start
+        self.time_allocation.refresh_from_db()
+        self.assertAlmostEqual(self.time_allocation.std_time_used, (sbig_duration + nres_duration).total_seconds() / 3600.0)
+
+    def test_configurations_are_charged_to_the_time_allocation_for_their_instrument_type(self):
+        nres_time_allocation = mixer.blend(TimeAllocation, instrument_types=['1M0-NRES-SCICAM'], semester=self.semester,
+                                           proposal=self.proposal, std_allocation=100)
+        request = self.requestgroup.requests.first()
+        sbig_configuration = request.configurations.first()
+        nres_configuration = create_simple_configuration(request, instrument_type='1M0-NRES-SCICAM', priority=2)
+        observation = self._add_observation(state='COMPLETED', time_completed=1000,
+                                            configurations=[sbig_configuration, nres_configuration])
+        # Give the NRES configuration a different duration so each time allocation's charge can be told apart
+        nres_duration = timedelta(minutes=20)
+        nres_summary = observation.configuration_statuses.get(configuration=nres_configuration).summary
+        nres_summary.end = nres_summary.start + nres_duration
+        nres_summary.save()
+        call_command('time_accounting', f'-p{self.proposal.id}', f'-s{self.semester.id}', stdout=StringIO(), stderr=StringIO())
+        sbig_summary = observation.configuration_statuses.get(configuration=sbig_configuration).summary
+        sbig_duration = sbig_summary.end - sbig_summary.start
+        self.time_allocation.refresh_from_db()
+        nres_time_allocation.refresh_from_db()
+        self.assertAlmostEqual(self.time_allocation.std_time_used, sbig_duration.total_seconds() / 3600.0)
+        self.assertAlmostEqual(nres_time_allocation.std_time_used, nres_duration.total_seconds() / 3600.0)
 
     def test_with_one_obs_command_reports_dry_run_doesnt_modify_time(self):
         command_output = StringIO()

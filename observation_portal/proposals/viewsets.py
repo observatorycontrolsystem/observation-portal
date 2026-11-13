@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.db import transaction
 from django.conf import settings
 from rest_framework import status
+from simple_history.utils import bulk_update_with_history
 
 from observation_portal.accounts.permissions import IsPrincipleInvestigator
 from observation_portal.common.mixins import ListAsDictMixin, DetailAsDictMixin
@@ -79,7 +80,10 @@ class ProposalViewSet(DetailAsDictMixin, ListAsDictMixin, viewsets.ReadOnlyModel
         request_serializer = self.get_request_serializer(data=request.data)
         if request_serializer.is_valid():
             time_limit_hours = request_serializer.validated_data['time_limit_hours']
-            proposal.membership_set.filter(role=Membership.CI).update(time_limit=time_limit_hours * 3600)
+            memberships = list(proposal.membership_set.filter(role=Membership.CI))
+            for membership in memberships:
+                membership.time_limit = time_limit_hours * 3600
+            bulk_update_with_history(memberships, Membership, ['time_limit'], default_user=request.user)
 
             response_serializer = self.get_response_serializer({'message': f'All CI time limits set to {time_limit_hours} hours'})
             return Response(response_serializer.data, status=status.HTTP_200_OK)

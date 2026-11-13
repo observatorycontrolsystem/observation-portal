@@ -31,7 +31,7 @@ packages = [
 ocs-django-manage = "manage:main"
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.12"
+python = ">=3.10,<3.12"
 apscheduler = ">=3.7,<3.8"
 boto3 = "<2.0"
 cerberus = ">1.0,<2.0"
@@ -63,6 +63,7 @@ sentry-sdk = {extras = ["django"], version = "^2.10.0"}
 django-health-check = "^3.18.3"
 ocs-rise-set = "^0.6.3"
 setuptools = "<81"
+django-simple-history = ">=3.12,<3.13"
 
 [tool.poetry.group.dev.dependencies]
 responses = "0.18.0"
