@@ -272,7 +272,7 @@ class ProposalAdmin(DjangoObjectActions, SimpleHistoryAdmin):
 def import_csv_data(csv_file, semester, sca) -> int:
     reader = csv.DictReader(io.TextIOWrapper(csv_file))
     created = 0
-    proposals_without_pi = []
+    invited_emails = []
     available_instrument_types = configdb.get_instrument_types()
     try:
         for row in reader:
@@ -296,8 +296,10 @@ def import_csv_data(csv_file, semester, sca) -> int:
                     user = User.objects.get(email__iexact=pi_email)
                     Membership.objects.create(user=user, proposal=proposal, role="PI")
                 except User.DoesNotExist:
-                    # Log proposal without PI linked for admin review later.
-                    proposals_without_pi.append(proposal.id)
+                    pi_invite = ProposalInvite.objects.create(proposal=proposal, email=pi_email, role="PI")
+                    # Defer the email until the import transaction commits so a failed import sends no invitations
+                    transaction.on_commit(pi_invite.send_invitation)
+                    invited_emails.append(pi_email)
 
             coi_emails = row["cois_email"].replace(" ", "").split(";")
             for email in coi_emails:
@@ -306,8 +308,9 @@ def import_csv_data(csv_file, semester, sca) -> int:
                         user = User.objects.get(email__iexact=email)
                         Membership.objects.create(user=user, proposal=proposal, role="CI")
                     except User.DoesNotExist:
-                        # Do nothing if COIs don't exist - the PI can invite them later
-                        pass
+                        coi_invite = ProposalInvite.objects.create(proposal=proposal, email=email, role="CI")
+                        transaction.on_commit(coi_invite.send_invitation)
+                        invited_emails.append(email)
 
             # Create a TimeAllocation
             tc = float(row["time_critical_time"]) if row["time_critical_time"] else 0.0
@@ -322,7 +325,7 @@ def import_csv_data(csv_file, semester, sca) -> int:
             created += 1
     except Exception as e:
         raise RuntimeError(f"Error occured on row {created + 1}") from e
-    return created, proposals_without_pi
+    return created, invited_emails
 
 
 class ImportCSVForm(forms.Form):
@@ -343,7 +346,7 @@ class ImportCSVView(FormView):
     def form_valid(self, form):
         try:
             with transaction.atomic():
-                num_imported, proposals_without_pis = import_csv_data(
+                num_imported, invited_emails = import_csv_data(
                     form.files["csv_file"], form.cleaned_data["semester"], form.cleaned_data["sca"]
                 )
         except Exception as e:
@@ -353,8 +356,8 @@ class ImportCSVView(FormView):
             )
             return redirect("admin:proposals_proposal_changelist")
         message = f"Successfully imported {num_imported} proposals."
-        if proposals_without_pis:
-            message += f" The following proposals' PI accounts were not found and could not be linked: {', '.join(proposals_without_pis)}"
+        if invited_emails:
+            message += f" The following users did not have accounts and were sent proposal invitations: {', '.join(invited_emails)}"
         self.admin.message_user(
             self.request, message
         )
