@@ -30,32 +30,56 @@ class ConfigDB(object):
     """Class to retrieve and process configuration data."""
 
     @staticmethod
-    @cache_function(duration=900)
     def _get_configdb_data(resource: str):
         """Return all configuration data.
 
         Return all data from ConfigDB at the given endpoint. Check first if the data is already cached, and
-        if so, return that.
+        if so, return that. If ConfigDB cannot be reached, fall back on the last data successfully retrieved
+        from it, which is kept without expiry in the shared default cache.
 
         Parameters:
             resource: ConfigDB endpoint
+        Raises:
+            ConfigDBException: If ConfigDB cannot be reached and there is no previously retrieved data
         Returns:
             Data retrieved
         """
-        error_message = _((
-            'ConfigDB connection is currently down, please wait a few minutes and try again. If this problem '
-            'persists then please contact support.'
-        ))
+        fallback_cache_key = f'configdb_data_{resource}.no_expire'
+
+        @cache_function(duration=900)
+        def get_configdb_data_from_api(resource: str):
+            error_message = _((
+                'ConfigDB connection is currently down, please wait a few minutes and try again. If this problem '
+                'persists then please contact support.'
+            ))
+            try:
+                r = requests.get(settings.CONFIGDB_URL + f'/{resource}/')
+                r.raise_for_status()
+            except (requests.exceptions.RequestException, requests.exceptions.HTTPError) as e:
+                msg = f'{e.__class__.__name__}: {error_message}'
+                raise ConfigDBException(msg)
+            try:
+                data = r.json()['results']
+            except KeyError:
+                raise ConfigDBException(error_message)
+            try:
+                caches['default'].set(fallback_cache_key, data, None)
+            except Exception as e:
+                logger.warning(f'Unable to store last known ConfigDB {resource} data in the default cache: {e!r}')
+            return data
+
         try:
-            r = requests.get(settings.CONFIGDB_URL + f'/{resource}/')
-            r.raise_for_status()
-        except (requests.exceptions.RequestException, requests.exceptions.HTTPError) as e:
-            msg = f'{e.__class__.__name__}: {error_message}'
-            raise ConfigDBException(msg)
-        try:
-            return r.json()['results']
-        except KeyError:
-            raise ConfigDBException(error_message)
+            return get_configdb_data_from_api(resource)
+        except ConfigDBException as e:
+            try:
+                data = caches['default'].get(fallback_cache_key)
+            except Exception as cache_error:
+                logger.warning(f'Unable to read last known ConfigDB {resource} data from the default cache: {cache_error!r}')
+                data = None
+            if data is None:
+                raise e
+            logger.warning(f'Using last known ConfigDB {resource} data: {e}')
+            return data
 
     def get_site_data(self):
         """Return ConfigDB sites data."""
@@ -632,12 +656,13 @@ class ConfigDB(object):
     @cache_function()
     def get_exposure_overhead(self, instrument_type_code, readout_mode):
         # using the instrument type code, build an instrument with the correct configdb parameters
+        instrument_type = {}
         for instrument in self.get_instruments(include_inactive=True):
             if instrument['instrument_type']['code'].upper() == instrument_type_code.upper():
                 instrument_type = instrument['instrument_type']
 
         modes_by_type = self.get_modes_by_type(instrument_type_code, mode_type='readout')
-        if 'readout' in modes_by_type:
+        if instrument_type and 'readout' in modes_by_type:
             default_mode = {}
             for mode in modes_by_type['readout']['modes']:
                 if mode['code'] == modes_by_type['readout'].get('default'):
