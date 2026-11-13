@@ -1,0 +1,20 @@
+{% extends "registration/registration_base.html" %}
+{% load i18n bootstrap4 %}
+
+{% block title %}{% trans "Register for an account" %}{% endblock %}
+
+{% block content %}
+<form method="post" action="">
+    <H3>Register a new LCO account</H3>
+    <H6><em>Note: All fields are required.</em></H6>
+    <br>
+    <div class="col-6">
+    {% csrf_token %}
+    {% bootstrap_form form exclude="simple_interface" wrapper_class='mb-1'%}
+    <hr>
+    <H6>For Students and Astrophotography:</H6>
+    {% bootstrap_field form.simple_interface %}
+    {% buttons submit='Register' %}{% endbuttons %}
+    </div>
+</form>
+{% endblock %}
