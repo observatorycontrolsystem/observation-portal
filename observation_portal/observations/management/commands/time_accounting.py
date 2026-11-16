@@ -1,5 +1,4 @@
 from django.core.management.base import BaseCommand
-from datetime import datetime, timedelta
 from observation_portal.common.configdb import configdb
 from observation_portal.observations.models import Observation, Summary
 from observation_portal.observations.time_accounting import configuration_time_used
@@ -25,6 +24,9 @@ class Command(BaseCommand):
                             help='Semester to perform time accounting on. Defaults to current semester.')
         parser.add_argument('-d', '--dry-run', dest='dry_run', action='store_true', default=False,
                             help='Dry-run mode will print the time totals but not change anything in the db.')
+        parser.add_argument('-r', '--recalculate', dest='recalculate', action='store_true', default=False,
+                            help='Recalculate time used from each configuration summary instead of using the time_charged '
+                                 'stored on the configuration status. Ignores any refunds that have been applied.')
 
     def handle(self, *args, **options):
         proposal_str = options['proposal'] or 'All'
@@ -68,17 +70,18 @@ class Command(BaseCommand):
 
                 for observation in observations:
                     observation_type = observation.request.request_group.observation_type
-                    configuration_time = timedelta(seconds=0)
                     for configuration_status in observation.configuration_statuses.all():
                         # Configurations of other instrument_types are charged to their own TimeAllocation
                         if configuration_status.configuration.instrument_type not in time_allocation.instrument_types:
                             continue
-                        try:
-                            configuration_time += configuration_time_used(configuration_status.summary, observation_type)
-                        except Summary.DoesNotExist:
-                            pass
-
-                    attempted_time[observation_type] += (configuration_time.total_seconds() / 3600.0)
+                        if options['recalculate']:
+                            try:
+                                attempted_time[observation_type] += configuration_time_used(configuration_status.summary, observation_type).total_seconds() / 3600.0
+                            except Summary.DoesNotExist:
+                                pass
+                        else:
+                            # time_charged holds the hours debited for this configuration, already reduced by any refunds
+                            attempted_time[observation_type] += configuration_status.time_charged
                 print(
                     "Proposal: {}, Instrument Types: {}, Used {} NORMAL hours, {} RAPID_RESPONSE hours, and {} TIME_CRITICAL hours".format(
                         proposal.id, ','.join(time_allocation.instrument_types), attempted_time[RequestGroup.NORMAL],
