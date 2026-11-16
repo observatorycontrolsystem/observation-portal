@@ -7,12 +7,12 @@ from observation_portal.proposals.models import ProposalInvite
 
 
 class CustomRegistrationForm(RegistrationFormTermsOfService, RegistrationFormUniqueEmail):
-    username = forms.CharField(max_length=50)
+    username = forms.CharField(max_length=50, help_text='Will be present under the USERID fits header.')
     first_name = forms.CharField(max_length=200)
     last_name = forms.CharField(max_length=200)
     institution = forms.CharField(max_length=200)
-    title = forms.CharField(max_length=200)
-    simple_interface = forms.BooleanField(label="Use Basic Mode", help_text="Hide advanced fields when making an observation request.", required=False)
+    title = forms.CharField(max_length=200, label="Role", help_text='Teacher, Graduate Student, Professor, PhD, etc.')
+    simple_interface = forms.BooleanField(label="Use Basic Mode (optional)", help_text="Hide advanced fields when making an observation request. (Can be changed from your user profile.)", required=False)
 
     field_order = [
         'first_name', 'last_name', 'institution', 'title',
