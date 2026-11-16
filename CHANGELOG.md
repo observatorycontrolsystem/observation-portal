@@ -10,6 +10,13 @@ This project adheres to semantic versioning.
 
 ### Removed
 
+## [4.18.13] - 2026-11-16
+### Changed
+- Registration template page has been updated to improve clarity
+- Fixed bug in realtime api and configdb caching
+- Fixed bug in BAD_DATA setting api
+
+
 ## [4.18.12] - 2026-11-11
 ### Changed
 - Apply proposal time_limit to REAL_TIME requests too

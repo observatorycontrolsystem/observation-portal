@@ -381,11 +381,18 @@ class RealTimeSerializer(serializers.ModelSerializer):
     """
     proposal = serializers.CharField(write_only=True)
     name = serializers.CharField(write_only=True)
-    site = serializers.ChoiceField(choices=configdb.get_site_tuples())
-    enclosure = serializers.ChoiceField(choices=configdb.get_enclosure_tuples())
-    telescope = serializers.ChoiceField(choices=configdb.get_telescope_tuples())
+    site = serializers.ChoiceField(choices=[])
+    enclosure = serializers.ChoiceField(choices=[])
+    telescope = serializers.ChoiceField(choices=[])
     state = serializers.ReadOnlyField()
     configuration_status_id = serializers.PrimaryKeyRelatedField(read_only=True)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["site"].choices = configdb.get_site_tuples()
+        self.fields["enclosure"].choices = configdb.get_enclosure_tuples()
+        self.fields["telescope"].choices = configdb.get_telescope_tuples()
 
     class Meta:
         model = Observation
