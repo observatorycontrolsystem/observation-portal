@@ -298,7 +298,7 @@ def import_csv_data(csv_file, semester, sca) -> int:
                 except User.DoesNotExist:
                     pi_invite = ProposalInvite.objects.create(proposal=proposal, email=pi_email, role="PI")
                     # Defer the email until the import transaction commits so a failed import sends no invitations
-                    transaction.on_commit(pi_invite.send_invitation)
+                    transaction.on_commit(pi_invite.send_invitation, robust=True)
                     invited_emails.append(pi_email)
 
             coi_emails = row["cois_email"].replace(" ", "").split(";")
@@ -309,7 +309,7 @@ def import_csv_data(csv_file, semester, sca) -> int:
                         Membership.objects.create(user=user, proposal=proposal, role="CI")
                     except User.DoesNotExist:
                         coi_invite = ProposalInvite.objects.create(proposal=proposal, email=email, role="CI")
-                        transaction.on_commit(coi_invite.send_invitation)
+                        transaction.on_commit(coi_invite.send_invitation, robust=True)
                         invited_emails.append(email)
 
             # Create a TimeAllocation
