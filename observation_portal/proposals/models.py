@@ -10,6 +10,7 @@ from django.utils.html import strip_tags
 from django.utils.module_loading import import_string
 from django.conf import settings
 from collections import namedtuple
+from simple_history.models import HistoricalRecords
 
 import logging
 import uuid
@@ -146,6 +147,8 @@ class Proposal(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     modified = models.DateTimeField(auto_now=True)
 
+    history = HistoricalRecords(excluded_fields=['modified'])
+
     class Meta:
         ordering = ('title',)
 
@@ -254,6 +257,8 @@ class TimeAllocation(models.Model):
         help_text='One or more instrument_types to share this time allocation'
     )
 
+    history = HistoricalRecords()
+
     class Meta:
         ordering = ('-semester__id',)
         constraints = [
@@ -293,6 +298,8 @@ class Membership(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     role = models.CharField(max_length=5, choices=ROLE_CHOICES)
     time_limit = models.IntegerField(default=-1)  # seconds, -1 is unlimited
+
+    history = HistoricalRecords()
 
     class Meta:
         unique_together = ('user', 'proposal')

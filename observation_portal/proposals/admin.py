@@ -12,6 +12,8 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.views.generic import FormView
 from django_object_actions import DjangoObjectActions, action
+from simple_history.admin import SimpleHistoryAdmin
+from simple_history.utils import bulk_update_with_history
 
 from observation_portal.common.configdb import configdb
 from observation_portal.common.admin import export_sciapps_key_data_tsv
@@ -82,7 +84,7 @@ class ProposalTagListFilter(admin.SimpleListFilter):
             return queryset
 
 
-class ProposalAdmin(DjangoObjectActions, admin.ModelAdmin):
+class ProposalAdmin(DjangoObjectActions, SimpleHistoryAdmin):
     list_display = (
         'id',
         'active',
@@ -109,13 +111,19 @@ class ProposalAdmin(DjangoObjectActions, admin.ModelAdmin):
     semesters.ordering = ''
 
     def activate_selected(self, request, queryset):
-        activated = queryset.filter(active=False).update(active=True)
+        proposals = list(queryset.filter(active=False))
+        for proposal in proposals:
+            proposal.active = True
+        activated = bulk_update_with_history(proposals, Proposal, ['active'], default_user=request.user)
         self.message_user(request, 'Successfully activated {} proposal(s)'.format(activated))
     activate_selected.short_description = 'Activate selected inactive proposals'
 
     @admin.action(description='Deactivate selected proposals')
     def deactivate_selected(self, request, queryset):
-        deactivated = queryset.update(active=False)
+        proposals = list(queryset)
+        for proposal in proposals:
+            proposal.active = False
+        deactivated = bulk_update_with_history(proposals, Proposal, ['active'], default_user=request.user)
         self.message_user(request, 'Successfully deactivated {} proposal(s)'.format(deactivated))
 
     def get_readonly_fields(self, request, obj=None):
@@ -215,7 +223,10 @@ class ProposalAdmin(DjangoObjectActions, admin.ModelAdmin):
 
     @admin.action(description='Make proposals Public')
     def makepublic_selected(self, request, queryset):
-        public = queryset.update(public=True)
+        proposals = list(queryset)
+        for proposal in proposals:
+            proposal.public = True
+        public = bulk_update_with_history(proposals, Proposal, ['public'], default_user=request.user)
         self.message_user(request, 'Successfully made {} proposal(s) public'.format(public))
 
     @admin.action(description='Rollover time allocation for selected proposals')
@@ -350,7 +361,7 @@ class ImportCSVView(FormView):
         return redirect("admin:proposals_proposal_changelist")
 
 
-class MembershipAdmin(admin.ModelAdmin):
+class MembershipAdmin(SimpleHistoryAdmin):
     list_display = ('proposal', 'proposal_title', 'user', 'role')
     list_filter = ('role',)
     search_fields = ['proposal__id', 'user__username', 'user__email', 'proposal__title']
@@ -387,7 +398,7 @@ class TimeAllocationInstrumentTypesFilter(admin.SimpleListFilter):
             queryset = queryset.filter(instrument_types__contains=[lookup_value])
         return queryset
 
-class TimeAllocationAdmin(admin.ModelAdmin):
+class TimeAllocationAdmin(SimpleHistoryAdmin):
     list_display = ['semester', 'proposal', 'instrument_types']
     list_filter = [TimeAllocationInstrumentTypesFilter, 'semester', 'proposal']
     autocomplete_fields = ['semester', 'proposal']

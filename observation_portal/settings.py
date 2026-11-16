@@ -100,6 +100,7 @@ INSTALLED_APPS = [
     'django_dramatiq',
     'health_check',
     'django_object_actions',
+    'simple_history',
     'observation_portal.accounts.apps.AccountsConfig',
     'observation_portal.requestgroups.apps.RequestGroupsConfig',
     'observation_portal.observations.apps.ObservationsConfig',
@@ -116,6 +117,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'observation_portal.common.middleware.DRFTokenAuthMiddleware',
+    'simple_history.middleware.HistoryRequestMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'observation_portal.common.middleware.RequestLogMiddleware',
@@ -164,6 +166,9 @@ DATABASES = {
 }
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
+# History is kept as an audit record only, so don't allow reverting objects to past versions from the admin
+SIMPLE_HISTORY_REVERT_DISABLED = True
 
 OAUTH2_PROVIDER_ACCESS_TOKEN_MODEL = 'oauth2_provider.AccessToken'
 OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
