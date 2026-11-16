@@ -63,13 +63,16 @@ class DowntimeDB(object):
         '''
         try:
             data = DowntimeDB._get_downtime_data()
-            downtime_intervals = DowntimeDB._order_downtime_by_resource_and_instrument_type(data)
-            caches['locmem'].set('downtime_intervals', downtime_intervals, 900)
-            caches['locmem'].set('downtime_intervals.no_expire', downtime_intervals)
-            return downtime_intervals
         except DowntimeDBException as e:
             logger.warning(repr(e))
-        return None
+            return None
+        downtime_intervals = DowntimeDB._order_downtime_by_resource_and_instrument_type(data)
+        caches['locmem'].set('downtime_intervals', downtime_intervals, 900)
+        try:
+            caches['default'].set('downtime_intervals.no_expire', downtime_intervals, None)
+        except Exception as e:
+            logger.warning(f'Unable to store last known downtime intervals in the default cache: {e!r}')
+        return downtime_intervals
 
     @staticmethod
     def get_downtime_intervals():
@@ -81,7 +84,11 @@ class DowntimeDB(object):
             # If the cache has expired, attempt to update the downtime intervals
             downtime_intervals = DowntimeDB.refresh_downtime_intervals()
             if downtime_intervals is None:
-                downtime_intervals = caches['locmem'].get('downtime_intervals.no_expire', {})
+                try:
+                    downtime_intervals = caches['default'].get('downtime_intervals.no_expire', {})
+                except Exception as e:
+                    logger.warning(f'Unable to read last known downtime intervals from the default cache: {e!r}')
+                    downtime_intervals = {}
 
         return downtime_intervals
 

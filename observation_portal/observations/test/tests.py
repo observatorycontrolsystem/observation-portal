@@ -2161,6 +2161,98 @@ class TestUpdateObservationApi(TestObservationApiBase):
         self.assertEqual(self.requestgroup.state, "COMPLETED")
         self.assertEqual(self.requestgroup.requests.first().state, "COMPLETED")
 
+    def test_update_canceled_observation_state_to_bad_data_succeeds(self):
+        observation = self._crete_existing_observation(datetime(2016, 9, 2, 23, 35, 41), datetime(2016, 9, 2, 23, 39, 59), observation_state="CANCELED")
+        self._set_request_to_completed()
+        update_data = {"state": "BAD_DATA"}
+        response = self.client.patch(reverse('api:observations-detail', args=(observation.id,)), update_data)
+        self.assertEqual(response.status_code, 200)
+
+        observation.refresh_from_db()
+        self.requestgroup.refresh_from_db()
+        self.assertEqual(observation.state, "BAD_DATA")
+        self.assertEqual(observation.configuration_statuses.first().state, "BAD_DATA")
+        self.assertEqual(self.requestgroup.state, "PENDING")
+        self.assertEqual(self.requestgroup.requests.first().state, "PENDING")
+
+    def test_update_observation_state_to_bad_data_keeps_request_completed_by_other_observation(self):
+        canceled_observation = self._crete_existing_observation(datetime(2016, 9, 2, 23, 35, 41), datetime(2016, 9, 2, 23, 39, 59), observation_state="CANCELED", configuration_state="NOT_ATTEMPTED")
+        self._crete_existing_observation(datetime(2016, 9, 3, 23, 35, 41), datetime(2016, 9, 3, 23, 39, 59), observation_state="COMPLETED", configuration_state="COMPLETED")
+        self._set_request_to_completed()
+        update_data = {"state": "BAD_DATA"}
+        response = self.client.patch(reverse('api:observations-detail', args=(canceled_observation.id,)), update_data)
+        self.assertEqual(response.status_code, 200)
+
+        canceled_observation.refresh_from_db()
+        self.requestgroup.refresh_from_db()
+        self.assertEqual(canceled_observation.state, "BAD_DATA")
+        self.assertEqual(self.requestgroup.state, "COMPLETED")
+        self.assertEqual(self.requestgroup.requests.first().state, "COMPLETED")
+
+    def test_update_observation_state_to_bad_data_resets_request_when_other_observation_is_bad_data(self):
+        observation = self._crete_existing_observation(datetime(2016, 9, 2, 23, 35, 41), datetime(2016, 9, 2, 23, 39, 59), observation_state="COMPLETED", configuration_state="COMPLETED")
+        self._crete_existing_observation(datetime(2016, 9, 3, 23, 35, 41), datetime(2016, 9, 3, 23, 39, 59), observation_state="BAD_DATA", configuration_state="COMPLETED")
+        self._set_request_to_completed()
+        update_data = {"state": "BAD_DATA"}
+        response = self.client.patch(reverse('api:observations-detail', args=(observation.id,)), update_data)
+        self.assertEqual(response.status_code, 200)
+
+        self.requestgroup.refresh_from_db()
+        self.assertEqual(self.requestgroup.state, "PENDING")
+        self.assertEqual(self.requestgroup.requests.first().state, "PENDING")
+
+    def test_update_observation_state_to_bad_data_expires_request_in_window_expired_request_group(self):
+        observation = self._crete_existing_observation(datetime(2016, 9, 2, 23, 35, 41), datetime(2016, 9, 2, 23, 39, 59), observation_state="COMPLETED", configuration_state="COMPLETED")
+        self._set_request_to_completed()
+        # An AND RequestGroup can be WINDOW_EXPIRED while one of its Requests is COMPLETED with windows remaining
+        RequestGroup.objects.filter(pk=self.requestgroup.pk).update(state='WINDOW_EXPIRED')
+        update_data = {"state": "BAD_DATA"}
+        response = self.client.patch(reverse('api:observations-detail', args=(observation.id,)), update_data)
+        self.assertEqual(response.status_code, 200)
+
+        observation.refresh_from_db()
+        self.requestgroup.refresh_from_db()
+        self.assertEqual(observation.state, "BAD_DATA")
+        self.assertEqual(self.requestgroup.requests.first().state, "WINDOW_EXPIRED")
+        self.assertEqual(self.requestgroup.state, "WINDOW_EXPIRED")
+
+    def test_update_observation_state_to_bad_data_in_window_expired_request_group_credits_debited_ipp_time(self):
+        time_allocation = mixer.blend(TimeAllocation, instrument_types=['1M0-SCICAM-SBIG'], semester=self.semester,
+                                      proposal=self.proposal, std_allocation=100, ipp_time_available=5, ipp_limit=10)
+        request_duration_hours = self.requestgroup.requests.first().duration / 3600.0
+        observation = self._crete_existing_observation(datetime(2016, 9, 2, 23, 35, 41), datetime(2016, 9, 2, 23, 39, 59), observation_state="COMPLETED", configuration_state="COMPLETED")
+        # ipp_value > 1 was debited on creation and is only credited back if the Request does not complete
+        self._set_request_to_completed(ipp_value=1.5)
+        RequestGroup.objects.filter(pk=self.requestgroup.pk).update(state='WINDOW_EXPIRED')
+        update_data = {"state": "BAD_DATA"}
+        response = self.client.patch(reverse('api:observations-detail', args=(observation.id,)), update_data)
+        self.assertEqual(response.status_code, 200)
+
+        time_allocation.refresh_from_db()
+        self.assertAlmostEqual(time_allocation.ipp_time_available, 5 + request_duration_hours * 0.5)
+
+    def test_update_observation_state_to_bad_data_keeps_request_in_canceled_request_group(self):
+        observation = self._crete_existing_observation(datetime(2016, 9, 2, 23, 35, 41), datetime(2016, 9, 2, 23, 39, 59), observation_state="COMPLETED", configuration_state="COMPLETED")
+        self._set_request_to_completed()
+        # Canceling a RequestGroup leaves its COMPLETED Requests as COMPLETED
+        RequestGroup.objects.filter(pk=self.requestgroup.pk).update(state='CANCELED')
+        update_data = {"state": "BAD_DATA"}
+        response = self.client.patch(reverse('api:observations-detail', args=(observation.id,)), update_data)
+        self.assertEqual(response.status_code, 200)
+
+        observation.refresh_from_db()
+        self.requestgroup.refresh_from_db()
+        self.assertEqual(observation.state, "BAD_DATA")
+        self.assertEqual(self.requestgroup.requests.first().state, "COMPLETED")
+        self.assertEqual(self.requestgroup.state, "CANCELED")
+
+    def test_update_pending_observation_state_to_bad_data_fails(self):
+        observation = self._crete_existing_observation(datetime(2016, 9, 2, 23, 35, 41), datetime(2016, 9, 2, 23, 39, 59), observation_state="PENDING")
+        update_data = {"state": "BAD_DATA"}
+        response = self.client.patch(reverse('api:observations-detail', args=(observation.id,)), update_data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), ['Cannot update observation state from PENDING to BAD_DATA'])
+
     def test_update_observation_state_fails_for_non_staff(self):
         observation = self._crete_existing_observation(datetime(2016, 9, 2, 23, 35, 41), datetime(2016, 9, 2, 23, 39, 59), observation_state="COMPLETED")
         update_data = {"state": "BAD_DATA"}
@@ -2194,6 +2286,29 @@ class TestUpdateObservationApi(TestObservationApiBase):
         time_allocation.refresh_from_db()
         # Show ipp_time_available has decreased by request_duration * ipp_value when setting it back to PENDING
         self.assertEqual(time_allocation.ipp_time_available, base_ipp_available - request_duration_hours * 0.5)
+
+    def test_update_observation_state_keeps_credited_ipp_time_when_request_stays_completed(self):
+        expired_semester = mixer.blend(
+            Semester, id='2016A', start=datetime(2016, 2, 1, tzinfo=timezone.utc),
+            end=datetime(2016, 8, 31, 23, 59, 59, tzinfo=timezone.utc)
+        )
+        time_allocation = mixer.blend(TimeAllocation, instrument_types=['1M0-SCICAM-SBIG'], semester=expired_semester,
+                                      proposal=self.proposal, std_allocation=100, ipp_time_available=5, ipp_limit=10)
+        base_ipp_available = time_allocation.ipp_time_available
+        observation = self._crete_existing_observation(datetime(2016, 9, 2, 23, 35, 41), datetime(2016, 9, 2, 23, 39, 59), observation_state="COMPLETED")
+        self._set_request_to_completed(ipp_value=0.5)
+        # Request windows are in the past, so the request cannot be reset to PENDING
+        window = self.requestgroup.requests.first().windows.first()
+        window.start = datetime(2016, 8, 30, tzinfo=timezone.utc)
+        window.end = datetime(2016, 8, 31, tzinfo=timezone.utc)
+        window.save()
+        update_data = {"state": "BAD_DATA"}
+        response = self.client.patch(reverse('api:observations-detail', args=(observation.id,)), update_data)
+        self.assertEqual(response.status_code, 200)
+
+        time_allocation.refresh_from_db()
+        self.assertEqual(self.requestgroup.requests.first().state, "COMPLETED")
+        self.assertEqual(time_allocation.ipp_time_available, base_ipp_available)
 
     def test_update_observation_state_does_nothing_to_debitted_ipp_time(self):
         # Ensure that resetting the Requst state from COMPLETED does nothing if ipp_value >= 1

@@ -103,6 +103,11 @@ def on_request_state_change(old_request_state, new_request):
             ipp_value = new_request.request_group.ipp_value
             if ipp_value >= 1.0:
                 modify_ipp_time_from_request(ipp_value, new_request, 'credit')
+        # A reopened COMPLETED request gives back the ipp_time that was credited to it on completion
+        if old_request_state == 'COMPLETED' and new_request.state == 'PENDING':
+            ipp_value = new_request.request_group.ipp_value
+            if ipp_value < 1.0:
+                modify_ipp_time_from_request(ipp_value, new_request, 'debit')
     if new_request.state == 'CANCELED':
         # Ensure its pending Observations are cancelled here
         Observation.cancel(new_request.observation_set.filter(state='PENDING'))
@@ -150,16 +155,30 @@ def set_observation_state_to_bad_data(observation, set_configuration_statuses=Tr
         if set_configuration_statuses:
             observation.configuration_statuses.update(state='BAD_DATA')
         observation.save()
-        # If the request was marked as completed but still has time remaining in its windows, set it back to PENDING
-        if observation.request.state == 'COMPLETED' and observation.request.max_window_time > now:
-            observation.request.state = 'PENDING'
-            observation.request.save()
-            observation.request.request_group.state = 'PENDING'
-            observation.request.request_group.save()
-    ipp_value = observation.request.request_group.ipp_value
-    # If ipp_time is < 1.0, then it was already credited to the proposal on request completion so we should remove it here
-    if ipp_value < 1.0:
-        modify_ipp_time_from_request(ipp_value, observation.request, 'debit')
+        request = observation.request
+        request_group = request.request_group
+        # If the request was marked as completed but still has time remaining in its windows, reopen it, unless its
+        # request group is CANCELED or another observation of the request still satisfies its completion criteria
+        if (request.state == 'COMPLETED' and request.max_window_time > now and
+                request_group.state in ['PENDING', 'COMPLETED', 'WINDOW_EXPIRED']):
+            other_observations = request.observation_set.exclude(pk=observation.pk).exclude(state__in=['PENDING', 'BAD_DATA'])
+            completed_by_other_observation = any(
+                get_request_state_from_configuration_statuses(
+                    'PENDING', request, other_observation.configuration_statuses.all()
+                ) == 'COMPLETED'
+                for other_observation in other_observations
+            )
+            if not completed_by_other_observation:
+                request.state = 'PENDING'
+                request.save()
+                if request_group.state == 'WINDOW_EXPIRED':
+                    # A request in an expired request group cannot be rescheduled, so expire it. COMPLETED cannot go
+                    # directly to WINDOW_EXPIRED, and passing through PENDING applies the ipp accounting of both changes
+                    request.state = 'WINDOW_EXPIRED'
+                    request.save()
+                elif request_group.state == 'COMPLETED':
+                    request_group.state = 'PENDING'
+                    request_group.save()
 
 
 def get_observation_state(configuration_statuses):
