@@ -2972,6 +2972,8 @@ class TestTimeAccountingCommand(TestObservationApiBase):
         self.assertAlmostEqual(self.time_allocation.rr_time_used, live_time_used)
 
     def test_time_allocation_with_multiple_instrument_types_is_charged_for_all_of_them(self):
+        self.time_allocation.instrument_types = ['1M0-SCICAM-SBIG', '1M0-NRES-SCICAM']
+        self.time_allocation.save()
         nres_requestgroup = self._generate_requestgroup(instrument_type='1M0-NRES-SCICAM')
         sbig_observation = self._add_observation(state='COMPLETED', time_completed=1000)
         nres_observation = self._add_observation(state='COMPLETED', time_completed=1000,
@@ -2981,7 +2983,7 @@ class TestTimeAccountingCommand(TestObservationApiBase):
         nres_summary = nres_observation.configuration_statuses.first().summary
         nres_summary.end = nres_summary.start + nres_duration
         nres_summary.save()
-        self.time_allocation.instrument_types = ['1M0-SCICAM-SBIG', '1M0-NRES-SCICAM']
+        self.time_allocation.refresh_from_db()
         self.time_allocation.std_time_used = 0
         self.time_allocation.save()
         call_command('time_accounting', f'-p{self.proposal.id}', '-i1M0-NRES-SCICAM', f'-s{self.semester.id}', stdout=StringIO(), stderr=StringIO())
@@ -3010,6 +3012,33 @@ class TestTimeAccountingCommand(TestObservationApiBase):
         nres_time_allocation.refresh_from_db()
         self.assertAlmostEqual(self.time_allocation.std_time_used, sbig_duration.total_seconds() / 3600.0)
         self.assertAlmostEqual(nres_time_allocation.std_time_used, nres_duration.total_seconds() / 3600.0)
+
+    def test_refunded_time_is_not_charged(self):
+        observation = self._add_observation(state='COMPLETED', time_completed=1000)
+        refund_observation_time(observation, 0.25)
+        # reset time used to 0 since creating the observation already modified it
+        self.time_allocation.std_time_used = 0
+        self.time_allocation.save()
+        call_command('time_accounting', f'-p{self.proposal.id}', '-i1M0-SCICAM-SBIG', f'-s{self.semester.id}', stdout=StringIO(), stderr=StringIO())
+        summary = observation.configuration_statuses.first().summary
+        time_used = (summary.end - summary.start).total_seconds() / 3600.0
+        self.time_allocation.refresh_from_db()
+        self.assertAlmostEqual(self.time_allocation.std_time_used, time_used * 0.75)
+
+    def test_recalculate_uses_summary_time_instead_of_time_charged(self):
+        observation = self._add_observation(state='COMPLETED', time_completed=1000)
+        # Simulate a configuration status from before time_charged was tracked
+        observation.configuration_statuses.update(time_charged=0)
+        self.time_allocation.std_time_used = 0
+        self.time_allocation.save()
+        call_command('time_accounting', f'-p{self.proposal.id}', '-i1M0-SCICAM-SBIG', f'-s{self.semester.id}', stdout=StringIO(), stderr=StringIO())
+        self.time_allocation.refresh_from_db()
+        self.assertEqual(self.time_allocation.std_time_used, 0)
+        call_command('time_accounting', f'-p{self.proposal.id}', '-i1M0-SCICAM-SBIG', f'-s{self.semester.id}', '-r', stdout=StringIO(), stderr=StringIO())
+        summary = observation.configuration_statuses.first().summary
+        time_used = (summary.end - summary.start).total_seconds() / 3600.0
+        self.time_allocation.refresh_from_db()
+        self.assertAlmostEqual(self.time_allocation.std_time_used, time_used)
 
     def test_with_one_obs_command_reports_dry_run_doesnt_modify_time(self):
         command_output = StringIO()
